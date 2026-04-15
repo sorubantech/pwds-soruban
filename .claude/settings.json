@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(git -C 'd:\\\\clients\\\\pwds\\\\projects\\\\pwds-soruban' status)",
-      "Bash(git -C 'd:\\\\clients\\\\pwds\\\\projects\\\\pwds-soruban' add .gitignore .claude/ pss-2.0-global/)"
+      "Bash(git -C 'd:\\\\clients\\\\pwds\\\\projects\\\\pwds-soruban' add .gitignore .claude/ pss-2.0-global/)",
+      "Bash(git -C 'd:\\\\clients\\\\pwds\\\\projects\\\\pwds-soruban' commit -m ' *)",
+      "Bash(git -C 'd:\\\\clients\\\\pwds\\\\projects\\\\pwds-soruban' remote add origin https://github.com/sorubantech/pwds-soruban.git)",
+      "Bash(git -C 'd:\\\\clients\\\\pwds\\\\projects\\\\pwds-soruban' remote -v)"
     ]
   }
 }

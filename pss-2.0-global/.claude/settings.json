@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc -l \"d:\\\\clients\\\\pwds\\\\projects\\\\pwds-soruban\\\\pss-2.0-global\\\\.claude\"/**/*.md)",
+      "Bash(find \"d:\\\\clients\\\\pwds\\\\projects\\\\pwds-soruban\\\\pss-2.0-global\\\\.claude\" -type f -exec wc -l {} +)",
+      "Bash(node -e ' *)"
+    ]
+  }
+}

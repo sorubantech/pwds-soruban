@@ -20,6 +20,16 @@ You receive:
 
 ---
 
+## Required Reading
+
+Before generating any code, read the code reference for the screen type being generated:
+- **MASTER_GRID**: Read `.claude/templates/master-grid/code-reference-frontend.md`
+- **FLOW**: Read `.claude/templates/flow-grid/code-reference-frontend.md` *(add this file when a FLOW reference entity is available)*
+
+Use ContactType (in the MASTER_GRID reference) as the canonical model. Substitute `ContactType` → `{EntityName}` throughout.
+
+---
+
 ## Code Generation Rules
 
 ### Base Paths
