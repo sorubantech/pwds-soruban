@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Donations - Mobile App</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a1a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .phone-frame {
+      width: 375px;
+      height: 812px;
+      background: #ffffff;
+      border-radius: 44px;
+      overflow: hidden;
+      box-shadow: 0 0 0 12px #2d2d2d, 0 0 0 14px #1a1a1a, 0 20px 60px rgba(0,0,0,0.5);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .phone-notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 28px;
+      background: #000;
+      border-radius: 0 0 18px 18px;
+      z-index: 10;
+    }
+
+    .status-bar {
+      background: #000;
+      color: #fff;
+      padding: 8px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 600;
+      height: 48px;
+    }
+
+    .status-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+    }
+
+    .screen-header {
+      background: white;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .screen-header-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .header-action {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      color: var(--accent);
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .header-action:active { background: var(--accent-bg); }
+
+    .phone-content {
+      flex: 1;
+      overflow-y: auto;
+      background: #f8fafc;
+      padding-bottom: 80px;
+    }
+
+    .phone-content::-webkit-scrollbar { width: 0; }
+
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* Summary Card */
+    .summary-card {
+      margin: 16px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      border-radius: 16px;
+      padding: 20px;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .summary-item { text-align: center; }
+
+    .summary-value {
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .summary-label {
+      font-size: 11px;
+      opacity: 0.85;
+      margin-top: 2px;
+    }
+
+    .summary-divider {
+      width: 1px;
+      background: rgba(255,255,255,0.25);
+    }
+
+    /* Filter Tabs */
+    .filter-tabs {
+      display: flex;
+      gap: 8px;
+      padding: 0 16px 16px;
+      overflow-x: auto;
+    }
+
+    .filter-tabs::-webkit-scrollbar { display: none; }
+
+    .filter-tab {
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      border: 1.5px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+
+    .filter-tab.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    /* Month Section */
+    .month-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+      padding: 0 16px;
+      margin-bottom: 8px;
+    }
+
+    /* Donation Item */
+    .donation-item {
+      background: white;
+      margin: 0 16px 8px;
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      border: 1px solid #f1f5f9;
+      cursor: pointer;
+    }
+
+    .donation-item:active { background: #f8fafc; }
+
+    .donation-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .donation-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .donation-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .donation-icon.orphan { background: #fef3c7; }
+    .donation-icon.education { background: #dbeafe; }
+    .donation-icon.water { background: #cffafe; }
+    .donation-icon.masjid { background: #e0e7ff; }
+
+    .donation-purpose {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .donation-meta {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .donation-amount {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      text-align: right;
+    }
+
+    .receipt-badge {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--success-color);
+      margin-top: 3px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .load-more {
+      text-align: center;
+      padding: 14px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent);
+      cursor: pointer;
+    }
+
+    /* Detail View */
+    .detail-header {
+      background: white;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .back-btn {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: var(--accent);
+      cursor: pointer;
+      border-radius: 50%;
+    }
+
+    .back-btn:active { background: var(--accent-bg); }
+
+    .detail-header-title {
+      flex: 1;
+      text-align: center;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-right: 36px;
+    }
+
+    .detail-hero {
+      text-align: center;
+      padding: 24px 20px 16px;
+      background: white;
+    }
+
+    .detail-emoji {
+      font-size: 40px;
+      margin-bottom: 8px;
+    }
+
+    .detail-purpose {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .detail-amount {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--accent);
+      margin-top: 4px;
+    }
+
+    .detail-currency {
+      font-size: 14px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .detail-info {
+      margin: 16px;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #f1f5f9;
+    }
+
+    .detail-info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .detail-info-row:last-child { border-bottom: none; }
+
+    .detail-info-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .detail-info-value {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    .status-badge.success {
+      background: #f0fdf4;
+      color: var(--success-color);
+    }
+
+    .detail-impact {
+      margin: 0 16px 16px;
+      background: var(--accent-bg);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .detail-impact-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    .detail-impact-text {
+      font-size: 13px;
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    .detail-actions {
+      padding: 0 16px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .detail-btn {
+      width: 100%;
+      height: 48px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: none;
+    }
+
+    .detail-btn.primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .detail-btn.secondary {
+      background: white;
+      color: var(--accent);
+      border: 1.5px solid var(--border-color);
+    }
+
+    .detail-btn.accent-outline {
+      background: white;
+      color: var(--accent);
+      border: 1.5px solid var(--accent);
+    }
+
+    /* Annual Statement View */
+    .statement-card {
+      margin: 16px;
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .statement-org {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      text-align: center;
+    }
+
+    .statement-year {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .statement-total {
+      text-align: center;
+      padding: 16px 0;
+      border-top: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 16px;
+    }
+
+    .statement-total-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .statement-total-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .statement-stats {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 16px;
+    }
+
+    .statement-stat {
+      text-align: center;
+    }
+
+    .statement-stat-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .statement-stat-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .statement-breakdown-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+    }
+
+    .breakdown-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .breakdown-item:last-child { border-bottom: none; }
+
+    .breakdown-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .breakdown-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .breakdown-right {
+      text-align: right;
+    }
+
+    .breakdown-amount {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .breakdown-pct {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .year-select {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 16px;
+    }
+
+    .year-select select {
+      padding: 8px 16px;
+      border: 1.5px solid var(--border-color);
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      background: white;
+      outline: none;
+    }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 80px;
+      background: white;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-around;
+      padding-top: 8px;
+      z-index: 5;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      padding: 4px 12px;
+      min-width: 56px;
+    }
+
+    .nav-item i {
+      font-size: 18px;
+      color: var(--text-secondary);
+    }
+
+    .nav-item span {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .nav-item.active i { color: var(--accent); }
+    .nav-item.active span { color: var(--accent); }
+
+    .home-indicator {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 134px;
+      height: 5px;
+      background: #d1d5db;
+      border-radius: 100px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+
+    <div class="status-bar">
+      <span>2:30</span>
+      <div class="status-bar-right">
+        <i class="fas fa-signal" style="font-size: 11px;"></i>
+        <i class="fas fa-wifi" style="font-size: 11px;"></i>
+        <i class="fas fa-battery-full" style="font-size: 13px;"></i>
+      </div>
+    </div>
+
+    <div class="phone-content">
+
+      <!-- LIST VIEW -->
+      <div class="view active" id="listView">
+        <div class="screen-header">
+          <div style="width: 36px;"></div>
+          <div class="screen-header-title">My Giving</div>
+          <div class="header-actions">
+            <div class="header-action"><i class="fas fa-search"></i></div>
+            <div class="header-action" onclick="showView('statement')"><i class="fas fa-download"></i></div>
+          </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="summary-card">
+          <div class="summary-item">
+            <div class="summary-value">$42,500</div>
+            <div class="summary-label">Total Given</div>
+          </div>
+          <div class="summary-divider"></div>
+          <div class="summary-item">
+            <div class="summary-value">$8,500</div>
+            <div class="summary-label">This Year</div>
+          </div>
+          <div class="summary-divider"></div>
+          <div class="summary-item">
+            <div class="summary-value">24</div>
+            <div class="summary-label">Donations</div>
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filter-tabs">
+          <div class="filter-tab active">All</div>
+          <div class="filter-tab">This Year</div>
+          <div class="filter-tab">2025</div>
+          <div class="filter-tab">2024</div>
+        </div>
+
+        <!-- April 2026 -->
+        <div class="month-label">April 2026</div>
+
+        <div class="donation-item" onclick="showView('detail')">
+          <div class="donation-row">
+            <div class="donation-left">
+              <div class="donation-icon orphan">🧒</div>
+              <div>
+                <div class="donation-purpose">Orphan Care</div>
+                <div class="donation-meta">
+                  <span>Apr 10</span>
+                  <span>·</span>
+                  <span>💳 Card ••4567</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="donation-amount">$1,500</div>
+              <div class="receipt-badge"><i class="fas fa-check-circle"></i> Receipt</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="donation-item">
+          <div class="donation-row">
+            <div class="donation-left">
+              <div class="donation-icon education">📚</div>
+              <div>
+                <div class="donation-purpose">Education</div>
+                <div class="donation-meta">
+                  <span>Apr 3</span>
+                  <span>·</span>
+                  <span>💳 Card ••4567</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="donation-amount">$800</div>
+              <div class="receipt-badge"><i class="fas fa-check-circle"></i> Receipt</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- March 2026 -->
+        <div class="month-label" style="margin-top: 12px;">March 2026</div>
+
+        <div class="donation-item">
+          <div class="donation-row">
+            <div class="donation-left">
+              <div class="donation-icon water">💧</div>
+              <div>
+                <div class="donation-purpose">Clean Water</div>
+                <div class="donation-meta">
+                  <span>Mar 28</span>
+                  <span>·</span>
+                  <span>🏦 Bank</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="donation-amount">$700</div>
+              <div class="receipt-badge"><i class="fas fa-check-circle"></i> Receipt</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="donation-item">
+          <div class="donation-row">
+            <div class="donation-left">
+              <div class="donation-icon masjid">🕌</div>
+              <div>
+                <div class="donation-purpose">Masjid Fund</div>
+                <div class="donation-meta">
+                  <span>Mar 15</span>
+                  <span>·</span>
+                  <span>💵 Cash</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="donation-amount">$500</div>
+              <div class="receipt-badge"><i class="fas fa-check-circle"></i> Receipt</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="donation-item">
+          <div class="donation-row">
+            <div class="donation-left">
+              <div class="donation-icon orphan">🧒</div>
+              <div>
+                <div class="donation-purpose">Orphan Care</div>
+                <div class="donation-meta">
+                  <span>Mar 5</span>
+                  <span>·</span>
+                  <span>💳 Card ••4567</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="donation-amount">$1,500</div>
+              <div class="receipt-badge"><i class="fas fa-check-circle"></i> Receipt</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="load-more">Load More...</div>
+      </div>
+
+      <!-- DETAIL VIEW -->
+      <div class="view" id="detailView">
+        <div class="detail-header">
+          <div class="back-btn" onclick="showView('list')"><i class="fas fa-arrow-left"></i></div>
+          <div class="detail-header-title">Donation Detail</div>
+        </div>
+
+        <div class="detail-hero">
+          <div class="detail-emoji">🧒</div>
+          <div class="detail-purpose">Orphan Care</div>
+          <div class="detail-amount">$1,500.00 <span class="detail-currency">USD</span></div>
+        </div>
+
+        <div class="detail-info">
+          <div class="detail-info-row">
+            <span class="detail-info-label">Date</span>
+            <span class="detail-info-value">Apr 10, 2026</span>
+          </div>
+          <div class="detail-info-row">
+            <span class="detail-info-label">Receipt #</span>
+            <span class="detail-info-value">REC-4547</span>
+          </div>
+          <div class="detail-info-row">
+            <span class="detail-info-label">Payment</span>
+            <span class="detail-info-value">Visa ••••4567</span>
+          </div>
+          <div class="detail-info-row">
+            <span class="detail-info-label">Campaign</span>
+            <span class="detail-info-value">Ramadan Appeal 2026</span>
+          </div>
+          <div class="detail-info-row">
+            <span class="detail-info-label">Status</span>
+            <span class="status-badge success"><i class="fas fa-check-circle"></i> Completed</span>
+          </div>
+          <div class="detail-info-row">
+            <span class="detail-info-label">Tax Deductible</span>
+            <span class="status-badge success"><i class="fas fa-check-circle"></i> Eligible (80G)</span>
+          </div>
+        </div>
+
+        <div class="detail-impact">
+          <div class="detail-impact-title">Your Impact</div>
+          <div class="detail-impact-text">🧒 This provides education for 3 children for one year.</div>
+        </div>
+
+        <div class="detail-actions">
+          <button class="detail-btn primary"><i class="fas fa-file-pdf"></i> Download Receipt (PDF)</button>
+          <button class="detail-btn secondary"><i class="fas fa-share-nodes"></i> Share Receipt</button>
+          <button class="detail-btn accent-outline"><i class="fas fa-hand-holding-dollar"></i> Donate Again</button>
+        </div>
+      </div>
+
+      <!-- ANNUAL STATEMENT VIEW -->
+      <div class="view" id="statementView">
+        <div class="detail-header">
+          <div class="back-btn" onclick="showView('list')"><i class="fas fa-arrow-left"></i></div>
+          <div class="detail-header-title">Annual Statement</div>
+        </div>
+
+        <div class="year-select">
+          <label style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">Select Year:</label>
+          <select>
+            <option>2026</option>
+            <option>2025</option>
+            <option>2024</option>
+          </select>
+        </div>
+
+        <div class="statement-card">
+          <div class="statement-org">Annual Giving Statement</div>
+          <div style="text-align: center; font-size: 14px; font-weight: 600; color: var(--text-primary); margin-top: 4px;">Khalid Al-Mansouri</div>
+          <div class="statement-year">Year: 2026 (Jan–Apr)</div>
+
+          <div class="statement-total">
+            <div class="statement-total-value">$8,500</div>
+            <div class="statement-total-label">Total Donations</div>
+          </div>
+
+          <div class="statement-stats">
+            <div class="statement-stat">
+              <div class="statement-stat-value">8</div>
+              <div class="statement-stat-label">Gifts</div>
+            </div>
+            <div class="statement-stat">
+              <div class="statement-stat-value">$8,500</div>
+              <div class="statement-stat-label">Tax-Deductible</div>
+            </div>
+          </div>
+
+          <div class="statement-breakdown-title">By Purpose</div>
+
+          <div class="breakdown-item">
+            <div class="breakdown-left">
+              <span>🧒</span>
+              <span class="breakdown-name">Orphan Care</span>
+            </div>
+            <div class="breakdown-right">
+              <div class="breakdown-amount">$4,500</div>
+              <div class="breakdown-pct">53%</div>
+            </div>
+          </div>
+
+          <div class="breakdown-item">
+            <div class="breakdown-left">
+              <span>📚</span>
+              <span class="breakdown-name">Education</span>
+            </div>
+            <div class="breakdown-right">
+              <div class="breakdown-amount">$2,100</div>
+              <div class="breakdown-pct">25%</div>
+            </div>
+          </div>
+
+          <div class="breakdown-item">
+            <div class="breakdown-left">
+              <span>💧</span>
+              <span class="breakdown-name">Clean Water</span>
+            </div>
+            <div class="breakdown-right">
+              <div class="breakdown-amount">$1,400</div>
+              <div class="breakdown-pct">16%</div>
+            </div>
+          </div>
+
+          <div class="breakdown-item">
+            <div class="breakdown-left">
+              <span>🕌</span>
+              <span class="breakdown-name">Masjid Fund</span>
+            </div>
+            <div class="breakdown-right">
+              <div class="breakdown-amount">$500</div>
+              <div class="breakdown-pct">6%</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-actions">
+          <button class="detail-btn primary"><i class="fas fa-file-pdf"></i> Download Statement (PDF)</button>
+          <button class="detail-btn secondary"><i class="fas fa-envelope"></i> Email Statement to Me</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+      <div class="nav-item">
+        <i class="fas fa-home"></i>
+        <span>Home</span>
+      </div>
+      <div class="nav-item">
+        <i class="fas fa-hand-holding-dollar"></i>
+        <span>Donate</span>
+      </div>
+      <div class="nav-item active">
+        <i class="fas fa-receipt"></i>
+        <span>Giving</span>
+      </div>
+      <div class="nav-item">
+        <i class="fas fa-calendar-alt"></i>
+        <span>Events</span>
+      </div>
+      <div class="nav-item">
+        <i class="fas fa-user"></i>
+        <span>Profile</span>
+      </div>
+      <div class="home-indicator"></div>
+    </div>
+
+  </div>
+
+  <script>
+    function showView(view) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById(view + 'View').classList.add('active');
+    }
+
+    document.querySelectorAll('.filter-tab').forEach(tab => {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+  </script>
+
+</body>
+
+</html>

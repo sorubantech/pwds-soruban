@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Integration Marketplace - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+      --mp-accent: #7c3aed;
+      --mp-accent-bg: #f5f3ff;
+      --mp-accent-light: #a78bfa;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0 0 0.2rem 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    /* Search */
+    .search-bar {
+      position: relative;
+      max-width: 360px;
+      width: 100%;
+    }
+
+    .search-bar input {
+      width: 100%;
+      padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .search-bar input:focus {
+      outline: none;
+      border-color: var(--mp-accent);
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    }
+
+    .search-bar i {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+    }
+
+    /* Category Pills */
+    .category-pills {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+
+    .category-pill {
+      padding: 0.375rem 0.875rem;
+      border-radius: 999px;
+      border: 1px solid var(--border-color);
+      background: white;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      color: var(--text-secondary);
+    }
+
+    .category-pill:hover {
+      border-color: var(--mp-accent);
+      color: var(--mp-accent);
+    }
+
+    .category-pill.active {
+      background: var(--mp-accent);
+      color: white;
+      border-color: var(--mp-accent);
+    }
+
+    /* Featured row */
+    .featured-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .featured-card {
+      background: linear-gradient(135deg, var(--mp-accent-bg), #ede9fe);
+      border: 2px solid var(--mp-accent-light);
+      border-radius: var(--card-radius);
+      padding: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      position: relative;
+    }
+
+    .featured-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.15);
+    }
+
+    .featured-badge {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      font-size: 0.625rem;
+      background: var(--mp-accent);
+      color: white;
+      padding: 0.125rem 0.5rem;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+    .featured-card .int-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .featured-card .int-name {
+      font-weight: 700;
+      font-size: 0.9375rem;
+      margin-bottom: 0.125rem;
+    }
+
+    .featured-card .int-desc {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    /* Section header */
+    .section-title {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 1.5rem 0 0.75rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .section-title .count {
+      font-size: 0.6875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: #f1f5f9;
+      padding: 0.125rem 0.5rem;
+      border-radius: 999px;
+    }
+
+    /* Integration cards grid */
+    .int-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .int-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: 2px solid transparent;
+      position: relative;
+    }
+
+    .int-card:hover {
+      border-color: var(--mp-accent-light);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .int-card.connected {
+      border-color: rgba(34, 197, 94, 0.3);
+    }
+
+    .int-card .int-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      margin-bottom: 0.75rem;
+      flex-shrink: 0;
+    }
+
+    .int-card .int-name {
+      font-weight: 700;
+      font-size: 0.875rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .int-card .int-desc {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+      line-height: 1.4;
+    }
+
+    .int-card .int-status {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      margin-bottom: 0.625rem;
+    }
+
+    .int-card .int-status.is-connected {
+      color: var(--success-color);
+    }
+
+    .int-card .int-status.is-available {
+      color: var(--text-secondary);
+    }
+
+    /* Buttons */
+    .btn-connect {
+      padding: 0.375rem 0.875rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: 1px solid var(--mp-accent);
+      background: white;
+      color: var(--mp-accent);
+    }
+
+    .btn-connect:hover {
+      background: var(--mp-accent);
+      color: white;
+    }
+
+    .btn-configure {
+      padding: 0.375rem 0.875rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: none;
+      background: var(--mp-accent);
+      color: white;
+    }
+
+    .btn-configure:hover {
+      background: #6d28d9;
+    }
+
+    .btn-outline-custom {
+      background: white;
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      text-decoration: none;
+    }
+
+    .btn-outline-custom:hover {
+      border-color: var(--mp-accent);
+      color: var(--mp-accent);
+    }
+
+    .btn-primary-custom {
+      background: var(--mp-accent);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .btn-primary-custom:hover {
+      background: #6d28d9;
+      color: white;
+    }
+
+    .btn-sm-action {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 0.25rem 0.625rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-sm-action:hover {
+      border-color: var(--mp-accent);
+      color: var(--mp-accent);
+    }
+
+    /* Cards */
+    .dash-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      margin-bottom: 1.25rem;
+      overflow: hidden;
+    }
+
+    .dash-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .dash-card-header h2 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .dash-card-body {
+      padding: 1.25rem;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-box {
+      background: white;
+      border-radius: var(--card-radius);
+      width: 640px;
+      max-width: 95vw;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .modal-header h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0.25rem;
+      line-height: 1;
+    }
+
+    .modal-close:hover {
+      color: var(--text-primary);
+    }
+
+    .modal-body {
+      padding: 1.25rem;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      padding: 1rem 1.25rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    /* Detail panel sections */
+    .detail-section {
+      margin-bottom: 1.25rem;
+    }
+
+    .detail-section-title {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .feature-list li {
+      font-size: 0.8125rem;
+      padding: 0.375rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .feature-list li i {
+      color: var(--success-color);
+      font-size: 0.75rem;
+    }
+
+    .config-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.8125rem;
+    }
+
+    .config-row:last-child {
+      border-bottom: none;
+    }
+
+    .config-label {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .config-value {
+      font-family: 'SF Mono', 'Consolas', monospace;
+      font-size: 0.75rem;
+      background: #f8fafc;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+    }
+
+    .sync-stat {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.5rem;
+      background: #f8fafc;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      margin-right: 0.75rem;
+    }
+
+    /* Form elements */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.375rem;
+      display: block;
+    }
+
+    .form-group .form-hint {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .form-control-custom {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .form-control-custom:focus {
+      outline: none;
+      border-color: var(--mp-accent);
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    }
+
+    /* Status badge */
+    .status-badge-connected {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--success-color);
+      background: #dcfce7;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+    }
+
+    .status-badge-mode {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--success-color);
+      background: #dcfce7;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+    }
+
+    /* Icon backgrounds */
+    .icon-stripe { background: #635bff; color: white; }
+    .icon-paypal { background: #003087; color: white; }
+    .icon-razorpay { background: #072654; color: white; }
+    .icon-square { background: #000; color: white; }
+    .icon-authnet { background: #1c3a5e; color: white; }
+    .icon-paytm { background: #00baf2; color: white; }
+    .icon-quickbooks { background: #2ca01c; color: white; }
+    .icon-xero { background: #13b5ea; color: white; }
+    .icon-tally { background: #e74c3c; color: white; }
+    .icon-zoho { background: #c8202b; color: white; }
+    .icon-mailchimp { background: #ffe01b; color: #241c15; }
+    .icon-sendgrid { background: #1a82e2; color: white; }
+    .icon-twilio { background: #f22f46; color: white; }
+    .icon-whatsapp { background: #25d366; color: white; }
+    .icon-salesforce { background: #00a1e0; color: white; }
+    .icon-hubspot { background: #ff7a59; color: white; }
+    .icon-google { background: #4285f4; color: white; }
+    .icon-microsoft { background: #0078d4; color: white; }
+    .icon-slack { background: #4a154b; color: white; }
+    .icon-teams { background: #6264a7; color: white; }
+    .icon-zapier { background: #ff4a00; color: white; }
+    .icon-ga { background: #e37400; color: white; }
+    .icon-powerbi { background: #f2c811; color: #333; }
+    .icon-mixpanel { background: #7856ff; color: white; }
+    .icon-hotjar { background: #fd3a5c; color: white; }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .int-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      }
+    }
+
+    @media (max-width: 576px) {
+      body { padding: 1rem; }
+      .page-header { flex-direction: column; }
+      .featured-row { grid-template-columns: 1fr; }
+      .int-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fa-solid fa-store" style="color: var(--mp-accent); margin-right: 0.375rem;"></i>Integration Marketplace</h1>
+      <p class="subtitle">Connect PSS 2.0 with your favorite tools and services</p>
+    </div>
+    <div class="search-bar">
+      <i class="fa-solid fa-search"></i>
+      <input type="text" placeholder="Search integrations..." id="searchInput" oninput="filterCards()">
+    </div>
+  </div>
+
+  <!-- Category Pills -->
+  <div class="category-pills">
+    <button class="category-pill active" onclick="filterCategory('all', this)">All</button>
+    <button class="category-pill" onclick="filterCategory('payment', this)">Payment</button>
+    <button class="category-pill" onclick="filterCategory('accounting', this)">Accounting</button>
+    <button class="category-pill" onclick="filterCategory('communication', this)">Communication</button>
+    <button class="category-pill" onclick="filterCategory('crm', this)">CRM</button>
+    <button class="category-pill" onclick="filterCategory('productivity', this)">Productivity</button>
+    <button class="category-pill" onclick="filterCategory('analytics', this)">Analytics</button>
+    <button class="category-pill" onclick="filterCategory('custom', this)">Custom</button>
+  </div>
+
+  <!-- Featured Integrations -->
+  <div class="featured-row">
+    <div class="featured-card" onclick="openDetail('stripe')">
+      <span class="featured-badge">Featured</span>
+      <div class="int-icon icon-stripe"><i class="fa-brands fa-stripe-s"></i></div>
+      <div>
+        <div class="int-name">Stripe</div>
+        <div class="int-desc">Payment processing for online donations</div>
+      </div>
+    </div>
+    <div class="featured-card" onclick="openDetail('quickbooks')">
+      <span class="featured-badge">Featured</span>
+      <div class="int-icon icon-quickbooks"><i class="fa-solid fa-book"></i></div>
+      <div>
+        <div class="int-name">QuickBooks</div>
+        <div class="int-desc">Accounting sync for donation records</div>
+      </div>
+    </div>
+    <div class="featured-card" onclick="openDetail('mailchimp')">
+      <span class="featured-badge">Featured</span>
+      <div class="int-icon icon-mailchimp"><i class="fa-brands fa-mailchimp"></i></div>
+      <div>
+        <div class="int-name">Mailchimp</div>
+        <div class="int-desc">Email marketing integration</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment & Processing -->
+  <div class="section-title" data-category="payment">
+    <i class="fa-solid fa-credit-card" style="color: var(--mp-accent);"></i> Payment & Processing
+    <span class="count">6 integrations</span>
+  </div>
+  <div class="int-grid" data-category="payment">
+    <div class="int-card connected" data-name="stripe" onclick="openDetail('stripe')">
+      <div class="int-icon icon-stripe"><i class="fa-brands fa-stripe-s"></i></div>
+      <div class="int-name">Stripe</div>
+      <div class="int-desc">Payment gateway for credit/debit cards</div>
+      <div class="int-status is-connected"><i class="fa-solid fa-check-circle"></i> Connected</div>
+      <button class="btn-configure" onclick="event.stopPropagation(); openDetail('stripe')">Configure</button>
+    </div>
+    <div class="int-card" data-name="paypal" onclick="openModal('connectApiModal')">
+      <div class="int-icon icon-paypal"><i class="fa-brands fa-paypal"></i></div>
+      <div class="int-name">PayPal</div>
+      <div class="int-desc">PayPal & Venmo payments</div>
+      <div class="int-status is-available"><i class="fa-regular fa-circle"></i> Available</div>
+      <button class="btn-connect" onclick="event.stopPropagation(); openModal('connectApiModal')">Connect</button>
+    </div>
+    <div class="int-card" data-name="razorpay" onclick="openModal('connectApiModal')">
+      <div class="int-icon icon-razorpay"><i class="fa-solid fa-r"></i></div>
+      <div class="int-name">Razorpay</div>
+      <div class="int-desc">India payment gateway</div>
+      <div class="int-status is-available"><i class="fa-regular fa-circle"></i> Available</div>
+      <button class="btn-connect" onclick="event.stopPropagation(); openModal('connectApiModal')">Connect</button>
+    </div>
+    <div class="int-card" data-name="square" onclick="openModal('connectApiModal')">
+      <div class="int-icon icon-square"><i class="fa-solid fa-square"></i></div>
+      <div class="int-name">Square</div>
+      <div class="int-desc">POS + online payments</div>
+      <div class="int-status is-available"><i class="fa-regular fa-circle"></i> Available</div>
+      <button class="btn-connect" onclick="event.stopPropagation(); openModal('connectApiModal')">Connect</button>
+    </div>
+    <div class="int-card" data-name="authorize.net" onclick="openModal('connectApiModal')">
+      <div class="int-icon icon-authnet"><i class="fa-solid fa-a"></i></div>
+      <div class="int-name">Authorize.net</div>
+      <div class="int-desc">US payment gateway</div>
+      <div class="int-status is-available"><i class="fa-regular fa-circle"></i> Available</div>
+      <button class="btn-connect" onclick="event.stopPropagation(); openModal('connectApiModal')">Connect</button>
+    </div>
+    <div class="int-card" data-name="paytm" onclick="openModal('connectApiModal')">
+      <div class="int-icon icon-paytm"><i class="fa-solid fa-p"></i></div>
+      <div class="int-name">Paytm</div>
+      <div class="int-desc">India UPI payments</div>
+      <div class="int-status is-available"><i class="fa-regular fa-circle"></i> Available</div>
+      <button class="btn-connect" onclick="event.stopPropagation(); openModal('connectApiModal')">Connect</button>
+    </div>
+  </div>
+
+  <!-- Accounting -->
+  <div class="section-title" data-category="accounting">
+    <i class="fa-solid fa-calculator" style="color: var(--mp-accent);"></i> Accounting
+    <span class="count">4 integrations</span>
+  </div>
+  <div class="int-grid" data-category="accounting">
+    <div class="int-card connected" data-name="quickbooks" onclick="openDetail('quickbooks')">
+      <div class="int-icon icon-quickbooks"><i class="fa-solid fa-book"></i></div>
+      <div class="int-name">QuickBooks</div>
+      <div class="int-desc">Cloud accounting & invoicing</div>
+      <div class="int-status is-connected"><i class="fa-solid fa-check-circle"></i> Connected</div>
+      <button class="btn-configure" onclick="event.stopPropagation(); openDetail('quickbooks')">Configure</button>
+    </div>
+    <div class="int-card" data-name="xero" onclick="openModal('connectApiModal')">
+      <div class="int-icon icon-xero"><i class="fa-solid fa-x"></i></div>
+      <div class="int-name">Xero</div>
+      <div class="int-desc">Online accounting software</div>
+      <div class="int-status is-available"><i class="fa-regular fa-circle"></i> Available</div>
+      <button class="btn-connect" onclick="event.stopPropagation(); openModal('connectApiModal')">Connect</button>
+    </div>
+    <div class="int-card" data-name="tally" onclick="openModal('connectApiModal')">
+      <div class="int-icon icon-tally"><i class="fa-solid fa-t"></i></div>
+      <div class="int-name">Tally</div>
+      <div class="int-desc">India accounting ERP</div>
+      <div class="int-status is-available"><i class="fa-regular fa-circle"></i> Available</div>
+      <button class="btn-connect" onclick="event.stopPropagation(); openModal('connectApiModal')">Connect</button>
+    </div>
+    <div class="int-card" data-name="zoho books" onclick="openModal('connectApiModal')">
+      <div class="int-icon icon-zoho"><i class="fa-solid fa-z"></i></div>
+      <div class="int-name">Zoho Books</div>
+      <div class="int-desc">Online accounting for small biz</div>
+      <div class="int-status is-available"><i class="fa-regular fa-circle"></i> Available</div>
+      <button class="btn-connect" onclick="event.stopPropagation(); openModal('connectApiModal')">Connect</button>
+    </div>
+  </div>
+
+  <!-- Communication -->
+  <div class="section-title" data-category="communication">
+    <i class="fa-solid fa-comments" style="color: var(--mp-accent);"></i> Communication
+    <span class="count">4 integrations</span>
+  </div>
+  <div class="int-grid" data-category="communication">
+    <div class="int-card" data-name="mailchimp" onclick="openModal('connectApiModal')">
+      <div class="int-icon icon-mailchimp"><i class="fa-brands fa-mailchimp"></i></div>
+      <div class="int-name">Mailchimp</div>
+      <div class="int-desc">Email marketing automation</div>
+      <div class="int-status is-available"><i class="fa-regular fa-circle"></i> Available</div>
+      <button class="btn-connect" onclick="event.stopPropagation(); openModal('connectApiModal')">Connect</button>
+    </div>
+    <div class="int-card connected" data-name="sendgrid" onclick="openDetail('sendgrid')">
+      <div class="int-icon icon-sendgrid"><i class="fa-solid fa-paper-plane"></i></div>
+      <div class="int-name">SendGrid</div>
+      <div class="int-desc">Transactional email service</div>
+      <div class="int-status is-connected"><i class="fa-solid fa-check-circle"></i> Connected</div>
+      <button class="btn-configure" onclick="event.stopPropagation(); openDetail('sendgrid')">Configure</button>
+    </div>
+    <div class="int-card connected" data-name="twilio" onclick="openDetail('twilio')">
+      <div class="int-icon icon-twilio"><i class="fa-solid fa-phone"></i></div>
+      <div class="int-name">Twilio</div>
+      <div class="int-desc">SMS & voice communications</div>
+      <div class="int-status is-connected"><i class="fa-solid fa-check-circle"></i> Connected</div>
+      <button class="btn-configure" onclick="event.stopPropagation(); openDetail('twilio')">Configure</button>
+    </div>
+    <div class="int-card connected" data-name="whatsapp business" onclick="openDetail('whatsapp')">
+      <div class="int-icon icon-whatsapp"><i class="fa-brands fa-whatsapp"></i></div>
+      <div class="int-name">WhatsApp Business</div>
+      <div class="int-desc">WhatsApp messaging API</div>
+      <div class="int-status is-connected"><i class="fa-solid fa-check-circle"></i> Connected</div>
+      <button class="btn-configure" onclick="event.stopPropagation(); openDetail('whatsapp')">Configure</button>
+    </div>
+  </div>
+
+  <!-- CRM & Data -->
+  <div class="section-title" data-category="crm">
+    <i class="fa-solid fa-address-book" style="color: var(--mp-accent);"></i> CRM & Data
+    <span class="count">4 integrations</span>
+  </div>
+  <div class="int-grid" data-category="crm">
+    <div class="int-card" data-name="salesforce" onclick="openModal('connectApiModal')">
+      <div class="int-icon icon-salesforce"><i class="fa-brands fa-salesforce"></i></div>
+      <div class="int-name">Salesforce</div>
+      <div class="int-desc">Enterprise CRM platform</div>
+      <div class="int-status is-available"><i class="fa-regular fa-circle"></i> Available</div>
+      <button class="btn-connect" onclick="event.stopPropagation(); openModal('connectApiModal')">Connect</button>
+    </div>
+    <div class="int-card" data-name="hubspot" onclick="openModal('connectApiModal')">
+      <div class="int-icon icon-hubspot"><i class="fa-brands fa-hubspot"></i></div>
+      <div class="int-name">HubSpot</div>
+      <div class="int-desc">Marketing & sales CRM</div>
+      <div class="int-status is-available"><i class="fa-regular fa-circle"></i> Available</div>
+      <button class="btn-connect" onclick="event.stopPropagation(); openModal('connectApiModal')">Connect</button>
+    </div>
+    <div class="int-card" data-name="google contacts" onclick="openModal('connectApiModal')">
+      <div class="int-icon icon-google"><i class="fa-brands fa-google"></i></div>
+      <div class="int-name">Google Contacts</div>
+      <div class="int-desc">Sync contacts with Google</div>
+      <div class="int-status is-available"><i class="fa-regular fa-circle"></i> Available</div>
+      <button class="btn-connect" onclick="event.stopPropagation(); openModal('connectApiModal')">Connect</button>
+    </div>
+    <div class="int-card" data-name="microsoft 365" onclick="openModal('connectApiModal')">
+      <div class="int-icon icon-microsoft"><i class="fa-brands fa-microsoft"></i></div>
+      <div class="int-name">Microsoft 365</div>
+      <div class="int-desc">Outlook, Teams & contacts sync</div>
+      <div class="int-status is-available"><i class="fa-regular fa-circle"></i> Available</div>
+      <button class="btn-connect" onclick="event.stopPropagation(); openModal('connectApiModal')">Connect</button>
+    </div>
+  </div>
+
+  <!-- Productivity -->
+  <div class="section-title" data-category="productivity">
+    <i class="fa-solid fa-puzzle-piece" style="color: var(--mp-accent);"></i> Productivity
+    <span class="count">4 integrations</span>
+  </div>
+  <div class="int-grid" data-category="productivity">
+    <div class="int-card" data-name="google workspace" onclick="openModal('connectApiModal')">
+      <div class="int-icon icon-google"><i class="fa-brands fa-google"></i></div>
+      <div class="int-name">Google Workspace</div>
+      <div class="int-desc">Drive, Sheets & Calendar</div>
+      <div class="int-status is-available"><i class="fa-regular fa-circle"></i> Available</div>
+      <button class="btn-connect" onclick="event.stopPropagation(); openModal('connectApiModal')">Connect</button>
+    </div>
+    <div class="int-card" data-name="slack" onclick="openModal('connectApiModal')">
+      <div class="int-icon icon-slack"><i class="fa-brands fa-slack"></i></div>
+      <div class="int-name">Slack</div>
+      <div class="int-desc">Team messaging & notifications</div>
+      <div class="int-status is-available"><i class="fa-regular fa-circle"></i> Available</div>
+      <button class="btn-connect" onclick="event.stopPropagation(); openModal('connectApiModal')">Connect</button>
+    </div>
+    <div class="int-card" data-name="microsoft teams" onclick="openModal('connectApiModal')">
+      <div class="int-icon icon-teams"><i class="fa-brands fa-microsoft"></i></div>
+      <div class="int-name">Microsoft Teams</div>
+      <div class="int-desc">Team collaboration & meetings</div>
+      <div class="int-status is-available"><i class="fa-regular fa-circle"></i> Available</div>
+      <button class="btn-connect" onclick="event.stopPropagation(); openModal('connectApiModal')">Connect</button>
+    </div>
+    <div class="int-card" data-name="zapier" onclick="openModal('connectApiModal')">
+      <div class="int-icon icon-zapier"><i class="fa-solid fa-bolt"></i></div>
+      <div class="int-name">Zapier</div>
+      <div class="int-desc">Automation workflows</div>
+      <div class="int-status is-available"><i class="fa-regular fa-circle"></i> Available</div>
+      <button class="btn-connect" onclick="event.stopPropagation(); openModal('connectApiModal')">Connect</button>
+    </div>
+  </div>
+
+  <!-- Analytics -->
+  <div class="section-title" data-category="analytics">
+    <i class="fa-solid fa-chart-pie" style="color: var(--mp-accent);"></i> Analytics
+    <span class="count">4 integrations</span>
+  </div>
+  <div class="int-grid" data-category="analytics">
+    <div class="int-card connected" data-name="google analytics" onclick="openDetail('ga')">
+      <div class="int-icon icon-ga"><i class="fa-solid fa-chart-line"></i></div>
+      <div class="int-name">Google Analytics</div>
+      <div class="int-desc">Website & campaign analytics</div>
+      <div class="int-status is-connected"><i class="fa-solid fa-check-circle"></i> Connected</div>
+      <button class="btn-configure" onclick="event.stopPropagation(); openDetail('ga')">Configure</button>
+    </div>
+    <div class="int-card connected" data-name="power bi" onclick="openDetail('powerbi')">
+      <div class="int-icon icon-powerbi"><i class="fa-solid fa-chart-bar"></i></div>
+      <div class="int-name">Power BI</div>
+      <div class="int-desc">Business intelligence dashboards</div>
+      <div class="int-status is-connected"><i class="fa-solid fa-check-circle"></i> Connected</div>
+      <button class="btn-configure" onclick="event.stopPropagation(); openDetail('powerbi')">Configure</button>
+    </div>
+    <div class="int-card" data-name="mixpanel" onclick="openModal('connectApiModal')">
+      <div class="int-icon icon-mixpanel"><i class="fa-solid fa-m"></i></div>
+      <div class="int-name">Mixpanel</div>
+      <div class="int-desc">Product analytics</div>
+      <div class="int-status is-available"><i class="fa-regular fa-circle"></i> Available</div>
+      <button class="btn-connect" onclick="event.stopPropagation(); openModal('connectApiModal')">Connect</button>
+    </div>
+    <div class="int-card" data-name="hotjar" onclick="openModal('connectApiModal')">
+      <div class="int-icon icon-hotjar"><i class="fa-solid fa-fire"></i></div>
+      <div class="int-name">Hotjar</div>
+      <div class="int-desc">Heatmaps & user behavior</div>
+      <div class="int-status is-available"><i class="fa-regular fa-circle"></i> Available</div>
+      <button class="btn-connect" onclick="event.stopPropagation(); openModal('connectApiModal')">Connect</button>
+    </div>
+  </div>
+
+  <!-- Custom Integration Section -->
+  <div class="section-title" data-category="custom">
+    <i class="fa-solid fa-code" style="color: var(--mp-accent);"></i> Custom Integration
+  </div>
+  <div class="dash-card" data-category="custom">
+    <div class="dash-card-header">
+      <h2><i class="fa-solid fa-webhook" style="color: var(--mp-accent);"></i> Create Custom Integration</h2>
+    </div>
+    <div class="dash-card-body">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label>Trigger</label>
+          <select class="form-control-custom">
+            <option>When donation is created</option>
+            <option>When contact is created</option>
+            <option>When event registration occurs</option>
+            <option>When campaign goal is reached</option>
+            <option>When volunteer signs up</option>
+            <option>When membership is renewed</option>
+          </select>
+          <div class="form-hint">Choose the event that triggers this integration</div>
+        </div>
+        <div class="form-group">
+          <label>Action</label>
+          <select class="form-control-custom">
+            <option>Send webhook to URL</option>
+            <option>Create record in CRM</option>
+            <option>Send Slack message</option>
+            <option>Add row to Google Sheet</option>
+            <option>Send email notification</option>
+            <option>Create task in project tool</option>
+          </select>
+          <div class="form-hint">What should happen when the trigger fires</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Webhook URL</label>
+        <input type="url" class="form-control-custom" placeholder="https://your-service.com/webhook">
+      </div>
+      <div class="form-group">
+        <label>Data to Send</label>
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+          <label style="font-size: 0.8125rem; display: flex; align-items: center; gap: 0.25rem; cursor: pointer;"><input type="checkbox" checked style="accent-color: var(--mp-accent);"> Donation ID</label>
+          <label style="font-size: 0.8125rem; display: flex; align-items: center; gap: 0.25rem; cursor: pointer;"><input type="checkbox" checked style="accent-color: var(--mp-accent);"> Amount</label>
+          <label style="font-size: 0.8125rem; display: flex; align-items: center; gap: 0.25rem; cursor: pointer;"><input type="checkbox" checked style="accent-color: var(--mp-accent);"> Contact Name</label>
+          <label style="font-size: 0.8125rem; display: flex; align-items: center; gap: 0.25rem; cursor: pointer;"><input type="checkbox" style="accent-color: var(--mp-accent);"> Purpose</label>
+          <label style="font-size: 0.8125rem; display: flex; align-items: center; gap: 0.25rem; cursor: pointer;"><input type="checkbox" style="accent-color: var(--mp-accent);"> Campaign</label>
+          <label style="font-size: 0.8125rem; display: flex; align-items: center; gap: 0.25rem; cursor: pointer;"><input type="checkbox" style="accent-color: var(--mp-accent);"> Timestamp</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Filter (optional)</label>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <span style="font-size: 0.8125rem; color: var(--text-secondary);">Only trigger when</span>
+          <select class="form-control-custom" style="width: auto;">
+            <option>Amount</option>
+            <option>Campaign</option>
+            <option>Contact Type</option>
+          </select>
+          <select class="form-control-custom" style="width: auto;">
+            <option>is greater than</option>
+            <option>equals</option>
+            <option>contains</option>
+          </select>
+          <input type="text" class="form-control-custom" style="width: 120px;" placeholder="$100">
+        </div>
+      </div>
+      <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.5rem;">
+        <button class="btn-outline-custom"><i class="fa-solid fa-flask"></i> Test Integration</button>
+        <button class="btn-primary-custom"><i class="fa-solid fa-check"></i> Save & Activate</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stripe Detail Modal -->
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="detailTitle"><i class="fa-brands fa-stripe-s" style="color: #635bff; margin-right: 0.375rem;"></i> Stripe — Payment Processing</h3>
+        <button class="modal-close" onclick="closeModal('detailModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+          <span class="status-badge-connected"><i class="fa-solid fa-check-circle"></i> Connected</span>
+          <span style="font-size: 0.75rem; color: var(--text-secondary);">since Jan 15, 2026</span>
+        </div>
+        <p style="font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 1.25rem;">Process credit/debit card payments for online donations, recurring gifts, event tickets, and membership fees.</p>
+
+        <div class="detail-section">
+          <div class="detail-section-title">Features</div>
+          <ul class="feature-list">
+            <li><i class="fa-solid fa-check"></i> Online donation payments</li>
+            <li><i class="fa-solid fa-check"></i> Recurring billing</li>
+            <li><i class="fa-solid fa-check"></i> Event ticket purchases</li>
+            <li><i class="fa-solid fa-check"></i> Membership fee processing</li>
+            <li><i class="fa-solid fa-check"></i> Automatic receipt generation</li>
+            <li><i class="fa-solid fa-check"></i> Refund processing</li>
+          </ul>
+        </div>
+
+        <div class="detail-section">
+          <div class="detail-section-title">Configuration</div>
+          <div class="config-row">
+            <span class="config-label">API Key</span>
+            <span class="config-value">sk_live_••••••••7890 <button class="btn-sm-action" style="margin-left: 0.25rem; font-size: 0.625rem;">Show</button></span>
+          </div>
+          <div class="config-row">
+            <span class="config-label">Webhook URL</span>
+            <span class="config-value">https://api.ghf.org/webhooks/stripe</span>
+          </div>
+          <div class="config-row">
+            <span class="config-label">Mode</span>
+            <span class="status-badge-mode"><i class="fa-solid fa-circle" style="font-size: 6px;"></i> Production</span>
+          </div>
+          <div class="config-row">
+            <span class="config-label">Test Mode</span>
+            <span style="font-size: 0.8125rem;">
+              <label style="position: relative; display: inline-block; width: 36px; height: 20px; cursor: pointer;">
+                <input type="checkbox" style="opacity: 0; width: 0; height: 0;">
+                <span style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: #e2e8f0; border-radius: 20px; transition: 0.2s;"></span>
+              </label>
+              Off
+            </span>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <div class="detail-section-title">Sync Activity (last 7 days)</div>
+          <div style="display: flex; flex-wrap: wrap;">
+            <span class="sync-stat"><i class="fa-solid fa-check" style="color: var(--success-color);"></i> <strong>45</strong>&nbsp;payments</span>
+            <span class="sync-stat"><i class="fa-solid fa-dollar-sign" style="color: var(--mp-accent);"></i> <strong>$12,340</strong>&nbsp;amount</span>
+            <span class="sync-stat"><i class="fa-solid fa-xmark" style="color: var(--danger-color);"></i> <strong>2</strong>&nbsp;failed</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline-custom" style="border-color: var(--danger-color); color: var(--danger-color);">Disconnect</button>
+        <button class="btn-outline-custom"><i class="fa-solid fa-list"></i> View Logs</button>
+        <button class="btn-primary-custom"><i class="fa-solid fa-save"></i> Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Connect API Key Modal -->
+  <div class="modal-overlay" id="connectApiModal">
+    <div class="modal-box" style="width: 480px;">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-key" style="color: var(--mp-accent); margin-right: 0.375rem;"></i> Connect Integration</h3>
+        <button class="modal-close" onclick="closeModal('connectApiModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 1rem;">Enter your API credentials to connect this integration with PSS 2.0.</p>
+        <div class="form-group">
+          <label>API Key</label>
+          <input type="text" class="form-control-custom" placeholder="Enter API key...">
+        </div>
+        <div class="form-group">
+          <label>API Secret</label>
+          <input type="password" class="form-control-custom" placeholder="Enter API secret...">
+        </div>
+        <div class="form-group">
+          <label>Environment</label>
+          <select class="form-control-custom">
+            <option>Production</option>
+            <option>Sandbox / Test</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline-custom" onclick="closeModal('connectApiModal')">Cancel</button>
+        <button class="btn-primary-custom"><i class="fa-solid fa-plug"></i> Connect</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openModal(id) {
+      document.getElementById(id).classList.add('active');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+
+    function openDetail(name) {
+      openModal('detailModal');
+    }
+
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.classList.remove('active');
+      });
+    });
+
+    function filterCategory(category, btn) {
+      document.querySelectorAll('.category-pill').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+
+      const sections = document.querySelectorAll('.section-title, .int-grid, .dash-card[data-category]');
+      sections.forEach(el => {
+        if (category === 'all' || el.dataset.category === category) {
+          el.style.display = '';
+        } else if (el.dataset.category) {
+          el.style.display = 'none';
+        }
+      });
+
+      // Show/hide featured row
+      document.querySelector('.featured-row').style.display = category === 'all' ? '' : 'none';
+    }
+
+    function filterCards() {
+      const query = document.getElementById('searchInput').value.toLowerCase();
+      document.querySelectorAll('.int-card').forEach(card => {
+        const name = card.dataset.name || '';
+        card.style.display = name.includes(query) ? '' : 'none';
+      });
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,1762 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Role Management - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons */
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #0c6577;
+      border-color: #0c6577;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-text {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-text:hover {
+      color: var(--danger-color);
+    }
+
+    /* Section Tabs */
+    .section-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 1.25rem;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .section-tab {
+      padding: 0.75rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border: none;
+      background: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.15s;
+    }
+
+    .section-tab:hover {
+      color: var(--accent);
+    }
+
+    .section-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* Role Cards Grid */
+    .role-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 992px) {
+      .role-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 576px) {
+      .role-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .role-card {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1.25rem;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .role-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      transform: translateY(-2px);
+    }
+
+    .role-card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .role-color-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .role-card-header h3 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      margin: 0;
+      flex: 1;
+    }
+
+    .role-badge {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .role-badge.system {
+      background: #fef2f2;
+      color: #dc2626;
+    }
+
+    .role-badge.custom {
+      background: var(--accent-bg);
+      color: var(--accent);
+    }
+
+    .access-level-badge {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      background: #f8fafc;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+
+    .role-card-description {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+      line-height: 1.5;
+    }
+
+    .role-card-modules {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .module-tag {
+      font-size: 0.6875rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      background: #f1f5f9;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .role-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .user-count {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .user-count i {
+      margin-right: 0.25rem;
+      color: var(--accent);
+    }
+
+    .role-card-actions {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .role-card-actions button {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .role-card-actions button:hover {
+      background: #f1f5f9;
+      color: var(--accent);
+    }
+
+    .role-card-actions button.btn-danger-sm:hover {
+      background: #fef2f2;
+      color: var(--danger-color);
+    }
+
+    .role-card .system-note {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+
+    /* Modal Overlay */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1050;
+      overflow-y: auto;
+      padding: 2rem;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    .modal-content-lg {
+      background: white;
+      border-radius: var(--card-radius);
+      width: 100%;
+      max-width: 900px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      margin: 0 auto;
+    }
+
+    .modal-header-custom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .modal-header-custom h2 {
+      font-size: 1.125rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .modal-header-custom .close-btn {
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+
+    .modal-header-custom .close-btn:hover {
+      color: var(--danger-color);
+      background: #fef2f2;
+    }
+
+    .modal-body-custom {
+      padding: 1.5rem;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+
+    .modal-footer-custom {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border-color);
+      flex-wrap: wrap;
+    }
+
+    /* Form Sections */
+    .form-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-section-title {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .form-section-title i {
+      color: var(--accent);
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.35rem;
+      display: block;
+    }
+
+    .form-group label .required {
+      color: var(--danger-color);
+    }
+
+    .form-control-custom {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      background: white;
+      transition: border-color 0.15s;
+    }
+
+    .form-control-custom:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    select.form-control-custom {
+      appearance: auto;
+    }
+
+    textarea.form-control-custom {
+      resize: vertical;
+      min-height: 70px;
+    }
+
+    .color-picker-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .color-picker-group input[type="color"] {
+      width: 40px;
+      height: 34px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 2px;
+      cursor: pointer;
+    }
+
+    .color-picker-group .color-label {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    /* Module Access Table */
+    .module-access-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    .module-access-table th {
+      background: #f8fafc;
+      padding: 0.5rem 0.75rem;
+      font-weight: 600;
+      text-align: center;
+      border-bottom: 2px solid var(--border-color);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .module-access-table th:first-child {
+      text-align: left;
+    }
+
+    .module-access-table td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .module-access-table td:first-child {
+      text-align: left;
+      font-weight: 600;
+    }
+
+    .module-access-table tr:hover {
+      background: #f8fafc;
+    }
+
+    .module-access-table input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .select-all-btns {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .select-all-btns button {
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-size: 0.6875rem;
+      cursor: pointer;
+      padding: 0;
+      font-weight: 600;
+      text-decoration: underline;
+    }
+
+    .select-all-btns button:hover {
+      color: #0c6577;
+    }
+
+    .module-note {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.75rem;
+      padding: 0.5rem 0.75rem;
+      background: #f8fafc;
+      border-radius: 6px;
+      border-left: 3px solid var(--accent);
+    }
+
+    /* Restriction Toggles */
+    .restriction-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .restriction-item:last-child {
+      border-bottom: none;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 40px;
+      height: 22px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #cbd5e1;
+      border-radius: 22px;
+      transition: 0.2s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.2s;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background: var(--accent);
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(18px);
+    }
+
+    .restriction-content {
+      flex: 1;
+    }
+
+    .restriction-content label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+      display: block;
+    }
+
+    .restriction-content .sub-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .restriction-content .restriction-fields {
+      display: none;
+      margin-top: 0.5rem;
+    }
+
+    .restriction-content .restriction-fields.active {
+      display: block;
+    }
+
+    /* Comparison Table */
+    .comparison-section {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1.25rem;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+    }
+
+    .comparison-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .comparison-header h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .comparison-selectors {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .comparison-selectors select {
+      padding: 0.4rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      background: white;
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    .comparison-table th {
+      background: #f8fafc;
+      padding: 0.625rem 0.75rem;
+      font-weight: 600;
+      text-align: center;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .comparison-table th:first-child {
+      text-align: left;
+    }
+
+    .comparison-table td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .comparison-table td:first-child {
+      text-align: left;
+      font-weight: 500;
+    }
+
+    .comparison-table tr.diff td {
+      background: #fffbeb;
+    }
+
+    .check-yes {
+      color: var(--success-color);
+      font-size: 1rem;
+    }
+
+    .check-no {
+      color: #cbd5e1;
+      font-size: 1rem;
+    }
+
+    .check-limited {
+      color: var(--warning-color);
+      font-size: 1rem;
+    }
+
+    /* Delete Confirm */
+    .delete-confirm-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .delete-confirm-overlay.active {
+      display: flex;
+    }
+
+    .delete-confirm-box {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1.5rem;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      text-align: center;
+    }
+
+    .delete-confirm-box .icon-circle {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #fef2f2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem;
+      font-size: 1.5rem;
+      color: var(--danger-color);
+    }
+
+    .delete-confirm-box h4 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .delete-confirm-box p {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      margin-bottom: 1.25rem;
+    }
+
+    .delete-confirm-box .btn-group-confirm {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+
+    .btn-danger-accent {
+      background: var(--danger-color);
+      border: 1px solid var(--danger-color);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-danger-accent:hover {
+      background: #b91c1c;
+      border-color: #b91c1c;
+    }
+
+    /* Checkbox group */
+    .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8125rem;
+    }
+
+    .checkbox-item input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+    }
+
+    /* Radio group */
+    .radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .radio-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8125rem;
+    }
+
+    .radio-item input[type="radio"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+    }
+
+    /* Responsive modal */
+    @media (max-width: 768px) {
+      .modal-overlay {
+        padding: 1rem;
+      }
+
+      .modal-body-custom {
+        max-height: 65vh;
+      }
+
+      .module-access-table {
+        font-size: 0.75rem;
+      }
+
+      .module-access-table th,
+      .module-access-table td {
+        padding: 0.35rem 0.4rem;
+      }
+    }
+
+    /* Tab content */
+    .tab-content-section {
+      display: none;
+    }
+
+    .tab-content-section.active {
+      display: block;
+    }
+
+    /* Inline hours group */
+    .hours-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .hours-group input[type="time"] {
+      padding: 0.4rem 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+    }
+
+    .hours-group span {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fa-solid fa-shield-halved" style="color: #dc2626; margin-right: 0.5rem;"></i>Role Management</h1>
+      <p class="subtitle">Define and manage user roles for access control</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="openRoleModal()">
+        <i class="fa-solid fa-plus"></i> New Role
+      </button>
+      <button class="btn-outline-accent" onclick="navigateToCapabilityMatrix()">
+        <i class="fa-solid fa-table-cells"></i> View Capability Matrix
+      </button>
+    </div>
+  </div>
+
+  <!-- Section Tabs -->
+  <div class="section-tabs">
+    <button class="section-tab active" onclick="switchTab('roles', this)">
+      <i class="fa-solid fa-id-badge"></i> All Roles
+    </button>
+    <button class="section-tab" onclick="switchTab('comparison', this)">
+      <i class="fa-solid fa-code-compare"></i> Role Comparison
+    </button>
+  </div>
+
+  <!-- Tab: All Roles -->
+  <div id="tab-roles" class="tab-content-section active">
+    <div class="role-grid">
+
+      <!-- 1. Super Admin -->
+      <div class="role-card" onclick="viewRole('super-admin')">
+        <div class="role-card-header">
+          <span class="role-color-indicator" style="background: #dc2626;"></span>
+          <h3>Super Admin</h3>
+          <span class="role-badge system">System</span>
+        </div>
+        <span class="access-level-badge" style="margin-bottom: 0.5rem; display: inline-block;">System-level</span>
+        <p class="role-card-description">Full access across all tenants and modules</p>
+        <div class="role-card-modules">
+          <span class="module-tag">All Modules</span>
+          <span class="module-tag">All Tenants</span>
+        </div>
+        <div class="role-card-footer">
+          <span class="user-count"><i class="fa-solid fa-users"></i> 2 users</span>
+          <span class="system-note">Cannot be modified</span>
+        </div>
+      </div>
+
+      <!-- 2. Org Admin -->
+      <div class="role-card" onclick="viewRole('org-admin')">
+        <div class="role-card-header">
+          <span class="role-color-indicator" style="background: #f97316;"></span>
+          <h3>Org Admin</h3>
+          <span class="role-badge system">System</span>
+        </div>
+        <span class="access-level-badge" style="margin-bottom: 0.5rem; display: inline-block;">Organization-level</span>
+        <p class="role-card-description">Full access within organization</p>
+        <div class="role-card-modules">
+          <span class="module-tag">All Modules</span>
+        </div>
+        <div class="role-card-footer">
+          <span class="user-count"><i class="fa-solid fa-users"></i> 5 users</span>
+          <span class="system-note">Cannot be deleted</span>
+        </div>
+      </div>
+
+      <!-- 3. Manager -->
+      <div class="role-card" onclick="viewRole('manager')">
+        <div class="role-card-header">
+          <span class="role-color-indicator" style="background: #3b82f6;"></span>
+          <h3>Manager</h3>
+          <span class="role-badge system">System</span>
+        </div>
+        <span class="access-level-badge" style="margin-bottom: 0.5rem; display: inline-block;">Branch-level</span>
+        <p class="role-card-description">Branch management, approvals, reporting</p>
+        <div class="role-card-modules">
+          <span class="module-tag">Fundraising</span>
+          <span class="module-tag">Contacts</span>
+          <span class="module-tag">Communication</span>
+          <span class="module-tag">Reports</span>
+          <span class="module-tag">Organization</span>
+        </div>
+        <div class="role-card-footer">
+          <span class="user-count"><i class="fa-solid fa-users"></i> 12 users</span>
+          <span class="system-note">Can customize</span>
+        </div>
+      </div>
+
+      <!-- 4. Staff -->
+      <div class="role-card" onclick="viewRole('staff')">
+        <div class="role-card-header">
+          <span class="role-color-indicator" style="background: #22c55e;"></span>
+          <h3>Staff</h3>
+          <span class="role-badge system">System</span>
+        </div>
+        <span class="access-level-badge" style="margin-bottom: 0.5rem; display: inline-block;">Branch-level</span>
+        <p class="role-card-description">Day-to-day operations</p>
+        <div class="role-card-modules">
+          <span class="module-tag">Fundraising</span>
+          <span class="module-tag">Contacts</span>
+          <span class="module-tag">Communication (limited)</span>
+        </div>
+        <div class="role-card-footer">
+          <span class="user-count"><i class="fa-solid fa-users"></i> 45 users</span>
+          <span class="system-note">Can customize</span>
+        </div>
+      </div>
+
+      <!-- 5. Field Agent -->
+      <div class="role-card" onclick="viewRole('field-agent')">
+        <div class="role-card-header">
+          <span class="role-color-indicator" style="background: #92400e;"></span>
+          <h3>Field Agent</h3>
+          <span class="role-badge system">System</span>
+        </div>
+        <span class="access-level-badge" style="margin-bottom: 0.5rem; display: inline-block;">Branch-level</span>
+        <p class="role-card-description">Field collection only</p>
+        <div class="role-card-modules">
+          <span class="module-tag">Field Collection</span>
+          <span class="module-tag">Contacts (limited)</span>
+        </div>
+        <div class="role-card-footer">
+          <span class="user-count"><i class="fa-solid fa-users"></i> 28 users</span>
+          <span class="system-note">Can customize</span>
+        </div>
+      </div>
+
+      <!-- 6. Auditor -->
+      <div class="role-card" onclick="viewRole('auditor')">
+        <div class="role-card-header">
+          <span class="role-color-indicator" style="background: #a855f7;"></span>
+          <h3>Auditor</h3>
+          <span class="role-badge system">System</span>
+        </div>
+        <span class="access-level-badge" style="margin-bottom: 0.5rem; display: inline-block;">All branches (read-only)</span>
+        <p class="role-card-description">Financial reporting and audit trail</p>
+        <div class="role-card-modules">
+          <span class="module-tag">Read-only</span>
+          <span class="module-tag">Reports</span>
+          <span class="module-tag">Audit Trail</span>
+        </div>
+        <div class="role-card-footer">
+          <span class="user-count"><i class="fa-solid fa-users"></i> 3 users</span>
+          <span class="system-note">Can customize</span>
+        </div>
+      </div>
+
+      <!-- 7. Campaign Manager (Custom) -->
+      <div class="role-card" onclick="editRole('campaign-manager')">
+        <div class="role-card-header">
+          <span class="role-color-indicator" style="background: #3b82f6;"></span>
+          <h3>Campaign Manager</h3>
+          <span class="role-badge custom">Custom</span>
+        </div>
+        <span class="access-level-badge" style="margin-bottom: 0.5rem; display: inline-block;">Branch-level</span>
+        <p class="role-card-description">Campaign and event management specialist</p>
+        <div class="role-card-modules">
+          <span class="module-tag">Organization</span>
+          <span class="module-tag">Communication</span>
+          <span class="module-tag">Reports</span>
+        </div>
+        <div class="role-card-footer">
+          <span class="user-count"><i class="fa-solid fa-users"></i> 8 users</span>
+          <div class="role-card-actions">
+            <button onclick="event.stopPropagation(); editRole('campaign-manager')" title="Edit"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+            <button class="btn-danger-sm" onclick="event.stopPropagation(); confirmDelete('Campaign Manager')" title="Delete"><i class="fa-solid fa-trash"></i> Delete</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 8. Data Entry (Custom) -->
+      <div class="role-card" onclick="editRole('data-entry')">
+        <div class="role-card-header">
+          <span class="role-color-indicator" style="background: #22c55e;"></span>
+          <h3>Data Entry</h3>
+          <span class="role-badge custom">Custom</span>
+        </div>
+        <span class="access-level-badge" style="margin-bottom: 0.5rem; display: inline-block;">Branch-level</span>
+        <p class="role-card-description">Donation and contact data entry only</p>
+        <div class="role-card-modules">
+          <span class="module-tag">Fundraising (limited)</span>
+          <span class="module-tag">Contacts</span>
+        </div>
+        <div class="role-card-footer">
+          <span class="user-count"><i class="fa-solid fa-users"></i> 15 users</span>
+          <div class="role-card-actions">
+            <button onclick="event.stopPropagation(); editRole('data-entry')" title="Edit"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+            <button class="btn-danger-sm" onclick="event.stopPropagation(); confirmDelete('Data Entry')" title="Delete"><i class="fa-solid fa-trash"></i> Delete</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 9. API Access (Custom) -->
+      <div class="role-card" onclick="editRole('api-access')">
+        <div class="role-card-header">
+          <span class="role-color-indicator" style="background: #94a3b8;"></span>
+          <h3>API Access</h3>
+          <span class="role-badge custom">Custom</span>
+        </div>
+        <span class="access-level-badge" style="margin-bottom: 0.5rem; display: inline-block;">System</span>
+        <p class="role-card-description">API-only access for integrations</p>
+        <div class="role-card-modules">
+          <span class="module-tag">No UI Access</span>
+          <span class="module-tag">API Only</span>
+        </div>
+        <div class="role-card-footer">
+          <span class="user-count"><i class="fa-solid fa-users"></i> 2 users</span>
+          <div class="role-card-actions">
+            <button onclick="event.stopPropagation(); editRole('api-access')" title="Edit"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+            <button class="btn-danger-sm" onclick="event.stopPropagation(); confirmDelete('API Access')" title="Delete"><i class="fa-solid fa-trash"></i> Delete</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Tab: Role Comparison -->
+  <div id="tab-comparison" class="tab-content-section">
+    <div class="comparison-section">
+      <div class="comparison-header">
+        <h3><i class="fa-solid fa-code-compare" style="color: var(--accent); margin-right: 0.5rem;"></i>Role Comparison</h3>
+        <div class="comparison-selectors">
+          <select id="compare-role-1" onchange="updateComparison()">
+            <option value="manager" selected>Manager</option>
+            <option value="staff">Staff</option>
+            <option value="field-agent">Field Agent</option>
+            <option value="auditor">Auditor</option>
+            <option value="campaign-manager">Campaign Manager</option>
+            <option value="data-entry">Data Entry</option>
+          </select>
+          <select id="compare-role-2" onchange="updateComparison()">
+            <option value="manager">Manager</option>
+            <option value="staff" selected>Staff</option>
+            <option value="field-agent">Field Agent</option>
+            <option value="auditor">Auditor</option>
+            <option value="campaign-manager">Campaign Manager</option>
+            <option value="data-entry">Data Entry</option>
+          </select>
+          <select id="compare-role-3" onchange="updateComparison()">
+            <option value="">(None)</option>
+            <option value="manager">Manager</option>
+            <option value="staff">Staff</option>
+            <option value="field-agent" selected>Field Agent</option>
+            <option value="auditor">Auditor</option>
+            <option value="campaign-manager">Campaign Manager</option>
+            <option value="data-entry">Data Entry</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table class="comparison-table" id="comparisonTable">
+          <thead>
+            <tr>
+              <th style="min-width: 200px;">Permission</th>
+              <th id="comp-header-1" style="min-width: 120px;">Manager</th>
+              <th id="comp-header-2" style="min-width: 120px;">Staff</th>
+              <th id="comp-header-3" style="min-width: 120px;">Field Agent</th>
+            </tr>
+          </thead>
+          <tbody id="comparisonBody">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create/Edit Role Modal -->
+  <div class="modal-overlay" id="roleModal">
+    <div class="modal-content-lg">
+      <div class="modal-header-custom">
+        <h2 id="modalTitle"><i class="fa-solid fa-shield-halved" style="color: #dc2626; margin-right: 0.5rem;"></i>Create New Role</h2>
+        <button class="close-btn" onclick="closeRoleModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body-custom">
+
+        <!-- Section 1: Role Information -->
+        <div class="form-section">
+          <div class="form-section-title">
+            <i class="fa-solid fa-circle-info"></i> Role Information
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Role Name <span class="required">*</span></label>
+                <input type="text" class="form-control-custom" id="roleName" placeholder="e.g., Campaign Manager">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>Access Level</label>
+                <select class="form-control-custom" id="roleAccessLevel">
+                  <option value="branch">Branch</option>
+                  <option value="organization">Organization</option>
+                  <option value="system">System</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>Role Type</label>
+                <input type="text" class="form-control-custom" id="roleType" value="Custom" disabled style="background: #f8fafc;">
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-8">
+              <div class="form-group">
+                <label>Description <span class="required">*</span></label>
+                <textarea class="form-control-custom" id="roleDescription" placeholder="Describe the purpose and scope of this role..."></textarea>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label>Role Color</label>
+                <div class="color-picker-group">
+                  <input type="color" id="roleColor" value="#3b82f6">
+                  <span class="color-label" id="colorLabel">#3b82f6</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Module Access -->
+        <div class="form-section">
+          <div class="form-section-title">
+            <i class="fa-solid fa-cubes"></i> Module Access
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="module-access-table" id="moduleAccessTable">
+              <thead>
+                <tr>
+                  <th style="min-width: 180px;">Module</th>
+                  <th>Perm 1</th>
+                  <th>Perm 2</th>
+                  <th>Perm 3</th>
+                  <th>Perm 4</th>
+                  <th>Perm 5</th>
+                  <th style="min-width: 100px;"></th>
+                </tr>
+              </thead>
+              <tbody id="moduleAccessBody">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+          <div class="module-note">
+            <i class="fa-solid fa-circle-info"></i> For detailed capability assignment, use the <a href="#" onclick="navigateToCapabilityMatrix(); return false;" style="color: var(--accent); font-weight: 600;">Role-Capability Matrix</a>
+          </div>
+        </div>
+
+        <!-- Section 3: Data Scope -->
+        <div class="form-section">
+          <div class="form-section-title">
+            <i class="fa-solid fa-database"></i> Data Scope
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Branch Access</label>
+                <select class="form-control-custom" id="branchAccess">
+                  <option value="assigned">Assigned Branch Only</option>
+                  <option value="sub-units" selected>Branch + Sub-units</option>
+                  <option value="region">Region</option>
+                  <option value="all">All Branches</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Data Visibility</label>
+                <div class="checkbox-group">
+                  <label class="checkbox-item">
+                    <input type="checkbox" checked> Can view own data
+                  </label>
+                  <label class="checkbox-item">
+                    <input type="checkbox" checked> Can view branch data
+                  </label>
+                  <label class="checkbox-item">
+                    <input type="checkbox"> Can view all organization data
+                  </label>
+                  <label class="checkbox-item">
+                    <input type="checkbox"> Can view cross-branch data
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Record Ownership</label>
+                <div class="radio-group">
+                  <label class="radio-item">
+                    <input type="radio" name="recordOwnership" value="own"> Can only edit own records
+                  </label>
+                  <label class="radio-item">
+                    <input type="radio" name="recordOwnership" value="branch" checked> Can edit branch records
+                  </label>
+                  <label class="radio-item">
+                    <input type="radio" name="recordOwnership" value="all"> Can edit all records
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 4: Restrictions -->
+        <div class="form-section">
+          <div class="form-section-title">
+            <i class="fa-solid fa-lock"></i> Restrictions
+          </div>
+
+          <!-- IP Restriction -->
+          <div class="restriction-item">
+            <label class="toggle-switch">
+              <input type="checkbox" id="ipRestrictionToggle" onchange="toggleRestriction('ip')">
+              <span class="toggle-slider"></span>
+            </label>
+            <div class="restriction-content">
+              <label>IP Restriction</label>
+              <div class="sub-label">Restrict access to specific IP addresses</div>
+              <div class="restriction-fields" id="ipRestrictionFields">
+                <textarea class="form-control-custom" placeholder="Enter allowed IPs, one per line&#10;e.g., 192.168.1.0/24&#10;10.0.0.1" rows="3"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Time Restriction -->
+          <div class="restriction-item">
+            <label class="toggle-switch">
+              <input type="checkbox" id="timeRestrictionToggle" onchange="toggleRestriction('time')">
+              <span class="toggle-slider"></span>
+            </label>
+            <div class="restriction-content">
+              <label>Time Restriction</label>
+              <div class="sub-label">Limit access to specific working hours</div>
+              <div class="restriction-fields" id="timeRestrictionFields">
+                <div class="hours-group">
+                  <input type="time" value="09:00"> <span>to</span> <input type="time" value="18:00">
+                  <span style="margin-left: 0.5rem; font-size: 0.75rem; color: var(--text-secondary);">(Local timezone)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Session Limit -->
+          <div class="restriction-item">
+            <div style="width: 40px; flex-shrink: 0;"></div>
+            <div class="restriction-content">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label>Session Limit</label>
+                    <select class="form-control-custom" id="sessionLimit">
+                      <option value="1">1 concurrent session</option>
+                      <option value="2">2 concurrent sessions</option>
+                      <option value="3" selected>3 concurrent sessions</option>
+                      <option value="unlimited">Unlimited</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label>Idle Timeout</label>
+                    <select class="form-control-custom" id="idleTimeout">
+                      <option value="15">15 minutes</option>
+                      <option value="30" selected>30 minutes</option>
+                      <option value="60">1 hour</option>
+                      <option value="240">4 hours</option>
+                      <option value="none">No timeout</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer-custom">
+        <button class="btn-text" onclick="closeRoleModal()">Cancel</button>
+        <button class="btn-outline-accent" onclick="saveAndConfigureCapabilities()">
+          <i class="fa-solid fa-table-cells"></i> Save & Configure Capabilities
+        </button>
+        <button class="btn-primary-accent" onclick="saveRole()">
+          <i class="fa-solid fa-check"></i> Save Role
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation -->
+  <div class="delete-confirm-overlay" id="deleteConfirm">
+    <div class="delete-confirm-box">
+      <div class="icon-circle">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h4>Delete Role</h4>
+      <p>Are you sure you want to delete <strong id="deleteRoleName">this role</strong>? This action cannot be undone. Users assigned to this role will lose their permissions.</p>
+      <div class="btn-group-confirm">
+        <button class="btn-outline-accent" onclick="closeDeleteConfirm()">Cancel</button>
+        <button class="btn-danger-accent" onclick="performDelete()"><i class="fa-solid fa-trash"></i> Delete Role</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ========= Tab Switching =========
+    function switchTab(tab, btn) {
+      document.querySelectorAll('.section-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content-section').forEach(s => s.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + tab).classList.add('active');
+      if (tab === 'comparison') updateComparison();
+    }
+
+    // ========= Role Modal =========
+    function openRoleModal(editMode, roleName) {
+      const modal = document.getElementById('roleModal');
+      const title = document.getElementById('modalTitle');
+      if (editMode) {
+        title.innerHTML = '<i class="fa-solid fa-shield-halved" style="color: #dc2626; margin-right: 0.5rem;"></i>Edit Role: ' + roleName;
+      } else {
+        title.innerHTML = '<i class="fa-solid fa-shield-halved" style="color: #dc2626; margin-right: 0.5rem;"></i>Create New Role';
+        document.getElementById('roleName').value = '';
+        document.getElementById('roleDescription').value = '';
+        document.getElementById('roleColor').value = '#3b82f6';
+        document.getElementById('colorLabel').textContent = '#3b82f6';
+        document.getElementById('roleAccessLevel').value = 'branch';
+        document.getElementById('roleType').value = 'Custom';
+      }
+      buildModuleAccessTable(editMode === 'campaign-manager');
+      modal.classList.add('active');
+    }
+
+    function closeRoleModal() {
+      document.getElementById('roleModal').classList.remove('active');
+    }
+
+    function viewRole(roleId) {
+      // System roles: view only (open modal in read mode for demo)
+      const names = {
+        'super-admin': 'Super Admin',
+        'org-admin': 'Org Admin',
+        'manager': 'Manager',
+        'staff': 'Staff',
+        'field-agent': 'Field Agent',
+        'auditor': 'Auditor'
+      };
+      if (names[roleId]) {
+        openRoleModal(roleId, names[roleId]);
+      }
+    }
+
+    function editRole(roleId) {
+      const names = {
+        'campaign-manager': 'Campaign Manager',
+        'data-entry': 'Data Entry',
+        'api-access': 'API Access'
+      };
+      if (names[roleId]) {
+        // Pre-fill form for demo
+        document.getElementById('roleName').value = names[roleId];
+        if (roleId === 'campaign-manager') {
+          document.getElementById('roleDescription').value = 'Campaign and event management specialist';
+          document.getElementById('roleColor').value = '#3b82f6';
+          document.getElementById('colorLabel').textContent = '#3b82f6';
+        } else if (roleId === 'data-entry') {
+          document.getElementById('roleDescription').value = 'Donation and contact data entry only';
+          document.getElementById('roleColor').value = '#22c55e';
+          document.getElementById('colorLabel').textContent = '#22c55e';
+        } else {
+          document.getElementById('roleDescription').value = 'API-only access for integrations';
+          document.getElementById('roleColor').value = '#94a3b8';
+          document.getElementById('colorLabel').textContent = '#94a3b8';
+        }
+        openRoleModal('campaign-manager', names[roleId]);
+      }
+    }
+
+    // ========= Module Access Table =========
+    const modules = [
+      { name: 'Dashboard', perms: ['View', 'Configure'] },
+      { name: 'Contacts', perms: ['View', 'Edit', 'Delete', 'Import/Export'] },
+      { name: 'Fundraising', perms: ['View', 'Edit', 'Delete', 'Refund', 'Reconciliation'] },
+      { name: 'Communication', perms: ['View', 'Send', 'Configure Templates', 'Automation'] },
+      { name: 'Organization', perms: ['View', 'Edit', 'Configure', 'Targets'] },
+      { name: 'Field Collection', perms: ['View', 'Edit', 'Approve', 'Receipt Books'] },
+      { name: 'Reports', perms: ['View', 'Run', 'Custom Builder', 'Schedule'] },
+      { name: 'Administration', perms: ['View', 'Users', 'Roles', 'Audit'] },
+      { name: 'Settings', perms: ['View', 'Configure'] }
+    ];
+
+    // Campaign Manager preset: Organization (View, Edit, Configure, Targets), Communication (View, Send, Configure Templates, Automation), Reports (View, Run), Dashboard (View)
+    const campaignManagerPreset = {
+      'Dashboard': ['View'],
+      'Contacts': ['View'],
+      'Communication': ['View', 'Send', 'Configure Templates', 'Automation'],
+      'Organization': ['View', 'Edit', 'Configure', 'Targets'],
+      'Reports': ['View', 'Run']
+    };
+
+    function buildModuleAccessTable(useCampaignPreset) {
+      const maxPerms = 5;
+      // Build header
+      const thead = document.querySelector('#moduleAccessTable thead tr');
+      thead.innerHTML = '<th style="min-width: 180px;">Module</th>';
+      for (let i = 0; i < maxPerms; i++) {
+        thead.innerHTML += '<th>-</th>';
+      }
+      thead.innerHTML += '<th style="min-width: 100px;"></th>';
+
+      const tbody = document.getElementById('moduleAccessBody');
+      tbody.innerHTML = '';
+      modules.forEach((mod, mi) => {
+        const tr = document.createElement('tr');
+        let cells = '<td>' + mod.name + '</td>';
+        mod.perms.forEach((perm, pi) => {
+          const checked = useCampaignPreset && campaignManagerPreset[mod.name] && campaignManagerPreset[mod.name].includes(perm);
+          cells += '<td title="' + perm + '"><input type="checkbox" data-module="' + mi + '" data-perm="' + pi + '" ' + (checked ? 'checked' : '') + ' onchange="handlePermChange(' + mi + ',' + pi + ',this)"><div style="font-size:0.625rem;color:var(--text-secondary);margin-top:2px;">' + perm + '</div></td>';
+        });
+        // Fill remaining cells if fewer than maxPerms
+        for (let i = mod.perms.length; i < maxPerms; i++) {
+          cells += '<td></td>';
+        }
+        cells += '<td><div class="select-all-btns"><button onclick="selectAllModule(' + mi + ')">All</button> | <button onclick="deselectAllModule(' + mi + ')">None</button></div></td>';
+        tr.innerHTML = cells;
+        tbody.appendChild(tr);
+      });
+
+      // Update header labels dynamically (just show dashes, real labels are per-row)
+      const ths = thead.querySelectorAll('th');
+      for (let i = 1; i <= maxPerms; i++) {
+        ths[i].textContent = '';
+      }
+    }
+
+    function handlePermChange(moduleIdx, permIdx, el) {
+      const mod = modules[moduleIdx];
+      // Hierarchical: if checking Edit (index 1+), View (index 0) must be checked
+      if (permIdx > 0 && el.checked) {
+        const viewCb = document.querySelector('input[data-module="' + moduleIdx + '"][data-perm="0"]');
+        if (viewCb && !viewCb.checked) viewCb.checked = true;
+      }
+      // If unchecking View, uncheck all
+      if (permIdx === 0 && !el.checked) {
+        mod.perms.forEach((_, pi) => {
+          const cb = document.querySelector('input[data-module="' + moduleIdx + '"][data-perm="' + pi + '"]');
+          if (cb) cb.checked = false;
+        });
+      }
+    }
+
+    function selectAllModule(moduleIdx) {
+      modules[moduleIdx].perms.forEach((_, pi) => {
+        const cb = document.querySelector('input[data-module="' + moduleIdx + '"][data-perm="' + pi + '"]');
+        if (cb) cb.checked = true;
+      });
+    }
+
+    function deselectAllModule(moduleIdx) {
+      modules[moduleIdx].perms.forEach((_, pi) => {
+        const cb = document.querySelector('input[data-module="' + moduleIdx + '"][data-perm="' + pi + '"]');
+        if (cb) cb.checked = false;
+      });
+    }
+
+    // ========= Restriction Toggles =========
+    function toggleRestriction(type) {
+      const fields = document.getElementById(type + 'RestrictionFields');
+      const toggle = document.getElementById(type + 'RestrictionToggle');
+      if (toggle.checked) {
+        fields.classList.add('active');
+      } else {
+        fields.classList.remove('active');
+      }
+    }
+
+    // ========= Color Picker =========
+    document.getElementById('roleColor').addEventListener('input', function () {
+      document.getElementById('colorLabel').textContent = this.value;
+    });
+
+    // ========= Delete Confirmation =========
+    let pendingDeleteRole = '';
+
+    function confirmDelete(roleName) {
+      pendingDeleteRole = roleName;
+      document.getElementById('deleteRoleName').textContent = roleName;
+      document.getElementById('deleteConfirm').classList.add('active');
+    }
+
+    function closeDeleteConfirm() {
+      document.getElementById('deleteConfirm').classList.remove('active');
+      pendingDeleteRole = '';
+    }
+
+    function performDelete() {
+      alert('Role "' + pendingDeleteRole + '" has been deleted.');
+      closeDeleteConfirm();
+    }
+
+    // ========= Save Actions =========
+    function saveRole() {
+      const name = document.getElementById('roleName').value.trim();
+      if (!name) {
+        alert('Please enter a role name.');
+        return;
+      }
+      const desc = document.getElementById('roleDescription').value.trim();
+      if (!desc) {
+        alert('Please enter a role description.');
+        return;
+      }
+      alert('Role "' + name + '" saved successfully.');
+      closeRoleModal();
+    }
+
+    function saveAndConfigureCapabilities() {
+      const name = document.getElementById('roleName').value.trim();
+      if (!name) {
+        alert('Please enter a role name.');
+        return;
+      }
+      alert('Role "' + name + '" saved. Navigating to Capability Matrix...');
+      closeRoleModal();
+      navigateToCapabilityMatrix();
+    }
+
+    // ========= Navigation =========
+    function navigateToCapabilityMatrix() {
+      try {
+        parent.loadContent('administration/role-capability-matrix');
+      } catch (e) {
+        alert('Navigation: administration/role-capability-matrix');
+      }
+    }
+
+    // ========= Role Comparison =========
+    const rolePermissions = {
+      'manager': {
+        'Dashboard - View': true, 'Dashboard - Configure': true,
+        'Contacts - View': true, 'Contacts - Edit': true, 'Contacts - Delete': true,
+        'Donations - View': true, 'Donations - Create': true, 'Donations - Approve': true,
+        'Field Collection': true,
+        'Reports - Run': true, 'Reports - Custom': true,
+        'Communication - Send': true, 'Communication - Templates': true,
+        'Organization - Edit': true, 'Organization - Targets': true
+      },
+      'staff': {
+        'Dashboard - View': true, 'Dashboard - Configure': false,
+        'Contacts - View': true, 'Contacts - Edit': true, 'Contacts - Delete': false,
+        'Donations - View': true, 'Donations - Create': true, 'Donations - Approve': false,
+        'Field Collection': false,
+        'Reports - Run': true, 'Reports - Custom': false,
+        'Communication - Send': true, 'Communication - Templates': false,
+        'Organization - Edit': false, 'Organization - Targets': false
+      },
+      'field-agent': {
+        'Dashboard - View': true, 'Dashboard - Configure': false,
+        'Contacts - View': true, 'Contacts - Edit': false, 'Contacts - Delete': false,
+        'Donations - View': true, 'Donations - Create': true, 'Donations - Approve': false,
+        'Field Collection': true,
+        'Reports - Run': false, 'Reports - Custom': false,
+        'Communication - Send': false, 'Communication - Templates': false,
+        'Organization - Edit': false, 'Organization - Targets': false
+      },
+      'auditor': {
+        'Dashboard - View': true, 'Dashboard - Configure': false,
+        'Contacts - View': true, 'Contacts - Edit': false, 'Contacts - Delete': false,
+        'Donations - View': true, 'Donations - Create': false, 'Donations - Approve': false,
+        'Field Collection': false,
+        'Reports - Run': true, 'Reports - Custom': true,
+        'Communication - Send': false, 'Communication - Templates': false,
+        'Organization - Edit': false, 'Organization - Targets': false
+      },
+      'campaign-manager': {
+        'Dashboard - View': true, 'Dashboard - Configure': false,
+        'Contacts - View': true, 'Contacts - Edit': false, 'Contacts - Delete': false,
+        'Donations - View': false, 'Donations - Create': false, 'Donations - Approve': false,
+        'Field Collection': false,
+        'Reports - Run': true, 'Reports - Custom': false,
+        'Communication - Send': true, 'Communication - Templates': true,
+        'Organization - Edit': true, 'Organization - Targets': true
+      },
+      'data-entry': {
+        'Dashboard - View': true, 'Dashboard - Configure': false,
+        'Contacts - View': true, 'Contacts - Edit': true, 'Contacts - Delete': false,
+        'Donations - View': true, 'Donations - Create': true, 'Donations - Approve': false,
+        'Field Collection': false,
+        'Reports - Run': false, 'Reports - Custom': false,
+        'Communication - Send': false, 'Communication - Templates': false,
+        'Organization - Edit': false, 'Organization - Targets': false
+      }
+    };
+
+    const comparisonRows = [
+      'Dashboard - View', 'Dashboard - Configure',
+      'Contacts - View', 'Contacts - Edit', 'Contacts - Delete',
+      'Donations - View', 'Donations - Create', 'Donations - Approve',
+      'Field Collection',
+      'Reports - Run', 'Reports - Custom',
+      'Communication - Send', 'Communication - Templates',
+      'Organization - Edit', 'Organization - Targets'
+    ];
+
+    const roleLabels = {
+      'manager': 'Manager',
+      'staff': 'Staff',
+      'field-agent': 'Field Agent',
+      'auditor': 'Auditor',
+      'campaign-manager': 'Campaign Manager',
+      'data-entry': 'Data Entry'
+    };
+
+    function updateComparison() {
+      const r1 = document.getElementById('compare-role-1').value;
+      const r2 = document.getElementById('compare-role-2').value;
+      const r3 = document.getElementById('compare-role-3').value;
+
+      document.getElementById('comp-header-1').textContent = roleLabels[r1] || '';
+      document.getElementById('comp-header-2').textContent = roleLabels[r2] || '';
+      const h3 = document.getElementById('comp-header-3');
+      if (r3) {
+        h3.textContent = roleLabels[r3] || '';
+        h3.style.display = '';
+      } else {
+        h3.style.display = 'none';
+      }
+
+      const tbody = document.getElementById('comparisonBody');
+      tbody.innerHTML = '';
+      comparisonRows.forEach(row => {
+        const v1 = rolePermissions[r1] ? rolePermissions[r1][row] : false;
+        const v2 = rolePermissions[r2] ? rolePermissions[r2][row] : false;
+        const v3 = r3 && rolePermissions[r3] ? rolePermissions[r3][row] : null;
+
+        const vals = [v1, v2];
+        if (r3) vals.push(v3);
+        const allSame = vals.every(v => v === vals[0]);
+
+        const tr = document.createElement('tr');
+        if (!allSame) tr.classList.add('diff');
+
+        let icon = (val) => val ? '<i class="fa-solid fa-circle-check check-yes"></i>' : '<i class="fa-solid fa-circle-xmark check-no"></i>';
+
+        let cells = '<td>' + row + '</td>';
+        cells += '<td>' + icon(v1) + '</td>';
+        cells += '<td>' + icon(v2) + '</td>';
+        if (r3) {
+          cells += '<td>' + icon(v3) + '</td>';
+        }
+        tr.innerHTML = cells;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ========= Init =========
+    buildModuleAccessTable(false);
+    updateComparison();
+
+    // Close modals on overlay click
+    document.getElementById('roleModal').addEventListener('click', function (e) {
+      if (e.target === this) closeRoleModal();
+    });
+    document.getElementById('deleteConfirm').addEventListener('click', function (e) {
+      if (e.target === this) closeDeleteConfirm();
+    });
+
+    // Escape key closes modals
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        closeRoleModal();
+        closeDeleteConfirm();
+      }
+    });
+  </script>
+</body>
+
+</html>

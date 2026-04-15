@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Gateway Configuration - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #0c6577;
+      border-color: #0c6577;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Gateway Cards Grid */
+    .gateway-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .gateway-card {
+      background: white;
+      border-radius: var(--card-radius);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .gateway-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .gateway-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      background: #fafbfc;
+    }
+
+    .gateway-logo-area {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .gateway-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 0.625rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .gateway-icon.stripe { background: #635bff20; color: #635bff; }
+    .gateway-icon.paypal { background: #00308720; color: #003087; }
+    .gateway-icon.razorpay { background: #072654; color: #fff; }
+    .gateway-icon.manual { background: #64748b20; color: #64748b; }
+
+    .gateway-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .gateway-env-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .gateway-env-badge.live {
+      background: #f0fdf4;
+      color: #16a34a;
+    }
+
+    .gateway-env-badge.test {
+      background: #fff7ed;
+      color: #ea580c;
+    }
+
+    .gateway-env-badge.active {
+      background: #f0fdf4;
+      color: #16a34a;
+    }
+
+    .gateway-card-body {
+      padding: 1.25rem;
+    }
+
+    .gateway-detail {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 0.4rem 0;
+      font-size: 0.8125rem;
+    }
+
+    .gateway-detail-label {
+      color: var(--text-secondary);
+      font-weight: 500;
+      min-width: 130px;
+    }
+
+    .gateway-detail-value {
+      color: var(--text-primary);
+      font-weight: 500;
+      text-align: right;
+      flex: 1;
+    }
+
+    .gateway-detail-value .badge-inline {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .currency-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+      justify-content: flex-end;
+    }
+
+    .currency-tag {
+      background: #f1f5f9;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+    }
+
+    .currency-more {
+      color: var(--accent);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .method-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+      justify-content: flex-end;
+    }
+
+    .method-tag {
+      background: var(--accent-bg);
+      color: var(--accent);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+    }
+
+    .webhook-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .webhook-status.connected { color: var(--success-color); }
+    .webhook-status.disconnected { color: var(--danger-color); }
+
+    .default-star {
+      color: #eab308;
+      font-size: 0.875rem;
+    }
+
+    .volume-info {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .volume-sub {
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+    }
+
+    .gateway-card-footer {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.75rem 1.25rem;
+      border-top: 1px solid var(--border-color);
+      background: #fafbfc;
+      flex-wrap: wrap;
+    }
+
+    .gateway-card-footer .btn {
+      font-size: 0.75rem;
+      padding: 0.3rem 0.625rem;
+      border-radius: 0.375rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+    }
+
+    .gateway-card-footer .btn:hover {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .gateway-card-footer .btn-disable:hover {
+      background: var(--danger-color);
+      border-color: var(--danger-color);
+    }
+
+    /* Webhook Log Section */
+    .section-card {
+      background: white;
+      border-radius: var(--card-radius);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      cursor: pointer;
+      user-select: none;
+      background: white;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .section-header:hover {
+      background: #fafbfc;
+    }
+
+    .section-header h3 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .section-header .toggle-chevron {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      transition: transform 0.2s;
+    }
+
+    .section-header.collapsed .toggle-chevron {
+      transform: rotate(-90deg);
+    }
+
+    .section-content {
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    .section-content.hidden {
+      max-height: 0 !important;
+      border-top: none;
+    }
+
+    /* Table */
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    .data-table thead th {
+      background: #f8fafc;
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 2px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    .data-table tbody td {
+      padding: 0.625rem 1rem;
+      border-bottom: 1px solid #f1f5f9;
+      color: var(--text-primary);
+      vertical-align: middle;
+    }
+
+    .data-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 9999px;
+    }
+
+    .status-badge.success { background: #f0fdf4; color: #16a34a; }
+    .status-badge.warning { background: #fffbeb; color: #d97706; }
+    .status-badge.danger { background: #fef2f2; color: #dc2626; }
+
+    .processing-time {
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    /* Modal */
+    .modal-header {
+      background: var(--accent);
+      color: white;
+      border-bottom: none;
+    }
+
+    .modal-header .btn-close {
+      filter: brightness(0) invert(1);
+    }
+
+    .modal-title {
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+    }
+
+    .form-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.3rem;
+    }
+
+    .form-control, .form-select {
+      font-size: 0.8125rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+      padding: 0.5rem 0.75rem;
+    }
+
+    .form-control:focus, .form-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .form-text {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .env-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .env-toggle .form-check-input:checked {
+      background-color: var(--success-color);
+      border-color: var(--success-color);
+    }
+
+    .json-editor {
+      font-family: 'Courier New', monospace;
+      font-size: 0.8125rem;
+      min-height: 100px;
+      background: #f8fafc;
+    }
+
+    .modal-footer .btn-primary-accent {
+      font-size: 0.8125rem;
+    }
+
+    .btn-test-connection {
+      background: #f0fdf4;
+      color: #16a34a;
+      border: 1px solid #bbf7d0;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+    }
+
+    .btn-test-connection:hover {
+      background: #16a34a;
+      color: white;
+    }
+
+    /* Breadcrumb */
+    .breadcrumb-nav {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      font-size: 0.8125rem;
+    }
+
+    .breadcrumb-nav a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .breadcrumb-nav a:hover {
+      text-decoration: underline;
+    }
+
+    .breadcrumb-nav .separator {
+      color: var(--text-secondary);
+    }
+
+    .breadcrumb-nav .current {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    /* Multi-select tags */
+    .multi-select-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+      padding: 0.375rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      min-height: 38px;
+      background: white;
+      cursor: text;
+    }
+
+    .ms-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      background: var(--accent-bg);
+      color: var(--accent);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+    }
+
+    .ms-tag .remove {
+      cursor: pointer;
+      font-size: 0.625rem;
+      opacity: 0.7;
+    }
+
+    .ms-tag .remove:hover {
+      opacity: 1;
+    }
+
+    @media (max-width: 768px) {
+      .gateway-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb-nav">
+    <a href="#" onclick="parent.loadContent('fundraising/donation-list')">Fundraising</a>
+    <span class="separator">/</span>
+    <span class="current">Payment Gateway Configuration</span>
+  </nav>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1>Payment Gateway Configuration</h1>
+      <p class="subtitle">Manage payment processing integrations</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" data-bs-toggle="modal" data-bs-target="#addGatewayModal">
+        <i class="fas fa-plus me-1"></i> Add Gateway
+      </button>
+    </div>
+  </div>
+
+  <!-- Active Gateways Grid -->
+  <div class="gateway-grid">
+
+    <!-- Card 1: Stripe -->
+    <div class="gateway-card">
+      <div class="gateway-card-header">
+        <div class="gateway-logo-area">
+          <div class="gateway-icon stripe">
+            <i class="fab fa-stripe-s"></i>
+          </div>
+          <div>
+            <div class="gateway-name">Stripe</div>
+            <span class="gateway-env-badge live"><i class="fas fa-circle" style="font-size:0.4rem"></i> Live</span>
+          </div>
+        </div>
+        <span class="default-star" title="Default Gateway"><i class="fas fa-star"></i></span>
+      </div>
+      <div class="gateway-card-body">
+        <div class="gateway-detail">
+          <span class="gateway-detail-label">Merchant ID</span>
+          <span class="gateway-detail-value"><code style="font-size:0.75rem;background:#f1f5f9;padding:0.1rem 0.35rem;border-radius:4px">acct_1234567890</code></span>
+        </div>
+        <div class="gateway-detail">
+          <span class="gateway-detail-label">Currencies</span>
+          <span class="gateway-detail-value">
+            <div class="currency-tags">
+              <span class="currency-tag">USD</span>
+              <span class="currency-tag">EUR</span>
+              <span class="currency-tag">GBP</span>
+              <span class="currency-tag">AED</span>
+              <span class="currency-tag">INR</span>
+              <span class="currency-tag">JPY</span>
+              <span class="currency-more">+20 more</span>
+            </div>
+          </span>
+        </div>
+        <div class="gateway-detail">
+          <span class="gateway-detail-label">Methods</span>
+          <span class="gateway-detail-value">
+            <div class="method-tags">
+              <span class="method-tag">Credit Card</span>
+              <span class="method-tag">Debit Card</span>
+              <span class="method-tag">Apple Pay</span>
+              <span class="method-tag">Google Pay</span>
+            </div>
+          </span>
+        </div>
+        <div class="gateway-detail">
+          <span class="gateway-detail-label">Webhook Status</span>
+          <span class="gateway-detail-value">
+            <span class="webhook-status connected"><i class="fas fa-check-circle"></i> Connected</span>
+            <span style="color:var(--text-secondary);font-size:0.6875rem;margin-left:0.3rem">(last event: 2 min ago)</span>
+          </span>
+        </div>
+        <div class="gateway-detail">
+          <span class="gateway-detail-label">Monthly Volume</span>
+          <span class="gateway-detail-value">
+            <span class="volume-info">$34,500</span>
+            <span class="volume-sub">(245 transactions)</span>
+          </span>
+        </div>
+      </div>
+      <div class="gateway-card-footer">
+        <button class="btn" data-bs-toggle="modal" data-bs-target="#addGatewayModal"><i class="fas fa-pen me-1"></i>Edit</button>
+        <button class="btn"><i class="fas fa-plug me-1"></i>Test Connection</button>
+        <button class="btn"><i class="fas fa-list me-1"></i>View Logs</button>
+        <button class="btn btn-disable"><i class="fas fa-ban me-1"></i>Disable</button>
+      </div>
+    </div>
+
+    <!-- Card 2: PayPal -->
+    <div class="gateway-card">
+      <div class="gateway-card-header">
+        <div class="gateway-logo-area">
+          <div class="gateway-icon paypal">
+            <i class="fab fa-paypal"></i>
+          </div>
+          <div>
+            <div class="gateway-name">PayPal</div>
+            <span class="gateway-env-badge live"><i class="fas fa-circle" style="font-size:0.4rem"></i> Live</span>
+          </div>
+        </div>
+      </div>
+      <div class="gateway-card-body">
+        <div class="gateway-detail">
+          <span class="gateway-detail-label">Merchant ID</span>
+          <span class="gateway-detail-value"><code style="font-size:0.75rem;background:#f1f5f9;padding:0.1rem 0.35rem;border-radius:4px">merchant@org.com</code></span>
+        </div>
+        <div class="gateway-detail">
+          <span class="gateway-detail-label">Currencies</span>
+          <span class="gateway-detail-value">
+            <div class="currency-tags">
+              <span class="currency-tag">USD</span>
+              <span class="currency-tag">EUR</span>
+              <span class="currency-tag">GBP</span>
+              <span class="currency-tag">BRL</span>
+              <span class="currency-tag">AUD</span>
+            </div>
+          </span>
+        </div>
+        <div class="gateway-detail">
+          <span class="gateway-detail-label">Methods</span>
+          <span class="gateway-detail-value">
+            <div class="method-tags">
+              <span class="method-tag">PayPal Balance</span>
+              <span class="method-tag">Credit Card via PayPal</span>
+            </div>
+          </span>
+        </div>
+        <div class="gateway-detail">
+          <span class="gateway-detail-label">Webhook Status</span>
+          <span class="gateway-detail-value">
+            <span class="webhook-status connected"><i class="fas fa-check-circle"></i> Connected</span>
+          </span>
+        </div>
+        <div class="gateway-detail">
+          <span class="gateway-detail-label">Monthly Volume</span>
+          <span class="gateway-detail-value">
+            <span class="volume-info">$8,200</span>
+            <span class="volume-sub">(56 transactions)</span>
+          </span>
+        </div>
+      </div>
+      <div class="gateway-card-footer">
+        <button class="btn" data-bs-toggle="modal" data-bs-target="#addGatewayModal"><i class="fas fa-pen me-1"></i>Edit</button>
+        <button class="btn"><i class="fas fa-plug me-1"></i>Test Connection</button>
+        <button class="btn"><i class="fas fa-list me-1"></i>View Logs</button>
+        <button class="btn btn-disable"><i class="fas fa-ban me-1"></i>Disable</button>
+      </div>
+    </div>
+
+    <!-- Card 3: Razorpay -->
+    <div class="gateway-card">
+      <div class="gateway-card-header">
+        <div class="gateway-logo-area">
+          <div class="gateway-icon razorpay">
+            <i class="fas fa-bolt"></i>
+          </div>
+          <div>
+            <div class="gateway-name">Razorpay</div>
+            <span class="gateway-env-badge live"><i class="fas fa-circle" style="font-size:0.4rem"></i> Live</span>
+          </div>
+        </div>
+        <span class="default-star" title="Default for INR"><i class="fas fa-star"></i></span>
+      </div>
+      <div class="gateway-card-body">
+        <div class="gateway-detail">
+          <span class="gateway-detail-label">Merchant ID</span>
+          <span class="gateway-detail-value"><code style="font-size:0.75rem;background:#f1f5f9;padding:0.1rem 0.35rem;border-radius:4px">rzp_live_abc123</code></span>
+        </div>
+        <div class="gateway-detail">
+          <span class="gateway-detail-label">Currencies</span>
+          <span class="gateway-detail-value">
+            <div class="currency-tags">
+              <span class="currency-tag">INR</span>
+            </div>
+          </span>
+        </div>
+        <div class="gateway-detail">
+          <span class="gateway-detail-label">Methods</span>
+          <span class="gateway-detail-value">
+            <div class="method-tags">
+              <span class="method-tag">UPI</span>
+              <span class="method-tag">Net Banking</span>
+              <span class="method-tag">Credit Card</span>
+              <span class="method-tag">Debit Card</span>
+              <span class="method-tag">Wallet</span>
+            </div>
+          </span>
+        </div>
+        <div class="gateway-detail">
+          <span class="gateway-detail-label">Webhook Status</span>
+          <span class="gateway-detail-value">
+            <span class="webhook-status connected"><i class="fas fa-check-circle"></i> Connected</span>
+          </span>
+        </div>
+        <div class="gateway-detail">
+          <span class="gateway-detail-label">Default for INR</span>
+          <span class="gateway-detail-value">
+            <span style="color:#eab308"><i class="fas fa-star"></i></span> Yes
+          </span>
+        </div>
+        <div class="gateway-detail">
+          <span class="gateway-detail-label">Monthly Volume</span>
+          <span class="gateway-detail-value">
+            <span class="volume-info">&#8377;2,80,000</span>
+            <span class="volume-sub">(189 transactions)</span>
+          </span>
+        </div>
+      </div>
+      <div class="gateway-card-footer">
+        <button class="btn" data-bs-toggle="modal" data-bs-target="#addGatewayModal"><i class="fas fa-pen me-1"></i>Edit</button>
+        <button class="btn"><i class="fas fa-plug me-1"></i>Test Connection</button>
+        <button class="btn"><i class="fas fa-list me-1"></i>View Logs</button>
+        <button class="btn btn-disable"><i class="fas fa-ban me-1"></i>Disable</button>
+      </div>
+    </div>
+
+    <!-- Card 4: Bank Transfer (Manual) -->
+    <div class="gateway-card">
+      <div class="gateway-card-header">
+        <div class="gateway-logo-area">
+          <div class="gateway-icon manual">
+            <i class="fas fa-building-columns"></i>
+          </div>
+          <div>
+            <div class="gateway-name">Bank Transfer (Manual)</div>
+            <span class="gateway-env-badge active"><i class="fas fa-circle" style="font-size:0.4rem"></i> Active</span>
+          </div>
+        </div>
+      </div>
+      <div class="gateway-card-body">
+        <div class="gateway-detail">
+          <span class="gateway-detail-label">Type</span>
+          <span class="gateway-detail-value">Manual / Offline</span>
+        </div>
+        <div class="gateway-detail">
+          <span class="gateway-detail-label">Display</span>
+          <span class="gateway-detail-value">Instructions shown on donation page</span>
+        </div>
+        <div class="gateway-detail">
+          <span class="gateway-detail-label">Bank Accounts</span>
+          <span class="gateway-detail-value">
+            <span class="volume-info">3</span>
+            <span class="volume-sub">configured</span>
+          </span>
+        </div>
+      </div>
+      <div class="gateway-card-footer">
+        <button class="btn" data-bs-toggle="modal" data-bs-target="#addGatewayModal"><i class="fas fa-pen me-1"></i>Edit Bank Accounts</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Webhook Log Section -->
+  <div class="section-card">
+    <div class="section-header" onclick="toggleWebhookLog(this)">
+      <h3><i class="fas fa-scroll me-2" style="color:var(--accent)"></i> Webhook Event Log</h3>
+      <i class="fas fa-chevron-down toggle-chevron"></i>
+    </div>
+    <div class="section-content">
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Gateway</th>
+              <th>Event Type</th>
+              <th>Status</th>
+              <th>Transaction ID</th>
+              <th>Processing</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Apr 10, 10:23 AM</td>
+              <td><span style="color:#635bff;font-weight:600"><i class="fab fa-stripe-s me-1"></i>Stripe</span></td>
+              <td><code style="font-size:0.75rem;background:#f1f5f9;padding:0.1rem 0.3rem;border-radius:3px">payment_intent.succeeded</code></td>
+              <td><span class="status-badge success"><i class="fas fa-check-circle"></i> Processed</span></td>
+              <td><code style="font-size:0.75rem">pi_abc123</code></td>
+              <td><span class="processing-time">45ms</span></td>
+            </tr>
+            <tr>
+              <td>Apr 10, 10:22 AM</td>
+              <td><span style="color:#635bff;font-weight:600"><i class="fab fa-stripe-s me-1"></i>Stripe</span></td>
+              <td><code style="font-size:0.75rem;background:#f1f5f9;padding:0.1rem 0.3rem;border-radius:3px">charge.succeeded</code></td>
+              <td><span class="status-badge success"><i class="fas fa-check-circle"></i> Processed</span></td>
+              <td><code style="font-size:0.75rem">ch_def456</code></td>
+              <td><span class="processing-time">38ms</span></td>
+            </tr>
+            <tr>
+              <td>Apr 10, 9:15 AM</td>
+              <td><span style="color:#072654;font-weight:600"><i class="fas fa-bolt me-1"></i>Razorpay</span></td>
+              <td><code style="font-size:0.75rem;background:#f1f5f9;padding:0.1rem 0.3rem;border-radius:3px">payment.authorized</code></td>
+              <td><span class="status-badge success"><i class="fas fa-check-circle"></i> Processed</span></td>
+              <td><code style="font-size:0.75rem">pay_ghi789</code></td>
+              <td><span class="processing-time">62ms</span></td>
+            </tr>
+            <tr>
+              <td>Apr 10, 8:00 AM</td>
+              <td><span style="color:#003087;font-weight:600"><i class="fab fa-paypal me-1"></i>PayPal</span></td>
+              <td><code style="font-size:0.75rem;background:#f1f5f9;padding:0.1rem 0.3rem;border-radius:3px">CHECKOUT.ORDER.COMPLETED</code></td>
+              <td><span class="status-badge warning"><i class="fas fa-rotate-right"></i> Retry (1)</span></td>
+              <td><code style="font-size:0.75rem">ORDER-jkl</code></td>
+              <td><span class="processing-time">120ms</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Gateway Modal -->
+  <div class="modal fade" id="addGatewayModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-credit-card me-2"></i> Add / Edit Payment Gateway</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Payment Gateway *</label>
+              <select class="form-select">
+                <option value="">Select gateway...</option>
+                <option>Stripe</option>
+                <option>PayPal</option>
+                <option>Razorpay</option>
+                <option>Braintree</option>
+                <option>Square</option>
+                <option>Manual</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Environment</label>
+              <div class="env-toggle mt-1">
+                <span style="font-size:0.8125rem;color:var(--text-secondary);font-weight:500">Test</span>
+                <div class="form-check form-switch mb-0">
+                  <input class="form-check-input" type="checkbox" id="envToggle" checked>
+                </div>
+                <span style="font-size:0.8125rem;color:var(--success-color);font-weight:600">Live</span>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">API Key *</label>
+              <input type="password" class="form-control" placeholder="Enter API key" value="sk_live_••••••••••••••••">
+              <div class="form-text">Encrypted and stored securely</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">API Secret *</label>
+              <input type="password" class="form-control" placeholder="Enter API secret" value="••••••••••••••••">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Webhook Secret</label>
+              <input type="password" class="form-control" placeholder="Enter webhook secret" value="whsec_••••••••••••">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Merchant ID</label>
+              <input type="text" class="form-control" placeholder="Enter merchant ID" value="acct_1234567890">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Supported Currencies</label>
+              <div class="multi-select-tags">
+                <span class="ms-tag">USD <i class="fas fa-xmark remove"></i></span>
+                <span class="ms-tag">EUR <i class="fas fa-xmark remove"></i></span>
+                <span class="ms-tag">GBP <i class="fas fa-xmark remove"></i></span>
+                <span class="ms-tag">INR <i class="fas fa-xmark remove"></i></span>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Supported Country Codes</label>
+              <div class="multi-select-tags">
+                <span class="ms-tag">US <i class="fas fa-xmark remove"></i></span>
+                <span class="ms-tag">GB <i class="fas fa-xmark remove"></i></span>
+                <span class="ms-tag">IN <i class="fas fa-xmark remove"></i></span>
+                <span class="ms-tag">AE <i class="fas fa-xmark remove"></i></span>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Is Default</label>
+              <div class="form-check form-switch mt-1">
+                <input class="form-check-input" type="checkbox" id="defaultToggle" checked>
+                <label class="form-check-label" for="defaultToggle" style="font-size:0.8125rem;color:var(--text-secondary)">Set as default gateway</label>
+              </div>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Additional Configuration (JSON)</label>
+              <textarea class="form-control json-editor" rows="4" placeholder='{ "statement_descriptor": "MyOrg Donation" }'>{
+  "statement_descriptor": "PeopleServe Donation",
+  "metadata_prefix": "pss_"
+}</textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-test-connection"><i class="fas fa-plug me-1"></i> Test Connection</button>
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn-primary-accent"><i class="fas fa-check me-1"></i> Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function toggleWebhookLog(header) {
+      header.classList.toggle('collapsed');
+      const content = header.nextElementSibling;
+      content.classList.toggle('hidden');
+    }
+  </script>
+</body>
+
+</html>

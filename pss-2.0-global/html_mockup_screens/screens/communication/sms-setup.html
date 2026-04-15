@@ -1,0 +1,1884 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SMS Integration - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+      --sms-blue: #2563EB;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .connection-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.3rem 0.75rem;
+      border-radius: 9999px;
+      background: #f0fdf4;
+      color: var(--success-color);
+      border: 1px solid #bbf7d0;
+    }
+
+    .connection-badge.disconnected {
+      background: #fef2f2;
+      color: var(--danger-color);
+      border-color: #fecaca;
+    }
+
+    .connection-badge.pending {
+      background: #fffbeb;
+      color: var(--warning-color);
+      border-color: #fde68a;
+    }
+
+    .connection-badge .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.4rem 0.75rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-accent {
+      background: var(--accent);
+      border: 1px solid var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.4rem 0.75rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-accent:hover {
+      background: #0c6578;
+    }
+
+    /* Tabs */
+    .tab-nav {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid var(--border-color);
+      margin-bottom: 1.5rem;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .tab-btn:hover {
+      color: var(--accent);
+    }
+
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Cards */
+    .card {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      margin-bottom: 1.25rem;
+    }
+
+    .card-header-custom {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-header-custom h3 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .card-body-custom {
+      padding: 1.25rem;
+    }
+
+    /* Provider Cards */
+    .provider-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .provider-card {
+      border: 2px solid var(--border-color);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .provider-card:hover {
+      border-color: var(--accent-light);
+      box-shadow: 0 2px 8px rgba(14, 116, 144, 0.1);
+    }
+
+    .provider-card.selected {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .provider-card .radio-dot {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border-color);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .provider-card.selected .radio-dot {
+      border-color: var(--accent);
+    }
+
+    .provider-card.selected .radio-dot::after {
+      content: '';
+      width: 10px;
+      height: 10px;
+      background: var(--accent);
+      border-radius: 50%;
+    }
+
+    .provider-icon {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .provider-card h4 {
+      font-size: 0.875rem;
+      font-weight: 700;
+      margin: 0 0 0.25rem;
+    }
+
+    .provider-card .provider-desc {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin: 0 0 0.5rem;
+    }
+
+    .provider-card .provider-status {
+      font-size: 0.6875rem;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Form styles */
+    .form-label-sm {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .form-control-sm-custom {
+      font-size: 0.8125rem;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      width: 100%;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .form-control-sm-custom:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(14, 116, 144, 0.15);
+    }
+
+    .form-control-sm-custom:read-only {
+      background: #f8fafc;
+      color: var(--text-secondary);
+    }
+
+    .form-hint {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .input-group-custom {
+      display: flex;
+      gap: 0;
+    }
+
+    .input-group-custom .form-control-sm-custom {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    .input-group-custom .input-addon {
+      display: flex;
+      align-items: center;
+      padding: 0 0.625rem;
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-left: none;
+      border-radius: 0 0.5rem 0.5rem 0;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      transition: color 0.15s;
+    }
+
+    .input-addon:hover {
+      color: var(--accent);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    select.form-control-sm-custom {
+      appearance: auto;
+    }
+
+    textarea.form-control-sm-custom {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    /* Connection status table */
+    .status-table {
+      width: 100%;
+    }
+
+    .status-table tr td {
+      padding: 0.5rem 0;
+      font-size: 0.8125rem;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .status-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .status-table tr td:first-child {
+      color: var(--text-secondary);
+      font-weight: 500;
+      width: 40%;
+    }
+
+    .status-table tr td:last-child {
+      font-weight: 600;
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      position: relative;
+      width: 40px;
+      height: 22px;
+      display: inline-block;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: #cbd5e1;
+      border-radius: 11px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      left: 3px;
+      top: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background: var(--accent);
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(18px);
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.625rem 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .toggle-row:last-child {
+      border-bottom: none;
+    }
+
+    .toggle-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+    }
+
+    .toggle-desc {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.125rem;
+    }
+
+    /* Info box */
+    .info-box {
+      background: var(--accent-bg);
+      border: 1px solid #a5f3fc;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      color: var(--accent);
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .info-box i {
+      margin-top: 0.125rem;
+    }
+
+    /* Opt-in Stats */
+    .optin-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .optin-stat {
+      text-align: center;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      background: #f8fafc;
+    }
+
+    .optin-stat .stat-value {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .optin-stat .stat-pct {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .optin-stat .stat-label {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .optin-stat.opted-in { border-left: 3px solid var(--success-color); }
+    .optin-stat.opted-out { border-left: 3px solid var(--danger-color); }
+    .optin-stat.never-asked { border-left: 3px solid var(--warning-color); }
+    .optin-stat.total { border-left: 3px solid var(--accent); }
+
+    /* Segmented bar */
+    .segmented-bar {
+      display: flex;
+      height: 12px;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 0.5rem;
+    }
+
+    .segmented-bar .seg {
+      height: 100%;
+      transition: width 0.3s;
+    }
+
+    .segmented-bar .seg.opted-in { background: var(--success-color); }
+    .segmented-bar .seg.opted-out { background: var(--danger-color); }
+    .segmented-bar .seg.never-asked { background: var(--warning-color); }
+
+    .seg-legend {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .seg-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+    }
+
+    .seg-legend-item .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    /* Tags input */
+    .tags-input {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.375rem;
+      padding: 0.375rem 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      min-height: 38px;
+      align-items: center;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      background: var(--accent-bg);
+      color: var(--accent);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 0.375rem;
+      border: 1px solid #a5f3fc;
+    }
+
+    .tag .tag-remove {
+      cursor: pointer;
+      font-size: 0.625rem;
+      opacity: 0.7;
+    }
+
+    .tag .tag-remove:hover {
+      opacity: 1;
+    }
+
+    .tags-input input {
+      border: none;
+      outline: none;
+      font-size: 0.8125rem;
+      flex: 1;
+      min-width: 80px;
+    }
+
+    /* Checkbox list */
+    .checkbox-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8125rem;
+    }
+
+    .checkbox-item input[type="checkbox"] {
+      accent-color: var(--accent);
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Usage stats */
+    .usage-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .usage-stat {
+      background: #f8fafc;
+      border-radius: 0.5rem;
+      padding: 0.875rem;
+      text-align: center;
+    }
+
+    .usage-stat .stat-value {
+      font-size: 1.375rem;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .usage-stat .stat-sub {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .usage-stat .stat-label {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    /* Budget bar */
+    .budget-bar-wrapper {
+      margin: 0.75rem 0;
+    }
+
+    .budget-bar {
+      height: 14px;
+      background: #e2e8f0;
+      border-radius: 7px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .budget-bar .budget-fill {
+      height: 100%;
+      border-radius: 7px;
+      background: linear-gradient(90deg, var(--success-color), var(--success-color));
+      transition: width 0.5s;
+    }
+
+    .budget-bar .budget-fill.warning {
+      background: linear-gradient(90deg, var(--success-color), var(--warning-color));
+    }
+
+    .budget-bar .budget-fill.danger {
+      background: linear-gradient(90deg, var(--warning-color), var(--danger-color));
+    }
+
+    .budget-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    /* Cost table */
+    .cost-table {
+      width: 100%;
+    }
+
+    .cost-table tr td {
+      padding: 0.5rem 0;
+      font-size: 0.8125rem;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .cost-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .cost-table tr td:first-child {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .cost-table tr td:last-child {
+      font-weight: 700;
+      text-align: right;
+    }
+
+    /* Data table */
+    .data-table {
+      width: 100%;
+      font-size: 0.8125rem;
+    }
+
+    .data-table th {
+      padding: 0.5rem 0.75rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      font-size: 0.6875rem;
+      letter-spacing: 0.05em;
+      border-bottom: 2px solid var(--border-color);
+      text-align: left;
+    }
+
+    .data-table td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    /* Chart placeholder */
+    .chart-placeholder {
+      background: #f8fafc;
+      border: 2px dashed var(--border-color);
+      border-radius: 0.75rem;
+      padding: 2rem;
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+    }
+
+    .chart-placeholder i {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      display: block;
+      opacity: 0.4;
+    }
+
+    /* Slider */
+    .slider-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .slider-group input[type="range"] {
+      flex: 1;
+      accent-color: var(--accent);
+    }
+
+    .slider-value {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--accent);
+      min-width: 40px;
+      text-align: center;
+    }
+
+    /* Quick links */
+    .quick-links {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.5rem;
+    }
+
+    .quick-link {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      background: white;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .quick-link:hover {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .quick-link i {
+      font-size: 1rem;
+    }
+
+    /* Accordion */
+    .accordion-item {
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      margin-bottom: 0.5rem;
+      overflow: hidden;
+    }
+
+    .accordion-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      background: #f8fafc;
+      cursor: pointer;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      transition: background 0.15s;
+    }
+
+    .accordion-header:hover {
+      background: #f1f5f9;
+    }
+
+    .accordion-header .chevron {
+      transition: transform 0.2s;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .accordion-header.open .chevron {
+      transform: rotate(180deg);
+    }
+
+    .accordion-body {
+      display: none;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .accordion-body.open {
+      display: block;
+    }
+
+    /* Status badges */
+    .badge-sm {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 0.375rem;
+    }
+
+    .badge-success { background: #f0fdf4; color: var(--success-color); }
+    .badge-warning { background: #fffbeb; color: var(--warning-color); }
+    .badge-danger { background: #fef2f2; color: var(--danger-color); }
+    .badge-info { background: var(--accent-bg); color: var(--accent); }
+
+    /* Radio group */
+    .radio-group {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8125rem;
+      cursor: pointer;
+    }
+
+    .radio-option input[type="radio"] {
+      accent-color: var(--accent);
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Character counter */
+    .char-counter {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      text-align: right;
+      margin-top: 0.25rem;
+    }
+
+    .char-counter.over { color: var(--danger-color); }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .form-row { grid-template-columns: 1fr; }
+      .provider-grid { grid-template-columns: 1fr; }
+      .optin-stats { grid-template-columns: 1fr 1fr; }
+      .usage-grid { grid-template-columns: 1fr 1fr; }
+      .quick-links { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1><i class="fas fa-comment-sms" style="color: var(--sms-blue);"></i> SMS Integration</h1>
+      <span class="connection-badge" id="connectionBadge">
+        <span class="dot"></span> Connected
+      </span>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline-accent" onclick="alert('Test SMS sent successfully!')">
+        <i class="fas fa-paper-plane"></i> Test SMS
+      </button>
+      <button class="btn-outline-accent" onclick="parent.loadContent('communication/sms-templates')">
+        <i class="fas fa-file-lines"></i> Go to Templates <i class="fas fa-arrow-right" style="font-size:0.625rem"></i>
+      </button>
+      <button class="btn-outline-accent" onclick="parent.loadContent('communication/sms-campaigns')">
+        <i class="fas fa-bullhorn"></i> Go to Campaigns <i class="fas fa-arrow-right" style="font-size:0.625rem"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('provider')">Provider Setup</button>
+    <button class="tab-btn" onclick="switchTab('compliance')">Sender &amp; Compliance</button>
+    <button class="tab-btn" onclick="switchTab('usage')">Usage &amp; Billing</button>
+  </div>
+
+  <!-- ==================== TAB 1: Provider Setup ==================== -->
+  <div class="tab-content active" id="tab-provider">
+
+    <!-- Provider Selection -->
+    <div class="card">
+      <div class="card-header-custom">
+        <h3><i class="fas fa-tower-broadcast" style="color:var(--accent); margin-right:0.5rem;"></i>SMS Provider</h3>
+      </div>
+      <div class="card-body-custom">
+        <div class="provider-grid">
+          <div class="provider-card selected" onclick="selectProvider(this, 'twilio')">
+            <span class="radio-dot"></span>
+            <div class="provider-icon">📱</div>
+            <h4>Twilio</h4>
+            <p class="provider-desc">Global SMS API with excellent deliverability</p>
+            <span class="provider-status">Most popular, supports 180+ countries</span>
+          </div>
+          <div class="provider-card" onclick="selectProvider(this, 'bird')">
+            <span class="radio-dot"></span>
+            <div class="provider-icon">🐦</div>
+            <h4>Bird (MessageBird)</h4>
+            <p class="provider-desc">Enterprise messaging platform</p>
+            <span class="provider-status">Strong in Europe, Middle East, Asia</span>
+          </div>
+          <div class="provider-card" onclick="selectProvider(this, 'vonage')">
+            <span class="radio-dot"></span>
+            <div class="provider-icon">📞</div>
+            <h4>Vonage (Nexmo)</h4>
+            <p class="provider-desc">Communications API by Vonage</p>
+            <span class="provider-status">Good for high-volume transactional SMS</span>
+          </div>
+          <div class="provider-card" onclick="selectProvider(this, 'local')">
+            <span class="radio-dot"></span>
+            <div class="provider-icon">🌐</div>
+            <h4>Local Provider</h4>
+            <p class="provider-desc">Country-specific SMS gateway</p>
+            <span class="provider-status">Best rates for single-country operations</span>
+          </div>
+          <div class="provider-card" onclick="selectProvider(this, 'custom')">
+            <span class="radio-dot"></span>
+            <div class="provider-icon">🔧</div>
+            <h4>Custom HTTP API</h4>
+            <p class="provider-desc">Connect via custom REST endpoint</p>
+            <span class="provider-status">For proprietary gateways</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Connection Configuration -->
+    <div class="card">
+      <div class="card-header-custom">
+        <h3><i class="fas fa-gear" style="color:var(--accent); margin-right:0.5rem;"></i>Connection Configuration</h3>
+      </div>
+      <div class="card-body-custom">
+
+        <!-- Twilio Fields -->
+        <div id="config-twilio">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label-sm">Account SID</label>
+              <input type="text" class="form-control-sm-custom" value="ACa1b2c3d4e5f6g7h8i9j0k1l2m3n4o5" placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+            </div>
+            <div class="form-group">
+              <label class="form-label-sm">Auth Token</label>
+              <div class="input-group-custom">
+                <input type="password" class="form-control-sm-custom" id="twilioToken" value="a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6">
+                <span class="input-addon" onclick="togglePassword('twilioToken')"><i class="fas fa-eye"></i></span>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label-sm">Messaging Service SID <span style="color:var(--text-secondary);font-weight:400;">(optional)</span></label>
+              <input type="text" class="form-control-sm-custom" placeholder="MGxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+              <div class="form-hint">Use a Messaging Service to enable multi-number sending and content intelligence.</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label-sm">Default From Number</label>
+              <input type="text" class="form-control-sm-custom" value="+1 415 555 0100" placeholder="+1 415 555 0100">
+            </div>
+          </div>
+          <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+            <button class="btn-accent">Connect</button>
+            <button class="btn-outline-accent">Send Test SMS</button>
+          </div>
+        </div>
+
+        <!-- Bird (MessageBird) Fields -->
+        <div id="config-bird" style="display:none;">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label-sm">API Key</label>
+              <div class="input-group-custom">
+                <input type="password" class="form-control-sm-custom" id="birdKey" placeholder="Enter API Key">
+                <span class="input-addon" onclick="togglePassword('birdKey')"><i class="fas fa-eye"></i></span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label-sm">Originator</label>
+              <input type="text" class="form-control-sm-custom" placeholder="e.g. HopeFound or +1415...">
+              <div class="form-hint">Alphanumeric sender name or phone number.</div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label-sm">Channel ID <span style="color:var(--text-secondary);font-weight:400;">(optional)</span></label>
+              <input type="text" class="form-control-sm-custom" placeholder="Enter Channel ID">
+            </div>
+            <div></div>
+          </div>
+          <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+            <button class="btn-accent">Connect</button>
+            <button class="btn-outline-accent">Send Test SMS</button>
+          </div>
+        </div>
+
+        <!-- Vonage (Nexmo) Fields -->
+        <div id="config-vonage" style="display:none;">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label-sm">API Key</label>
+              <input type="text" class="form-control-sm-custom" placeholder="Enter API Key">
+            </div>
+            <div class="form-group">
+              <label class="form-label-sm">API Secret</label>
+              <div class="input-group-custom">
+                <input type="password" class="form-control-sm-custom" id="vonageSecret" placeholder="Enter API Secret">
+                <span class="input-addon" onclick="togglePassword('vonageSecret')"><i class="fas fa-eye"></i></span>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label-sm">Application ID <span style="color:var(--text-secondary);font-weight:400;">(optional)</span></label>
+              <input type="text" class="form-control-sm-custom" placeholder="Enter Application ID">
+            </div>
+            <div class="form-group">
+              <label class="form-label-sm">Default From Number</label>
+              <input type="text" class="form-control-sm-custom" placeholder="+1 415 555 0100">
+            </div>
+          </div>
+          <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+            <button class="btn-accent">Connect</button>
+            <button class="btn-outline-accent">Send Test SMS</button>
+          </div>
+        </div>
+
+        <!-- Local Provider Fields -->
+        <div id="config-local" style="display:none;">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label-sm">Provider Name</label>
+              <input type="text" class="form-control-sm-custom" placeholder="e.g. BulkSMS, SMSCountry, MSG91">
+            </div>
+            <div class="form-group">
+              <label class="form-label-sm">API Endpoint URL</label>
+              <input type="text" class="form-control-sm-custom" placeholder="https://api.provider.com/v1/sms/send">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label-sm">API Key</label>
+              <div class="input-group-custom">
+                <input type="password" class="form-control-sm-custom" id="localApiKey" placeholder="Enter API Key">
+                <span class="input-addon" onclick="togglePassword('localApiKey')"><i class="fas fa-eye"></i></span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label-sm">API Secret</label>
+              <div class="input-group-custom">
+                <input type="password" class="form-control-sm-custom" id="localApiSecret" placeholder="Enter API Secret">
+                <span class="input-addon" onclick="togglePassword('localApiSecret')"><i class="fas fa-eye"></i></span>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label-sm">Sender ID</label>
+              <input type="text" class="form-control-sm-custom" placeholder="e.g. HOPFND">
+              <div class="form-hint">6-character alphanumeric sender ID registered with your provider.</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label-sm">Response Format</label>
+              <select class="form-control-sm-custom">
+                <option value="json">JSON</option>
+                <option value="xml">XML</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label-sm">Documentation URL <span style="color:var(--text-secondary);font-weight:400;">(optional)</span></label>
+            <input type="text" class="form-control-sm-custom" placeholder="https://docs.provider.com/api">
+          </div>
+          <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+            <button class="btn-accent">Connect</button>
+            <button class="btn-outline-accent">Send Test SMS</button>
+          </div>
+        </div>
+
+        <!-- Custom HTTP API Fields -->
+        <div id="config-custom" style="display:none;">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label-sm">POST Endpoint URL</label>
+              <input type="text" class="form-control-sm-custom" placeholder="https://your-gateway.com/api/sms">
+            </div>
+            <div class="form-group">
+              <label class="form-label-sm">Authentication</label>
+              <select class="form-control-sm-custom" id="customAuthType">
+                <option value="apikey">API Key Header</option>
+                <option value="basic">Basic Auth</option>
+                <option value="bearer">Bearer Token</option>
+                <option value="custom">Custom Header</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label-sm">Auth Value</label>
+              <div class="input-group-custom">
+                <input type="password" class="form-control-sm-custom" id="customAuthValue" placeholder="Enter auth credential">
+                <span class="input-addon" onclick="togglePassword('customAuthValue')"><i class="fas fa-eye"></i></span>
+              </div>
+              <div class="form-hint">API key, token, or Base64-encoded credentials depending on auth type.</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label-sm">Success Response Code</label>
+              <input type="number" class="form-control-sm-custom" value="200" placeholder="200">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label-sm">Request Body Template</label>
+            <textarea class="form-control-sm-custom" style="font-family: 'Courier New', monospace; min-height:120px;">{
+  "to": "{{phone_number}}",
+  "from": "{{sender_id}}",
+  "message": "{{message_body}}",
+  "callback_url": "{{callback_url}}"
+}</textarea>
+            <div class="form-hint">Use <code>{{phone_number}}</code>, <code>{{sender_id}}</code>, <code>{{message_body}}</code>, <code>{{callback_url}}</code> as placeholders.</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label-sm">Delivery Callback URL</label>
+            <div class="input-group-custom">
+              <input type="text" class="form-control-sm-custom" value="https://api.pss2.com/webhooks/sms/delivery/tenant_001" readonly>
+              <span class="input-addon" onclick="copyToClipboard(this.previousElementSibling)" title="Copy"><i class="fas fa-copy"></i></span>
+            </div>
+            <div class="form-hint">Configure this URL in your gateway for delivery status callbacks.</div>
+          </div>
+          <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+            <button class="btn-accent">Connect</button>
+            <button class="btn-outline-accent">Send Test SMS</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Connection Status -->
+    <div class="card">
+      <div class="card-header-custom">
+        <h3><i class="fas fa-circle-check" style="color:var(--success-color); margin-right:0.5rem;"></i>Connection Status</h3>
+      </div>
+      <div class="card-body-custom">
+        <table class="status-table">
+          <tr>
+            <td>Status</td>
+            <td><span class="badge-sm badge-success"><i class="fas fa-circle" style="font-size:0.5rem"></i> Connected</span></td>
+          </tr>
+          <tr>
+            <td>Provider</td>
+            <td>Twilio</td>
+          </tr>
+          <tr>
+            <td>From Number</td>
+            <td>+1 415 555 0100</td>
+          </tr>
+          <tr>
+            <td>Sender ID</td>
+            <td>HopeFound</td>
+          </tr>
+          <tr>
+            <td>Country Coverage</td>
+            <td>185 countries</td>
+          </tr>
+          <tr>
+            <td>Connected Since</td>
+            <td>Mar 1, 2026</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==================== TAB 2: Sender & Compliance ==================== -->
+  <div class="tab-content" id="tab-compliance">
+
+    <!-- Sender ID Configuration -->
+    <div class="card">
+      <div class="card-header-custom">
+        <h3><i class="fas fa-id-card" style="color:var(--accent); margin-right:0.5rem;"></i>Sender ID Configuration</h3>
+      </div>
+      <div class="card-body-custom">
+        <div class="info-box">
+          <i class="fas fa-circle-info"></i>
+          <div>Sender ID availability varies by country. Some countries require pre-registration of alphanumeric sender IDs, while others only allow numeric (phone number) senders.</div>
+        </div>
+
+        <label class="form-label-sm" style="margin-bottom:0.5rem;">Sender Type</label>
+        <div class="radio-group">
+          <label class="radio-option">
+            <input type="radio" name="senderType" value="phone" checked> Phone Number
+            <span style="font-size:0.6875rem; color:var(--text-secondary);">(works in all countries)</span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="senderType" value="alpha"> Alphanumeric Sender ID
+            <span style="font-size:0.6875rem; color:var(--text-secondary);">(e.g. "HopeFound", 11 chars max)</span>
+          </label>
+        </div>
+
+        <div class="form-row" style="margin-top:0.5rem;">
+          <div class="form-group">
+            <label class="form-label-sm">Fallback Sender</label>
+            <input type="text" class="form-control-sm-custom" value="+1 415 555 0100" placeholder="Fallback number for unsupported countries">
+            <div class="form-hint">Used when alphanumeric sender ID is not supported in the destination country.</div>
+          </div>
+          <div></div>
+        </div>
+
+        <label class="form-label-sm" style="margin-bottom:0.5rem; margin-top:0.5rem;">Registration Status by Country</label>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Country</th>
+                <th>Sender ID</th>
+                <th>Type</th>
+                <th>Registration</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>&#127470;&#127475; India</td>
+                <td>HOPFND</td>
+                <td>Alphanumeric (DLT)</td>
+                <td>DLT Entity ID: 1101456789012</td>
+                <td><span class="badge-sm badge-success">Registered</span></td>
+              </tr>
+              <tr>
+                <td>&#127482;&#127480; United States</td>
+                <td>+1 415 555 0100</td>
+                <td>10DLC Number</td>
+                <td>Campaign ID: CXYZ123</td>
+                <td><span class="badge-sm badge-success">Approved</span></td>
+              </tr>
+              <tr>
+                <td>&#127468;&#127463; United Kingdom</td>
+                <td>HopeFound</td>
+                <td>Alphanumeric</td>
+                <td>No registration required</td>
+                <td><span class="badge-sm badge-success">Active</span></td>
+              </tr>
+              <tr>
+                <td>&#127462;&#127466; UAE</td>
+                <td>HopeFound</td>
+                <td>Alphanumeric</td>
+                <td>TRA Approval: TRA-2026-1847</td>
+                <td><span class="badge-sm badge-warning">Pending Review</span></td>
+              </tr>
+              <tr>
+                <td>&#127480;&#127468; Singapore</td>
+                <td>HopeFound</td>
+                <td>Alphanumeric</td>
+                <td>SGNIC Registration</td>
+                <td><span class="badge-sm badge-success">Registered</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- DND/DNC Compliance -->
+    <div class="card">
+      <div class="card-header-custom">
+        <h3><i class="fas fa-ban" style="color:var(--danger-color); margin-right:0.5rem;"></i>DND/DNC Compliance</h3>
+      </div>
+      <div class="card-body-custom">
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Honor Do Not Disturb (DND) Registry</div>
+            <div class="toggle-desc">Automatically check and block messages to numbers on national DND/DNC registries</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="form-row" style="margin-top:1rem;">
+          <div class="form-group">
+            <label class="form-label-sm">DND Registry Provider</label>
+            <select class="form-control-sm-custom">
+              <option>Auto-detect by country</option>
+              <option>India - TRAI DND Registry</option>
+              <option>US - National Do Not Call Registry</option>
+              <option>UK - TPS/CTPS</option>
+              <option>Custom Registry API</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label-sm">Last DND Sync</label>
+            <input type="text" class="form-control-sm-custom" value="Apr 10, 2026, 02:00 AM" readonly>
+          </div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:1.5rem; margin-top:0.25rem;">
+          <div style="font-size:0.8125rem;">
+            <span style="font-weight:600; color:var(--danger-color);">2,847</span>
+            <span style="color:var(--text-secondary);">contacts currently blocked by DND</span>
+          </div>
+          <div style="display:flex; gap:0.5rem;">
+            <button class="btn-outline-accent" style="font-size:0.75rem; padding:0.3rem 0.625rem;">
+              <i class="fas fa-sync"></i> Sync Now
+            </button>
+            <button class="btn-outline-accent" style="font-size:0.75rem; padding:0.3rem 0.625rem;">
+              <i class="fas fa-list"></i> View Blocked List
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Opt-in / Opt-out Configuration -->
+    <div class="card">
+      <div class="card-header-custom">
+        <h3><i class="fas fa-user-check" style="color:var(--accent); margin-right:0.5rem;"></i>Opt-in / Opt-out Configuration</h3>
+      </div>
+      <div class="card-body-custom">
+
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Require SMS Opt-in Before Sending</div>
+            <div class="toggle-desc">Only send SMS to contacts who have explicitly opted in to receive messages</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div style="margin-top:1rem;">
+          <label class="form-label-sm" style="margin-bottom:0.5rem;">Opt-in Collection Points</label>
+          <div class="checkbox-list">
+            <label class="checkbox-item"><input type="checkbox" checked> Donation form (checkbox at checkout)</label>
+            <label class="checkbox-item"><input type="checkbox" checked> Beneficiary registration form</label>
+            <label class="checkbox-item"><input type="checkbox" checked> Event registration</label>
+            <label class="checkbox-item"><input type="checkbox"> Volunteer signup</label>
+            <label class="checkbox-item"><input type="checkbox"> Website popup / landing page</label>
+            <label class="checkbox-item"><input type="checkbox" checked> Import with consent flag</label>
+          </div>
+        </div>
+
+        <div style="margin-top:1.25rem;">
+          <label class="form-label-sm" style="margin-bottom:0.5rem;">Opt-in Statistics</label>
+          <div class="segmented-bar">
+            <div class="seg opted-in" style="width:68%"></div>
+            <div class="seg opted-out" style="width:12%"></div>
+            <div class="seg never-asked" style="width:20%"></div>
+          </div>
+          <div class="seg-legend">
+            <div class="seg-legend-item"><span class="dot" style="background:var(--success-color)"></span> Opted In (68%)</div>
+            <div class="seg-legend-item"><span class="dot" style="background:var(--danger-color)"></span> Opted Out (12%)</div>
+            <div class="seg-legend-item"><span class="dot" style="background:var(--warning-color)"></span> Never Asked (20%)</div>
+          </div>
+          <div class="optin-stats">
+            <div class="optin-stat total">
+              <div class="stat-value">12,450</div>
+              <div class="stat-label">Total Contacts</div>
+            </div>
+            <div class="optin-stat opted-in">
+              <div class="stat-value">8,466</div>
+              <div class="stat-pct">68%</div>
+              <div class="stat-label">Opted In</div>
+            </div>
+            <div class="optin-stat opted-out">
+              <div class="stat-value">1,494</div>
+              <div class="stat-pct">12%</div>
+              <div class="stat-label">Opted Out</div>
+            </div>
+            <div class="optin-stat never-asked">
+              <div class="stat-value">2,490</div>
+              <div class="stat-pct">20%</div>
+              <div class="stat-label">Never Asked</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:0.75rem;">
+          <label class="form-label-sm" style="margin-bottom:0.375rem;">Opt-out Keywords</label>
+          <div class="tags-input">
+            <span class="tag">STOP <span class="tag-remove" onclick="this.parentElement.remove()">&times;</span></span>
+            <span class="tag">UNSUBSCRIBE <span class="tag-remove" onclick="this.parentElement.remove()">&times;</span></span>
+            <span class="tag">CANCEL <span class="tag-remove" onclick="this.parentElement.remove()">&times;</span></span>
+            <span class="tag">END <span class="tag-remove" onclick="this.parentElement.remove()">&times;</span></span>
+            <span class="tag">QUIT <span class="tag-remove" onclick="this.parentElement.remove()">&times;</span></span>
+            <input type="text" placeholder="Add keyword...">
+          </div>
+          <div class="form-hint">Messages containing these keywords will trigger automatic opt-out.</div>
+        </div>
+
+        <div style="margin-top:1rem;">
+          <label class="form-label-sm" style="margin-bottom:0.375rem;">Opt-out Confirmation Message</label>
+          <textarea class="form-control-sm-custom" id="optoutMsg" maxlength="160" oninput="updateCharCount()" style="min-height:60px;">You have been unsubscribed from HopeFound SMS notifications. Reply START to re-subscribe. Msg&amp;data rates may apply.</textarea>
+          <div class="char-counter" id="charCounter">118 / 160 characters</div>
+        </div>
+
+        <div class="toggle-row" style="margin-top:0.5rem;">
+          <div>
+            <div class="toggle-label">Auto-process Opt-out Replies</div>
+            <div class="toggle-desc">Automatically unsubscribe contacts who reply with opt-out keywords</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Country-Specific Compliance Notes -->
+    <div class="card">
+      <div class="card-header-custom">
+        <h3><i class="fas fa-scale-balanced" style="color:var(--warning-color); margin-right:0.5rem;"></i>Country-Specific Compliance Notes</h3>
+      </div>
+      <div class="card-body-custom" style="padding:0.75rem 1.25rem;">
+
+        <div class="accordion-item">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span>&#127470;&#127475; India - TRAI DLT Regulations</span>
+            <i class="fas fa-chevron-down chevron"></i>
+          </div>
+          <div class="accordion-body">
+            <strong>Key Requirements:</strong>
+            <ul style="margin:0.5rem 0; padding-left:1.25rem;">
+              <li>All SMS senders must register on the DLT (Distributed Ledger Technology) platform</li>
+              <li>Entity ID, Sender ID (Header), and Content Templates must be pre-registered</li>
+              <li>Promotional SMS only allowed between 9:00 AM - 9:00 PM IST</li>
+              <li>Transactional SMS allowed 24/7 but must match registered templates</li>
+              <li>Scrubbing against NCPR (National Customer Preference Register) is mandatory</li>
+              <li>Content must include entity name and opt-out instructions</li>
+            </ul>
+            <span class="badge-sm badge-success">Your DLT registration is active</span>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span>&#127482;&#127480; United States - TCPA &amp; 10DLC</span>
+            <i class="fas fa-chevron-down chevron"></i>
+          </div>
+          <div class="accordion-body">
+            <strong>Key Requirements:</strong>
+            <ul style="margin:0.5rem 0; padding-left:1.25rem;">
+              <li>TCPA (Telephone Consumer Protection Act) requires prior express written consent for marketing messages</li>
+              <li>10DLC (10-Digit Long Code) registration required for A2P messaging</li>
+              <li>Brand and campaign must be registered with The Campaign Registry (TCR)</li>
+              <li>Must include opt-out instructions (e.g., "Reply STOP to unsubscribe")</li>
+              <li>Cannot send messages before 8:00 AM or after 9:00 PM recipient's local time</li>
+              <li>Violations can result in fines of $500 - $1,500 per message</li>
+            </ul>
+            <span class="badge-sm badge-success">10DLC campaign approved</span>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span>&#127468;&#127463; United Kingdom - ICO / PECR</span>
+            <i class="fas fa-chevron-down chevron"></i>
+          </div>
+          <div class="accordion-body">
+            <strong>Key Requirements:</strong>
+            <ul style="margin:0.5rem 0; padding-left:1.25rem;">
+              <li>PECR (Privacy and Electronic Communications Regulations) governs SMS marketing</li>
+              <li>Consent must be specific, informed, and freely given (GDPR-aligned)</li>
+              <li>Must identify the sender in every message</li>
+              <li>Charities have a "soft opt-in" exception for existing donors</li>
+              <li>Must provide a simple opt-out mechanism</li>
+              <li>ICO can fine up to 500,000 GBP for violations</li>
+            </ul>
+            <span class="badge-sm badge-info">Soft opt-in enabled for donors</span>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span>&#127462;&#127466; UAE - TRA Regulations</span>
+            <i class="fas fa-chevron-down chevron"></i>
+          </div>
+          <div class="accordion-body">
+            <strong>Key Requirements:</strong>
+            <ul style="margin:0.5rem 0; padding-left:1.25rem;">
+              <li>TRA (Telecommunications Regulatory Authority) approval required for all bulk SMS</li>
+              <li>Sender ID must be registered and approved by TRA</li>
+              <li>Content must be reviewed and approved before sending</li>
+              <li>Arabic language option must be provided where applicable</li>
+              <li>Promotional SMS restricted during Ramadan and public holidays</li>
+              <li>All messages must comply with UAE content laws</li>
+            </ul>
+            <span class="badge-sm badge-warning">Sender ID pending TRA review</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==================== TAB 3: Usage & Billing ==================== -->
+  <div class="tab-content" id="tab-usage">
+
+    <!-- Current Period Summary -->
+    <div class="card">
+      <div class="card-header-custom">
+        <h3><i class="fas fa-chart-bar" style="color:var(--accent); margin-right:0.5rem;"></i>Current Period Summary</h3>
+        <span style="font-size:0.75rem; color:var(--text-secondary);">Mar 1 - Mar 31, 2026</span>
+      </div>
+      <div class="card-body-custom">
+        <div class="usage-grid">
+          <div class="usage-stat">
+            <div class="stat-value">4,682</div>
+            <div class="stat-sub" style="color:var(--sms-blue);">messages</div>
+            <div class="stat-label">SMS Sent</div>
+          </div>
+          <div class="usage-stat">
+            <div class="stat-value">4,521</div>
+            <div class="stat-sub" style="color:var(--success-color);">96.6%</div>
+            <div class="stat-label">Delivered</div>
+          </div>
+          <div class="usage-stat">
+            <div class="stat-value">161</div>
+            <div class="stat-sub" style="color:var(--danger-color);">3.4%</div>
+            <div class="stat-label">Failed</div>
+          </div>
+          <div class="usage-stat">
+            <div class="stat-value">5,230</div>
+            <div class="stat-sub">segments</div>
+            <div class="stat-label">Segments Used</div>
+          </div>
+          <div class="usage-stat">
+            <div class="stat-value">312</div>
+            <div class="stat-sub" style="color:var(--accent);">replies</div>
+            <div class="stat-label">Inbound Replies</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Segment Explanation -->
+    <div class="info-box" style="margin:0 0 1.25rem 0;">
+      <i class="fas fa-circle-info"></i>
+      <div>
+        <strong>How SMS Segments Work:</strong> A single SMS can contain up to <strong>160 characters</strong> using GSM-7 encoding (standard Latin characters). Messages with Unicode characters (emojis, non-Latin scripts) are limited to <strong>70 characters</strong> per segment. Longer messages are split into multiple segments: 153 chars/segment for GSM-7, 67 chars/segment for Unicode. Each segment is billed separately.
+      </div>
+    </div>
+
+    <!-- Cost Tracking -->
+    <div class="card">
+      <div class="card-header-custom">
+        <h3><i class="fas fa-wallet" style="color:var(--accent); margin-right:0.5rem;"></i>Cost Tracking</h3>
+      </div>
+      <div class="card-body-custom">
+        <table class="cost-table">
+          <tr>
+            <td>Monthly Budget Cap</td>
+            <td>$300.00</td>
+          </tr>
+          <tr>
+            <td>Spent This Month</td>
+            <td>$187.20</td>
+          </tr>
+          <tr>
+            <td>Remaining Budget</td>
+            <td style="color:var(--success-color);">$112.80</td>
+          </tr>
+          <tr>
+            <td>Average Cost per Segment</td>
+            <td>~$0.04</td>
+          </tr>
+        </table>
+
+        <div class="budget-bar-wrapper">
+          <div class="budget-bar">
+            <div class="budget-fill warning" style="width: 62.4%;"></div>
+          </div>
+          <div class="budget-labels">
+            <span>$0</span>
+            <span>62.4% used ($187.20 / $300.00)</span>
+            <span>$300</span>
+          </div>
+        </div>
+
+        <div style="margin-top:1.25rem;">
+          <label class="form-label-sm" style="margin-bottom:0.375rem;">Budget Alert Threshold</label>
+          <div class="slider-group">
+            <input type="range" min="50" max="100" value="80" id="budgetSlider" oninput="document.getElementById('budgetValue').textContent = this.value + '%'">
+            <span class="slider-value" id="budgetValue">80%</span>
+          </div>
+          <div class="form-hint">Send alert notification when spending reaches this percentage of the monthly budget.</div>
+        </div>
+
+        <div class="toggle-row" style="margin-top:0.75rem;">
+          <div>
+            <div class="toggle-label">Auto-pause SMS When Budget Exceeded</div>
+            <div class="toggle-desc">Automatically stop sending SMS when the monthly budget cap is reached</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Pause Promotional Only</div>
+            <div class="toggle-desc">When budget is exceeded, only pause promotional messages; continue transactional SMS</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cost by Country -->
+    <div class="card">
+      <div class="card-header-custom">
+        <h3><i class="fas fa-globe" style="color:var(--accent); margin-right:0.5rem;"></i>Cost by Country (Top 5)</h3>
+      </div>
+      <div class="card-body-custom">
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Country</th>
+                <th>Messages</th>
+                <th>Segments</th>
+                <th>Cost/Segment</th>
+                <th>Total Cost</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>&#127470;&#127475; India</td>
+                <td>2,140</td>
+                <td>2,380</td>
+                <td>$0.015</td>
+                <td style="font-weight:700;">$35.70</td>
+              </tr>
+              <tr>
+                <td>&#127482;&#127480; United States</td>
+                <td>1,250</td>
+                <td>1,420</td>
+                <td>$0.075</td>
+                <td style="font-weight:700;">$106.50</td>
+              </tr>
+              <tr>
+                <td>&#127468;&#127463; United Kingdom</td>
+                <td>620</td>
+                <td>710</td>
+                <td>$0.040</td>
+                <td style="font-weight:700;">$28.40</td>
+              </tr>
+              <tr>
+                <td>&#127462;&#127466; UAE</td>
+                <td>410</td>
+                <td>430</td>
+                <td>$0.032</td>
+                <td style="font-weight:700;">$13.76</td>
+              </tr>
+              <tr>
+                <td>&#127480;&#127468; Singapore</td>
+                <td>262</td>
+                <td>290</td>
+                <td>$0.010</td>
+                <td style="font-weight:700;">$2.90</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="form-row" style="margin-bottom:1.25rem;">
+      <div class="card" style="margin-bottom:0;">
+        <div class="card-header-custom">
+          <h3><i class="fas fa-chart-column" style="color:var(--accent); margin-right:0.5rem;"></i>Daily Usage (Last 30 Days)</h3>
+        </div>
+        <div class="card-body-custom">
+          <div class="chart-placeholder">
+            <i class="fas fa-chart-column"></i>
+            Daily SMS volume bar chart<br>
+            <span style="font-size:0.6875rem;">Integration with Chart.js / ApexCharts</span>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:0;">
+        <div class="card-header-custom">
+          <h3><i class="fas fa-chart-bar" style="color:var(--accent); margin-right:0.5rem;"></i>Delivery Rate by Country</h3>
+        </div>
+        <div class="card-body-custom">
+          <div class="chart-placeholder">
+            <i class="fas fa-chart-bar"></i>
+            Horizontal bar chart by country<br>
+            <span style="font-size:0.6875rem;">Showing delivery success % per country</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Webhook Event Configuration -->
+    <div class="card">
+      <div class="card-header-custom">
+        <h3><i class="fas fa-plug" style="color:var(--accent); margin-right:0.5rem;"></i>Webhook Event Configuration</h3>
+      </div>
+      <div class="card-body-custom">
+        <div class="info-box">
+          <i class="fas fa-circle-info"></i>
+          <div>Select which SMS events should trigger webhook notifications to your application.</div>
+        </div>
+        <div class="checkbox-list" style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
+          <label class="checkbox-item"><input type="checkbox" checked> Message Sent</label>
+          <label class="checkbox-item"><input type="checkbox" checked> Message Delivered</label>
+          <label class="checkbox-item"><input type="checkbox" checked> Message Failed</label>
+          <label class="checkbox-item"><input type="checkbox" checked> Inbound Reply Received</label>
+          <label class="checkbox-item"><input type="checkbox" checked> Opt-out Received</label>
+          <label class="checkbox-item"><input type="checkbox"> Opt-in Received</label>
+          <label class="checkbox-item"><input type="checkbox"> Budget Threshold Reached</label>
+          <label class="checkbox-item"><input type="checkbox"> DND Check Failed</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="card">
+      <div class="card-header-custom">
+        <h3><i class="fas fa-link" style="color:var(--accent); margin-right:0.5rem;"></i>Quick Links</h3>
+      </div>
+      <div class="card-body-custom">
+        <div class="quick-links">
+          <a class="quick-link" onclick="parent.loadContent('communication/sms-templates')">
+            <i class="fas fa-file-lines"></i> SMS Templates
+          </a>
+          <a class="quick-link" onclick="parent.loadContent('communication/sms-campaigns')">
+            <i class="fas fa-bullhorn"></i> SMS Campaigns
+          </a>
+          <a class="quick-link" onclick="parent.loadContent('communication/notification-templates')">
+            <i class="fas fa-bell"></i> Notification Templates
+          </a>
+          <a class="quick-link" onclick="parent.loadContent('communication/automation-workflows')">
+            <i class="fas fa-robot"></i> Automation Workflows
+          </a>
+          <a class="quick-link" onclick="parent.loadContent('communication/placeholder-management')">
+            <i class="fas fa-code"></i> Placeholder Management
+          </a>
+          <a class="quick-link" onclick="parent.loadContent('communication/email-analytics')">
+            <i class="fas fa-chart-pie"></i> Communication Analytics
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Tab switching
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
+      document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+      document.getElementById('tab-' + tabName).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    // Provider selection
+    function selectProvider(card, provider) {
+      document.querySelectorAll('.provider-card').forEach(function(c) { c.classList.remove('selected'); });
+      card.classList.add('selected');
+
+      // Hide all config panels
+      var configs = ['twilio', 'bird', 'vonage', 'local', 'custom'];
+      configs.forEach(function(id) {
+        var el = document.getElementById('config-' + id);
+        if (el) el.style.display = 'none';
+      });
+
+      // Show selected config
+      var configEl = document.getElementById('config-' + provider);
+      if (configEl) configEl.style.display = 'block';
+    }
+
+    // Password toggle
+    function togglePassword(inputId) {
+      var input = document.getElementById(inputId);
+      var icon = input.parentElement.querySelector('.input-addon i');
+      if (input.type === 'password') {
+        input.type = 'text';
+        if (icon) icon.className = 'fas fa-eye-slash';
+      } else {
+        input.type = 'password';
+        if (icon) icon.className = 'fas fa-eye';
+      }
+    }
+
+    // Copy to clipboard
+    function copyToClipboard(input) {
+      navigator.clipboard.writeText(input.value).then(function() {
+        var addon = input.nextElementSibling;
+        var origIcon = addon.innerHTML;
+        addon.innerHTML = '<i class="fas fa-check" style="color:var(--success-color)"></i>';
+        setTimeout(function() { addon.innerHTML = origIcon; }, 1500);
+      });
+    }
+
+    // Accordion toggle
+    function toggleAccordion(header) {
+      var body = header.nextElementSibling;
+      var isOpen = body.classList.contains('open');
+
+      // Close all
+      document.querySelectorAll('.accordion-body').forEach(function(b) { b.classList.remove('open'); });
+      document.querySelectorAll('.accordion-header').forEach(function(h) { h.classList.remove('open'); });
+
+      // Toggle clicked
+      if (!isOpen) {
+        body.classList.add('open');
+        header.classList.add('open');
+      }
+    }
+
+    // Character counter for opt-out message
+    function updateCharCount() {
+      var textarea = document.getElementById('optoutMsg');
+      var counter = document.getElementById('charCounter');
+      var len = textarea.value.length;
+      counter.textContent = len + ' / 160 characters';
+      counter.className = len > 160 ? 'char-counter over' : 'char-counter';
+    }
+
+    // Initialize char count
+    updateCharCount();
+  </script>
+
+</body>
+
+</html>

@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Predictive Analytics - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+      --ai-accent: #8b5cf6;
+      --ai-accent-bg: #f5f3ff;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* ── Page Header ── */
+    .page-header { margin-bottom: 1.5rem; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem; }
+    .page-header p { font-size: 0.875rem; color: var(--text-secondary); margin: 0; }
+    .header-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+
+    .model-badge {
+      display: inline-flex; align-items: center; gap: 0.375rem;
+      background: var(--ai-accent-bg); color: var(--ai-accent);
+      border: 1px solid #ddd6fe; border-radius: 999px;
+      font-size: 0.6875rem; font-weight: 600; padding: 0.25rem 0.75rem;
+    }
+
+    .btn-outline-accent {
+      background: white; color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      padding: 0.5rem 1rem; border-radius: 0.5rem;
+      font-size: 0.8125rem; font-weight: 500; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-outline-accent:hover { border-color: var(--ai-accent); color: var(--ai-accent); }
+
+    /* ── Card Base ── */
+    .dash-card {
+      background: white; border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow); border: 1px solid var(--border-color);
+    }
+    .dash-card-header {
+      padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;
+    }
+    .dash-card-header h3 { font-size: 0.9375rem; font-weight: 700; margin: 0; color: var(--text-primary); }
+    .dash-card-body { padding: 1.25rem; }
+    .section-gap { margin-bottom: 1.5rem; }
+
+    /* ── KPI Row ── */
+    .kpi-row {
+      display: flex; gap: 1.5rem; margin-bottom: 1rem; flex-wrap: wrap;
+    }
+    .kpi-item { text-align: center; }
+    .kpi-value { font-size: 1.375rem; font-weight: 700; color: var(--text-primary); }
+    .kpi-label { font-size: 0.6875rem; color: var(--text-secondary); font-weight: 500; }
+    .kpi-change { font-size: 0.6875rem; font-weight: 600; }
+    .kpi-change.up { color: var(--success-color); }
+    .kpi-change.down { color: var(--danger-color); }
+
+    /* ── Forecast Chart ── */
+    .forecast-chart {
+      position: relative; height: 240px; margin-top: 0.5rem;
+      border-left: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .forecast-y-axis {
+      position: absolute; left: -45px; top: 0; bottom: 0;
+      display: flex; flex-direction: column; justify-content: space-between;
+      font-size: 0.625rem; color: var(--text-secondary); text-align: right;
+      padding: 4px 0;
+    }
+
+    .forecast-grid-line {
+      position: absolute; left: 0; right: 0; height: 1px;
+      background: #f1f5f9;
+    }
+
+    /* Confidence band */
+    .confidence-band {
+      position: absolute; left: 0; right: 0;
+      background: rgba(139, 92, 246, 0.08);
+      border-radius: 4px;
+    }
+
+    /* Forecast line (SVG) */
+    .forecast-svg {
+      position: absolute; left: 0; right: 0; top: 0; bottom: 0;
+      width: 100%; height: 100%;
+    }
+
+    .forecast-labels {
+      display: flex; justify-content: space-between;
+      font-size: 0.5625rem; color: var(--text-secondary);
+      padding-top: 0.375rem; padding-left: 50px;
+    }
+
+    .forecast-legend {
+      display: flex; gap: 1.25rem; margin-top: 0.75rem;
+      font-size: 0.6875rem; color: var(--text-secondary); flex-wrap: wrap;
+    }
+    .forecast-legend .dot { width: 12px; height: 3px; border-radius: 2px; display: inline-block; margin-right: 4px; vertical-align: middle; }
+    .forecast-legend .dot.solid { background: var(--ai-accent); }
+    .forecast-legend .dot.band { background: rgba(139,92,246,0.25); height: 10px; border-radius: 3px; }
+    .forecast-legend .dot.dashed { background: #94a3b8; border-top: 2px dashed #94a3b8; height: 0; }
+    .forecast-legend .dot.green-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success-color); }
+
+    /* ── Annotation Callouts ── */
+    .forecast-callout {
+      position: absolute; background: white; border: 1px solid var(--border-color);
+      border-radius: 0.375rem; padding: 0.25rem 0.5rem;
+      font-size: 0.625rem; box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      white-space: nowrap; z-index: 2;
+    }
+    .forecast-callout .callout-val { font-weight: 700; color: var(--ai-accent); }
+    .forecast-callout .callout-label { color: var(--text-secondary); }
+
+    /* ── Tables ── */
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th {
+      text-align: left; font-size: 0.6875rem; font-weight: 600;
+      color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;
+      padding: 0.625rem 1rem; border-bottom: 1px solid var(--border-color); background: #fafbfc;
+    }
+    .data-table td {
+      padding: 0.625rem 1rem; font-size: 0.8125rem;
+      border-bottom: 1px solid #f1f5f9; color: var(--text-primary);
+    }
+    .data-table tr:hover td { background: #fafbfc; }
+    .data-table tr:last-child td { border-bottom: none; }
+
+    .clickable { color: var(--accent); cursor: pointer; font-weight: 500; }
+    .clickable:hover { text-decoration: underline; }
+
+    .confidence-badge {
+      display: inline-flex; align-items: center; gap: 0.25rem;
+      font-size: 0.75rem; font-weight: 600; white-space: nowrap;
+    }
+    .confidence-badge.high { color: var(--success-color); }
+    .confidence-badge.medium { color: var(--warning-color); }
+    .confidence-badge.low { color: var(--danger-color); }
+
+    .factor-text { font-size: 0.75rem; color: var(--text-secondary); max-width: 200px; }
+
+    .btn-table-action {
+      background: white; color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+      padding: 0.25rem 0.625rem; border-radius: 0.375rem;
+      font-size: 0.6875rem; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-table-action:hover { border-color: var(--ai-accent); color: var(--ai-accent); }
+    .btn-table-action.danger:hover { border-color: var(--danger-color); color: var(--danger-color); }
+
+    /* ── Histogram ── */
+    .histogram-area { display: flex; align-items: flex-end; gap: 0.5rem; height: 160px; padding: 0 0.5rem; }
+    .hist-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.25rem; height: 100%; justify-content: flex-end; }
+    .hist-bar {
+      width: 100%; border-radius: 4px 4px 0 0; min-height: 4px;
+      background: linear-gradient(180deg, var(--ai-accent), #a78bfa);
+      transition: height 0.3s; cursor: default;
+    }
+    .hist-val { font-size: 0.625rem; font-weight: 700; color: var(--text-primary); }
+    .hist-label { font-size: 0.5625rem; color: var(--text-secondary); font-weight: 500; text-align: center; }
+
+    /* ── Recommendation Cards ── */
+    .rec-card {
+      display: flex; align-items: flex-start; gap: 0.75rem;
+      padding: 0.875rem; border: 1px solid var(--border-color);
+      border-radius: 0.5rem; background: #fafbfc;
+      margin-bottom: 0.5rem;
+    }
+    .rec-card:last-child { margin-bottom: 0; }
+    .rec-icon {
+      width: 32px; height: 32px; border-radius: 0.5rem;
+      background: var(--ai-accent-bg); color: var(--ai-accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.875rem; flex-shrink: 0;
+    }
+    .rec-text { flex: 1; font-size: 0.8125rem; color: var(--text-primary); line-height: 1.5; }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .kpi-row { gap: 1rem; }
+      .data-table { display: block; overflow-x: auto; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ── Page Header ── -->
+  <div class="page-header">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+      <div>
+        <h1><i class="fa-solid fa-chart-line" style="color: var(--ai-accent);"></i> Predictive Analytics</h1>
+        <p>AI-powered forecasting for fundraising outcomes</p>
+      </div>
+      <div class="header-actions">
+        <span class="model-badge"><i class="fa-solid fa-brain"></i> Trained on 3 years of data &bull; Last update: Apr 10, 2026</span>
+        <button class="btn-outline-accent"><i class="fa-solid fa-gear"></i> Configure Models</button>
+        <button class="btn-outline-accent"><i class="fa-solid fa-file-export"></i> Export Forecasts</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       SECTION 1: Revenue Forecast
+       ══════════════════════════════════════════════════ -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fa-solid fa-chart-mixed" style="color: var(--ai-accent); margin-right: 0.375rem;"></i> 12-Month Revenue Forecast</h3>
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="text-align: right;">
+          <div style="font-size: 1.25rem; font-weight: 700; color: var(--ai-accent);">$890,000</div>
+          <div style="font-size: 0.6875rem; color: var(--text-secondary);">Forecast (next 12 months) &bull; <span style="color: var(--success-color); font-weight: 600;">+14.1%</span> vs last year</div>
+        </div>
+      </div>
+    </div>
+    <div class="dash-card-body">
+      <!-- Forecast Chart (CSS-based placeholder with callouts) -->
+      <div style="position: relative; padding-left: 50px;">
+        <div class="forecast-chart">
+          <!-- Y-axis -->
+          <div class="forecast-y-axis">
+            <span>$140K</span><span>$120K</span><span>$100K</span><span>$80K</span><span>$60K</span><span>$40K</span><span>$20K</span>
+          </div>
+
+          <!-- Grid lines -->
+          <div class="forecast-grid-line" style="top: 14.3%;"></div>
+          <div class="forecast-grid-line" style="top: 28.6%;"></div>
+          <div class="forecast-grid-line" style="top: 42.9%;"></div>
+          <div class="forecast-grid-line" style="top: 57.1%;"></div>
+          <div class="forecast-grid-line" style="top: 71.4%;"></div>
+          <div class="forecast-grid-line" style="top: 85.7%;"></div>
+
+          <!-- Confidence band -->
+          <div class="confidence-band" style="top: 20%; bottom: 40%; left: 8%; right: 2%;"></div>
+
+          <!-- SVG forecast line -->
+          <svg class="forecast-svg" viewBox="0 0 1000 240" preserveAspectRatio="none">
+            <!-- Last year (dashed gray) -->
+            <polyline points="40,160 120,155 200,170 280,150 360,175 440,125 520,100 600,135 680,140 760,85 840,110 920,95"
+              fill="none" stroke="#94a3b8" stroke-width="2" stroke-dasharray="8,5" opacity="0.6"/>
+            <!-- Forecast (solid purple) -->
+            <polyline points="40,145 120,140 200,155 280,130 360,160 440,105 520,80 600,115 680,120 760,55 840,90 920,70"
+              fill="none" stroke="#8b5cf6" stroke-width="2.5"/>
+            <!-- Current month actual (green dot) -->
+            <circle cx="40" cy="145" r="5" fill="#22c55e" stroke="white" stroke-width="2"/>
+          </svg>
+
+          <!-- Callouts -->
+          <div class="forecast-callout" style="top: 10%; left: 68%;">
+            <span class="callout-val">$120K</span> <span class="callout-label">Ramadan 2027</span>
+          </div>
+          <div class="forecast-callout" style="top: 30%; left: 78%;">
+            <span class="callout-val">$95K</span> <span class="callout-label">Year-End 2026</span>
+          </div>
+          <div class="forecast-callout" style="top: 55%; left: 35%;">
+            <span class="callout-val">$45K</span> <span class="callout-label">Summer 2026</span>
+          </div>
+        </div>
+
+        <div class="forecast-labels">
+          <span>May</span><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span>
+          <span>Nov</span><span>Dec</span><span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span>
+        </div>
+      </div>
+
+      <div class="forecast-legend">
+        <span><span class="dot solid"></span> Forecasted Revenue</span>
+        <span><span class="dot band"></span> 80% Confidence Interval</span>
+        <span><span class="dot dashed"></span> Same Period Last Year</span>
+        <span><span class="dot green-dot"></span> Current Month Actual</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       SECTION 2: Donor Lifetime Value (LTV)
+       ══════════════════════════════════════════════════ -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fa-solid fa-gem" style="color: var(--ai-accent); margin-right: 0.375rem;"></i> Donor Lifetime Value (LTV)</h3>
+    </div>
+    <div class="dash-card-body">
+
+      <!-- LTV Histogram -->
+      <div style="margin-bottom: 1.5rem;">
+        <div style="font-size: 0.8125rem; font-weight: 600; margin-bottom: 0.75rem;">LTV Distribution</div>
+        <div class="histogram-area">
+          <div class="hist-col">
+            <div class="hist-val">456</div>
+            <div class="hist-bar" style="height: 60%;"></div>
+            <div class="hist-label">$0–100</div>
+          </div>
+          <div class="hist-col">
+            <div class="hist-val">678</div>
+            <div class="hist-bar" style="height: 89%;"></div>
+            <div class="hist-label">$100–500</div>
+          </div>
+          <div class="hist-col">
+            <div class="hist-val">345</div>
+            <div class="hist-bar" style="height: 45%;"></div>
+            <div class="hist-label">$500–1K</div>
+          </div>
+          <div class="hist-col">
+            <div class="hist-val">189</div>
+            <div class="hist-bar" style="height: 25%;"></div>
+            <div class="hist-label">$1K–5K</div>
+          </div>
+          <div class="hist-col">
+            <div class="hist-val">67</div>
+            <div class="hist-bar" style="height: 9%;"></div>
+            <div class="hist-label">$5K–10K</div>
+          </div>
+          <div class="hist-col">
+            <div class="hist-val">23</div>
+            <div class="hist-bar" style="height: 3%;"></div>
+            <div class="hist-label">$10K+</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LTV Predictions Table -->
+      <div style="font-size: 0.8125rem; font-weight: 600; margin-bottom: 0.75rem;">LTV Predictions — Top Donors</div>
+      <div style="overflow-x: auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Donor</th>
+              <th>Current LTV</th>
+              <th>Predicted 3-Year LTV</th>
+              <th>Confidence</th>
+              <th>Key Factors</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="clickable" onclick="parent.loadContent('contacts/contact-detail')">Khalid Al-Mansouri</span></td>
+              <td><strong>$42,500</strong></td>
+              <td style="color: var(--ai-accent); font-weight: 700;">$68,000</td>
+              <td><span class="confidence-badge high">&#x1F7E2; High (89%)</span></td>
+              <td class="factor-text">Consistent growth, high engagement</td>
+              <td><button class="btn-table-action" onclick="parent.loadContent('contacts/contact-detail')">View Profile</button></td>
+            </tr>
+            <tr>
+              <td><span class="clickable" onclick="parent.loadContent('contacts/contact-detail')">Ravi Sharma</span></td>
+              <td><strong>$35,100</strong></td>
+              <td style="color: var(--ai-accent); font-weight: 700;">$52,000</td>
+              <td><span class="confidence-badge high">&#x1F7E2; High (85%)</span></td>
+              <td class="factor-text">Increasing frequency, recurring</td>
+              <td><button class="btn-table-action" onclick="parent.loadContent('contacts/contact-detail')">View Profile</button></td>
+            </tr>
+            <tr>
+              <td><span class="clickable" onclick="parent.loadContent('contacts/contact-detail')">James Okonkwo</span></td>
+              <td><strong>$22,800</strong></td>
+              <td style="color: var(--ai-accent); font-weight: 700;">$38,000</td>
+              <td><span class="confidence-badge medium">&#x1F7E1; Medium (72%)</span></td>
+              <td class="factor-text">Growing but irregular</td>
+              <td><button class="btn-table-action" onclick="parent.loadContent('contacts/contact-detail')">View Profile</button></td>
+            </tr>
+            <tr>
+              <td><span class="clickable" onclick="parent.loadContent('contacts/contact-detail')">Fatima Al-Zahra</span></td>
+              <td><strong>$18,200</strong></td>
+              <td style="color: var(--ai-accent); font-weight: 700;">$45,000</td>
+              <td><span class="confidence-badge high">&#x1F7E2; High (82%)</span></td>
+              <td class="factor-text">Rapid growth trajectory</td>
+              <td><button class="btn-table-action" onclick="parent.loadContent('contacts/contact-detail')">View Profile</button></td>
+            </tr>
+            <tr>
+              <td><span class="clickable" onclick="parent.loadContent('contacts/contact-detail')">Sarah Ahmed</span></td>
+              <td><strong>$12,400</strong></td>
+              <td style="color: var(--danger-color); font-weight: 700;">$8,000</td>
+              <td><span class="confidence-badge low">&#x1F534; Low (45%)</span></td>
+              <td class="factor-text">Declining engagement</td>
+              <td><button class="btn-table-action danger" onclick="parent.loadContent('ai-intelligence/action-board')">Re-engage</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- LTV by Acquisition Channel -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fa-solid fa-route" style="color: var(--ai-accent); margin-right: 0.375rem;"></i> LTV by Acquisition Channel</h3>
+    </div>
+    <div class="dash-card-body">
+      <div style="overflow-x: auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Channel</th>
+              <th>Avg LTV</th>
+              <th>Donors</th>
+              <th>Cost / Acquisition</th>
+              <th>ROI</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><i class="fa-solid fa-calendar-check" style="color: var(--ai-accent);"></i> Events</td>
+              <td><strong>$2,850</strong></td><td>234</td><td>$45</td>
+              <td><span style="color: var(--success-color); font-weight: 700;">63x</span></td>
+            </tr>
+            <tr>
+              <td><i class="fa-solid fa-user-group" style="color: var(--ai-accent);"></i> Referral</td>
+              <td><strong>$2,100</strong></td><td>189</td><td>$0</td>
+              <td><span style="color: var(--success-color); font-weight: 700;">&infin;</span></td>
+            </tr>
+            <tr>
+              <td><i class="fa-solid fa-globe" style="color: var(--ai-accent);"></i> Online / Website</td>
+              <td><strong>$890</strong></td><td>567</td><td>$15</td>
+              <td><span style="color: var(--success-color); font-weight: 700;">59x</span></td>
+            </tr>
+            <tr>
+              <td><i class="fa-brands fa-instagram" style="color: var(--ai-accent);"></i> Social Media</td>
+              <td><strong>$450</strong></td><td>345</td><td>$8</td>
+              <td><span style="color: var(--success-color); font-weight: 700;">56x</span></td>
+            </tr>
+            <tr>
+              <td><i class="fa-solid fa-person-walking" style="color: var(--ai-accent);"></i> Field Collection</td>
+              <td><strong>$1,200</strong></td><td>456</td><td>$25</td>
+              <td><span style="color: var(--success-color); font-weight: 700;">48x</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       SECTION 3: Optimal Ask Amount
+       ══════════════════════════════════════════════════ -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fa-solid fa-bullseye" style="color: var(--ai-accent); margin-right: 0.375rem;"></i> Optimal Ask Amount</h3>
+      <span style="font-size: 0.6875rem; color: var(--text-secondary);">AI-recommended ask amounts for next donation request</span>
+    </div>
+    <div class="dash-card-body">
+      <div style="overflow-x: auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Donor</th>
+              <th>Last Gift</th>
+              <th>Avg Gift</th>
+              <th>Recommended Ask</th>
+              <th>Confidence</th>
+              <th>Reasoning</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="clickable" onclick="parent.loadContent('contacts/contact-detail')">Khalid Al-Mansouri</span></td>
+              <td>$5,000</td><td>$1,181</td>
+              <td><strong style="color: var(--ai-accent);">$6,000</strong></td>
+              <td><span class="confidence-badge high">&#x1F7E2; 78%</span></td>
+              <td class="factor-text">Consistent upgrader, Ramadan period</td>
+            </tr>
+            <tr>
+              <td><span class="clickable" onclick="parent.loadContent('contacts/contact-detail')">Fatima Al-Zahra</span></td>
+              <td>$800</td><td>$338</td>
+              <td><strong style="color: var(--ai-accent);">$1,000</strong></td>
+              <td><span class="confidence-badge high">&#x1F7E2; 72%</span></td>
+              <td class="factor-text">Upgrade pattern, high engagement</td>
+            </tr>
+            <tr>
+              <td><span class="clickable" onclick="parent.loadContent('contacts/contact-detail')">Ravi Sharma</span></td>
+              <td>$2,000</td><td>$731</td>
+              <td><strong style="color: var(--ai-accent);">$2,500</strong></td>
+              <td><span class="confidence-badge medium">&#x1F7E1; 65%</span></td>
+              <td class="factor-text">Moderate upgrade potential</td>
+            </tr>
+            <tr>
+              <td><span class="clickable" onclick="parent.loadContent('contacts/contact-detail')">James Okonkwo</span></td>
+              <td>$1,200</td><td>$950</td>
+              <td><strong style="color: var(--ai-accent);">$1,200</strong></td>
+              <td><span class="confidence-badge medium">&#x1F7E1; 58%</span></td>
+              <td class="factor-text">Maintain current level</td>
+            </tr>
+            <tr>
+              <td><span class="clickable" onclick="parent.loadContent('contacts/contact-detail')">Mohamed Ali</span></td>
+              <td>$5,000</td><td>$1,250</td>
+              <td><strong style="color: var(--danger-color);">$500</strong></td>
+              <td><span class="confidence-badge low">&#x1F534; 35%</span></td>
+              <td class="factor-text">At-risk, lower ask to re-engage</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       SECTION 4: Campaign Performance Prediction
+       ══════════════════════════════════════════════════ -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fa-solid fa-rocket" style="color: var(--ai-accent); margin-right: 0.375rem;"></i> Campaign Performance Prediction</h3>
+      <span style="font-size: 0.6875rem; color: var(--text-secondary); font-weight: 500;">Upcoming Campaign: Ramadan Appeal 2027</span>
+    </div>
+    <div class="dash-card-body">
+      <div style="font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 1rem;">Based on historical Ramadan campaigns:</div>
+
+      <div style="overflow-x: auto; margin-bottom: 1.5rem;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>2024 Actual</th>
+              <th>2025 Actual</th>
+              <th>2026 Actual</th>
+              <th style="background: var(--ai-accent-bg);">2027 Predicted</th>
+              <th>Confidence</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Total Raised</strong></td>
+              <td>$145K</td><td>$178K</td><td>$210K</td>
+              <td style="background: var(--ai-accent-bg);"><strong style="color: var(--ai-accent);">$245K</strong></td>
+              <td><span class="confidence-badge high">&#x1F7E2; 82%</span></td>
+            </tr>
+            <tr>
+              <td><strong>Donors</strong></td>
+              <td>456</td><td>534</td><td>612</td>
+              <td style="background: var(--ai-accent-bg);"><strong style="color: var(--ai-accent);">680</strong></td>
+              <td><span class="confidence-badge medium">&#x1F7E1; 75%</span></td>
+            </tr>
+            <tr>
+              <td><strong>New Donors</strong></td>
+              <td>89</td><td>112</td><td>134</td>
+              <td style="background: var(--ai-accent-bg);"><strong style="color: var(--ai-accent);">155</strong></td>
+              <td><span class="confidence-badge medium">&#x1F7E1; 68%</span></td>
+            </tr>
+            <tr>
+              <td><strong>Avg Gift</strong></td>
+              <td>$318</td><td>$333</td><td>$343</td>
+              <td style="background: var(--ai-accent-bg);"><strong style="color: var(--ai-accent);">$360</strong></td>
+              <td><span class="confidence-badge high">&#x1F7E2; 85%</span></td>
+            </tr>
+            <tr>
+              <td><strong>Online %</strong></td>
+              <td>35%</td><td>42%</td><td>48%</td>
+              <td style="background: var(--ai-accent-bg);"><strong style="color: var(--ai-accent);">55%</strong></td>
+              <td><span class="confidence-badge medium">&#x1F7E1; 72%</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Recommendations -->
+      <div style="font-size: 0.8125rem; font-weight: 600; margin-bottom: 0.75rem;">
+        <i class="fa-solid fa-lightbulb" style="color: var(--ai-accent);"></i> AI Recommendations
+      </div>
+      <div class="rec-card">
+        <div class="rec-icon"><i class="fa-solid fa-calendar-plus"></i></div>
+        <div class="rec-text">
+          <strong>Start campaign 2 weeks earlier</strong> based on giving pattern analysis — early Ramadan donors contribute 22% more when engaged before the start.
+        </div>
+      </div>
+      <div class="rec-card">
+        <div class="rec-icon"><i class="fa-brands fa-whatsapp"></i></div>
+        <div class="rec-text">
+          <strong>Allocate 30% more budget to WhatsApp outreach</strong> — highest conversion channel with 90% read rate and 20% click-through in Q1 2026.
+        </div>
+      </div>
+      <div class="rec-card">
+        <div class="rec-icon"><i class="fa-solid fa-phone"></i></div>
+        <div class="rec-text">
+          <strong>Target 45 LYBUNT donors with personal calls</strong> — predicted 28% recovery rate, yielding an estimated $18,000 in recovered giving.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

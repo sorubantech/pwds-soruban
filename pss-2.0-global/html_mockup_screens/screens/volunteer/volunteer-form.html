@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register Volunteer - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --volunteer: #059669;
+      --volunteer-light: #d1fae5;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .back-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 1rem;
+    }
+
+    .back-btn:hover {
+      border-color: var(--volunteer);
+      color: var(--volunteer);
+      background: var(--volunteer-light);
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--volunteer);
+      border-color: var(--volunteer);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--volunteer);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover { background: #047857; border-color: #047857; color: white; }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--volunteer);
+      color: var(--volunteer);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover { background: var(--volunteer); color: white; }
+
+    .btn-text {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-text:hover { color: var(--danger-color); }
+
+    /* Accordion Sections */
+    .form-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      margin-bottom: 0.75rem;
+      overflow: hidden;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.875rem 1.25rem;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+    }
+
+    .section-header:hover { background: #f8fafc; }
+
+    .section-header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+
+    .section-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 0.5rem;
+      background: var(--volunteer-light);
+      color: var(--volunteer);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+    }
+
+    .section-title {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .section-toggle {
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      transition: transform 0.25s;
+    }
+
+    .section-header.collapsed .section-toggle {
+      transform: rotate(-90deg);
+    }
+
+    .section-body {
+      padding: 0 1.25rem 1.25rem;
+      transition: max-height 0.3s ease;
+      overflow: hidden;
+    }
+
+    .section-body.collapsed {
+      max-height: 0 !important;
+      padding: 0 1.25rem;
+    }
+
+    /* Form Controls */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .form-grid .full-width { grid-column: 1 / -1; }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .form-group label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .form-group label .required {
+      color: var(--danger-color);
+      margin-left: 2px;
+    }
+
+    .form-control, .form-select {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .form-control:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--volunteer);
+      box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+    }
+
+    textarea.form-control {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .form-check-input:checked {
+      background-color: var(--volunteer);
+      border-color: var(--volunteer);
+    }
+
+    .form-check-input:focus {
+      box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+    }
+
+    /* Contact Link Search */
+    .contact-search-wrapper {
+      position: relative;
+    }
+
+    .contact-search-wrapper i {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .contact-search-wrapper input {
+      padding-left: 2.25rem;
+    }
+
+    .contact-search-result {
+      background: var(--volunteer-light);
+      border: 1px solid #a7f3d0;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      margin-top: 0.5rem;
+      display: none;
+      font-size: 0.8125rem;
+    }
+
+    .contact-search-result.show { display: flex; }
+
+    .contact-search-result .contact-found {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex: 1;
+    }
+
+    .contact-avatar-sm {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--volunteer);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.6875rem;
+      flex-shrink: 0;
+    }
+
+    .contact-found-name { font-weight: 600; }
+    .contact-found-code { font-size: 0.6875rem; color: var(--text-secondary); }
+
+    .contact-no-match {
+      display: none;
+      background: #fef3c7;
+      border: 1px solid #fde68a;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      margin-top: 0.5rem;
+      font-size: 0.8125rem;
+      color: #92400e;
+    }
+
+    .contact-no-match.show { display: flex; align-items: center; gap: 0.5rem; }
+
+    /* Radio Group */
+    .radio-group {
+      display: flex;
+      gap: 1.5rem;
+      padding-top: 0.25rem;
+    }
+
+    .radio-group .form-check {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .radio-group .form-check-label {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    /* Multi-select Tags */
+    .multi-select-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.375rem;
+    }
+
+    .multi-tag {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.375rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+      user-select: none;
+    }
+
+    .multi-tag:hover {
+      border-color: var(--volunteer);
+      color: var(--volunteer);
+    }
+
+    .multi-tag.selected {
+      background: var(--volunteer);
+      border-color: var(--volunteer);
+      color: white;
+    }
+
+    .multi-tag .tag-check {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      border: 1.5px solid currentColor;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.5rem;
+    }
+
+    .multi-tag.selected .tag-check {
+      background: white;
+      color: var(--volunteer);
+      border-color: white;
+    }
+
+    /* Tag Input (for languages, certs) */
+    .tag-input-wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.375rem;
+      padding: 0.375rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      min-height: 38px;
+      align-items: center;
+      cursor: text;
+    }
+
+    .tag-input-wrapper:focus-within {
+      border-color: var(--volunteer);
+      box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+    }
+
+    .tag-input-wrapper .tag-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.2rem 0.5rem;
+      background: var(--volunteer-light);
+      color: var(--volunteer);
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .tag-input-wrapper .tag-pill .remove-tag {
+      cursor: pointer;
+      font-size: 0.625rem;
+      opacity: 0.7;
+      transition: opacity 0.15s;
+    }
+
+    .tag-input-wrapper .tag-pill .remove-tag:hover { opacity: 1; }
+
+    .tag-input-wrapper input {
+      border: none;
+      outline: none;
+      font-size: 0.8125rem;
+      flex: 1;
+      min-width: 80px;
+      padding: 0.125rem 0.25rem;
+    }
+
+    /* Day Checkboxes */
+    .day-checks {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .day-check {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .day-check label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    /* Blackout Dates */
+    .blackout-row {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      padding: 0.625rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+
+    .blackout-row input {
+      flex: 1;
+      min-width: 120px;
+    }
+
+    .btn-remove-row {
+      background: none;
+      border: none;
+      color: var(--danger-color);
+      font-size: 0.8125rem;
+      cursor: pointer;
+      padding: 0.375rem;
+      border-radius: 0.375rem;
+      transition: all 0.15s;
+    }
+
+    .btn-remove-row:hover { background: rgba(220, 38, 38, 0.08); }
+
+    .btn-add-row {
+      background: none;
+      border: 1px dashed var(--volunteer);
+      color: var(--volunteer);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-top: 0.375rem;
+    }
+
+    .btn-add-row:hover { background: var(--volunteer-light); }
+    .btn-add-row i { margin-right: 0.375rem; }
+
+    /* Image Upload */
+    .image-upload-area {
+      border: 2px dashed var(--border-color);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #f8fafc;
+    }
+
+    .image-upload-area:hover {
+      border-color: var(--volunteer);
+      background: var(--volunteer-light);
+    }
+
+    .image-upload-area i {
+      font-size: 1.5rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .image-upload-area p {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .image-upload-area .browse-link {
+      color: var(--volunteer);
+      font-weight: 600;
+      text-decoration: underline;
+    }
+
+    /* Validation */
+    .is-invalid { border-color: var(--danger-color) !important; }
+    .invalid-feedback {
+      font-size: 0.75rem;
+      color: var(--danger-color);
+      margin-top: 0.125rem;
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 9999;
+    }
+
+    .toast-success {
+      background: white;
+      border: 1px solid var(--success-color);
+      border-left: 4px solid var(--success-color);
+      border-radius: 0.5rem;
+      padding: 0.875rem 1.25rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      animation: slideIn 0.3s ease;
+    }
+
+    .toast-success i { color: var(--success-color); font-size: 1rem; }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Sticky Footer (Mobile) */
+    .sticky-footer {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid var(--border-color);
+      padding: 0.75rem 1.25rem;
+      z-index: 100;
+      gap: 0.5rem;
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .sticky-footer .btn-primary-accent,
+    .sticky-footer .btn-text {
+      flex: 1;
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 1rem; padding-bottom: 5rem; }
+      .form-grid { grid-template-columns: 1fr; }
+      .header-actions { display: none; }
+      .sticky-footer { display: flex; }
+      .page-header h1 { font-size: 1.25rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" onclick="parent.loadContent('volunteer/volunteer-list')" title="Back to Volunteers">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <div>
+        <h1 id="pageTitle">Register Volunteer</h1>
+        <p class="subtitle">Add a new volunteer to the system</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="saveVolunteer()">
+        <i class="fas fa-check me-1"></i> Register Volunteer
+      </button>
+      <button class="btn-outline-accent" onclick="saveAndAddAnother()">
+        <i class="fas fa-plus me-1"></i> Register & Add Another
+      </button>
+      <button class="btn-text" onclick="parent.loadContent('volunteer/volunteer-list')">Cancel</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 1: Contact Link -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header" onclick="toggleAccordion(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-link"></i></div>
+        <span class="section-title">Contact Link</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body" id="sectionContact">
+      <div class="form-group full-width" style="margin-bottom: 0.75rem;">
+        <label>Link to Existing Contact</label>
+        <div class="radio-group" style="margin-bottom: 0.625rem;">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="contactMode" id="modeLink" value="link" checked onchange="toggleContactMode()">
+            <label class="form-check-label" for="modeLink">Search existing contact</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="contactMode" id="modeNew" value="new" onchange="toggleContactMode()">
+            <label class="form-check-label" for="modeNew">Create new contact</label>
+          </div>
+        </div>
+      </div>
+
+      <div id="contactSearchArea">
+        <div class="form-group full-width">
+          <div class="contact-search-wrapper">
+            <i class="fas fa-search"></i>
+            <input type="text" class="form-control" placeholder="Search contacts by name, email, phone..." id="contactSearch" oninput="simulateContactSearch(this.value)">
+          </div>
+
+          <!-- Found match -->
+          <div class="contact-search-result" id="contactFound">
+            <div class="contact-found">
+              <div class="contact-avatar-sm">AS</div>
+              <div>
+                <div class="contact-found-name">Ahmed Salim</div>
+                <div class="contact-found-code">CON-1245 &middot; ahmed@gmail.com &middot; +971 50 123 4567</div>
+              </div>
+            </div>
+            <button class="btn-primary-accent" style="padding: 0.375rem 0.75rem; font-size: 0.75rem;">Select</button>
+          </div>
+
+          <!-- No match -->
+          <div class="contact-no-match" id="contactNoMatch">
+            <i class="fas fa-info-circle"></i>
+            No contact found. Personal details below will create a new contact record.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 2: Personal Information -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header" onclick="toggleAccordion(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-user"></i></div>
+        <span class="section-title">Personal Information</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body" id="sectionPersonal">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>First Name <span class="required">*</span></label>
+          <input type="text" class="form-control" placeholder="Enter first name">
+        </div>
+        <div class="form-group">
+          <label>Last Name <span class="required">*</span></label>
+          <input type="text" class="form-control" placeholder="Enter last name">
+        </div>
+        <div class="form-group">
+          <label>Email <span class="required">*</span></label>
+          <input type="email" class="form-control" placeholder="email@example.com">
+        </div>
+        <div class="form-group">
+          <label>Phone <span class="required">*</span></label>
+          <div class="d-flex gap-2">
+            <select class="form-select" style="max-width: 100px;">
+              <option>+971</option>
+              <option>+1</option>
+              <option>+44</option>
+              <option>+91</option>
+              <option>+966</option>
+              <option>+234</option>
+            </select>
+            <input type="tel" class="form-control" placeholder="50 123 4567">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Date of Birth</label>
+          <input type="date" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Gender</label>
+          <select class="form-select">
+            <option value="">Select...</option>
+            <option>Male</option>
+            <option>Female</option>
+            <option>Other</option>
+            <option>Prefer not to say</option>
+          </select>
+        </div>
+        <div class="form-group full-width">
+          <label>Address</label>
+          <input type="text" class="form-control" placeholder="Street address">
+        </div>
+        <div class="form-group">
+          <label>City <span class="required">*</span></label>
+          <input type="text" class="form-control" placeholder="City">
+        </div>
+        <div class="form-group">
+          <label>Country <span class="required">*</span></label>
+          <select class="form-select">
+            <option value="">Select country...</option>
+            <option selected>United Arab Emirates</option>
+            <option>Saudi Arabia</option>
+            <option>United States</option>
+            <option>United Kingdom</option>
+            <option>India</option>
+            <option>Nigeria</option>
+            <option>Brazil</option>
+            <option>Morocco</option>
+            <option>Japan</option>
+          </select>
+        </div>
+        <div class="form-group full-width">
+          <label>Profile Photo</label>
+          <div class="image-upload-area">
+            <i class="fas fa-cloud-upload-alt d-block"></i>
+            <p>Drag & drop a photo here, or <span class="browse-link">browse</span></p>
+            <p style="font-size: 0.6875rem; margin-top: 0.25rem;">PNG, JPG up to 2MB</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 3: Skills & Interests -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header" onclick="toggleAccordion(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-star"></i></div>
+        <span class="section-title">Skills & Interests</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body" id="sectionSkills">
+      <div class="form-group full-width" style="margin-bottom: 1rem;">
+        <label>Skills <span class="required">*</span></label>
+        <div class="multi-select-tags">
+          <span class="multi-tag selected" onclick="toggleMultiTag(this)"><span class="tag-check"><i class="fas fa-check"></i></span> Event Management</span>
+          <span class="multi-tag" onclick="toggleMultiTag(this)"><span class="tag-check"></span> Fundraising</span>
+          <span class="multi-tag" onclick="toggleMultiTag(this)"><span class="tag-check"></span> Teaching/Training</span>
+          <span class="multi-tag" onclick="toggleMultiTag(this)"><span class="tag-check"></span> Medical/Healthcare</span>
+          <span class="multi-tag" onclick="toggleMultiTag(this)"><span class="tag-check"></span> IT/Technology</span>
+          <span class="multi-tag" onclick="toggleMultiTag(this)"><span class="tag-check"></span> Photography/Videography</span>
+          <span class="multi-tag" onclick="toggleMultiTag(this)"><span class="tag-check"></span> Driving</span>
+          <span class="multi-tag" onclick="toggleMultiTag(this)"><span class="tag-check"></span> Cooking</span>
+          <span class="multi-tag" onclick="toggleMultiTag(this)"><span class="tag-check"></span> Cleaning</span>
+          <span class="multi-tag" onclick="toggleMultiTag(this)"><span class="tag-check"></span> Translation</span>
+          <span class="multi-tag" onclick="toggleMultiTag(this)"><span class="tag-check"></span> Public Speaking</span>
+          <span class="multi-tag" onclick="toggleMultiTag(this)"><span class="tag-check"></span> Graphic Design</span>
+          <span class="multi-tag" onclick="toggleMultiTag(this)"><span class="tag-check"></span> Social Media</span>
+          <span class="multi-tag" onclick="toggleMultiTag(this)"><span class="tag-check"></span> Counseling</span>
+          <span class="multi-tag" onclick="toggleMultiTag(this)"><span class="tag-check"></span> Legal</span>
+          <span class="multi-tag" onclick="toggleMultiTag(this)"><span class="tag-check"></span> Accounting/Finance</span>
+          <span class="multi-tag" onclick="toggleMultiTag(this)"><span class="tag-check"></span> Writing/Editing</span>
+          <span class="multi-tag" onclick="toggleMultiTag(this)"><span class="tag-check"></span> Music/Arts</span>
+          <span class="multi-tag" onclick="toggleMultiTag(this)"><span class="tag-check"></span> Sports/Fitness</span>
+          <span class="multi-tag" onclick="toggleMultiTag(this)"><span class="tag-check"></span> Other</span>
+        </div>
+      </div>
+
+      <div class="form-group full-width" id="otherSkillsGroup" style="display: none; margin-bottom: 1rem;">
+        <label>Other Skills</label>
+        <input type="text" class="form-control" placeholder="Specify other skills...">
+      </div>
+
+      <div class="form-group full-width" style="margin-bottom: 1rem;">
+        <label>Interests</label>
+        <div class="multi-select-tags">
+          <span class="multi-tag" onclick="toggleMultiTag(this)"><span class="tag-check"></span> Education</span>
+          <span class="multi-tag" onclick="toggleMultiTag(this)"><span class="tag-check"></span> Healthcare</span>
+          <span class="multi-tag" onclick="toggleMultiTag(this)"><span class="tag-check"></span> Orphan Care</span>
+          <span class="multi-tag" onclick="toggleMultiTag(this)"><span class="tag-check"></span> Community Development</span>
+          <span class="multi-tag" onclick="toggleMultiTag(this)"><span class="tag-check"></span> Environment</span>
+          <span class="multi-tag" onclick="toggleMultiTag(this)"><span class="tag-check"></span> Women Empowerment</span>
+          <span class="multi-tag" onclick="toggleMultiTag(this)"><span class="tag-check"></span> Food Distribution</span>
+          <span class="multi-tag" onclick="toggleMultiTag(this)"><span class="tag-check"></span> Disaster Relief</span>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label>Languages</label>
+          <div class="tag-input-wrapper" onclick="this.querySelector('input').focus()">
+            <span class="tag-pill">Arabic <span class="remove-tag" onclick="event.stopPropagation(); this.parentElement.remove();">&times;</span></span>
+            <span class="tag-pill">English <span class="remove-tag" onclick="event.stopPropagation(); this.parentElement.remove();">&times;</span></span>
+            <input type="text" placeholder="Type and press Enter to add...">
+          </div>
+        </div>
+        <div class="form-group full-width">
+          <label>Certifications</label>
+          <div class="tag-input-wrapper" onclick="this.querySelector('input').focus()">
+            <input type="text" placeholder="e.g., First Aid (Dec 2026) — press Enter to add...">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 4: Availability -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header" onclick="toggleAccordion(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-calendar-alt"></i></div>
+        <span class="section-title">Availability</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body" id="sectionAvailability">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Availability Type</label>
+          <select class="form-select">
+            <option>Part-time</option>
+            <option>Full-time</option>
+            <option>Occasional</option>
+            <option>Events Only</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Preferred Time</label>
+          <select class="form-select">
+            <option>Morning (6 AM - 12 PM)</option>
+            <option selected>Afternoon (12 - 5 PM)</option>
+            <option>Evening (5 - 10 PM)</option>
+            <option>Flexible</option>
+          </select>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Available Days</label>
+          <div class="day-checks">
+            <div class="day-check">
+              <input class="form-check-input" type="checkbox" id="dayMon">
+              <label for="dayMon">Mon</label>
+            </div>
+            <div class="day-check">
+              <input class="form-check-input" type="checkbox" id="dayTue">
+              <label for="dayTue">Tue</label>
+            </div>
+            <div class="day-check">
+              <input class="form-check-input" type="checkbox" id="dayWed">
+              <label for="dayWed">Wed</label>
+            </div>
+            <div class="day-check">
+              <input class="form-check-input" type="checkbox" id="dayThu">
+              <label for="dayThu">Thu</label>
+            </div>
+            <div class="day-check">
+              <input class="form-check-input" type="checkbox" id="dayFri">
+              <label for="dayFri">Fri</label>
+            </div>
+            <div class="day-check">
+              <input class="form-check-input" type="checkbox" id="daySat" checked>
+              <label for="daySat">Sat</label>
+            </div>
+            <div class="day-check">
+              <input class="form-check-input" type="checkbox" id="daySun" checked>
+              <label for="daySun">Sun</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Max Hours/Week</label>
+          <input type="number" class="form-control" value="12" min="1" max="60">
+        </div>
+        <div class="form-group">
+          <label>Start Date</label>
+          <input type="date" class="form-control">
+        </div>
+
+        <div class="form-group full-width">
+          <label>Blackout Dates (unavailable periods)</label>
+          <div id="blackoutDates">
+            <div class="blackout-row">
+              <input type="date" class="form-control" placeholder="From">
+              <span style="font-size: 0.75rem; color: var(--text-secondary);">to</span>
+              <input type="date" class="form-control" placeholder="To">
+              <button class="btn-remove-row" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
+            </div>
+          </div>
+          <button class="btn-add-row" onclick="addBlackoutRow()"><i class="fas fa-plus"></i> Add Blackout Period</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 5: Emergency Contact -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header" onclick="toggleAccordion(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-phone-alt"></i></div>
+        <span class="section-title">Emergency Contact</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body" id="sectionEmergency">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Name <span class="required">*</span></label>
+          <input type="text" class="form-control" placeholder="Emergency contact name">
+        </div>
+        <div class="form-group">
+          <label>Relationship</label>
+          <select class="form-select">
+            <option value="">Select...</option>
+            <option selected>Spouse</option>
+            <option>Parent</option>
+            <option>Sibling</option>
+            <option>Child</option>
+            <option>Friend</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Phone <span class="required">*</span></label>
+          <div class="d-flex gap-2">
+            <select class="form-select" style="max-width: 100px;">
+              <option>+971</option>
+              <option>+1</option>
+              <option>+44</option>
+              <option>+91</option>
+            </select>
+            <input type="tel" class="form-control" placeholder="50 987 6543">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 6: Additional -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header" onclick="toggleAccordion(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-info-circle"></i></div>
+        <span class="section-title">Additional Information</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body" id="sectionAdditional">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>How did you hear about us?</label>
+          <select class="form-select">
+            <option value="">Select...</option>
+            <option selected>Social Media</option>
+            <option>Friend/Family</option>
+            <option>Event</option>
+            <option>Website</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Branch Assignment</label>
+          <select class="form-select">
+            <option selected>Dubai (HQ)</option>
+            <option>Abu Dhabi</option>
+            <option>Sharjah</option>
+            <option>Riyadh</option>
+          </select>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Previous Volunteer Experience</label>
+          <textarea class="form-control" placeholder="Describe any previous volunteering experience..."></textarea>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Motivation</label>
+          <textarea class="form-control" placeholder="Why do you want to volunteer with us?"></textarea>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Notes <span style="font-size: 0.6875rem; color: var(--text-secondary); font-weight: 400;">(internal, staff-only)</span></label>
+          <textarea class="form-control" placeholder="Internal notes about this volunteer..."></textarea>
+        </div>
+
+        <div class="form-group full-width">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="termsCheck" checked>
+            <label class="form-check-label" for="termsCheck" style="font-size: 0.8125rem;">
+              I agree to the volunteer code of conduct
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Action Bar -->
+  <div style="display: flex; gap: 0.5rem; justify-content: flex-end; padding-top: 0.5rem;">
+    <button class="btn-primary-accent" onclick="saveVolunteer()">
+      <i class="fas fa-check me-1"></i> Register Volunteer
+    </button>
+    <button class="btn-outline-accent" onclick="saveAndAddAnother()">
+      <i class="fas fa-plus me-1"></i> Register & Add Another
+    </button>
+    <button class="btn-text" onclick="parent.loadContent('volunteer/volunteer-list')">Cancel</button>
+  </div>
+
+  <!-- Sticky Footer (Mobile) -->
+  <div class="sticky-footer">
+    <button class="btn-primary-accent" onclick="saveVolunteer()">
+      <i class="fas fa-check me-1"></i> Register
+    </button>
+    <button class="btn-text" onclick="parent.loadContent('volunteer/volunteer-list')">Cancel</button>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    // Accordion toggle
+    function toggleAccordion(header) {
+      header.classList.toggle('collapsed');
+      const body = header.nextElementSibling;
+      body.classList.toggle('collapsed');
+    }
+
+    // Contact mode toggle
+    function toggleContactMode() {
+      const mode = document.querySelector('input[name="contactMode"]:checked').value;
+      const searchArea = document.getElementById('contactSearchArea');
+      if (mode === 'new') {
+        searchArea.style.display = 'none';
+      } else {
+        searchArea.style.display = 'block';
+      }
+    }
+
+    // Simulate contact search
+    function simulateContactSearch(val) {
+      const found = document.getElementById('contactFound');
+      const noMatch = document.getElementById('contactNoMatch');
+      if (val.length > 3 && val.toLowerCase().includes('ahmed')) {
+        found.classList.add('show');
+        noMatch.classList.remove('show');
+      } else if (val.length > 5) {
+        found.classList.remove('show');
+        noMatch.classList.add('show');
+      } else {
+        found.classList.remove('show');
+        noMatch.classList.remove('show');
+      }
+    }
+
+    // Multi-tag toggle
+    function toggleMultiTag(tag) {
+      tag.classList.toggle('selected');
+      const check = tag.querySelector('.tag-check');
+      if (tag.classList.contains('selected')) {
+        check.innerHTML = '<i class="fas fa-check"></i>';
+      } else {
+        check.innerHTML = '';
+      }
+
+      // Show/hide Other Skills field
+      const otherTag = document.querySelector('.multi-tag:last-child');
+      if (tag.textContent.trim().startsWith('Other') && tag.classList.contains('selected')) {
+        document.getElementById('otherSkillsGroup').style.display = 'block';
+      } else if (tag.textContent.trim().startsWith('Other') && !tag.classList.contains('selected')) {
+        document.getElementById('otherSkillsGroup').style.display = 'none';
+      }
+    }
+
+    // Add blackout row
+    function addBlackoutRow() {
+      const container = document.getElementById('blackoutDates');
+      const row = document.createElement('div');
+      row.className = 'blackout-row';
+      row.innerHTML = `
+        <input type="date" class="form-control" placeholder="From">
+        <span style="font-size: 0.75rem; color: var(--text-secondary);">to</span>
+        <input type="date" class="form-control" placeholder="To">
+        <button class="btn-remove-row" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
+      `;
+      container.appendChild(row);
+    }
+
+    // Tag input - Enter to add
+    document.querySelectorAll('.tag-input-wrapper input').forEach(input => {
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && this.value.trim()) {
+          e.preventDefault();
+          const pill = document.createElement('span');
+          pill.className = 'tag-pill';
+          pill.innerHTML = this.value.trim() + ' <span class="remove-tag" onclick="event.stopPropagation(); this.parentElement.remove();">&times;</span>';
+          this.parentElement.insertBefore(pill, this);
+          this.value = '';
+        }
+      });
+    });
+
+    // Save volunteer
+    function saveVolunteer() {
+      showToast('Volunteer registered successfully!');
+      setTimeout(() => {
+        parent.loadContent('volunteer/volunteer-list');
+      }, 1500);
+    }
+
+    // Save and add another
+    function saveAndAddAnother() {
+      showToast('Volunteer registered! Form reset for next entry.');
+    }
+
+    // Toast notification
+    function showToast(message) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'toast-success';
+      toast.innerHTML = '<i class="fas fa-check-circle"></i> ' + message;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+  </script>
+
+</body>
+
+</html>

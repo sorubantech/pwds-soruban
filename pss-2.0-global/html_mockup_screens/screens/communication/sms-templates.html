@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SMS Templates - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+      --sms-blue: #2563EB;
+      --sms-blue-light: #dbeafe;
+      --sms-bubble: #2563EB;
+      --sms-chat-bg: #f0f0f0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;
+    }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+    .page-header .subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 0; }
+    .header-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+
+    .btn-primary-accent {
+      background: var(--accent); border-color: var(--accent); color: white;
+      font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem;
+      border-radius: 0.5rem; border: 1px solid var(--accent); cursor: pointer; transition: all 0.15s;
+    }
+    .btn-primary-accent:hover { background: #0c6577; border-color: #0c6577; color: white; }
+
+    .btn-outline-accent {
+      background: white; border: 1px solid var(--border-color); color: var(--text-primary);
+      font-size: 0.8125rem; font-weight: 500; padding: 0.5rem 1rem;
+      border-radius: 0.5rem; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-outline-accent:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+
+    .btn-secondary {
+      background: white; border: 1px solid var(--border-color); color: var(--text-secondary);
+      font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem;
+      border-radius: 0.5rem; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-secondary:hover { border-color: var(--text-secondary); color: var(--text-primary); }
+
+    /* Status Summary */
+    .status-summary {
+      display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;
+    }
+    .status-summary .status-item {
+      font-size: 0.8125rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.375rem;
+    }
+    .status-summary .status-item strong { color: var(--text-primary); font-size: 1rem; }
+    .status-summary .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .status-dot.total { background: var(--accent); }
+    .status-dot.transactional { background: var(--sms-blue); }
+    .status-dot.promotional { background: #7c3aed; }
+
+    /* Filter Bar */
+    .filter-bar {
+      display: flex; gap: 0.75rem; margin-bottom: 1.25rem; flex-wrap: wrap; align-items: center;
+    }
+    .filter-bar .search-box { flex: 1; min-width: 200px; max-width: 320px; position: relative; }
+    .filter-bar .search-box input {
+      width: 100%; padding: 0.5rem 0.75rem 0.5rem 2.25rem; border: 1px solid var(--border-color);
+      border-radius: 0.5rem; font-size: 0.8125rem; background: white; color: var(--text-primary);
+    }
+    .filter-bar .search-box input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14,116,144,0.1); }
+    .filter-bar .search-box i { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 0.8125rem; }
+    .filter-bar select {
+      padding: 0.5rem 2rem 0.5rem 0.75rem; border: 1px solid var(--border-color);
+      border-radius: 0.5rem; font-size: 0.8125rem; background: white; color: var(--text-primary); cursor: pointer;
+    }
+    .filter-bar select:focus { outline: none; border-color: var(--accent); }
+
+    /* List Card & Table */
+    .list-card {
+      background: white; border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow); border: 1px solid var(--border-color); overflow: hidden;
+    }
+    .table-container { overflow-x: auto; }
+    .template-table { width: 100%; border-collapse: collapse; min-width: 1100px; }
+    .template-table th {
+      background: #f8fafc; font-weight: 600; color: var(--text-secondary);
+      font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.05em;
+      padding: 0.625rem 0.75rem; border-bottom: 1px solid var(--border-color); white-space: nowrap;
+    }
+    .template-table td {
+      padding: 0.75rem; border-bottom: 1px solid var(--border-color);
+      font-size: 0.8125rem; vertical-align: middle;
+    }
+    .template-table tbody tr:hover { background: #f8fafc; }
+    .template-name {
+      font-weight: 600; color: var(--text-primary); cursor: pointer;
+      font-family: 'Consolas','Monaco',monospace; font-size: 0.8125rem;
+    }
+    .template-name:hover { color: var(--accent); }
+
+    /* Badges */
+    .category-badge {
+      display: inline-block; padding: 0.125rem 0.5rem; border-radius: 9999px;
+      font-size: 0.6875rem; font-weight: 600;
+    }
+    .category-badge.transactional { background: var(--accent-bg); color: var(--accent); }
+    .category-badge.promotional { background: #faf5ff; color: #7c3aed; }
+
+    .lang-badge {
+      display: inline-block; padding: 0.125rem 0.5rem; border-radius: 9999px;
+      font-size: 0.6875rem; font-weight: 600; background: #f1f5f9; color: var(--text-secondary);
+    }
+
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1875rem 0.625rem;
+      border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; white-space: nowrap;
+    }
+    .status-badge.active { background: #dcfce7; color: #16a34a; }
+    .status-badge.draft { background: #f8fafc; color: var(--text-secondary); }
+    .status-badge.pending { background: #fef9c3; color: #ca8a04; }
+
+    .segment-warn { color: var(--warning-color); font-weight: 600; }
+    .dlt-id { font-family: 'Consolas','Monaco',monospace; font-size: 0.75rem; color: var(--text-secondary); }
+
+    /* Action Buttons */
+    .action-btn {
+      padding: 0.25rem 0.5rem; border: 1px solid var(--border-color); background: white;
+      border-radius: 0.375rem; font-size: 0.6875rem; font-weight: 600;
+      color: var(--text-secondary); cursor: pointer; transition: all 0.15s; white-space: nowrap;
+    }
+    .action-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .action-btn.danger { color: var(--danger-color); }
+    .action-btn.danger:hover { border-color: var(--danger-color); background: var(--danger-color); color: white; }
+
+    /* ======================== */
+    /* EDITOR VIEW              */
+    /* ======================== */
+    .editor-view { display: none; min-height: calc(100vh - 3rem); flex-direction: column; }
+    .editor-view.active { display: flex; }
+    .list-view { display: block; }
+    .list-view.hidden { display: none; }
+
+    .editor-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-bottom: 1rem; border-bottom: 1px solid var(--border-color); margin-bottom: 1rem;
+      flex-wrap: wrap; gap: 0.75rem;
+    }
+    .editor-header-left { display: flex; align-items: center; gap: 0.75rem; flex: 1; min-width: 0; }
+
+    .back-btn {
+      width: 36px; height: 36px; border-radius: 0.5rem; border: 1px solid var(--border-color);
+      background: white; color: var(--text-secondary); display: flex; align-items: center;
+      justify-content: center; cursor: pointer; transition: all 0.15s; font-size: 1rem; flex-shrink: 0;
+    }
+    .back-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+
+    .editor-header-right { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+
+    /* Editor Split Pane */
+    .editor-split { display: flex; flex: 1; gap: 1.25rem; min-height: 0; }
+
+    .editor-left {
+      flex: 0 0 55%; display: flex; flex-direction: column; background: white;
+      border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color);
+      overflow-y: auto; max-height: calc(100vh - 10rem);
+    }
+    .editor-right {
+      flex: 0 0 calc(45% - 1.25rem); display: flex; flex-direction: column;
+      border-radius: var(--card-radius); overflow: hidden; align-items: center; justify-content: flex-start;
+      padding: 1.5rem; background: #f8fafc;
+    }
+
+    .editor-section {
+      padding: 1.25rem; border-bottom: 1px solid var(--border-color);
+    }
+    .editor-section:last-child { border-bottom: none; }
+    .editor-section h6 {
+      font-size: 0.8125rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--text-primary);
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .editor-section h6 .optional { font-weight: 400; color: var(--text-secondary); font-size: 0.75rem; }
+
+    .form-label-custom { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.375rem; display: block; }
+    .form-label-custom .required { color: var(--danger-color); }
+
+    .form-control-custom {
+      width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--border-color);
+      border-radius: 0.5rem; font-size: 0.8125rem; color: var(--text-primary); transition: border-color 0.15s;
+    }
+    .form-control-custom:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14,116,144,0.1); }
+
+    .form-hint { font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.25rem; }
+
+    /* Body Textarea */
+    .body-textarea {
+      width: 100%; min-height: 120px; padding: 0.75rem; border: 1px solid var(--border-color);
+      border-radius: 0.5rem; font-size: 0.8125rem; font-family: inherit;
+      color: var(--text-primary); resize: vertical; line-height: 1.6;
+    }
+    .body-textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14,116,144,0.1); }
+
+    /* Character Counter */
+    .char-counter-bar {
+      display: flex; align-items: center; gap: 1rem; margin-top: 0.5rem; flex-wrap: wrap;
+    }
+    .char-counter-bar .counter-item {
+      display: flex; align-items: center; gap: 0.375rem; font-size: 0.75rem; color: var(--text-secondary);
+    }
+    .char-counter-bar .counter-item strong { color: var(--text-primary); }
+    .char-counter-bar .counter-item.green strong { color: var(--success-color); }
+    .char-counter-bar .counter-item.amber strong { color: var(--warning-color); }
+    .char-counter-bar .counter-item.red strong { color: var(--danger-color); }
+
+    .char-progress {
+      width: 100%; height: 4px; background: #e2e8f0; border-radius: 2px; margin-top: 0.375rem; overflow: hidden;
+    }
+    .char-progress .bar {
+      height: 100%; border-radius: 2px; transition: width 0.2s, background 0.2s;
+    }
+    .char-progress .bar.green { background: var(--success-color); }
+    .char-progress .bar.amber { background: var(--warning-color); }
+    .char-progress .bar.red { background: var(--danger-color); }
+
+    .encoding-badge {
+      display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1875rem 0.625rem;
+      border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; background: var(--sms-blue-light); color: var(--sms-blue);
+    }
+
+    .segment-badge {
+      display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1875rem 0.625rem;
+      border-radius: 9999px; font-size: 0.6875rem; font-weight: 600;
+    }
+    .segment-badge.green { background: #dcfce7; color: #16a34a; }
+    .segment-badge.amber { background: #fef9c3; color: #ca8a04; }
+    .segment-badge.red { background: #fef2f2; color: #991b1b; }
+
+    .placeholder-btn {
+      display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.375rem 0.75rem;
+      border: 1px dashed var(--accent); background: white; border-radius: 0.5rem;
+      font-size: 0.75rem; font-weight: 600; color: var(--accent); cursor: pointer; transition: all 0.15s;
+    }
+    .placeholder-btn:hover { background: var(--accent-bg); }
+
+    .placeholder-dropdown {
+      display: none; position: absolute; top: 100%; left: 0; z-index: 100;
+      background: white; border: 1px solid var(--border-color); border-radius: 0.5rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12); width: 280px; max-height: 300px; overflow-y: auto;
+    }
+    .placeholder-dropdown.show { display: block; }
+    .placeholder-group-title {
+      padding: 0.375rem 0.75rem; font-size: 0.625rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.05em; color: var(--text-secondary); background: #f8fafc; border-bottom: 1px solid var(--border-color);
+    }
+    .placeholder-option {
+      padding: 0.375rem 0.75rem; font-size: 0.8125rem; cursor: pointer; transition: background 0.1s;
+      font-family: 'Consolas','Monaco',monospace;
+    }
+    .placeholder-option:hover { background: var(--accent-bg); color: var(--accent); }
+
+    /* Variable Mapping Table */
+    .var-table { width: 100%; border-collapse: collapse; }
+    .var-table th {
+      background: #f8fafc; padding: 0.5rem 0.75rem; font-size: 0.6875rem; font-weight: 600;
+      color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border-color); text-align: left;
+    }
+    .var-table td {
+      padding: 0.5rem 0.75rem; font-size: 0.8125rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle;
+    }
+    .var-table tbody tr:hover { background: #f8fafc; }
+    .var-tag {
+      display: inline-block; padding: 0.125rem 0.5rem; border-radius: 0.25rem;
+      font-size: 0.75rem; font-weight: 600; background: #fef3c7; color: #92400e;
+      font-family: 'Consolas','Monaco',monospace;
+    }
+
+    /* DLT Section */
+    .dlt-section {
+      border: 1px solid var(--border-color); border-radius: 0.5rem; overflow: hidden;
+    }
+    .dlt-header {
+      display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem;
+      background: #f8fafc; cursor: pointer; transition: background 0.15s;
+    }
+    .dlt-header:hover { background: #f1f5f9; }
+    .dlt-header h6 { margin: 0; font-size: 0.8125rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
+    .dlt-body { padding: 1rem; display: none; border-top: 1px solid var(--border-color); }
+    .dlt-body.show { display: block; }
+
+    .info-box {
+      background: var(--accent-bg); border: 1px solid #a5f3fc; border-radius: 0.5rem;
+      padding: 0.75rem 1rem; font-size: 0.75rem; color: var(--accent);
+      display: flex; align-items: flex-start; gap: 0.5rem; margin-bottom: 1rem;
+    }
+    .info-box i { margin-top: 0.125rem; flex-shrink: 0; }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      position: relative; width: 40px; height: 22px; display: inline-block;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; inset: 0; background: #cbd5e1; border-radius: 11px;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .toggle-slider::before {
+      content: ''; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px;
+      background: white; border-radius: 50%; transition: transform 0.2s;
+    }
+    .toggle-switch input:checked + .toggle-slider { background: var(--accent); }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); }
+
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.625rem 0; border-bottom: 1px solid #f1f5f9;
+    }
+    .toggle-row:last-child { border-bottom: none; }
+    .toggle-label { font-size: 0.8125rem; font-weight: 600; }
+    .toggle-desc { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.125rem; }
+
+    /* Editor Footer */
+    .editor-footer {
+      display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem;
+      padding-top: 1rem; border-top: 1px solid var(--border-color); margin-top: 1rem; flex-wrap: wrap;
+    }
+
+    /* ======================== */
+    /* SMS PHONE PREVIEW        */
+    /* ======================== */
+    .phone-frame {
+      width: 320px; max-width: 100%; background: white; border-radius: 24px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15); overflow: hidden; border: 2px solid #e2e8f0;
+    }
+    .phone-header {
+      background: var(--sms-blue); color: white; padding: 0.75rem 1rem;
+      display: flex; align-items: center; gap: 0.75rem;
+    }
+    .phone-header .back-icon { font-size: 1rem; cursor: pointer; }
+    .phone-header .contact-info { flex: 1; }
+    .phone-header .contact-name { font-size: 0.8125rem; font-weight: 600; }
+    .phone-header .contact-status { font-size: 0.625rem; opacity: 0.85; }
+    .phone-header-actions { display: flex; gap: 0.75rem; font-size: 0.875rem; opacity: 0.85; }
+
+    .phone-chat {
+      min-height: 300px; padding: 1rem; background: var(--sms-chat-bg);
+      display: flex; flex-direction: column; justify-content: flex-end;
+    }
+    .phone-date {
+      text-align: center; font-size: 0.625rem; color: #999; margin-bottom: 0.75rem;
+      font-weight: 600;
+    }
+    .sms-bubble {
+      background: var(--sms-bubble); color: white; border-radius: 16px 16px 4px 16px;
+      padding: 0.75rem 1rem; font-size: 0.8125rem; line-height: 1.5;
+      max-width: 85%; margin-left: auto; position: relative;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .sms-bubble .bubble-meta {
+      text-align: right; font-size: 0.625rem; opacity: 0.7; margin-top: 0.375rem;
+    }
+    .sms-bubble .char-info {
+      text-align: right; font-size: 0.5625rem; opacity: 0.6; margin-top: 0.125rem;
+    }
+
+    .phone-input-bar {
+      display: flex; align-items: center; gap: 0.5rem; padding: 0.625rem 0.75rem;
+      border-top: 1px solid #e0e0e0; background: white;
+    }
+    .phone-input-bar .input-mock {
+      flex: 1; padding: 0.4rem 0.75rem; border-radius: 18px; background: #f0f0f0;
+      font-size: 0.75rem; color: #999;
+    }
+    .phone-input-bar .send-icon {
+      width: 32px; height: 32px; border-radius: 50%; background: var(--sms-blue);
+      display: flex; align-items: center; justify-content: center; color: white; font-size: 0.75rem;
+    }
+
+    .preview-label {
+      text-align: center; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary);
+      margin-bottom: 1rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .editor-split { flex-direction: column; }
+      .editor-left { flex: 1; max-height: none; }
+      .editor-right { flex: 1; }
+    }
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .filter-bar .search-box { max-width: 100%; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ==================== LIST VIEW ==================== -->
+  <div class="list-view" id="listView">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem;">
+          <h1><i class="fas fa-comment-sms" style="color: var(--sms-blue);"></i> SMS Templates</h1>
+        </div>
+        <p class="subtitle">Create and manage SMS message templates</p>
+        <div class="status-summary" style="margin-top: 0.5rem;">
+          <div class="status-item"><span class="status-dot total"></span> Total: <strong>14</strong></div>
+          <div class="status-item"><span class="status-dot transactional"></span> Transactional: <strong>8</strong></div>
+          <div class="status-item"><span class="status-dot promotional"></span> Promotional: <strong>6</strong></div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn-primary-accent" onclick="showEditor()">
+          <i class="fas fa-plus me-1"></i> Create Template
+        </button>
+        <button class="btn-outline-accent">
+          <i class="fas fa-file-import me-1"></i> Import from DLT
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Search templates...">
+      </div>
+      <select>
+        <option>All Categories</option>
+        <option>Transactional</option>
+        <option>Promotional</option>
+      </select>
+      <select>
+        <option>All Languages</option>
+        <option>English</option>
+        <option>Arabic</option>
+        <option>Hindi</option>
+        <option>Portuguese</option>
+        <option>Bengali</option>
+        <option>French</option>
+        <option>Spanish</option>
+      </select>
+      <select>
+        <option>All Statuses</option>
+        <option>Active</option>
+        <option>Draft</option>
+        <option>DLT Registered</option>
+        <option>DLT Pending</option>
+      </select>
+    </div>
+
+    <!-- Template Table -->
+    <div class="list-card">
+      <div class="table-container">
+        <table class="template-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Template Name</th>
+              <th>Category</th>
+              <th>Language</th>
+              <th>Chars</th>
+              <th>Segments</th>
+              <th>DLT ID</th>
+              <th>Status</th>
+              <th>Last Used</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td><span class="template-name" onclick="showEditor()">donation_receipt_sms</span></td>
+              <td><span class="category-badge transactional">Transactional</span></td>
+              <td><span class="lang-badge">English</span></td>
+              <td>142</td>
+              <td>1</td>
+              <td><span class="dlt-id">DLT-10045</span></td>
+              <td><span class="status-badge active"><i class="fas fa-check-circle"></i> Active</span></td>
+              <td>Apr 12</td>
+              <td>
+                <button class="action-btn" onclick="showEditor()">Edit</button>
+                <button class="action-btn">Preview</button>
+                <button class="action-btn">Duplicate</button>
+                <button class="action-btn danger">Delete</button>
+              </td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td><span class="template-name">donation_receipt_sms_hi</span></td>
+              <td><span class="category-badge transactional">Transactional</span></td>
+              <td><span class="lang-badge">Hindi</span></td>
+              <td>68</td>
+              <td>1 <span style="font-size:0.6875rem; color:var(--text-secondary);">(Unicode)</span></td>
+              <td><span class="dlt-id">DLT-10046</span></td>
+              <td><span class="status-badge active"><i class="fas fa-check-circle"></i> Active</span></td>
+              <td>Apr 11</td>
+              <td>
+                <button class="action-btn">Edit</button>
+                <button class="action-btn">Preview</button>
+                <button class="action-btn">Duplicate</button>
+                <button class="action-btn danger">Delete</button>
+              </td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td><span class="template-name">donation_thankyou_sms</span></td>
+              <td><span class="category-badge promotional">Promotional</span></td>
+              <td><span class="lang-badge">English</span></td>
+              <td>155</td>
+              <td>1</td>
+              <td><span class="dlt-id">DLT-10047</span></td>
+              <td><span class="status-badge active"><i class="fas fa-check-circle"></i> Active</span></td>
+              <td>Apr 10</td>
+              <td>
+                <button class="action-btn">Edit</button>
+                <button class="action-btn">Preview</button>
+                <button class="action-btn">Duplicate</button>
+                <button class="action-btn danger">Delete</button>
+              </td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td><span class="template-name">event_reminder_sms</span></td>
+              <td><span class="category-badge transactional">Transactional</span></td>
+              <td><span class="lang-badge">English</span></td>
+              <td>148</td>
+              <td>1</td>
+              <td><span style="color: var(--text-secondary);">—</span></td>
+              <td><span class="status-badge active"><i class="fas fa-check-circle"></i> Active</span></td>
+              <td>Apr 8</td>
+              <td>
+                <button class="action-btn">Edit</button>
+                <button class="action-btn">Preview</button>
+                <button class="action-btn">Duplicate</button>
+                <button class="action-btn danger">Delete</button>
+              </td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td><span class="template-name">campaign_appeal_sms</span></td>
+              <td><span class="category-badge promotional">Promotional</span></td>
+              <td><span class="lang-badge">English</span></td>
+              <td>158</td>
+              <td>1</td>
+              <td><span style="color: var(--text-secondary);">—</span></td>
+              <td><span class="status-badge active"><i class="fas fa-check-circle"></i> Active</span></td>
+              <td>Apr 5</td>
+              <td>
+                <button class="action-btn">Edit</button>
+                <button class="action-btn">Preview</button>
+                <button class="action-btn">Duplicate</button>
+                <button class="action-btn danger">Delete</button>
+              </td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td><span class="template-name">recurring_failed_sms</span></td>
+              <td><span class="category-badge transactional">Transactional</span></td>
+              <td><span class="lang-badge">English</span></td>
+              <td>136</td>
+              <td>1</td>
+              <td><span class="dlt-id">DLT-10048</span></td>
+              <td><span class="status-badge active"><i class="fas fa-check-circle"></i> Active</span></td>
+              <td>Apr 3</td>
+              <td>
+                <button class="action-btn">Edit</button>
+                <button class="action-btn">Preview</button>
+                <button class="action-btn">Duplicate</button>
+                <button class="action-btn danger">Delete</button>
+              </td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td><span class="template-name">pledge_reminder_sms</span></td>
+              <td><span class="category-badge transactional">Transactional</span></td>
+              <td><span class="lang-badge">English</span></td>
+              <td>145</td>
+              <td>1</td>
+              <td><span class="dlt-id">DLT-10049</span></td>
+              <td><span class="status-badge active"><i class="fas fa-check-circle"></i> Active</span></td>
+              <td>Apr 1</td>
+              <td>
+                <button class="action-btn">Edit</button>
+                <button class="action-btn">Preview</button>
+                <button class="action-btn">Duplicate</button>
+                <button class="action-btn danger">Delete</button>
+              </td>
+            </tr>
+            <tr>
+              <td>8</td>
+              <td><span class="template-name">membership_renewal_sms</span></td>
+              <td><span class="category-badge transactional">Transactional</span></td>
+              <td><span class="lang-badge">English</span></td>
+              <td>152</td>
+              <td>1</td>
+              <td><span style="color: var(--text-secondary);">—</span></td>
+              <td><span class="status-badge active"><i class="fas fa-check-circle"></i> Active</span></td>
+              <td>Mar 28</td>
+              <td>
+                <button class="action-btn">Edit</button>
+                <button class="action-btn">Preview</button>
+                <button class="action-btn">Duplicate</button>
+                <button class="action-btn danger">Delete</button>
+              </td>
+            </tr>
+            <tr>
+              <td>9</td>
+              <td><span class="template-name">year_end_appeal_sms</span></td>
+              <td><span class="category-badge promotional">Promotional</span></td>
+              <td><span class="lang-badge">English</span></td>
+              <td>290</td>
+              <td><span class="segment-warn">2 <i class="fas fa-exclamation-triangle"></i></span></td>
+              <td><span style="color: var(--text-secondary);">—</span></td>
+              <td><span class="status-badge active"><i class="fas fa-check-circle"></i> Active</span></td>
+              <td>Dec 25</td>
+              <td>
+                <button class="action-btn">Edit</button>
+                <button class="action-btn">Preview</button>
+                <button class="action-btn">Duplicate</button>
+                <button class="action-btn danger">Delete</button>
+              </td>
+            </tr>
+            <tr>
+              <td>10</td>
+              <td><span class="template-name">volunteer_shift_sms</span></td>
+              <td><span class="category-badge transactional">Transactional</span></td>
+              <td><span class="lang-badge">English</span></td>
+              <td>128</td>
+              <td>1</td>
+              <td><span style="color: var(--text-secondary);">—</span></td>
+              <td><span class="status-badge active"><i class="fas fa-check-circle"></i> Active</span></td>
+              <td>Mar 20</td>
+              <td>
+                <button class="action-btn">Edit</button>
+                <button class="action-btn">Preview</button>
+                <button class="action-btn">Duplicate</button>
+                <button class="action-btn danger">Delete</button>
+              </td>
+            </tr>
+            <tr>
+              <td>11</td>
+              <td><span class="template-name">receipt_sms_ar</span></td>
+              <td><span class="category-badge transactional">Transactional</span></td>
+              <td><span class="lang-badge">Arabic</span></td>
+              <td>65</td>
+              <td>1 <span style="font-size:0.6875rem; color:var(--text-secondary);">(Unicode)</span></td>
+              <td><span style="color: var(--text-secondary);">—</span></td>
+              <td><span class="status-badge active"><i class="fas fa-check-circle"></i> Active</span></td>
+              <td>Mar 15</td>
+              <td>
+                <button class="action-btn">Edit</button>
+                <button class="action-btn">Preview</button>
+                <button class="action-btn">Duplicate</button>
+                <button class="action-btn danger">Delete</button>
+              </td>
+            </tr>
+            <tr>
+              <td>12</td>
+              <td><span class="template-name">ramadan_appeal_sms</span></td>
+              <td><span class="category-badge promotional">Promotional</span></td>
+              <td><span class="lang-badge">English</span></td>
+              <td>156</td>
+              <td>1</td>
+              <td><span style="color: var(--text-secondary);">—</span></td>
+              <td><span class="status-badge draft"><i class="fas fa-file-alt"></i> Draft</span></td>
+              <td>—</td>
+              <td>
+                <button class="action-btn">Edit</button>
+                <button class="action-btn">Preview</button>
+                <button class="action-btn danger">Delete</button>
+              </td>
+            </tr>
+            <tr>
+              <td>13</td>
+              <td><span class="template-name">dlt_pending_template</span></td>
+              <td><span class="category-badge promotional">Promotional</span></td>
+              <td><span class="lang-badge">Hindi</span></td>
+              <td>62</td>
+              <td>1 <span style="font-size:0.6875rem; color:var(--text-secondary);">(Unicode)</span></td>
+              <td><span class="status-badge pending" style="padding: 0.125rem 0.375rem; font-size: 0.625rem;">Pending</span></td>
+              <td><span class="status-badge pending"><i class="fas fa-clock"></i> DLT Pending</span></td>
+              <td>—</td>
+              <td>
+                <button class="action-btn">Preview</button>
+              </td>
+            </tr>
+            <tr>
+              <td>14</td>
+              <td><span class="template-name">collection_confirm_sms</span></td>
+              <td><span class="category-badge transactional">Transactional</span></td>
+              <td><span class="lang-badge">English</span></td>
+              <td>140</td>
+              <td>1</td>
+              <td><span style="color: var(--text-secondary);">—</span></td>
+              <td><span class="status-badge draft"><i class="fas fa-file-alt"></i> Draft</span></td>
+              <td>—</td>
+              <td>
+                <button class="action-btn">Edit</button>
+                <button class="action-btn">Preview</button>
+                <button class="action-btn danger">Delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== EDITOR VIEW ==================== -->
+  <div class="editor-view" id="editorView">
+
+    <!-- Editor Header -->
+    <div class="editor-header">
+      <div class="editor-header-left">
+        <button class="back-btn" onclick="showList()" title="Back to templates">
+          <i class="fas fa-arrow-left"></i>
+        </button>
+        <div style="flex: 1; display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+          <input type="text" class="form-control-custom" value="donation_receipt_sms" style="max-width: 260px; font-family: 'Consolas','Monaco',monospace;" placeholder="Template name">
+          <select class="form-control-custom" style="max-width: 160px;">
+            <option value="transactional" selected>Transactional</option>
+            <option value="promotional">Promotional</option>
+          </select>
+          <select class="form-control-custom" style="max-width: 140px;">
+            <option>English</option>
+            <option>Arabic</option>
+            <option>Hindi</option>
+            <option>Portuguese</option>
+            <option>Bengali</option>
+            <option>French</option>
+            <option>Spanish</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Editor Split Pane -->
+    <div class="editor-split">
+
+      <!-- Left Panel: Form -->
+      <div class="editor-left">
+
+        <!-- Section 1: Message Body -->
+        <div class="editor-section">
+          <h6><i class="fas fa-message" style="color: var(--sms-blue);"></i> Message Body <span class="required">*</span></h6>
+
+          <textarea class="body-textarea" id="smsBody" oninput="updatePreview()">Dear {{contact.first_name}}, thank you for your donation of {{donation.currency}} {{donation.amount}} to {{donation.purpose}}. Receipt: {{donation.receipt_number}}. Tax-deductible under {{organization.tax_code}}. -Hope Foundation</textarea>
+
+          <!-- Character Counter -->
+          <div class="char-progress">
+            <div class="bar green" id="charBar" style="width: 88.75%;"></div>
+          </div>
+          <div class="char-counter-bar">
+            <div class="counter-item green" id="charCounter">
+              Characters: <strong>142 / 160</strong>
+            </div>
+            <div class="counter-item">
+              <span class="encoding-badge" id="encodingBadge"><i class="fas fa-font"></i> GSM-7 &middot; 160 chars/segment</span>
+            </div>
+            <div class="counter-item">
+              Segments: <span class="segment-badge green" id="segmentBadge">1</span>
+            </div>
+            <div class="counter-item">
+              Est. cost: <strong>~$0.04</strong> per recipient
+            </div>
+          </div>
+
+          <!-- Placeholder Insertion -->
+          <div style="margin-top: 0.75rem; position: relative;" id="placeholderContainer">
+            <button class="placeholder-btn" onclick="togglePlaceholderDropdown()">
+              <i class="fas fa-plus"></i> Insert Placeholder
+            </button>
+            <div class="placeholder-dropdown" id="placeholderDropdown">
+              <div class="placeholder-group-title">Contact</div>
+              <div class="placeholder-option" onclick="insertPlaceholder('{{contact.first_name}}')">{{contact.first_name}}</div>
+              <div class="placeholder-option" onclick="insertPlaceholder('{{contact.last_name}}')">{{contact.last_name}}</div>
+              <div class="placeholder-option" onclick="insertPlaceholder('{{contact.full_name}}')">{{contact.full_name}}</div>
+              <div class="placeholder-option" onclick="insertPlaceholder('{{contact.mobile}}')">{{contact.mobile}}</div>
+              <div class="placeholder-group-title">Donation</div>
+              <div class="placeholder-option" onclick="insertPlaceholder('{{donation.amount}}')">{{donation.amount}}</div>
+              <div class="placeholder-option" onclick="insertPlaceholder('{{donation.currency}}')">{{donation.currency}}</div>
+              <div class="placeholder-option" onclick="insertPlaceholder('{{donation.purpose}}')">{{donation.purpose}}</div>
+              <div class="placeholder-option" onclick="insertPlaceholder('{{donation.receipt_number}}')">{{donation.receipt_number}}</div>
+              <div class="placeholder-option" onclick="insertPlaceholder('{{donation.date}}')">{{donation.date}}</div>
+              <div class="placeholder-group-title">Organization</div>
+              <div class="placeholder-option" onclick="insertPlaceholder('{{organization.name}}')">{{organization.name}}</div>
+              <div class="placeholder-option" onclick="insertPlaceholder('{{organization.tax_code}}')">{{organization.tax_code}}</div>
+              <div class="placeholder-option" onclick="insertPlaceholder('{{organization.phone}}')">{{organization.phone}}</div>
+              <div class="placeholder-group-title">Campaign</div>
+              <div class="placeholder-option" onclick="insertPlaceholder('{{campaign.name}}')">{{campaign.name}}</div>
+              <div class="placeholder-option" onclick="insertPlaceholder('{{campaign.goal}}')">{{campaign.goal}}</div>
+              <div class="placeholder-group-title">Event</div>
+              <div class="placeholder-option" onclick="insertPlaceholder('{{event.name}}')">{{event.name}}</div>
+              <div class="placeholder-option" onclick="insertPlaceholder('{{event.date}}')">{{event.date}}</div>
+              <div class="placeholder-option" onclick="insertPlaceholder('{{event.venue}}')">{{event.venue}}</div>
+              <div class="placeholder-group-title">System</div>
+              <div class="placeholder-option" onclick="insertPlaceholder('{{system.date}}')">{{system.date}}</div>
+              <div class="placeholder-option" onclick="insertPlaceholder('{{system.opt_out_link}}')">{{system.opt_out_link}}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Placeholder Mapping -->
+        <div class="editor-section">
+          <h6><i class="fas fa-table-cells" style="color: var(--accent);"></i> Placeholder Mapping &amp; Preview</h6>
+          <table class="var-table">
+            <thead>
+              <tr>
+                <th>Placeholder</th>
+                <th>PSS Field</th>
+                <th>Sample Value</th>
+                <th>Fallback</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="var-tag">{{contact.first_name}}</span></td>
+                <td>Contact: First Name</td>
+                <td>Sarah</td>
+                <td><input type="text" value="Valued Donor" style="padding:0.25rem 0.5rem; border:1px solid var(--border-color); border-radius:0.375rem; font-size:0.75rem; width:100%;"></td>
+              </tr>
+              <tr>
+                <td><span class="var-tag">{{donation.amount}}</span></td>
+                <td>Donation: Amount</td>
+                <td>500</td>
+                <td><input type="text" value="" placeholder="—" style="padding:0.25rem 0.5rem; border:1px solid var(--border-color); border-radius:0.375rem; font-size:0.75rem; width:100%;"></td>
+              </tr>
+              <tr>
+                <td><span class="var-tag">{{donation.currency}}</span></td>
+                <td>Donation: Currency Symbol</td>
+                <td>$</td>
+                <td><input type="text" value="" placeholder="—" style="padding:0.25rem 0.5rem; border:1px solid var(--border-color); border-radius:0.375rem; font-size:0.75rem; width:100%;"></td>
+              </tr>
+              <tr>
+                <td><span class="var-tag">{{donation.purpose}}</span></td>
+                <td>Donation: Purpose</td>
+                <td>Children's Education</td>
+                <td><input type="text" value="General Fund" style="padding:0.25rem 0.5rem; border:1px solid var(--border-color); border-radius:0.375rem; font-size:0.75rem; width:100%;"></td>
+              </tr>
+              <tr>
+                <td><span class="var-tag">{{donation.receipt_number}}</span></td>
+                <td>Donation: Receipt No.</td>
+                <td>RCP-2026-0892</td>
+                <td><input type="text" value="" placeholder="—" style="padding:0.25rem 0.5rem; border:1px solid var(--border-color); border-radius:0.375rem; font-size:0.75rem; width:100%;"></td>
+              </tr>
+              <tr>
+                <td><span class="var-tag">{{organization.tax_code}}</span></td>
+                <td>Org: Tax Code</td>
+                <td>501(c)(3)</td>
+                <td><input type="text" value="" placeholder="—" style="padding:0.25rem 0.5rem; border:1px solid var(--border-color); border-radius:0.375rem; font-size:0.75rem; width:100%;"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Section 3: DLT Registration -->
+        <div class="editor-section">
+          <div class="dlt-section">
+            <div class="dlt-header" onclick="toggleDLT()">
+              <h6><i class="fas fa-shield-halved" style="color: var(--accent);"></i> DLT Registration (India) <span class="optional">— Collapsible</span></h6>
+              <i class="fas fa-chevron-down" id="dltChevron" style="color: var(--text-secondary); font-size: 0.75rem; transition: transform 0.2s;"></i>
+            </div>
+            <div class="dlt-body" id="dltBody">
+              <div class="info-box">
+                <i class="fas fa-info-circle"></i>
+                <span>Indian TRAI regulations require all SMS templates to be registered on the DLT platform before sending. Template content must exactly match the DLT-registered content.</span>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                  <label class="form-label-custom">DLT Template ID</label>
+                  <input type="text" class="form-control-custom" value="1234567890123456">
+                </div>
+                <div>
+                  <label class="form-label-custom">DLT Entity ID</label>
+                  <input type="text" class="form-control-custom" value="9876543210" readonly style="background:#f8fafc; color:var(--text-secondary);">
+                </div>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                  <label class="form-label-custom">Registration Status</label>
+                  <div><span class="status-badge active"><i class="fas fa-check-circle"></i> Registered</span></div>
+                </div>
+                <div>
+                  <label class="form-label-custom">Principal Entity Name</label>
+                  <input type="text" class="form-control-custom" value="Hope Foundation India" readonly style="background:#f8fafc; color:var(--text-secondary);">
+                </div>
+              </div>
+              <button class="btn-outline-accent" style="font-size: 0.75rem;">
+                <i class="fas fa-external-link-alt me-1"></i> Register on DLT
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 4: Sending Rules -->
+        <div class="editor-section">
+          <h6><i class="fas fa-cog" style="color: var(--accent);"></i> Sending Rules</h6>
+
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">Quiet Hours</div>
+              <div class="toggle-desc">Promotional SMS will be queued and sent after quiet hours end (9:00 AM recipient's local time)</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">Retry on Failure</div>
+              <div class="toggle-desc">Automatically retry sending if delivery fails</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.75rem;">
+            <div>
+              <label class="form-label-custom">Retry Attempts</label>
+              <select class="form-control-custom">
+                <option>1</option>
+                <option selected>2</option>
+                <option>3</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label-custom">Retry Delay</label>
+              <select class="form-control-custom">
+                <option>5 min</option>
+                <option selected>15 min</option>
+                <option>30 min</option>
+                <option>1 hour</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Panel: Phone Preview -->
+      <div class="editor-right">
+        <div class="preview-label"><i class="fas fa-mobile-alt me-1"></i> SMS Preview</div>
+
+        <div class="phone-frame">
+          <div class="phone-header">
+            <span class="back-icon"><i class="fas fa-chevron-left"></i></span>
+            <div class="contact-info">
+              <div class="contact-name">Messages &middot; HopeFound</div>
+            </div>
+            <div class="phone-header-actions">
+              <i class="fas fa-ellipsis-v"></i>
+            </div>
+          </div>
+
+          <div class="phone-chat">
+            <div class="phone-date">Today, 10:15 AM</div>
+            <div class="sms-bubble" id="previewBubble">
+              <span id="previewText">Dear Sarah, thank you for your donation of $500 to Children's Education. Receipt: RCP-2026-0892. Tax-deductible under 501(c)(3). -Hope Foundation</span>
+              <div class="bubble-meta">10:15 AM <i class="fas fa-check-double" style="margin-left:0.25rem;"></i></div>
+              <div class="char-info" id="previewCharInfo">142 chars &middot; 1 segment</div>
+            </div>
+          </div>
+
+          <div class="phone-input-bar">
+            <div class="input-mock">SMS message</div>
+            <div class="send-icon"><i class="fas fa-arrow-up"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Editor Footer -->
+    <div class="editor-footer">
+      <button class="btn-secondary" onclick="showList()">Cancel</button>
+      <button class="btn-outline-accent">
+        <i class="fas fa-save me-1"></i> Save as Draft
+      </button>
+      <button class="btn-primary-accent">
+        <i class="fas fa-check me-1"></i> Save &amp; Activate
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // ---- View Switching ----
+    function showEditor() {
+      document.getElementById('listView').classList.add('hidden');
+      document.getElementById('editorView').classList.add('active');
+    }
+    function showList() {
+      document.getElementById('listView').classList.remove('hidden');
+      document.getElementById('editorView').classList.remove('active');
+    }
+
+    // ---- Placeholder Dropdown ----
+    function togglePlaceholderDropdown() {
+      document.getElementById('placeholderDropdown').classList.toggle('show');
+    }
+    function insertPlaceholder(ph) {
+      const ta = document.getElementById('smsBody');
+      const start = ta.selectionStart;
+      const end = ta.selectionEnd;
+      ta.value = ta.value.substring(0, start) + ph + ta.value.substring(end);
+      ta.focus();
+      ta.selectionStart = ta.selectionEnd = start + ph.length;
+      document.getElementById('placeholderDropdown').classList.remove('show');
+      updatePreview();
+    }
+    document.addEventListener('click', function(e) {
+      if (!document.getElementById('placeholderContainer').contains(e.target)) {
+        document.getElementById('placeholderDropdown').classList.remove('show');
+      }
+    });
+
+    // ---- DLT Toggle ----
+    function toggleDLT() {
+      const body = document.getElementById('dltBody');
+      const chevron = document.getElementById('dltChevron');
+      body.classList.toggle('show');
+      chevron.style.transform = body.classList.contains('show') ? 'rotate(180deg)' : 'rotate(0)';
+    }
+
+    // ---- GSM-7 detection ----
+    const GSM7_CHARS = '@\u00a3$\u00a5\u00e8\u00e9\u00f9\u00ec\u00f2\u00c7\n\u00d8\u00f8\r\u00c5\u00e5\u0394_\u03a6\u0393\u039b\u03a9\u03a0\u03a8\u03a3\u0398\u039e\u00c6\u00e6\u00df\u00c9 !"#\u00a4%&\'()*+,-./0123456789:;<=>?\u00a1ABCDEFGHIJKLMNOPQRSTUVWXYZ\u00c4\u00d6\u00d1\u00dc\u00a7\u00bfabcdefghijklmnopqrstuvwxyz\u00e4\u00f6\u00f1\u00fc\u00e0';
+    const GSM7_EXT = '|^{}[]~\\€';
+
+    function isGSM7(text) {
+      for (let ch of text) {
+        if (GSM7_CHARS.indexOf(ch) === -1 && GSM7_EXT.indexOf(ch) === -1) return false;
+      }
+      return true;
+    }
+
+    function countGSM7Chars(text) {
+      let count = 0;
+      for (let ch of text) {
+        count += GSM7_EXT.indexOf(ch) !== -1 ? 2 : 1;
+      }
+      return count;
+    }
+
+    function calcSegments(text) {
+      const gsm = isGSM7(text);
+      const len = gsm ? countGSM7Chars(text) : text.length;
+      const singleLimit = gsm ? 160 : 70;
+      const multiLimit = gsm ? 153 : 67;
+      if (len === 0) return { chars: 0, segments: 0, encoding: gsm ? 'GSM-7' : 'Unicode', limit: singleLimit };
+      if (len <= singleLimit) return { chars: len, segments: 1, encoding: gsm ? 'GSM-7' : 'Unicode', limit: singleLimit };
+      return { chars: len, segments: Math.ceil(len / multiLimit), encoding: gsm ? 'GSM-7' : 'Unicode', limit: singleLimit };
+    }
+
+    // ---- Sample values for preview ----
+    const sampleValues = {
+      '{{contact.first_name}}': 'Sarah',
+      '{{contact.last_name}}': 'Johnson',
+      '{{contact.full_name}}': 'Sarah Johnson',
+      '{{contact.mobile}}': '+1 555-0101',
+      '{{donation.amount}}': '500',
+      '{{donation.currency}}': '$',
+      '{{donation.purpose}}': "Children's Education",
+      '{{donation.receipt_number}}': 'RCP-2026-0892',
+      '{{donation.date}}': 'Apr 12, 2026',
+      '{{organization.name}}': 'Hope Foundation',
+      '{{organization.tax_code}}': '501(c)(3)',
+      '{{organization.phone}}': '+1 415-555-0100',
+      '{{campaign.name}}': 'Ramadan Appeal',
+      '{{campaign.goal}}': '$50,000',
+      '{{event.name}}': 'Annual Gala',
+      '{{event.date}}': 'May 15, 2026',
+      '{{event.venue}}': 'Grand Ballroom',
+      '{{system.date}}': 'Apr 12, 2026',
+      '{{system.opt_out_link}}': 'Reply STOP'
+    };
+
+    function renderPreview(text) {
+      let rendered = text;
+      for (const [key, val] of Object.entries(sampleValues)) {
+        rendered = rendered.split(key).join(val);
+      }
+      return rendered;
+    }
+
+    // ---- Live Update ----
+    function updatePreview() {
+      const body = document.getElementById('smsBody').value;
+      const info = calcSegments(body);
+      const rendered = renderPreview(body);
+      const renderedInfo = calcSegments(rendered);
+
+      // Update preview
+      document.getElementById('previewText').textContent = rendered;
+      document.getElementById('previewCharInfo').textContent = renderedInfo.chars + ' chars \u00b7 ' + renderedInfo.segments + ' segment' + (renderedInfo.segments !== 1 ? 's' : '');
+
+      // Update counters
+      const pct = Math.min((renderedInfo.chars / renderedInfo.limit) * 100, 100);
+      const bar = document.getElementById('charBar');
+      bar.style.width = Math.min((renderedInfo.chars / 306) * 100, 100) + '%';
+
+      let colorClass = 'green';
+      if (renderedInfo.chars > 306) colorClass = 'red';
+      else if (renderedInfo.chars > 160) colorClass = 'amber';
+
+      bar.className = 'bar ' + colorClass;
+
+      document.getElementById('charCounter').className = 'counter-item ' + colorClass;
+      document.getElementById('charCounter').innerHTML = 'Characters: <strong>' + renderedInfo.chars + ' / ' + renderedInfo.limit + '</strong>';
+
+      const encLabel = renderedInfo.encoding === 'GSM-7' ? 'GSM-7 \u00b7 160 chars/segment' : 'Unicode \u00b7 70 chars/segment';
+      document.getElementById('encodingBadge').innerHTML = '<i class="fas fa-font"></i> ' + encLabel;
+
+      const segBadge = document.getElementById('segmentBadge');
+      let segColor = 'green';
+      if (renderedInfo.segments >= 3) segColor = 'red';
+      else if (renderedInfo.segments === 2) segColor = 'amber';
+      segBadge.className = 'segment-badge ' + segColor;
+      segBadge.textContent = renderedInfo.segments;
+    }
+
+    // Initialize preview
+    updatePreview();
+  </script>
+
+</body>
+</html>

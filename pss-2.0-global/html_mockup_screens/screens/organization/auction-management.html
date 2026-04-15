@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auction Management - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+      --events-accent: #7c3aed;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
+    .page-header-left { display: flex; align-items: flex-start; gap: 1rem; }
+    .back-btn { width: 36px; height: 36px; border-radius: 0.5rem; border: 1px solid var(--border-color); background: white; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; font-size: 1rem; margin-top: 0.25rem; }
+    .back-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+    .breadcrumb-nav { font-size: 0.75rem; color: var(--text-secondary); margin: 0 0 0.25rem 0; }
+    .breadcrumb-nav a { color: var(--accent); text-decoration: none; cursor: pointer; }
+    .breadcrumb-nav a:hover { text-decoration: underline; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+    .page-header .subtitle { font-size: 0.8125rem; color: var(--text-secondary); margin-top: 0.25rem; }
+    .header-badges { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-top: 0.25rem; }
+    .badge-category { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1875rem 0.5rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; background: #faf5ff; color: #7c3aed; }
+    .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: flex-start; }
+    .btn-primary-accent { background: var(--accent); border-color: var(--accent); color: white; font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid var(--accent); cursor: pointer; transition: all 0.15s; }
+    .btn-primary-accent:hover { background: #0c6577; border-color: #0c6577; color: white; }
+    .btn-outline-accent { background: white; border: 1px solid var(--accent); color: var(--accent); font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.15s; }
+    .btn-outline-accent:hover { background: var(--accent); color: white; }
+    .btn-outline-danger { background: white; border: 1px solid var(--danger-color); color: var(--danger-color); font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.15s; }
+    .btn-outline-danger:hover { background: var(--danger-color); color: white; }
+
+    /* KPI Stats Grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+    .stat-card { background: white; border-radius: var(--card-radius); padding: 1.125rem; box-shadow: var(--card-shadow); border: 1px solid var(--border-color); text-align: center; transition: transform 0.15s, box-shadow 0.15s; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }
+    .stat-value { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+    .stat-label { font-size: 0.75rem; color: var(--text-secondary); font-weight: 500; margin-bottom: 0.25rem; }
+    .stat-subtitle { font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.25rem; }
+
+    /* Dash Card */
+    .dash-card { background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); }
+    .dash-card-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
+    .dash-card-header h3 { font-size: 0.9375rem; font-weight: 700; margin: 0; color: var(--text-primary); }
+    .dash-card-body { padding: 1.25rem; }
+
+    /* Table */
+    .data-table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+    .data-table th { padding: 0.625rem 0.75rem; font-size: 0.6875rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color); text-align: left; white-space: nowrap; }
+    .data-table td { padding: 0.625rem 0.75rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover { background: #f8fafc; }
+
+    /* Section Gap */
+    .section-gap { margin-bottom: 1.25rem; }
+
+    /* Table footer / pagination */
+    .table-footer { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1.25rem; border-top: 1px solid var(--border-color); font-size: 0.75rem; color: var(--text-secondary); flex-wrap: wrap; gap: 0.5rem; }
+    .pagination-btns { display: flex; gap: 0.25rem; }
+    .pagination-btns button { width: 28px; height: 28px; border-radius: 0.375rem; border: 1px solid var(--border-color); background: white; color: var(--text-secondary); cursor: pointer; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+    .pagination-btns button:hover { border-color: var(--accent); color: var(--accent); }
+    .pagination-btns button.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+    /* Small action buttons in tables */
+    .action-btn { font-size: 0.6875rem; padding: 0.25rem 0.5rem; border-radius: 0.25rem; border: 1px solid var(--border-color); background: white; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+    .action-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .action-btn.primary { border-color: var(--accent); color: var(--accent); }
+    .action-btn.primary:hover { background: var(--accent); color: white; }
+    .action-btn.success { border-color: var(--success-color); color: var(--success-color); }
+    .action-btn.success:hover { background: var(--success-color); color: white; }
+    .action-btn.danger { border-color: var(--danger-color); color: var(--danger-color); }
+    .action-btn.danger:hover { background: var(--danger-color); color: white; }
+    .action-btn.warning { border-color: var(--warning-color); color: var(--warning-color); }
+    .action-btn.warning:hover { background: var(--warning-color); color: white; }
+
+    /* More menu dropdown */
+    .more-menu-wrap { position: relative; display: inline-block; }
+    .more-btn { width: 28px; height: 28px; border-radius: 0.375rem; border: 1px solid var(--border-color); background: white; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem; transition: all 0.15s; }
+    .more-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .more-dropdown { display: none; position: absolute; right: 0; top: 34px; background: white; border: 1px solid var(--border-color); border-radius: 0.5rem; box-shadow: 0 4px 16px rgba(0,0,0,0.12); min-width: 160px; z-index: 100; padding: 0.375rem 0; }
+    .more-dropdown.show { display: block; }
+    .more-dropdown a { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; font-size: 0.8125rem; color: var(--text-primary); text-decoration: none; cursor: pointer; }
+    .more-dropdown a:hover { background: var(--accent-bg); color: var(--accent); }
+    .more-dropdown a i { width: 16px; text-align: center; color: var(--text-secondary); }
+
+    /* Search input in card header */
+    .header-search { display: flex; align-items: center; gap: 0.5rem; }
+    .header-search input { padding: 0.375rem 0.75rem; font-size: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.375rem; outline: none; width: 180px; }
+    .header-search input:focus { border-color: var(--accent); }
+    .header-search select { padding: 0.375rem 0.5rem; font-size: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.375rem; outline: none; background: white; cursor: pointer; }
+
+    /* Event selector dropdown */
+    .event-selector { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.375rem 0.75rem; border-radius: 0.5rem; border: 1px solid var(--border-color); background: white; font-size: 0.8125rem; font-weight: 600; color: var(--events-accent); cursor: pointer; transition: all 0.15s; }
+    .event-selector:hover { border-color: var(--events-accent); background: #faf5ff; }
+
+    /* Bid Activity Feed */
+    .bid-feed { max-height: 340px; overflow-y: auto; }
+    .bid-feed-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.625rem 0; border-bottom: 1px solid #f1f5f9; }
+    .bid-feed-item:last-child { border-bottom: none; }
+    .bid-feed-time { font-size: 0.6875rem; color: var(--text-secondary); min-width: 60px; flex-shrink: 0; padding-top: 2px; }
+    .bid-feed-text { font-size: 0.8125rem; color: var(--text-primary); line-height: 1.4; }
+    .bid-feed-text .bidder { color: var(--accent); font-weight: 600; cursor: pointer; text-decoration: none; }
+    .bid-feed-text .bidder:hover { text-decoration: underline; }
+    .bid-feed-text .amount { font-weight: 700; color: var(--text-primary); }
+    .bid-feed-text .item-name { font-weight: 600; color: var(--events-accent); }
+
+    /* Live indicator */
+    .live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--success-color); margin-right: 0.375rem; animation: pulse-dot 1.5s ease-in-out infinite; }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+      50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+    }
+
+    /* Form styles */
+    .form-section { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-group { display: flex; flex-direction: column; gap: 0.25rem; }
+    .form-group.full-width { grid-column: 1 / -1; }
+    .form-group label { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.03em; }
+    .form-group label .required { color: var(--danger-color); }
+    .form-group input,
+    .form-group select,
+    .form-group textarea { padding: 0.5rem 0.75rem; font-size: 0.8125rem; border: 1px solid var(--border-color); border-radius: 0.5rem; outline: none; transition: border-color 0.15s; font-family: inherit; }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { border-color: var(--accent); }
+    .form-group textarea { min-height: 80px; resize: vertical; }
+
+    /* Photo upload area */
+    .photo-upload-area { border: 2px dashed var(--border-color); border-radius: 0.5rem; padding: 1.5rem; text-align: center; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; background: #f8fafc; }
+    .photo-upload-area:hover { border-color: var(--accent); background: var(--accent-bg); }
+    .photo-upload-area i { font-size: 1.5rem; margin-bottom: 0.5rem; display: block; opacity: 0.5; }
+    .photo-upload-area span { font-size: 0.75rem; }
+    .photo-gallery { display: flex; gap: 0.5rem; margin-top: 0.75rem; flex-wrap: wrap; }
+    .photo-thumb { width: 64px; height: 64px; border-radius: 0.375rem; background: #e2e8f0; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 0.625rem; position: relative; border: 1px solid var(--border-color); }
+    .photo-thumb .remove-photo { position: absolute; top: -4px; right: -4px; width: 16px; height: 16px; border-radius: 50%; background: var(--danger-color); color: white; border: none; cursor: pointer; font-size: 0.5rem; display: flex; align-items: center; justify-content: center; }
+
+    /* Collapsible card toggle */
+    .collapse-toggle { cursor: pointer; user-select: none; }
+    .collapse-toggle i.fa-chevron-down { transition: transform 0.2s; }
+    .collapse-toggle.collapsed i.fa-chevron-down { transform: rotate(-90deg); }
+
+    /* Reserve status indicators */
+    .reserve-met { color: var(--success-color); font-weight: 600; }
+    .reserve-not-met { color: var(--danger-color); font-weight: 600; }
+
+    /* Status badges */
+    .status-active { color: var(--success-color); font-weight: 600; }
+    .status-closed { color: var(--danger-color); font-weight: 600; }
+    .status-won { color: var(--events-accent); font-weight: 600; }
+    .status-pending { color: var(--warning-color); font-weight: 600; }
+    .status-below { color: var(--warning-color); font-weight: 600; }
+    .status-no-winner { color: var(--danger-color); font-weight: 600; }
+    .status-paid { color: var(--success-color); font-weight: 600; }
+    .status-awaiting { color: var(--warning-color); font-weight: 600; }
+
+    /* Bidding status badge in header */
+    .bidding-status-badge { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; background: #f0fdf4; color: var(--success-color); border: 1px solid #bbf7d0; }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .form-section { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" onclick="parent.loadContent('organization/event-list')">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <div>
+        <p class="breadcrumb-nav"><a onclick="parent.loadContent('organization/event-list')">Events</a> &rsaquo; Auction Management</p>
+        <h1>Auction Management</h1>
+        <div class="subtitle">Manage auction items, bids, and winners</div>
+        <div class="header-badges" style="margin-top: 0.375rem;">
+          <button class="event-selector" onclick="parent.loadContent('organization/event-list')">
+            <i class="fas fa-calendar-alt"></i> Fundraising Gala 2026 <i class="fas fa-caret-down" style="font-size:0.625rem;"></i>
+          </button>
+          <span class="bidding-status-badge"><span class="live-dot"></span> Bidding Open</span>
+        </div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="toggleAddItemForm()">
+        <i class="fas fa-plus me-1"></i> Add Item
+      </button>
+      <button class="btn-outline-accent" onclick="alert('Bidding opened! All items are now accepting bids.')">
+        <i class="fas fa-gavel me-1"></i> Open Bidding
+      </button>
+      <button class="btn-outline-danger" onclick="alert('Bidding closed! No more bids will be accepted.')">
+        <i class="fas fa-stop-circle me-1"></i> Close Bidding
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Stats Grid -->
+  <div class="stats-grid section-gap">
+    <div class="stat-card">
+      <div class="stat-label">Total Items</div>
+      <div class="stat-value">25</div>
+      <div class="stat-subtitle">Live: 5 &middot; Silent: 20</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Bids</div>
+      <div class="stat-value">189</div>
+      <div class="stat-subtitle">Unique bidders: 67</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Current High Bids Total</div>
+      <div class="stat-value" style="color: var(--accent);">$45,600</div>
+      <div class="stat-subtitle">Across all active items</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Bidding Status</div>
+      <div class="stat-value" style="font-size: 1.25rem;">&#128994; Open</div>
+      <div class="stat-subtitle">Closes in <strong style="color: var(--accent);">2h 30m</strong></div>
+    </div>
+  </div>
+
+  <!-- Auction Items Table -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-gavel me-2" style="color:var(--events-accent);"></i> Auction Items</h3>
+      <div class="header-search">
+        <input type="text" placeholder="Search items..." />
+        <select>
+          <option value="">All Categories</option>
+          <option>Travel</option>
+          <option>Dining</option>
+          <option>Art</option>
+          <option>Sports</option>
+          <option>Fashion</option>
+          <option>Experience</option>
+          <option>Tech</option>
+          <option>Other</option>
+        </select>
+        <select>
+          <option value="">All Status</option>
+          <option>Active</option>
+          <option>Below Reserve</option>
+          <option>Closed</option>
+          <option>Won</option>
+        </select>
+      </div>
+    </div>
+    <div class="dash-card-body" style="padding:0;">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Item</th>
+              <th>Category</th>
+              <th>Donor / Sponsor</th>
+              <th>Starting Bid</th>
+              <th>Current Bid</th>
+              <th>Bids</th>
+              <th>Reserve</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td><strong>Weekend at Atlantis</strong></td>
+              <td><span class="badge-category"><i class="fas fa-plane"></i> Travel</span></td>
+              <td>Atlantis Hotel</td>
+              <td>$500</td>
+              <td><strong>$2,800</strong></td>
+              <td>12</td>
+              <td><span class="reserve-met">$1,000 &#10004;</span></td>
+              <td><span class="status-active">&#128994; Active</span></td>
+              <td>
+                <button class="action-btn primary" onclick="alert('Viewing bid history for Weekend at Atlantis...\n\n$2,800 - Ravi Sharma\n$2,500 - Khalid Al-Mansouri\n$2,200 - Sarah Johnson\n...')">View Bids</button>
+                <div class="more-menu-wrap" style="display:inline-block;">
+                  <button class="more-btn" onclick="toggleMenu(this)" style="width:24px;height:24px;font-size:0.875rem;">&#8943;</button>
+                  <div class="more-dropdown">
+                    <a onclick="alert('Editing item...')"><i class="fas fa-pen"></i> Edit</a>
+                    <a onclick="alert('Pausing bidding...')"><i class="fas fa-pause"></i> Pause</a>
+                    <a onclick="alert('Removing item...')" style="color:var(--danger-color);"><i class="fas fa-trash" style="color:var(--danger-color);"></i> Remove</a>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td><strong>Signed Cricket Bat</strong></td>
+              <td><span class="badge-category"><i class="fas fa-baseball-bat-ball"></i> Sports</span></td>
+              <td>Sports Club</td>
+              <td>$200</td>
+              <td><strong>$1,500</strong></td>
+              <td>8</td>
+              <td><span class="reserve-met">$500 &#10004;</span></td>
+              <td><span class="status-active">&#128994; Active</span></td>
+              <td>
+                <button class="action-btn primary" onclick="alert('Viewing bid history for Signed Cricket Bat...')">View Bids</button>
+                <div class="more-menu-wrap" style="display:inline-block;">
+                  <button class="more-btn" onclick="toggleMenu(this)" style="width:24px;height:24px;font-size:0.875rem;">&#8943;</button>
+                  <div class="more-dropdown">
+                    <a onclick="alert('Editing item...')"><i class="fas fa-pen"></i> Edit</a>
+                    <a onclick="alert('Pausing bidding...')"><i class="fas fa-pause"></i> Pause</a>
+                    <a onclick="alert('Removing item...')" style="color:var(--danger-color);"><i class="fas fa-trash" style="color:var(--danger-color);"></i> Remove</a>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td><strong>Private Dinner for 8</strong></td>
+              <td><span class="badge-category"><i class="fas fa-utensils"></i> Dining</span></td>
+              <td>Chef Ahmad</td>
+              <td>$1,000</td>
+              <td><strong>$3,200</strong></td>
+              <td>6</td>
+              <td><span class="reserve-met">$2,000 &#10004;</span></td>
+              <td><span class="status-active">&#128994; Active</span></td>
+              <td>
+                <button class="action-btn primary" onclick="alert('Viewing bid history for Private Dinner for 8...')">View Bids</button>
+                <div class="more-menu-wrap" style="display:inline-block;">
+                  <button class="more-btn" onclick="toggleMenu(this)" style="width:24px;height:24px;font-size:0.875rem;">&#8943;</button>
+                  <div class="more-dropdown">
+                    <a onclick="alert('Editing item...')"><i class="fas fa-pen"></i> Edit</a>
+                    <a onclick="alert('Pausing bidding...')"><i class="fas fa-pause"></i> Pause</a>
+                    <a onclick="alert('Removing item...')" style="color:var(--danger-color);"><i class="fas fa-trash" style="color:var(--danger-color);"></i> Remove</a>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td><strong>Original Painting</strong></td>
+              <td><span class="badge-category"><i class="fas fa-palette"></i> Art</span></td>
+              <td>Local Artist</td>
+              <td>$300</td>
+              <td><strong>$450</strong></td>
+              <td>3</td>
+              <td><span class="reserve-not-met">$500 &#10008;</span></td>
+              <td><span class="status-below">&#128993; Below Reserve</span></td>
+              <td>
+                <button class="action-btn primary" onclick="alert('Viewing bid history for Original Painting...')">View Bids</button>
+                <div class="more-menu-wrap" style="display:inline-block;">
+                  <button class="more-btn" onclick="toggleMenu(this)" style="width:24px;height:24px;font-size:0.875rem;">&#8943;</button>
+                  <div class="more-dropdown">
+                    <a onclick="alert('Editing item...')"><i class="fas fa-pen"></i> Edit</a>
+                    <a onclick="alert('Lowering reserve...')"><i class="fas fa-arrow-down"></i> Lower Reserve</a>
+                    <a onclick="alert('Removing item...')" style="color:var(--danger-color);"><i class="fas fa-trash" style="color:var(--danger-color);"></i> Remove</a>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td><strong>Luxury Watch</strong></td>
+              <td><span class="badge-category"><i class="fas fa-gem"></i> Fashion</span></td>
+              <td>Jewelry Sponsor</td>
+              <td>$2,000</td>
+              <td><strong>$5,500</strong></td>
+              <td>15</td>
+              <td><span class="reserve-met">$3,000 &#10004;</span></td>
+              <td><span class="status-active">&#128994; Active</span></td>
+              <td>
+                <button class="action-btn primary" onclick="alert('Viewing bid history for Luxury Watch...')">View Bids</button>
+                <div class="more-menu-wrap" style="display:inline-block;">
+                  <button class="more-btn" onclick="toggleMenu(this)" style="width:24px;height:24px;font-size:0.875rem;">&#8943;</button>
+                  <div class="more-dropdown">
+                    <a onclick="alert('Editing item...')"><i class="fas fa-pen"></i> Edit</a>
+                    <a onclick="alert('Pausing bidding...')"><i class="fas fa-pause"></i> Pause</a>
+                    <a onclick="alert('Removing item...')" style="color:var(--danger-color);"><i class="fas fa-trash" style="color:var(--danger-color);"></i> Remove</a>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td><strong>Spa & Wellness Package</strong></td>
+              <td><span class="badge-category"><i class="fas fa-spa"></i> Experience</span></td>
+              <td>Wellness Resort</td>
+              <td>$400</td>
+              <td><strong>$1,200</strong></td>
+              <td>7</td>
+              <td><span class="reserve-met">$600 &#10004;</span></td>
+              <td><span class="status-active">&#128994; Active</span></td>
+              <td>
+                <button class="action-btn primary" onclick="alert('Viewing bid history...')">View Bids</button>
+                <div class="more-menu-wrap" style="display:inline-block;">
+                  <button class="more-btn" onclick="toggleMenu(this)" style="width:24px;height:24px;font-size:0.875rem;">&#8943;</button>
+                  <div class="more-dropdown">
+                    <a onclick="alert('Editing item...')"><i class="fas fa-pen"></i> Edit</a>
+                    <a onclick="alert('Pausing bidding...')"><i class="fas fa-pause"></i> Pause</a>
+                    <a onclick="alert('Removing item...')" style="color:var(--danger-color);"><i class="fas fa-trash" style="color:var(--danger-color);"></i> Remove</a>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td><strong>MacBook Pro 16"</strong></td>
+              <td><span class="badge-category"><i class="fas fa-laptop"></i> Tech</span></td>
+              <td>Tech Corp</td>
+              <td>$1,500</td>
+              <td><strong>$3,800</strong></td>
+              <td>11</td>
+              <td><span class="reserve-met">$2,500 &#10004;</span></td>
+              <td><span class="status-active">&#128994; Active</span></td>
+              <td>
+                <button class="action-btn primary" onclick="alert('Viewing bid history...')">View Bids</button>
+                <div class="more-menu-wrap" style="display:inline-block;">
+                  <button class="more-btn" onclick="toggleMenu(this)" style="width:24px;height:24px;font-size:0.875rem;">&#8943;</button>
+                  <div class="more-dropdown">
+                    <a onclick="alert('Editing item...')"><i class="fas fa-pen"></i> Edit</a>
+                    <a onclick="alert('Pausing bidding...')"><i class="fas fa-pause"></i> Pause</a>
+                    <a onclick="alert('Removing item...')" style="color:var(--danger-color);"><i class="fas fa-trash" style="color:var(--danger-color);"></i> Remove</a>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>8</td>
+              <td><strong>Golf Day with Pro</strong></td>
+              <td><span class="badge-category"><i class="fas fa-golf-ball-tee"></i> Sports</span></td>
+              <td>Golf Academy</td>
+              <td>$300</td>
+              <td><strong>$950</strong></td>
+              <td>5</td>
+              <td><span class="reserve-met">$500 &#10004;</span></td>
+              <td><span class="status-active">&#128994; Active</span></td>
+              <td>
+                <button class="action-btn primary" onclick="alert('Viewing bid history...')">View Bids</button>
+                <div class="more-menu-wrap" style="display:inline-block;">
+                  <button class="more-btn" onclick="toggleMenu(this)" style="width:24px;height:24px;font-size:0.875rem;">&#8943;</button>
+                  <div class="more-dropdown">
+                    <a onclick="alert('Editing item...')"><i class="fas fa-pen"></i> Edit</a>
+                    <a onclick="alert('Pausing bidding...')"><i class="fas fa-pause"></i> Pause</a>
+                    <a onclick="alert('Removing item...')" style="color:var(--danger-color);"><i class="fas fa-trash" style="color:var(--danger-color);"></i> Remove</a>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>9</td>
+              <td><strong>Wine Collection (12 bottles)</strong></td>
+              <td><span class="badge-category"><i class="fas fa-wine-bottle"></i> Dining</span></td>
+              <td>Vineyard Estate</td>
+              <td>$250</td>
+              <td><strong>$700</strong></td>
+              <td>4</td>
+              <td><span class="reserve-met">$400 &#10004;</span></td>
+              <td><span class="status-active">&#128994; Active</span></td>
+              <td>
+                <button class="action-btn primary" onclick="alert('Viewing bid history...')">View Bids</button>
+                <div class="more-menu-wrap" style="display:inline-block;">
+                  <button class="more-btn" onclick="toggleMenu(this)" style="width:24px;height:24px;font-size:0.875rem;">&#8943;</button>
+                  <div class="more-dropdown">
+                    <a onclick="alert('Editing item...')"><i class="fas fa-pen"></i> Edit</a>
+                    <a onclick="alert('Pausing bidding...')"><i class="fas fa-pause"></i> Pause</a>
+                    <a onclick="alert('Removing item...')" style="color:var(--danger-color);"><i class="fas fa-trash" style="color:var(--danger-color);"></i> Remove</a>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>10</td>
+              <td><strong>Hot Air Balloon Ride</strong></td>
+              <td><span class="badge-category"><i class="fas fa-cloud"></i> Experience</span></td>
+              <td>Adventure Co.</td>
+              <td>$150</td>
+              <td><strong>$380</strong></td>
+              <td>2</td>
+              <td><span class="reserve-not-met">$400 &#10008;</span></td>
+              <td><span class="status-below">&#128993; Below Reserve</span></td>
+              <td>
+                <button class="action-btn primary" onclick="alert('Viewing bid history...')">View Bids</button>
+                <div class="more-menu-wrap" style="display:inline-block;">
+                  <button class="more-btn" onclick="toggleMenu(this)" style="width:24px;height:24px;font-size:0.875rem;">&#8943;</button>
+                  <div class="more-dropdown">
+                    <a onclick="alert('Editing item...')"><i class="fas fa-pen"></i> Edit</a>
+                    <a onclick="alert('Lowering reserve...')"><i class="fas fa-arrow-down"></i> Lower Reserve</a>
+                    <a onclick="alert('Removing item...')" style="color:var(--danger-color);"><i class="fas fa-trash" style="color:var(--danger-color);"></i> Remove</a>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="table-footer">
+      <span>Showing 10 of 25 items</span>
+      <div class="pagination-btns">
+        <button disabled><i class="fas fa-chevron-left"></i></button>
+        <button class="active">1</button>
+        <button>2</button>
+        <button>3</button>
+        <button><i class="fas fa-chevron-right"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Item Form (Collapsible) -->
+  <div class="dash-card section-gap" id="addItemCard">
+    <div class="dash-card-header collapse-toggle" onclick="toggleFormCollapse()">
+      <h3><i class="fas fa-plus-circle me-2" style="color:var(--accent);"></i> Add New Auction Item</h3>
+      <i class="fas fa-chevron-down" style="color:var(--text-secondary); font-size:0.75rem;"></i>
+    </div>
+    <div class="dash-card-body" id="addItemFormBody">
+      <div class="form-section">
+        <div class="form-group">
+          <label>Item Name <span class="required">*</span></label>
+          <input type="text" placeholder="e.g., Weekend at Atlantis" />
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select>
+            <option value="">Select category...</option>
+            <option>Travel</option>
+            <option>Dining</option>
+            <option>Art</option>
+            <option>Sports</option>
+            <option>Fashion</option>
+            <option>Experience</option>
+            <option>Tech</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group full-width">
+          <label>Description <span class="required">*</span></label>
+          <textarea placeholder="Detailed description of the auction item..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Donated By</label>
+          <input type="text" placeholder="Donor or sponsor name" />
+        </div>
+        <div class="form-group">
+          <label>Estimated Value</label>
+          <input type="text" placeholder="$0.00" />
+        </div>
+        <div class="form-group">
+          <label>Starting Bid <span class="required">*</span></label>
+          <input type="text" placeholder="$0.00" />
+        </div>
+        <div class="form-group">
+          <label>Bid Increment</label>
+          <input type="text" placeholder="$100" value="$100" />
+        </div>
+        <div class="form-group">
+          <label>Reserve Price <span style="font-weight:400; text-transform:none;">(optional)</span></label>
+          <input type="text" placeholder="$0.00" />
+        </div>
+        <div class="form-group">
+          <label>Auction Type</label>
+          <select>
+            <option>Silent</option>
+            <option>Live</option>
+          </select>
+        </div>
+        <div class="form-group full-width">
+          <label>Photos</label>
+          <div class="photo-upload-area" onclick="alert('File picker would open here...')">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <span>Click to upload or drag photos here<br>JPG, PNG up to 5MB each &middot; Max 6 photos</span>
+          </div>
+          <div class="photo-gallery">
+            <div class="photo-thumb">
+              <i class="fas fa-image"></i>
+              <button class="remove-photo" onclick="alert('Photo removed')"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="photo-thumb">
+              <i class="fas fa-image"></i>
+              <button class="remove-photo" onclick="alert('Photo removed')"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="photo-thumb" style="border-style:dashed; cursor:pointer;" onclick="alert('Add another photo')">
+              <i class="fas fa-plus" style="font-size:0.875rem;"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:1rem; display:flex; gap:0.5rem;">
+        <button class="btn-primary-accent" onclick="alert('Auction item saved successfully!')">
+          <i class="fas fa-check me-1"></i> Save Item
+        </button>
+        <button class="btn-outline-accent" onclick="toggleAddItemForm()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Two-column layout: Bid Activity + Winners -->
+  <div class="row g-3 section-gap">
+    <!-- Bid Activity (Live Feed) -->
+    <div class="col-lg-5">
+      <div class="dash-card" style="height:100%;">
+        <div class="dash-card-header">
+          <h3><span class="live-dot"></span> Bid Activity <span style="font-size:0.6875rem; font-weight:400; color:var(--text-secondary); margin-left:0.5rem;">Real-time</span></h3>
+          <span style="font-size:0.6875rem; color:var(--success-color); font-weight:600;"><i class="fas fa-signal me-1"></i> Live</span>
+        </div>
+        <div class="dash-card-body" style="padding: 0.75rem 1.25rem;">
+          <div class="bid-feed">
+            <div class="bid-feed-item">
+              <div class="bid-feed-time">2:30 PM</div>
+              <div class="bid-feed-text">
+                <a class="bidder" onclick="parent.loadContent('contacts/contact-detail')">Khalid Al-Mansouri</a> bid <span class="amount">$5,500</span> on <span class="item-name">Luxury Watch</span>
+              </div>
+            </div>
+            <div class="bid-feed-item">
+              <div class="bid-feed-time">2:28 PM</div>
+              <div class="bid-feed-text">
+                <a class="bidder" onclick="parent.loadContent('contacts/contact-detail')">Fatima Al-Zahra</a> bid <span class="amount">$3,200</span> on <span class="item-name">Private Dinner for 8</span>
+              </div>
+            </div>
+            <div class="bid-feed-item">
+              <div class="bid-feed-time">2:25 PM</div>
+              <div class="bid-feed-text">
+                <a class="bidder" onclick="parent.loadContent('contacts/contact-detail')">Ravi Sharma</a> bid <span class="amount">$2,800</span> on <span class="item-name">Weekend at Atlantis</span>
+              </div>
+            </div>
+            <div class="bid-feed-item">
+              <div class="bid-feed-time">2:22 PM</div>
+              <div class="bid-feed-text">
+                <a class="bidder" onclick="parent.loadContent('contacts/contact-detail')">James Okonkwo</a> bid <span class="amount">$1,500</span> on <span class="item-name">Signed Cricket Bat</span>
+              </div>
+            </div>
+            <div class="bid-feed-item">
+              <div class="bid-feed-time">2:18 PM</div>
+              <div class="bid-feed-text">
+                <a class="bidder" onclick="parent.loadContent('contacts/contact-detail')">Aisha Mohammed</a> bid <span class="amount">$3,800</span> on <span class="item-name">MacBook Pro 16"</span>
+              </div>
+            </div>
+            <div class="bid-feed-item">
+              <div class="bid-feed-time">2:15 PM</div>
+              <div class="bid-feed-text">
+                <a class="bidder" onclick="parent.loadContent('contacts/contact-detail')">Sarah Johnson</a> bid <span class="amount">$1,200</span> on <span class="item-name">Spa & Wellness Package</span>
+              </div>
+            </div>
+            <div class="bid-feed-item">
+              <div class="bid-feed-time">2:12 PM</div>
+              <div class="bid-feed-text">
+                <a class="bidder" onclick="parent.loadContent('contacts/contact-detail')">David Chen</a> bid <span class="amount">$950</span> on <span class="item-name">Golf Day with Pro</span>
+              </div>
+            </div>
+            <div class="bid-feed-item">
+              <div class="bid-feed-time">2:08 PM</div>
+              <div class="bid-feed-text">
+                <a class="bidder" onclick="parent.loadContent('contacts/contact-detail')">Maria Santos</a> bid <span class="amount">$700</span> on <span class="item-name">Wine Collection</span>
+              </div>
+            </div>
+            <div class="bid-feed-item">
+              <div class="bid-feed-time">2:05 PM</div>
+              <div class="bid-feed-text">
+                <a class="bidder" onclick="parent.loadContent('contacts/contact-detail')">Omar Farooq</a> bid <span class="amount">$450</span> on <span class="item-name">Original Painting</span>
+              </div>
+            </div>
+            <div class="bid-feed-item">
+              <div class="bid-feed-time">2:01 PM</div>
+              <div class="bid-feed-text">
+                <a class="bidder" onclick="parent.loadContent('contacts/contact-detail')">Priya Patel</a> bid <span class="amount">$380</span> on <span class="item-name">Hot Air Balloon Ride</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Winners & Payment -->
+    <div class="col-lg-7">
+      <div class="dash-card" style="height:100%;">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-trophy me-2" style="color:var(--warning-color);"></i> Winners & Payment</h3>
+          <span style="font-size:0.6875rem; color:var(--text-secondary);">Post-bidding settlement</span>
+        </div>
+        <div class="dash-card-body" style="padding:0;">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Winner</th>
+                  <th>Winning Bid</th>
+                  <th>Payment</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Luxury Watch</strong></td>
+                  <td><a style="color:var(--accent); cursor:pointer; text-decoration:none; font-weight:600;" onclick="parent.loadContent('contacts/contact-detail')">Khalid Al-Mansouri</a></td>
+                  <td><strong>$5,500</strong></td>
+                  <td><i class="fas fa-credit-card me-1" style="color:var(--text-secondary);"></i> &#8226;&#8226;&#8226;&#8226;4567</td>
+                  <td><span class="status-paid">&#9989; Paid</span></td>
+                  <td><button class="action-btn" onclick="alert('Generating receipt...')">Receipt</button></td>
+                </tr>
+                <tr>
+                  <td><strong>Private Dinner for 8</strong></td>
+                  <td><a style="color:var(--accent); cursor:pointer; text-decoration:none; font-weight:600;" onclick="parent.loadContent('contacts/contact-detail')">Fatima Al-Zahra</a></td>
+                  <td><strong>$3,200</strong></td>
+                  <td style="color:var(--warning-color);">Pending</td>
+                  <td><span class="status-awaiting">&#9203; Awaiting</span></td>
+                  <td>
+                    <button class="action-btn primary" onclick="alert('Sending invoice to Fatima Al-Zahra...')">Send Invoice</button>
+                    <button class="action-btn success" onclick="alert('Recording payment...')">Collect</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>Weekend at Atlantis</strong></td>
+                  <td><a style="color:var(--accent); cursor:pointer; text-decoration:none; font-weight:600;" onclick="parent.loadContent('contacts/contact-detail')">Ravi Sharma</a></td>
+                  <td><strong>$2,800</strong></td>
+                  <td><i class="fas fa-money-bill-wave me-1" style="color:var(--text-secondary);"></i> Cash</td>
+                  <td><span class="status-paid">&#9989; Paid</span></td>
+                  <td><button class="action-btn" onclick="alert('Generating receipt...')">Receipt</button></td>
+                </tr>
+                <tr>
+                  <td><strong>Original Painting</strong></td>
+                  <td><span style="color:var(--text-secondary);">&mdash;</span></td>
+                  <td><span style="color:var(--text-secondary);">$450 <span style="font-size:0.625rem;">(below reserve)</span></span></td>
+                  <td>&mdash;</td>
+                  <td><span class="status-no-winner">&#10060; No Winner</span></td>
+                  <td>
+                    <button class="action-btn warning" onclick="alert('Overriding reserve - awarding to highest bidder...')">Override</button>
+                    <button class="action-btn" onclick="alert('Re-auctioning item...')">Re-auction</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>MacBook Pro 16"</strong></td>
+                  <td><a style="color:var(--accent); cursor:pointer; text-decoration:none; font-weight:600;" onclick="parent.loadContent('contacts/contact-detail')">Aisha Mohammed</a></td>
+                  <td><strong>$3,800</strong></td>
+                  <td><i class="fas fa-credit-card me-1" style="color:var(--text-secondary);"></i> &#8226;&#8226;&#8226;&#8226;8901</td>
+                  <td><span class="status-paid">&#9989; Paid</span></td>
+                  <td><button class="action-btn" onclick="alert('Generating receipt...')">Receipt</button></td>
+                </tr>
+                <tr>
+                  <td><strong>Spa & Wellness Package</strong></td>
+                  <td><a style="color:var(--accent); cursor:pointer; text-decoration:none; font-weight:600;" onclick="parent.loadContent('contacts/contact-detail')">Sarah Johnson</a></td>
+                  <td><strong>$1,200</strong></td>
+                  <td style="color:var(--warning-color);">Pending</td>
+                  <td><span class="status-awaiting">&#9203; Awaiting</span></td>
+                  <td>
+                    <button class="action-btn primary" onclick="alert('Sending invoice to Sarah Johnson...')">Send Invoice</button>
+                    <button class="action-btn success" onclick="alert('Recording payment...')">Collect</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>Golf Day with Pro</strong></td>
+                  <td><a style="color:var(--accent); cursor:pointer; text-decoration:none; font-weight:600;" onclick="parent.loadContent('contacts/contact-detail')">David Chen</a></td>
+                  <td><strong>$950</strong></td>
+                  <td><i class="fas fa-money-bill-wave me-1" style="color:var(--text-secondary);"></i> Cash</td>
+                  <td><span class="status-paid">&#9989; Paid</span></td>
+                  <td><button class="action-btn" onclick="alert('Generating receipt...')">Receipt</button></td>
+                </tr>
+                <tr>
+                  <td><strong>Hot Air Balloon Ride</strong></td>
+                  <td><span style="color:var(--text-secondary);">&mdash;</span></td>
+                  <td><span style="color:var(--text-secondary);">$380 <span style="font-size:0.625rem;">(below reserve)</span></span></td>
+                  <td>&mdash;</td>
+                  <td><span class="status-no-winner">&#10060; No Winner</span></td>
+                  <td>
+                    <button class="action-btn warning" onclick="alert('Overriding reserve...')">Override</button>
+                    <button class="action-btn" onclick="alert('Re-auctioning item...')">Re-auction</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Toggle more menus
+    function toggleMenu(btn) {
+      const dropdown = btn.nextElementSibling;
+      document.querySelectorAll('.more-dropdown.show').forEach(d => {
+        if (d !== dropdown) d.classList.remove('show');
+      });
+      dropdown.classList.toggle('show');
+    }
+
+    // Close menus when clicking outside
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.more-menu-wrap')) {
+        document.querySelectorAll('.more-dropdown.show').forEach(d => d.classList.remove('show'));
+      }
+    });
+
+    // Toggle Add Item form visibility
+    function toggleAddItemForm() {
+      const card = document.getElementById('addItemCard');
+      const body = document.getElementById('addItemFormBody');
+      if (body.style.display === 'none') {
+        body.style.display = 'block';
+        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        body.style.display = 'none';
+      }
+    }
+
+    // Toggle form collapse
+    function toggleFormCollapse() {
+      const body = document.getElementById('addItemFormBody');
+      const header = document.querySelector('#addItemCard .collapse-toggle');
+      if (body.style.display === 'none') {
+        body.style.display = 'block';
+        header.classList.remove('collapsed');
+      } else {
+        body.style.display = 'none';
+        header.classList.add('collapsed');
+      }
+    }
+  </script>
+
+</body>
+
+</html>

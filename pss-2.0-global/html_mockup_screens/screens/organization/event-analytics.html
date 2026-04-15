@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Post-Event Analytics - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+      --events-accent: #7c3aed;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
+    .page-header-left { display: flex; align-items: flex-start; gap: 1rem; }
+    .back-btn { width: 36px; height: 36px; border-radius: 0.5rem; border: 1px solid var(--border-color); background: white; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; font-size: 1rem; margin-top: 0.25rem; }
+    .back-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+    .breadcrumb-nav { font-size: 0.75rem; color: var(--text-secondary); margin: 0 0 0.25rem 0; }
+    .breadcrumb-nav a { color: var(--accent); text-decoration: none; cursor: pointer; }
+    .breadcrumb-nav a:hover { text-decoration: underline; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+    .page-header .subtitle { font-size: 0.8125rem; color: var(--text-secondary); margin-top: 0.25rem; }
+    .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: flex-start; }
+    .btn-primary-accent { background: var(--accent); border-color: var(--accent); color: white; font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid var(--accent); cursor: pointer; transition: all 0.15s; }
+    .btn-primary-accent:hover { background: #0c6577; border-color: #0c6577; color: white; }
+    .btn-outline-accent { background: white; border: 1px solid var(--accent); color: var(--accent); font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.15s; }
+    .btn-outline-accent:hover { background: var(--accent); color: white; }
+
+    /* Event Overview Bar */
+    .event-overview-bar { background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); padding: 1rem 1.25rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; font-size: 0.8125rem; }
+    .event-overview-bar .event-name { font-weight: 700; font-size: 0.9375rem; color: var(--text-primary); }
+    .event-overview-bar .separator { color: var(--border-color); }
+    .event-overview-bar .detail { color: var(--text-secondary); display: flex; align-items: center; gap: 0.375rem; }
+    .event-overview-bar .detail i { color: var(--accent); font-size: 0.75rem; }
+    .status-completed { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1875rem 0.625rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; background: #f0fdf4; color: var(--success-color); }
+
+    /* KPI Stats Grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+    .stat-card { background: white; border-radius: var(--card-radius); padding: 1.125rem; box-shadow: var(--card-shadow); border: 1px solid var(--border-color); text-align: center; transition: transform 0.15s, box-shadow 0.15s; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }
+    .stat-value { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+    .stat-label { font-size: 0.75rem; color: var(--text-secondary); font-weight: 500; margin-bottom: 0.25rem; }
+    .stat-subtitle { font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.25rem; }
+    .stat-subtitle.success { color: var(--success-color); }
+
+    /* Dash Card */
+    .dash-card { background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); }
+    .dash-card-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
+    .dash-card-header h3 { font-size: 0.9375rem; font-weight: 700; margin: 0; color: var(--text-primary); }
+    .dash-card-body { padding: 1.25rem; }
+
+    /* Chart Placeholder */
+    .chart-placeholder { background: #f8fafc; border: 1px dashed var(--border-color); border-radius: 0.5rem; height: 250px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-secondary); }
+    .chart-placeholder i { font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5; }
+    .chart-placeholder span { font-size: 0.8125rem; }
+    .chart-placeholder .chart-note { font-size: 0.6875rem; margin-top: 0.375rem; color: var(--text-secondary); opacity: 0.7; }
+
+    /* Table */
+    .data-table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+    .data-table th { padding: 0.625rem 0.75rem; font-size: 0.6875rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color); text-align: left; white-space: nowrap; }
+    .data-table td { padding: 0.625rem 0.75rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover { background: #f8fafc; }
+    .data-table .total-row { font-weight: 700; background: #f8fafc; }
+    .data-table .total-row td { border-top: 2px solid var(--border-color); }
+
+    /* Inline progress bar for table cells */
+    .inline-progress { display: flex; align-items: center; gap: 0.5rem; }
+    .inline-progress-track { flex: 1; height: 6px; background: #e2e8f0; border-radius: 9999px; overflow: hidden; min-width: 60px; }
+    .inline-progress-fill { height: 100%; border-radius: 9999px; transition: width 0.3s; }
+    .inline-progress-text { font-size: 0.75rem; font-weight: 600; white-space: nowrap; min-width: 40px; }
+
+    /* Revenue Dot */
+    .rev-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 0.5rem; flex-shrink: 0; }
+
+    /* Section Gap */
+    .section-gap { margin-bottom: 1.25rem; }
+
+    /* Engagement Stat Items */
+    .engagement-list { list-style: none; padding: 0; margin: 0; }
+    .engagement-list li { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid #f1f5f9; font-size: 0.8125rem; }
+    .engagement-list li:last-child { border-bottom: none; }
+    .engagement-list .eng-label { color: var(--text-primary); }
+    .engagement-list .eng-value { font-weight: 700; color: var(--text-primary); }
+    .engagement-list .eng-pct { font-size: 0.75rem; color: var(--text-secondary); margin-left: 0.5rem; }
+
+    /* Star Rating */
+    .star-rating { display: inline-flex; gap: 2px; }
+    .star-rating .fa-star { color: #e2e8f0; font-size: 1rem; }
+    .star-rating .fa-star.filled { color: #f59e0b; }
+    .star-rating .fa-star-half-stroke { color: #f59e0b; font-size: 1rem; }
+
+    /* Horizontal Bar */
+    .h-bar-group { margin-bottom: 0.75rem; }
+    .h-bar-group:last-child { margin-bottom: 0; }
+    .h-bar-label { display: flex; justify-content: space-between; font-size: 0.8125rem; margin-bottom: 0.25rem; }
+    .h-bar-label span:first-child { color: var(--text-primary); }
+    .h-bar-label span:last-child { font-weight: 600; color: var(--text-primary); }
+    .h-bar-track { height: 8px; background: #e2e8f0; border-radius: 9999px; overflow: hidden; }
+    .h-bar-fill { height: 100%; border-radius: 9999px; transition: width 0.5s; }
+
+    /* NPS Stacked Bar */
+    .nps-stacked { display: flex; height: 28px; border-radius: 6px; overflow: hidden; margin-bottom: 0.5rem; }
+    .nps-segment { display: flex; align-items: center; justify-content: center; font-size: 0.6875rem; font-weight: 600; color: white; }
+    .nps-legend { display: flex; gap: 1.25rem; font-size: 0.75rem; flex-wrap: wrap; }
+    .nps-legend-item { display: flex; align-items: center; gap: 0.375rem; }
+    .nps-legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+    /* Feedback Lists */
+    .feedback-list { list-style: none; padding: 0; margin: 0; }
+    .feedback-list li { display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.375rem 0; font-size: 0.8125rem; color: var(--text-primary); }
+    .feedback-list li i { margin-top: 0.125rem; font-size: 0.75rem; flex-shrink: 0; }
+
+    /* ROI Table */
+    .roi-table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+    .roi-table td { padding: 0.625rem 0.75rem; border-bottom: 1px solid #f1f5f9; }
+    .roi-table tr:last-child td { border-bottom: none; }
+    .roi-table tr:hover { background: #f8fafc; }
+    .roi-table .metric-label { color: var(--text-secondary); font-weight: 500; }
+    .roi-table .metric-value { font-weight: 700; color: var(--text-primary); text-align: right; }
+    .roi-table .highlight td { background: var(--accent-bg); }
+    .roi-table .highlight .metric-value { color: var(--accent); font-size: 1rem; }
+
+    /* Trend Arrow */
+    .trend-up { color: var(--success-color); font-weight: 600; }
+
+    /* Event Selector Dropdown */
+    .event-selector { position: relative; display: inline-block; }
+    .event-selector-btn { background: white; border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 0.375rem 0.75rem; font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; gap: 0.375rem; transition: all 0.15s; }
+    .event-selector-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .event-selector-btn i { font-size: 0.625rem; color: var(--text-secondary); }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .stats-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" onclick="parent.loadContent('organization/event-list')">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <div>
+        <p class="breadcrumb-nav"><a onclick="parent.loadContent('organization/event-list')">Events</a> &rsaquo; Post-Event Analytics</p>
+        <h1>Post-Event Analytics</h1>
+        <div class="subtitle">Comprehensive event performance analysis</div>
+        <div style="margin-top: 0.5rem;">
+          <div class="event-selector">
+            <button class="event-selector-btn" onclick="alert('Event selector: Switch between events for analytics comparison')">
+              Fundraising Gala 2026 <i class="fas fa-caret-down"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="alert('Exporting PDF report...')">
+        <i class="fas fa-file-export me-1"></i> Export Report
+      </button>
+      <button class="btn-outline-accent" onclick="alert('Printing report...')">
+        <i class="fas fa-print me-1"></i> Print
+      </button>
+      <button class="btn-outline-accent" onclick="alert('Sharing with board members...')">
+        <i class="fas fa-share-alt me-1"></i> Share with Board
+      </button>
+    </div>
+  </div>
+
+  <!-- Event Overview Bar -->
+  <div class="event-overview-bar section-gap">
+    <span class="event-name">Fundraising Gala 2026</span>
+    <span class="separator">|</span>
+    <span class="detail"><i class="fas fa-calendar-alt"></i> Apr 20, 2026</span>
+    <span class="separator">|</span>
+    <span class="detail"><i class="fas fa-map-marker-alt"></i> Grand Hyatt Dubai</span>
+    <span class="separator">|</span>
+    <span class="status-completed"><i class="fas fa-check-circle"></i> Completed</span>
+  </div>
+
+  <!-- KPI Hero Cards -->
+  <div class="stats-grid section-gap">
+    <div class="stat-card">
+      <div class="stat-label">Total Revenue</div>
+      <div class="stat-value">$113,400</div>
+      <div class="stat-subtitle success">113% of $100K goal</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Ticket Revenue</div>
+      <div class="stat-value">$67,800</div>
+      <div class="stat-subtitle">From all ticket types</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Auction Revenue</div>
+      <div class="stat-value">$45,600</div>
+      <div class="stat-subtitle">Silent + Live auction</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Attendees</div>
+      <div class="stat-value">278 / 300</div>
+      <div class="stat-subtitle success">92.7% attendance</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">New Donors</div>
+      <div class="stat-value">34</div>
+      <div class="stat-subtitle">First-time attendees who donated</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Cost per Attendee</div>
+      <div class="stat-value">$89</div>
+      <div class="stat-subtitle">Total cost: $24,700</div>
+    </div>
+  </div>
+
+  <!-- Revenue Breakdown -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-chart-pie me-2" style="color: var(--events-accent);"></i> Revenue Breakdown</h3>
+      <span style="font-size: 0.75rem; color: var(--text-secondary);">Total: $128,400</span>
+    </div>
+    <div class="dash-card-body">
+      <div class="row">
+        <!-- Donut Chart Placeholder -->
+        <div class="col-lg-5 mb-3 mb-lg-0">
+          <div class="chart-placeholder" style="height: 280px;">
+            <i class="fas fa-chart-pie"></i>
+            <span>Revenue Distribution</span>
+            <span class="chart-note">Donut chart &mdash; integrate with Chart.js</span>
+          </div>
+        </div>
+        <!-- Revenue Table -->
+        <div class="col-lg-7">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Source</th>
+                <th style="text-align:right;">Amount</th>
+                <th style="text-align:right;">%</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="rev-dot" style="background: #7c3aed;"></span>VIP Tables</td>
+                <td style="text-align:right;"><strong>$35,000</strong></td>
+                <td style="text-align:right;">30.9%</td>
+              </tr>
+              <tr>
+                <td><span class="rev-dot" style="background: #0e7490;"></span>Premium Tickets</td>
+                <td style="text-align:right;"><strong>$21,000</strong></td>
+                <td style="text-align:right;">18.5%</td>
+              </tr>
+              <tr>
+                <td><span class="rev-dot" style="background: #06b6d4;"></span>Standard Tickets</td>
+                <td style="text-align:right;"><strong>$15,600</strong></td>
+                <td style="text-align:right;">13.8%</td>
+              </tr>
+              <tr>
+                <td><span class="rev-dot" style="background: #22c55e;"></span>Standing Tickets</td>
+                <td style="text-align:right;"><strong>$6,700</strong></td>
+                <td style="text-align:right;">5.9%</td>
+              </tr>
+              <tr>
+                <td><span class="rev-dot" style="background: #f59e0b;"></span>Silent Auction</td>
+                <td style="text-align:right;"><strong>$38,200</strong></td>
+                <td style="text-align:right;">33.7%</td>
+              </tr>
+              <tr>
+                <td><span class="rev-dot" style="background: #ef4444;"></span>Live Auction</td>
+                <td style="text-align:right;"><strong>$7,400</strong></td>
+                <td style="text-align:right;">6.5%</td>
+              </tr>
+              <tr>
+                <td><span class="rev-dot" style="background: #8b5cf6;"></span>On-site Donations</td>
+                <td style="text-align:right;"><strong>$4,500</strong></td>
+                <td style="text-align:right;">4.0%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Attendance Analysis -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-user-check me-2" style="color: var(--accent);"></i> Attendance Analysis</h3>
+    </div>
+    <div class="dash-card-body" style="padding: 0;">
+      <!-- Registration vs Attendance Table -->
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Ticket Type</th>
+              <th style="text-align:right;">Registered</th>
+              <th style="text-align:right;">Attended</th>
+              <th style="text-align:right;">No-Show</th>
+              <th>Attendance Rate</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>VIP Table</strong></td>
+              <td style="text-align:right;">70</td>
+              <td style="text-align:right;">68</td>
+              <td style="text-align:right;">2</td>
+              <td>
+                <div class="inline-progress">
+                  <div class="inline-progress-track"><div class="inline-progress-fill" style="width:97%; background:var(--success-color);"></div></div>
+                  <span class="inline-progress-text">97%</span>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Premium</strong></td>
+              <td style="text-align:right;">42</td>
+              <td style="text-align:right;">40</td>
+              <td style="text-align:right;">2</td>
+              <td>
+                <div class="inline-progress">
+                  <div class="inline-progress-track"><div class="inline-progress-fill" style="width:95%; background:var(--success-color);"></div></div>
+                  <span class="inline-progress-text">95%</span>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Standard</strong></td>
+              <td style="text-align:right;">78</td>
+              <td style="text-align:right;">70</td>
+              <td style="text-align:right;">8</td>
+              <td>
+                <div class="inline-progress">
+                  <div class="inline-progress-track"><div class="inline-progress-fill" style="width:90%; background:var(--success-color);"></div></div>
+                  <span class="inline-progress-text">90%</span>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Standing</strong></td>
+              <td style="text-align:right;">67</td>
+              <td style="text-align:right;">56</td>
+              <td style="text-align:right;">11</td>
+              <td>
+                <div class="inline-progress">
+                  <div class="inline-progress-track"><div class="inline-progress-fill" style="width:84%; background:var(--warning-color);"></div></div>
+                  <span class="inline-progress-text">84%</span>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Complimentary</strong></td>
+              <td style="text-align:right;">34</td>
+              <td style="text-align:right;">28</td>
+              <td style="text-align:right;">6</td>
+              <td>
+                <div class="inline-progress">
+                  <div class="inline-progress-track"><div class="inline-progress-fill" style="width:82%; background:var(--warning-color);"></div></div>
+                  <span class="inline-progress-text">82%</span>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Walk-in</strong></td>
+              <td style="text-align:right;">&mdash;</td>
+              <td style="text-align:right;">16</td>
+              <td style="text-align:right;">&mdash;</td>
+              <td>
+                <div class="inline-progress">
+                  <span class="inline-progress-text" style="color: var(--text-secondary);">&mdash;</span>
+                </div>
+              </td>
+            </tr>
+            <tr class="total-row">
+              <td><strong>Total</strong></td>
+              <td style="text-align:right;"><strong>291</strong></td>
+              <td style="text-align:right;"><strong>278</strong></td>
+              <td style="text-align:right;"><strong>29</strong></td>
+              <td>
+                <div class="inline-progress">
+                  <div class="inline-progress-track" style="height: 8px;"><div class="inline-progress-fill" style="width:92.7%; background:var(--success-color);"></div></div>
+                  <span class="inline-progress-text" style="font-size: 0.8125rem;"><strong>92.7%</strong></span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <!-- Check-in Timeline -->
+    <div style="padding: 1.25rem; border-top: 1px solid var(--border-color);">
+      <h6 style="font-size: 0.8125rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-primary);">
+        <i class="fas fa-clock me-1" style="color: var(--accent);"></i> Check-in Timeline (6 PM &ndash; 11 PM)
+      </h6>
+      <div class="chart-placeholder" style="height: 200px;">
+        <i class="fas fa-chart-line"></i>
+        <span>Check-in Timeline</span>
+        <span class="chart-note">Peak arrival: 7:00&ndash;7:30 PM (45% of attendees)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Donor Engagement -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-hand-holding-heart me-2" style="color: var(--events-accent);"></i> Donor Engagement</h3>
+    </div>
+    <div class="dash-card-body">
+      <ul class="engagement-list">
+        <li>
+          <span class="eng-label"><i class="fas fa-user-plus me-2" style="color: var(--accent);"></i> First-time event attendees</span>
+          <span><span class="eng-value">89</span><span class="eng-pct">(32%)</span></span>
+        </li>
+        <li>
+          <span class="eng-label"><i class="fas fa-redo me-2" style="color: var(--accent);"></i> Returning attendees</span>
+          <span><span class="eng-value">189</span><span class="eng-pct">(68%)</span></span>
+        </li>
+        <li>
+          <span class="eng-label"><i class="fas fa-donate me-2" style="color: var(--success-color);"></i> Attendees who made a donation</span>
+          <span><span class="eng-value">178</span><span class="eng-pct">(64%)</span></span>
+        </li>
+        <li>
+          <span class="eng-label"><i class="fas fa-star me-2" style="color: var(--warning-color);"></i> New donors acquired at event</span>
+          <span><span class="eng-value">34</span><span class="eng-pct">(12.2%)</span></span>
+        </li>
+        <li>
+          <span class="eng-label"><i class="fas fa-chart-line me-2" style="color: var(--events-accent);"></i> Average engagement score</span>
+          <span><span class="eng-value">72</span><span class="eng-pct">(vs org avg 54)</span></span>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Feedback & Satisfaction -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-comment-dots me-2" style="color: var(--accent);"></i> Feedback &amp; Satisfaction</h3>
+      <span style="font-size: 0.75rem; color: var(--text-secondary);">145 responses (52% response rate)</span>
+    </div>
+    <div class="dash-card-body">
+      <div class="row">
+        <!-- Overall Rating -->
+        <div class="col-lg-6 mb-4">
+          <div style="text-align: center; margin-bottom: 1.5rem;">
+            <div style="font-size: 2.5rem; font-weight: 800; color: var(--text-primary); line-height: 1;">4.2</div>
+            <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">out of 5.0</div>
+            <div class="star-rating">
+              <i class="fas fa-star filled"></i>
+              <i class="fas fa-star filled"></i>
+              <i class="fas fa-star filled"></i>
+              <i class="fas fa-star filled"></i>
+              <i class="fas fa-star-half-stroke"></i>
+            </div>
+          </div>
+
+          <!-- Category Ratings -->
+          <div class="h-bar-group">
+            <div class="h-bar-label"><span>Venue</span><span>4.5</span></div>
+            <div class="h-bar-track"><div class="h-bar-fill" style="width: 90%; background: var(--success-color);"></div></div>
+          </div>
+          <div class="h-bar-group">
+            <div class="h-bar-label"><span>Program</span><span>4.3</span></div>
+            <div class="h-bar-track"><div class="h-bar-fill" style="width: 86%; background: var(--accent);"></div></div>
+          </div>
+          <div class="h-bar-group">
+            <div class="h-bar-label"><span>Food &amp; Beverage</span><span>4.0</span></div>
+            <div class="h-bar-track"><div class="h-bar-fill" style="width: 80%; background: var(--accent-light);"></div></div>
+          </div>
+          <div class="h-bar-group">
+            <div class="h-bar-label"><span>Networking</span><span>3.8</span></div>
+            <div class="h-bar-track"><div class="h-bar-fill" style="width: 76%; background: var(--warning-color);"></div></div>
+          </div>
+        </div>
+
+        <!-- NPS + Feedback -->
+        <div class="col-lg-6">
+          <!-- NPS Score -->
+          <div style="margin-bottom: 1.5rem;">
+            <div style="display: flex; align-items: baseline; gap: 0.5rem; margin-bottom: 0.75rem;">
+              <span style="font-size: 0.8125rem; font-weight: 700; color: var(--text-primary);">Net Promoter Score</span>
+              <span style="font-size: 1.5rem; font-weight: 800; color: var(--success-color);">+45</span>
+            </div>
+            <div class="nps-stacked">
+              <div class="nps-segment" style="width: 58%; background: var(--success-color);">58%</div>
+              <div class="nps-segment" style="width: 29%; background: var(--warning-color);">29%</div>
+              <div class="nps-segment" style="width: 13%; background: var(--danger-color);">13%</div>
+            </div>
+            <div class="nps-legend">
+              <div class="nps-legend-item"><div class="nps-legend-dot" style="background: var(--success-color);"></div> Promoters (58%)</div>
+              <div class="nps-legend-item"><div class="nps-legend-dot" style="background: var(--warning-color);"></div> Passives (29%)</div>
+              <div class="nps-legend-item"><div class="nps-legend-dot" style="background: var(--danger-color);"></div> Detractors (13%)</div>
+            </div>
+          </div>
+
+          <!-- Top Positive Feedback -->
+          <div style="margin-bottom: 1rem;">
+            <h6 style="font-size: 0.75rem; font-weight: 700; color: var(--success-color); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">
+              <i class="fas fa-thumbs-up me-1"></i> Top Positive Feedback
+            </h6>
+            <ul class="feedback-list">
+              <li><i class="fas fa-check-circle" style="color: var(--success-color);"></i> Excellent keynote speaker and inspiring stories from beneficiaries</li>
+              <li><i class="fas fa-check-circle" style="color: var(--success-color);"></i> Well-organized silent auction with diverse items</li>
+              <li><i class="fas fa-check-circle" style="color: var(--success-color);"></i> Beautiful venue and outstanding catering quality</li>
+            </ul>
+          </div>
+
+          <!-- Top Improvement Areas -->
+          <div>
+            <h6 style="font-size: 0.75rem; font-weight: 700; color: var(--warning-color); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">
+              <i class="fas fa-lightbulb me-1"></i> Top Improvement Areas
+            </h6>
+            <ul class="feedback-list">
+              <li><i class="fas fa-exclamation-circle" style="color: var(--warning-color);"></i> More structured networking time between sessions</li>
+              <li><i class="fas fa-exclamation-circle" style="color: var(--warning-color);"></i> Longer break between dinner and auction segment</li>
+              <li><i class="fas fa-exclamation-circle" style="color: var(--warning-color);"></i> Better signage and wayfinding for first-time attendees</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROI Analysis -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-calculator me-2" style="color: var(--success-color);"></i> ROI Analysis</h3>
+    </div>
+    <div class="dash-card-body">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <table class="roi-table">
+            <tr>
+              <td class="metric-label">Total Revenue</td>
+              <td class="metric-value">$128,400</td>
+            </tr>
+            <tr>
+              <td class="metric-label">Total Costs</td>
+              <td class="metric-value" style="color: var(--danger-color);">$24,700</td>
+            </tr>
+            <tr class="highlight">
+              <td class="metric-label" style="font-weight: 700;">Net Revenue</td>
+              <td class="metric-value">$103,700</td>
+            </tr>
+            <tr class="highlight">
+              <td class="metric-label" style="font-weight: 700;">ROI</td>
+              <td class="metric-value" style="font-size: 1.125rem;">420%</td>
+            </tr>
+            <tr>
+              <td class="metric-label">Cost per Dollar Raised</td>
+              <td class="metric-value">$0.19</td>
+            </tr>
+            <tr>
+              <td class="metric-label">Revenue per Attendee</td>
+              <td class="metric-value">$462</td>
+            </tr>
+            <tr>
+              <td class="metric-label">Donor Acquisition Cost</td>
+              <td class="metric-value">$726 <span style="font-size: 0.6875rem; font-weight: 400; color: var(--text-secondary);">(for 34 new donors)</span></td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Year-over-Year Comparison -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-chart-bar me-2" style="color: var(--accent);"></i> Year-over-Year Comparison</h3>
+    </div>
+    <div class="dash-card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th style="text-align:right;">2024</th>
+              <th style="text-align:right;">2025</th>
+              <th style="text-align:right;">2026</th>
+              <th style="text-align:right;">Trend</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Revenue</strong></td>
+              <td style="text-align:right;">$78,500</td>
+              <td style="text-align:right;">$95,200</td>
+              <td style="text-align:right;"><strong>$128,400</strong></td>
+              <td style="text-align:right;"><span class="trend-up"><i class="fas fa-arrow-up me-1"></i>35%</span></td>
+            </tr>
+            <tr>
+              <td><strong>Attendees</strong></td>
+              <td style="text-align:right;">180</td>
+              <td style="text-align:right;">225</td>
+              <td style="text-align:right;"><strong>278</strong></td>
+              <td style="text-align:right;"><span class="trend-up"><i class="fas fa-arrow-up me-1"></i>24%</span></td>
+            </tr>
+            <tr>
+              <td><strong>Auction Revenue</strong></td>
+              <td style="text-align:right;">$22,000</td>
+              <td style="text-align:right;">$32,500</td>
+              <td style="text-align:right;"><strong>$45,600</strong></td>
+              <td style="text-align:right;"><span class="trend-up"><i class="fas fa-arrow-up me-1"></i>40%</span></td>
+            </tr>
+            <tr>
+              <td><strong>NPS Score</strong></td>
+              <td style="text-align:right;">+32</td>
+              <td style="text-align:right;">+38</td>
+              <td style="text-align:right;"><strong>+45</strong></td>
+              <td style="text-align:right;"><span class="trend-up"><i class="fas fa-arrow-up me-1"></i>improving</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</body>
+
+</html>

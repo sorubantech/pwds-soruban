@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff Attendance - Mobile App</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --field-accent: #059669;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a1a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .phone-frame {
+      width: 375px;
+      height: 812px;
+      background: #ffffff;
+      border-radius: 44px;
+      overflow: hidden;
+      box-shadow: 0 0 0 12px #2d2d2d, 0 0 0 14px #1a1a1a, 0 20px 60px rgba(0,0,0,0.5);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .phone-notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 28px;
+      background: #000;
+      border-radius: 0 0 18px 18px;
+      z-index: 10;
+    }
+
+    .status-bar {
+      background: #000;
+      color: #fff;
+      padding: 8px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 600;
+      height: 48px;
+    }
+
+    .status-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+    }
+
+    /* Staff Header */
+    .staff-header {
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      color: white;
+      padding: 12px 20px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .staff-header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .staff-org {
+      font-size: 11px;
+      font-weight: 600;
+      opacity: 0.85;
+    }
+
+    .staff-name {
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .staff-avatar {
+      width: 36px;
+      height: 36px;
+      background: rgba(255,255,255,0.25);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    /* Content */
+    .phone-content {
+      flex: 1;
+      overflow-y: auto;
+      background: #f8fafc;
+      padding-bottom: 80px;
+    }
+
+    .phone-content::-webkit-scrollbar { width: 0; }
+
+    /* Tab Switcher */
+    .tab-switcher {
+      display: flex;
+      background: white;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* Views */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* Clock Card */
+    .clock-card {
+      margin: 16px;
+      background: white;
+      border-radius: 20px;
+      padding: 24px 20px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      border: 1px solid #f1f5f9;
+    }
+
+    .clock-date {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .clock-day {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .clock-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--success-color);
+      margin-bottom: 4px;
+    }
+
+    .clock-status-dot {
+      width: 10px;
+      height: 10px;
+      background: var(--success-color);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .clock-since {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .clock-location {
+      font-size: 12px;
+      color: var(--success-color);
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    .clock-btn {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: none;
+      font-size: 16px;
+      font-weight: 700;
+      color: white;
+      cursor: pointer;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      box-shadow: 0 6px 24px rgba(220, 38, 38, 0.3);
+      background: linear-gradient(135deg, #dc2626, #ef4444);
+      margin-bottom: 16px;
+    }
+
+    .clock-btn.clock-in {
+      background: linear-gradient(135deg, #16a34a, #22c55e);
+      box-shadow: 0 6px 24px rgba(22, 163, 74, 0.3);
+    }
+
+    .clock-btn i {
+      font-size: 24px;
+    }
+
+    .clock-gps {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .clock-gps i {
+      color: var(--accent);
+    }
+
+    .clock-distance {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    /* Today's Log */
+    .section-card {
+      margin: 0 16px 16px;
+      background: white;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      border: 1px solid #f1f5f9;
+    }
+
+    .section-card-header {
+      padding: 14px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .log-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid #f8fafc;
+    }
+
+    .log-item:last-child { border-bottom: none; }
+
+    .log-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .log-icon.green { background: #f0fdf4; color: var(--success-color); }
+    .log-icon.orange { background: #fff7ed; color: #f97316; }
+    .log-icon.red { background: #fef2f2; color: var(--danger-color); }
+
+    .log-info { flex: 1; }
+
+    .log-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .log-time {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .log-location {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    /* Progress Bar */
+    .hours-progress {
+      padding: 14px 16px;
+    }
+
+    .hours-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .hours-bar-track {
+      height: 10px;
+      background: #f1f5f9;
+      border-radius: 100px;
+      overflow: hidden;
+    }
+
+    .hours-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-light));
+      border-radius: 100px;
+      transition: width 0.5s;
+    }
+
+    .hours-percent {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      text-align: right;
+      margin-top: 4px;
+    }
+
+    /* Weekly Summary */
+    .week-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      padding: 14px 16px;
+    }
+
+    .week-day {
+      text-align: center;
+    }
+
+    .week-day-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .week-day-hours {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-primary);
+      padding: 6px 2px;
+      border-radius: 6px;
+      background: #f0fdf4;
+    }
+
+    .week-day-hours.in-progress {
+      background: #fefce8;
+      color: var(--warning-color);
+    }
+
+    .week-day-hours.empty {
+      background: #f8fafc;
+      color: var(--text-secondary);
+    }
+
+    .week-total {
+      padding: 10px 16px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+      text-align: center;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .week-total span {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    /* Event Check-in View */
+    .event-banner {
+      margin: 16px;
+      background: linear-gradient(135deg, #1e1b4b, #312e81);
+      border-radius: 16px;
+      padding: 18px;
+      color: white;
+    }
+
+    .event-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: rgba(255,255,255,0.2);
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+
+    .event-name {
+      font-size: 17px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .event-details {
+      font-size: 12px;
+      opacity: 0.8;
+      margin-bottom: 14px;
+    }
+
+    .event-progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .event-progress-track {
+      height: 8px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+
+    .event-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #a78bfa, #c4b5fd);
+      border-radius: 100px;
+    }
+
+    /* Scan Button */
+    .scan-qr-btn {
+      margin: 0 16px 16px;
+      padding: 16px;
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      border: none;
+      border-radius: 14px;
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: calc(100% - 32px);
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+
+    .scan-qr-btn:active {
+      transform: scale(0.98);
+    }
+
+    /* Recent Check-ins */
+    .checkin-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid #f8fafc;
+    }
+
+    .checkin-item:last-child { border-bottom: none; }
+
+    .checkin-check {
+      width: 28px;
+      height: 28px;
+      background: #f0fdf4;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--success-color);
+      font-size: 12px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .checkin-info { flex: 1; }
+
+    .checkin-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .checkin-detail {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 1px;
+    }
+
+    .checkin-time {
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    /* Manual Search */
+    .manual-search {
+      margin: 0 16px 12px;
+    }
+
+    .manual-search-input {
+      width: 100%;
+      padding: 12px 16px 12px 40px;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      font-size: 13px;
+      color: var(--text-primary);
+      outline: none;
+    }
+
+    .manual-search-input:focus {
+      border-color: #6366f1;
+    }
+
+    .manual-search-wrap {
+      position: relative;
+    }
+
+    .manual-search-wrap i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .walkin-btn {
+      margin: 0 16px 16px;
+      padding: 12px;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: calc(100% - 32px);
+    }
+
+    .walkin-btn i {
+      color: #6366f1;
+    }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 80px;
+      background: white;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-around;
+      padding-top: 8px;
+      z-index: 5;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      padding: 4px 8px;
+      min-width: 52px;
+    }
+
+    .nav-item i {
+      font-size: 18px;
+      color: var(--text-secondary);
+    }
+
+    .nav-item span {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .nav-item.active i { color: var(--accent); }
+    .nav-item.active span { color: var(--accent); }
+
+    .home-indicator {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 134px;
+      height: 5px;
+      background: #d1d5db;
+      border-radius: 100px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <span>2:30</span>
+      <div class="status-bar-right">
+        <i class="fas fa-signal" style="font-size: 11px;"></i>
+        <i class="fas fa-wifi" style="font-size: 11px;"></i>
+        <i class="fas fa-battery-full" style="font-size: 13px;"></i>
+      </div>
+    </div>
+
+    <!-- Staff Header -->
+    <div class="staff-header">
+      <div class="staff-header-left">
+        <div class="staff-avatar"><i class="fas fa-user"></i></div>
+        <div>
+          <div class="staff-org"><i class="fas fa-heart me-1"></i> GHF</div>
+          <div class="staff-name">Ahmed Salim</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Switcher -->
+    <div class="tab-switcher">
+      <div class="tab-btn active" onclick="switchTab('attendance')">
+        <i class="fas fa-clock me-1"></i> Attendance
+      </div>
+      <div class="tab-btn" onclick="switchTab('checkin')">
+        <i class="fas fa-ticket me-1"></i> Event Check-in
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="phone-content">
+
+      <!-- Attendance View -->
+      <div class="view active" id="attendanceView">
+
+        <!-- Clock Card -->
+        <div class="clock-card">
+          <div class="clock-date">April 12, 2026</div>
+          <div class="clock-day">Saturday</div>
+
+          <div class="clock-status">
+            <div class="clock-status-dot"></div>
+            Clocked In
+          </div>
+          <div class="clock-since">Since: 8:05 AM (6h 25m)</div>
+          <div class="clock-location"><i class="fas fa-check-circle me-1"></i> Dubai HQ</div>
+
+          <button class="clock-btn" onclick="toggleClock(this)">
+            <i class="fas fa-stop"></i>
+            Clock Out
+          </button>
+
+          <div class="clock-gps">
+            <i class="fas fa-map-marker-alt me-1"></i> Al Quoz, Dubai
+          </div>
+          <div class="clock-distance">(0.2 km from office)</div>
+        </div>
+
+        <!-- Today's Log -->
+        <div class="section-card">
+          <div class="section-card-header">Today's Activity</div>
+
+          <div class="log-item">
+            <div class="log-icon green"><i class="fas fa-sign-in-alt"></i></div>
+            <div class="log-info">
+              <div class="log-label">Clock In</div>
+              <div class="log-location">Dubai HQ</div>
+            </div>
+            <div class="log-time">8:05 AM</div>
+          </div>
+
+          <div class="log-item">
+            <div class="log-icon orange"><i class="fas fa-mug-hot"></i></div>
+            <div class="log-info">
+              <div class="log-label">Break Start</div>
+            </div>
+            <div class="log-time">12:00 PM</div>
+          </div>
+
+          <div class="log-item">
+            <div class="log-icon orange"><i class="fas fa-mug-hot"></i></div>
+            <div class="log-info">
+              <div class="log-label">Break End</div>
+            </div>
+            <div class="log-time">12:45 PM</div>
+          </div>
+
+          <div class="log-item">
+            <div class="log-icon red"><i class="fas fa-sign-out-alt"></i></div>
+            <div class="log-info">
+              <div class="log-label" style="color: var(--text-secondary);">Clock Out</div>
+              <div class="log-location" style="font-style: italic;">Still working...</div>
+            </div>
+            <div class="log-time">—</div>
+          </div>
+
+          <!-- Hours Progress -->
+          <div class="hours-progress">
+            <div class="hours-label">
+              <span>Hours Today: 6h 25m</span>
+              <span>8h target</span>
+            </div>
+            <div class="hours-bar-track">
+              <div class="hours-bar-fill" style="width: 80%;"></div>
+            </div>
+            <div class="hours-percent">80%</div>
+          </div>
+        </div>
+
+        <!-- Weekly Summary -->
+        <div class="section-card">
+          <div class="section-card-header">This Week</div>
+
+          <div class="week-grid">
+            <div class="week-day">
+              <div class="week-day-label">Mon</div>
+              <div class="week-day-hours">8:10</div>
+            </div>
+            <div class="week-day">
+              <div class="week-day-label">Tue</div>
+              <div class="week-day-hours">8:05</div>
+            </div>
+            <div class="week-day">
+              <div class="week-day-label">Wed</div>
+              <div class="week-day-hours">8:20</div>
+            </div>
+            <div class="week-day">
+              <div class="week-day-label">Thu</div>
+              <div class="week-day-hours">7:55</div>
+            </div>
+            <div class="week-day">
+              <div class="week-day-label">Fri</div>
+              <div class="week-day-hours in-progress">6:25</div>
+            </div>
+            <div class="week-day">
+              <div class="week-day-label">Sat</div>
+              <div class="week-day-hours empty">—</div>
+            </div>
+            <div class="week-day">
+              <div class="week-day-label">Sun</div>
+              <div class="week-day-hours empty">—</div>
+            </div>
+          </div>
+
+          <div class="week-total">
+            38h 55m <span>/ 40h target</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Event Check-in View -->
+      <div class="view" id="checkinView">
+
+        <!-- Event Banner -->
+        <div class="event-banner">
+          <div class="event-badge">Event Check-in Mode</div>
+          <div class="event-name">Fundraising Gala 2026</div>
+          <div class="event-details">Grand Hyatt Dubai | 7:00 PM</div>
+          <div class="event-progress-label">
+            <span>Checked In: 45 / 291 registered</span>
+            <span>15.5%</span>
+          </div>
+          <div class="event-progress-track">
+            <div class="event-progress-fill" style="width: 15.5%;"></div>
+          </div>
+        </div>
+
+        <!-- Scan QR -->
+        <button class="scan-qr-btn">
+          <i class="fas fa-camera"></i> Scan QR Code
+        </button>
+
+        <!-- Recent Check-ins -->
+        <div class="section-card">
+          <div class="section-card-header">Recent Check-ins</div>
+
+          <div class="checkin-item">
+            <div class="checkin-check"><i class="fas fa-check"></i></div>
+            <div class="checkin-info">
+              <div class="checkin-name">Khalid Al-Mansouri</div>
+              <div class="checkin-detail">VIP Table | Table 3</div>
+            </div>
+            <div class="checkin-time">7:02 PM</div>
+          </div>
+
+          <div class="checkin-item">
+            <div class="checkin-check"><i class="fas fa-check"></i></div>
+            <div class="checkin-info">
+              <div class="checkin-name">Fatima Al-Zahra</div>
+              <div class="checkin-detail">Premium | Seat B12</div>
+            </div>
+            <div class="checkin-time">7:05 PM</div>
+          </div>
+
+          <div class="checkin-item">
+            <div class="checkin-check"><i class="fas fa-check"></i></div>
+            <div class="checkin-info">
+              <div class="checkin-name">Ravi Sharma</div>
+              <div class="checkin-detail">Standard | Seat C34</div>
+            </div>
+            <div class="checkin-time">7:08 PM</div>
+          </div>
+        </div>
+
+        <!-- Manual Search -->
+        <div class="manual-search">
+          <div class="manual-search-wrap">
+            <i class="fas fa-search"></i>
+            <input type="text" class="manual-search-input" placeholder="Search by name or ticket #">
+          </div>
+        </div>
+
+        <!-- Walk-in -->
+        <button class="walkin-btn">
+          <i class="fas fa-user-plus"></i> Mark as Walk-in
+        </button>
+
+      </div>
+
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+      <div class="nav-item">
+        <i class="fas fa-home"></i>
+        <span>Home</span>
+      </div>
+      <div class="nav-item active" onclick="switchTab('attendance')">
+        <i class="fas fa-clock"></i>
+        <span>Attendance</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('checkin')">
+        <i class="fas fa-ticket"></i>
+        <span>Check-in</span>
+      </div>
+      <div class="nav-item">
+        <i class="fas fa-clipboard-list"></i>
+        <span>Tasks</span>
+      </div>
+      <div class="nav-item">
+        <i class="fas fa-user"></i>
+        <span>Profile</span>
+      </div>
+      <div class="home-indicator"></div>
+    </div>
+
+  </div>
+
+  <script>
+    function switchTab(tab) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+
+      if (tab === 'attendance') {
+        document.getElementById('attendanceView').classList.add('active');
+        document.querySelectorAll('.tab-btn')[0].classList.add('active');
+      } else {
+        document.getElementById('checkinView').classList.add('active');
+        document.querySelectorAll('.tab-btn')[1].classList.add('active');
+      }
+    }
+
+    function toggleClock(btn) {
+      if (btn.classList.contains('clock-in')) {
+        btn.classList.remove('clock-in');
+        btn.innerHTML = '<i class="fas fa-stop"></i>Clock Out';
+      } else {
+        btn.classList.add('clock-in');
+        btn.innerHTML = '<i class="fas fa-play"></i>Clock In';
+      }
+    }
+  </script>
+
+</body>
+
+</html>

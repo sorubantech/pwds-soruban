@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Social Media Integration - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+      --social-accent: #1d4ed8;
+      --social-accent-bg: #eff6ff;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0 0 0.2rem 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    /* Buttons */
+    .btn-primary-custom {
+      background: var(--social-accent);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .btn-primary-custom:hover {
+      background: #1e40af;
+      color: white;
+    }
+
+    .btn-outline-custom {
+      background: white;
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      text-decoration: none;
+    }
+
+    .btn-outline-custom:hover {
+      border-color: var(--social-accent);
+      color: var(--social-accent);
+    }
+
+    .btn-sm-action {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 0.25rem 0.625rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-sm-action:hover {
+      border-color: var(--social-accent);
+      color: var(--social-accent);
+    }
+
+    .btn-sm-action.danger:hover {
+      border-color: var(--danger-color);
+      color: var(--danger-color);
+    }
+
+    .btn-sm-action.boost {
+      border-color: var(--social-accent);
+      color: var(--social-accent);
+    }
+
+    .btn-sm-action.boost:hover {
+      background: var(--social-accent);
+      color: white;
+    }
+
+    /* Cards */
+    .dash-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      margin-bottom: 1.25rem;
+      overflow: hidden;
+    }
+
+    .dash-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .dash-card-header h2 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .dash-card-body {
+      padding: 1.25rem;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      padding: 1rem 1.25rem;
+      text-align: center;
+    }
+
+    .stat-card .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--social-accent);
+    }
+
+    .stat-card .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .stat-card .stat-sub {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.125rem;
+    }
+
+    /* Platform icon colors */
+    .platform-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .platform-icon.facebook { background: #1877f2; }
+    .platform-icon.instagram { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
+    .platform-icon.twitter { background: #1da1f2; }
+    .platform-icon.linkedin { background: #0a66c2; }
+    .platform-icon.youtube { background: #ff0000; }
+
+    /* Table */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .data-table thead th {
+      background: #f8fafc;
+      padding: 0.625rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-color);
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .data-table tbody td {
+      padding: 0.625rem 0.75rem;
+      font-size: 0.8125rem;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+
+    .data-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    .data-table .text-right {
+      text-align: right;
+    }
+
+    .data-table .text-center {
+      text-align: center;
+    }
+
+    .data-table .total-row td {
+      font-weight: 700;
+      background: #f8fafc;
+      border-top: 2px solid var(--border-color);
+    }
+
+    /* Status badges */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+    }
+
+    .status-badge.connected {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .status-badge.expired {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .status-badge.disconnected {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    /* Sentiment */
+    .sentiment-positive { color: var(--success-color); }
+    .sentiment-negative { color: var(--danger-color); }
+    .sentiment-neutral { color: var(--warning-color); }
+
+    /* Engagement chart mock */
+    .engagement-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 0.75rem;
+      height: 180px;
+      padding: 1rem 0;
+    }
+
+    .chart-week {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .chart-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      flex: 1;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .chart-bar {
+      width: 12px;
+      border-radius: 3px 3px 0 0;
+      min-height: 4px;
+      transition: height 0.3s;
+    }
+
+    .chart-bar.fb { background: #1877f2; }
+    .chart-bar.ig { background: #e4405f; }
+    .chart-bar.tw { background: #1da1f2; }
+    .chart-bar.li { background: #0a66c2; }
+
+    .chart-label {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .chart-legend {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .chart-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .chart-legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+    }
+
+    /* Keyword tag */
+    .keyword-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.625rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      background: var(--social-accent-bg);
+      color: var(--social-accent);
+      font-weight: 500;
+      margin: 0.125rem;
+    }
+
+    /* Account row flex */
+    .account-info {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+
+    .account-name {
+      font-weight: 600;
+      font-size: 0.8125rem;
+    }
+
+    .account-handle {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    /* Post content */
+    .post-content {
+      max-width: 280px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.8125rem;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-box {
+      background: white;
+      border-radius: var(--card-radius);
+      width: 600px;
+      max-width: 95vw;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .modal-header h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0.25rem;
+      line-height: 1;
+    }
+
+    .modal-close:hover {
+      color: var(--text-primary);
+    }
+
+    .modal-body {
+      padding: 1.25rem;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      padding: 1rem 1.25rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    /* Form elements */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.375rem;
+      display: block;
+    }
+
+    .form-group .form-hint {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .form-control-custom {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .form-control-custom:focus {
+      outline: none;
+      border-color: var(--social-accent);
+      box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1);
+    }
+
+    textarea.form-control-custom {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .char-counter {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      text-align: right;
+      margin-top: 0.25rem;
+    }
+
+    .char-counter.over {
+      color: var(--danger-color);
+      font-weight: 600;
+    }
+
+    .platform-checks {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .platform-check {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.8125rem;
+      cursor: pointer;
+    }
+
+    .platform-check input[type="checkbox"] {
+      accent-color: var(--social-accent);
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 576px) {
+      body { padding: 1rem; }
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .page-header {
+        flex-direction: column;
+      }
+      .data-table {
+        display: block;
+        overflow-x: auto;
+      }
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+    }
+
+    .actions-cell {
+      display: flex;
+      gap: 0.25rem;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fa-solid fa-share-nodes" style="color: var(--social-accent); margin-right: 0.375rem;"></i>Social Media Integration</h1>
+      <p class="subtitle">Connect social accounts, share campaigns, and track engagement</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-custom" onclick="openModal('connectModal')">
+        <i class="fa-solid fa-plus"></i> Connect Account
+      </button>
+      <button class="btn-outline-custom" onclick="openModal('scheduleModal')">
+        <i class="fa-regular fa-calendar"></i> Schedule Post
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Summary -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-value">5</div>
+      <div class="stat-label">Connected Accounts</div>
+      <div class="stat-sub">1 needs attention</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">55</div>
+      <div class="stat-label">Posts (30 days)</div>
+      <div class="stat-sub">Across all platforms</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">108.5K</div>
+      <div class="stat-label">Total Reach</div>
+      <div class="stat-sub">+18% vs last month</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">9.4%</div>
+      <div class="stat-label">Engagement Rate</div>
+      <div class="stat-sub">10,147 interactions</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">2,147</div>
+      <div class="stat-label">Link Clicks</div>
+      <div class="stat-sub">+12% vs last month</div>
+    </div>
+  </div>
+
+  <!-- Connected Accounts -->
+  <div class="dash-card">
+    <div class="dash-card-header">
+      <h2><i class="fa-solid fa-link" style="color: var(--social-accent);"></i> Connected Accounts</h2>
+      <span style="font-size: 0.75rem; color: var(--text-secondary);">5 platforms</span>
+    </div>
+    <div class="dash-card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Platform</th>
+              <th>Account</th>
+              <th class="text-right">Followers</th>
+              <th>Status</th>
+              <th>Last Post</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="account-info">
+                  <span class="platform-icon facebook"><i class="fa-brands fa-facebook-f"></i></span>
+                  <span style="font-weight: 600;">Facebook</span>
+                </div>
+              </td>
+              <td>
+                <div class="account-name">@GlobalHumanitarian</div>
+              </td>
+              <td class="text-right"><strong>12.5K</strong></td>
+              <td><span class="status-badge connected"><i class="fa-solid fa-circle" style="font-size: 6px;"></i> Connected</span></td>
+              <td style="font-size: 0.75rem; color: var(--text-secondary);">Apr 11, 3:00 PM</td>
+              <td>
+                <div class="actions-cell">
+                  <button class="btn-sm-action"><i class="fa-solid fa-external-link"></i> View</button>
+                  <button class="btn-sm-action danger">Disconnect</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="account-info">
+                  <span class="platform-icon instagram"><i class="fa-brands fa-instagram"></i></span>
+                  <span style="font-weight: 600;">Instagram</span>
+                </div>
+              </td>
+              <td>
+                <div class="account-name">@ghf_official</div>
+              </td>
+              <td class="text-right"><strong>8.2K</strong></td>
+              <td><span class="status-badge connected"><i class="fa-solid fa-circle" style="font-size: 6px;"></i> Connected</span></td>
+              <td style="font-size: 0.75rem; color: var(--text-secondary);">Apr 10, 5:00 PM</td>
+              <td>
+                <div class="actions-cell">
+                  <button class="btn-sm-action"><i class="fa-solid fa-external-link"></i> View</button>
+                  <button class="btn-sm-action danger">Disconnect</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="account-info">
+                  <span class="platform-icon twitter"><i class="fa-brands fa-x-twitter"></i></span>
+                  <span style="font-weight: 600;">Twitter/X</span>
+                </div>
+              </td>
+              <td>
+                <div class="account-name">@GHF_org</div>
+              </td>
+              <td class="text-right"><strong>5.1K</strong></td>
+              <td><span class="status-badge connected"><i class="fa-solid fa-circle" style="font-size: 6px;"></i> Connected</span></td>
+              <td style="font-size: 0.75rem; color: var(--text-secondary);">Apr 12, 10:00 AM</td>
+              <td>
+                <div class="actions-cell">
+                  <button class="btn-sm-action"><i class="fa-solid fa-external-link"></i> View</button>
+                  <button class="btn-sm-action danger">Disconnect</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="account-info">
+                  <span class="platform-icon linkedin"><i class="fa-brands fa-linkedin-in"></i></span>
+                  <span style="font-weight: 600;">LinkedIn</span>
+                </div>
+              </td>
+              <td>
+                <div class="account-name">Global Humanitarian Foundation</div>
+              </td>
+              <td class="text-right"><strong>3.4K</strong></td>
+              <td><span class="status-badge connected"><i class="fa-solid fa-circle" style="font-size: 6px;"></i> Connected</span></td>
+              <td style="font-size: 0.75rem; color: var(--text-secondary);">Apr 9, 2:00 PM</td>
+              <td>
+                <div class="actions-cell">
+                  <button class="btn-sm-action"><i class="fa-solid fa-external-link"></i> View</button>
+                  <button class="btn-sm-action danger">Disconnect</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="account-info">
+                  <span class="platform-icon youtube"><i class="fa-brands fa-youtube"></i></span>
+                  <span style="font-weight: 600;">YouTube</span>
+                </div>
+              </td>
+              <td>
+                <div class="account-name">GHF Channel</div>
+              </td>
+              <td class="text-right"><strong>1.8K</strong> <span style="font-size: 0.6875rem; color: var(--text-secondary);">subs</span></td>
+              <td><span class="status-badge expired"><i class="fa-solid fa-exclamation-triangle" style="font-size: 8px;"></i> Token Expired</span></td>
+              <td style="font-size: 0.75rem; color: var(--text-secondary);">Mar 15</td>
+              <td>
+                <div class="actions-cell">
+                  <button class="btn-sm-action" style="border-color: var(--warning-color); color: var(--warning-color);"><i class="fa-solid fa-rotate-right"></i> Reconnect</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Engagement Overview -->
+  <div class="dash-card">
+    <div class="dash-card-header">
+      <h2><i class="fa-solid fa-chart-line" style="color: var(--social-accent);"></i> Engagement Overview</h2>
+      <span style="font-size: 0.75rem; color: var(--text-secondary);">Last 30 days</span>
+    </div>
+    <div class="dash-card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Platform</th>
+              <th class="text-right">Posts</th>
+              <th class="text-right">Reach</th>
+              <th class="text-right">Engagement</th>
+              <th class="text-right">Clicks</th>
+              <th class="text-right">Shares</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="account-info">
+                  <span class="platform-icon facebook" style="width: 24px; height: 24px; font-size: 0.75rem;"><i class="fa-brands fa-facebook-f"></i></span>
+                  Facebook
+                </div>
+              </td>
+              <td class="text-right">12</td>
+              <td class="text-right">45,200</td>
+              <td class="text-right">3,456 <span style="font-size: 0.6875rem; color: var(--success-color);">(7.6%)</span></td>
+              <td class="text-right">890</td>
+              <td class="text-right">234</td>
+            </tr>
+            <tr>
+              <td>
+                <div class="account-info">
+                  <span class="platform-icon instagram" style="width: 24px; height: 24px; font-size: 0.75rem;"><i class="fa-brands fa-instagram"></i></span>
+                  Instagram
+                </div>
+              </td>
+              <td class="text-right">15</td>
+              <td class="text-right">32,100</td>
+              <td class="text-right">4,567 <span style="font-size: 0.6875rem; color: var(--success-color);">(14.2%)</span></td>
+              <td class="text-right">456</td>
+              <td class="text-right">178</td>
+            </tr>
+            <tr>
+              <td>
+                <div class="account-info">
+                  <span class="platform-icon twitter" style="width: 24px; height: 24px; font-size: 0.75rem;"><i class="fa-brands fa-x-twitter"></i></span>
+                  Twitter/X
+                </div>
+              </td>
+              <td class="text-right">20</td>
+              <td class="text-right">18,900</td>
+              <td class="text-right">1,234 <span style="font-size: 0.6875rem; color: var(--success-color);">(6.5%)</span></td>
+              <td class="text-right">567</td>
+              <td class="text-right">345</td>
+            </tr>
+            <tr>
+              <td>
+                <div class="account-info">
+                  <span class="platform-icon linkedin" style="width: 24px; height: 24px; font-size: 0.75rem;"><i class="fa-brands fa-linkedin-in"></i></span>
+                  LinkedIn
+                </div>
+              </td>
+              <td class="text-right">8</td>
+              <td class="text-right">12,300</td>
+              <td class="text-right">890 <span style="font-size: 0.6875rem; color: var(--success-color);">(7.2%)</span></td>
+              <td class="text-right">234</td>
+              <td class="text-right">89</td>
+            </tr>
+            <tr class="total-row">
+              <td><strong>Total</strong></td>
+              <td class="text-right"><strong>55</strong></td>
+              <td class="text-right"><strong>108,500</strong></td>
+              <td class="text-right"><strong>10,147</strong> <span style="font-size: 0.6875rem; color: var(--success-color);">(9.4%)</span></td>
+              <td class="text-right"><strong>2,147</strong></td>
+              <td class="text-right"><strong>846</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Engagement Trend Chart -->
+  <div class="dash-card">
+    <div class="dash-card-header">
+      <h2><i class="fa-solid fa-chart-bar" style="color: var(--social-accent);"></i> Engagement Trend</h2>
+      <span style="font-size: 0.75rem; color: var(--text-secondary);">Last 4 weeks</span>
+    </div>
+    <div class="dash-card-body">
+      <div class="engagement-chart">
+        <div class="chart-week">
+          <div class="chart-bars">
+            <div class="chart-bar fb" style="height: 60%;"></div>
+            <div class="chart-bar ig" style="height: 80%;"></div>
+            <div class="chart-bar tw" style="height: 35%;"></div>
+            <div class="chart-bar li" style="height: 25%;"></div>
+          </div>
+          <div class="chart-label">Week 1</div>
+        </div>
+        <div class="chart-week">
+          <div class="chart-bars">
+            <div class="chart-bar fb" style="height: 70%;"></div>
+            <div class="chart-bar ig" style="height: 90%;"></div>
+            <div class="chart-bar tw" style="height: 40%;"></div>
+            <div class="chart-bar li" style="height: 30%;"></div>
+          </div>
+          <div class="chart-label">Week 2</div>
+        </div>
+        <div class="chart-week">
+          <div class="chart-bars">
+            <div class="chart-bar fb" style="height: 85%;"></div>
+            <div class="chart-bar ig" style="height: 100%;"></div>
+            <div class="chart-bar tw" style="height: 50%;"></div>
+            <div class="chart-bar li" style="height: 35%;"></div>
+          </div>
+          <div class="chart-label">Week 3</div>
+        </div>
+        <div class="chart-week" style="position: relative;">
+          <div style="position: absolute; top: -8px; left: 50%; transform: translateX(-50%); font-size: 0.625rem; background: var(--social-accent); color: white; padding: 0.125rem 0.375rem; border-radius: 4px; white-space: nowrap;">Ramadan Campaign</div>
+          <div class="chart-bars">
+            <div class="chart-bar fb" style="height: 95%;"></div>
+            <div class="chart-bar ig" style="height: 95%;"></div>
+            <div class="chart-bar tw" style="height: 55%;"></div>
+            <div class="chart-bar li" style="height: 40%;"></div>
+          </div>
+          <div class="chart-label">Week 4</div>
+        </div>
+      </div>
+      <div class="chart-legend">
+        <div class="chart-legend-item"><div class="chart-legend-dot" style="background: #1877f2;"></div> Facebook</div>
+        <div class="chart-legend-item"><div class="chart-legend-dot" style="background: #e4405f;"></div> Instagram</div>
+        <div class="chart-legend-item"><div class="chart-legend-dot" style="background: #1da1f2;"></div> Twitter/X</div>
+        <div class="chart-legend-item"><div class="chart-legend-dot" style="background: #0a66c2;"></div> LinkedIn</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Posts -->
+  <div class="dash-card">
+    <div class="dash-card-header">
+      <h2><i class="fa-solid fa-rss" style="color: var(--social-accent);"></i> Recent Posts</h2>
+      <button class="btn-sm-action">View All</button>
+    </div>
+    <div class="dash-card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Platform</th>
+              <th>Content</th>
+              <th class="text-right">Reach</th>
+              <th class="text-right">Engagement</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-size: 0.75rem; color: var(--text-secondary); white-space: nowrap;">Apr 12</td>
+              <td>
+                <div class="account-info">
+                  <span class="platform-icon twitter" style="width: 22px; height: 22px; font-size: 0.625rem;"><i class="fa-brands fa-x-twitter"></i></span>
+                  <span style="font-size: 0.75rem;">Twitter/X</span>
+                </div>
+              </td>
+              <td><div class="post-content">"Our Ramadan Appeal has raised $210K! Thank you for your generosity..."</div></td>
+              <td class="text-right">2,300</td>
+              <td class="text-right">145</td>
+              <td>
+                <div class="actions-cell">
+                  <button class="btn-sm-action"><i class="fa-solid fa-external-link"></i> View</button>
+                  <button class="btn-sm-action boost"><i class="fa-solid fa-rocket"></i> Boost</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="font-size: 0.75rem; color: var(--text-secondary); white-space: nowrap;">Apr 11</td>
+              <td>
+                <div class="account-info">
+                  <span class="platform-icon facebook" style="width: 22px; height: 22px; font-size: 0.625rem;"><i class="fa-brands fa-facebook-f"></i></span>
+                  <span style="font-size: 0.75rem;">Facebook</span>
+                </div>
+              </td>
+              <td><div class="post-content">"500 children now receive education through our school program..."</div></td>
+              <td class="text-right">5,600</td>
+              <td class="text-right">456</td>
+              <td>
+                <div class="actions-cell">
+                  <button class="btn-sm-action"><i class="fa-solid fa-external-link"></i> View</button>
+                  <button class="btn-sm-action boost"><i class="fa-solid fa-rocket"></i> Boost</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="font-size: 0.75rem; color: var(--text-secondary); white-space: nowrap;">Apr 10</td>
+              <td>
+                <div class="account-info">
+                  <span class="platform-icon instagram" style="width: 22px; height: 22px; font-size: 0.625rem;"><i class="fa-brands fa-instagram"></i></span>
+                  <span style="font-size: 0.75rem;">Instagram</span>
+                </div>
+              </td>
+              <td><div class="post-content"><i class="fa-solid fa-image" style="color: var(--text-secondary); margin-right: 0.25rem;"></i> Clean water project progress update</div></td>
+              <td class="text-right">4,200</td>
+              <td class="text-right">678</td>
+              <td>
+                <div class="actions-cell">
+                  <button class="btn-sm-action"><i class="fa-solid fa-external-link"></i> View</button>
+                  <button class="btn-sm-action boost"><i class="fa-solid fa-rocket"></i> Boost</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Social Listening -->
+  <div class="dash-card">
+    <div class="dash-card-header">
+      <h2><i class="fa-solid fa-ear-listen" style="color: var(--social-accent);"></i> Social Listening</h2>
+      <button class="btn-sm-action"><i class="fa-solid fa-plus"></i> Add Keyword</button>
+    </div>
+    <div class="dash-card-body">
+      <div style="margin-bottom: 1rem;">
+        <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem;">Tracked Keywords</div>
+        <div>
+          <span class="keyword-tag"><i class="fa-solid fa-hashtag"></i> GHF</span>
+          <span class="keyword-tag"><i class="fa-solid fa-hashtag"></i> Global Humanitarian</span>
+          <span class="keyword-tag"><i class="fa-solid fa-hashtag"></i> orphan care</span>
+          <span class="keyword-tag"><i class="fa-solid fa-hashtag"></i> RamadanGiving</span>
+        </div>
+      </div>
+      <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem;">Recent Mentions</div>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Platform</th>
+              <th>User</th>
+              <th>Mention</th>
+              <th>Sentiment</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-size: 0.75rem; color: var(--text-secondary);">Apr 12</td>
+              <td>
+                <div class="account-info">
+                  <span class="platform-icon twitter" style="width: 20px; height: 20px; font-size: 0.5625rem;"><i class="fa-brands fa-x-twitter"></i></span>
+                  <span style="font-size: 0.75rem;">Twitter/X</span>
+                </div>
+              </td>
+              <td style="font-weight: 500;">@donor123</td>
+              <td style="font-size: 0.8125rem;">"Just donated to @GHF_org amazing work!"</td>
+              <td><span class="sentiment-positive"><i class="fa-solid fa-circle" style="font-size: 8px;"></i> Positive</span></td>
+            </tr>
+            <tr>
+              <td style="font-size: 0.75rem; color: var(--text-secondary);">Apr 11</td>
+              <td>
+                <div class="account-info">
+                  <span class="platform-icon facebook" style="width: 20px; height: 20px; font-size: 0.5625rem;"><i class="fa-brands fa-facebook-f"></i></span>
+                  <span style="font-size: 0.75rem;">Facebook</span>
+                </div>
+              </td>
+              <td style="font-weight: 500;">Jane Smith</td>
+              <td style="font-size: 0.8125rem;">"Amazing work by Global Humanitarian"</td>
+              <td><span class="sentiment-positive"><i class="fa-solid fa-circle" style="font-size: 8px;"></i> Positive</span></td>
+            </tr>
+            <tr>
+              <td style="font-size: 0.75rem; color: var(--text-secondary);">Apr 10</td>
+              <td>
+                <div class="account-info">
+                  <span class="platform-icon instagram" style="width: 20px; height: 20px; font-size: 0.5625rem;"><i class="fa-brands fa-instagram"></i></span>
+                  <span style="font-size: 0.75rem;">Instagram</span>
+                </div>
+              </td>
+              <td style="font-weight: 500;">@impact_now</td>
+              <td style="font-size: 0.8125rem;">"Great to see #orphancare initiatives by @ghf_official"</td>
+              <td><span class="sentiment-positive"><i class="fa-solid fa-circle" style="font-size: 8px;"></i> Positive</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Connect Account Modal -->
+  <div class="modal-overlay" id="connectModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-plug" style="color: var(--social-accent); margin-right: 0.375rem;"></i> Connect Social Account</h3>
+        <button class="modal-close" onclick="closeModal('connectModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 1rem;">Select a platform to connect. You'll be redirected to authorize PSS 2.0.</p>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;">
+          <button style="display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem; border: 1px solid var(--border-color); border-radius: 0.5rem; background: white; cursor: pointer; transition: all 0.15s;" onmouseover="this.style.borderColor='#1877f2'" onmouseout="this.style.borderColor='var(--border-color)'">
+            <span class="platform-icon facebook"><i class="fa-brands fa-facebook-f"></i></span>
+            <div style="text-align: left;"><div style="font-weight: 600; font-size: 0.8125rem;">Facebook</div><div style="font-size: 0.6875rem; color: var(--text-secondary);">Pages & Groups</div></div>
+          </button>
+          <button style="display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem; border: 1px solid var(--border-color); border-radius: 0.5rem; background: white; cursor: pointer; transition: all 0.15s;" onmouseover="this.style.borderColor='#e4405f'" onmouseout="this.style.borderColor='var(--border-color)'">
+            <span class="platform-icon instagram"><i class="fa-brands fa-instagram"></i></span>
+            <div style="text-align: left;"><div style="font-weight: 600; font-size: 0.8125rem;">Instagram</div><div style="font-size: 0.6875rem; color: var(--text-secondary);">Business Account</div></div>
+          </button>
+          <button style="display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem; border: 1px solid var(--border-color); border-radius: 0.5rem; background: white; cursor: pointer; transition: all 0.15s;" onmouseover="this.style.borderColor='#1da1f2'" onmouseout="this.style.borderColor='var(--border-color)'">
+            <span class="platform-icon twitter"><i class="fa-brands fa-x-twitter"></i></span>
+            <div style="text-align: left;"><div style="font-weight: 600; font-size: 0.8125rem;">Twitter/X</div><div style="font-size: 0.6875rem; color: var(--text-secondary);">Organization Account</div></div>
+          </button>
+          <button style="display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem; border: 1px solid var(--border-color); border-radius: 0.5rem; background: white; cursor: pointer; transition: all 0.15s;" onmouseover="this.style.borderColor='#0a66c2'" onmouseout="this.style.borderColor='var(--border-color)'">
+            <span class="platform-icon linkedin"><i class="fa-brands fa-linkedin-in"></i></span>
+            <div style="text-align: left;"><div style="font-weight: 600; font-size: 0.8125rem;">LinkedIn</div><div style="font-size: 0.6875rem; color: var(--text-secondary);">Company Page</div></div>
+          </button>
+          <button style="display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem; border: 1px solid var(--border-color); border-radius: 0.5rem; background: white; cursor: pointer; transition: all 0.15s;" onmouseover="this.style.borderColor='#ff0000'" onmouseout="this.style.borderColor='var(--border-color)'">
+            <span class="platform-icon youtube"><i class="fa-brands fa-youtube"></i></span>
+            <div style="text-align: left;"><div style="font-weight: 600; font-size: 0.8125rem;">YouTube</div><div style="font-size: 0.6875rem; color: var(--text-secondary);">Channel</div></div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Schedule Post Modal -->
+  <div class="modal-overlay" id="scheduleModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3><i class="fa-regular fa-calendar" style="color: var(--social-accent); margin-right: 0.375rem;"></i> Schedule Post</h3>
+        <button class="modal-close" onclick="closeModal('scheduleModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Platforms</label>
+          <div class="platform-checks">
+            <label class="platform-check"><input type="checkbox" checked> <i class="fa-brands fa-facebook-f" style="color: #1877f2;"></i> Facebook</label>
+            <label class="platform-check"><input type="checkbox" checked> <i class="fa-brands fa-instagram" style="color: #e4405f;"></i> Instagram</label>
+            <label class="platform-check"><input type="checkbox" checked> <i class="fa-brands fa-x-twitter" style="color: #1da1f2;"></i> Twitter/X</label>
+            <label class="platform-check"><input type="checkbox"> <i class="fa-brands fa-linkedin-in" style="color: #0a66c2;"></i> LinkedIn</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Content</label>
+          <textarea class="form-control-custom" id="postContent" placeholder="Write your post..." oninput="updateCharCount()"></textarea>
+          <div class="char-counter" id="charCounter">0 / 280 (Twitter limit)</div>
+        </div>
+        <div class="form-group">
+          <label>Image / Video</label>
+          <div style="border: 2px dashed var(--border-color); border-radius: 0.5rem; padding: 1.5rem; text-align: center; color: var(--text-secondary); cursor: pointer;">
+            <i class="fa-solid fa-cloud-arrow-up" style="font-size: 1.5rem; margin-bottom: 0.375rem;"></i>
+            <div style="font-size: 0.8125rem;">Click or drag to upload media</div>
+            <div style="font-size: 0.6875rem;">JPG, PNG, MP4 up to 50MB</div>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <div class="form-group">
+            <label>Link URL</label>
+            <input type="url" class="form-control-custom" placeholder="https://...">
+          </div>
+          <div class="form-group">
+            <label>Campaign Link</label>
+            <select class="form-control-custom">
+              <option>Select campaign...</option>
+              <option>Ramadan Appeal 2026</option>
+              <option>Clean Water Project</option>
+              <option>Education Fund</option>
+            </select>
+            <div class="form-hint">Appends UTM tracking parameters</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Schedule</label>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <select class="form-control-custom" id="scheduleType" onchange="toggleScheduleDate()">
+              <option value="immediate">Post Immediately</option>
+              <option value="scheduled">Schedule for Later</option>
+            </select>
+            <input type="datetime-local" class="form-control-custom" id="scheduleDate" disabled style="opacity: 0.5;">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline-custom" onclick="closeModal('scheduleModal')">Cancel</button>
+        <button class="btn-primary-custom"><i class="fa-solid fa-paper-plane"></i> Post Now</button>
+        <button class="btn-outline-custom" style="border-color: var(--social-accent); color: var(--social-accent);"><i class="fa-regular fa-clock"></i> Schedule</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openModal(id) {
+      document.getElementById(id).classList.add('active');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+
+    // Close modal on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.classList.remove('active');
+      });
+    });
+
+    function updateCharCount() {
+      const content = document.getElementById('postContent').value;
+      const counter = document.getElementById('charCounter');
+      const len = content.length;
+      counter.textContent = `${len} / 280 (Twitter limit)`;
+      counter.classList.toggle('over', len > 280);
+    }
+
+    function toggleScheduleDate() {
+      const type = document.getElementById('scheduleType').value;
+      const dateInput = document.getElementById('scheduleDate');
+      dateInput.disabled = type === 'immediate';
+      dateInput.style.opacity = type === 'immediate' ? '0.5' : '1';
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Volunteer-to-Donor Conversion - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+      --volunteer-accent: #059669;
+      --volunteer-accent-bg: #ecfdf5;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0 0 0.2rem 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    /* Buttons */
+    .btn-primary-custom {
+      background: var(--volunteer-accent);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .btn-primary-custom:hover {
+      background: #047857;
+      color: white;
+    }
+
+    .btn-outline-custom {
+      background: white;
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      text-decoration: none;
+    }
+
+    .btn-outline-custom:hover {
+      border-color: var(--volunteer-accent);
+      color: var(--volunteer-accent);
+    }
+
+    .btn-sm-action {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 0.25rem 0.625rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-sm-action:hover {
+      border-color: var(--volunteer-accent);
+      color: var(--volunteer-accent);
+    }
+
+    /* Cards */
+    .dash-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      margin-bottom: 1.25rem;
+      overflow: hidden;
+    }
+
+    .dash-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .dash-card-header h2 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .dash-card-body {
+      padding: 1.25rem;
+    }
+
+    /* KPI Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      padding: 1.25rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .stat-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.125rem;
+      flex-shrink: 0;
+    }
+
+    .stat-icon.emerald { background: #ecfdf5; color: #059669; }
+    .stat-icon.teal { background: #ecfeff; color: #0e7490; }
+    .stat-icon.blue { background: #eff6ff; color: #2563eb; }
+    .stat-icon.purple { background: #f5f3ff; color: #7c3aed; }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.125rem;
+    }
+
+    .stat-sub {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    /* Funnel */
+    .funnel-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.5rem 0;
+    }
+
+    .funnel-step {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      padding: 0.875rem 1.5rem;
+      border-radius: 0.5rem;
+      margin-bottom: 0.375rem;
+      color: white;
+      font-weight: 600;
+      font-size: 0.875rem;
+      position: relative;
+      transition: transform 0.15s;
+    }
+
+    .funnel-step:hover {
+      transform: scale(1.02);
+    }
+
+    .funnel-step .funnel-pct {
+      font-size: 0.6875rem;
+      font-weight: 500;
+      opacity: 0.85;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 0.125rem 0.5rem;
+      border-radius: 999px;
+    }
+
+    .funnel-step:nth-child(1) { background: #059669; width: 90%; }
+    .funnel-step:nth-child(2) { background: #0d9488; width: 80%; }
+    .funnel-step:nth-child(3) { background: #0e7490; width: 65%; }
+    .funnel-step:nth-child(4) { background: #2563eb; width: 50%; }
+    .funnel-step:nth-child(5) { background: #7c3aed; width: 35%; }
+
+    /* Table */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .data-table thead th {
+      background: #f8fafc;
+      padding: 0.625rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-color);
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .data-table tbody td {
+      padding: 0.625rem 0.75rem;
+      font-size: 0.8125rem;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+
+    .data-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    .data-table .text-right {
+      text-align: right;
+    }
+
+    .data-table .text-center {
+      text-align: center;
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+    }
+
+    /* Engagement badge */
+    .engagement-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+    }
+
+    .engagement-badge.high {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .engagement-badge.medium {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .engagement-badge.low {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    /* Timeline chart mock */
+    .timeline-chart {
+      position: relative;
+      height: 200px;
+      border-left: 2px solid var(--border-color);
+      border-bottom: 2px solid var(--border-color);
+      margin: 1.5rem 1rem 1rem 2.5rem;
+    }
+
+    .timeline-line {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .timeline-point {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: var(--volunteer-accent);
+      border-radius: 50%;
+      border: 2px solid white;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+      transform: translate(-50%, 50%);
+    }
+
+    .timeline-point .point-label {
+      position: absolute;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.625rem;
+      font-weight: 700;
+      color: var(--volunteer-accent);
+      white-space: nowrap;
+    }
+
+    .timeline-path {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .timeline-x-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-left: 2.5rem;
+      margin-right: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .timeline-x-labels span {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+    }
+
+    .timeline-y-labels {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 200px;
+      display: flex;
+      flex-direction: column-reverse;
+      justify-content: space-between;
+      width: 2.5rem;
+    }
+
+    .timeline-y-labels span {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      text-align: right;
+      padding-right: 0.5rem;
+    }
+
+    .timeline-annotation {
+      position: absolute;
+      font-size: 0.625rem;
+      background: var(--volunteer-accent);
+      color: white;
+      padding: 0.125rem 0.5rem;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    /* H-bar chart for triggers */
+    .h-bar-chart {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .h-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .h-bar-label {
+      width: 200px;
+      font-size: 0.8125rem;
+      text-align: right;
+      flex-shrink: 0;
+      color: var(--text-primary);
+    }
+
+    .h-bar-track {
+      flex: 1;
+      height: 24px;
+      background: #f1f5f9;
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .h-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: var(--volunteer-accent);
+      display: flex;
+      align-items: center;
+      padding-left: 0.5rem;
+      transition: width 0.5s;
+    }
+
+    .h-bar-value {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: white;
+      white-space: nowrap;
+    }
+
+    .h-bar-meta {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      width: 80px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    /* Volunteer link */
+    .volunteer-link {
+      color: var(--volunteer-accent);
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .volunteer-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Tips card */
+    .tips-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .tips-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.625rem;
+      padding: 0.625rem 0;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.8125rem;
+    }
+
+    .tips-list li:last-child {
+      border-bottom: none;
+    }
+
+    .tips-list li i {
+      color: var(--volunteer-accent);
+      margin-top: 0.125rem;
+      flex-shrink: 0;
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .h-bar-label {
+        width: 140px;
+        font-size: 0.75rem;
+      }
+    }
+
+    @media (max-width: 576px) {
+      body { padding: 1rem; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .page-header { flex-direction: column; }
+      .data-table { display: block; overflow-x: auto; }
+      .h-bar-label { width: 100px; font-size: 0.6875rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fa-solid fa-arrow-right-arrow-left" style="color: var(--volunteer-accent); margin-right: 0.375rem;"></i>Volunteer-to-Donor Conversion</h1>
+      <p class="subtitle">Track and optimize the volunteer-to-donor pipeline</p>
+    </div>
+    <div class="header-actions">
+      <select class="form-select form-select-sm" style="width: auto; border-color: var(--border-color); font-size: 0.8125rem; border-radius: 0.5rem;">
+        <option>Last 12 Months</option>
+        <option>Last 6 Months</option>
+        <option>Last 3 Months</option>
+        <option>Year to Date</option>
+        <option>All Time</option>
+      </select>
+      <button class="btn-outline-custom">
+        <i class="fa-solid fa-download"></i> Export Report
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon emerald"><i class="fa-solid fa-percent"></i></div>
+      <div>
+        <div class="stat-value">36%</div>
+        <div class="stat-label">Conversion Rate</div>
+        <div class="stat-sub">84 of 234 volunteers also donated</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon teal"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+      <div>
+        <div class="stat-value">$245</div>
+        <div class="stat-label">Avg First Donation</div>
+        <div class="stat-sub">2.1x more than avg new donor ($117)</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="fa-solid fa-clock"></i></div>
+      <div>
+        <div class="stat-value">4.2 mo</div>
+        <div class="stat-label">Time to Convert</div>
+        <div class="stat-sub">Avg from first shift to first donation</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon purple"><i class="fa-solid fa-heart"></i></div>
+      <div>
+        <div class="stat-value">$1,850</div>
+        <div class="stat-label">Lifetime Value</div>
+        <div class="stat-sub">3.2x higher than non-volunteer donors</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Conversion Funnel -->
+  <div class="dash-card">
+    <div class="dash-card-header">
+      <h2><i class="fa-solid fa-filter" style="color: var(--volunteer-accent);"></i> Conversion Funnel</h2>
+      <span style="font-size: 0.75rem; color: var(--text-secondary);">Last 12 months</span>
+    </div>
+    <div class="dash-card-body">
+      <div class="funnel-container">
+        <div class="funnel-step">
+          <i class="fa-solid fa-users"></i>
+          Total Volunteers: 234
+          <span class="funnel-pct">100%</span>
+        </div>
+        <div class="funnel-step">
+          <i class="fa-solid fa-address-card"></i>
+          Volunteers w/ Contact: 220
+          <span class="funnel-pct">94%</span>
+        </div>
+        <div class="funnel-step">
+          <i class="fa-solid fa-bullhorn"></i>
+          Received Ask: 156
+          <span class="funnel-pct">67%</span>
+        </div>
+        <div class="funnel-step">
+          <i class="fa-solid fa-hand-holding-heart"></i>
+          Made Donation: 84
+          <span class="funnel-pct">36%</span>
+        </div>
+        <div class="funnel-step">
+          <i class="fa-solid fa-rotate"></i>
+          Recurring Donors: 28
+          <span class="funnel-pct">12%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Conversion Timeline -->
+  <div class="dash-card">
+    <div class="dash-card-header">
+      <h2><i class="fa-solid fa-timeline" style="color: var(--volunteer-accent);"></i> Conversion Timeline</h2>
+      <span style="font-size: 0.75rem; color: var(--text-secondary);">Months since first volunteer shift</span>
+    </div>
+    <div class="dash-card-body">
+      <div style="position: relative;">
+        <div class="timeline-y-labels">
+          <span>0%</span>
+          <span>10%</span>
+          <span>20%</span>
+          <span>30%</span>
+          <span>40%</span>
+          <span>50%</span>
+        </div>
+        <div class="timeline-chart">
+          <svg viewBox="0 0 400 200" preserveAspectRatio="none" style="width: 100%; height: 100%; position: absolute; bottom: 0; left: 0;">
+            <defs>
+              <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#059669" stop-opacity="0.2"/>
+                <stop offset="100%" stop-color="#059669" stop-opacity="0.02"/>
+              </linearGradient>
+            </defs>
+            <!-- Area fill -->
+            <path d="M 0 200 L 0 170 L 50 160 L 100 140 L 150 120 L 200 72 L 250 44 L 300 28 L 350 20 L 400 16 L 400 200 Z" fill="url(#areaGrad)"/>
+            <!-- Line -->
+            <path d="M 0 170 L 50 160 L 100 140 L 150 120 L 200 72 L 250 44 L 300 28 L 350 20 L 400 16" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- Data points -->
+            <circle cx="50" cy="160" r="4" fill="white" stroke="#059669" stroke-width="2"/>
+            <circle cx="150" cy="120" r="4" fill="white" stroke="#059669" stroke-width="2"/>
+            <circle cx="200" cy="72" r="5" fill="#059669" stroke="white" stroke-width="2"/>
+            <circle cx="300" cy="28" r="4" fill="white" stroke="#059669" stroke-width="2"/>
+            <circle cx="400" cy="16" r="4" fill="white" stroke="#059669" stroke-width="2"/>
+            <!-- Labels -->
+            <text x="50" y="152" text-anchor="middle" font-size="9" fill="#059669" font-weight="700">5%</text>
+            <text x="150" y="112" text-anchor="middle" font-size="9" fill="#059669" font-weight="700">15%</text>
+            <text x="200" y="62" text-anchor="middle" font-size="9" fill="#059669" font-weight="700">28%</text>
+            <text x="300" y="18" text-anchor="middle" font-size="9" fill="#059669" font-weight="700">36%</text>
+            <text x="400" y="8" text-anchor="end" font-size="9" fill="#059669" font-weight="700">42%</text>
+            <!-- Annotation box -->
+            <rect x="130" y="75" width="130" height="18" rx="4" fill="#059669"/>
+            <text x="195" y="87" text-anchor="middle" font-size="8" fill="white" font-weight="600">Key window: months 3-6</text>
+          </svg>
+        </div>
+        <div class="timeline-x-labels">
+          <span>0 mo</span>
+          <span>3 mo</span>
+          <span>6 mo</span>
+          <span>9 mo</span>
+          <span>12 mo</span>
+          <span>18 mo</span>
+          <span>24 mo</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Conversion by Trigger -->
+  <div class="dash-card">
+    <div class="dash-card-header">
+      <h2><i class="fa-solid fa-bolt" style="color: var(--volunteer-accent);"></i> Conversion by Trigger</h2>
+      <span style="font-size: 0.75rem; color: var(--text-secondary);">What prompted the first donation</span>
+    </div>
+    <div class="dash-card-body">
+      <div class="h-bar-chart">
+        <div class="h-bar-row">
+          <div class="h-bar-label">Asked by staff during shift</div>
+          <div class="h-bar-track">
+            <div class="h-bar-fill" style="width: 33%; background: #059669;">
+              <span class="h-bar-value">28 (33%)</span>
+            </div>
+          </div>
+          <div class="h-bar-meta">Avg $180</div>
+        </div>
+        <div class="h-bar-row">
+          <div class="h-bar-label">Email campaign after event</div>
+          <div class="h-bar-track">
+            <div class="h-bar-fill" style="width: 26%; background: #0d9488;">
+              <span class="h-bar-value">22 (26%)</span>
+            </div>
+          </div>
+          <div class="h-bar-meta">Avg $120</div>
+        </div>
+        <div class="h-bar-row">
+          <div class="h-bar-label">Self-initiated (online)</div>
+          <div class="h-bar-track">
+            <div class="h-bar-fill" style="width: 21%; background: #0e7490;">
+              <span class="h-bar-value">18 (21%)</span>
+            </div>
+          </div>
+          <div class="h-bar-meta">Avg $350</div>
+        </div>
+        <div class="h-bar-row">
+          <div class="h-bar-label">Peer-to-peer fundraising</div>
+          <div class="h-bar-track">
+            <div class="h-bar-fill" style="width: 11%; background: #2563eb;">
+              <span class="h-bar-value">9 (11%)</span>
+            </div>
+          </div>
+          <div class="h-bar-meta">Avg $95</div>
+        </div>
+        <div class="h-bar-row">
+          <div class="h-bar-label">Direct mail</div>
+          <div class="h-bar-track">
+            <div class="h-bar-fill" style="width: 6%; background: #7c3aed;">
+              <span class="h-bar-value">5</span>
+            </div>
+          </div>
+          <div class="h-bar-meta">Avg $200</div>
+        </div>
+        <div class="h-bar-row">
+          <div class="h-bar-label">Other</div>
+          <div class="h-bar-track">
+            <div class="h-bar-fill" style="width: 3%; background: #94a3b8;">
+              <span class="h-bar-value">2</span>
+            </div>
+          </div>
+          <div class="h-bar-meta">Avg $150</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Volunteer-Donor Table -->
+  <div class="dash-card">
+    <div class="dash-card-header">
+      <h2><i class="fa-solid fa-user-check" style="color: var(--volunteer-accent);"></i> Converted Volunteer-Donors</h2>
+      <span style="font-size: 0.75rem; color: var(--text-secondary);">84 volunteers converted</span>
+    </div>
+    <div class="dash-card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Volunteer</th>
+              <th>Volunteer Since</th>
+              <th class="text-right">Hours</th>
+              <th>First Donation</th>
+              <th class="text-right">Total Donated</th>
+              <th>Conversion Time</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a class="volunteer-link" onclick="parent.loadContent('contacts/contact-detail')">Ahmed Salim</a></td>
+              <td style="font-size: 0.75rem; color: var(--text-secondary);">Jan 2024</td>
+              <td class="text-right"><strong>245</strong> hrs</td>
+              <td style="font-size: 0.8125rem;">Mar 2024 <span style="color: var(--volunteer-accent); font-weight: 600;">($200)</span></td>
+              <td class="text-right"><strong>$4,200</strong></td>
+              <td><span style="font-size: 0.75rem; background: #ecfdf5; color: #059669; padding: 0.125rem 0.5rem; border-radius: 999px; font-weight: 600;">2 months</span></td>
+              <td><button class="btn-sm-action" onclick="parent.loadContent('contacts/contact-detail')"><i class="fa-solid fa-eye"></i> View</button></td>
+            </tr>
+            <tr>
+              <td><a class="volunteer-link" onclick="parent.loadContent('contacts/contact-detail')">Ravi Kumar</a></td>
+              <td style="font-size: 0.75rem; color: var(--text-secondary);">Mar 2024</td>
+              <td class="text-right"><strong>156</strong> hrs</td>
+              <td style="font-size: 0.8125rem;">Jul 2024 <span style="color: var(--volunteer-accent); font-weight: 600;">($500)</span></td>
+              <td class="text-right"><strong>$3,800</strong></td>
+              <td><span style="font-size: 0.75rem; background: #ecfdf5; color: #059669; padding: 0.125rem 0.5rem; border-radius: 999px; font-weight: 600;">4 months</span></td>
+              <td><button class="btn-sm-action" onclick="parent.loadContent('contacts/contact-detail')"><i class="fa-solid fa-eye"></i> View</button></td>
+            </tr>
+            <tr>
+              <td><a class="volunteer-link" onclick="parent.loadContent('contacts/contact-detail')">James Okonkwo</a></td>
+              <td style="font-size: 0.75rem; color: var(--text-secondary);">Jun 2024</td>
+              <td class="text-right"><strong>312</strong> hrs</td>
+              <td style="font-size: 0.8125rem;">Sep 2024 <span style="color: var(--volunteer-accent); font-weight: 600;">($100)</span></td>
+              <td class="text-right"><strong>$2,100</strong></td>
+              <td><span style="font-size: 0.75rem; background: #ecfdf5; color: #059669; padding: 0.125rem 0.5rem; border-radius: 999px; font-weight: 600;">3 months</span></td>
+              <td><button class="btn-sm-action" onclick="parent.loadContent('contacts/contact-detail')"><i class="fa-solid fa-eye"></i> View</button></td>
+            </tr>
+            <tr>
+              <td><a class="volunteer-link" onclick="parent.loadContent('contacts/contact-detail')">Maria Santos</a></td>
+              <td style="font-size: 0.75rem; color: var(--text-secondary);">Feb 2024</td>
+              <td class="text-right"><strong>189</strong> hrs</td>
+              <td style="font-size: 0.8125rem;">Aug 2024 <span style="color: var(--volunteer-accent); font-weight: 600;">($300)</span></td>
+              <td class="text-right"><strong>$2,900</strong></td>
+              <td><span style="font-size: 0.75rem; background: #fef3c7; color: #92400e; padding: 0.125rem 0.5rem; border-radius: 999px; font-weight: 600;">6 months</span></td>
+              <td><button class="btn-sm-action" onclick="parent.loadContent('contacts/contact-detail')"><i class="fa-solid fa-eye"></i> View</button></td>
+            </tr>
+            <tr>
+              <td><a class="volunteer-link" onclick="parent.loadContent('contacts/contact-detail')">Fatima Al-Rashid</a></td>
+              <td style="font-size: 0.75rem; color: var(--text-secondary);">Apr 2024</td>
+              <td class="text-right"><strong>98</strong> hrs</td>
+              <td style="font-size: 0.8125rem;">Jun 2024 <span style="color: var(--volunteer-accent); font-weight: 600;">($150)</span></td>
+              <td class="text-right"><strong>$1,600</strong></td>
+              <td><span style="font-size: 0.75rem; background: #ecfdf5; color: #059669; padding: 0.125rem 0.5rem; border-radius: 999px; font-weight: 600;">2 months</span></td>
+              <td><button class="btn-sm-action" onclick="parent.loadContent('contacts/contact-detail')"><i class="fa-solid fa-eye"></i> View</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Not-Yet-Converted Volunteers -->
+  <div class="dash-card">
+    <div class="dash-card-header">
+      <h2><i class="fa-solid fa-user-clock" style="color: var(--warning-color);"></i> Not-Yet-Converted Volunteers</h2>
+      <span style="font-size: 0.75rem; color: var(--text-secondary);">Opportunity list</span>
+    </div>
+    <div class="dash-card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Volunteer</th>
+              <th class="text-right">Hours</th>
+              <th>Engagement</th>
+              <th>Skills</th>
+              <th>Suggested Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a class="volunteer-link" onclick="parent.loadContent('volunteer/volunteer-detail')">Amina Hassan</a></td>
+              <td class="text-right"><strong>45</strong> hrs</td>
+              <td><span class="engagement-badge high"><i class="fa-solid fa-circle" style="font-size: 6px;"></i> High</span></td>
+              <td style="font-size: 0.75rem;">Event Management</td>
+              <td style="font-size: 0.8125rem;"><i class="fa-solid fa-lightbulb" style="color: var(--warning-color); margin-right: 0.25rem;"></i> Invite to donor event</td>
+            </tr>
+            <tr>
+              <td><a class="volunteer-link" onclick="parent.loadContent('volunteer/volunteer-detail')">Omar Farouk</a></td>
+              <td class="text-right"><strong>28</strong> hrs</td>
+              <td><span class="engagement-badge medium"><i class="fa-solid fa-circle" style="font-size: 6px;"></i> Medium</span></td>
+              <td style="font-size: 0.75rem;">Driving</td>
+              <td style="font-size: 0.8125rem;"><i class="fa-solid fa-lightbulb" style="color: var(--warning-color); margin-right: 0.25rem;"></i> Personal ask from manager</td>
+            </tr>
+            <tr>
+              <td><a class="volunteer-link" onclick="parent.loadContent('volunteer/volunteer-detail')">Yusuf Ali</a></td>
+              <td class="text-right"><strong>12</strong> hrs</td>
+              <td><span class="engagement-badge medium"><i class="fa-solid fa-circle" style="font-size: 6px;"></i> Medium</span></td>
+              <td style="font-size: 0.75rem;">IT Support</td>
+              <td style="font-size: 0.8125rem;"><i class="fa-solid fa-lightbulb" style="color: var(--warning-color); margin-right: 0.25rem;"></i> Include in email campaign</td>
+            </tr>
+            <tr>
+              <td><a class="volunteer-link" onclick="parent.loadContent('volunteer/volunteer-detail')">Sarah Chen</a></td>
+              <td class="text-right"><strong>67</strong> hrs</td>
+              <td><span class="engagement-badge high"><i class="fa-solid fa-circle" style="font-size: 6px;"></i> High</span></td>
+              <td style="font-size: 0.75rem;">Translation</td>
+              <td style="font-size: 0.8125rem;"><i class="fa-solid fa-lightbulb" style="color: var(--warning-color); margin-right: 0.25rem;"></i> Invite to site visit</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="padding: 1rem 1.25rem; border-top: 1px solid var(--border-color); display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <button class="btn-primary-custom" onclick="parent.loadContent('communication/email-campaign-builder')">
+          <i class="fa-solid fa-envelope"></i> Send Conversion Campaign
+        </button>
+        <button class="btn-outline-custom">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Create Suggested Actions
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Conversion Strategies -->
+  <div class="dash-card">
+    <div class="dash-card-header">
+      <h2><i class="fa-solid fa-graduation-cap" style="color: var(--volunteer-accent);"></i> Conversion Strategies</h2>
+      <span style="font-size: 0.75rem; color: var(--text-secondary);">Tips & best practices</span>
+    </div>
+    <div class="dash-card-body">
+      <ul class="tips-list">
+        <li>
+          <i class="fa-solid fa-check-circle"></i>
+          <div><strong>5+ shifts rule:</strong> Volunteers who attend 5+ shifts are 3x more likely to donate. Prioritize engagement for newer volunteers.</div>
+        </li>
+        <li>
+          <i class="fa-solid fa-check-circle"></i>
+          <div><strong>Personal ask:</strong> Personal ask by direct manager has the highest conversion rate (33%). Equip managers with talking points.</div>
+        </li>
+        <li>
+          <i class="fa-solid fa-check-circle"></i>
+          <div><strong>Thank-you emails:</strong> Include a soft donation CTA in volunteer thank-you emails. This yields 8% click-through.</div>
+        </li>
+        <li>
+          <i class="fa-solid fa-check-circle"></i>
+          <div><strong>Donor events:</strong> Invite volunteers to donor appreciation events for crossover exposure. 22% of attendees convert within 30 days.</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+</body>
+</html>

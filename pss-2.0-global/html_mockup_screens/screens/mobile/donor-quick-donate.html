@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quick Donate - Mobile App</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a1a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    /* Phone Frame */
+    .phone-frame {
+      width: 375px;
+      height: 812px;
+      background: #ffffff;
+      border-radius: 44px;
+      overflow: hidden;
+      box-shadow: 0 0 0 12px #2d2d2d, 0 0 0 14px #1a1a1a, 0 20px 60px rgba(0,0,0,0.5);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .phone-notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 28px;
+      background: #000;
+      border-radius: 0 0 18px 18px;
+      z-index: 10;
+    }
+
+    .status-bar {
+      background: #000;
+      color: #fff;
+      padding: 8px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 600;
+      height: 48px;
+    }
+
+    .status-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+    }
+
+    /* Screen Header */
+    .screen-header {
+      background: white;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .screen-header-back {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: var(--accent);
+      cursor: pointer;
+      border-radius: 50%;
+    }
+
+    .screen-header-back:active { background: var(--accent-bg); }
+
+    .screen-header-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .screen-header-logo {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    /* Content */
+    .phone-content {
+      flex: 1;
+      overflow-y: auto;
+      background: #f8fafc;
+    }
+
+    .phone-content::-webkit-scrollbar { width: 0; }
+
+    /* View States */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* Step 1: Purpose */
+    .step-label {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      padding: 20px 20px 12px;
+    }
+
+    .step-sublabel {
+      font-size: 12px;
+      color: var(--text-secondary);
+      padding: 0 20px 14px;
+    }
+
+    .purpose-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      padding: 0 20px 20px;
+    }
+
+    .purpose-pill {
+      padding: 12px 8px;
+      background: white;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      min-height: 56px;
+      justify-content: center;
+    }
+
+    .purpose-pill .emoji {
+      font-size: 20px;
+    }
+
+    .purpose-pill.selected {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+      color: var(--accent);
+    }
+
+    .purpose-pill:active {
+      transform: scale(0.97);
+    }
+
+    .where-needed {
+      margin: 0 20px 20px;
+      padding: 12px;
+      background: white;
+      border: 2px dashed var(--border-color);
+      border-radius: 12px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    .where-needed.selected {
+      border-color: var(--accent);
+      border-style: solid;
+      background: var(--accent-bg);
+      color: var(--accent);
+    }
+
+    /* Divider */
+    .section-divider {
+      height: 8px;
+      background: #f1f5f9;
+    }
+
+    /* Step 2: Amount */
+    .amount-presets {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      padding: 0 20px 14px;
+    }
+
+    .amount-preset {
+      padding: 12px 8px;
+      background: white;
+      border: 2px solid var(--border-color);
+      border-radius: 10px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .amount-preset.selected {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+      color: var(--accent);
+    }
+
+    .amount-input-wrap {
+      padding: 0 20px 10px;
+    }
+
+    .amount-input-box {
+      display: flex;
+      align-items: center;
+      background: white;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px 16px;
+      gap: 8px;
+    }
+
+    .amount-input-box:focus-within {
+      border-color: var(--accent);
+    }
+
+    .amount-currency {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+
+    .amount-input {
+      border: none;
+      outline: none;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-primary);
+      width: 100%;
+      background: transparent;
+    }
+
+    .currency-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px 16px;
+    }
+
+    .currency-tag {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .currency-change {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      cursor: pointer;
+    }
+
+    /* Toggle Options */
+    .toggle-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      cursor: pointer;
+    }
+
+    .toggle-checkbox {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border-color);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 11px;
+      color: white;
+    }
+
+    .toggle-checkbox.checked {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .toggle-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    /* Step 3: Payment */
+    .payment-option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 20px;
+      cursor: pointer;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .payment-option:active { background: #f8fafc; }
+
+    .payment-radio {
+      width: 22px;
+      height: 22px;
+      border: 2px solid var(--border-color);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .payment-radio.selected {
+      border-color: var(--accent);
+    }
+
+    .payment-radio.selected::after {
+      content: '';
+      width: 12px;
+      height: 12px;
+      background: var(--accent);
+      border-radius: 50%;
+    }
+
+    .payment-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .payment-icon.card { background: #eff6ff; color: #3b82f6; }
+    .payment-icon.bank { background: #f0fdf4; color: #22c55e; }
+    .payment-icon.mobile { background: #faf5ff; color: #a855f7; }
+
+    .payment-info { flex: 1; }
+
+    .payment-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .payment-subtitle {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .payment-badge {
+      font-size: 9px;
+      font-weight: 700;
+      background: var(--accent-bg);
+      color: var(--accent);
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    /* Donate Button */
+    .donate-btn-wrap {
+      padding: 16px 20px 24px;
+    }
+
+    .donate-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      border: none;
+      border-radius: 14px;
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(14, 116, 144, 0.3);
+    }
+
+    .donate-btn:active {
+      transform: scale(0.98);
+    }
+
+    /* Confirmation */
+    .confirm-card {
+      margin: 24px 20px;
+      background: white;
+      border-radius: 20px;
+      padding: 32px 24px;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .confirm-check {
+      width: 64px;
+      height: 64px;
+      background: #f0fdf4;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      color: var(--success-color);
+      margin: 0 auto 16px;
+    }
+
+    .confirm-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .confirm-amount {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+      line-height: 1.5;
+    }
+
+    .confirm-amount strong {
+      color: var(--accent);
+    }
+
+    .confirm-receipt {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 2px;
+    }
+
+    .confirm-divider {
+      height: 1px;
+      background: var(--border-color);
+      margin: 16px 0;
+    }
+
+    .confirm-impact-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .confirm-impact {
+      font-size: 14px;
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    .confirm-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .confirm-btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: none;
+    }
+
+    .confirm-btn.primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .confirm-btn.secondary {
+      background: white;
+      color: var(--accent);
+      border: 1px solid var(--border-color);
+    }
+
+    .confirm-btn.ghost {
+      background: transparent;
+      color: var(--text-secondary);
+    }
+
+    /* Home Indicator */
+    .home-indicator {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 134px;
+      height: 5px;
+      background: #d1d5db;
+      border-radius: 100px;
+      z-index: 5;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <span>2:30</span>
+      <div class="status-bar-right">
+        <i class="fas fa-signal" style="font-size: 11px;"></i>
+        <i class="fas fa-wifi" style="font-size: 11px;"></i>
+        <i class="fas fa-battery-full" style="font-size: 13px;"></i>
+      </div>
+    </div>
+
+    <!-- Screen Header -->
+    <div class="screen-header">
+      <div class="screen-header-back" onclick="showView('form')">
+        <i class="fas fa-arrow-left"></i>
+      </div>
+      <div class="screen-header-title">Make a Donation</div>
+      <div class="screen-header-logo">GHF</div>
+    </div>
+
+    <!-- Content -->
+    <div class="phone-content">
+
+      <!-- Form View -->
+      <div class="view active" id="formView">
+        <!-- Step 1: Purpose -->
+        <div class="step-label">Select where your gift goes</div>
+        <div class="purpose-grid">
+          <div class="purpose-pill selected" onclick="selectPurpose(this)">
+            <span class="emoji">🧒</span>
+            Orphan Care
+          </div>
+          <div class="purpose-pill" onclick="selectPurpose(this)">
+            <span class="emoji">📚</span>
+            Education
+          </div>
+          <div class="purpose-pill" onclick="selectPurpose(this)">
+            <span class="emoji">💧</span>
+            Clean Water
+          </div>
+          <div class="purpose-pill" onclick="selectPurpose(this)">
+            <span class="emoji">🏥</span>
+            Healthcare
+          </div>
+          <div class="purpose-pill" onclick="selectPurpose(this)">
+            <span class="emoji">🍽</span>
+            Food
+          </div>
+          <div class="purpose-pill" onclick="selectPurpose(this)">
+            <span class="emoji">🕌</span>
+            Masjid Fund
+          </div>
+          <div class="purpose-pill" onclick="selectPurpose(this)">
+            <span class="emoji">👩</span>
+            Women
+          </div>
+          <div class="purpose-pill" onclick="selectPurpose(this)">
+            <span class="emoji">📋</span>
+            General
+          </div>
+          <div class="purpose-pill" onclick="selectPurpose(this)">
+            <span class="emoji">🔥</span>
+            Emergency
+          </div>
+        </div>
+
+        <div class="where-needed" onclick="selectWhereNeeded(this)">
+          <i class="fas fa-hand-holding-heart me-1"></i> Where most needed — org decides allocation
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- Step 2: Amount -->
+        <div class="step-label">How much would you like to give?</div>
+        <div class="amount-presets">
+          <div class="amount-preset" onclick="selectAmount(this, 50)">$50</div>
+          <div class="amount-preset" onclick="selectAmount(this, 100)">$100</div>
+          <div class="amount-preset" onclick="selectAmount(this, 250)">$250</div>
+          <div class="amount-preset" onclick="selectAmount(this, 500)">$500</div>
+        </div>
+
+        <div class="amount-input-wrap">
+          <div class="amount-input-box">
+            <span class="amount-currency">$</span>
+            <input type="text" class="amount-input" value="1,500" id="amountInput" placeholder="0">
+          </div>
+        </div>
+
+        <div class="currency-row">
+          <span class="currency-tag">USD 🇺🇸</span>
+          <span class="currency-change">Change <i class="fas fa-chevron-right" style="font-size: 9px;"></i></span>
+        </div>
+
+        <div class="toggle-option" onclick="toggleCheck(this)">
+          <div class="toggle-checkbox"><i class="fas fa-check"></i></div>
+          <span class="toggle-label">Make this a monthly donation</span>
+        </div>
+
+        <div class="toggle-option" onclick="toggleCheck(this)">
+          <div class="toggle-checkbox"><i class="fas fa-check"></i></div>
+          <span class="toggle-label">Dedicate in someone's honor</span>
+        </div>
+
+        <div class="section-divider" style="margin-top: 8px;"></div>
+
+        <!-- Step 3: Payment -->
+        <div class="step-label">Pay with</div>
+
+        <div class="payment-option" onclick="selectPayment(this)">
+          <div class="payment-radio selected"></div>
+          <div class="payment-icon card"><i class="fas fa-credit-card"></i></div>
+          <div class="payment-info">
+            <div class="payment-title">Visa ••••4567</div>
+            <div class="payment-subtitle">Saved card</div>
+          </div>
+          <span class="payment-badge">Saved</span>
+        </div>
+
+        <div class="payment-option" onclick="selectPayment(this)">
+          <div class="payment-radio"></div>
+          <div class="payment-icon card"><i class="fas fa-credit-card"></i></div>
+          <div class="payment-info">
+            <div class="payment-title">Add new card</div>
+            <div class="payment-subtitle">Credit or debit card</div>
+          </div>
+        </div>
+
+        <div class="payment-option" onclick="selectPayment(this)">
+          <div class="payment-radio"></div>
+          <div class="payment-icon bank"><i class="fas fa-building-columns"></i></div>
+          <div class="payment-info">
+            <div class="payment-title">Bank Transfer</div>
+            <div class="payment-subtitle">Direct bank transfer</div>
+          </div>
+        </div>
+
+        <div class="payment-option" onclick="selectPayment(this)">
+          <div class="payment-radio"></div>
+          <div class="payment-icon mobile"><i class="fab fa-apple-pay" style="font-size: 22px;"></i></div>
+          <div class="payment-info">
+            <div class="payment-title">Apple Pay / Google Pay</div>
+            <div class="payment-subtitle">One-tap payment</div>
+          </div>
+        </div>
+
+        <!-- Donate Button -->
+        <div class="donate-btn-wrap">
+          <button class="donate-btn" onclick="showView('confirm')">
+            <i class="fas fa-heart"></i>
+            Donate $1,500
+          </button>
+        </div>
+      </div>
+
+      <!-- Confirmation View -->
+      <div class="view" id="confirmView">
+        <div class="confirm-card">
+          <div class="confirm-check">
+            <i class="fas fa-check"></i>
+          </div>
+          <div class="confirm-title">Thank You, Khalid!</div>
+          <div class="confirm-amount">
+            Your donation of <strong>$1,500</strong><br>
+            to Orphan Care has been received.
+          </div>
+
+          <div class="confirm-receipt">Receipt: <strong>REC-4547</strong></div>
+          <div class="confirm-receipt">Sent to: khalid@email.com</div>
+
+          <div class="confirm-divider"></div>
+
+          <div class="confirm-impact-title">Your gift will provide:</div>
+          <div class="confirm-impact">
+            🧒 Education for 3 children<br>for one year
+          </div>
+
+          <div class="confirm-actions">
+            <button class="confirm-btn primary">
+              <i class="fas fa-share-nodes"></i> Share Your Giving
+            </button>
+            <button class="confirm-btn secondary">
+              <i class="fas fa-download"></i> Download Receipt
+            </button>
+            <button class="confirm-btn ghost" onclick="showView('form')">
+              Return Home
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="home-indicator"></div>
+  </div>
+
+  <script>
+    function selectPurpose(el) {
+      document.querySelectorAll('.purpose-pill').forEach(p => p.classList.remove('selected'));
+      document.querySelector('.where-needed').classList.remove('selected');
+      el.classList.add('selected');
+    }
+
+    function selectWhereNeeded(el) {
+      document.querySelectorAll('.purpose-pill').forEach(p => p.classList.remove('selected'));
+      el.classList.toggle('selected');
+    }
+
+    function selectAmount(el, amount) {
+      document.querySelectorAll('.amount-preset').forEach(p => p.classList.remove('selected'));
+      el.classList.add('selected');
+      document.getElementById('amountInput').value = amount.toLocaleString();
+    }
+
+    function selectPayment(el) {
+      document.querySelectorAll('.payment-radio').forEach(r => r.classList.remove('selected'));
+      el.querySelector('.payment-radio').classList.add('selected');
+    }
+
+    function toggleCheck(el) {
+      el.querySelector('.toggle-checkbox').classList.toggle('checked');
+    }
+
+    function showView(view) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      if (view === 'confirm') {
+        document.getElementById('confirmView').classList.add('active');
+      } else {
+        document.getElementById('formView').classList.add('active');
+      }
+    }
+  </script>
+
+</body>
+
+</html>

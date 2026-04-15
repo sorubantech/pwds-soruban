@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hour Tracking - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+      --volunteer-accent: #059669;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+    .page-header .subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 0; }
+    .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+
+    .btn-primary-accent { background: var(--accent); border-color: var(--accent); color: white; font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid var(--accent); cursor: pointer; transition: all 0.15s; }
+    .btn-primary-accent:hover { background: #0c6577; border-color: #0c6577; color: white; }
+    .btn-outline-accent { background: white; border: 1px solid var(--accent); color: var(--accent); font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.15s; }
+    .btn-outline-accent:hover { background: var(--accent); color: white; }
+
+    /* Stats Grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.25rem; }
+    .stat-card { background: white; border-radius: var(--card-radius); padding: 1.25rem; box-shadow: var(--card-shadow); border: 1px solid var(--border-color); display: flex; align-items: flex-start; gap: 1rem; transition: transform 0.15s, box-shadow 0.15s; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }
+    .stat-icon { width: 48px; height: 48px; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; }
+    .stat-icon.teal { background: var(--accent-bg); color: var(--accent); }
+    .stat-icon.orange { background: #fff7ed; color: #f97316; }
+    .stat-icon.blue { background: #eff6ff; color: #3b82f6; }
+    .stat-icon.gold { background: #fefce8; color: #eab308; }
+    .stat-info { flex: 1; }
+    .stat-value { font-size: 1.625rem; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+    .stat-label { font-size: 0.8125rem; color: var(--text-secondary); font-weight: 500; margin-bottom: 0.125rem; }
+    .stat-subtitle { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; }
+    .stat-subtitle .positive { color: var(--success-color); font-weight: 600; }
+
+    /* Filter Bar */
+    .filter-bar { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    .filter-bar select, .filter-bar input { padding: 0.4375rem 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 0.8125rem; background: white; color: var(--text-primary); }
+    .filter-bar select:focus, .filter-bar input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1); }
+    .filter-chip { padding: 0.3125rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; border: 1px solid var(--border-color); background: white; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+    .filter-chip:hover { border-color: var(--accent); color: var(--accent); }
+    .filter-chip.active { background: var(--accent); border-color: var(--accent); color: white; }
+    .clear-filters { font-size: 0.75rem; color: var(--accent); cursor: pointer; font-weight: 600; background: none; border: none; padding: 0.3125rem 0.5rem; }
+    .clear-filters:hover { text-decoration: underline; }
+
+    /* Data Card */
+    .data-card { background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); margin-bottom: 1.25rem; }
+    .data-card-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
+    .data-card-header h3 { font-size: 0.9375rem; font-weight: 700; margin: 0; }
+
+    /* Data Table */
+    .data-table { width: 100%; font-size: 0.8125rem; }
+    .data-table th { background: #f8fafc; font-weight: 600; color: var(--text-secondary); font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color); white-space: nowrap; cursor: pointer; }
+    .data-table th:hover { color: var(--accent); }
+    .data-table th i { margin-left: 0.25rem; font-size: 0.625rem; }
+    .data-table td { padding: 0.75rem 1rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover { background: #f8fafc; }
+
+    .badge-status { padding: 0.1875rem 0.625rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; }
+    .badge-status.pending { background: #fef3c7; color: #92400e; }
+    .badge-status.approved { background: #dcfce7; color: #166534; }
+    .badge-status.rejected { background: #fef2f2; color: var(--danger-color); }
+
+    .btn-sm-action { padding: 0.25rem 0.5rem; font-size: 0.6875rem; font-weight: 600; border-radius: 0.375rem; border: 1px solid; cursor: pointer; transition: all 0.15s; }
+    .btn-approve { border-color: var(--success-color); color: #166534; background: white; }
+    .btn-approve:hover { background: var(--success-color); color: white; }
+    .btn-reject { border-color: var(--danger-color); color: var(--danger-color); background: white; }
+    .btn-reject:hover { background: var(--danger-color); color: white; }
+    .btn-edit { border-color: var(--border-color); color: var(--text-secondary); background: white; }
+    .btn-edit:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-more { border: none; background: none; color: var(--text-secondary); cursor: pointer; font-size: 0.875rem; padding: 0.25rem; }
+    .btn-more:hover { color: var(--accent); }
+
+    .checkbox-col { width: 36px; text-align: center; }
+    .checkbox-col input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+
+    .bulk-actions { padding: 0.75rem 1.25rem; background: var(--accent-bg); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 0.75rem; }
+    .bulk-actions span { font-size: 0.8125rem; font-weight: 600; color: var(--accent); }
+
+    /* Collapsible Section */
+    .collapsible-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+    .collapsible-header:hover { background: #f8fafc; }
+    .collapsible-header h3 { font-size: 0.9375rem; font-weight: 700; margin: 0; }
+    .collapsible-body { display: none; }
+    .collapsible-body.show { display: block; }
+
+    /* Modal */
+    .modal-backdrop-custom { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1060; align-items: center; justify-content: center; }
+    .modal-backdrop-custom.show { display: flex; }
+    .modal-box { background: white; border-radius: var(--card-radius); width: 520px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+    .modal-header-custom { padding: 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
+    .modal-header-custom h3 { font-size: 1.0625rem; font-weight: 700; margin: 0; }
+    .modal-close { background: none; border: none; font-size: 1.25rem; color: var(--text-secondary); cursor: pointer; }
+    .modal-body-custom { padding: 1.25rem; }
+    .modal-footer-custom { padding: 1rem 1.25rem; border-top: 1px solid var(--border-color); display: flex; gap: 0.5rem; justify-content: flex-end; }
+
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.375rem; }
+    .form-group label .req { color: var(--danger-color); }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 0.8125rem; color: var(--text-primary); transition: border-color 0.15s; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1); }
+    .form-group textarea { resize: vertical; min-height: 60px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+    .summary-table { width: 100%; font-size: 0.8125rem; }
+    .summary-table th { background: #f8fafc; font-weight: 600; color: var(--text-secondary); font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.625rem 1rem; border-bottom: 1px solid var(--border-color); }
+    .summary-table td { padding: 0.625rem 1rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .summary-table tr:last-child td { border-bottom: none; }
+    .summary-table tr:hover { background: #f8fafc; }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .form-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-clock me-2" style="color: var(--volunteer-accent);"></i>Hour Tracking</h1>
+      <p class="subtitle">Log, review, and approve volunteer service hours</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="openModal()"><i class="fas fa-plus me-1"></i> Log Hours</button>
+      <button class="btn-outline-accent"><i class="fas fa-check-double me-1"></i> Bulk Approve</button>
+      <button class="btn-outline-accent"><i class="fas fa-file-export me-1"></i> Export Report</button>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon teal"><i class="fas fa-clock"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Total Hours (Period)</div>
+        <div class="stat-value">1,456</div>
+        <div class="stat-subtitle">189 volunteers</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon orange"><i class="fas fa-hourglass-half"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Pending Approval</div>
+        <div class="stat-value">45</div>
+        <div class="stat-subtitle">128 hours awaiting review</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="fas fa-chart-bar"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Avg Hours/Volunteer</div>
+        <div class="stat-value">7.7</div>
+        <div class="stat-subtitle"><span class="positive">&#8593; 1.2</span> vs last month</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon gold"><i class="fas fa-trophy"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Top Contributor</div>
+        <div class="stat-value" style="font-size:1.125rem;">James Okonkwo</div>
+        <div class="stat-subtitle">34 hrs this month</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hour Log Table -->
+  <div class="data-card">
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <select>
+        <option>This Month</option>
+        <option>Last Month</option>
+        <option>This Quarter</option>
+        <option>Custom Range</option>
+      </select>
+      <select>
+        <option>All Volunteers</option>
+        <option>Ahmed Salim</option>
+        <option>Ravi Kumar</option>
+        <option>James Okonkwo</option>
+        <option>Fatima Al-Zahra</option>
+        <option>Amina Hassan</option>
+      </select>
+      <div style="display:flex;gap:0.25rem;">
+        <button class="filter-chip active">All</button>
+        <button class="filter-chip">Pending</button>
+        <button class="filter-chip">Approved</button>
+        <button class="filter-chip">Rejected</button>
+      </div>
+      <select>
+        <option>All Types</option>
+        <option>Event</option>
+        <option>Office</option>
+        <option>Field</option>
+        <option>Remote</option>
+        <option>Training</option>
+      </select>
+      <select>
+        <option>All Branches</option>
+        <option>Dubai</option>
+        <option>Mumbai</option>
+        <option>Delhi</option>
+      </select>
+      <button class="clear-filters"><i class="fas fa-times me-1"></i>Clear Filters</button>
+    </div>
+
+    <!-- Bulk Actions -->
+    <div class="bulk-actions">
+      <input type="checkbox" style="width:16px;height:16px;accent-color:var(--accent);">
+      <span>2 selected</span>
+      <button class="btn-sm-action btn-approve"><i class="fas fa-check me-1"></i>Approve Selected</button>
+      <button class="btn-sm-action btn-reject"><i class="fas fa-times me-1"></i>Reject Selected</button>
+    </div>
+
+    <div style="overflow-x:auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="checkbox-col"><input type="checkbox" style="width:14px;height:14px;accent-color:var(--accent);"></th>
+            <th>Date <i class="fas fa-sort"></i></th>
+            <th>Volunteer <i class="fas fa-sort"></i></th>
+            <th>Activity</th>
+            <th>Shift Link</th>
+            <th>Hours <i class="fas fa-sort"></i></th>
+            <th>Approved By</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="checkbox-col"><input type="checkbox" style="width:14px;height:14px;accent-color:var(--accent);" checked></td>
+            <td>Apr 12</td>
+            <td><a href="#" onclick="parent.loadContent('volunteer/volunteer-detail');return false;" style="color:var(--accent);font-weight:600;text-decoration:none;">Ahmed Salim</a></td>
+            <td>Food Pack Distribution</td>
+            <td><a href="#" style="color:var(--accent);font-size:0.75rem;text-decoration:none;"><i class="fas fa-link me-1"></i>Shift #45</a></td>
+            <td style="font-weight:700;">4.0</td>
+            <td style="color:var(--text-secondary);">—</td>
+            <td><span class="badge-status pending">&#128203; Pending</span></td>
+            <td>
+              <div style="display:flex;gap:0.25rem;">
+                <button class="btn-sm-action btn-approve">Approve</button>
+                <button class="btn-sm-action btn-reject">Reject</button>
+                <button class="btn-sm-action btn-edit">Edit</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="checkbox-col"><input type="checkbox" style="width:14px;height:14px;accent-color:var(--accent);" checked></td>
+            <td>Apr 12</td>
+            <td><a href="#" onclick="parent.loadContent('volunteer/volunteer-detail');return false;" style="color:var(--accent);font-weight:600;text-decoration:none;">Ravi Kumar</a></td>
+            <td>Food Pack Distribution</td>
+            <td><a href="#" style="color:var(--accent);font-size:0.75rem;text-decoration:none;"><i class="fas fa-link me-1"></i>Shift #45</a></td>
+            <td style="font-weight:700;">4.0</td>
+            <td style="color:var(--text-secondary);">—</td>
+            <td><span class="badge-status pending">&#128203; Pending</span></td>
+            <td>
+              <div style="display:flex;gap:0.25rem;">
+                <button class="btn-sm-action btn-approve">Approve</button>
+                <button class="btn-sm-action btn-reject">Reject</button>
+                <button class="btn-sm-action btn-edit">Edit</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="checkbox-col"><input type="checkbox" style="width:14px;height:14px;accent-color:var(--accent);"></td>
+            <td>Apr 11</td>
+            <td><a href="#" onclick="parent.loadContent('volunteer/volunteer-detail');return false;" style="color:var(--accent);font-weight:600;text-decoration:none;">James Okonkwo</a></td>
+            <td>Community Outreach</td>
+            <td><a href="#" style="color:var(--accent);font-size:0.75rem;text-decoration:none;"><i class="fas fa-link me-1"></i>Shift #44</a></td>
+            <td style="font-weight:700;">6.0</td>
+            <td>Fatima Al-Zahra</td>
+            <td><span class="badge-status approved">&#10003; Approved</span></td>
+            <td>
+              <div style="display:flex;gap:0.25rem;">
+                <button class="btn-sm-action btn-edit">Edit</button>
+                <button class="btn-more"><i class="fas fa-ellipsis-vertical"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="checkbox-col"><input type="checkbox" style="width:14px;height:14px;accent-color:var(--accent);"></td>
+            <td>Apr 10</td>
+            <td><a href="#" onclick="parent.loadContent('volunteer/volunteer-detail');return false;" style="color:var(--accent);font-weight:600;text-decoration:none;">Fatima Al-Zahra</a></td>
+            <td>Data Entry (remote)</td>
+            <td><span style="color:var(--text-secondary);font-size:0.75rem;">Manual entry</span></td>
+            <td style="font-weight:700;">3.0</td>
+            <td>Ahmed Salim</td>
+            <td><span class="badge-status approved">&#10003; Approved</span></td>
+            <td>
+              <div style="display:flex;gap:0.25rem;">
+                <button class="btn-sm-action btn-edit">Edit</button>
+                <button class="btn-more"><i class="fas fa-ellipsis-vertical"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="checkbox-col"><input type="checkbox" style="width:14px;height:14px;accent-color:var(--accent);"></td>
+            <td>Apr 9</td>
+            <td><a href="#" onclick="parent.loadContent('volunteer/volunteer-detail');return false;" style="color:var(--accent);font-weight:600;text-decoration:none;">Ahmed Salim</a></td>
+            <td>Donor calls</td>
+            <td><span style="color:var(--text-secondary);font-size:0.75rem;">Manual entry</span></td>
+            <td style="font-weight:700;">2.0</td>
+            <td>Fatima Al-Zahra</td>
+            <td><span class="badge-status approved">&#10003; Approved</span></td>
+            <td>
+              <div style="display:flex;gap:0.25rem;">
+                <button class="btn-sm-action btn-edit">Edit</button>
+                <button class="btn-more"><i class="fas fa-ellipsis-vertical"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="checkbox-col"><input type="checkbox" style="width:14px;height:14px;accent-color:var(--accent);"></td>
+            <td>Apr 8</td>
+            <td><a href="#" onclick="parent.loadContent('volunteer/volunteer-detail');return false;" style="color:var(--accent);font-weight:600;text-decoration:none;">Amina Hassan</a></td>
+            <td>Event prep materials</td>
+            <td><a href="#" style="color:var(--accent);font-size:0.75rem;text-decoration:none;"><i class="fas fa-link me-1"></i>Shift #42</a></td>
+            <td style="font-weight:700;">5.0</td>
+            <td style="color:var(--text-secondary);">—</td>
+            <td><span class="badge-status rejected">&#10007; Rejected</span></td>
+            <td>
+              <div style="display:flex;gap:0.25rem;">
+                <button class="btn-sm-action btn-edit" style="border-color:var(--accent);color:var(--accent);">View Reason</button>
+                <button class="btn-more"><i class="fas fa-ellipsis-vertical"></i></button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Volunteer Hours Summary (Collapsible) -->
+  <div class="data-card">
+    <div class="collapsible-header" onclick="toggleSummary()">
+      <h3><i class="fas fa-chart-pie me-2" style="color:var(--volunteer-accent);"></i>Volunteer Hours Summary</h3>
+      <i class="fas fa-chevron-down" id="summaryChevron" style="color:var(--text-secondary);font-size:0.8125rem;transition:transform 0.2s;"></i>
+    </div>
+    <div class="collapsible-body show" id="summaryBody">
+      <div style="overflow-x:auto;">
+        <table class="summary-table">
+          <thead>
+            <tr>
+              <th>Volunteer</th>
+              <th>Apr Hours</th>
+              <th>YTD Hours</th>
+              <th>Shifts</th>
+              <th>Avg/Shift</th>
+              <th>Approval Rate</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a href="#" onclick="parent.loadContent('volunteer/volunteer-detail');return false;" style="color:var(--accent);font-weight:600;text-decoration:none;">James Okonkwo</a></td>
+              <td style="font-weight:700;">34</td>
+              <td>156</td>
+              <td>8</td>
+              <td>4.3</td>
+              <td><span style="color:var(--success-color);font-weight:600;">100%</span></td>
+            </tr>
+            <tr>
+              <td><a href="#" onclick="parent.loadContent('volunteer/volunteer-detail');return false;" style="color:var(--accent);font-weight:600;text-decoration:none;">Ahmed Salim</a></td>
+              <td style="font-weight:700;">18</td>
+              <td>245</td>
+              <td>5</td>
+              <td>3.6</td>
+              <td><span style="color:var(--success-color);font-weight:600;">100%</span></td>
+            </tr>
+            <tr>
+              <td><a href="#" onclick="parent.loadContent('volunteer/volunteer-detail');return false;" style="color:var(--accent);font-weight:600;text-decoration:none;">Ravi Kumar</a></td>
+              <td style="font-weight:700;">22</td>
+              <td>156</td>
+              <td>6</td>
+              <td>3.7</td>
+              <td><span style="color:var(--warning-color);font-weight:600;">95%</span></td>
+            </tr>
+            <tr>
+              <td><a href="#" onclick="parent.loadContent('volunteer/volunteer-detail');return false;" style="color:var(--accent);font-weight:600;text-decoration:none;">Fatima Al-Zahra</a></td>
+              <td style="font-weight:700;">12</td>
+              <td>189</td>
+              <td>4</td>
+              <td>3.0</td>
+              <td><span style="color:var(--success-color);font-weight:600;">100%</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Log Hours Modal -->
+  <div class="modal-backdrop-custom" id="logModal">
+    <div class="modal-box">
+      <div class="modal-header-custom">
+        <h3><i class="fas fa-clock me-2" style="color:var(--accent);"></i>Log Hours</h3>
+        <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body-custom">
+        <div class="form-group">
+          <label>Volunteer <span class="req">*</span></label>
+          <select>
+            <option>— Select Volunteer —</option>
+            <option selected>Ahmed Salim</option>
+            <option>Ravi Kumar</option>
+            <option>James Okonkwo</option>
+            <option>Fatima Al-Zahra</option>
+            <option>Amina Hassan</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Date <span class="req">*</span></label>
+            <input type="date" value="2026-04-12">
+          </div>
+          <div class="form-group">
+            <label>Hours <span class="req">*</span></label>
+            <input type="number" value="4.0" step="0.5" min="0.5">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Activity <span class="req">*</span></label>
+          <input type="text" placeholder="e.g. Food Pack Distribution">
+        </div>
+        <div class="form-group">
+          <label>Linked Shift <span style="font-weight:400;color:var(--text-secondary);">(optional)</span></label>
+          <select>
+            <option value="">— Select Shift —</option>
+            <option>Shift #45 — Food Pack Distribution (Apr 12)</option>
+            <option>Shift #44 — Community Outreach (Apr 11)</option>
+            <option>Shift #43 — Office Admin (Apr 10)</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Start Time <span style="font-weight:400;color:var(--text-secondary);">(optional)</span></label>
+            <input type="time" value="08:00">
+          </div>
+          <div class="form-group">
+            <label>End Time <span style="font-weight:400;color:var(--text-secondary);">(optional)</span></label>
+            <input type="time" value="12:00">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Activity Type</label>
+          <select>
+            <option>Event</option>
+            <option>Office</option>
+            <option>Field</option>
+            <option>Remote</option>
+            <option>Training</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea placeholder="e.g. Led setup team, coordinated with venue staff"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Attachments <span style="font-weight:400;color:var(--text-secondary);">(optional)</span></label>
+          <div style="border:2px dashed var(--border-color);border-radius:0.5rem;padding:1.25rem;text-align:center;color:var(--text-secondary);cursor:pointer;">
+            <i class="fas fa-cloud-upload-alt" style="font-size:1.5rem;margin-bottom:0.375rem;display:block;opacity:0.5;"></i>
+            <span style="font-size:0.8125rem;">Drop files here or <span style="color:var(--accent);font-weight:600;">browse</span></span>
+            <div style="font-size:0.6875rem;margin-top:0.25rem;">Photos, sign-in sheets (max 10MB)</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer-custom">
+        <button class="btn-outline-accent" onclick="closeModal()">Cancel</button>
+        <button class="btn-outline-accent"><i class="fas fa-check-double me-1"></i>Log &amp; Approve</button>
+        <button class="btn-primary-accent"><i class="fas fa-check me-1"></i>Log Hours</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openModal() {
+      document.getElementById('logModal').classList.add('show');
+    }
+
+    function closeModal() {
+      document.getElementById('logModal').classList.remove('show');
+    }
+
+    function toggleSummary() {
+      const body = document.getElementById('summaryBody');
+      const chevron = document.getElementById('summaryChevron');
+      body.classList.toggle('show');
+      chevron.style.transform = body.classList.contains('show') ? '' : 'rotate(-90deg)';
+    }
+
+    // Filter chips
+    document.querySelectorAll('.filter-chip').forEach(chip => {
+      chip.addEventListener('click', function () {
+        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+  </script>
+
+</body>
+</html>

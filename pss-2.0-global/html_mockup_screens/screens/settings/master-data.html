@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Master Data - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --settings-accent: #6366f1;
+      --settings-accent-bg: #eef2ff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-accent {
+      background: var(--settings-accent);
+      color: #fff;
+      border: none;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-accent:hover { background: #4f46e5; color: #fff; }
+
+    .btn-outline {
+      background: #fff;
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline:hover { border-color: var(--settings-accent); color: var(--settings-accent); }
+
+    /* Split Layout */
+    .split-layout {
+      display: flex;
+      gap: 1.25rem;
+      min-height: calc(100vh - 130px);
+    }
+
+    .left-panel {
+      width: 30%;
+      min-width: 280px;
+      background: #fff;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .right-panel {
+      flex: 1;
+      background: #fff;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Left Panel - Type List */
+    .panel-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .search-box {
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      background: #f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' fill='%2394a3b8'%3E%3Cpath d='M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z'/%3E%3C/svg%3E") no-repeat 0.75rem center / 14px;
+      transition: border-color 0.15s;
+      outline: none;
+    }
+
+    .search-box input:focus { border-color: var(--settings-accent); }
+
+    .type-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .type-list::-webkit-scrollbar { width: 4px; }
+    .type-list::-webkit-scrollbar-track { background: transparent; }
+    .type-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+    .type-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid #f1f5f9;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .type-item:hover { background: #f8fafc; }
+
+    .type-item.active {
+      background: var(--settings-accent-bg);
+      border-left: 3px solid var(--settings-accent);
+    }
+
+    .type-item .type-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 0.5rem;
+      background: #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+
+    .type-item.active .type-icon {
+      background: var(--settings-accent);
+      color: #fff;
+    }
+
+    .type-item .type-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .type-item .type-name {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .type-item .type-meta {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.125rem;
+    }
+
+    .badge-system {
+      font-size: 0.625rem;
+      font-weight: 700;
+      padding: 0.1rem 0.375rem;
+      border-radius: 999px;
+      background: #fff7ed;
+      color: #f97316;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .badge-custom {
+      font-size: 0.625rem;
+      font-weight: 700;
+      padding: 0.1rem 0.375rem;
+      border-radius: 999px;
+      background: #f0fdf4;
+      color: #22c55e;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    /* Right Panel */
+    .right-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .right-header-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .type-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .type-description {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .type-badges {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      margin-top: 0.5rem;
+    }
+
+    .code-badge {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      font-family: 'Courier New', monospace;
+      padding: 0.2rem 0.5rem;
+      border-radius: 0.375rem;
+      background: #f1f5f9;
+      color: var(--text-secondary);
+    }
+
+    .system-lock-badge {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+      background: #fff7ed;
+      color: #f97316;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .right-header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .btn-sm-accent {
+      background: var(--settings-accent);
+      color: #fff;
+      border: none;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-sm-accent:hover { background: #4f46e5; }
+
+    .btn-sm-outline {
+      background: #fff;
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-sm-outline:hover { border-color: var(--settings-accent); color: var(--settings-accent); }
+
+    /* Values Table */
+    .values-table-wrapper {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .values-table-wrapper::-webkit-scrollbar { width: 4px; }
+    .values-table-wrapper::-webkit-scrollbar-track { background: transparent; }
+    .values-table-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+    .values-table {
+      width: 100%;
+      font-size: 0.8125rem;
+    }
+
+    .values-table thead th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .values-table tbody td {
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+
+    .values-table tbody tr:hover { background: #fafafe; }
+
+    .values-table tbody tr.inactive {
+      opacity: 0.5;
+    }
+
+    .drag-handle {
+      cursor: grab;
+      color: #cbd5e1;
+      font-size: 0.875rem;
+    }
+
+    .drag-handle:hover { color: var(--settings-accent); }
+
+    .status-active {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--success-color);
+    }
+
+    .status-inactive {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .btn-icon {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0.25rem 0.375rem;
+      border-radius: 0.25rem;
+      font-size: 0.8125rem;
+      transition: all 0.15s;
+    }
+
+    .btn-icon:hover { color: var(--settings-accent); background: var(--settings-accent-bg); }
+
+    .btn-icon-more {
+      position: relative;
+    }
+
+    /* Dropdown menu */
+    .dropdown-menu-custom {
+      position: absolute;
+      right: 0;
+      top: 100%;
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      z-index: 100;
+      min-width: 160px;
+      display: none;
+      padding: 0.375rem;
+    }
+
+    .dropdown-menu-custom.show { display: block; }
+
+    .dropdown-menu-custom a {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.625rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      text-decoration: none;
+      border-radius: 0.375rem;
+      transition: background 0.15s;
+    }
+
+    .dropdown-menu-custom a:hover { background: #f8fafc; }
+    .dropdown-menu-custom a.danger { color: var(--danger-color); }
+    .dropdown-menu-custom a.danger:hover { background: #fef2f2; }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.5);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.show { display: flex; }
+
+    .modal-box {
+      background: #fff;
+      border-radius: var(--card-radius);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-header h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0.25rem;
+    }
+
+    .modal-body { padding: 1.5rem; }
+
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+    }
+
+    .form-label-sm {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.375rem;
+    }
+
+    .form-label-sm .required { color: var(--danger-color); margin-left: 0.125rem; }
+
+    .form-control-sm-custom {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8125rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .form-control-sm-custom:focus { border-color: var(--settings-accent); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+
+    .form-switch-custom {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .translations-section {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .translation-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .translation-lang {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      width: 60px;
+      flex-shrink: 0;
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .split-layout {
+        flex-direction: column;
+      }
+      .left-panel {
+        width: 100%;
+        min-width: unset;
+        max-height: 300px;
+      }
+    }
+
+    @media (max-width: 576px) {
+      body { padding: 1rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-database me-2" style="color: var(--settings-accent);"></i>Master Data</h1>
+      <p class="subtitle">Manage lookup values, categories, and reference data</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-accent" onclick="openCreateTypeModal()"><i class="fas fa-plus me-1"></i> New Data Type</button>
+      <button class="btn-outline"><i class="fas fa-file-import me-1"></i> Import</button>
+      <button class="btn-outline"><i class="fas fa-file-export me-1"></i> Export All</button>
+    </div>
+  </div>
+
+  <!-- Split Layout -->
+  <div class="split-layout">
+
+    <!-- Left Panel: Type List -->
+    <div class="left-panel">
+      <div class="panel-header">
+        <span>Data Types</span>
+        <span style="font-size: 0.6875rem; color: var(--text-secondary); font-weight: 500;">12 types</span>
+      </div>
+      <div class="search-box">
+        <input type="text" placeholder="Search data types..." id="typeSearch" oninput="filterTypes()">
+      </div>
+      <div class="type-list" id="typeList">
+        <!-- System Types -->
+        <div class="type-item active" onclick="selectType(this, 'salutation')" data-type="salutation">
+          <div class="type-icon"><i class="fas fa-clipboard-list"></i></div>
+          <div class="type-info">
+            <div class="type-name">Salutation</div>
+            <div class="type-meta">
+              <span>8 values</span>
+              <span class="badge-system"><i class="fas fa-lock" style="font-size: 0.5rem;"></i> System</span>
+            </div>
+          </div>
+        </div>
+        <div class="type-item" onclick="selectType(this, 'contact_type')" data-type="contact_type">
+          <div class="type-icon"><i class="fas fa-clipboard-list"></i></div>
+          <div class="type-info">
+            <div class="type-name">Contact Type</div>
+            <div class="type-meta">
+              <span>6 values</span>
+              <span class="badge-system"><i class="fas fa-lock" style="font-size: 0.5rem;"></i> System</span>
+            </div>
+          </div>
+        </div>
+        <div class="type-item" onclick="selectType(this, 'payment_mode')" data-type="payment_mode">
+          <div class="type-icon"><i class="fas fa-clipboard-list"></i></div>
+          <div class="type-info">
+            <div class="type-name">Payment Mode</div>
+            <div class="type-meta">
+              <span>7 values</span>
+              <span class="badge-system"><i class="fas fa-lock" style="font-size: 0.5rem;"></i> System</span>
+            </div>
+          </div>
+        </div>
+        <div class="type-item" onclick="selectType(this, 'donation_category')" data-type="donation_category">
+          <div class="type-icon"><i class="fas fa-clipboard-list"></i></div>
+          <div class="type-info">
+            <div class="type-name">Donation Category</div>
+            <div class="type-meta">
+              <span>5 values</span>
+              <span class="badge-system"><i class="fas fa-lock" style="font-size: 0.5rem;"></i> System</span>
+            </div>
+          </div>
+        </div>
+        <div class="type-item" onclick="selectType(this, 'communication_channel')" data-type="communication_channel">
+          <div class="type-icon"><i class="fas fa-clipboard-list"></i></div>
+          <div class="type-info">
+            <div class="type-name">Communication Channel</div>
+            <div class="type-meta">
+              <span>4 values</span>
+              <span class="badge-system"><i class="fas fa-lock" style="font-size: 0.5rem;"></i> System</span>
+            </div>
+          </div>
+        </div>
+        <div class="type-item" onclick="selectType(this, 'event_type')" data-type="event_type">
+          <div class="type-icon"><i class="fas fa-clipboard-list"></i></div>
+          <div class="type-info">
+            <div class="type-name">Event Type</div>
+            <div class="type-meta">
+              <span>5 values</span>
+              <span class="badge-system"><i class="fas fa-lock" style="font-size: 0.5rem;"></i> System</span>
+            </div>
+          </div>
+        </div>
+        <div class="type-item" onclick="selectType(this, 'document_category')" data-type="document_category">
+          <div class="type-icon"><i class="fas fa-clipboard-list"></i></div>
+          <div class="type-info">
+            <div class="type-name">Document Category</div>
+            <div class="type-meta">
+              <span>4 values</span>
+              <span class="badge-system"><i class="fas fa-lock" style="font-size: 0.5rem;"></i> System</span>
+            </div>
+          </div>
+        </div>
+        <div class="type-item" onclick="selectType(this, 'relationship_type')" data-type="relationship_type">
+          <div class="type-icon"><i class="fas fa-clipboard-list"></i></div>
+          <div class="type-info">
+            <div class="type-name">Relationship Type</div>
+            <div class="type-meta">
+              <span>8 values</span>
+              <span class="badge-system"><i class="fas fa-lock" style="font-size: 0.5rem;"></i> System</span>
+            </div>
+          </div>
+        </div>
+        <!-- Custom Types -->
+        <div class="type-item" onclick="selectType(this, 'volunteer_skill')" data-type="volunteer_skill">
+          <div class="type-icon"><i class="fas fa-clipboard-list"></i></div>
+          <div class="type-info">
+            <div class="type-name">Volunteer Skill</div>
+            <div class="type-meta">
+              <span>12 values</span>
+              <span class="badge-custom">Custom</span>
+            </div>
+          </div>
+        </div>
+        <div class="type-item" onclick="selectType(this, 'fundraiser_source')" data-type="fundraiser_source">
+          <div class="type-icon"><i class="fas fa-clipboard-list"></i></div>
+          <div class="type-info">
+            <div class="type-name">Fundraiser Source</div>
+            <div class="type-meta">
+              <span>6 values</span>
+              <span class="badge-custom">Custom</span>
+            </div>
+          </div>
+        </div>
+        <div class="type-item" onclick="selectType(this, 'cancellation_reason')" data-type="cancellation_reason">
+          <div class="type-icon"><i class="fas fa-clipboard-list"></i></div>
+          <div class="type-info">
+            <div class="type-name">Cancellation Reason</div>
+            <div class="type-meta">
+              <span>5 values</span>
+              <span class="badge-custom">Custom</span>
+            </div>
+          </div>
+        </div>
+        <div class="type-item" onclick="selectType(this, 'decline_reason')" data-type="decline_reason">
+          <div class="type-icon"><i class="fas fa-clipboard-list"></i></div>
+          <div class="type-info">
+            <div class="type-name">Decline Reason</div>
+            <div class="type-meta">
+              <span>4 values</span>
+              <span class="badge-custom">Custom</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Panel: Values -->
+    <div class="right-panel">
+      <div class="right-header">
+        <div class="right-header-top">
+          <div>
+            <div class="type-title">Salutation</div>
+            <div class="type-description">Title prefix for contact names</div>
+            <div class="type-badges">
+              <span class="code-badge">SALUTATION</span>
+              <span class="system-lock-badge"><i class="fas fa-lock"></i> System type</span>
+            </div>
+          </div>
+          <div class="right-header-actions">
+            <button class="btn-sm-accent" onclick="openAddValueModal()"><i class="fas fa-plus me-1"></i> Add Value</button>
+            <button class="btn-sm-outline"><i class="fas fa-pen me-1"></i> Edit Type</button>
+            <button class="btn-sm-outline"><i class="fas fa-file-export me-1"></i> Export</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Values Table -->
+      <div class="values-table-wrapper">
+        <table class="values-table">
+          <thead>
+            <tr>
+              <th style="width: 36px;"></th>
+              <th style="width: 40px;">#</th>
+              <th>Code</th>
+              <th>Display Value</th>
+              <th>Abbreviation</th>
+              <th>Active</th>
+              <th style="width: 80px;">Sort Order</th>
+              <th style="width: 100px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+              <td>1</td>
+              <td><span class="code-badge">MR</span></td>
+              <td><strong>Mr.</strong></td>
+              <td>Mr</td>
+              <td><span class="status-active"><i class="fas fa-check-circle"></i> Active</span></td>
+              <td>1</td>
+              <td>
+                <button class="btn-icon" onclick="openAddValueModal()"><i class="fas fa-pen"></i></button>
+                <div class="btn-icon-more" style="display: inline-block;">
+                  <button class="btn-icon" onclick="toggleDropdown(event, 'dd1')"><i class="fas fa-ellipsis-vertical"></i></button>
+                  <div class="dropdown-menu-custom" id="dd1">
+                    <a href="#"><i class="fas fa-pen"></i> Edit</a>
+                    <a href="#"><i class="fas fa-toggle-off"></i> Deactivate</a>
+                    <a href="#"><i class="fas fa-arrow-up"></i> Move Up</a>
+                    <a href="#"><i class="fas fa-arrow-down"></i> Move Down</a>
+                    <a href="#" class="danger"><i class="fas fa-trash"></i> Delete</a>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+              <td>2</td>
+              <td><span class="code-badge">MRS</span></td>
+              <td><strong>Mrs.</strong></td>
+              <td>Mrs</td>
+              <td><span class="status-active"><i class="fas fa-check-circle"></i> Active</span></td>
+              <td>2</td>
+              <td>
+                <button class="btn-icon"><i class="fas fa-pen"></i></button>
+                <div class="btn-icon-more" style="display: inline-block;">
+                  <button class="btn-icon" onclick="toggleDropdown(event, 'dd2')"><i class="fas fa-ellipsis-vertical"></i></button>
+                  <div class="dropdown-menu-custom" id="dd2">
+                    <a href="#"><i class="fas fa-pen"></i> Edit</a>
+                    <a href="#"><i class="fas fa-toggle-off"></i> Deactivate</a>
+                    <a href="#"><i class="fas fa-arrow-up"></i> Move Up</a>
+                    <a href="#"><i class="fas fa-arrow-down"></i> Move Down</a>
+                    <a href="#" class="danger"><i class="fas fa-trash"></i> Delete</a>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+              <td>3</td>
+              <td><span class="code-badge">MS</span></td>
+              <td><strong>Ms.</strong></td>
+              <td>Ms</td>
+              <td><span class="status-active"><i class="fas fa-check-circle"></i> Active</span></td>
+              <td>3</td>
+              <td>
+                <button class="btn-icon"><i class="fas fa-pen"></i></button>
+                <div class="btn-icon-more" style="display: inline-block;">
+                  <button class="btn-icon" onclick="toggleDropdown(event, 'dd3')"><i class="fas fa-ellipsis-vertical"></i></button>
+                  <div class="dropdown-menu-custom" id="dd3">
+                    <a href="#"><i class="fas fa-pen"></i> Edit</a>
+                    <a href="#"><i class="fas fa-toggle-off"></i> Deactivate</a>
+                    <a href="#"><i class="fas fa-arrow-up"></i> Move Up</a>
+                    <a href="#"><i class="fas fa-arrow-down"></i> Move Down</a>
+                    <a href="#" class="danger"><i class="fas fa-trash"></i> Delete</a>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+              <td>4</td>
+              <td><span class="code-badge">DR</span></td>
+              <td><strong>Dr.</strong></td>
+              <td>Dr</td>
+              <td><span class="status-active"><i class="fas fa-check-circle"></i> Active</span></td>
+              <td>4</td>
+              <td>
+                <button class="btn-icon"><i class="fas fa-pen"></i></button>
+                <div class="btn-icon-more" style="display: inline-block;">
+                  <button class="btn-icon" onclick="toggleDropdown(event, 'dd4')"><i class="fas fa-ellipsis-vertical"></i></button>
+                  <div class="dropdown-menu-custom" id="dd4">
+                    <a href="#"><i class="fas fa-pen"></i> Edit</a>
+                    <a href="#"><i class="fas fa-toggle-off"></i> Deactivate</a>
+                    <a href="#"><i class="fas fa-arrow-up"></i> Move Up</a>
+                    <a href="#"><i class="fas fa-arrow-down"></i> Move Down</a>
+                    <a href="#" class="danger"><i class="fas fa-trash"></i> Delete</a>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+              <td>5</td>
+              <td><span class="code-badge">PROF</span></td>
+              <td><strong>Professor</strong></td>
+              <td>Prof</td>
+              <td><span class="status-active"><i class="fas fa-check-circle"></i> Active</span></td>
+              <td>5</td>
+              <td>
+                <button class="btn-icon"><i class="fas fa-pen"></i></button>
+                <div class="btn-icon-more" style="display: inline-block;">
+                  <button class="btn-icon" onclick="toggleDropdown(event, 'dd5')"><i class="fas fa-ellipsis-vertical"></i></button>
+                  <div class="dropdown-menu-custom" id="dd5">
+                    <a href="#"><i class="fas fa-pen"></i> Edit</a>
+                    <a href="#"><i class="fas fa-toggle-off"></i> Deactivate</a>
+                    <a href="#"><i class="fas fa-arrow-up"></i> Move Up</a>
+                    <a href="#"><i class="fas fa-arrow-down"></i> Move Down</a>
+                    <a href="#" class="danger"><i class="fas fa-trash"></i> Delete</a>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+              <td>6</td>
+              <td><span class="code-badge">REV</span></td>
+              <td><strong>Reverend</strong></td>
+              <td>Rev</td>
+              <td><span class="status-active"><i class="fas fa-check-circle"></i> Active</span></td>
+              <td>6</td>
+              <td>
+                <button class="btn-icon"><i class="fas fa-pen"></i></button>
+                <div class="btn-icon-more" style="display: inline-block;">
+                  <button class="btn-icon" onclick="toggleDropdown(event, 'dd6')"><i class="fas fa-ellipsis-vertical"></i></button>
+                  <div class="dropdown-menu-custom" id="dd6">
+                    <a href="#"><i class="fas fa-pen"></i> Edit</a>
+                    <a href="#"><i class="fas fa-toggle-off"></i> Deactivate</a>
+                    <a href="#"><i class="fas fa-arrow-up"></i> Move Up</a>
+                    <a href="#"><i class="fas fa-arrow-down"></i> Move Down</a>
+                    <a href="#" class="danger"><i class="fas fa-trash"></i> Delete</a>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+              <td>7</td>
+              <td><span class="code-badge">SHEIKH</span></td>
+              <td><strong>Sheikh</strong></td>
+              <td>Sh</td>
+              <td><span class="status-active"><i class="fas fa-check-circle"></i> Active</span></td>
+              <td>7</td>
+              <td>
+                <button class="btn-icon"><i class="fas fa-pen"></i></button>
+                <div class="btn-icon-more" style="display: inline-block;">
+                  <button class="btn-icon" onclick="toggleDropdown(event, 'dd7')"><i class="fas fa-ellipsis-vertical"></i></button>
+                  <div class="dropdown-menu-custom" id="dd7">
+                    <a href="#"><i class="fas fa-pen"></i> Edit</a>
+                    <a href="#"><i class="fas fa-toggle-off"></i> Deactivate</a>
+                    <a href="#"><i class="fas fa-arrow-up"></i> Move Up</a>
+                    <a href="#"><i class="fas fa-arrow-down"></i> Move Down</a>
+                    <a href="#" class="danger"><i class="fas fa-trash"></i> Delete</a>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr class="inactive">
+              <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+              <td>8</td>
+              <td><span class="code-badge">HAJI</span></td>
+              <td><strong>Haji</strong></td>
+              <td>Hj</td>
+              <td><span class="status-inactive"><i class="far fa-circle"></i> Inactive</span></td>
+              <td>8</td>
+              <td>
+                <button class="btn-icon"><i class="fas fa-pen"></i></button>
+                <div class="btn-icon-more" style="display: inline-block;">
+                  <button class="btn-icon" onclick="toggleDropdown(event, 'dd8')"><i class="fas fa-ellipsis-vertical"></i></button>
+                  <div class="dropdown-menu-custom" id="dd8">
+                    <a href="#"><i class="fas fa-pen"></i> Edit</a>
+                    <a href="#"><i class="fas fa-toggle-on"></i> Activate</a>
+                    <a href="#"><i class="fas fa-arrow-up"></i> Move Up</a>
+                    <a href="#"><i class="fas fa-arrow-down"></i> Move Down</a>
+                    <a href="#" class="danger"><i class="fas fa-trash"></i> Delete</a>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Value Modal -->
+  <div class="modal-overlay" id="addValueModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3><i class="fas fa-plus-circle me-2" style="color: var(--settings-accent);"></i>Add Value</h3>
+        <button class="modal-close" onclick="closeModal('addValueModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label-sm">Code <span class="required">*</span></label>
+          <input type="text" class="form-control-sm-custom" placeholder="e.g. SHEIKH" style="text-transform: uppercase;" value="SHEIKH">
+        </div>
+        <div class="mb-3">
+          <label class="form-label-sm">Display Value <span class="required">*</span></label>
+          <input type="text" class="form-control-sm-custom" placeholder="e.g. Sheikh" value="Sheikh">
+        </div>
+        <div class="mb-3">
+          <label class="form-label-sm">Abbreviation</label>
+          <input type="text" class="form-control-sm-custom" placeholder="e.g. Sh" value="Sh">
+        </div>
+        <div class="mb-3">
+          <label class="form-label-sm">Description</label>
+          <input type="text" class="form-control-sm-custom" placeholder="Optional description">
+        </div>
+        <div class="mb-3">
+          <label class="form-label-sm">Active</label>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" checked>
+            <label class="form-check-label" style="font-size: 0.8125rem;">Enabled</label>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label-sm">Sort Order</label>
+          <input type="number" class="form-control-sm-custom" value="9" style="width: 100px;">
+        </div>
+
+        <!-- Translations -->
+        <div class="translations-section">
+          <label class="form-label-sm"><i class="fas fa-language me-1"></i> Translations</label>
+          <div class="translation-row">
+            <span class="translation-lang">Hindi</span>
+            <input type="text" class="form-control-sm-custom" value="&#2358;&#2375;&#2326;">
+          </div>
+          <div class="translation-row">
+            <span class="translation-lang">Arabic</span>
+            <input type="text" class="form-control-sm-custom" value="&#1588;&#1610;&#1582;">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('addValueModal')">Cancel</button>
+        <button class="btn-accent" onclick="closeModal('addValueModal')"><i class="fas fa-check me-1"></i> Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Data Type Modal -->
+  <div class="modal-overlay" id="createTypeModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3><i class="fas fa-plus-circle me-2" style="color: var(--settings-accent);"></i>Create Data Type</h3>
+        <button class="modal-close" onclick="closeModal('createTypeModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label-sm">Type Name <span class="required">*</span></label>
+          <input type="text" class="form-control-sm-custom" placeholder="e.g. Volunteer Skill" value="Volunteer Skill">
+        </div>
+        <div class="mb-3">
+          <label class="form-label-sm">Code <span class="required">*</span></label>
+          <input type="text" class="form-control-sm-custom" placeholder="e.g. VOLUNTEER_SKILL" style="text-transform: uppercase;" value="VOLUNTEER_SKILL">
+        </div>
+        <div class="mb-3">
+          <label class="form-label-sm">Description</label>
+          <input type="text" class="form-control-sm-custom" placeholder="Skills that volunteers can be tagged with" value="Skills that volunteers can be tagged with">
+        </div>
+        <div class="mb-3">
+          <label class="form-label-sm">Allow Multiple Selection</label>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox">
+            <label class="form-check-label" style="font-size: 0.8125rem;">Fields using this type allow multi-select</label>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label-sm">Allow User Input</label>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox">
+            <label class="form-check-label" style="font-size: 0.8125rem;">Users can add new values inline</label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('createTypeModal')">Cancel</button>
+        <button class="btn-accent" onclick="closeModal('createTypeModal')"><i class="fas fa-check me-1"></i> Create Type</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Type selection
+    function selectType(el, typeName) {
+      document.querySelectorAll('.type-item').forEach(item => item.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    // Search filter
+    function filterTypes() {
+      const query = document.getElementById('typeSearch').value.toLowerCase();
+      document.querySelectorAll('.type-item').forEach(item => {
+        const name = item.querySelector('.type-name').textContent.toLowerCase();
+        item.style.display = name.includes(query) ? '' : 'none';
+      });
+    }
+
+    // Modals
+    function openAddValueModal() {
+      document.getElementById('addValueModal').classList.add('show');
+    }
+
+    function openCreateTypeModal() {
+      document.getElementById('createTypeModal').classList.add('show');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('show');
+    }
+
+    // Dropdown toggles
+    function toggleDropdown(event, id) {
+      event.stopPropagation();
+      document.querySelectorAll('.dropdown-menu-custom').forEach(d => {
+        if (d.id !== id) d.classList.remove('show');
+      });
+      document.getElementById(id).classList.toggle('show');
+    }
+
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.dropdown-menu-custom').forEach(d => d.classList.remove('show'));
+    });
+  </script>
+
+</body>
+
+</html>

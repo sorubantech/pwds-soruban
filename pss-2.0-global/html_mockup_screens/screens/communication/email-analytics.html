@@ -1,0 +1,1601 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Analytics - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .header-filters {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-select {
+      font-size: 0.8125rem;
+      padding: 0.4rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      color: var(--text-primary);
+      background: white;
+      cursor: pointer;
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(14, 116, 144, 0.15);
+    }
+
+    .date-btn {
+      font-size: 0.75rem;
+      padding: 0.35rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+
+    .date-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .date-btn.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.4rem 0.75rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* View Toggle */
+    .view-toggle {
+      display: flex;
+      gap: 0;
+      margin-bottom: 1.25rem;
+    }
+
+    .view-toggle-btn {
+      font-size: 0.8125rem;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+
+    .view-toggle-btn:first-child {
+      border-radius: 0.5rem 0 0 0.5rem;
+    }
+
+    .view-toggle-btn:last-child {
+      border-radius: 0 0.5rem 0.5rem 0;
+      border-left: none;
+    }
+
+    .view-toggle-btn.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    /* Card Base */
+    .dash-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+    }
+
+    .dash-card-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .dash-card-header h3 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      margin: 0;
+      color: var(--text-primary);
+    }
+
+    .dash-card-body {
+      padding: 1.25rem;
+    }
+
+    /* KPI Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1.25rem;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .stat-icon.blue { background: #eff6ff; color: #3b82f6; }
+    .stat-icon.green { background: #f0fdf4; color: #22c55e; }
+    .stat-icon.teal { background: var(--accent-bg); color: var(--accent); }
+    .stat-icon.orange { background: #fff7ed; color: #f97316; }
+    .stat-icon.red { background: #fef2f2; color: #ef4444; }
+    .stat-icon.purple { background: #faf5ff; color: #a855f7; }
+
+    .stat-info { flex: 1; }
+
+    .stat-value {
+      font-size: 1.625rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .stat-label {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 0.125rem;
+    }
+
+    .stat-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .stat-subtitle .positive { color: var(--success-color); font-weight: 600; }
+    .stat-subtitle .negative-good { color: var(--success-color); font-weight: 600; }
+    .stat-subtitle .neutral { color: var(--text-secondary); font-weight: 600; }
+
+    /* Funnel Visualization */
+    .funnel-container {
+      padding: 1.5rem 0;
+    }
+
+    .funnel-stages {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      position: relative;
+    }
+
+    .funnel-stage {
+      flex: 1;
+      text-align: center;
+      position: relative;
+    }
+
+    .funnel-bar {
+      height: 56px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 1rem;
+      margin: 0 2px;
+      transition: transform 0.2s;
+    }
+
+    .funnel-bar:hover {
+      transform: scaleY(1.06);
+    }
+
+    .funnel-stage-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-top: 0.5rem;
+    }
+
+    .funnel-stage-pct {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.125rem;
+    }
+
+    .funnel-arrow {
+      font-size: 1rem;
+      color: #cbd5e1;
+      flex-shrink: 0;
+      margin: 0 -4px;
+      z-index: 1;
+      margin-top: -1.5rem;
+    }
+
+    /* Campaign Performance Table */
+    .table-responsive { overflow-x: auto; }
+
+    .data-table {
+      width: 100%;
+      font-size: 0.8125rem;
+      border-collapse: collapse;
+    }
+
+    .data-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .data-table th:hover {
+      color: var(--accent);
+    }
+
+    .data-table th i {
+      margin-left: 0.25rem;
+      font-size: 0.5625rem;
+    }
+
+    .data-table td {
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+      color: var(--text-primary);
+      vertical-align: middle;
+    }
+
+    .data-table tr:last-child td { border-bottom: none; }
+
+    .data-table tr:hover td {
+      background: #f8fafc;
+    }
+
+    .campaign-link {
+      color: var(--accent);
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .campaign-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Rate color coding */
+    .rate-cell {
+      padding: 0.2rem 0.5rem;
+      border-radius: 0.375rem;
+      font-weight: 600;
+      font-size: 0.75rem;
+      display: inline-block;
+      min-width: 50px;
+      text-align: center;
+    }
+
+    .rate-green { background: #f0fdf4; color: #16a34a; }
+    .rate-yellow { background: #fefce8; color: #ca8a04; }
+    .rate-red { background: #fef2f2; color: #dc2626; }
+
+    /* Trends Chart Placeholder */
+    .chart-placeholder {
+      width: 100%;
+      height: 260px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chart-y-axis {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 30px;
+      width: 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-size: 0.625rem;
+      color: var(--text-secondary);
+      text-align: right;
+      padding-right: 8px;
+    }
+
+    .chart-area {
+      position: absolute;
+      left: 45px;
+      top: 0;
+      right: 0;
+      bottom: 30px;
+      border-left: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .chart-grid-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: #f1f5f9;
+    }
+
+    .chart-line {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+    }
+
+    .chart-x-axis {
+      position: absolute;
+      left: 45px;
+      right: 0;
+      bottom: 0;
+      height: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.625rem;
+      color: var(--text-secondary);
+    }
+
+    .chart-legend {
+      display: flex;
+      gap: 1.5rem;
+      justify-content: center;
+      margin-top: 0.5rem;
+    }
+
+    .chart-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 3px;
+      border-radius: 2px;
+    }
+
+    /* Best Performing Content */
+    .best-content-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    .best-content-card {
+      background: #f8fafc;
+      border-radius: 0.75rem;
+      padding: 1rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .best-content-label {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .best-content-value {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.4;
+    }
+
+    .best-content-metric {
+      font-size: 0.75rem;
+      color: var(--success-color);
+      font-weight: 600;
+      margin-top: 0.375rem;
+    }
+
+    /* Section gap */
+    .section-gap { margin-bottom: 1.5rem; }
+
+    /* Campaign Detail Mode */
+    .campaign-header-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .campaign-header-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .campaign-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .campaign-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      background: #f0fdf4;
+      color: #16a34a;
+    }
+
+    .campaign-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .campaign-meta-item {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .campaign-meta-item strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    /* Engagement metrics cards */
+    .engage-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .engage-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      padding: 1rem 1.25rem;
+      text-align: center;
+    }
+
+    .engage-card .metric-value {
+      font-size: 1.375rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .engage-card .metric-pct {
+      font-size: 0.875rem;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .engage-card .metric-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .engage-card .metric-sub {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.125rem;
+    }
+
+    /* Delivery breakdown */
+    .delivery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    .delivery-item {
+      text-align: center;
+      padding: 1rem;
+      border-radius: 0.75rem;
+    }
+
+    .delivery-item.delivered {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+    }
+
+    .delivery-item.soft-bounce {
+      background: #fefce8;
+      border: 1px solid #fde68a;
+    }
+
+    .delivery-item.hard-bounce {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+    }
+
+    .delivery-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .delivery-item.delivered .delivery-value { color: #16a34a; }
+    .delivery-item.soft-bounce .delivery-value { color: #ca8a04; }
+    .delivery-item.hard-bounce .delivery-value { color: #dc2626; }
+
+    .delivery-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-top: 0.25rem;
+    }
+
+    .delivery-desc {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    /* Filter pills */
+    .filter-pills {
+      display: flex;
+      gap: 0.375rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-pill {
+      font-size: 0.75rem;
+      padding: 0.3rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 9999px;
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+
+    .filter-pill:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .filter-pill.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    /* Status badges for recipient table */
+    .status-badge {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 9999px;
+      white-space: nowrap;
+    }
+
+    .status-opened-clicked { background: #f0fdf4; color: #16a34a; }
+    .status-opened { background: #eff6ff; color: #3b82f6; }
+    .status-delivered { background: #f8fafc; color: var(--text-secondary); }
+    .status-bounced { background: #fef2f2; color: #dc2626; }
+    .status-unsub { background: #fef2f2; color: #9333ea; }
+
+    /* Heatmap */
+    .heatmap-container {
+      overflow-x: auto;
+    }
+
+    .heatmap-grid {
+      display: grid;
+      grid-template-columns: 60px repeat(24, 1fr);
+      gap: 2px;
+      font-size: 0.5625rem;
+      min-width: 650px;
+    }
+
+    .heatmap-header {
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-align: center;
+      padding: 0.25rem 0;
+    }
+
+    .heatmap-row-label {
+      display: flex;
+      align-items: center;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.625rem;
+    }
+
+    .heatmap-cell {
+      aspect-ratio: 1;
+      border-radius: 3px;
+      min-height: 18px;
+      transition: transform 0.1s;
+      cursor: default;
+    }
+
+    .heatmap-cell:hover {
+      transform: scale(1.15);
+      z-index: 1;
+    }
+
+    .heatmap-cell.level-0 { background: #f1f5f9; }
+    .heatmap-cell.level-1 { background: #ccfbf1; }
+    .heatmap-cell.level-2 { background: #5eead4; }
+    .heatmap-cell.level-3 { background: #14b8a6; }
+    .heatmap-cell.level-4 { background: #0e7490; }
+
+    .heatmap-legend {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+      justify-content: flex-end;
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+    }
+
+    .heatmap-legend-cell {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+    }
+
+    /* Recipient name link */
+    .recipient-link {
+      color: var(--accent);
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .recipient-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Click map table bar */
+    .click-bar-track {
+      height: 8px;
+      background: #f1f5f9;
+      border-radius: 9999px;
+      overflow: hidden;
+      width: 100%;
+      max-width: 120px;
+    }
+
+    .click-bar-fill {
+      height: 100%;
+      border-radius: 9999px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-light));
+    }
+
+    /* Back button */
+    .back-link {
+      font-size: 0.8125rem;
+      color: var(--accent);
+      cursor: pointer;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      margin-bottom: 1rem;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .best-content-grid { grid-template-columns: 1fr; }
+      .engage-grid { grid-template-columns: repeat(2, 1fr); }
+      .delivery-grid { grid-template-columns: 1fr; }
+      .funnel-stages { flex-direction: column; gap: 0.5rem; }
+      .funnel-arrow { transform: rotate(90deg); }
+      .funnel-bar { height: 44px; }
+    }
+
+    @media (max-width: 576px) {
+      body { padding: 1rem; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .engage-grid { grid-template-columns: 1fr; }
+      .header-filters { flex-direction: column; align-items: stretch; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ================= OVERVIEW MODE ================= -->
+  <div id="overviewMode">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <h1><i class="fas fa-chart-bar me-2" style="color: var(--accent);"></i>Email Analytics</h1>
+      </div>
+      <div class="header-filters">
+        <div style="display: flex; gap: 0.25rem;">
+          <button class="date-btn" onclick="setDateRange(this)">7 Days</button>
+          <button class="date-btn active" onclick="setDateRange(this)">30 Days</button>
+          <button class="date-btn" onclick="setDateRange(this)">90 Days</button>
+          <button class="date-btn" onclick="setDateRange(this)">YTD</button>
+          <button class="date-btn" onclick="setDateRange(this)">Custom</button>
+        </div>
+        <select class="filter-select" id="campaignFilter" onchange="handleCampaignFilter(this)">
+          <option value="all">All Campaigns</option>
+          <option value="newsletter4">Monthly Newsletter #4</option>
+          <option value="ramadan">Ramadan Appeal</option>
+          <option value="easter">Easter Campaign</option>
+          <option value="gala">Winter Gala Invite</option>
+          <option value="thankyou">Donation Thank You (Auto)</option>
+          <option value="welcome">Welcome New Donor (Auto)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- KPI Summary Cards -->
+    <div class="stats-grid section-gap">
+      <div class="stat-card">
+        <div class="stat-icon blue">
+          <i class="fas fa-paper-plane"></i>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">Total Emails Sent</div>
+          <div class="stat-value">45,678</div>
+          <div class="stat-subtitle">This period <span class="positive">+15%</span></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">Delivery Rate</div>
+          <div class="stat-value">97.2%</div>
+          <div class="stat-subtitle">44,399 delivered <span class="neutral">Stable</span></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon teal">
+          <i class="fas fa-envelope-open"></i>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">Open Rate</div>
+          <div class="stat-value">34.5%</div>
+          <div class="stat-subtitle">15,318 opens <span class="positive">+2.3%</span></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon purple">
+          <i class="fas fa-mouse-pointer"></i>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">Click Rate</div>
+          <div class="stat-value">5.8%</div>
+          <div class="stat-subtitle">2,575 clicks <span class="positive">+0.4%</span></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon orange">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">Bounce Rate</div>
+          <div class="stat-value">2.8%</div>
+          <div class="stat-subtitle">1,279 bounced <span class="negative-good">-0.5%</span></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon red">
+          <i class="fas fa-user-minus"></i>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">Unsubscribe Rate</div>
+          <div class="stat-value">0.3%</div>
+          <div class="stat-subtitle">137 unsubscribed <span class="neutral">Stable</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Email Funnel Visualization -->
+    <div class="dash-card section-gap">
+      <div class="dash-card-header">
+        <h3><i class="fas fa-filter me-2" style="color: var(--accent);"></i>Email Funnel</h3>
+      </div>
+      <div class="dash-card-body">
+        <div class="funnel-container">
+          <div class="funnel-stages">
+            <div class="funnel-stage">
+              <div class="funnel-bar" style="background: linear-gradient(135deg, #2563eb, #3b82f6); width: 100%;">45,678</div>
+              <div class="funnel-stage-label">Sent</div>
+              <div class="funnel-stage-pct">100%</div>
+            </div>
+            <div class="funnel-arrow"><i class="fas fa-chevron-right"></i></div>
+            <div class="funnel-stage">
+              <div class="funnel-bar" style="background: linear-gradient(135deg, #0891b2, #06b6d4); width: 97%;">44,399</div>
+              <div class="funnel-stage-label">Delivered</div>
+              <div class="funnel-stage-pct">97.2%</div>
+            </div>
+            <div class="funnel-arrow"><i class="fas fa-chevron-right"></i></div>
+            <div class="funnel-stage">
+              <div class="funnel-bar" style="background: linear-gradient(135deg, #0e7490, #14b8a6); width: 80%;">15,318</div>
+              <div class="funnel-stage-label">Opened</div>
+              <div class="funnel-stage-pct">34.5%</div>
+            </div>
+            <div class="funnel-arrow"><i class="fas fa-chevron-right"></i></div>
+            <div class="funnel-stage">
+              <div class="funnel-bar" style="background: linear-gradient(135deg, #059669, #10b981); width: 55%;">2,575</div>
+              <div class="funnel-stage-label">Clicked</div>
+              <div class="funnel-stage-pct">5.8%</div>
+            </div>
+            <div class="funnel-arrow"><i class="fas fa-chevron-right"></i></div>
+            <div class="funnel-stage">
+              <div class="funnel-bar" style="background: linear-gradient(135deg, #16a34a, #22c55e); width: 40%;">342</div>
+              <div class="funnel-stage-label">Converted</div>
+              <div class="funnel-stage-pct">0.7%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Campaign Performance Comparison Table -->
+    <div class="dash-card section-gap">
+      <div class="dash-card-header">
+        <h3><i class="fas fa-table me-2" style="color: var(--accent);"></i>Campaign Performance</h3>
+        <span style="font-size: 0.75rem; color: var(--text-secondary);">Click campaign name for details</span>
+      </div>
+      <div class="dash-card-body" style="padding: 0;">
+        <div class="table-responsive">
+          <table class="data-table" id="campaignTable">
+            <thead>
+              <tr>
+                <th onclick="sortTable(0)">Campaign <i class="fas fa-sort"></i></th>
+                <th onclick="sortTable(1)">Sent <i class="fas fa-sort"></i></th>
+                <th onclick="sortTable(2)">Delivered <i class="fas fa-sort"></i></th>
+                <th onclick="sortTable(3)">Opened <i class="fas fa-sort"></i></th>
+                <th onclick="sortTable(4)">Open Rate <i class="fas fa-sort"></i></th>
+                <th onclick="sortTable(5)">Clicked <i class="fas fa-sort"></i></th>
+                <th onclick="sortTable(6)">Click Rate <i class="fas fa-sort"></i></th>
+                <th onclick="sortTable(7)">Bounced <i class="fas fa-sort"></i></th>
+                <th onclick="sortTable(8)">Unsub <i class="fas fa-sort"></i></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><a class="campaign-link" onclick="showCampaignDetail('newsletter4')">Monthly Newsletter #4</a></td>
+                <td>8,234</td>
+                <td>8,102</td>
+                <td>3,095</td>
+                <td><span class="rate-cell rate-green">38.2%</span></td>
+                <td>494</td>
+                <td><span class="rate-cell rate-green">6.1%</span></td>
+                <td>132</td>
+                <td>12</td>
+              </tr>
+              <tr>
+                <td><a class="campaign-link" onclick="showCampaignDetail('ramadan')">Ramadan Appeal</a></td>
+                <td>3,456</td>
+                <td>3,401</td>
+                <td>1,432</td>
+                <td><span class="rate-cell rate-green">42.1%</span></td>
+                <td>296</td>
+                <td><span class="rate-cell rate-green">8.7%</span></td>
+                <td>55</td>
+                <td>8</td>
+              </tr>
+              <tr>
+                <td><a class="campaign-link" onclick="showCampaignDetail('easter')">Easter Campaign</a></td>
+                <td>2,890</td>
+                <td>2,845</td>
+                <td>1,013</td>
+                <td><span class="rate-cell rate-green">35.6%</span></td>
+                <td>148</td>
+                <td><span class="rate-cell rate-green">5.2%</span></td>
+                <td>45</td>
+                <td>5</td>
+              </tr>
+              <tr>
+                <td><a class="campaign-link" onclick="showCampaignDetail('gala')">Winter Gala Invite</a></td>
+                <td>1,200</td>
+                <td>1,178</td>
+                <td>569</td>
+                <td><span class="rate-cell rate-green">48.3%</span></td>
+                <td>179</td>
+                <td><span class="rate-cell rate-green">15.2%</span></td>
+                <td>22</td>
+                <td>2</td>
+              </tr>
+              <tr>
+                <td><a class="campaign-link" onclick="showCampaignDetail('thankyou')">Donation Thank You (Auto)</a></td>
+                <td>342</td>
+                <td>340</td>
+                <td>230</td>
+                <td><span class="rate-cell rate-green">67.5%</span></td>
+                <td>42</td>
+                <td><span class="rate-cell rate-green">12.3%</span></td>
+                <td>2</td>
+                <td>0</td>
+              </tr>
+              <tr>
+                <td><a class="campaign-link" onclick="showCampaignDetail('welcome')">Welcome New Donor (Auto)</a></td>
+                <td>567</td>
+                <td>561</td>
+                <td>404</td>
+                <td><span class="rate-cell rate-green">72.1%</span></td>
+                <td>126</td>
+                <td><span class="rate-cell rate-green">22.4%</span></td>
+                <td>6</td>
+                <td>1</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trends Chart -->
+    <div class="dash-card section-gap">
+      <div class="dash-card-header">
+        <h3><i class="fas fa-chart-line me-2" style="color: var(--accent);"></i>Open & Click Rate Trends</h3>
+        <span style="font-size: 0.75rem; color: var(--text-secondary);">Last 30 days</span>
+      </div>
+      <div class="dash-card-body">
+        <div class="chart-placeholder">
+          <div class="chart-y-axis">
+            <span>50%</span>
+            <span>40%</span>
+            <span>30%</span>
+            <span>20%</span>
+            <span>10%</span>
+            <span>0%</span>
+          </div>
+          <div class="chart-area">
+            <!-- Grid lines -->
+            <div class="chart-grid-line" style="top: 0%;"></div>
+            <div class="chart-grid-line" style="top: 20%;"></div>
+            <div class="chart-grid-line" style="top: 40%;"></div>
+            <div class="chart-grid-line" style="top: 60%;"></div>
+            <div class="chart-grid-line" style="top: 80%;"></div>
+            <!-- Open Rate line (SVG) -->
+            <svg class="chart-line" viewBox="0 0 800 200" preserveAspectRatio="none">
+              <!-- Open Rate line - teal -->
+              <polyline points="0,140 80,135 160,128 240,120 320,132 400,118 480,126 560,115 640,122 720,110 800,108"
+                fill="none" stroke="#0e7490" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+              <!-- Open Rate area fill -->
+              <polyline points="0,140 80,135 160,128 240,120 320,132 400,118 480,126 560,115 640,122 720,110 800,108 800,200 0,200"
+                fill="url(#tealGrad)" opacity="0.12" />
+              <!-- Click Rate line - purple -->
+              <polyline points="0,186 80,184 160,182 240,178 320,184 400,180 480,178 560,176 640,178 720,174 800,172"
+                fill="none" stroke="#8b5cf6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+              <!-- Click Rate area fill -->
+              <polyline points="0,186 80,184 160,182 240,178 320,184 400,180 480,178 560,176 640,178 720,174 800,172 800,200 0,200"
+                fill="url(#purpleGrad)" opacity="0.12" />
+              <!-- Dots for open rate -->
+              <circle cx="0" cy="140" r="3" fill="#0e7490" />
+              <circle cx="80" cy="135" r="3" fill="#0e7490" />
+              <circle cx="160" cy="128" r="3" fill="#0e7490" />
+              <circle cx="240" cy="120" r="3" fill="#0e7490" />
+              <circle cx="320" cy="132" r="3" fill="#0e7490" />
+              <circle cx="400" cy="118" r="3" fill="#0e7490" />
+              <circle cx="480" cy="126" r="3" fill="#0e7490" />
+              <circle cx="560" cy="115" r="3" fill="#0e7490" />
+              <circle cx="640" cy="122" r="3" fill="#0e7490" />
+              <circle cx="720" cy="110" r="3" fill="#0e7490" />
+              <circle cx="800" cy="108" r="3" fill="#0e7490" />
+              <!-- Dots for click rate -->
+              <circle cx="0" cy="186" r="3" fill="#8b5cf6" />
+              <circle cx="80" cy="184" r="3" fill="#8b5cf6" />
+              <circle cx="160" cy="182" r="3" fill="#8b5cf6" />
+              <circle cx="240" cy="178" r="3" fill="#8b5cf6" />
+              <circle cx="320" cy="184" r="3" fill="#8b5cf6" />
+              <circle cx="400" cy="180" r="3" fill="#8b5cf6" />
+              <circle cx="480" cy="178" r="3" fill="#8b5cf6" />
+              <circle cx="560" cy="176" r="3" fill="#8b5cf6" />
+              <circle cx="640" cy="178" r="3" fill="#8b5cf6" />
+              <circle cx="720" cy="174" r="3" fill="#8b5cf6" />
+              <circle cx="800" cy="172" r="3" fill="#8b5cf6" />
+              <defs>
+                <linearGradient id="tealGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#0e7490" />
+                  <stop offset="100%" stop-color="#0e7490" stop-opacity="0" />
+                </linearGradient>
+                <linearGradient id="purpleGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#8b5cf6" />
+                  <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <div class="chart-x-axis">
+            <span>Mar 13</span>
+            <span>Mar 16</span>
+            <span>Mar 19</span>
+            <span>Mar 22</span>
+            <span>Mar 25</span>
+            <span>Mar 28</span>
+            <span>Mar 31</span>
+            <span>Apr 3</span>
+            <span>Apr 6</span>
+            <span>Apr 9</span>
+            <span>Apr 12</span>
+          </div>
+        </div>
+        <div class="chart-legend">
+          <div class="chart-legend-item">
+            <div class="legend-dot" style="background: #0e7490;"></div>
+            Open Rate
+          </div>
+          <div class="chart-legend-item">
+            <div class="legend-dot" style="background: #8b5cf6;"></div>
+            Click Rate
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Best Performing Content -->
+    <div class="dash-card section-gap">
+      <div class="dash-card-header">
+        <h3><i class="fas fa-trophy me-2" style="color: var(--accent);"></i>Best Performing Content</h3>
+      </div>
+      <div class="dash-card-body">
+        <div class="best-content-grid">
+          <div class="best-content-card">
+            <div class="best-content-label"><i class="fas fa-envelope-open me-1"></i> Best Subject Line</div>
+            <div class="best-content-value">"Your impact this month &mdash; 12 children found homes"</div>
+            <div class="best-content-metric">Open Rate: 52.3%</div>
+          </div>
+          <div class="best-content-card">
+            <div class="best-content-label"><i class="fas fa-clock me-1"></i> Best Send Time</div>
+            <div class="best-content-value">Tuesday 10:00 AM</div>
+            <div class="best-content-metric">38% avg open rate</div>
+          </div>
+          <div class="best-content-card">
+            <div class="best-content-label"><i class="fas fa-star me-1"></i> Best Campaign Type</div>
+            <div class="best-content-value">Automated Emails</div>
+            <div class="best-content-metric">65% avg open rate vs 36% for campaigns</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ================= CAMPAIGN DETAIL MODE ================= -->
+  <div id="detailMode" style="display: none;">
+
+    <!-- Back link -->
+    <div class="back-link" onclick="showOverview()">
+      <i class="fas fa-arrow-left"></i> Back to Overview
+    </div>
+
+    <!-- Campaign Header Card -->
+    <div class="campaign-header-card">
+      <div class="campaign-header-top">
+        <div>
+          <div class="campaign-title" id="detailCampaignName">Monthly Newsletter #4</div>
+          <div class="campaign-meta">
+            <div class="campaign-meta-item"><i class="fas fa-calendar me-1"></i> <strong>Sent:</strong> April 10, 2026 at 10:00 AM</div>
+            <div class="campaign-meta-item"><i class="fas fa-user me-1"></i> <strong>From:</strong> Hope Foundation &lt;info@ngo.org&gt;</div>
+          </div>
+          <div class="campaign-meta" style="margin-top: 0.5rem;">
+            <div class="campaign-meta-item"><i class="fas fa-heading me-1"></i> <strong>Subject:</strong> "Your April Impact Report &mdash; 3 Amazing Stories"</div>
+            <div class="campaign-meta-item"><i class="fas fa-users me-1"></i> <strong>Recipients:</strong> 8,234</div>
+            <div class="campaign-meta-item"><i class="fas fa-palette me-1"></i> <strong>Template:</strong> Monthly Newsletter</div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: flex-start;">
+          <span class="campaign-status"><i class="fas fa-check-circle"></i> Sent</span>
+          <button class="btn-outline-accent" onclick="parent.loadContent('communication/email-campaign-builder')" title="Resend to non-openers">
+            <i class="fas fa-redo me-1"></i> Resend to Non-Openers
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Campaign Funnel -->
+    <div class="dash-card section-gap">
+      <div class="dash-card-header">
+        <h3><i class="fas fa-filter me-2" style="color: var(--accent);"></i>Campaign Funnel</h3>
+      </div>
+      <div class="dash-card-body">
+        <div class="funnel-container">
+          <div class="funnel-stages">
+            <div class="funnel-stage">
+              <div class="funnel-bar" style="background: linear-gradient(135deg, #2563eb, #3b82f6); width: 100%;">8,234</div>
+              <div class="funnel-stage-label">Sent</div>
+              <div class="funnel-stage-pct">100%</div>
+            </div>
+            <div class="funnel-arrow"><i class="fas fa-chevron-right"></i></div>
+            <div class="funnel-stage">
+              <div class="funnel-bar" style="background: linear-gradient(135deg, #0891b2, #06b6d4); width: 97%;">8,102</div>
+              <div class="funnel-stage-label">Delivered</div>
+              <div class="funnel-stage-pct">98.4%</div>
+            </div>
+            <div class="funnel-arrow"><i class="fas fa-chevron-right"></i></div>
+            <div class="funnel-stage">
+              <div class="funnel-bar" style="background: linear-gradient(135deg, #0e7490, #14b8a6); width: 72%;">3,095</div>
+              <div class="funnel-stage-label">Opened</div>
+              <div class="funnel-stage-pct">38.2%</div>
+            </div>
+            <div class="funnel-arrow"><i class="fas fa-chevron-right"></i></div>
+            <div class="funnel-stage">
+              <div class="funnel-bar" style="background: linear-gradient(135deg, #059669, #10b981); width: 45%;">494</div>
+              <div class="funnel-stage-label">Clicked</div>
+              <div class="funnel-stage-pct">6.1%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Engagement Metrics -->
+    <div class="engage-grid section-gap">
+      <div class="engage-card">
+        <div class="metric-value">3,095</div>
+        <div class="metric-pct">38.2%</div>
+        <div class="metric-label">Unique Opens</div>
+      </div>
+      <div class="engage-card">
+        <div class="metric-value">4,521</div>
+        <div class="metric-pct">Total Opens</div>
+        <div class="metric-label">1.46 opens per opener</div>
+      </div>
+      <div class="engage-card">
+        <div class="metric-value">494</div>
+        <div class="metric-pct">6.1%</div>
+        <div class="metric-label">Unique Clicks</div>
+      </div>
+      <div class="engage-card">
+        <div class="metric-value">721</div>
+        <div class="metric-pct">Total Clicks</div>
+        <div class="metric-label">1.46 clicks per clicker</div>
+      </div>
+    </div>
+
+    <!-- Click Map -->
+    <div class="dash-card section-gap">
+      <div class="dash-card-header">
+        <h3><i class="fas fa-link me-2" style="color: var(--accent);"></i>Click Map &mdash; Top Clicked Links</h3>
+      </div>
+      <div class="dash-card-body" style="padding: 0;">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Link</th>
+                <th>Clicks</th>
+                <th>% of Total</th>
+                <th>Distribution</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><i class="fas fa-hand-holding-dollar me-1" style="color: var(--accent);"></i> "Donate Now" button</td>
+                <td>234</td>
+                <td><strong>32.5%</strong></td>
+                <td><div class="click-bar-track"><div class="click-bar-fill" style="width: 100%;"></div></div></td>
+              </tr>
+              <tr>
+                <td><i class="fas fa-book-open me-1" style="color: var(--accent);"></i> "Read Full Story" link</td>
+                <td>156</td>
+                <td>21.6%</td>
+                <td><div class="click-bar-track"><div class="click-bar-fill" style="width: 66.7%;"></div></div></td>
+              </tr>
+              <tr>
+                <td><i class="fas fa-chart-pie me-1" style="color: var(--accent);"></i> "View Impact Report" link</td>
+                <td>89</td>
+                <td>12.3%</td>
+                <td><div class="click-bar-track"><div class="click-bar-fill" style="width: 38%;"></div></div></td>
+              </tr>
+              <tr>
+                <td><i class="fas fa-calendar-check me-1" style="color: var(--accent);"></i> "Register for Event" link</td>
+                <td>67</td>
+                <td>9.3%</td>
+                <td><div class="click-bar-track"><div class="click-bar-fill" style="width: 28.6%;"></div></div></td>
+              </tr>
+              <tr>
+                <td><i class="fas fa-share-nodes me-1" style="color: var(--accent);"></i> Social media icons</td>
+                <td>45</td>
+                <td>6.2%</td>
+                <td><div class="click-bar-track"><div class="click-bar-fill" style="width: 19.2%;"></div></div></td>
+              </tr>
+              <tr>
+                <td><i class="fas fa-user-minus me-1" style="color: #94a3b8;"></i> Unsubscribe</td>
+                <td>12</td>
+                <td>1.7%</td>
+                <td><div class="click-bar-track"><div class="click-bar-fill" style="width: 5.1%; background: #f87171;"></div></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delivery Breakdown -->
+    <div class="dash-card section-gap">
+      <div class="dash-card-header">
+        <h3><i class="fas fa-truck me-2" style="color: var(--accent);"></i>Delivery Breakdown</h3>
+      </div>
+      <div class="dash-card-body">
+        <div class="delivery-grid">
+          <div class="delivery-item delivered">
+            <div class="delivery-value">8,102</div>
+            <div class="delivery-label">Delivered (98.4%)</div>
+            <div class="delivery-desc">Successfully delivered</div>
+          </div>
+          <div class="delivery-item soft-bounce">
+            <div class="delivery-value">87</div>
+            <div class="delivery-label">Soft Bounce (1.1%)</div>
+            <div class="delivery-desc">Temporary: mailbox full, server down</div>
+          </div>
+          <div class="delivery-item hard-bounce">
+            <div class="delivery-value">45</div>
+            <div class="delivery-label">Hard Bounce (0.5%)</div>
+            <div class="delivery-desc">Permanent: invalid address</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recipient Activity Table -->
+    <div class="dash-card section-gap">
+      <div class="dash-card-header">
+        <h3><i class="fas fa-users me-2" style="color: var(--accent);"></i>Recipient Activity</h3>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <button class="btn-outline-accent" style="font-size: 0.75rem; padding: 0.3rem 0.625rem;" onclick="alert('Exporting CSV...')">
+            <i class="fas fa-download me-1"></i> Export CSV
+          </button>
+        </div>
+      </div>
+      <div class="dash-card-body" style="padding: 0.75rem 1.25rem 0;">
+        <div class="filter-pills" style="margin-bottom: 0.75rem;">
+          <button class="filter-pill active" onclick="setRecipientFilter(this)">All</button>
+          <button class="filter-pill" onclick="setRecipientFilter(this)">Opened</button>
+          <button class="filter-pill" onclick="setRecipientFilter(this)">Clicked</button>
+          <button class="filter-pill" onclick="setRecipientFilter(this)">Not Opened</button>
+          <button class="filter-pill" onclick="setRecipientFilter(this)">Bounced</button>
+          <button class="filter-pill" onclick="setRecipientFilter(this)">Unsubscribed</button>
+        </div>
+      </div>
+      <div style="padding: 0;">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Recipient</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Opened</th>
+                <th>Open Time</th>
+                <th>Clicked</th>
+                <th>Links Clicked</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><a class="recipient-link" onclick="parent.loadContent('contacts/contact-detail')">Sarah Johnson</a></td>
+                <td>sarah.j@email.com</td>
+                <td><span class="status-badge status-opened-clicked">Opened + Clicked</span></td>
+                <td>Yes</td>
+                <td>Apr 10, 10:23 AM</td>
+                <td>Yes</td>
+                <td>Donate Now, Read Story</td>
+              </tr>
+              <tr>
+                <td><a class="recipient-link" onclick="parent.loadContent('contacts/contact-detail')">Ahmad Al-Hassan</a></td>
+                <td>ahmad@email.ae</td>
+                <td><span class="status-badge status-opened">Opened</span></td>
+                <td>Yes</td>
+                <td>Apr 10, 11:45 AM</td>
+                <td>No</td>
+                <td>&mdash;</td>
+              </tr>
+              <tr>
+                <td><a class="recipient-link" onclick="parent.loadContent('contacts/contact-detail')">Ravi Krishnan</a></td>
+                <td>ravi.k@email.in</td>
+                <td><span class="status-badge status-opened-clicked">Opened + Clicked</span></td>
+                <td>Yes</td>
+                <td>Apr 10, 2:12 PM</td>
+                <td>Yes</td>
+                <td>View Impact Report</td>
+              </tr>
+              <tr>
+                <td><a class="recipient-link" onclick="parent.loadContent('contacts/contact-detail')">Maria Santos</a></td>
+                <td>maria@email.br</td>
+                <td><span class="status-badge status-delivered">Delivered</span></td>
+                <td>No</td>
+                <td>&mdash;</td>
+                <td>No</td>
+                <td>&mdash;</td>
+              </tr>
+              <tr>
+                <td><a class="recipient-link" onclick="parent.loadContent('contacts/contact-detail')">James Okonkwo</a></td>
+                <td>james@email.ng</td>
+                <td><span class="status-badge status-bounced">Bounced</span></td>
+                <td>&mdash;</td>
+                <td>&mdash;</td>
+                <td>&mdash;</td>
+                <td>Hard bounce: invalid</td>
+              </tr>
+              <tr>
+                <td><a class="recipient-link" onclick="parent.loadContent('contacts/contact-detail')">Emily Chen</a></td>
+                <td>emily.c@email.com</td>
+                <td><span class="status-badge status-unsub">Unsubscribed</span></td>
+                <td>Yes</td>
+                <td>Apr 10, 10:45 AM</td>
+                <td>No</td>
+                <td>Unsubscribe</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Open Time Heatmap -->
+    <div class="dash-card section-gap">
+      <div class="dash-card-header">
+        <h3><i class="fas fa-fire me-2" style="color: var(--accent);"></i>Open Time Heatmap</h3>
+        <span style="font-size: 0.75rem; color: var(--text-secondary);">Peak: Tuesday 10 AM &ndash; 12 PM</span>
+      </div>
+      <div class="dash-card-body">
+        <div class="heatmap-container">
+          <div class="heatmap-grid" id="heatmapGrid">
+            <!-- Header row -->
+            <div class="heatmap-header"></div>
+            <!-- Hours 0-23 rendered by JS -->
+          </div>
+        </div>
+        <div class="heatmap-legend">
+          <span>Less</span>
+          <div class="heatmap-legend-cell level-0"></div>
+          <div class="heatmap-legend-cell level-1"></div>
+          <div class="heatmap-legend-cell level-2"></div>
+          <div class="heatmap-legend-cell level-3"></div>
+          <div class="heatmap-legend-cell level-4"></div>
+          <span>More</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ---- Date Range Toggle ----
+    function setDateRange(btn) {
+      document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    // ---- Campaign Filter Dropdown ----
+    function handleCampaignFilter(select) {
+      if (select.value !== 'all') {
+        showCampaignDetail(select.value);
+      } else {
+        showOverview();
+      }
+    }
+
+    // ---- View Switching ----
+    function showOverview() {
+      document.getElementById('overviewMode').style.display = '';
+      document.getElementById('detailMode').style.display = 'none';
+      document.getElementById('campaignFilter').value = 'all';
+    }
+
+    function showCampaignDetail(campaignId) {
+      document.getElementById('overviewMode').style.display = 'none';
+      document.getElementById('detailMode').style.display = '';
+      document.getElementById('campaignFilter').value = campaignId;
+
+      // Update campaign name in detail header
+      const names = {
+        newsletter4: 'Monthly Newsletter #4',
+        ramadan: 'Ramadan Appeal',
+        easter: 'Easter Campaign',
+        gala: 'Winter Gala Invite',
+        thankyou: 'Donation Thank You (Auto)',
+        welcome: 'Welcome New Donor (Auto)'
+      };
+      document.getElementById('detailCampaignName').textContent = names[campaignId] || campaignId;
+    }
+
+    // ---- Recipient Filter Pills ----
+    function setRecipientFilter(btn) {
+      document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    // ---- Simple Table Sort ----
+    let sortDirection = {};
+    function sortTable(colIdx) {
+      const table = document.getElementById('campaignTable');
+      const tbody = table.querySelector('tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      const dir = sortDirection[colIdx] === 'asc' ? 'desc' : 'asc';
+      sortDirection[colIdx] = dir;
+
+      rows.sort((a, b) => {
+        let aVal = a.cells[colIdx].textContent.replace(/[%,]/g, '').trim();
+        let bVal = b.cells[colIdx].textContent.replace(/[%,]/g, '').trim();
+        const aNum = parseFloat(aVal);
+        const bNum = parseFloat(bVal);
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+          return dir === 'asc' ? aNum - bNum : bNum - aNum;
+        }
+        return dir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+      });
+
+      rows.forEach(r => tbody.appendChild(r));
+    }
+
+    // ---- Heatmap Generation ----
+    (function buildHeatmap() {
+      const grid = document.getElementById('heatmapGrid');
+      const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const hours = Array.from({ length: 24 }, (_, i) => i);
+
+      // Seed data: higher activity Tue/Wed 9-12 AM
+      const heatData = {};
+      days.forEach((d, di) => {
+        heatData[d] = {};
+        hours.forEach(h => {
+          let base = 0;
+          // Weekday business hours
+          if (di < 5 && h >= 8 && h <= 17) base = 1;
+          // Peak morning
+          if (di >= 1 && di <= 2 && h >= 9 && h <= 12) base = 3;
+          if (di === 1 && (h === 10 || h === 11)) base = 4;
+          // Some afternoon
+          if (di < 5 && h >= 14 && h <= 16) base = Math.max(base, 1);
+          // Evening slight
+          if (h >= 19 && h <= 21) base = Math.max(base, 1);
+          // Random variation
+          if (base > 0 && Math.random() > 0.7) base = Math.max(0, base - 1);
+          if (base < 4 && Math.random() > 0.85) base = Math.min(4, base + 1);
+          heatData[d][h] = base;
+        });
+      });
+
+      // Build header row (hours)
+      // Already has empty corner cell from HTML
+      hours.forEach(h => {
+        const cell = document.createElement('div');
+        cell.className = 'heatmap-header';
+        cell.textContent = h;
+        grid.appendChild(cell);
+      });
+
+      // Build day rows
+      days.forEach(d => {
+        const label = document.createElement('div');
+        label.className = 'heatmap-row-label';
+        label.textContent = d;
+        grid.appendChild(label);
+
+        hours.forEach(h => {
+          const cell = document.createElement('div');
+          cell.className = 'heatmap-cell level-' + heatData[d][h];
+          cell.title = d + ' ' + h + ':00 — Level ' + heatData[d][h];
+          grid.appendChild(cell);
+        });
+      });
+    })();
+
+    // ---- Cross-screen Navigation ----
+    function navigateTo(screen) {
+      if (parent && parent.loadContent) {
+        parent.loadContent(screen);
+      }
+    }
+  </script>
+
+</body>
+
+</html>

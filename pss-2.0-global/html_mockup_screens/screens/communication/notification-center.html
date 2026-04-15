@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notification Center - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+      --unread-bg: #f0f9ff;
+      --priority-high: #f59e0b;
+      --priority-urgent: #ef4444;
+      --cat-donation: #166534;
+      --cat-donation-bg: #dcfce7;
+      --cat-contact: #1e40af;
+      --cat-contact-bg: #dbeafe;
+      --cat-campaign: #7c3aed;
+      --cat-campaign-bg: #f3e8ff;
+      --cat-event: #ea580c;
+      --cat-event-bg: #ffedd5;
+      --cat-system: #475569;
+      --cat-system-bg: #f1f5f9;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+    .page-header .subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 0; }
+
+    .unread-badge {
+      display: inline-flex; align-items: center; gap: 0.375rem;
+      background: #fef2f2; color: var(--danger-color); font-size: 0.75rem;
+      font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 9999px;
+      margin-left: 0.5rem;
+    }
+
+    .header-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+
+    .btn-primary-accent {
+      background: var(--accent); border-color: var(--accent); color: white;
+      font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem;
+      border-radius: 0.5rem; border: 1px solid var(--accent); cursor: pointer; transition: all 0.15s;
+    }
+    .btn-primary-accent:hover { background: #0c6577; border-color: #0c6577; color: white; }
+
+    .btn-outline-accent {
+      background: white; border: 1px solid var(--border-color); color: var(--text-primary);
+      font-size: 0.8125rem; font-weight: 500; padding: 0.5rem 1rem;
+      border-radius: 0.5rem; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-outline-accent:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Filter Chips */
+    .filter-bar {
+      display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+    .filter-chip {
+      padding: 0.375rem 0.875rem; border-radius: 9999px; font-size: 0.8125rem;
+      font-weight: 500; border: 1px solid var(--border-color); background: white;
+      color: var(--text-secondary); cursor: pointer; transition: all 0.15s;
+    }
+    .filter-chip:hover { border-color: var(--accent); color: var(--accent); }
+    .filter-chip.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .filter-divider { width: 1px; height: 24px; background: var(--border-color); margin: 0 0.25rem; }
+
+    .filter-select {
+      font-size: 0.8125rem; border-radius: 9999px; border: 1px solid var(--border-color);
+      padding: 0.375rem 0.75rem; background: white; color: var(--text-secondary); cursor: pointer;
+    }
+    .filter-select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(14,116,144,0.1); }
+
+    /* Date Section */
+    .date-section {
+      font-size: 0.75rem; font-weight: 700; color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: 0.05em; padding: 0.75rem 0 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .date-section:first-of-type { margin-top: 0; }
+
+    /* Notification Card */
+    .notif-card {
+      background: white; border-radius: var(--card-radius); padding: 1rem 1.25rem;
+      box-shadow: var(--card-shadow); margin-bottom: 0.5rem; display: flex;
+      align-items: flex-start; gap: 0.875rem; position: relative;
+      border-left: 3px solid transparent; transition: all 0.15s; cursor: pointer;
+    }
+    .notif-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .notif-card.unread { background: var(--unread-bg); border-left-color: var(--accent); }
+    .notif-card.priority-high { border-left-color: var(--priority-high); }
+    .notif-card.priority-urgent { border-left-color: var(--priority-urgent); }
+    .notif-card.priority-urgent.unread { animation: urgentPulse 2s ease-in-out infinite; }
+
+    @keyframes urgentPulse {
+      0%, 100% { box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+      50% { box-shadow: 0 2px 12px rgba(239,68,68,0.15); }
+    }
+
+    .notif-unread-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+      position: absolute; left: -1px; top: 50%; transform: translateY(-50%);
+      display: none;
+    }
+    .notif-card.unread .notif-unread-dot { display: block; }
+
+    .notif-icon {
+      width: 42px; height: 42px; border-radius: 50%; display: flex;
+      align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0;
+    }
+    .notif-icon.donation { background: var(--cat-donation-bg); color: var(--cat-donation); }
+    .notif-icon.contact { background: var(--cat-contact-bg); color: var(--cat-contact); }
+    .notif-icon.campaign { background: var(--cat-campaign-bg); color: var(--cat-campaign); }
+    .notif-icon.event { background: var(--cat-event-bg); color: var(--cat-event); }
+    .notif-icon.system { background: var(--cat-system-bg); color: var(--cat-system); }
+
+    .notif-content { flex: 1; min-width: 0; }
+    .notif-title {
+      font-size: 0.875rem; font-weight: 600; color: var(--text-primary);
+      margin-bottom: 0.25rem; line-height: 1.3;
+    }
+    .notif-title:hover { color: var(--accent); }
+    .notif-body {
+      font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.4;
+      margin-bottom: 0.5rem; display: -webkit-box; -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .notif-action-btn {
+      font-size: 0.75rem; font-weight: 600; color: var(--accent); background: var(--accent-bg);
+      border: none; padding: 0.25rem 0.625rem; border-radius: 0.375rem;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .notif-action-btn:hover { background: var(--accent); color: white; }
+
+    .notif-meta {
+      display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;
+      flex-shrink: 0; min-width: 100px;
+    }
+    .notif-time { font-size: 0.6875rem; color: #94a3b8; white-space: nowrap; }
+
+    .notif-star {
+      background: none; border: none; color: #cbd5e1; font-size: 0.875rem;
+      cursor: pointer; transition: all 0.15s; padding: 0;
+    }
+    .notif-star:hover, .notif-star.starred { color: var(--warning-color); }
+
+    .notif-menu-btn {
+      background: none; border: none; color: #94a3b8; font-size: 0.875rem;
+      cursor: pointer; padding: 0.125rem 0.25rem; border-radius: 0.25rem;
+      transition: all 0.15s;
+    }
+    .notif-menu-btn:hover { color: var(--text-primary); background: #f1f5f9; }
+
+    .notif-actions-row { display: flex; align-items: center; gap: 0.5rem; }
+
+    /* Dropdown Menu */
+    .notif-dropdown {
+      position: absolute; right: 1rem; top: 2.5rem; background: white;
+      border: 1px solid var(--border-color); border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 100; min-width: 180px;
+      display: none;
+    }
+    .notif-dropdown.show { display: block; }
+    .notif-dropdown-item {
+      padding: 0.5rem 0.875rem; font-size: 0.8125rem; color: var(--text-primary);
+      cursor: pointer; display: flex; align-items: center; gap: 0.5rem;
+      transition: background 0.1s;
+    }
+    .notif-dropdown-item:hover { background: #f8fafc; }
+    .notif-dropdown-item:first-child { border-radius: 0.5rem 0.5rem 0 0; }
+    .notif-dropdown-item:last-child { border-radius: 0 0 0.5rem 0.5rem; }
+    .notif-dropdown-item i { width: 16px; text-align: center; color: var(--text-secondary); font-size: 0.75rem; }
+    .notif-dropdown-item.danger { color: var(--danger-color); }
+    .notif-dropdown-item.danger i { color: var(--danger-color); }
+
+    /* Load More */
+    .load-more {
+      text-align: center; padding: 1.5rem;
+    }
+    .load-more-btn {
+      background: white; border: 1px solid var(--border-color); color: var(--text-secondary);
+      font-size: 0.8125rem; font-weight: 600; padding: 0.625rem 1.5rem;
+      border-radius: 0.5rem; cursor: pointer; transition: all 0.15s;
+    }
+    .load-more-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center; padding: 4rem 2rem; color: var(--text-secondary);
+      display: none;
+    }
+    .empty-state i { font-size: 3rem; color: #cbd5e1; margin-bottom: 1rem; }
+    .empty-state h3 { font-size: 1.125rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; }
+    .empty-state p { font-size: 0.875rem; }
+
+    @media (max-width: 768px) {
+      .notif-meta { min-width: auto; flex-direction: row; align-items: center; }
+      .notif-card { flex-wrap: wrap; }
+      .filter-bar { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 0.25rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1>
+        Notifications
+        <span class="unread-badge" id="unreadBadge"><i class="fas fa-circle" style="font-size: 0.375rem;"></i> 4 unread</span>
+      </h1>
+      <p class="subtitle">Your in-app alerts and activity feed</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline-accent" onclick="markAllRead()">
+        <i class="fas fa-check-double me-1"></i> Mark All as Read
+      </button>
+      <button class="btn-outline-accent" onclick="parent.loadContent('communication/notification-templates')">
+        <i class="fas fa-gear me-1"></i> Notification Settings
+      </button>
+    </div>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <span class="filter-chip active" onclick="setFilter(this, 'all')">All</span>
+    <span class="filter-chip" onclick="setFilter(this, 'unread')">Unread</span>
+    <span class="filter-chip" onclick="setFilter(this, 'read')">Read</span>
+    <span class="filter-chip" onclick="setFilter(this, 'starred')">Starred</span>
+    <div class="filter-divider"></div>
+    <select class="filter-select" id="categoryFilter" onchange="applyFilters()">
+      <option value="">All Categories</option>
+      <option value="Donation">Donation</option>
+      <option value="Contact">Contact</option>
+      <option value="Campaign">Campaign</option>
+      <option value="Event">Event</option>
+      <option value="System">System</option>
+    </select>
+    <select class="filter-select" id="priorityFilter" onchange="applyFilters()">
+      <option value="">All Priorities</option>
+      <option value="normal">Normal</option>
+      <option value="high">High</option>
+      <option value="urgent">Urgent</option>
+    </select>
+  </div>
+
+  <!-- Notification List -->
+  <div id="notificationList"></div>
+
+  <!-- Empty State -->
+  <div class="empty-state" id="emptyState">
+    <i class="fas fa-bell-slash"></i>
+    <h3>You're all caught up!</h3>
+    <p>No notifications match your filters. You'll be notified when important events happen.</p>
+  </div>
+
+  <!-- Load More -->
+  <div class="load-more" id="loadMore">
+    <button class="load-more-btn" onclick="loadMoreNotifications()">
+      <i class="fas fa-arrow-down me-1"></i> Load More Notifications
+    </button>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Notification data
+    const notifications = [
+      // Today
+      { id: 1, group: 'Today', time: '10 min ago', icon: 'fa-hand-holding-dollar', category: 'Donation', title: 'New donation: $500 from Sarah Johnson', body: 'Donated $500 USD to Children\'s Education via Online (Stripe).', priority: 'normal', status: 'unread', starred: false, action: 'View Donation', nav: 'fundraising/donation-detail' },
+      { id: 2, group: 'Today', time: '25 min ago', icon: 'fa-rotate-left', category: 'Donation', title: 'Recurring payment failed: David Miller', body: 'Monthly $50 USD — Card expired. Retry scheduled for Apr 13.', priority: 'high', status: 'unread', starred: false, action: 'View Schedule', nav: 'fundraising/recurring-donations' },
+      { id: 3, group: 'Today', time: '1 hour ago', icon: 'fa-user-plus', category: 'Contact', title: 'New contact created: Amina Patel', body: 'Added by Maria (Staff) via import. Type: Donor.', priority: 'normal', status: 'unread', starred: false, action: 'View Contact', nav: 'contacts/contact-detail' },
+      { id: 4, group: 'Today', time: '2 hours ago', icon: 'fa-check-circle', category: 'System', title: 'Approval pending: Refund request #RF-0034', body: 'Refund of $75 for Emily Chen requested by John Smith.', priority: 'urgent', status: 'unread', starred: false, action: 'Review', nav: 'administration/audit-trail' },
+      { id: 5, group: 'Today', time: '3 hours ago', icon: 'fa-money-check', category: 'Donation', title: 'Cheque cleared: Green Earth Foundation', body: 'Cheque #4521 for $5,000 USD cleared successfully.', priority: 'normal', status: 'read', starred: false, action: 'View Donation', nav: 'fundraising/donation-detail' },
+      // Yesterday
+      { id: 6, group: 'Yesterday', time: 'Yesterday 4:30 PM', icon: 'fa-file-import', category: 'System', title: 'Import completed: Contact batch upload', body: '234 contacts imported, 3 duplicates found, 1 error.', priority: 'normal', status: 'read', starred: false, action: 'View Import', nav: 'contacts/contact-import' },
+      { id: 7, group: 'Yesterday', time: 'Yesterday 2:15 PM', icon: 'fa-bullseye', category: 'Campaign', title: 'Campaign goal reached: Ramadan Appeal', body: 'Target $50,000 reached! Total raised: $52,340 from 456 donors.', priority: 'normal', status: 'read', starred: true, action: 'View Campaign', nav: 'communication/email-analytics' },
+      { id: 8, group: 'Yesterday', time: 'Yesterday 11:00 AM', icon: 'fa-hand-holding-dollar', category: 'Donation', title: 'Large donation alert: $5,000 from Green Earth Foundation', body: 'Cheque donation to Medical Aid. Pending clearance.', priority: 'high', status: 'read', starred: false, action: 'View Donation', nav: 'fundraising/donation-detail' },
+      { id: 9, group: 'Yesterday', time: 'Yesterday 9:00 AM', icon: 'fa-calendar-days', category: 'Event', title: 'Event registration: Spring Gala 2026', body: '3 new registrations. Total: 89/150 capacity.', priority: 'normal', status: 'read', starred: false, action: 'View Event', nav: 'organization/event-dashboard' },
+      // Earlier This Week
+      { id: 10, group: 'Earlier This Week', time: 'Apr 9', icon: 'fa-clone', category: 'Contact', title: 'Duplicate contact detected', body: '"Ravi Krishnan" may be a duplicate of "R. Krishnan" (87% match).', priority: 'normal', status: 'read', starred: false, action: 'Review Duplicates', nav: 'contacts/duplicate-merge' },
+      { id: 11, group: 'Earlier This Week', time: 'Apr 8', icon: 'fa-exclamation-triangle', category: 'Donation', title: 'Pledge payment overdue: Carlos Mendez', body: 'Monthly pledge of $100 — 15 days overdue. Total outstanding: $200.', priority: 'high', status: 'read', starred: false, action: 'View Pledge', nav: 'fundraising/pledge-management' },
+      { id: 12, group: 'Earlier This Week', time: 'Apr 7', icon: 'fa-envelope', category: 'Campaign', title: 'Email campaign sent: Monthly Newsletter #4', body: 'Delivered to 8,102 of 8,234 recipients. Open rate: 38.2%.', priority: 'normal', status: 'read', starred: false, action: 'View Report', nav: 'communication/email-analytics' },
+    ];
+
+    let activeStatusFilter = 'all';
+    let openDropdownId = null;
+
+    function getCategoryClass(cat) {
+      return cat.toLowerCase();
+    }
+
+    function renderNotifications(data) {
+      const container = document.getElementById('notificationList');
+      const empty = document.getElementById('emptyState');
+      const loadMoreEl = document.getElementById('loadMore');
+
+      if (data.length === 0) {
+        container.innerHTML = '';
+        empty.style.display = 'block';
+        loadMoreEl.style.display = 'none';
+        return;
+      }
+
+      empty.style.display = 'none';
+      loadMoreEl.style.display = 'block';
+
+      let html = '';
+      let currentGroup = '';
+
+      data.forEach(n => {
+        if (n.group !== currentGroup) {
+          currentGroup = n.group;
+          html += `<div class="date-section">${currentGroup}</div>`;
+        }
+
+        const priorityClass = n.priority !== 'normal' ? ` priority-${n.priority}` : '';
+        const unreadClass = n.status === 'unread' ? ' unread' : '';
+
+        html += `
+          <div class="notif-card${unreadClass}${priorityClass}" id="notif-${n.id}" onclick="handleCardClick(event, ${n.id})">
+            <div class="notif-unread-dot"></div>
+            <div class="notif-icon ${getCategoryClass(n.category)}">
+              <i class="fas ${n.icon}"></i>
+            </div>
+            <div class="notif-content">
+              <div class="notif-title">${n.title}</div>
+              <div class="notif-body">${n.body}</div>
+              <button class="notif-action-btn" onclick="navigateTo('${n.nav}', event)">${n.action}</button>
+            </div>
+            <div class="notif-meta">
+              <span class="notif-time">${n.time}</span>
+              <div class="notif-actions-row">
+                <button class="notif-star ${n.starred ? 'starred' : ''}" onclick="toggleStar(${n.id}, event)" title="Star">
+                  <i class="fa${n.starred ? 's' : 'r'} fa-star"></i>
+                </button>
+                <button class="notif-menu-btn" onclick="toggleDropdown(${n.id}, event)" title="More">
+                  <i class="fas fa-ellipsis-vertical"></i>
+                </button>
+              </div>
+            </div>
+            <div class="notif-dropdown" id="dropdown-${n.id}">
+              <div class="notif-dropdown-item" onclick="toggleReadStatus(${n.id}, event)">
+                <i class="fas ${n.status === 'unread' ? 'fa-envelope-open' : 'fa-envelope'}"></i>
+                <span>Mark as ${n.status === 'unread' ? 'Read' : 'Unread'}</span>
+              </div>
+              <div class="notif-dropdown-item" onclick="toggleStar(${n.id}, event)">
+                <i class="fas fa-star"></i>
+                <span>${n.starred ? 'Unstar' : 'Star'}</span>
+              </div>
+              <div class="notif-dropdown-item" onclick="muteType(${n.id}, event)">
+                <i class="fas fa-bell-slash"></i>
+                <span>Mute this type</span>
+              </div>
+              <div class="notif-dropdown-item danger" onclick="deleteNotification(${n.id}, event)">
+                <i class="fas fa-trash"></i>
+                <span>Delete</span>
+              </div>
+            </div>
+          </div>`;
+      });
+
+      container.innerHTML = html;
+      updateUnreadCount();
+    }
+
+    function applyFilters() {
+      const catFilter = document.getElementById('categoryFilter').value;
+      const prioFilter = document.getElementById('priorityFilter').value;
+
+      let filtered = notifications.filter(n => {
+        if (activeStatusFilter === 'unread' && n.status !== 'unread') return false;
+        if (activeStatusFilter === 'read' && n.status !== 'read') return false;
+        if (activeStatusFilter === 'starred' && !n.starred) return false;
+        if (catFilter && n.category !== catFilter) return false;
+        if (prioFilter && n.priority !== prioFilter) return false;
+        return true;
+      });
+
+      renderNotifications(filtered);
+    }
+
+    function setFilter(chip, filter) {
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      activeStatusFilter = filter;
+      applyFilters();
+    }
+
+    function handleCardClick(event, id) {
+      if (event.target.closest('.notif-action-btn') || event.target.closest('.notif-star') ||
+          event.target.closest('.notif-menu-btn') || event.target.closest('.notif-dropdown')) return;
+      const n = notifications.find(x => x.id === id);
+      if (n && n.status === 'unread') {
+        n.status = 'read';
+        applyFilters();
+      }
+    }
+
+    function navigateTo(screen, event) {
+      event.stopPropagation();
+      try { parent.loadContent(screen); } catch (e) { console.log('Navigate to:', screen); }
+    }
+
+    function toggleStar(id, event) {
+      event.stopPropagation();
+      closeAllDropdowns();
+      const n = notifications.find(x => x.id === id);
+      if (n) { n.starred = !n.starred; applyFilters(); }
+    }
+
+    function toggleReadStatus(id, event) {
+      event.stopPropagation();
+      closeAllDropdowns();
+      const n = notifications.find(x => x.id === id);
+      if (n) { n.status = n.status === 'unread' ? 'read' : 'unread'; applyFilters(); }
+    }
+
+    function deleteNotification(id, event) {
+      event.stopPropagation();
+      closeAllDropdowns();
+      const idx = notifications.findIndex(x => x.id === id);
+      if (idx !== -1) { notifications.splice(idx, 1); applyFilters(); }
+    }
+
+    function muteType(id, event) {
+      event.stopPropagation();
+      closeAllDropdowns();
+      alert('Notification type muted. You can unmute from Notification Settings.');
+    }
+
+    function toggleDropdown(id, event) {
+      event.stopPropagation();
+      const dd = document.getElementById('dropdown-' + id);
+      const isOpen = dd.classList.contains('show');
+      closeAllDropdowns();
+      if (!isOpen) { dd.classList.add('show'); openDropdownId = id; }
+    }
+
+    function closeAllDropdowns() {
+      document.querySelectorAll('.notif-dropdown').forEach(d => d.classList.remove('show'));
+      openDropdownId = null;
+    }
+
+    function markAllRead() {
+      notifications.forEach(n => n.status = 'read');
+      applyFilters();
+    }
+
+    function updateUnreadCount() {
+      const count = notifications.filter(n => n.status === 'unread').length;
+      const badge = document.getElementById('unreadBadge');
+      if (count > 0) {
+        badge.innerHTML = `<i class="fas fa-circle" style="font-size: 0.375rem;"></i> ${count} unread`;
+        badge.style.display = 'inline-flex';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    function loadMoreNotifications() {
+      alert('Loading more notifications...');
+    }
+
+    // Close dropdowns on outside click
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.notif-dropdown') && !e.target.closest('.notif-menu-btn')) {
+        closeAllDropdowns();
+      }
+    });
+
+    // Initial render
+    renderNotifications(notifications);
+  </script>
+</body>
+
+</html>

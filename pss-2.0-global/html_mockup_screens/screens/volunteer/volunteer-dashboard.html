@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Volunteer Dashboard - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+      --volunteer-accent: #059669;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+    .page-header .subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 0; }
+    .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+
+    .btn-outline-accent { background: white; border: 1px solid var(--accent); color: var(--accent); font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.15s; }
+    .btn-outline-accent:hover { background: var(--accent); color: white; }
+
+    .period-selector select {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      background: white;
+      outline: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .period-selector select:focus { border-color: var(--accent); }
+
+    /* KPI Stats Grid (2 rows of 3) */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .stat-card { background: white; border-radius: var(--card-radius); padding: 1.25rem; box-shadow: var(--card-shadow); border: 1px solid var(--border-color); display: flex; align-items: flex-start; gap: 1rem; transition: transform 0.15s, box-shadow 0.15s; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }
+    .stat-icon { width: 48px; height: 48px; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; }
+    .stat-icon.emerald { background: #ecfdf5; color: var(--volunteer-accent); }
+    .stat-icon.teal { background: var(--accent-bg); color: var(--accent); }
+    .stat-icon.blue { background: #eff6ff; color: #3b82f6; }
+    .stat-icon.purple { background: #faf5ff; color: #a855f7; }
+    .stat-icon.orange { background: #fff7ed; color: #f97316; }
+    .stat-icon.gold { background: #fefce8; color: #eab308; }
+    .stat-info { flex: 1; }
+    .stat-value { font-size: 1.625rem; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+    .stat-label { font-size: 0.8125rem; color: var(--text-secondary); font-weight: 500; margin-bottom: 0.125rem; }
+    .stat-subtitle { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; }
+    .stat-subtitle .positive { color: var(--success-color); font-weight: 600; }
+
+    /* Dashboard Card */
+    .dash-card { background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); margin-bottom: 1.25rem; }
+    .dash-card-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
+    .dash-card-header h3 { font-size: 0.9375rem; font-weight: 700; margin: 0; }
+    .dash-card-body { padding: 1.25rem; }
+
+    /* Chart Placeholder */
+    .chart-placeholder {
+      background: #f8fafc;
+      border: 1px dashed var(--border-color);
+      border-radius: 0.5rem;
+      height: 260px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+    }
+    .chart-placeholder i { font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5; }
+    .chart-placeholder span { font-size: 0.8125rem; }
+
+    /* Bar chart mock */
+    .bar-chart-mock { display: flex; align-items: flex-end; gap: 12px; height: 200px; padding: 0 1rem; }
+    .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .bar-group { display: flex; gap: 3px; align-items: flex-end; width: 100%; justify-content: center; }
+    .bar { border-radius: 3px 3px 0 0; transition: height 0.4s; min-width: 16px; }
+    .bar.hours { background: linear-gradient(180deg, var(--volunteer-accent), #34d399); }
+    .bar.count { background: linear-gradient(180deg, var(--accent), var(--accent-light)); width: 3px; min-width: 3px; }
+    .bar-label { font-size: 0.625rem; color: var(--text-secondary); font-weight: 500; }
+    .bar-val { font-size: 0.5625rem; color: var(--text-primary); font-weight: 600; }
+    .chart-legend-row { display: flex; gap: 1.25rem; justify-content: center; margin-top: 0.75rem; }
+    .chart-legend-item { display: flex; align-items: center; gap: 0.375rem; font-size: 0.75rem; color: var(--text-secondary); }
+    .chart-legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+    /* Horizontal Bar Chart */
+    .h-bar-chart { display: flex; flex-direction: column; gap: 0.75rem; }
+    .h-bar-item { display: flex; align-items: center; gap: 0.75rem; }
+    .h-bar-label { width: 110px; font-size: 0.8125rem; font-weight: 500; color: var(--text-primary); text-align: right; flex-shrink: 0; }
+    .h-bar-track { flex: 1; height: 24px; background: #f1f5f9; border-radius: 0.25rem; overflow: hidden; }
+    .h-bar-fill { height: 100%; border-radius: 0.25rem; background: linear-gradient(90deg, var(--volunteer-accent), #34d399); display: flex; align-items: center; padding-left: 0.5rem; font-size: 0.6875rem; font-weight: 600; color: white; white-space: nowrap; transition: width 0.5s; }
+    .h-bar-value { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); width: 40px; flex-shrink: 0; }
+
+    /* Leaderboard */
+    .leaderboard-table { width: 100%; font-size: 0.8125rem; }
+    .leaderboard-table th { background: #f8fafc; font-weight: 600; color: var(--text-secondary); font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color); white-space: nowrap; }
+    .leaderboard-table td { padding: 0.75rem 1rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .leaderboard-table tr:last-child td { border-bottom: none; }
+    .leaderboard-table tr:hover { background: #f8fafc; }
+
+    .rank-badge { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 700; }
+    .rank-1 { background: #fef3c7; }
+    .rank-2 { background: #f1f5f9; }
+    .rank-3 { background: #fed7aa; }
+    .rank-other { background: #f8fafc; color: var(--text-secondary); font-size: 0.75rem; }
+
+    .badge-tag { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1875rem 0.5rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; }
+    .badge-tag.champion { background: #fef3c7; color: #92400e; }
+    .badge-tag.star { background: #eff6ff; color: #1e40af; }
+    .badge-tag.veteran { background: #ecfdf5; color: #065f46; }
+
+    /* Shift Table */
+    .shift-table { width: 100%; font-size: 0.8125rem; }
+    .shift-table th { background: #f8fafc; font-weight: 600; color: var(--text-secondary); font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.625rem 1rem; border-bottom: 1px solid var(--border-color); white-space: nowrap; }
+    .shift-table td { padding: 0.625rem 1rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .shift-table tr:last-child td { border-bottom: none; }
+    .shift-table tr:hover { background: #f8fafc; }
+
+    .gap-badge { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1875rem 0.5rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; }
+    .gap-badge.warning { background: #fef3c7; color: #92400e; }
+    .gap-badge.full { background: #dcfce7; color: #166534; }
+
+    /* Activity Feed */
+    .activity-feed { padding: 0; }
+    .activity-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem 1.25rem; border-bottom: 1px solid #f1f5f9; }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; flex-shrink: 0; }
+    .activity-icon.hours { background: #ecfdf5; color: var(--volunteer-accent); }
+    .activity-icon.registration { background: #eff6ff; color: #3b82f6; }
+    .activity-icon.milestone { background: #fef3c7; color: #eab308; }
+    .activity-icon.shift { background: var(--accent-bg); color: var(--accent); }
+    .activity-icon.approve { background: #dcfce7; color: #16a34a; }
+    .activity-text { flex: 1; font-size: 0.8125rem; line-height: 1.5; }
+    .activity-text strong { font-weight: 600; }
+    .activity-time { font-size: 0.6875rem; color: var(--text-secondary); white-space: nowrap; flex-shrink: 0; }
+
+    /* Grid layout */
+    .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem; }
+    .bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .charts-row, .bottom-row { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 992px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 576px) {
+      body { padding: 1rem; }
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-chart-line me-2" style="color: var(--volunteer-accent);"></i>Volunteer Dashboard</h1>
+      <p class="subtitle">Volunteer program overview and performance metrics</p>
+    </div>
+    <div class="header-actions">
+      <div class="period-selector">
+        <select>
+          <option>This Month</option>
+          <option>Last Month</option>
+          <option>This Quarter</option>
+          <option>Custom Range</option>
+        </select>
+      </div>
+      <select style="padding:0.5rem 0.75rem;border:1px solid var(--border-color);border-radius:0.5rem;font-size:0.8125rem;background:white;font-weight:600;">
+        <option>All Branches</option>
+        <option>Dubai</option>
+        <option>Mumbai</option>
+        <option>Delhi</option>
+        <option>Dhaka</option>
+        <option>Nairobi</option>
+      </select>
+      <button class="btn-outline-accent"><i class="fas fa-file-export me-1"></i> Export Report</button>
+    </div>
+  </div>
+
+  <!-- KPI Hero Cards (2 rows of 3) -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon emerald"><i class="fas fa-users"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Active Volunteers</div>
+        <div class="stat-value">189</div>
+        <div class="stat-subtitle"><span class="positive">&#8593; 12 new</span> this month</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon teal"><i class="fas fa-clock"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Total Hours (Month)</div>
+        <div class="stat-value">1,456</div>
+        <div class="stat-subtitle"><span class="positive">&#8593; 18%</span> vs last month</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="fas fa-calendar-check"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Upcoming Shifts</div>
+        <div class="stat-value">23</div>
+        <div class="stat-subtitle">Next 7 days</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon purple"><i class="fas fa-chart-bar"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Avg Hours/Volunteer</div>
+        <div class="stat-value">7.7</div>
+        <div class="stat-subtitle"><span class="positive">&#8593; 1.2</span> vs last month</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon orange"><i class="fas fa-user-clock"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Retention Rate</div>
+        <div class="stat-value">82%</div>
+        <div class="stat-subtitle">Active &gt;6 months</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon gold"><i class="fas fa-hand-holding-heart"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Volunteer-to-Donor Rate</div>
+        <div class="stat-value">34%</div>
+        <div class="stat-subtitle">64 volunteers also donate</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="charts-row">
+    <!-- Chart 1: Hours Trend -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <h3><i class="fas fa-chart-column me-2" style="color:var(--volunteer-accent);"></i>Hours Trend</h3>
+        <span style="font-size:0.75rem;color:var(--text-secondary);">Last 6 months</span>
+      </div>
+      <div class="dash-card-body">
+        <div class="bar-chart-mock">
+          <div class="bar-col">
+            <div class="bar-val">820</div>
+            <div class="bar-group">
+              <div class="bar hours" style="height:82px;width:28px;"></div>
+              <div class="bar count" style="height:60px;" title="140 volunteers"></div>
+            </div>
+            <div class="bar-label">Nov</div>
+          </div>
+          <div class="bar-col">
+            <div class="bar-val">950</div>
+            <div class="bar-group">
+              <div class="bar hours" style="height:95px;width:28px;"></div>
+              <div class="bar count" style="height:64px;" title="148 volunteers"></div>
+            </div>
+            <div class="bar-label">Dec</div>
+          </div>
+          <div class="bar-col">
+            <div class="bar-val">880</div>
+            <div class="bar-group">
+              <div class="bar hours" style="height:88px;width:28px;"></div>
+              <div class="bar count" style="height:62px;" title="145 volunteers"></div>
+            </div>
+            <div class="bar-label">Jan</div>
+          </div>
+          <div class="bar-col">
+            <div class="bar-val">1,100</div>
+            <div class="bar-group">
+              <div class="bar hours" style="height:110px;width:28px;"></div>
+              <div class="bar count" style="height:70px;" title="160 volunteers"></div>
+            </div>
+            <div class="bar-label">Feb</div>
+          </div>
+          <div class="bar-col">
+            <div class="bar-val">1,230</div>
+            <div class="bar-group">
+              <div class="bar hours" style="height:123px;width:28px;"></div>
+              <div class="bar count" style="height:76px;" title="177 volunteers"></div>
+            </div>
+            <div class="bar-label">Mar</div>
+          </div>
+          <div class="bar-col">
+            <div class="bar-val">1,456</div>
+            <div class="bar-group">
+              <div class="bar hours" style="height:145px;width:28px;"></div>
+              <div class="bar count" style="height:82px;" title="189 volunteers"></div>
+            </div>
+            <div class="bar-label">Apr</div>
+          </div>
+        </div>
+        <div class="chart-legend-row">
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:var(--volunteer-accent);"></div> Total Hours</div>
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:var(--accent);"></div> Active Volunteers</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart 2: Volunteers by Skill -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <h3><i class="fas fa-user-tag me-2" style="color:var(--accent);"></i>Volunteers by Skill</h3>
+      </div>
+      <div class="dash-card-body">
+        <div class="h-bar-chart">
+          <div class="h-bar-item">
+            <div class="h-bar-label">Event Mgmt</div>
+            <div class="h-bar-track"><div class="h-bar-fill" style="width:85%;">67</div></div>
+            <div class="h-bar-value">67</div>
+          </div>
+          <div class="h-bar-item">
+            <div class="h-bar-label">Fundraising</div>
+            <div class="h-bar-track"><div class="h-bar-fill" style="width:57%;">45</div></div>
+            <div class="h-bar-value">45</div>
+          </div>
+          <div class="h-bar-item">
+            <div class="h-bar-label">Teaching</div>
+            <div class="h-bar-track"><div class="h-bar-fill" style="width:43%;">34</div></div>
+            <div class="h-bar-value">34</div>
+          </div>
+          <div class="h-bar-item">
+            <div class="h-bar-label">IT/Technology</div>
+            <div class="h-bar-track"><div class="h-bar-fill" style="width:35%;">28</div></div>
+            <div class="h-bar-value">28</div>
+          </div>
+          <div class="h-bar-item">
+            <div class="h-bar-label">Medical</div>
+            <div class="h-bar-track"><div class="h-bar-fill" style="width:28%;">22</div></div>
+            <div class="h-bar-value">22</div>
+          </div>
+          <div class="h-bar-item">
+            <div class="h-bar-label">Photography</div>
+            <div class="h-bar-track"><div class="h-bar-fill" style="width:23%;">18</div></div>
+            <div class="h-bar-value">18</div>
+          </div>
+          <div class="h-bar-item">
+            <div class="h-bar-label">Other</div>
+            <div class="h-bar-track"><div class="h-bar-fill" style="width:71%;background:linear-gradient(90deg,#94a3b8,#cbd5e1);">56</div></div>
+            <div class="h-bar-value">56</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Volunteers Leaderboard -->
+  <div class="dash-card">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-trophy me-2" style="color:#eab308;"></i>Top Volunteers</h3>
+      <span style="font-size:0.75rem;color:var(--text-secondary);">This month</span>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="leaderboard-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Volunteer</th>
+            <th>Hours (Month)</th>
+            <th>Hours (YTD)</th>
+            <th>Shifts</th>
+            <th>Badge</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="rank-badge rank-1">&#129351;</span></td>
+            <td><a href="#" onclick="parent.loadContent('volunteer/volunteer-detail');return false;" style="color:var(--accent);font-weight:600;text-decoration:none;">James Okonkwo</a></td>
+            <td style="font-weight:700;">34 hrs</td>
+            <td>156 hrs</td>
+            <td>8</td>
+            <td><span class="badge-tag champion">&#127942; Champion</span></td>
+          </tr>
+          <tr>
+            <td><span class="rank-badge rank-2">&#129352;</span></td>
+            <td><a href="#" onclick="parent.loadContent('volunteer/volunteer-detail');return false;" style="color:var(--accent);font-weight:600;text-decoration:none;">Ravi Kumar</a></td>
+            <td style="font-weight:700;">22 hrs</td>
+            <td>156 hrs</td>
+            <td>6</td>
+            <td><span class="badge-tag star">&#11088; Star</span></td>
+          </tr>
+          <tr>
+            <td><span class="rank-badge rank-3">&#129353;</span></td>
+            <td><a href="#" onclick="parent.loadContent('volunteer/volunteer-detail');return false;" style="color:var(--accent);font-weight:600;text-decoration:none;">Ahmed Salim</a></td>
+            <td style="font-weight:700;">18 hrs</td>
+            <td>245 hrs</td>
+            <td>5</td>
+            <td><span class="badge-tag veteran">&#127894; Veteran</span></td>
+          </tr>
+          <tr>
+            <td><span class="rank-badge rank-other">4</span></td>
+            <td><a href="#" onclick="parent.loadContent('volunteer/volunteer-detail');return false;" style="color:var(--accent);font-weight:600;text-decoration:none;">Fatima Al-Zahra</a></td>
+            <td style="font-weight:700;">12 hrs</td>
+            <td>189 hrs</td>
+            <td>4</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td><span class="rank-badge rank-other">5</span></td>
+            <td><a href="#" onclick="parent.loadContent('volunteer/volunteer-detail');return false;" style="color:var(--accent);font-weight:600;text-decoration:none;">Amina Hassan</a></td>
+            <td style="font-weight:700;">10 hrs</td>
+            <td>45 hrs</td>
+            <td>3</td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Bottom Row: Upcoming Shifts + Activity Feed -->
+  <div class="bottom-row">
+    <!-- Upcoming Shifts -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <h3><i class="fas fa-calendar-week me-2" style="color:var(--accent);"></i>Upcoming Shifts</h3>
+        <span style="font-size:0.75rem;color:var(--text-secondary);">Next 7 days</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="shift-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Shift</th>
+              <th>Time</th>
+              <th>Location</th>
+              <th>Needed</th>
+              <th>Assigned</th>
+              <th>Gap</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Apr 15</td>
+              <td style="font-weight:600;">Gala Setup</td>
+              <td>8AM–12PM</td>
+              <td>Grand Hyatt</td>
+              <td>12</td>
+              <td>8</td>
+              <td><span class="gap-badge warning"><i class="fas fa-exclamation-triangle me-1" style="font-size:0.5625rem;"></i>4 needed</span></td>
+            </tr>
+            <tr>
+              <td>Apr 17</td>
+              <td style="font-weight:600;">Office Admin</td>
+              <td>9AM–1PM</td>
+              <td>HQ</td>
+              <td>2</td>
+              <td>2</td>
+              <td><span class="gap-badge full"><i class="fas fa-check me-1" style="font-size:0.5625rem;"></i>Full</span></td>
+            </tr>
+            <tr>
+              <td>Apr 20</td>
+              <td style="font-weight:600;">Gala Event Day</td>
+              <td>9AM–6PM</td>
+              <td>Grand Hyatt</td>
+              <td>20</td>
+              <td>15</td>
+              <td><span class="gap-badge warning"><i class="fas fa-exclamation-triangle me-1" style="font-size:0.5625rem;"></i>5 needed</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Recent Activity Feed -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <h3><i class="fas fa-stream me-2" style="color:var(--volunteer-accent);"></i>Recent Activity</h3>
+        <a href="#" style="font-size:0.75rem;color:var(--accent);font-weight:600;text-decoration:none;">View All</a>
+      </div>
+      <div class="activity-feed">
+        <div class="activity-item">
+          <div class="activity-icon hours"><i class="fas fa-clock"></i></div>
+          <div class="activity-text"><strong>Ahmed Salim</strong> logged 4 hours — Food Pack Distribution</div>
+          <div class="activity-time">Apr 12</div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-icon registration"><i class="fas fa-user-plus"></i></div>
+          <div class="activity-text"><strong>2 new volunteer registrations</strong> pending approval</div>
+          <div class="activity-time">Apr 12</div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-icon milestone"><i class="fas fa-trophy"></i></div>
+          <div class="activity-text"><strong>James Okonkwo</strong> completed 100th shift — &#127942; milestone!</div>
+          <div class="activity-time">Apr 11</div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-icon shift"><i class="fas fa-calendar-plus"></i></div>
+          <div class="activity-text">Shift created: <strong>Gala Setup</strong> (Apr 15) — 12 volunteers needed</div>
+          <div class="activity-time">Apr 10</div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-icon approve"><i class="fas fa-check-circle"></i></div>
+          <div class="activity-text"><strong>Fatima Al-Zahra</strong> approved 8 hour entries</div>
+          <div class="activity-time">Apr 9</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

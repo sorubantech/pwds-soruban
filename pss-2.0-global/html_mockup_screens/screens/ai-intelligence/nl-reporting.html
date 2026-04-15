@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ask Your Data - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+      --ai-accent: #8b5cf6;
+      --ai-accent-bg: #f5f3ff;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      font-size: 14px;
+      color: var(--text-primary);
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Page Header ── */
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.25rem 1.5rem; background: white;
+      border-bottom: 1px solid var(--border-color); flex-shrink: 0;
+      flex-wrap: wrap; gap: 0.75rem;
+    }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+    .page-header .subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 0; }
+    .ai-badge {
+      display: inline-flex; align-items: center; gap: 0.375rem;
+      background: var(--ai-accent-bg); color: var(--ai-accent);
+      border: 1px solid #ddd6fe; border-radius: 999px;
+      font-size: 0.6875rem; font-weight: 600; padding: 0.25rem 0.75rem;
+    }
+
+    /* ── Main Layout ── */
+    .main-layout {
+      flex: 1; display: flex; overflow: hidden;
+    }
+    .chat-area {
+      flex: 1; display: flex; flex-direction: column; overflow: hidden;
+    }
+    .sidebar-panel {
+      width: 260px; background: white; border-left: 1px solid var(--border-color);
+      overflow-y: auto; padding: 1rem; flex-shrink: 0;
+    }
+
+    /* ── Query Input ── */
+    .query-section {
+      padding: 1.5rem 2rem; background: white; border-bottom: 1px solid var(--border-color);
+      flex-shrink: 0;
+    }
+    .query-wrapper {
+      max-width: 800px; margin: 0 auto;
+    }
+    .query-input-group {
+      display: flex; align-items: center; gap: 0.5rem;
+      background: white; border: 2px solid var(--border-color);
+      border-radius: 0.75rem; padding: 0.5rem 0.75rem;
+      transition: border-color 0.2s;
+    }
+    .query-input-group:focus-within {
+      border-color: var(--ai-accent); box-shadow: 0 0 0 3px rgba(139,92,246,0.1);
+    }
+    .query-input-group i { color: var(--ai-accent); font-size: 1.125rem; }
+    .query-input {
+      flex: 1; border: none; outline: none; font-size: 0.9375rem;
+      font-family: inherit; color: var(--text-primary); padding: 0.375rem 0;
+    }
+    .query-input::placeholder { color: #94a3b8; }
+    .btn-ask {
+      background: linear-gradient(135deg, var(--ai-accent), #a78bfa);
+      color: white; border: none; padding: 0.5rem 1.25rem;
+      border-radius: 0.5rem; font-size: 0.8125rem; font-weight: 600;
+      cursor: pointer; display: flex; align-items: center; gap: 0.375rem;
+      transition: all 0.2s; white-space: nowrap;
+    }
+    .btn-ask:hover { background: linear-gradient(135deg, #7c3aed, #8b5cf6); }
+
+    /* ── Suggested Questions ── */
+    .suggestions {
+      display: flex; flex-wrap: wrap; gap: 0.375rem; margin-top: 0.75rem;
+    }
+    .suggestion-chip {
+      background: var(--ai-accent-bg); border: 1px solid #ede9fe;
+      padding: 0.375rem 0.75rem; border-radius: 999px;
+      font-size: 0.75rem; color: var(--ai-accent); cursor: pointer;
+      transition: all 0.15s; white-space: nowrap;
+    }
+    .suggestion-chip:hover { background: var(--ai-accent); color: white; }
+
+    /* ── Chat Thread ── */
+    .chat-thread {
+      flex: 1; overflow-y: auto; padding: 1.5rem 2rem;
+    }
+    .chat-thread-inner {
+      max-width: 800px; margin: 0 auto;
+      display: flex; flex-direction: column; gap: 1.5rem;
+    }
+
+    /* User Message */
+    .user-msg {
+      display: flex; gap: 0.75rem; align-items: flex-start;
+    }
+    .user-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--accent); color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 700; flex-shrink: 0;
+    }
+    .user-bubble {
+      background: var(--accent-bg); border: 1px solid #cffafe;
+      border-radius: 0.75rem; padding: 0.75rem 1rem;
+      font-size: 0.875rem; color: var(--text-primary); font-weight: 500;
+      max-width: 600px;
+    }
+
+    /* AI Response */
+    .ai-response {
+      display: flex; gap: 0.75rem; align-items: flex-start;
+    }
+    .ai-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--ai-accent), #a78bfa); color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; flex-shrink: 0;
+    }
+    .ai-bubble {
+      flex: 1; max-width: 700px;
+    }
+    .ai-text {
+      background: white; border: 1px solid var(--border-color);
+      border-radius: 0.75rem; padding: 1rem 1.25rem;
+      font-size: 0.875rem; line-height: 1.6; color: var(--text-primary);
+      box-shadow: var(--card-shadow);
+    }
+    .ai-text strong { color: var(--text-primary); }
+    .ai-text .highlight { color: var(--ai-accent); font-weight: 700; }
+    .ai-text .trend-up { color: var(--success-color); font-weight: 600; }
+    .ai-text .trend-down { color: var(--danger-color); font-weight: 600; }
+
+    /* ── Chart Placeholder ── */
+    .chart-placeholder {
+      background: white; border: 1px solid var(--border-color);
+      border-radius: 0.75rem; padding: 1rem;
+      margin-top: 0.75rem; box-shadow: var(--card-shadow);
+    }
+    .chart-area {
+      height: 180px; background: linear-gradient(135deg, rgba(139,92,246,0.03), rgba(14,116,144,0.03));
+      border: 1px dashed #ddd6fe; border-radius: 0.5rem;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      position: relative; overflow: hidden;
+    }
+
+    /* Bar chart CSS */
+    .bar-chart-row {
+      display: flex; align-items: flex-end; gap: 1.5rem;
+      height: 140px; padding: 0 1.5rem 0.5rem; width: 100%;
+      justify-content: center;
+    }
+    .bar-col {
+      display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+      flex: 1; max-width: 120px;
+    }
+    .bar-value { font-size: 0.6875rem; font-weight: 700; color: var(--text-primary); }
+    .bar-fill {
+      width: 100%; border-radius: 4px 4px 0 0; min-height: 4px;
+      transition: height 0.3s;
+    }
+    .bar-label { font-size: 0.6875rem; color: var(--text-secondary); font-weight: 500; margin-top: 0.25rem; }
+
+    /* Horizontal bar */
+    .h-bar-chart { width: 100%; padding: 0.5rem 1rem; }
+    .h-bar-row {
+      display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.625rem;
+    }
+    .h-bar-label { width: 140px; font-size: 0.75rem; font-weight: 500; color: var(--text-primary); text-align: right; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .h-bar-track { flex: 1; height: 20px; background: #f1f5f9; border-radius: 4px; overflow: hidden; }
+    .h-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+    .h-bar-value { width: 60px; font-size: 0.6875rem; font-weight: 700; color: var(--text-primary); }
+
+    /* ── Data Table ── */
+    .response-table {
+      margin-top: 0.75rem; background: white; border: 1px solid var(--border-color);
+      border-radius: 0.75rem; overflow: hidden; box-shadow: var(--card-shadow);
+    }
+    .response-table table { width: 100%; border-collapse: collapse; }
+    .response-table th {
+      text-align: left; font-size: 0.6875rem; font-weight: 600;
+      color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;
+      padding: 0.625rem 1rem; border-bottom: 1px solid var(--border-color);
+      background: #fafbfc;
+    }
+    .response-table td {
+      padding: 0.625rem 1rem; font-size: 0.8125rem;
+      border-bottom: 1px solid #f1f5f9; color: var(--text-primary);
+    }
+    .response-table tr:last-child td { border-bottom: none; }
+    .response-table tr.total-row td { font-weight: 700; background: #fafbfc; border-top: 2px solid var(--border-color); }
+    .response-table .clickable { color: var(--accent); cursor: pointer; font-weight: 500; }
+    .response-table .clickable:hover { text-decoration: underline; }
+
+    /* ── Response Actions ── */
+    .response-actions {
+      display: flex; gap: 0.375rem; margin-top: 0.75rem; flex-wrap: wrap;
+    }
+    .btn-response {
+      background: white; color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+      padding: 0.375rem 0.75rem; border-radius: 0.375rem;
+      font-size: 0.6875rem; font-weight: 500; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 0.25rem;
+      transition: all 0.15s;
+    }
+    .btn-response:hover { border-color: var(--ai-accent); color: var(--ai-accent); }
+
+    /* ── Refinement Chips ── */
+    .refinement {
+      display: flex; align-items: center; gap: 0.375rem; margin-top: 0.75rem;
+      font-size: 0.75rem; color: var(--text-secondary); flex-wrap: wrap;
+    }
+    .refine-chip {
+      background: #f1f5f9; border: 1px solid var(--border-color);
+      padding: 0.25rem 0.625rem; border-radius: 999px;
+      font-size: 0.6875rem; color: var(--text-secondary); cursor: pointer;
+      transition: all 0.15s;
+    }
+    .refine-chip:hover { background: var(--ai-accent-bg); color: var(--ai-accent); border-color: #ddd6fe; }
+
+    /* ── Sidebar ── */
+    .sidebar-section { margin-bottom: 1.25rem; }
+    .sidebar-section-title {
+      font-size: 0.6875rem; font-weight: 700; color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.625rem;
+    }
+    .saved-query {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 0.625rem; border-radius: 0.375rem;
+      font-size: 0.8125rem; color: var(--text-primary); cursor: pointer;
+      transition: background 0.15s;
+    }
+    .saved-query:hover { background: var(--ai-accent-bg); }
+    .saved-query i { color: var(--ai-accent); font-size: 0.75rem; width: 16px; text-align: center; }
+    .btn-save-query {
+      display: flex; align-items: center; gap: 0.375rem;
+      padding: 0.5rem 0.625rem; border-radius: 0.375rem;
+      font-size: 0.8125rem; color: var(--ai-accent); cursor: pointer;
+      border: 1px dashed #ddd6fe; background: none; width: 100;
+      transition: background 0.15s; font-weight: 500;
+    }
+    .btn-save-query:hover { background: var(--ai-accent-bg); }
+
+    .engagement-dot {
+      display: inline-flex; align-items: center; gap: 0.25rem;
+      font-size: 0.75rem; font-weight: 600;
+    }
+    .engagement-dot.high { color: var(--success-color); }
+
+    /* ── Responsive ── */
+    @media (max-width: 992px) {
+      .sidebar-panel { display: none; }
+      .query-section { padding: 1rem; }
+      .chat-thread { padding: 1rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ── Page Header ── -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fa-solid fa-message-bot" style="color: var(--ai-accent);"></i> Ask Your Data</h1>
+      <p class="subtitle">Get instant answers and charts using natural language</p>
+    </div>
+    <div>
+      <span class="ai-badge"><i class="fa-solid fa-microchip"></i> Powered by AI — results generated from your PSS 2.0 data</span>
+    </div>
+  </div>
+
+  <div class="main-layout">
+    <div class="chat-area">
+
+      <!-- ── Query Input ── -->
+      <div class="query-section">
+        <div class="query-wrapper">
+          <div class="query-input-group">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input class="query-input" type="text" placeholder="Ask a question about your data..." id="queryInput">
+            <button class="btn-ask" onclick="askQuery()"><i class="fa-solid fa-sparkles"></i> Ask</button>
+          </div>
+          <div class="suggestions">
+            <span class="suggestion-chip" onclick="fillQuery('How much did we raise this month?')">How much did we raise this month?</span>
+            <span class="suggestion-chip" onclick="fillQuery('Who are our top 10 donors?')">Who are our top 10 donors?</span>
+            <span class="suggestion-chip" onclick="fillQuery('Compare donations by branch this quarter')">Compare donations by branch this quarter</span>
+            <span class="suggestion-chip" onclick="fillQuery('How many new donors joined in 2026?')">How many new donors joined in 2026?</span>
+            <span class="suggestion-chip" onclick="fillQuery('Show LYBUNT donors with >$1,000 last year')">Show LYBUNT donors with >$1,000 last year</span>
+            <span class="suggestion-chip" onclick="fillQuery('What\\'s our email open rate this month?')">What's our email open rate this month?</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Chat Thread ── -->
+      <div class="chat-thread">
+        <div class="chat-thread-inner">
+
+          <!-- ═══ Conversation 1: Dubai Revenue ═══ -->
+          <div class="user-msg">
+            <div class="user-avatar">AS</div>
+            <div class="user-bubble">"How much did we raise from Dubai last quarter?"</div>
+          </div>
+
+          <div class="ai-response">
+            <div class="ai-avatar"><i class="fa-solid fa-sparkles" style="font-size: 0.625rem;"></i></div>
+            <div class="ai-bubble">
+              <div class="ai-text">
+                Dubai branch raised <strong class="highlight">$78,500</strong> in Q1 2026 (Jan–Mar), across <strong>345 donations</strong> from <strong>234 unique donors</strong>.
+                <br><br>
+                This is <span class="trend-up">&#8593; 18.5%</span> compared to Q4 2025 ($66,200).
+              </div>
+
+              <!-- Bar Chart -->
+              <div class="chart-placeholder">
+                <div style="font-size: 0.6875rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem;">Dubai Monthly Donations — Q1 2026</div>
+                <div class="chart-area">
+                  <div class="bar-chart-row">
+                    <div class="bar-col">
+                      <div class="bar-value">$24,500</div>
+                      <div class="bar-fill" style="height: 77%; background: linear-gradient(180deg, var(--ai-accent), #a78bfa);"></div>
+                      <div class="bar-label">January</div>
+                    </div>
+                    <div class="bar-col">
+                      <div class="bar-value">$22,300</div>
+                      <div class="bar-fill" style="height: 70%; background: linear-gradient(180deg, var(--ai-accent), #a78bfa);"></div>
+                      <div class="bar-label">February</div>
+                    </div>
+                    <div class="bar-col">
+                      <div class="bar-value">$31,700</div>
+                      <div class="bar-fill" style="height: 100%; background: linear-gradient(180deg, var(--ai-accent), #a78bfa);"></div>
+                      <div class="bar-label">March</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Table -->
+              <div class="response-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Month</th>
+                      <th>Donations</th>
+                      <th>Amount</th>
+                      <th>Donors</th>
+                      <th>Avg</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>January</td><td>112</td><td>$24,500</td><td>89</td><td>$219</td></tr>
+                    <tr><td>February</td><td>98</td><td>$22,300</td><td>78</td><td>$227</td></tr>
+                    <tr><td>March</td><td>135</td><td>$31,700</td><td>112</td><td>$283</td></tr>
+                    <tr class="total-row"><td>Total</td><td>345</td><td>$78,500</td><td>234</td><td>$227</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="response-actions">
+                <button class="btn-response"><i class="fa-solid fa-file-excel"></i> Export to Excel</button>
+                <button class="btn-response"><i class="fa-solid fa-gauge"></i> Add to Dashboard</button>
+                <button class="btn-response" onclick="parent.loadContent('reports/custom-report-builder')"><i class="fa-solid fa-chart-bar"></i> Create Full Report</button>
+                <button class="btn-response"><i class="fa-solid fa-share-nodes"></i> Share</button>
+              </div>
+              <div class="refinement">
+                Refine:
+                <span class="refine-chip">By branch</span>
+                <span class="refine-chip">By purpose</span>
+                <span class="refine-chip">Different period</span>
+                <span class="refine-chip">Add comparison</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ═══ Conversation 2: Top 5 Donors ═══ -->
+          <div class="user-msg">
+            <div class="user-avatar">AS</div>
+            <div class="user-bubble">"Show me the top 5 donors by lifetime giving"</div>
+          </div>
+
+          <div class="ai-response">
+            <div class="ai-avatar"><i class="fa-solid fa-sparkles" style="font-size: 0.625rem;"></i></div>
+            <div class="ai-bubble">
+              <div class="ai-text">
+                Here are your <strong>top 5 donors</strong> by total lifetime giving:
+              </div>
+
+              <!-- Table -->
+              <div class="response-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Rank</th>
+                      <th>Donor</th>
+                      <th>Lifetime Total</th>
+                      <th>First Gift</th>
+                      <th>Donations</th>
+                      <th>Engagement</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>1</td>
+                      <td><span class="clickable" onclick="parent.loadContent('contacts/contact-detail')">Khalid Al-Mansouri</span></td>
+                      <td><strong>$42,500</strong></td><td>2021</td><td>36</td>
+                      <td><span class="engagement-dot high">96 &#x1F7E2;</span></td>
+                    </tr>
+                    <tr>
+                      <td>2</td>
+                      <td><span class="clickable" onclick="parent.loadContent('contacts/contact-detail')">Ravi Sharma</span></td>
+                      <td><strong>$35,100</strong></td><td>2020</td><td>48</td>
+                      <td><span class="engagement-dot high">89 &#x1F7E2;</span></td>
+                    </tr>
+                    <tr>
+                      <td>3</td>
+                      <td><span class="clickable" onclick="parent.loadContent('contacts/contact-detail')">James Okonkwo</span></td>
+                      <td><strong>$22,800</strong></td><td>2022</td><td>24</td>
+                      <td><span class="engagement-dot high">85 &#x1F7E2;</span></td>
+                    </tr>
+                    <tr>
+                      <td>4</td>
+                      <td><span class="clickable" onclick="parent.loadContent('contacts/contact-detail')">Fatima Al-Zahra</span></td>
+                      <td><strong>$18,200</strong></td><td>2023</td><td>18</td>
+                      <td><span class="engagement-dot high">92 &#x1F7E2;</span></td>
+                    </tr>
+                    <tr>
+                      <td>5</td>
+                      <td><span class="clickable" onclick="parent.loadContent('contacts/contact-detail')">Sarah Ahmed</span></td>
+                      <td><strong>$12,400</strong></td><td>2021</td><td>22</td>
+                      <td><span class="engagement-dot high">87 &#x1F7E2;</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Horizontal Bar Chart -->
+              <div class="chart-placeholder">
+                <div style="font-size: 0.6875rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem;">Top 5 Donors — Lifetime Giving</div>
+                <div class="h-bar-chart">
+                  <div class="h-bar-row">
+                    <div class="h-bar-label">Khalid Al-Mansouri</div>
+                    <div class="h-bar-track"><div class="h-bar-fill" style="width: 100%; background: linear-gradient(90deg, var(--ai-accent), #a78bfa);"></div></div>
+                    <div class="h-bar-value">$42,500</div>
+                  </div>
+                  <div class="h-bar-row">
+                    <div class="h-bar-label">Ravi Sharma</div>
+                    <div class="h-bar-track"><div class="h-bar-fill" style="width: 82.6%; background: linear-gradient(90deg, var(--ai-accent), #a78bfa);"></div></div>
+                    <div class="h-bar-value">$35,100</div>
+                  </div>
+                  <div class="h-bar-row">
+                    <div class="h-bar-label">James Okonkwo</div>
+                    <div class="h-bar-track"><div class="h-bar-fill" style="width: 53.6%; background: linear-gradient(90deg, var(--ai-accent), #a78bfa);"></div></div>
+                    <div class="h-bar-value">$22,800</div>
+                  </div>
+                  <div class="h-bar-row">
+                    <div class="h-bar-label">Fatima Al-Zahra</div>
+                    <div class="h-bar-track"><div class="h-bar-fill" style="width: 42.8%; background: linear-gradient(90deg, var(--ai-accent), #a78bfa);"></div></div>
+                    <div class="h-bar-value">$18,200</div>
+                  </div>
+                  <div class="h-bar-row">
+                    <div class="h-bar-label">Sarah Ahmed</div>
+                    <div class="h-bar-track"><div class="h-bar-fill" style="width: 29.2%; background: linear-gradient(90deg, var(--ai-accent), #a78bfa);"></div></div>
+                    <div class="h-bar-value">$12,400</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="response-actions">
+                <button class="btn-response"><i class="fa-solid fa-file-excel"></i> Export</button>
+                <button class="btn-response"><i class="fa-solid fa-users"></i> View All Donors</button>
+                <button class="btn-response"><i class="fa-solid fa-envelope"></i> Email This List</button>
+              </div>
+              <div class="refinement">
+                Refine:
+                <span class="refine-chip">By branch</span>
+                <span class="refine-chip">By purpose</span>
+                <span class="refine-chip">Different period</span>
+                <span class="refine-chip">Add comparison</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ═══ Conversation 3: Email vs WhatsApp ═══ -->
+          <div class="user-msg">
+            <div class="user-avatar">AS</div>
+            <div class="user-bubble">"Compare email vs WhatsApp open rates for Q1 2026"</div>
+          </div>
+
+          <div class="ai-response">
+            <div class="ai-avatar"><i class="fa-solid fa-sparkles" style="font-size: 0.625rem;"></i></div>
+            <div class="ai-bubble">
+              <div class="ai-text">
+                Communication channel comparison for <strong>Q1 2026</strong>:
+              </div>
+
+              <!-- Comparison Table -->
+              <div class="response-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Metric</th>
+                      <th>Email</th>
+                      <th>WhatsApp</th>
+                      <th>SMS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>Sent</td><td>12,500</td><td>3,200</td><td>4,500</td></tr>
+                    <tr><td>Delivered</td><td>11,800 (94.4%)</td><td>3,100 (96.9%)</td><td>4,200 (93.3%)</td></tr>
+                    <tr><td>Opened / Read</td><td>4,720 (40.0%)</td><td><strong style="color: var(--success-color);">2,790 (90.0%)</strong></td><td>—</td></tr>
+                    <tr><td>Clicked</td><td>1,180 (10.0%)</td><td><strong style="color: var(--success-color);">620 (20.0%)</strong></td><td>—</td></tr>
+                    <tr><td>Responded</td><td>—</td><td>340 (11.0%)</td><td>89 (2.1%)</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="ai-text" style="margin-top: 0.75rem; background: var(--ai-accent-bg); border-color: #ddd6fe;">
+                <i class="fa-solid fa-lightbulb" style="color: var(--ai-accent);"></i>
+                <strong>WhatsApp has significantly higher engagement</strong> (90% read rate vs 40% email open rate), but email reaches 4x more people. Consider <strong>WhatsApp for high-priority personal outreach</strong> and <strong>email for bulk communications</strong>.
+              </div>
+
+              <div class="response-actions">
+                <button class="btn-response"><i class="fa-solid fa-file-excel"></i> Export to Excel</button>
+                <button class="btn-response"><i class="fa-solid fa-gauge"></i> Add to Dashboard</button>
+                <button class="btn-response" onclick="parent.loadContent('reports/custom-report-builder')"><i class="fa-solid fa-chart-bar"></i> Create Full Report</button>
+                <button class="btn-response"><i class="fa-solid fa-share-nodes"></i> Share</button>
+              </div>
+              <div class="refinement">
+                Refine:
+                <span class="refine-chip">By branch</span>
+                <span class="refine-chip">By purpose</span>
+                <span class="refine-chip">Different period</span>
+                <span class="refine-chip">Add comparison</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Sidebar: Saved Queries ── -->
+    <div class="sidebar-panel">
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Saved Queries</div>
+        <div class="saved-query"><i class="fa-solid fa-bookmark"></i> Monthly Board Summary</div>
+        <div class="saved-query"><i class="fa-solid fa-bookmark"></i> Top Donors</div>
+        <div class="saved-query"><i class="fa-solid fa-bookmark"></i> Branch Comparison</div>
+        <div class="saved-query"><i class="fa-solid fa-bookmark"></i> Campaign ROI</div>
+        <div style="margin-top: 0.5rem;">
+          <button class="btn-save-query"><i class="fa-solid fa-plus"></i> Save Current Query</button>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Recent Queries</div>
+        <div class="saved-query"><i class="fa-solid fa-clock-rotate-left" style="color: var(--text-secondary);"></i> Dubai revenue Q1 2026</div>
+        <div class="saved-query"><i class="fa-solid fa-clock-rotate-left" style="color: var(--text-secondary);"></i> Top 5 donors by LTV</div>
+        <div class="saved-query"><i class="fa-solid fa-clock-rotate-left" style="color: var(--text-secondary);"></i> Email vs WhatsApp rates</div>
+        <div class="saved-query"><i class="fa-solid fa-clock-rotate-left" style="color: var(--text-secondary);"></i> New donors Jan 2026</div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Data Sources</div>
+        <div style="font-size: 0.75rem; color: var(--text-secondary); line-height: 1.6;">
+          <div><i class="fa-solid fa-circle-check" style="color: var(--success-color);"></i> Donations (updated real-time)</div>
+          <div><i class="fa-solid fa-circle-check" style="color: var(--success-color);"></i> Contacts (updated real-time)</div>
+          <div><i class="fa-solid fa-circle-check" style="color: var(--success-color);"></i> Communications (updated hourly)</div>
+          <div><i class="fa-solid fa-circle-check" style="color: var(--success-color);"></i> Events (updated daily)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function fillQuery(text) {
+      document.getElementById('queryInput').value = text;
+    }
+
+    function askQuery() {
+      const input = document.getElementById('queryInput');
+      if (!input.value.trim()) return;
+      // Simulate processing
+      const btn = document.querySelector('.btn-ask');
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Thinking...';
+      btn.disabled = true;
+      setTimeout(() => {
+        btn.innerHTML = '<i class="fa-solid fa-sparkles"></i> Ask';
+        btn.disabled = false;
+      }, 1500);
+    }
+
+    // Enter key to ask
+    document.getElementById('queryInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') askQuery();
+    });
+  </script>
+
+</body>
+</html>

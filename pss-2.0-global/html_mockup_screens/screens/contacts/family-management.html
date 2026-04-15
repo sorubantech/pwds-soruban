@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Families & Households - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #0c6577;
+      border-color: #0c6577;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    /* Search & Filter Bar */
+    .filter-bar {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1rem 1.25rem;
+      box-shadow: var(--card-shadow);
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .search-input-wrapper {
+      position: relative;
+      flex: 1;
+      min-width: 250px;
+    }
+
+    .search-input-wrapper i {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .filter-chips {
+      display: flex;
+      gap: 0.375rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-chip {
+      padding: 0.375rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .filter-chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .filter-chip.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    /* Family Cards Grid */
+    .family-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .family-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      padding: 1.25rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex;
+      flex-direction: column;
+      gap: 0.875rem;
+    }
+
+    .family-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    .family-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .family-code {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .members-badge {
+      background: var(--accent-bg);
+      color: var(--accent);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.25rem 0.625rem;
+      border-radius: 9999px;
+    }
+
+    .family-head-row {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+
+    .head-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.8125rem;
+      flex-shrink: 0;
+    }
+
+    .head-avatar.no-head {
+      background: var(--warning-color);
+    }
+
+    .head-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .head-name {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .head-name .crown-icon {
+      color: var(--warning-color);
+      font-size: 0.75rem;
+    }
+
+    .head-name .no-head-text {
+      color: var(--warning-color);
+      font-weight: 600;
+    }
+
+    .head-label {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+    }
+
+    .family-address {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .family-address i {
+      margin-top: 2px;
+      font-size: 0.75rem;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    /* Member list */
+    .member-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
+      padding: 0.625rem;
+      background: #f8fafc;
+      border-radius: 0.5rem;
+    }
+
+    .member-list-title {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.125rem;
+    }
+
+    .member-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8125rem;
+    }
+
+    .member-name-link {
+      color: var(--accent);
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+
+    .member-name-link:hover {
+      color: #0c6577;
+      text-decoration: underline;
+    }
+
+    .member-relation {
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+    }
+
+    .engagement-mini {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      font-size: 0.625rem;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .engagement-mini.high { background: var(--success-color); }
+    .engagement-mini.medium { background: var(--warning-color); }
+    .engagement-mini.low { background: var(--danger-color); }
+
+    /* Giving */
+    .family-giving {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 0.625rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .giving-label {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    .giving-amount {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    /* Card Actions */
+    .card-actions {
+      display: flex;
+      gap: 0.375rem;
+    }
+
+    .card-action-btn {
+      padding: 0.375rem 0.625rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .card-action-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .card-action-btn.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .card-action-btn.primary:hover {
+      background: #0c6577;
+    }
+
+    /* Pagination */
+    .pagination-bar {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 0.75rem 1.25rem;
+      box-shadow: var(--card-shadow);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .pagination-info {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .pagination-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .page-size-select {
+      padding: 0.375rem 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      color: var(--text-primary);
+      background: white;
+      cursor: pointer;
+    }
+
+    .page-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 0.75rem;
+      transition: all 0.15s;
+    }
+
+    .page-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .page-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Modal */
+    .modal-content { border: none; border-radius: var(--card-radius); }
+    .modal-header { border-bottom: 1px solid var(--border-color); padding: 1rem 1.25rem; }
+    .modal-header .modal-title { font-size: 1.125rem; font-weight: 700; }
+    .modal-body { padding: 1.25rem; }
+    .modal-footer { border-top: 1px solid var(--border-color); padding: 0.75rem 1.25rem; }
+
+    .form-label-sm {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .form-control-custom {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .form-control-custom:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .member-manage-list {
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      overflow: hidden;
+    }
+
+    .member-manage-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.8125rem;
+    }
+
+    .member-manage-row:last-child { border-bottom: none; }
+
+    .member-manage-row .member-info {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+
+    .member-manage-row .mini-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent-bg);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.625rem;
+      font-weight: 700;
+    }
+
+    .member-manage-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .radio-head {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    .btn-remove {
+      background: none;
+      border: none;
+      color: var(--danger-color);
+      cursor: pointer;
+      font-size: 0.8125rem;
+      padding: 0.25rem;
+      transition: opacity 0.15s;
+    }
+
+    .btn-remove:hover { opacity: 0.7; }
+
+    .add-member-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--accent);
+      background: var(--accent-bg);
+      border: 1px dashed var(--accent);
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      width: 100%;
+      justify-content: center;
+      margin-top: 0.5rem;
+    }
+
+    .add-member-btn:hover { background: #d5f5fa; }
+
+    .section-divider {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding-bottom: 0.375rem;
+      border-bottom: 1px solid var(--border-color);
+      margin-top: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .family-grid { grid-template-columns: 1fr; }
+      .filter-bar { flex-direction: column; align-items: stretch; }
+      .search-input-wrapper { min-width: unset; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-people-roof" style="color: var(--accent); margin-right: 0.5rem; font-size: 1.25rem;"></i>Families & Households</h1>
+      <p class="subtitle">1,234 families</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="openNewFamilyModal()">
+        <i class="fas fa-plus me-1"></i> New Family
+      </button>
+    </div>
+  </div>
+
+  <!-- Search & Filter Bar -->
+  <div class="filter-bar">
+    <div class="search-input-wrapper">
+      <i class="fas fa-search"></i>
+      <input type="text" class="search-input" placeholder="Search by family code, member name, or address...">
+    </div>
+    <div class="filter-chips">
+      <span class="filter-chip active">All</span>
+      <span class="filter-chip">With Head</span>
+      <span class="filter-chip">Without Head</span>
+      <span class="filter-chip">Single Member</span>
+      <span class="filter-chip">3+ Members</span>
+    </div>
+  </div>
+
+  <!-- Family Cards Grid -->
+  <div class="family-grid">
+
+    <!-- FAM-0001 — Johnson Family -->
+    <div class="family-card">
+      <div class="family-card-header">
+        <span class="family-code">FAM-0001</span>
+        <span class="members-badge"><i class="fas fa-users me-1"></i>3 members</span>
+      </div>
+      <div class="family-head-row">
+        <div class="head-avatar">SJ</div>
+        <div class="head-info">
+          <span class="head-name">Sarah Johnson <i class="fas fa-crown crown-icon" title="Family Head"></i></span>
+          <span class="head-label">Family Head</span>
+        </div>
+      </div>
+      <div class="family-address">
+        <i class="fas fa-location-dot"></i>
+        <span>456 Oak Avenue, Springfield, IL 62704, USA</span>
+      </div>
+      <div class="member-list">
+        <div class="member-list-title">Members</div>
+        <div class="member-row">
+          <div><a class="member-name-link" onclick="parent.loadContent('contacts/contact-detail')">Sarah Johnson</a> <span class="member-relation">(Head)</span></div>
+          <span class="engagement-mini high" title="Score: 92">92</span>
+        </div>
+        <div class="member-row">
+          <div><a class="member-name-link" onclick="parent.loadContent('contacts/contact-detail')">Michael Johnson</a> <span class="member-relation">(Spouse)</span></div>
+          <span class="engagement-mini medium" title="Score: 78">78</span>
+        </div>
+        <div class="member-row">
+          <div><a class="member-name-link" onclick="parent.loadContent('contacts/contact-detail')">Emma Johnson</a> <span class="member-relation">(Daughter)</span></div>
+          <span class="engagement-mini medium" title="Score: 45">45</span>
+        </div>
+      </div>
+      <div class="family-giving">
+        <span class="giving-label">Total Family Giving</span>
+        <span class="giving-amount">$8,450</span>
+      </div>
+      <div class="card-actions">
+        <button class="card-action-btn primary" onclick="parent.loadContent('contacts/contact-detail')"><i class="fas fa-eye me-1"></i>View</button>
+        <button class="card-action-btn" onclick="openEditFamilyModal('FAM-0001')"><i class="fas fa-pen me-1"></i>Edit</button>
+        <button class="card-action-btn" onclick="openEditFamilyModal('FAM-0001')"><i class="fas fa-user-plus me-1"></i>Add Member</button>
+      </div>
+    </div>
+
+    <!-- FAM-0002 — Al-Hassan Family -->
+    <div class="family-card">
+      <div class="family-card-header">
+        <span class="family-code">FAM-0002</span>
+        <span class="members-badge"><i class="fas fa-users me-1"></i>4 members</span>
+      </div>
+      <div class="family-head-row">
+        <div class="head-avatar">AA</div>
+        <div class="head-info">
+          <span class="head-name">Ahmad Al-Hassan <i class="fas fa-crown crown-icon" title="Family Head"></i></span>
+          <span class="head-label">Family Head</span>
+        </div>
+      </div>
+      <div class="family-address">
+        <i class="fas fa-location-dot"></i>
+        <span>12 Palm Street, Dubai, UAE</span>
+      </div>
+      <div class="member-list">
+        <div class="member-list-title">Members</div>
+        <div class="member-row">
+          <div><a class="member-name-link" onclick="parent.loadContent('contacts/contact-detail')">Ahmad Al-Hassan</a> <span class="member-relation">(Head)</span></div>
+          <span class="engagement-mini high" title="Score: 85">85</span>
+        </div>
+        <div class="member-row">
+          <div><a class="member-name-link" onclick="parent.loadContent('contacts/contact-detail')">Fatima Al-Hassan</a> <span class="member-relation">(Spouse)</span></div>
+          <span class="engagement-mini medium" title="Score: 72">72</span>
+        </div>
+        <div class="member-row">
+          <div><a class="member-name-link" onclick="parent.loadContent('contacts/contact-detail')">Omar Al-Hassan</a> <span class="member-relation">(Son)</span></div>
+          <span class="engagement-mini low" title="Score: 30">30</span>
+        </div>
+        <div class="member-row">
+          <div><a class="member-name-link" onclick="parent.loadContent('contacts/contact-detail')">Layla Al-Hassan</a> <span class="member-relation">(Daughter)</span></div>
+          <span class="engagement-mini low" title="Score: 25">25</span>
+        </div>
+      </div>
+      <div class="family-giving">
+        <span class="giving-label">Total Family Giving</span>
+        <span class="giving-amount">$15,200</span>
+      </div>
+      <div class="card-actions">
+        <button class="card-action-btn primary" onclick="parent.loadContent('contacts/contact-detail')"><i class="fas fa-eye me-1"></i>View</button>
+        <button class="card-action-btn" onclick="openEditFamilyModal('FAM-0002')"><i class="fas fa-pen me-1"></i>Edit</button>
+        <button class="card-action-btn" onclick="openEditFamilyModal('FAM-0002')"><i class="fas fa-user-plus me-1"></i>Add Member</button>
+      </div>
+    </div>
+
+    <!-- FAM-0003 — Krishnan Family -->
+    <div class="family-card">
+      <div class="family-card-header">
+        <span class="family-code">FAM-0003</span>
+        <span class="members-badge"><i class="fas fa-users me-1"></i>2 members</span>
+      </div>
+      <div class="family-head-row">
+        <div class="head-avatar">RK</div>
+        <div class="head-info">
+          <span class="head-name">Ravi Krishnan <i class="fas fa-crown crown-icon" title="Family Head"></i></span>
+          <span class="head-label">Family Head</span>
+        </div>
+      </div>
+      <div class="family-address">
+        <i class="fas fa-location-dot"></i>
+        <span>78 MG Road, Chennai, Tamil Nadu 600001, India</span>
+      </div>
+      <div class="member-list">
+        <div class="member-list-title">Members</div>
+        <div class="member-row">
+          <div><a class="member-name-link" onclick="parent.loadContent('contacts/contact-detail')">Ravi Krishnan</a> <span class="member-relation">(Head)</span></div>
+          <span class="engagement-mini medium" title="Score: 65">65</span>
+        </div>
+        <div class="member-row">
+          <div><a class="member-name-link" onclick="parent.loadContent('contacts/contact-detail')">Priya Krishnan</a> <span class="member-relation">(Spouse)</span></div>
+          <span class="engagement-mini medium" title="Score: 58">58</span>
+        </div>
+      </div>
+      <div class="family-giving">
+        <span class="giving-label">Total Family Giving</span>
+        <span class="giving-amount">$2,400</span>
+      </div>
+      <div class="card-actions">
+        <button class="card-action-btn primary" onclick="parent.loadContent('contacts/contact-detail')"><i class="fas fa-eye me-1"></i>View</button>
+        <button class="card-action-btn" onclick="openEditFamilyModal('FAM-0003')"><i class="fas fa-pen me-1"></i>Edit</button>
+        <button class="card-action-btn" onclick="openEditFamilyModal('FAM-0003')"><i class="fas fa-user-plus me-1"></i>Add Member</button>
+      </div>
+    </div>
+
+    <!-- FAM-0004 — Santos Family (No Head) -->
+    <div class="family-card">
+      <div class="family-card-header">
+        <span class="family-code">FAM-0004</span>
+        <span class="members-badge"><i class="fas fa-users me-1"></i>3 members</span>
+      </div>
+      <div class="family-head-row">
+        <div class="head-avatar no-head"><i class="fas fa-exclamation" style="font-size: 0.75rem;"></i></div>
+        <div class="head-info">
+          <span class="head-name"><span class="no-head-text"><i class="fas fa-triangle-exclamation me-1"></i>No Head Assigned</span></span>
+          <span class="head-label">Family head not designated</span>
+        </div>
+      </div>
+      <div class="family-address">
+        <i class="fas fa-location-dot"></i>
+        <span>Rua Augusta 1200, Sao Paulo, SP, Brazil</span>
+      </div>
+      <div class="member-list">
+        <div class="member-list-title">Members</div>
+        <div class="member-row">
+          <div><a class="member-name-link" onclick="parent.loadContent('contacts/contact-detail')">Maria Santos</a></div>
+          <span class="engagement-mini medium" title="Score: 78">78</span>
+        </div>
+        <div class="member-row">
+          <div><a class="member-name-link" onclick="parent.loadContent('contacts/contact-detail')">Carlos Santos</a></div>
+          <span class="engagement-mini medium" title="Score: 55">55</span>
+        </div>
+        <div class="member-row">
+          <div><a class="member-name-link" onclick="parent.loadContent('contacts/contact-detail')">Ana Santos</a></div>
+          <span class="engagement-mini low" title="Score: 40">40</span>
+        </div>
+      </div>
+      <div class="family-giving">
+        <span class="giving-label">Total Family Giving</span>
+        <span class="giving-amount">$850</span>
+      </div>
+      <div class="card-actions">
+        <button class="card-action-btn primary" onclick="parent.loadContent('contacts/contact-detail')"><i class="fas fa-eye me-1"></i>View</button>
+        <button class="card-action-btn" onclick="openEditFamilyModal('FAM-0004')"><i class="fas fa-pen me-1"></i>Edit</button>
+        <button class="card-action-btn" onclick="openEditFamilyModal('FAM-0004')"><i class="fas fa-user-plus me-1"></i>Add Member</button>
+      </div>
+    </div>
+
+    <!-- FAM-0005 — Okonkwo Family (Single Member) -->
+    <div class="family-card">
+      <div class="family-card-header">
+        <span class="family-code">FAM-0005</span>
+        <span class="members-badge"><i class="fas fa-user me-1"></i>1 member</span>
+      </div>
+      <div class="family-head-row">
+        <div class="head-avatar">JO</div>
+        <div class="head-info">
+          <span class="head-name">James Okonkwo <i class="fas fa-crown crown-icon" title="Family Head"></i></span>
+          <span class="head-label">Family Head</span>
+        </div>
+      </div>
+      <div class="family-address">
+        <i class="fas fa-location-dot"></i>
+        <span>15 Allen Avenue, Lagos, Nigeria</span>
+      </div>
+      <div class="member-list">
+        <div class="member-list-title">Members</div>
+        <div class="member-row">
+          <div><a class="member-name-link" onclick="parent.loadContent('contacts/contact-detail')">James Okonkwo</a> <span class="member-relation">(Head)</span></div>
+          <span class="engagement-mini medium" title="Score: 45">45</span>
+        </div>
+      </div>
+      <div class="family-giving">
+        <span class="giving-label">Total Family Giving</span>
+        <span class="giving-amount">$375</span>
+      </div>
+      <div class="card-actions">
+        <button class="card-action-btn primary" onclick="parent.loadContent('contacts/contact-detail')"><i class="fas fa-eye me-1"></i>View</button>
+        <button class="card-action-btn" onclick="openEditFamilyModal('FAM-0005')"><i class="fas fa-pen me-1"></i>Edit</button>
+        <button class="card-action-btn" onclick="openEditFamilyModal('FAM-0005')"><i class="fas fa-user-plus me-1"></i>Add Member</button>
+      </div>
+    </div>
+
+    <!-- FAM-0006 — Chen-Miller Family -->
+    <div class="family-card">
+      <div class="family-card-header">
+        <span class="family-code">FAM-0006</span>
+        <span class="members-badge"><i class="fas fa-users me-1"></i>2 members</span>
+      </div>
+      <div class="family-head-row">
+        <div class="head-avatar">EC</div>
+        <div class="head-info">
+          <span class="head-name">Emily Chen <i class="fas fa-crown crown-icon" title="Family Head"></i></span>
+          <span class="head-label">Family Head</span>
+        </div>
+      </div>
+      <div class="family-address">
+        <i class="fas fa-location-dot"></i>
+        <span>890 Sunset Blvd, Los Angeles, CA 90028, USA</span>
+      </div>
+      <div class="member-list">
+        <div class="member-list-title">Members</div>
+        <div class="member-row">
+          <div><a class="member-name-link" onclick="parent.loadContent('contacts/contact-detail')">Emily Chen</a> <span class="member-relation">(Head)</span></div>
+          <span class="engagement-mini medium" title="Score: 58">58</span>
+        </div>
+        <div class="member-row">
+          <div><a class="member-name-link" onclick="parent.loadContent('contacts/contact-detail')">David Miller</a> <span class="member-relation">(Spouse)</span></div>
+          <span class="engagement-mini low" title="Score: 34">34</span>
+        </div>
+      </div>
+      <div class="family-giving">
+        <span class="giving-label">Total Family Giving</span>
+        <span class="giving-amount">$525</span>
+      </div>
+      <div class="card-actions">
+        <button class="card-action-btn primary" onclick="parent.loadContent('contacts/contact-detail')"><i class="fas fa-eye me-1"></i>View</button>
+        <button class="card-action-btn" onclick="openEditFamilyModal('FAM-0006')"><i class="fas fa-pen me-1"></i>Edit</button>
+        <button class="card-action-btn" onclick="openEditFamilyModal('FAM-0006')"><i class="fas fa-user-plus me-1"></i>Add Member</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination-bar">
+    <span class="pagination-info">Showing 1-6 of 1,234 families</span>
+    <div class="pagination-controls">
+      <select class="page-size-select" title="Page size">
+        <option value="6" selected>6 per page</option>
+        <option value="12">12 per page</option>
+        <option value="24">24 per page</option>
+      </select>
+      <button class="page-btn" disabled><i class="fas fa-chevron-left"></i></button>
+      <button class="page-btn active">1</button>
+      <button class="page-btn">2</button>
+      <button class="page-btn">3</button>
+      <button class="page-btn">...</button>
+      <button class="page-btn">206</button>
+      <button class="page-btn"><i class="fas fa-chevron-right"></i></button>
+    </div>
+  </div>
+
+  <!-- New/Edit Family Modal -->
+  <div class="modal fade" id="familyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 600px;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="familyModalTitle"><i class="fas fa-people-roof me-2" style="color: var(--accent);"></i>New Family</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Family Details -->
+          <div class="row g-3">
+            <div class="col-sm-6">
+              <label class="form-label-sm">Family Code</label>
+              <input type="text" class="form-control form-control-custom" placeholder="Auto-generated" value="FAM-0007" maxlength="100">
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label-sm">Addressee Name</label>
+              <input type="text" class="form-control form-control-custom" placeholder="e.g., The Johnson Family" maxlength="100">
+            </div>
+          </div>
+
+          <!-- Address Section -->
+          <div class="section-divider">Shared Address</div>
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label-sm">Address Line 1</label>
+              <input type="text" class="form-control form-control-custom" placeholder="Street address">
+            </div>
+            <div class="col-12">
+              <label class="form-label-sm">Address Line 2</label>
+              <input type="text" class="form-control form-control-custom" placeholder="Apartment, suite, etc.">
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label-sm">Country</label>
+              <select class="form-control form-control-custom">
+                <option value="">Select country...</option>
+                <option>United States</option>
+                <option>India</option>
+                <option>United Arab Emirates</option>
+                <option>Brazil</option>
+                <option>Nigeria</option>
+              </select>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label-sm">State / Province</label>
+              <select class="form-control form-control-custom">
+                <option value="">Select state...</option>
+              </select>
+            </div>
+            <div class="col-sm-4">
+              <label class="form-label-sm">District</label>
+              <select class="form-control form-control-custom">
+                <option value="">Select...</option>
+              </select>
+            </div>
+            <div class="col-sm-4">
+              <label class="form-label-sm">City</label>
+              <select class="form-control form-control-custom">
+                <option value="">Select...</option>
+              </select>
+            </div>
+            <div class="col-sm-4">
+              <label class="form-label-sm">Pincode / ZIP</label>
+              <input type="text" class="form-control form-control-custom" placeholder="Postal code">
+            </div>
+          </div>
+
+          <!-- Members Section -->
+          <div class="section-divider">Family Members</div>
+          <div class="member-manage-list" id="memberManageList">
+            <div class="member-manage-row">
+              <div class="member-info">
+                <div class="mini-avatar">SJ</div>
+                <span>Sarah Johnson</span>
+              </div>
+              <div class="member-manage-actions">
+                <label class="radio-head">
+                  <input type="radio" name="familyHead" checked> Head
+                </label>
+                <button class="btn-remove" title="Remove member"><i class="fas fa-times"></i></button>
+              </div>
+            </div>
+            <div class="member-manage-row">
+              <div class="member-info">
+                <div class="mini-avatar">MJ</div>
+                <span>Michael Johnson</span>
+              </div>
+              <div class="member-manage-actions">
+                <label class="radio-head">
+                  <input type="radio" name="familyHead"> Head
+                </label>
+                <button class="btn-remove" title="Remove member"><i class="fas fa-times"></i></button>
+              </div>
+            </div>
+          </div>
+          <button class="add-member-btn">
+            <i class="fas fa-search"></i> Search & Add Member
+          </button>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-outline-accent" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn-primary-accent" onclick="saveFamily()">
+            <i class="fas fa-check me-1"></i> Save Family
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Filter chip toggle
+    document.querySelectorAll('.filter-chip').forEach(chip => {
+      chip.addEventListener('click', function () {
+        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+
+    // Modal instance
+    let familyModal;
+    document.addEventListener('DOMContentLoaded', function () {
+      familyModal = new bootstrap.Modal(document.getElementById('familyModal'));
+    });
+
+    function openNewFamilyModal() {
+      document.getElementById('familyModalTitle').innerHTML =
+        '<i class="fas fa-people-roof me-2" style="color: var(--accent);"></i>New Family';
+      familyModal.show();
+    }
+
+    function openEditFamilyModal(code) {
+      document.getElementById('familyModalTitle').innerHTML =
+        '<i class="fas fa-people-roof me-2" style="color: var(--accent);"></i>Edit Family — ' + code;
+      familyModal.show();
+    }
+
+    function saveFamily() {
+      familyModal.hide();
+    }
+  </script>
+
+</body>
+
+</html>

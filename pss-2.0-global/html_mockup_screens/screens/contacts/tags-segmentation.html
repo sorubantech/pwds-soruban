@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tags & Segmentation - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    /* Buttons */
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #0c6577;
+      border-color: #0c6577;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-secondary:hover {
+      background: #f1f5f9;
+      color: var(--text-primary);
+    }
+
+    /* Tabs */
+    .tab-nav {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid var(--border-color);
+      margin-bottom: 1.25rem;
+    }
+
+    .tab-btn {
+      padding: 0.75rem 1.5rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .tab-btn:hover { color: var(--accent); }
+
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Stat Cards */
+    .stat-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      padding: 1rem 1.25rem;
+    }
+
+    .stat-card .stat-label {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-card .stat-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .stat-card .stat-sub {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.125rem;
+    }
+
+    /* List Card */
+    .list-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+    }
+
+    /* Action Bar */
+    .action-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .search-input {
+      position: relative;
+      min-width: 240px;
+    }
+
+    .search-input i {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .search-input input {
+      width: 100%;
+      padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .search-input input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    /* Tag Cloud */
+    .tag-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      padding: 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      background: #f8fafc;
+    }
+
+    .tag-cloud-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.375rem 0.75rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: 1px solid transparent;
+    }
+
+    .tag-cloud-badge:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    }
+
+    .tag-cloud-badge .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .tag-cloud-badge .tag-count {
+      font-size: 0.65rem;
+      opacity: 0.7;
+      font-weight: 400;
+    }
+
+    .tag-xs { font-size: 0.6875rem; }
+    .tag-sm { font-size: 0.75rem; }
+    .tag-md { font-size: 0.8125rem; }
+    .tag-lg { font-size: 0.9375rem; }
+    .tag-xl { font-size: 1.0625rem; }
+
+    /* Tag Colors */
+    .tag-blue { background: #dbeafe; color: #1e40af; }
+    .tag-blue .dot { background: #3b82f6; }
+    .tag-green { background: #dcfce7; color: #166534; }
+    .tag-green .dot { background: #22c55e; }
+    .tag-red { background: #fee2e2; color: #991b1b; }
+    .tag-red .dot { background: #ef4444; }
+    .tag-orange { background: #ffedd5; color: #9a3412; }
+    .tag-orange .dot { background: #f97316; }
+    .tag-purple { background: #f3e8ff; color: #6b21a8; }
+    .tag-purple .dot { background: #a855f7; }
+    .tag-teal { background: #ccfbf1; color: #115e59; }
+    .tag-teal .dot { background: #14b8a6; }
+    .tag-pink { background: #fce7f3; color: #9d174d; }
+    .tag-pink .dot { background: #ec4899; }
+    .tag-gray { background: #f1f5f9; color: #475569; }
+    .tag-gray .dot { background: #94a3b8; }
+
+    /* Data Table */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .data-table thead th {
+      padding: 0.75rem 1rem;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border-color);
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .data-table tbody td {
+      padding: 0.75rem 1rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+
+    .data-table tbody tr:hover { background: #f8fafc; }
+    .data-table tbody tr:last-child td { border-bottom: none; }
+
+    .color-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .action-link {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent);
+      cursor: pointer;
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .action-link:hover { color: #0c6577; text-decoration: underline; }
+    .action-link.danger { color: var(--danger-color); }
+    .action-link.danger:hover { color: #b91c1c; }
+    .action-link.run { color: var(--success-color); }
+    .action-link.run:hover { color: #16a34a; }
+
+    /* Inline Form */
+    .inline-form {
+      display: none;
+      padding: 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      background: #f8fafc;
+    }
+
+    .inline-form.show { display: block; }
+
+    .inline-form label {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.25rem;
+      display: block;
+    }
+
+    .inline-form input,
+    .inline-form textarea {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .inline-form input:focus,
+    .inline-form textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .color-palette { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+    .color-swatch {
+      width: 32px;
+      height: 32px;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .color-swatch:hover { transform: scale(1.1); }
+
+    .color-swatch.selected {
+      border-color: var(--text-primary);
+      box-shadow: 0 0 0 2px white, 0 0 0 4px var(--text-primary);
+    }
+
+    /* Segment Builder Modal */
+    .segment-builder {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 9999;
+      overflow-y: auto;
+      padding: 2rem;
+    }
+
+    .segment-builder.show {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    .builder-panel {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      width: 100%;
+      max-width: 900px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .builder-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .builder-header h3 { font-size: 1.125rem; font-weight: 700; margin: 0; }
+
+    .builder-close {
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0.25rem;
+    }
+
+    .builder-close:hover { color: var(--text-primary); }
+
+    .builder-body { padding: 1.5rem; }
+
+    .builder-section-label {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .builder-input {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .builder-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    /* Rule Rows */
+    .rule-group {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .rule-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 0.5rem;
+    }
+
+    .rule-row:last-child { margin-bottom: 0; }
+
+    .rule-row select,
+    .rule-row input {
+      padding: 0.4375rem 0.625rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      background: white;
+    }
+
+    .rule-row select:focus,
+    .rule-row input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .rule-field { flex: 2; min-width: 160px; }
+    .rule-operator { flex: 1.5; min-width: 140px; }
+    .rule-value { flex: 2; min-width: 140px; }
+
+    .rule-remove {
+      background: none;
+      border: none;
+      color: var(--danger-color);
+      cursor: pointer;
+      padding: 0.375rem;
+      font-size: 0.875rem;
+      border-radius: 0.375rem;
+      transition: background 0.15s;
+    }
+
+    .rule-remove:hover { background: #fee2e2; }
+
+    .logic-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+      margin: 0.25rem 0;
+    }
+
+    .logic-badge.active-and { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
+    .logic-badge.active-or { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+
+    .add-rule-btn {
+      background: none;
+      border: 1px dashed var(--border-color);
+      color: var(--text-secondary);
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .add-rule-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    /* Preview Section */
+    .preview-section {
+      background: var(--accent-bg);
+      border: 1px solid #a5f3fc;
+      border-radius: 0.75rem;
+      padding: 1rem 1.25rem;
+      margin-top: 1rem;
+    }
+
+    .preview-count {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .preview-label {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      margin-top: 0.125rem;
+    }
+
+    .preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.75rem;
+      background: white;
+      border-radius: 0.5rem;
+      overflow: hidden;
+    }
+
+    .preview-table th {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.625rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border-color);
+      text-align: left;
+    }
+
+    .preview-table td {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.75rem;
+      color: var(--text-primary);
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .preview-table tr:last-child td { border-bottom: none; }
+
+    .builder-footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border-color);
+      flex-wrap: wrap;
+    }
+
+    .rules-summary {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      max-width: 280px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .segment-count { font-weight: 700; color: var(--accent); }
+
+    .table-responsive { overflow-x: auto; }
+
+    .action-sep { color: var(--border-color); margin: 0 0.2rem; }
+
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .rule-row { flex-direction: column; align-items: stretch; }
+      .rule-field, .rule-operator, .rule-value { min-width: 100%; }
+      .segment-builder { padding: 0.75rem; }
+      .builder-panel { max-height: 95vh; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-tags" style="color: var(--accent); margin-right: 0.5rem; font-size: 1.25rem;"></i>Tags & Segmentation</h1>
+      <p class="subtitle">Organize contacts with tags and build dynamic segments for targeted outreach</p>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('tags')">
+      <i class="fas fa-tag me-1"></i> Tags
+    </button>
+    <button class="tab-btn" onclick="switchTab('segments')">
+      <i class="fas fa-filter me-1"></i> Segments
+    </button>
+  </div>
+
+  <!-- ===== TAB 1: Tags ===== -->
+  <div class="tab-content active" id="tab-tags">
+
+    <!-- Tag Stats Row -->
+    <div class="row g-3 mb-3">
+      <div class="col-md-4">
+        <div class="stat-card">
+          <div class="stat-label">Total Tags</div>
+          <div class="stat-value">24</div>
+          <div class="stat-sub">Across all categories</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="stat-card">
+          <div class="stat-label">Most Used</div>
+          <div class="stat-value" style="font-size: 1.0625rem;">Monthly Donor</div>
+          <div class="stat-sub">2,345 contacts</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="stat-card">
+          <div class="stat-label">Recently Created</div>
+          <div class="stat-value" style="font-size: 1.0625rem;">Spring 2026 Appeal</div>
+          <div class="stat-sub">Apr 5, 2026</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tags Card -->
+    <div class="list-card">
+
+      <!-- Action Bar -->
+      <div class="action-bar">
+        <button class="btn-primary-accent" onclick="toggleTagForm()">
+          <i class="fas fa-plus me-1"></i> New Tag
+        </button>
+        <div class="search-input">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Search tags..." oninput="filterTags(this.value)">
+        </div>
+      </div>
+
+      <!-- Inline Tag Form -->
+      <div class="inline-form" id="tagForm">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label>Tag Name <span style="color: var(--danger-color);">*</span></label>
+            <input type="text" id="tagNameInput" placeholder="Enter tag name...">
+          </div>
+          <div class="col-md-4">
+            <label>Color</label>
+            <div class="color-palette mt-1">
+              <div class="color-swatch selected" style="background: #3b82f6;" data-color="blue" onclick="selectColor(this)"></div>
+              <div class="color-swatch" style="background: #22c55e;" data-color="green" onclick="selectColor(this)"></div>
+              <div class="color-swatch" style="background: #ef4444;" data-color="red" onclick="selectColor(this)"></div>
+              <div class="color-swatch" style="background: #f97316;" data-color="orange" onclick="selectColor(this)"></div>
+              <div class="color-swatch" style="background: #a855f7;" data-color="purple" onclick="selectColor(this)"></div>
+              <div class="color-swatch" style="background: #14b8a6;" data-color="teal" onclick="selectColor(this)"></div>
+              <div class="color-swatch" style="background: #ec4899;" data-color="pink" onclick="selectColor(this)"></div>
+              <div class="color-swatch" style="background: #94a3b8;" data-color="gray" onclick="selectColor(this)"></div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <label>Description (optional)</label>
+            <input type="text" placeholder="Brief description...">
+          </div>
+        </div>
+        <div class="d-flex gap-2 mt-3">
+          <button class="btn-primary-accent" onclick="saveTag()"><i class="fas fa-check me-1"></i> Save</button>
+          <button class="btn-secondary" onclick="toggleTagForm()">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Tag Cloud -->
+      <div class="tag-cloud" id="tagCloud">
+        <span class="tag-cloud-badge tag-green tag-xl"><span class="dot"></span>Monthly Donor <span class="tag-count">2,345</span></span>
+        <span class="tag-cloud-badge tag-green tag-lg"><span class="dot"></span>Spring 2026 Appeal <span class="tag-count">3,240</span></span>
+        <span class="tag-cloud-badge tag-orange tag-lg"><span class="dot"></span>Lapsed <span class="tag-count">1,234</span></span>
+        <span class="tag-cloud-badge tag-green tag-md"><span class="dot"></span>First-Time Donor <span class="tag-count">890</span></span>
+        <span class="tag-cloud-badge tag-purple tag-md"><span class="dot"></span>Annual Gala <span class="tag-count">890</span></span>
+        <span class="tag-cloud-badge tag-red tag-md"><span class="dot"></span>At Risk <span class="tag-count">567</span></span>
+        <span class="tag-cloud-badge tag-blue tag-sm"><span class="dot"></span>Major Donor <span class="tag-count">456</span></span>
+        <span class="tag-cloud-badge tag-teal tag-sm"><span class="dot"></span>Education Sponsor <span class="tag-count">234</span></span>
+        <span class="tag-cloud-badge tag-purple tag-sm"><span class="dot"></span>Event Volunteer <span class="tag-count">178</span></span>
+        <span class="tag-cloud-badge tag-blue tag-xs"><span class="dot"></span>Corporate Partner <span class="tag-count">45</span></span>
+      </div>
+
+      <!-- Tags Table -->
+      <div class="table-responsive">
+        <table class="data-table" id="tagsTable">
+          <thead>
+            <tr>
+              <th>Tag Name</th>
+              <th>Color</th>
+              <th>Contacts</th>
+              <th>Created</th>
+              <th>Created By</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Major Donor</strong></td>
+              <td><span class="color-dot" style="background: #3b82f6;"></span> Blue</td>
+              <td>456</td>
+              <td>Jan 2024</td>
+              <td>System</td>
+              <td>
+                <a class="action-link" onclick="editTag('Major Donor')">Edit</a>
+                <span class="action-sep">|</span>
+                <a class="action-link danger" onclick="deleteTag('Major Donor')">Delete</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Monthly Donor</strong></td>
+              <td><span class="color-dot" style="background: #22c55e;"></span> Green</td>
+              <td>2,345</td>
+              <td>Jan 2024</td>
+              <td>System</td>
+              <td>
+                <a class="action-link" onclick="editTag('Monthly Donor')">Edit</a>
+                <span class="action-sep">|</span>
+                <a class="action-link danger" onclick="deleteTag('Monthly Donor')">Delete</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Annual Gala</strong></td>
+              <td><span class="color-dot" style="background: #a855f7;"></span> Purple</td>
+              <td>890</td>
+              <td>Mar 2025</td>
+              <td>John Smith</td>
+              <td>
+                <a class="action-link" onclick="editTag('Annual Gala')">Edit</a>
+                <span class="action-sep">|</span>
+                <a class="action-link danger" onclick="deleteTag('Annual Gala')">Delete</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Education Sponsor</strong></td>
+              <td><span class="color-dot" style="background: #14b8a6;"></span> Teal</td>
+              <td>234</td>
+              <td>Jun 2025</td>
+              <td>Jane Doe</td>
+              <td>
+                <a class="action-link" onclick="editTag('Education Sponsor')">Edit</a>
+                <span class="action-sep">|</span>
+                <a class="action-link danger" onclick="deleteTag('Education Sponsor')">Delete</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>At Risk</strong></td>
+              <td><span class="color-dot" style="background: #ef4444;"></span> Red</td>
+              <td>567</td>
+              <td>Aug 2025</td>
+              <td>System</td>
+              <td>
+                <a class="action-link" onclick="editTag('At Risk')">Edit</a>
+                <span class="action-sep">|</span>
+                <a class="action-link danger" onclick="deleteTag('At Risk')">Delete</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Lapsed</strong></td>
+              <td><span class="color-dot" style="background: #f97316;"></span> Orange</td>
+              <td>1,234</td>
+              <td>Jan 2024</td>
+              <td>System</td>
+              <td>
+                <a class="action-link" onclick="editTag('Lapsed')">Edit</a>
+                <span class="action-sep">|</span>
+                <a class="action-link danger" onclick="deleteTag('Lapsed')">Delete</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Spring 2026 Appeal</strong></td>
+              <td><span class="color-dot" style="background: #22c55e;"></span> Green</td>
+              <td>3,240</td>
+              <td>Apr 2026</td>
+              <td>John Smith</td>
+              <td>
+                <a class="action-link" onclick="editTag('Spring 2026 Appeal')">Edit</a>
+                <span class="action-sep">|</span>
+                <a class="action-link danger" onclick="deleteTag('Spring 2026 Appeal')">Delete</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Corporate Partner</strong></td>
+              <td><span class="color-dot" style="background: #3b82f6;"></span> Blue</td>
+              <td>45</td>
+              <td>Feb 2024</td>
+              <td>System</td>
+              <td>
+                <a class="action-link" onclick="editTag('Corporate Partner')">Edit</a>
+                <span class="action-sep">|</span>
+                <a class="action-link danger" onclick="deleteTag('Corporate Partner')">Delete</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Event Volunteer</strong></td>
+              <td><span class="color-dot" style="background: #a855f7;"></span> Purple</td>
+              <td>178</td>
+              <td>Mar 2024</td>
+              <td>System</td>
+              <td>
+                <a class="action-link" onclick="editTag('Event Volunteer')">Edit</a>
+                <span class="action-sep">|</span>
+                <a class="action-link danger" onclick="deleteTag('Event Volunteer')">Delete</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>First-Time Donor</strong></td>
+              <td><span class="color-dot" style="background: #22c55e;"></span> Green</td>
+              <td>890</td>
+              <td>Jan 2024</td>
+              <td>System</td>
+              <td>
+                <a class="action-link" onclick="editTag('First-Time Donor')">Edit</a>
+                <span class="action-sep">|</span>
+                <a class="action-link danger" onclick="deleteTag('First-Time Donor')">Delete</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TAB 2: Segments ===== -->
+  <div class="tab-content" id="tab-segments">
+
+    <!-- Segment Stats Row -->
+    <div class="row g-3 mb-3">
+      <div class="col-md-4">
+        <div class="stat-card">
+          <div class="stat-label">Total Segments</div>
+          <div class="stat-value">12</div>
+          <div class="stat-sub">Active filter-based groups</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="stat-card">
+          <div class="stat-label">Largest Segment</div>
+          <div class="stat-value" style="font-size: 1.0625rem;">All Active Donors</div>
+          <div class="stat-sub">8,456 contacts</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="stat-card">
+          <div class="stat-label">Recently Run</div>
+          <div class="stat-value" style="font-size: 1.0625rem;">Lapsed Donors 90d</div>
+          <div class="stat-sub">Apr 10, 2026</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Segments Card -->
+    <div class="list-card">
+
+      <!-- Action Bar -->
+      <div class="action-bar">
+        <button class="btn-primary-accent" onclick="openSegmentBuilder()">
+          <i class="fas fa-plus me-1"></i> New Segment
+        </button>
+        <div class="search-input">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Search segments..." oninput="filterSegments(this.value)">
+        </div>
+      </div>
+
+      <!-- Segments Table -->
+      <div class="table-responsive">
+        <table class="data-table" id="segmentsTable">
+          <thead>
+            <tr>
+              <th>Segment Name</th>
+              <th>Rules Summary</th>
+              <th>Contact Count</th>
+              <th>Last Run</th>
+              <th>Created By</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>All Active Donors</strong></td>
+              <td><span class="rules-summary">Type = Donor AND Status = Active</span></td>
+              <td><span class="segment-count">8,456</span></td>
+              <td>Apr 10</td>
+              <td>System</td>
+              <td>
+                <a class="action-link" onclick="viewSegment('All Active Donors')">View</a>
+                <span class="action-sep">|</span>
+                <a class="action-link" onclick="editSegment('All Active Donors')">Edit</a>
+                <span class="action-sep">|</span>
+                <a class="action-link run" onclick="runSegment('All Active Donors')">Run</a>
+                <span class="action-sep">|</span>
+                <a class="action-link danger" onclick="deleteSegment('All Active Donors')">Delete</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Major Donors ($1K+)</strong></td>
+              <td><span class="rules-summary">Total Donated &ge; $1,000 AND Last 12 months</span></td>
+              <td><span class="segment-count">456</span></td>
+              <td>Apr 10</td>
+              <td>John Smith</td>
+              <td>
+                <a class="action-link" onclick="viewSegment('Major Donors')">View</a>
+                <span class="action-sep">|</span>
+                <a class="action-link" onclick="editSegment('Major Donors ($1K+)')">Edit</a>
+                <span class="action-sep">|</span>
+                <a class="action-link run" onclick="runSegment('Major Donors')">Run</a>
+                <span class="action-sep">|</span>
+                <a class="action-link danger" onclick="deleteSegment('Major Donors')">Delete</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Lapsed Donors (90 days)</strong></td>
+              <td><span class="rules-summary">Last Donation > 90 days ago AND Score &lt; 50</span></td>
+              <td><span class="segment-count">1,234</span></td>
+              <td>Apr 10</td>
+              <td>System</td>
+              <td>
+                <a class="action-link" onclick="viewSegment('Lapsed Donors')">View</a>
+                <span class="action-sep">|</span>
+                <a class="action-link" onclick="editSegment('Lapsed Donors (90 days)')">Edit</a>
+                <span class="action-sep">|</span>
+                <a class="action-link run" onclick="runSegment('Lapsed Donors')">Run</a>
+                <span class="action-sep">|</span>
+                <a class="action-link danger" onclick="deleteSegment('Lapsed Donors')">Delete</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Monthly Recurring Active</strong></td>
+              <td><span class="rules-summary">Has Active Recurring = Yes</span></td>
+              <td><span class="segment-count">890</span></td>
+              <td>Apr 9</td>
+              <td>System</td>
+              <td>
+                <a class="action-link" onclick="viewSegment('Monthly Recurring')">View</a>
+                <span class="action-sep">|</span>
+                <a class="action-link" onclick="editSegment('Monthly Recurring Active')">Edit</a>
+                <span class="action-sep">|</span>
+                <a class="action-link run" onclick="runSegment('Monthly Recurring')">Run</a>
+                <span class="action-sep">|</span>
+                <a class="action-link danger" onclick="deleteSegment('Monthly Recurring')">Delete</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>High Engagement (80+)</strong></td>
+              <td><span class="rules-summary">Engagement Score &ge; 80</span></td>
+              <td><span class="segment-count">2,100</span></td>
+              <td>Apr 8</td>
+              <td>Jane Doe</td>
+              <td>
+                <a class="action-link" onclick="viewSegment('High Engagement')">View</a>
+                <span class="action-sep">|</span>
+                <a class="action-link" onclick="editSegment('High Engagement (80+)')">Edit</a>
+                <span class="action-sep">|</span>
+                <a class="action-link run" onclick="runSegment('High Engagement')">Run</a>
+                <span class="action-sep">|</span>
+                <a class="action-link danger" onclick="deleteSegment('High Engagement')">Delete</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Email Engaged</strong></td>
+              <td><span class="rules-summary">Opened Email in Last 30 days</span></td>
+              <td><span class="segment-count">5,678</span></td>
+              <td>Apr 7</td>
+              <td>System</td>
+              <td>
+                <a class="action-link" onclick="viewSegment('Email Engaged')">View</a>
+                <span class="action-sep">|</span>
+                <a class="action-link" onclick="editSegment('Email Engaged')">Edit</a>
+                <span class="action-sep">|</span>
+                <a class="action-link run" onclick="runSegment('Email Engaged')">Run</a>
+                <span class="action-sep">|</span>
+                <a class="action-link danger" onclick="deleteSegment('Email Engaged')">Delete</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>India-based Donors</strong></td>
+              <td><span class="rules-summary">Country = India AND Type = Donor</span></td>
+              <td><span class="segment-count">3,456</span></td>
+              <td>Apr 5</td>
+              <td>John Smith</td>
+              <td>
+                <a class="action-link" onclick="viewSegment('India-based Donors')">View</a>
+                <span class="action-sep">|</span>
+                <a class="action-link" onclick="editSegment('India-based Donors')">Edit</a>
+                <span class="action-sep">|</span>
+                <a class="action-link run" onclick="runSegment('India-based Donors')">Run</a>
+                <span class="action-sep">|</span>
+                <a class="action-link danger" onclick="deleteSegment('India-based Donors')">Delete</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Spring Appeal Targets</strong></td>
+              <td><span class="rules-summary">Score &ge; 60 AND NOT Tag "Spring 2026 Appeal"</span></td>
+              <td><span class="segment-count">1,890</span></td>
+              <td>Apr 1</td>
+              <td>Jane Doe</td>
+              <td>
+                <a class="action-link" onclick="viewSegment('Spring Appeal')">View</a>
+                <span class="action-sep">|</span>
+                <a class="action-link" onclick="editSegment('Spring Appeal Targets')">Edit</a>
+                <span class="action-sep">|</span>
+                <a class="action-link run" onclick="runSegment('Spring Appeal')">Run</a>
+                <span class="action-sep">|</span>
+                <a class="action-link danger" onclick="deleteSegment('Spring Appeal')">Delete</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Segment Builder Modal ===== -->
+  <div class="segment-builder" id="segmentBuilder" onclick="if(event.target===this)closeSegmentBuilder()">
+    <div class="builder-panel">
+      <div class="builder-header">
+        <h3><i class="fas fa-filter me-2" style="color: var(--accent);"></i>Segment Builder</h3>
+        <button class="builder-close" onclick="closeSegmentBuilder()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="builder-body">
+        <!-- Segment Name -->
+        <div class="mb-3">
+          <div class="builder-section-label">Segment Name</div>
+          <input type="text" class="builder-input" placeholder="e.g., High-Value Donors Q2 2026" id="segmentNameInput">
+        </div>
+
+        <!-- Filter Rules -->
+        <div class="mb-3">
+          <div class="builder-section-label">Filter Rules</div>
+
+          <div class="rule-group" id="ruleGroup1">
+            <!-- Rule 1 -->
+            <div class="rule-row">
+              <select class="rule-field" onchange="updateOperators(this)">
+                <option value="">Select Field...</option>
+                <option value="contact_name">Contact Name</option>
+                <option value="email">Email</option>
+                <option value="phone">Phone</option>
+                <option value="country">Country</option>
+                <option value="contact_type" selected>Contact Type</option>
+                <option value="engagement_score">Engagement Score</option>
+                <option value="total_donated">Total Donated</option>
+                <option value="last_donation_date">Last Donation Date</option>
+                <option value="last_donation_amount">Last Donation Amount</option>
+                <option value="tags">Tags</option>
+                <option value="has_recurring">Has Recurring</option>
+                <option value="email_opened">Email Opened</option>
+                <option value="event_attended">Event Attended</option>
+                <option value="volunteer_hours">Volunteer Hours</option>
+              </select>
+              <select class="rule-operator">
+                <option value="is" selected>is</option>
+                <option value="is_not">is not</option>
+                <option value="is_any_of">is any of</option>
+              </select>
+              <input type="text" class="rule-value" value="Donor" placeholder="Value...">
+              <button class="rule-remove" onclick="removeRule(this)" title="Remove rule"><i class="fas fa-trash-alt"></i></button>
+            </div>
+
+            <div class="d-flex justify-content-center my-1">
+              <span class="logic-badge active-and" onclick="toggleLogic(this)">AND</span>
+            </div>
+
+            <!-- Rule 2 -->
+            <div class="rule-row">
+              <select class="rule-field" onchange="updateOperators(this)">
+                <option value="">Select Field...</option>
+                <option value="contact_name">Contact Name</option>
+                <option value="email">Email</option>
+                <option value="phone">Phone</option>
+                <option value="country">Country</option>
+                <option value="contact_type">Contact Type</option>
+                <option value="engagement_score" selected>Engagement Score</option>
+                <option value="total_donated">Total Donated</option>
+                <option value="last_donation_date">Last Donation Date</option>
+                <option value="last_donation_amount">Last Donation Amount</option>
+                <option value="tags">Tags</option>
+                <option value="has_recurring">Has Recurring</option>
+                <option value="email_opened">Email Opened</option>
+                <option value="event_attended">Event Attended</option>
+                <option value="volunteer_hours">Volunteer Hours</option>
+              </select>
+              <select class="rule-operator">
+                <option value="equals">equals</option>
+                <option value="greater_than" selected>greater than</option>
+                <option value="less_than">less than</option>
+                <option value="between">between</option>
+              </select>
+              <input type="number" class="rule-value" value="60" placeholder="Value...">
+              <button class="rule-remove" onclick="removeRule(this)" title="Remove rule"><i class="fas fa-trash-alt"></i></button>
+            </div>
+
+            <div class="d-flex justify-content-center my-1">
+              <span class="logic-badge active-and" onclick="toggleLogic(this)">AND</span>
+            </div>
+
+            <!-- Rule 3 -->
+            <div class="rule-row">
+              <select class="rule-field" onchange="updateOperators(this)">
+                <option value="">Select Field...</option>
+                <option value="contact_name">Contact Name</option>
+                <option value="email">Email</option>
+                <option value="phone">Phone</option>
+                <option value="country">Country</option>
+                <option value="contact_type">Contact Type</option>
+                <option value="engagement_score">Engagement Score</option>
+                <option value="total_donated">Total Donated</option>
+                <option value="last_donation_date">Last Donation Date</option>
+                <option value="last_donation_amount">Last Donation Amount</option>
+                <option value="tags" selected>Tags</option>
+                <option value="has_recurring">Has Recurring</option>
+                <option value="email_opened">Email Opened</option>
+                <option value="event_attended">Event Attended</option>
+                <option value="volunteer_hours">Volunteer Hours</option>
+              </select>
+              <select class="rule-operator">
+                <option value="is">is</option>
+                <option value="is_not" selected>is not</option>
+                <option value="is_any_of">is any of</option>
+              </select>
+              <input type="text" class="rule-value" value="Spring 2026 Appeal" placeholder="Value...">
+              <button class="rule-remove" onclick="removeRule(this)" title="Remove rule"><i class="fas fa-trash-alt"></i></button>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 mt-2">
+            <button class="add-rule-btn" onclick="addRule()">
+              <i class="fas fa-plus me-1"></i> Add Rule
+            </button>
+            <button class="add-rule-btn" onclick="addRuleGroup()">
+              <i class="fas fa-layer-group me-1"></i> Add Rule Group
+            </button>
+          </div>
+        </div>
+
+        <!-- Preview Section -->
+        <div class="preview-section">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+            <div>
+              <div class="preview-count">1,890</div>
+              <div class="preview-label">Matching Contacts</div>
+            </div>
+            <button class="btn-outline-accent" onclick="previewResults()" style="font-size: 0.75rem; padding: 0.375rem 0.75rem;">
+              <i class="fas fa-eye me-1"></i> Preview Results
+            </button>
+          </div>
+
+          <div id="previewTable" style="display: none;">
+            <table class="preview-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Code</th>
+                  <th>Type</th>
+                  <th>Score</th>
+                  <th>Last Donation</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Ramesh Kumar</td>
+                  <td>CON-00245</td>
+                  <td>Donor</td>
+                  <td><strong style="color: var(--accent);">78</strong></td>
+                  <td>$250 (Mar 15, 2026)</td>
+                </tr>
+                <tr>
+                  <td>Sarah Johnson</td>
+                  <td>CON-00312</td>
+                  <td>Donor</td>
+                  <td><strong style="color: var(--accent);">85</strong></td>
+                  <td>$500 (Feb 28, 2026)</td>
+                </tr>
+                <tr>
+                  <td>Priya Sharma</td>
+                  <td>CON-00189</td>
+                  <td>Donor</td>
+                  <td><strong style="color: var(--accent);">72</strong></td>
+                  <td>$150 (Mar 22, 2026)</td>
+                </tr>
+                <tr>
+                  <td>Michael Chen</td>
+                  <td>CON-00456</td>
+                  <td>Donor</td>
+                  <td><strong style="color: var(--accent);">91</strong></td>
+                  <td>$1,000 (Apr 2, 2026)</td>
+                </tr>
+                <tr>
+                  <td>Anita Desai</td>
+                  <td>CON-00534</td>
+                  <td>Donor</td>
+                  <td><strong style="color: var(--accent);">65</strong></td>
+                  <td>$100 (Mar 10, 2026)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Builder Footer -->
+      <div class="builder-footer">
+        <button class="btn-secondary" onclick="closeSegmentBuilder()">Cancel</button>
+        <button class="btn-outline-accent" onclick="saveAndUseCampaign()">
+          <i class="fas fa-paper-plane me-1"></i> Save & Use in Campaign
+        </button>
+        <button class="btn-primary-accent" onclick="saveSegment()">
+          <i class="fas fa-check me-1"></i> Save Segment
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* Tab Switching */
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.getElementById('tab-' + tab).classList.add('active');
+      event.target.closest('.tab-btn').classList.add('active');
+    }
+
+    /* Tag Form */
+    function toggleTagForm() {
+      const form = document.getElementById('tagForm');
+      form.classList.toggle('show');
+      if (form.classList.contains('show')) document.getElementById('tagNameInput').focus();
+    }
+
+    function selectColor(swatch) {
+      document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+      swatch.classList.add('selected');
+    }
+
+    function saveTag() {
+      const name = document.getElementById('tagNameInput').value;
+      if (!name.trim()) { alert('Please enter a tag name.'); return; }
+      alert('Tag "' + name + '" saved successfully!');
+      toggleTagForm();
+      document.getElementById('tagNameInput').value = '';
+    }
+
+    function editTag(name) {
+      document.getElementById('tagForm').classList.add('show');
+      document.getElementById('tagNameInput').value = name;
+      document.getElementById('tagNameInput').focus();
+    }
+
+    function deleteTag(name) {
+      if (confirm('Are you sure you want to delete the tag "' + name + '"? This will remove it from all contacts.')) {
+        alert('Tag "' + name + '" deleted.');
+      }
+    }
+
+    /* Search / Filter */
+    function filterTags(query) {
+      const q = query.toLowerCase();
+      document.querySelectorAll('#tagsTable tbody tr').forEach(row => {
+        row.style.display = row.cells[0].textContent.toLowerCase().includes(q) ? '' : 'none';
+      });
+      document.querySelectorAll('#tagCloud .tag-cloud-badge').forEach(badge => {
+        badge.style.display = badge.textContent.toLowerCase().includes(q) ? '' : 'none';
+      });
+    }
+
+    function filterSegments(query) {
+      const q = query.toLowerCase();
+      document.querySelectorAll('#segmentsTable tbody tr').forEach(row => {
+        const text = row.cells[0].textContent.toLowerCase() + ' ' + row.cells[1].textContent.toLowerCase();
+        row.style.display = text.includes(q) ? '' : 'none';
+      });
+    }
+
+    /* Segment Builder */
+    function openSegmentBuilder() {
+      document.getElementById('segmentBuilder').classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSegmentBuilder() {
+      document.getElementById('segmentBuilder').classList.remove('show');
+      document.body.style.overflow = '';
+    }
+
+    function editSegment(name) {
+      document.getElementById('segmentNameInput').value = name;
+      openSegmentBuilder();
+    }
+
+    function viewSegment(name) {
+      if (window.parent && window.parent.loadContent) {
+        window.parent.loadContent('contacts/contact-list');
+      }
+    }
+
+    function runSegment(name) {
+      alert('Segment "' + name + '" is being recalculated...\nContact count updated.');
+    }
+
+    function deleteSegment(name) {
+      if (confirm('Are you sure you want to delete the segment "' + name + '"?')) {
+        alert('Segment "' + name + '" deleted.');
+      }
+    }
+
+    function saveSegment() {
+      const name = document.getElementById('segmentNameInput').value;
+      if (!name.trim()) { alert('Please enter a segment name.'); return; }
+      alert('Segment "' + name + '" saved successfully!');
+      closeSegmentBuilder();
+    }
+
+    function saveAndUseCampaign() {
+      const name = document.getElementById('segmentNameInput').value;
+      if (!name.trim()) { alert('Please enter a segment name.'); return; }
+      alert('Segment "' + name + '" saved! Redirecting to campaign builder...');
+      closeSegmentBuilder();
+      if (window.parent && window.parent.loadContent) {
+        window.parent.loadContent('communication/email-campaign-builder');
+      }
+    }
+
+    /* Logic Toggle */
+    function toggleLogic(badge) {
+      if (badge.textContent.trim() === 'AND') {
+        badge.textContent = 'OR';
+        badge.classList.replace('active-and', 'active-or');
+      } else {
+        badge.textContent = 'AND';
+        badge.classList.replace('active-or', 'active-and');
+      }
+    }
+
+    /* Add / Remove Rules */
+    function addRule() {
+      const group = document.getElementById('ruleGroup1');
+      const logicDiv = document.createElement('div');
+      logicDiv.className = 'd-flex justify-content-center my-1';
+      logicDiv.innerHTML = '<span class="logic-badge active-and" onclick="toggleLogic(this)">AND</span>';
+      group.appendChild(logicDiv);
+
+      const row = document.createElement('div');
+      row.className = 'rule-row';
+      row.innerHTML = `
+        <select class="rule-field" onchange="updateOperators(this)">
+          <option value="">Select Field...</option>
+          <option value="contact_name">Contact Name</option>
+          <option value="email">Email</option>
+          <option value="phone">Phone</option>
+          <option value="country">Country</option>
+          <option value="contact_type">Contact Type</option>
+          <option value="engagement_score">Engagement Score</option>
+          <option value="total_donated">Total Donated</option>
+          <option value="last_donation_date">Last Donation Date</option>
+          <option value="last_donation_amount">Last Donation Amount</option>
+          <option value="tags">Tags</option>
+          <option value="has_recurring">Has Recurring</option>
+          <option value="email_opened">Email Opened</option>
+          <option value="event_attended">Event Attended</option>
+          <option value="volunteer_hours">Volunteer Hours</option>
+        </select>
+        <select class="rule-operator">
+          <option value="contains">contains</option>
+          <option value="equals">equals</option>
+          <option value="starts_with">starts with</option>
+          <option value="is_empty">is empty</option>
+          <option value="is_not_empty">is not empty</option>
+        </select>
+        <input type="text" class="rule-value" placeholder="Value...">
+        <button class="rule-remove" onclick="removeRule(this)" title="Remove rule"><i class="fas fa-trash-alt"></i></button>
+      `;
+      group.appendChild(row);
+    }
+
+    function addRuleGroup() {
+      const container = document.getElementById('ruleGroup1').parentElement;
+      const newGroup = document.createElement('div');
+      newGroup.className = 'rule-group mt-2';
+      newGroup.innerHTML = `
+        <div style="font-size:0.6875rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem;">
+          <i class="fas fa-layer-group me-1"></i> Nested Group
+        </div>
+        <div class="rule-row">
+          <select class="rule-field" onchange="updateOperators(this)">
+            <option value="">Select Field...</option>
+            <option value="contact_name">Contact Name</option>
+            <option value="email">Email</option>
+            <option value="phone">Phone</option>
+            <option value="country">Country</option>
+            <option value="contact_type">Contact Type</option>
+            <option value="engagement_score">Engagement Score</option>
+            <option value="total_donated">Total Donated</option>
+            <option value="last_donation_date">Last Donation Date</option>
+            <option value="last_donation_amount">Last Donation Amount</option>
+            <option value="tags">Tags</option>
+            <option value="has_recurring">Has Recurring</option>
+            <option value="email_opened">Email Opened</option>
+            <option value="event_attended">Event Attended</option>
+            <option value="volunteer_hours">Volunteer Hours</option>
+          </select>
+          <select class="rule-operator">
+            <option value="contains">contains</option>
+            <option value="equals">equals</option>
+            <option value="starts_with">starts with</option>
+            <option value="is_empty">is empty</option>
+            <option value="is_not_empty">is not empty</option>
+          </select>
+          <input type="text" class="rule-value" placeholder="Value...">
+          <button class="rule-remove" onclick="removeRule(this)" title="Remove rule"><i class="fas fa-trash-alt"></i></button>
+        </div>
+      `;
+      container.appendChild(newGroup);
+    }
+
+    function removeRule(btn) {
+      const ruleRow = btn.closest('.rule-row');
+      const prev = ruleRow.previousElementSibling;
+      const next = ruleRow.nextElementSibling;
+      if (prev && prev.querySelector('.logic-badge')) prev.remove();
+      else if (next && next.querySelector('.logic-badge')) next.remove();
+      ruleRow.remove();
+    }
+
+    /* Dynamic Operators */
+    function updateOperators(fieldSelect) {
+      const field = fieldSelect.value;
+      const opSelect = fieldSelect.closest('.rule-row').querySelector('.rule-operator');
+      const valInput = fieldSelect.closest('.rule-row').querySelector('.rule-value');
+      let ops = [];
+
+      if (['contact_name', 'email', 'phone'].includes(field)) {
+        ops = [['contains','contains'],['equals','equals'],['starts_with','starts with'],['is_empty','is empty'],['is_not_empty','is not empty']];
+      } else if (['engagement_score', 'total_donated', 'last_donation_amount', 'volunteer_hours'].includes(field)) {
+        ops = [['equals','equals'],['greater_than','greater than'],['less_than','less than'],['between','between']];
+        valInput.type = 'number'; valInput.value = ''; return updateOps();
+      } else if (['last_donation_date', 'email_opened', 'event_attended'].includes(field)) {
+        ops = [['before','before'],['after','after'],['between','between'],['in_last_x_days','in last X days'],['more_than_x_days_ago','more than X days ago']];
+      } else if (['country', 'contact_type', 'tags'].includes(field)) {
+        ops = [['is','is'],['is_not','is not'],['is_any_of','is any of']];
+      } else if (['has_recurring'].includes(field)) {
+        ops = [['is_true','is true'],['is_false','is false']];
+      } else {
+        ops = [['contains','contains'],['equals','equals']];
+      }
+
+      valInput.type = 'text'; valInput.value = '';
+      function updateOps() {}
+      opSelect.innerHTML = ops.map(o => '<option value="' + o[0] + '">' + o[1] + '</option>').join('');
+    }
+
+    /* Preview */
+    function previewResults() {
+      const t = document.getElementById('previewTable');
+      t.style.display = t.style.display === 'none' ? 'block' : 'none';
+    }
+  </script>
+
+</body>
+
+</html>

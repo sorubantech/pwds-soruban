@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>P2P Campaigns - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+    .page-header .subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 0; }
+    .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .btn-primary-accent { background: var(--accent); border-color: var(--accent); color: white; font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid var(--accent); cursor: pointer; transition: all 0.15s; }
+    .btn-primary-accent:hover { background: #0c6577; border-color: #0c6577; color: white; }
+    .btn-outline-accent { background: white; border: 1px solid var(--accent); color: var(--accent); font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.15s; }
+    .btn-outline-accent:hover { background: var(--accent); color: white; }
+
+    /* KPI Stats Grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+    .stat-card { background: white; border-radius: var(--card-radius); padding: 1.25rem; box-shadow: var(--card-shadow); border: 1px solid var(--border-color); display: flex; align-items: flex-start; gap: 1rem; transition: transform 0.15s, box-shadow 0.15s; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }
+    .stat-icon { width: 48px; height: 48px; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; }
+    .stat-icon.green { background: #f0fdf4; color: #22c55e; }
+    .stat-icon.blue { background: #eff6ff; color: #3b82f6; }
+    .stat-icon.purple { background: #faf5ff; color: #a855f7; }
+    .stat-icon.teal { background: var(--accent-bg); color: var(--accent); }
+    .stat-info { flex: 1; }
+    .stat-value { font-size: 1.625rem; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+    .stat-label { font-size: 0.8125rem; color: var(--text-secondary); font-weight: 500; margin-bottom: 0.125rem; }
+    .stat-subtitle { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; }
+
+    /* List Card */
+    .list-card { background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); }
+
+    /* Filter Bar */
+    .filter-bar { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); }
+    .search-input { position: relative; flex: 1; min-width: 240px; }
+    .search-input i { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 0.875rem; }
+    .search-input input { width: 100%; padding: 0.5rem 0.75rem 0.5rem 2.25rem; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 0.8125rem; color: var(--text-primary); transition: border-color 0.15s; }
+    .search-input input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1); }
+
+    /* Filter Chips */
+    .filter-chips { display: flex; gap: 0.375rem; flex-wrap: wrap; }
+    .filter-chip { padding: 0.3125rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; border: 1px solid var(--border-color); background: white; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+    .filter-chip:hover { border-color: var(--accent); color: var(--accent); }
+    .filter-chip.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+    /* Table */
+    .table-responsive { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+    thead th { padding: 0.75rem 1rem; text-align: left; font-size: 0.6875rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid var(--border-color); white-space: nowrap; }
+    tbody td { padding: 0.75rem 1rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    tbody tr:hover { background: #f8fafc; }
+    tbody tr:last-child td { border-bottom: none; }
+
+    /* Campaign name link */
+    .campaign-name { font-weight: 600; color: var(--accent); cursor: pointer; text-decoration: none; }
+    .campaign-name:hover { text-decoration: underline; }
+
+    /* Status Badges */
+    .status-badge { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.25rem 0.625rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; white-space: nowrap; }
+    .status-badge.active { background: #f0fdf4; color: #16a34a; }
+    .status-badge.always-active { background: #eff6ff; color: #2563eb; }
+    .status-badge.completed { background: #f0fdf4; color: #15803d; }
+    .status-badge.archived { background: #f1f5f9; color: #64748b; }
+    .status-badge.draft { background: #fefce8; color: #a16207; }
+
+    /* Progress bar in table */
+    .progress-cell { min-width: 120px; }
+    .progress-bar-track { height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; margin-bottom: 0.25rem; }
+    .progress-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+    .progress-bar-fill.high { background: var(--success-color); }
+    .progress-bar-fill.medium { background: var(--warning-color); }
+    .progress-bar-fill.low { background: var(--danger-color); }
+    .progress-pct { font-size: 0.75rem; font-weight: 600; }
+
+    /* Action buttons */
+    .action-btn { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.5rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 0.6875rem; font-weight: 500; color: var(--text-secondary); background: white; cursor: pointer; transition: all 0.15s; text-decoration: none; white-space: nowrap; }
+    .action-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+    .action-btn.danger:hover { border-color: var(--danger-color); color: var(--danger-color); background: #fef2f2; }
+
+    /* Table footer / pagination */
+    .table-footer { padding: 0.75rem 1.25rem; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; }
+    .table-info { font-size: 0.8125rem; color: var(--text-secondary); }
+    .pagination-controls { display: flex; gap: 0.25rem; }
+    .page-btn { width: 32px; height: 32px; border: 1px solid var(--border-color); border-radius: 0.375rem; background: white; color: var(--text-secondary); font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; }
+    .page-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .page-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1>Peer-to-Peer Campaigns</h1>
+      <p class="subtitle">Enable supporters to fundraise on your behalf</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="parent.loadContent('fundraising/p2p-campaign-setup')">
+        <i class="fas fa-plus me-1"></i> Create P2P Campaign
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Summary Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon teal">
+        <i class="fas fa-users"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Active Campaigns</div>
+        <div class="stat-value">3</div>
+        <div class="stat-subtitle">Total: 8</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon blue">
+        <i class="fas fa-user-group"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Total Fundraisers</div>
+        <div class="stat-value">234</div>
+        <div class="stat-subtitle">Active: 189</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green">
+        <i class="fas fa-hand-holding-dollar"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Total Raised (P2P)</div>
+        <div class="stat-value">$125,670</div>
+        <div class="stat-subtitle">This year</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon purple">
+        <i class="fas fa-chart-line"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Avg Per Fundraiser</div>
+        <div class="stat-value">$538</div>
+        <div class="stat-subtitle">Top: $3,200</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Campaign Table Card -->
+  <div class="list-card">
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+        <div class="search-input">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Search campaigns by name, status..." id="searchInput">
+        </div>
+      </div>
+      <div class="filter-chips">
+        <span class="filter-chip active" onclick="filterCampaigns(this, 'all')">All (8)</span>
+        <span class="filter-chip" onclick="filterCampaigns(this, 'active')">Active (4)</span>
+        <span class="filter-chip" onclick="filterCampaigns(this, 'completed')">Completed (2)</span>
+        <span class="filter-chip" onclick="filterCampaigns(this, 'draft')">Draft (1)</span>
+        <span class="filter-chip" onclick="filterCampaigns(this, 'archived')">Archived (1)</span>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Campaign Name</th>
+            <th>Status</th>
+            <th>Goal</th>
+            <th>Raised</th>
+            <th>Progress</th>
+            <th>Fundraisers</th>
+            <th>Donors</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Row 1: Run for Education 2026 -->
+          <tr data-status="active">
+            <td><a class="campaign-name" onclick="parent.loadContent('fundraising/p2p-campaign-setup')">Run for Education 2026</a></td>
+            <td><span class="status-badge active"><i class="fas fa-circle" style="font-size:0.375rem"></i> Active</span></td>
+            <td>$50,000</td>
+            <td><strong>$34,560</strong></td>
+            <td class="progress-cell">
+              <div class="progress-bar-track"><div class="progress-bar-fill medium" style="width:69.1%"></div></div>
+              <span class="progress-pct">69.1%</span>
+            </td>
+            <td>89</td>
+            <td>456</td>
+            <td>Mar 1, 2026</td>
+            <td>Jun 30, 2026</td>
+            <td>
+              <div class="d-flex gap-1 flex-wrap">
+                <button class="action-btn" onclick="parent.loadContent('fundraising/p2p-fundraiser-list')"><i class="fas fa-gauge-high"></i> Dashboard</button>
+                <button class="action-btn" onclick="parent.loadContent('fundraising/p2p-campaign-setup')"><i class="fas fa-pen"></i> Edit</button>
+                <button class="action-btn" onclick="window.open('#','_blank')"><i class="fas fa-eye"></i> View Page</button>
+              </div>
+            </td>
+          </tr>
+          <!-- Row 2: Winter Warmth Drive -->
+          <tr data-status="active">
+            <td><a class="campaign-name" onclick="parent.loadContent('fundraising/p2p-campaign-setup')">Winter Warmth Drive</a></td>
+            <td><span class="status-badge active"><i class="fas fa-circle" style="font-size:0.375rem"></i> Active</span></td>
+            <td>$25,000</td>
+            <td><strong>$18,900</strong></td>
+            <td class="progress-cell">
+              <div class="progress-bar-track"><div class="progress-bar-fill high" style="width:75.6%"></div></div>
+              <span class="progress-pct">75.6%</span>
+            </td>
+            <td>45</td>
+            <td>234</td>
+            <td>Nov 1, 2025</td>
+            <td>Feb 28, 2026</td>
+            <td>
+              <div class="d-flex gap-1 flex-wrap">
+                <button class="action-btn" onclick="parent.loadContent('fundraising/p2p-fundraiser-list')"><i class="fas fa-gauge-high"></i> Dashboard</button>
+                <button class="action-btn" onclick="parent.loadContent('fundraising/p2p-campaign-setup')"><i class="fas fa-pen"></i> Edit</button>
+                <button class="action-btn" onclick="window.open('#','_blank')"><i class="fas fa-eye"></i> View Page</button>
+              </div>
+            </td>
+          </tr>
+          <!-- Row 3: Clean Water Challenge -->
+          <tr data-status="active">
+            <td><a class="campaign-name" onclick="parent.loadContent('fundraising/p2p-campaign-setup')">Clean Water Challenge</a></td>
+            <td><span class="status-badge active"><i class="fas fa-circle" style="font-size:0.375rem"></i> Active</span></td>
+            <td>$100,000</td>
+            <td><strong>$72,210</strong></td>
+            <td class="progress-cell">
+              <div class="progress-bar-track"><div class="progress-bar-fill medium" style="width:72.2%"></div></div>
+              <span class="progress-pct">72.2%</span>
+            </td>
+            <td>100</td>
+            <td>890</td>
+            <td>Jan 1, 2026</td>
+            <td>Dec 31, 2026</td>
+            <td>
+              <div class="d-flex gap-1 flex-wrap">
+                <button class="action-btn" onclick="parent.loadContent('fundraising/p2p-fundraiser-list')"><i class="fas fa-gauge-high"></i> Dashboard</button>
+                <button class="action-btn" onclick="parent.loadContent('fundraising/p2p-campaign-setup')"><i class="fas fa-pen"></i> Edit</button>
+                <button class="action-btn" onclick="window.open('#','_blank')"><i class="fas fa-eye"></i> View Page</button>
+              </div>
+            </td>
+          </tr>
+          <!-- Row 4: Birthday Fundraising -->
+          <tr data-status="active">
+            <td><a class="campaign-name" onclick="parent.loadContent('fundraising/p2p-campaign-setup')">Birthday Fundraising</a></td>
+            <td><span class="status-badge always-active"><i class="fas fa-infinity" style="font-size:0.5rem"></i> Always Active</span></td>
+            <td>&mdash;</td>
+            <td><strong>$12,340</strong></td>
+            <td class="progress-cell">
+              <span class="progress-pct" style="color:var(--text-secondary)">&mdash;</span>
+            </td>
+            <td>34</td>
+            <td>123</td>
+            <td>&mdash;</td>
+            <td>&mdash;</td>
+            <td>
+              <div class="d-flex gap-1 flex-wrap">
+                <button class="action-btn" onclick="parent.loadContent('fundraising/p2p-fundraiser-list')"><i class="fas fa-gauge-high"></i> Dashboard</button>
+                <button class="action-btn" onclick="parent.loadContent('fundraising/p2p-campaign-setup')"><i class="fas fa-pen"></i> Edit</button>
+                <button class="action-btn" onclick="window.open('#','_blank')"><i class="fas fa-eye"></i> View Page</button>
+              </div>
+            </td>
+          </tr>
+          <!-- Row 5: Ramadan Giving 2026 -->
+          <tr data-status="completed">
+            <td><a class="campaign-name" onclick="parent.loadContent('fundraising/p2p-campaign-setup')">Ramadan Giving 2026</a></td>
+            <td><span class="status-badge completed"><i class="fas fa-check-circle" style="font-size:0.5rem"></i> Completed</span></td>
+            <td>$30,000</td>
+            <td><strong>$35,670</strong></td>
+            <td class="progress-cell">
+              <div class="progress-bar-track"><div class="progress-bar-fill high" style="width:100%"></div></div>
+              <span class="progress-pct" style="color:var(--success-color)">118.9%</span>
+            </td>
+            <td>67</td>
+            <td>345</td>
+            <td>Mar 1, 2026</td>
+            <td>Mar 31, 2026</td>
+            <td>
+              <div class="d-flex gap-1 flex-wrap">
+                <button class="action-btn" onclick="parent.loadContent('fundraising/p2p-fundraiser-list')"><i class="fas fa-gauge-high"></i> Dashboard</button>
+                <button class="action-btn" onclick="window.open('#','_blank')"><i class="fas fa-eye"></i> View Page</button>
+                <button class="action-btn"><i class="fas fa-copy"></i> Duplicate</button>
+              </div>
+            </td>
+          </tr>
+          <!-- Row 6: Cycling for Hope 2025 -->
+          <tr data-status="completed">
+            <td><a class="campaign-name" onclick="parent.loadContent('fundraising/p2p-campaign-setup')">Cycling for Hope 2025</a></td>
+            <td><span class="status-badge completed"><i class="fas fa-check-circle" style="font-size:0.5rem"></i> Completed</span></td>
+            <td>$20,000</td>
+            <td><strong>$14,500</strong></td>
+            <td class="progress-cell">
+              <div class="progress-bar-track"><div class="progress-bar-fill medium" style="width:72.5%"></div></div>
+              <span class="progress-pct">72.5%</span>
+            </td>
+            <td>23</td>
+            <td>156</td>
+            <td>Jun 1, 2025</td>
+            <td>Aug 31, 2025</td>
+            <td>
+              <div class="d-flex gap-1 flex-wrap">
+                <button class="action-btn" onclick="parent.loadContent('fundraising/p2p-fundraiser-list')"><i class="fas fa-gauge-high"></i> Dashboard</button>
+                <button class="action-btn" onclick="window.open('#','_blank')"><i class="fas fa-eye"></i> View Page</button>
+                <button class="action-btn"><i class="fas fa-copy"></i> Duplicate</button>
+              </div>
+            </td>
+          </tr>
+          <!-- Row 7: Back to School 2025 -->
+          <tr data-status="archived">
+            <td><a class="campaign-name">Back to School 2025</a></td>
+            <td><span class="status-badge archived"><i class="fas fa-box-archive" style="font-size:0.5rem"></i> Archived</span></td>
+            <td>$15,000</td>
+            <td><strong>$8,900</strong></td>
+            <td class="progress-cell">
+              <div class="progress-bar-track"><div class="progress-bar-fill low" style="width:59.3%"></div></div>
+              <span class="progress-pct">59.3%</span>
+            </td>
+            <td>12</td>
+            <td>78</td>
+            <td>Aug 1, 2025</td>
+            <td>Sep 30, 2025</td>
+            <td>
+              <div class="d-flex gap-1 flex-wrap">
+                <button class="action-btn" onclick="window.open('#','_blank')"><i class="fas fa-eye"></i> View Page</button>
+                <button class="action-btn"><i class="fas fa-copy"></i> Duplicate</button>
+              </div>
+            </td>
+          </tr>
+          <!-- Row 8: Holiday Hope (Draft) -->
+          <tr data-status="draft">
+            <td><a class="campaign-name" onclick="parent.loadContent('fundraising/p2p-campaign-setup')">Holiday Hope</a></td>
+            <td><span class="status-badge draft"><i class="fas fa-pen-to-square" style="font-size:0.5rem"></i> Draft</span></td>
+            <td>$40,000</td>
+            <td>&mdash;</td>
+            <td class="progress-cell">
+              <span class="progress-pct" style="color:var(--text-secondary)">&mdash;</span>
+            </td>
+            <td>&mdash;</td>
+            <td>&mdash;</td>
+            <td>Nov 15, 2026</td>
+            <td>Dec 31, 2026</td>
+            <td>
+              <div class="d-flex gap-1 flex-wrap">
+                <button class="action-btn" onclick="parent.loadContent('fundraising/p2p-campaign-setup')"><i class="fas fa-pen"></i> Edit</button>
+                <button class="action-btn danger"><i class="fas fa-trash"></i> Delete</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Table Footer -->
+    <div class="table-footer">
+      <div class="table-info">Showing 1-8 of 8 campaigns</div>
+      <div class="pagination-controls">
+        <button class="page-btn" disabled><i class="fas fa-chevron-left"></i></button>
+        <button class="page-btn active">1</button>
+        <button class="page-btn" disabled><i class="fas fa-chevron-right"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function filterCampaigns(chip, status) {
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+
+      document.querySelectorAll('tbody tr').forEach(row => {
+        if (status === 'all') {
+          row.style.display = '';
+        } else {
+          row.style.display = row.dataset.status === status ? '' : 'none';
+        }
+      });
+    }
+
+    document.getElementById('searchInput').addEventListener('input', function () {
+      const q = this.value.toLowerCase();
+      document.querySelectorAll('tbody tr').forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(q) ? '' : 'none';
+      });
+    });
+  </script>
+
+</body>
+</html>

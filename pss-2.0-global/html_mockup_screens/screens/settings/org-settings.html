@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Organization Settings - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+      --settings-accent: #6366f1;
+      --settings-accent-bg: #eef2ff;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn-primary-custom {
+      background: var(--settings-accent);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .btn-primary-custom:hover {
+      background: #4f46e5;
+    }
+
+    .btn-outline-custom {
+      background: white;
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .btn-outline-custom:hover {
+      border-color: var(--settings-accent);
+      color: var(--settings-accent);
+    }
+
+    /* Search */
+    .search-box {
+      position: relative;
+      width: 320px;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      background: white;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .search-box input:focus {
+      border-color: var(--settings-accent);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .search-box i {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+    }
+
+    /* Layout */
+    .settings-layout {
+      display: flex;
+      gap: 1.25rem;
+      min-height: calc(100vh - 160px);
+    }
+
+    /* Category Nav */
+    .category-nav {
+      width: 240px;
+      flex-shrink: 0;
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      padding: 0.5rem;
+      height: fit-content;
+      position: sticky;
+      top: 0;
+    }
+
+    .category-item {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      padding: 0.625rem 0.75rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+
+    .category-item:hover {
+      background: var(--settings-accent-bg);
+      color: var(--settings-accent);
+    }
+
+    .category-item.active {
+      background: var(--settings-accent);
+      color: white;
+    }
+
+    .category-item .cat-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      flex-shrink: 0;
+    }
+
+    .category-item:not(.active) .cat-icon {
+      background: #f8fafc;
+    }
+
+    .category-item.active .cat-icon {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .category-item .cat-count {
+      margin-left: auto;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.125rem 0.375rem;
+      border-radius: 9999px;
+      min-width: 20px;
+      text-align: center;
+    }
+
+    .category-item:not(.active) .cat-count {
+      background: #f1f5f9;
+      color: var(--text-secondary);
+    }
+
+    .category-item.active .cat-count {
+      background: rgba(255, 255, 255, 0.25);
+      color: white;
+    }
+
+    /* Settings Panel */
+    .settings-panel {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .settings-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      margin-bottom: 1.25rem;
+    }
+
+    .settings-card-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .settings-card-header .cat-icon-lg {
+      width: 36px;
+      height: 36px;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      background: var(--settings-accent-bg);
+      color: var(--settings-accent);
+    }
+
+    .settings-card-header h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .settings-card-header .desc {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    /* Setting Rows */
+    .setting-row {
+      display: flex;
+      align-items: center;
+      padding: 0.875rem 1.25rem;
+      border-bottom: 1px solid #f1f5f9;
+      gap: 1rem;
+      transition: background 0.15s;
+    }
+
+    .setting-row:last-child {
+      border-bottom: none;
+    }
+
+    .setting-row:hover {
+      background: #fafbfc;
+    }
+
+    .setting-row.changed {
+      background: #fefce8;
+    }
+
+    .setting-label {
+      width: 200px;
+      flex-shrink: 0;
+    }
+
+    .setting-label .name {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .setting-label .name .changed-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--settings-accent);
+      flex-shrink: 0;
+      display: none;
+    }
+
+    .setting-row.changed .setting-label .name .changed-dot {
+      display: inline-block;
+    }
+
+    .setting-control {
+      width: 280px;
+      flex-shrink: 0;
+    }
+
+    .setting-desc {
+      flex: 1;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      min-width: 0;
+    }
+
+    .setting-actions {
+      flex-shrink: 0;
+    }
+
+    .reset-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 0.75rem;
+      padding: 0.25rem;
+      border-radius: 0.25rem;
+      opacity: 0;
+      transition: all 0.15s;
+    }
+
+    .setting-row.changed .reset-btn {
+      opacity: 1;
+    }
+
+    .reset-btn:hover {
+      color: var(--danger-color);
+      background: #fef2f2;
+    }
+
+    /* Form controls */
+    .setting-control input[type="text"],
+    .setting-control input[type="number"],
+    .setting-control input[type="email"],
+    .setting-control input[type="time"] {
+      width: 100%;
+      padding: 0.375rem 0.625rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      font-size: 0.8125rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .setting-control input:focus {
+      border-color: var(--settings-accent);
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+    }
+
+    .setting-control select {
+      width: 100%;
+      padding: 0.375rem 0.625rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      font-size: 0.8125rem;
+      outline: none;
+      background: white;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .setting-control select:focus {
+      border-color: var(--settings-accent);
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .toggle-switch input {
+      display: none;
+    }
+
+    .toggle-slider {
+      width: 40px;
+      height: 22px;
+      background: #cbd5e1;
+      border-radius: 11px;
+      cursor: pointer;
+      transition: background 0.2s;
+      position: relative;
+    }
+
+    .toggle-slider::after {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background: white;
+      border-radius: 50%;
+      top: 3px;
+      left: 3px;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    }
+
+    .toggle-switch input:checked+.toggle-slider {
+      background: var(--settings-accent);
+    }
+
+    .toggle-switch input:checked+.toggle-slider::after {
+      transform: translateX(18px);
+    }
+
+    .toggle-label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    /* Multi-select checkboxes */
+    .multi-check-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .multi-check-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.75rem;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .multi-check-item input[type="checkbox"] {
+      accent-color: var(--settings-accent);
+      width: 14px;
+      height: 14px;
+    }
+
+    /* Tags input */
+    .tags-input {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+      padding: 0.25rem 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      min-height: 34px;
+      align-items: center;
+      background: white;
+    }
+
+    .tag-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      background: var(--settings-accent-bg);
+      color: var(--settings-accent);
+      padding: 0.125rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .tag-item .remove-tag {
+      cursor: pointer;
+      font-size: 0.625rem;
+      opacity: 0.6;
+    }
+
+    .tag-item .remove-tag:hover {
+      opacity: 1;
+    }
+
+    /* Bottom Change Bar */
+    .change-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 2px solid var(--settings-accent);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 100;
+      box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .change-bar .change-info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--settings-accent);
+    }
+
+    .change-bar .change-info i {
+      font-size: 1rem;
+    }
+
+    .change-bar .change-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn-discard {
+      background: white;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-discard:hover {
+      border-color: var(--danger-color);
+      color: var(--danger-color);
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .settings-layout {
+        flex-direction: column;
+      }
+
+      .category-nav {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        padding: 0.5rem;
+      }
+
+      .category-item {
+        flex: 0 0 auto;
+        padding: 0.5rem 0.75rem;
+      }
+
+      .category-item .cat-count {
+        display: none;
+      }
+
+      .setting-row {
+        flex-wrap: wrap;
+      }
+
+      .setting-label {
+        width: 100%;
+      }
+
+      .setting-control {
+        width: 100%;
+      }
+
+      .setting-desc {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .search-box {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-cogs" style="color: var(--settings-accent); margin-right: 0.5rem; font-size: 1.25rem;"></i>Organization Settings</h1>
+      <p class="subtitle">System parameters and operational configuration</p>
+    </div>
+    <div class="header-actions">
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Search settings..." id="settingsSearch">
+      </div>
+      <button class="btn-outline-custom"><i class="fas fa-file-import"></i> Import Settings</button>
+      <button class="btn-outline-custom"><i class="fas fa-file-export"></i> Export Settings</button>
+      <button class="btn-primary-custom"><i class="fas fa-save"></i> Save All Changes</button>
+    </div>
+  </div>
+
+  <!-- Settings Layout -->
+  <div class="settings-layout">
+    <!-- Category Navigation -->
+    <div class="category-nav">
+      <button class="category-item active" onclick="showCategory('fundraising', this)">
+        <span class="cat-icon">💰</span>
+        Fundraising & Donations
+        <span class="cat-count">15</span>
+      </button>
+      <button class="category-item" onclick="showCategory('receipts', this)">
+        <span class="cat-icon">📃</span>
+        Receipts & Tax
+        <span class="cat-count">10</span>
+      </button>
+      <button class="category-item" onclick="showCategory('communication', this)">
+        <span class="cat-icon">📧</span>
+        Communication
+        <span class="cat-count">9</span>
+      </button>
+      <button class="category-item" onclick="showCategory('contacts', this)">
+        <span class="cat-icon">👥</span>
+        Contacts & CRM
+        <span class="cat-count">7</span>
+      </button>
+      <button class="category-item" onclick="showCategory('organization', this)">
+        <span class="cat-icon">🏢</span>
+        Organization
+        <span class="cat-count">6</span>
+      </button>
+      <button class="category-item" onclick="showCategory('field', this)">
+        <span class="cat-icon">🚶</span>
+        Field Collection
+        <span class="cat-count">5</span>
+      </button>
+      <button class="category-item" onclick="showCategory('reports', this)">
+        <span class="cat-icon">📊</span>
+        Reports
+        <span class="cat-count">4</span>
+      </button>
+      <button class="category-item" onclick="showCategory('security', this)">
+        <span class="cat-icon">🔒</span>
+        Security & Privacy
+        <span class="cat-count">8</span>
+      </button>
+      <button class="category-item" onclick="showCategory('notifications', this)">
+        <span class="cat-icon">🔔</span>
+        Notifications
+        <span class="cat-count">5</span>
+      </button>
+      <button class="category-item" onclick="showCategory('regional', this)">
+        <span class="cat-icon">🌐</span>
+        Regional & Compliance
+        <span class="cat-count">6</span>
+      </button>
+    </div>
+
+    <!-- Settings Panel -->
+    <div class="settings-panel">
+      <!-- Fundraising & Donations -->
+      <div class="settings-category" id="cat-fundraising">
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div class="cat-icon-lg">💰</div>
+            <div>
+              <h3>Fundraising & Donations</h3>
+              <p class="desc">Configure donation processing, duplicate detection, and recurring payment behavior</p>
+            </div>
+          </div>
+          <div class="settings-card-body">
+            <!-- Default Currency -->
+            <div class="setting-row">
+              <div class="setting-label">
+                <div class="name"><span class="changed-dot"></span> Default Currency</div>
+              </div>
+              <div class="setting-control">
+                <select>
+                  <option selected>AED - UAE Dirham</option>
+                  <option>USD - US Dollar</option>
+                  <option>EUR - Euro</option>
+                  <option>GBP - British Pound</option>
+                  <option>INR - Indian Rupee</option>
+                  <option>SAR - Saudi Riyal</option>
+                </select>
+              </div>
+              <div class="setting-desc">Default currency for new donations</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <!-- Allow Multi-Currency -->
+            <div class="setting-row changed">
+              <div class="setting-label">
+                <div class="name"><span class="changed-dot"></span> Allow Multi-Currency</div>
+              </div>
+              <div class="setting-control">
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <span class="toggle-slider"></span>
+                  <span class="toggle-label">On</span>
+                </label>
+              </div>
+              <div class="setting-desc">Allow donations in different currencies</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <!-- Minimum Donation Amount -->
+            <div class="setting-row">
+              <div class="setting-label">
+                <div class="name"><span class="changed-dot"></span> Minimum Donation Amount</div>
+              </div>
+              <div class="setting-control">
+                <input type="number" value="1.00" min="0" step="0.01">
+              </div>
+              <div class="setting-desc">Minimum amount accepted</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <!-- Maximum Donation Amount -->
+            <div class="setting-row">
+              <div class="setting-label">
+                <div class="name"><span class="changed-dot"></span> Maximum Donation Amount</div>
+              </div>
+              <div class="setting-control">
+                <input type="number" value="1000000" min="0">
+              </div>
+              <div class="setting-desc">Maximum single donation (0 = unlimited)</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <!-- Auto-Generate Receipt -->
+            <div class="setting-row">
+              <div class="setting-label">
+                <div class="name"><span class="changed-dot"></span> Auto-Generate Receipt</div>
+              </div>
+              <div class="setting-control">
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <span class="toggle-slider"></span>
+                  <span class="toggle-label">On</span>
+                </label>
+              </div>
+              <div class="setting-desc">Automatically create receipt on donation entry</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <!-- Receipt Delivery Default -->
+            <div class="setting-row">
+              <div class="setting-label">
+                <div class="name"><span class="changed-dot"></span> Receipt Delivery Default</div>
+              </div>
+              <div class="setting-control">
+                <select>
+                  <option selected>Email</option>
+                  <option>WhatsApp</option>
+                  <option>Print</option>
+                  <option>None</option>
+                </select>
+              </div>
+              <div class="setting-desc">Default receipt delivery method</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <!-- Require Purpose -->
+            <div class="setting-row">
+              <div class="setting-label">
+                <div class="name"><span class="changed-dot"></span> Require Purpose</div>
+              </div>
+              <div class="setting-control">
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <span class="toggle-slider"></span>
+                  <span class="toggle-label">On</span>
+                </label>
+              </div>
+              <div class="setting-desc">Mandate purpose selection for every donation</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <!-- Default Purpose -->
+            <div class="setting-row">
+              <div class="setting-label">
+                <div class="name"><span class="changed-dot"></span> Default Purpose</div>
+              </div>
+              <div class="setting-control">
+                <select>
+                  <option selected>General Fund</option>
+                  <option>Education</option>
+                  <option>Healthcare</option>
+                  <option>Disaster Relief</option>
+                  <option>Orphan Sponsorship</option>
+                </select>
+              </div>
+              <div class="setting-desc">Pre-selected purpose when creating donation</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <!-- Allow Anonymous Donations -->
+            <div class="setting-row changed">
+              <div class="setting-label">
+                <div class="name"><span class="changed-dot"></span> Allow Anonymous Donations</div>
+              </div>
+              <div class="setting-control">
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <span class="toggle-slider"></span>
+                  <span class="toggle-label">On</span>
+                </label>
+              </div>
+              <div class="setting-desc">Allow donations without linked contact</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <!-- Duplicate Check Window -->
+            <div class="setting-row">
+              <div class="setting-label">
+                <div class="name"><span class="changed-dot"></span> Duplicate Check Window</div>
+              </div>
+              <div class="setting-control">
+                <select>
+                  <option>1 hour</option>
+                  <option>6 hours</option>
+                  <option>12 hours</option>
+                  <option selected>24 hours</option>
+                  <option>48 hours</option>
+                  <option>7 days</option>
+                </select>
+              </div>
+              <div class="setting-desc">Time window to flag potential duplicate donations</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <!-- Duplicate Check Fields -->
+            <div class="setting-row">
+              <div class="setting-label">
+                <div class="name"><span class="changed-dot"></span> Duplicate Check Fields</div>
+              </div>
+              <div class="setting-control">
+                <div class="multi-check-group">
+                  <label class="multi-check-item"><input type="checkbox" checked> Amount</label>
+                  <label class="multi-check-item"><input type="checkbox" checked> Date</label>
+                  <label class="multi-check-item"><input type="checkbox" checked> Contact</label>
+                  <label class="multi-check-item"><input type="checkbox"> Purpose</label>
+                </div>
+              </div>
+              <div class="setting-desc">Fields to compare for duplicate detection</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <!-- Online Donation Confirmation Email -->
+            <div class="setting-row">
+              <div class="setting-label">
+                <div class="name"><span class="changed-dot"></span> Online Donation Confirmation</div>
+              </div>
+              <div class="setting-control">
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <span class="toggle-slider"></span>
+                  <span class="toggle-label">On</span>
+                </label>
+              </div>
+              <div class="setting-desc">Send confirmation email for online donations</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <!-- Pledge Reminder Days -->
+            <div class="setting-row changed">
+              <div class="setting-label">
+                <div class="name"><span class="changed-dot"></span> Pledge Reminder Days</div>
+              </div>
+              <div class="setting-control">
+                <div class="tags-input">
+                  <span class="tag-item">7 <span class="remove-tag"><i class="fas fa-times"></i></span></span>
+                  <span class="tag-item">14 <span class="remove-tag"><i class="fas fa-times"></i></span></span>
+                  <span class="tag-item">30 <span class="remove-tag"><i class="fas fa-times"></i></span></span>
+                </div>
+              </div>
+              <div class="setting-desc">Days before pledge due date to send reminders</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <!-- Recurring Retry Attempts -->
+            <div class="setting-row">
+              <div class="setting-label">
+                <div class="name"><span class="changed-dot"></span> Recurring Retry Attempts</div>
+              </div>
+              <div class="setting-control">
+                <select>
+                  <option>1</option>
+                  <option>2</option>
+                  <option selected>3</option>
+                  <option>5</option>
+                </select>
+              </div>
+              <div class="setting-desc">Number of retries for failed recurring payments</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <!-- Recurring Retry Interval -->
+            <div class="setting-row">
+              <div class="setting-label">
+                <div class="name"><span class="changed-dot"></span> Recurring Retry Interval</div>
+              </div>
+              <div class="setting-control">
+                <select>
+                  <option>1 day</option>
+                  <option selected>3 days</option>
+                  <option>5 days</option>
+                  <option>7 days</option>
+                </select>
+              </div>
+              <div class="setting-desc">Days between retry attempts</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Receipts & Tax -->
+      <div class="settings-category" id="cat-receipts" style="display: none;">
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div class="cat-icon-lg">📃</div>
+            <div>
+              <h3>Receipts & Tax</h3>
+              <p class="desc">Receipt numbering, tax exemption, and receipt delivery configuration</p>
+            </div>
+          </div>
+          <div class="settings-card-body">
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Receipt Number Prefix</div></div>
+              <div class="setting-control"><input type="text" value="REC-"></div>
+              <div class="setting-desc">Prefix for receipt numbers</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Receipt Number Format</div></div>
+              <div class="setting-control">
+                <select>
+                  <option selected>Prefix + Auto</option>
+                  <option>Year/Serial</option>
+                  <option>Custom</option>
+                </select>
+              </div>
+              <div class="setting-desc">Format: Prefix+Auto, Year/Serial, Custom</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row changed">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Next Receipt Number</div></div>
+              <div class="setting-control"><input type="number" value="4547"></div>
+              <div class="setting-desc">Next auto-generated number</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Financial Year Reset</div></div>
+              <div class="setting-control">
+                <label class="toggle-switch">
+                  <input type="checkbox">
+                  <span class="toggle-slider"></span>
+                  <span class="toggle-label">Off</span>
+                </label>
+              </div>
+              <div class="setting-desc">Reset numbering each financial year</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Tax Exempt Organization</div></div>
+              <div class="setting-control">
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <span class="toggle-slider"></span>
+                  <span class="toggle-label">On</span>
+                </label>
+              </div>
+              <div class="setting-desc">Organization is tax-exempt</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Tax Section</div></div>
+              <div class="setting-control"><input type="text" value="80G"></div>
+              <div class="setting-desc">Applicable tax section (80G, 501c3, etc.)</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Show Tax Info on Receipt</div></div>
+              <div class="setting-control">
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <span class="toggle-slider"></span>
+                  <span class="toggle-label">On</span>
+                </label>
+              </div>
+              <div class="setting-desc">Include tax exemption details on receipts</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Receipt Validity Days</div></div>
+              <div class="setting-control"><input type="number" value="365"></div>
+              <div class="setting-desc">Days before receipt download links expire</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Require Receipt Signature</div></div>
+              <div class="setting-control">
+                <label class="toggle-switch">
+                  <input type="checkbox">
+                  <span class="toggle-slider"></span>
+                  <span class="toggle-label">Off</span>
+                </label>
+              </div>
+              <div class="setting-desc">Require authorized signatory on receipts</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Authorized Signatory</div></div>
+              <div class="setting-control"><input type="text" value="Ahmed Salim, Director"></div>
+              <div class="setting-desc">Name and title for receipt signature</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Communication -->
+      <div class="settings-category" id="cat-communication" style="display: none;">
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div class="cat-icon-lg">📧</div>
+            <div>
+              <h3>Communication</h3>
+              <p class="desc">Message limits, quiet hours, bounce handling, and email defaults</p>
+            </div>
+          </div>
+          <div class="settings-card-body">
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Email Daily Limit</div></div>
+              <div class="setting-control"><input type="number" value="5000"></div>
+              <div class="setting-desc">Maximum emails per day</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> SMS Daily Limit</div></div>
+              <div class="setting-control"><input type="number" value="2000"></div>
+              <div class="setting-desc">Maximum SMS per day</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> WhatsApp Daily Limit</div></div>
+              <div class="setting-control"><input type="number" value="1000"></div>
+              <div class="setting-desc">Maximum WhatsApp messages per day</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Quiet Hours Start</div></div>
+              <div class="setting-control"><input type="time" value="22:00"></div>
+              <div class="setting-desc">No automated messages after this time</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Quiet Hours End</div></div>
+              <div class="setting-control"><input type="time" value="07:00"></div>
+              <div class="setting-desc">Resume automated messages after this time</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Unsubscribe Link Required</div></div>
+              <div class="setting-control">
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <span class="toggle-slider"></span>
+                  <span class="toggle-label">On</span>
+                </label>
+              </div>
+              <div class="setting-desc">Include unsubscribe in all marketing emails</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Auto-Archive Campaigns</div></div>
+              <div class="setting-control">
+                <select>
+                  <option>7 days</option>
+                  <option>14 days</option>
+                  <option selected>30 days</option>
+                  <option>60 days</option>
+                  <option>90 days</option>
+                </select>
+              </div>
+              <div class="setting-desc">Archive completed campaigns after N days</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Default Reply-To</div></div>
+              <div class="setting-control"><input type="email" value="info@ghf.org"></div>
+              <div class="setting-desc">Default reply-to for outgoing emails</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Bounce Handling</div></div>
+              <div class="setting-control">
+                <select>
+                  <option>Auto-deactivate after 1</option>
+                  <option selected>Auto-deactivate after 3</option>
+                  <option>Auto-deactivate after 5</option>
+                  <option>Manual review</option>
+                </select>
+              </div>
+              <div class="setting-desc">Action after N bounces</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contacts & CRM -->
+      <div class="settings-category" id="cat-contacts" style="display: none;">
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div class="cat-icon-lg">👥</div>
+            <div>
+              <h3>Contacts & CRM</h3>
+              <p class="desc">Contact management, deduplication, and data quality rules</p>
+            </div>
+          </div>
+          <div class="settings-card-body">
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Auto-Merge Duplicates</div></div>
+              <div class="setting-control">
+                <label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span><span class="toggle-label">Off</span></label>
+              </div>
+              <div class="setting-desc">Automatically merge contacts with same email/phone</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Default Contact Type</div></div>
+              <div class="setting-control">
+                <select><option selected>Individual</option><option>Organization</option></select>
+              </div>
+              <div class="setting-desc">Default type when creating new contacts</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Require Email or Phone</div></div>
+              <div class="setting-control">
+                <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span><span class="toggle-label">On</span></label>
+              </div>
+              <div class="setting-desc">At least one contact method is required</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Contact Code Format</div></div>
+              <div class="setting-control"><input type="text" value="CON-{AUTO}"></div>
+              <div class="setting-desc">Auto-generated contact code pattern</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Inactive After Days</div></div>
+              <div class="setting-control"><input type="number" value="365"></div>
+              <div class="setting-desc">Mark contact inactive after N days without activity</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Allow Contact Delete</div></div>
+              <div class="setting-control">
+                <label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span><span class="toggle-label">Off</span></label>
+              </div>
+              <div class="setting-desc">Allow permanent deletion of contacts (vs soft-delete only)</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> GDPR Data Retention</div></div>
+              <div class="setting-control">
+                <select><option>1 year</option><option>2 years</option><option selected>5 years</option><option>7 years</option><option>Indefinite</option></select>
+              </div>
+              <div class="setting-desc">Data retention period for contact records</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Organization -->
+      <div class="settings-category" id="cat-organization" style="display: none;">
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div class="cat-icon-lg">🏢</div>
+            <div>
+              <h3>Organization</h3>
+              <p class="desc">General organizational parameters and operational defaults</p>
+            </div>
+          </div>
+          <div class="settings-card-body">
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Financial Year Start</div></div>
+              <div class="setting-control">
+                <select><option selected>January</option><option>April</option><option>July</option><option>October</option></select>
+              </div>
+              <div class="setting-desc">Month the financial year begins</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Default Language</div></div>
+              <div class="setting-control">
+                <select><option selected>English</option><option>Arabic</option><option>Hindi</option><option>French</option></select>
+              </div>
+              <div class="setting-desc">Default system language</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Date Format</div></div>
+              <div class="setting-control">
+                <select><option selected>DD/MM/YYYY</option><option>MM/DD/YYYY</option><option>YYYY-MM-DD</option></select>
+              </div>
+              <div class="setting-desc">System-wide date display format</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Time Zone</div></div>
+              <div class="setting-control">
+                <select><option>UTC</option><option selected>Asia/Dubai (GMT+4)</option><option>Asia/Kolkata (GMT+5:30)</option><option>America/New_York (EST)</option></select>
+              </div>
+              <div class="setting-desc">Default timezone for the organization</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Multi-Branch Mode</div></div>
+              <div class="setting-control">
+                <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span><span class="toggle-label">On</span></label>
+              </div>
+              <div class="setting-desc">Enable multi-branch data segregation</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Audit Trail Retention</div></div>
+              <div class="setting-control">
+                <select><option>6 months</option><option>1 year</option><option selected>2 years</option><option>5 years</option><option>Indefinite</option></select>
+              </div>
+              <div class="setting-desc">How long to keep audit trail records</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Field Collection -->
+      <div class="settings-category" id="cat-field" style="display: none;">
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div class="cat-icon-lg">🚶</div>
+            <div>
+              <h3>Field Collection</h3>
+              <p class="desc">Mobile app, offline sync, and field agent configuration</p>
+            </div>
+          </div>
+          <div class="settings-card-body">
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Offline Mode</div></div>
+              <div class="setting-control">
+                <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span><span class="toggle-label">On</span></label>
+              </div>
+              <div class="setting-desc">Allow field agents to work offline</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> GPS Tracking</div></div>
+              <div class="setting-control">
+                <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span><span class="toggle-label">On</span></label>
+              </div>
+              <div class="setting-desc">Track agent location during collection visits</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Max Sync Interval</div></div>
+              <div class="setting-control">
+                <select><option>5 minutes</option><option selected>15 minutes</option><option>30 minutes</option><option>1 hour</option></select>
+              </div>
+              <div class="setting-desc">Maximum time between data syncs</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Photo Required</div></div>
+              <div class="setting-control">
+                <label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span><span class="toggle-label">Off</span></label>
+              </div>
+              <div class="setting-desc">Require photo evidence for field collections</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Daily Collection Limit</div></div>
+              <div class="setting-control"><input type="number" value="50"></div>
+              <div class="setting-desc">Maximum collections per agent per day</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reports -->
+      <div class="settings-category" id="cat-reports" style="display: none;">
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div class="cat-icon-lg">📊</div>
+            <div>
+              <h3>Reports</h3>
+              <p class="desc">Report generation, export formats, and scheduling defaults</p>
+            </div>
+          </div>
+          <div class="settings-card-body">
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Default Export Format</div></div>
+              <div class="setting-control">
+                <select><option selected>Excel (.xlsx)</option><option>CSV</option><option>PDF</option></select>
+              </div>
+              <div class="setting-desc">Default file format for report exports</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Max Report Rows</div></div>
+              <div class="setting-control"><input type="number" value="50000"></div>
+              <div class="setting-desc">Maximum rows in a single report export</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Schedule Report Email</div></div>
+              <div class="setting-control">
+                <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span><span class="toggle-label">On</span></label>
+              </div>
+              <div class="setting-desc">Allow scheduled report delivery via email</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Report Cache Duration</div></div>
+              <div class="setting-control">
+                <select><option>5 minutes</option><option selected>15 minutes</option><option>1 hour</option><option>No cache</option></select>
+              </div>
+              <div class="setting-desc">How long to cache generated reports</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Security & Privacy -->
+      <div class="settings-category" id="cat-security" style="display: none;">
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div class="cat-icon-lg">🔒</div>
+            <div>
+              <h3>Security & Privacy</h3>
+              <p class="desc">Authentication, password policies, session management, and data privacy</p>
+            </div>
+          </div>
+          <div class="settings-card-body">
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Two-Factor Authentication</div></div>
+              <div class="setting-control">
+                <select><option>Optional</option><option selected>Required for admins</option><option>Required for all</option></select>
+              </div>
+              <div class="setting-desc">2FA enforcement policy</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Password Min Length</div></div>
+              <div class="setting-control"><input type="number" value="8" min="6" max="32"></div>
+              <div class="setting-desc">Minimum password character length</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Password Expiry Days</div></div>
+              <div class="setting-control"><input type="number" value="90"></div>
+              <div class="setting-desc">Force password change after N days (0 = never)</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Session Timeout</div></div>
+              <div class="setting-control">
+                <select><option>15 minutes</option><option selected>30 minutes</option><option>1 hour</option><option>4 hours</option></select>
+              </div>
+              <div class="setting-desc">Auto-logout after inactivity</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Max Login Attempts</div></div>
+              <div class="setting-control"><input type="number" value="5"></div>
+              <div class="setting-desc">Lock account after N failed login attempts</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> IP Whitelisting</div></div>
+              <div class="setting-control">
+                <label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span><span class="toggle-label">Off</span></label>
+              </div>
+              <div class="setting-desc">Restrict access to specific IP addresses</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Data Encryption at Rest</div></div>
+              <div class="setting-control">
+                <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span><span class="toggle-label">On</span></label>
+              </div>
+              <div class="setting-desc">Encrypt sensitive data stored in database</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Mask PII in Logs</div></div>
+              <div class="setting-control">
+                <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span><span class="toggle-label">On</span></label>
+              </div>
+              <div class="setting-desc">Mask personally identifiable information in system logs</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notifications -->
+      <div class="settings-category" id="cat-notifications" style="display: none;">
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div class="cat-icon-lg">🔔</div>
+            <div>
+              <h3>Notifications</h3>
+              <p class="desc">System notification channels, digest settings, and alert preferences</p>
+            </div>
+          </div>
+          <div class="settings-card-body">
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> In-App Notifications</div></div>
+              <div class="setting-control">
+                <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span><span class="toggle-label">On</span></label>
+              </div>
+              <div class="setting-desc">Show notifications within the application</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Email Notifications</div></div>
+              <div class="setting-control">
+                <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span><span class="toggle-label">On</span></label>
+              </div>
+              <div class="setting-desc">Send notification emails for important events</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Daily Digest</div></div>
+              <div class="setting-control">
+                <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span><span class="toggle-label">On</span></label>
+              </div>
+              <div class="setting-desc">Send daily summary of all notifications</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Digest Send Time</div></div>
+              <div class="setting-control"><input type="time" value="08:00"></div>
+              <div class="setting-desc">Time to send daily digest email</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Notification Retention</div></div>
+              <div class="setting-control">
+                <select><option>7 days</option><option selected>30 days</option><option>90 days</option></select>
+              </div>
+              <div class="setting-desc">How long to keep notification history</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Regional & Compliance -->
+      <div class="settings-category" id="cat-regional" style="display: none;">
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div class="cat-icon-lg">🌐</div>
+            <div>
+              <h3>Regional & Compliance</h3>
+              <p class="desc">Localization, regulatory compliance, and regional data handling rules</p>
+            </div>
+          </div>
+          <div class="settings-card-body">
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Default Country</div></div>
+              <div class="setting-control">
+                <select><option selected>United Arab Emirates</option><option>India</option><option>United States</option><option>United Kingdom</option><option>Saudi Arabia</option></select>
+              </div>
+              <div class="setting-desc">Default country for addresses and forms</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> GDPR Compliance</div></div>
+              <div class="setting-control">
+                <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span><span class="toggle-label">On</span></label>
+              </div>
+              <div class="setting-desc">Enable GDPR-compliant data handling</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Consent Required</div></div>
+              <div class="setting-control">
+                <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span><span class="toggle-label">On</span></label>
+              </div>
+              <div class="setting-desc">Require explicit consent for data collection</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Data Residency</div></div>
+              <div class="setting-control">
+                <select><option selected>UAE (Middle East)</option><option>EU (Frankfurt)</option><option>US (Virginia)</option><option>India (Mumbai)</option></select>
+              </div>
+              <div class="setting-desc">Primary data storage region</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Right to Erasure</div></div>
+              <div class="setting-control">
+                <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span><span class="toggle-label">On</span></label>
+              </div>
+              <div class="setting-desc">Allow contacts to request complete data deletion</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label"><div class="name"><span class="changed-dot"></span> Cookie Consent Banner</div></div>
+              <div class="setting-control">
+                <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span><span class="toggle-label">On</span></label>
+              </div>
+              <div class="setting-desc">Show cookie consent on public-facing pages</div>
+              <div class="setting-actions"><button class="reset-btn" title="Reset to default"><i class="fas fa-undo"></i></button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Change Bar -->
+  <div class="change-bar">
+    <div class="change-info">
+      <i class="fas fa-exclamation-circle"></i>
+      3 settings changed
+    </div>
+    <div class="change-actions">
+      <button class="btn-discard">Discard Changes</button>
+      <button class="btn-primary-custom"><i class="fas fa-save"></i> Save All</button>
+    </div>
+  </div>
+
+  <script>
+    function showCategory(catId, btn) {
+      document.querySelectorAll('.settings-category').forEach(c => c.style.display = 'none');
+      document.querySelectorAll('.category-item').forEach(c => c.classList.remove('active'));
+      document.getElementById('cat-' + catId).style.display = 'block';
+      btn.classList.add('active');
+    }
+
+    // Search filter
+    document.getElementById('settingsSearch').addEventListener('input', function () {
+      const query = this.value.toLowerCase();
+      document.querySelectorAll('.settings-category').forEach(cat => {
+        cat.style.display = 'block';
+      });
+      document.querySelectorAll('.setting-row').forEach(row => {
+        const label = row.querySelector('.setting-label .name').textContent.toLowerCase();
+        const desc = row.querySelector('.setting-desc').textContent.toLowerCase();
+        row.style.display = (label.includes(query) || desc.includes(query)) ? '' : 'none';
+      });
+      if (query === '') {
+        document.querySelectorAll('.settings-category').forEach(c => c.style.display = 'none');
+        const active = document.querySelector('.category-item.active');
+        if (active) active.click();
+      }
+    });
+
+    // Toggle label update
+    document.querySelectorAll('.toggle-switch input').forEach(toggle => {
+      toggle.addEventListener('change', function () {
+        const label = this.closest('.toggle-switch').querySelector('.toggle-label');
+        label.textContent = this.checked ? 'On' : 'Off';
+      });
+    });
+  </script>
+</body>
+
+</html>

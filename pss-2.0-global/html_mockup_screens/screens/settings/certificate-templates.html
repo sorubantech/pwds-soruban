@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Certificate Templates - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #6366f1;
+      --accent-light: #818cf8;
+      --accent-bg: #eef2ff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons */
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .btn-primary-accent:hover {
+      background: #4f46e5;
+      border-color: #4f46e5;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-danger-outline {
+      background: white;
+      border: 1px solid var(--danger-color);
+      color: var(--danger-color);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .btn-danger-outline:hover {
+      background: var(--danger-color);
+      color: white;
+    }
+
+    .btn-sm-action {
+      padding: 0.3rem 0.625rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-sm-action:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    /* Template Gallery Grid */
+    .template-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+    }
+
+    .template-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+      transition: all 0.2s;
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+    }
+
+    .template-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      transform: translateY(-2px);
+    }
+
+    .template-card-preview {
+      height: 160px;
+      background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .template-card-preview .preview-doc {
+      width: 70%;
+      height: 85%;
+      background: white;
+      border-radius: 4px;
+      padding: 0.75rem;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      overflow: hidden;
+    }
+
+    .preview-header-bar {
+      height: 14px;
+      background: var(--accent);
+      border-radius: 2px;
+      opacity: 0.8;
+    }
+
+    .preview-line {
+      height: 5px;
+      background: #e2e8f0;
+      border-radius: 2px;
+    }
+
+    .preview-line.short { width: 55%; }
+    .preview-line.medium { width: 75%; }
+    .preview-line.long { width: 90%; }
+
+    .preview-block {
+      height: 20px;
+      background: #f1f5f9;
+      border-radius: 2px;
+      margin-top: 0.25rem;
+    }
+
+    .preview-sig {
+      margin-top: auto;
+      height: 8px;
+      width: 40%;
+      background: #cbd5e1;
+      border-radius: 2px;
+    }
+
+    .template-card-preview .type-icon {
+      position: absolute;
+      top: 0.625rem;
+      left: 0.625rem;
+      width: 28px;
+      height: 28px;
+      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      background: white;
+      color: var(--accent);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .template-card-preview .status-dot {
+      position: absolute;
+      top: 0.625rem;
+      right: 0.625rem;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid white;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+    }
+
+    .status-dot.active { background: var(--success-color); }
+    .status-dot.draft { background: var(--text-secondary); }
+
+    .template-card-body {
+      padding: 1rem;
+    }
+
+    .template-card-body h5 {
+      font-size: 0.875rem;
+      font-weight: 700;
+      margin: 0 0 0.25rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .template-card-body .template-type {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-bottom: 0.375rem;
+    }
+
+    .template-card-body .template-desc {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.625rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .template-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .template-card-footer .usage-count {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+    }
+
+    .template-card-footer .usage-count i {
+      margin-right: 0.25rem;
+    }
+
+    .template-card-footer .card-actions {
+      display: flex;
+      gap: 0.375rem;
+    }
+
+    .default-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.625rem;
+      font-weight: 700;
+      padding: 0.125rem 0.375rem;
+      border-radius: 9999px;
+      background: var(--accent-bg);
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    /* Create New Card */
+    .template-card.create-new {
+      border: 2px dashed var(--border-color);
+      background: #fafbfc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 280px;
+      transition: all 0.2s;
+    }
+
+    .template-card.create-new:hover {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+      transform: translateY(-2px);
+    }
+
+    .template-card.create-new .create-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--accent-bg);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .template-card.create-new h5 {
+      font-size: 0.875rem;
+      font-weight: 700;
+      margin: 0 0 0.25rem;
+      color: var(--text-primary);
+    }
+
+    .template-card.create-new p {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    /* ======= EDITOR VIEW ======= */
+    .editor-view {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #f1f5f9;
+      z-index: 1000;
+      flex-direction: column;
+    }
+
+    .editor-view.active {
+      display: flex;
+    }
+
+    .editor-toolbar {
+      background: white;
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .editor-toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .editor-toolbar-left .back-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .editor-toolbar-left .back-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .editor-toolbar-left h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .editor-toolbar-right {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .editor-body {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* Left Panel - Settings */
+    .editor-left {
+      width: 260px;
+      background: white;
+      border-right: 1px solid var(--border-color);
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    .panel-section {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .panel-section-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+
+    .panel-section-title i {
+      transition: transform 0.2s;
+    }
+
+    .panel-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .panel-label .required {
+      color: var(--danger-color);
+    }
+
+    .panel-input {
+      font-size: 0.75rem;
+      padding: 0.4rem 0.625rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      width: 100%;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+      margin-bottom: 0.75rem;
+    }
+
+    .panel-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.12);
+    }
+
+    .panel-select {
+      font-size: 0.75rem;
+      padding: 0.4rem 0.625rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      width: 100%;
+      color: var(--text-primary);
+      background: white;
+      cursor: pointer;
+      margin-bottom: 0.75rem;
+    }
+
+    .panel-select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Margins row */
+    .margins-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .margins-grid .panel-label {
+      font-size: 0.6875rem;
+    }
+
+    .margins-grid .panel-input {
+      margin-bottom: 0;
+    }
+
+    /* Toggle */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+    }
+
+    .toggle-row .toggle-info {
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      display: inline-block;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: #cbd5e1;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      left: 3px;
+      top: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background: var(--accent);
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(16px);
+    }
+
+    /* Placeholder chips */
+    .placeholder-group {
+      margin-bottom: 0.75rem;
+    }
+
+    .placeholder-group-title {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin-bottom: 0.375rem;
+    }
+
+    .placeholder-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+    }
+
+    .placeholder-chip {
+      font-size: 0.625rem;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      padding: 0.2rem 0.4rem;
+      border-radius: 0.25rem;
+      background: #f1f5f9;
+      color: var(--accent);
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+      font-weight: 500;
+    }
+
+    .placeholder-chip:hover {
+      background: var(--accent-bg);
+      border-color: var(--accent);
+    }
+
+    .placeholder-search {
+      font-size: 0.6875rem;
+      padding: 0.3rem 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      width: 100%;
+      margin-bottom: 0.625rem;
+    }
+
+    .placeholder-search:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Center Panel - Code Editor */
+    .editor-center {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .editor-tab-bar {
+      background: #1e293b;
+      padding: 0 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .editor-tab {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      background: #334155;
+      border-radius: 0.375rem 0.375rem 0 0;
+      margin-top: 0.375rem;
+    }
+
+    .editor-tab i { font-size: 0.625rem; }
+
+    .editor-tab-actions {
+      display: flex;
+      gap: 0.375rem;
+    }
+
+    .editor-tab-actions button {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 0.75rem;
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      transition: all 0.15s;
+    }
+
+    .editor-tab-actions button:hover {
+      color: white;
+      background: #475569;
+    }
+
+    .code-editor {
+      flex: 1;
+      background: #0f172a;
+      overflow: auto;
+      padding: 0;
+      position: relative;
+    }
+
+    .code-editor pre {
+      margin: 0;
+      padding: 0.75rem 0;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 0.75rem;
+      line-height: 1.6;
+      color: #e2e8f0;
+      counter-reset: line;
+    }
+
+    .code-line {
+      display: flex;
+      padding: 0 0.75rem;
+      min-height: 1.6em;
+    }
+
+    .code-line:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .line-number {
+      color: #475569;
+      text-align: right;
+      min-width: 2.5rem;
+      padding-right: 1rem;
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    .line-content {
+      flex: 1;
+      white-space: pre;
+    }
+
+    /* Syntax highlighting */
+    .hl-tag { color: #f472b6; }
+    .hl-attr { color: #a78bfa; }
+    .hl-str { color: #34d399; }
+    .hl-comment { color: #64748b; font-style: italic; }
+    .hl-prop { color: #38bdf8; }
+    .hl-val { color: #fbbf24; }
+    .hl-placeholder { color: #fb923c; background: rgba(251, 146, 60, 0.1); padding: 0 2px; border-radius: 2px; }
+    .hl-selector { color: #c084fc; }
+
+    /* Right Panel - Preview */
+    .editor-right {
+      width: 300px;
+      background: #f8fafc;
+      border-left: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .preview-header {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: white;
+    }
+
+    .preview-header h4 {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .zoom-controls {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .zoom-btn {
+      padding: 0.2rem 0.5rem;
+      font-size: 0.625rem;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      border-radius: 0.25rem;
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .zoom-btn.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .zoom-btn:hover:not(.active) {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .preview-area {
+      flex: 1;
+      padding: 1.25rem;
+      overflow: auto;
+      display: flex;
+      justify-content: center;
+    }
+
+    .preview-page {
+      background: white;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+      border-radius: 4px;
+      width: 100%;
+      max-width: 250px;
+      aspect-ratio: 210/297;
+      padding: 1.5rem 1rem;
+      font-size: 0.5rem;
+      line-height: 1.5;
+      overflow: hidden;
+      color: #333;
+    }
+
+    .preview-page .prev-header {
+      text-align: center;
+      border-bottom: 1.5px solid var(--accent);
+      padding-bottom: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .preview-page .prev-logo {
+      width: 28px;
+      height: 28px;
+      background: var(--accent-bg);
+      border-radius: 0.25rem;
+      margin: 0 auto 0.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      font-size: 0.625rem;
+    }
+
+    .preview-page .prev-org {
+      font-size: 0.5625rem;
+      font-weight: 700;
+    }
+
+    .preview-page .prev-title {
+      font-size: 0.625rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-top: 0.125rem;
+    }
+
+    .preview-page .prev-field {
+      display: flex;
+      gap: 0.25rem;
+      margin-bottom: 0.125rem;
+    }
+
+    .preview-page .prev-field .label {
+      color: #999;
+      min-width: 3rem;
+    }
+
+    .preview-page .prev-amount {
+      font-size: 0.625rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .preview-page .prev-sig {
+      margin-top: 0.75rem;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 0.25rem;
+      font-size: 0.4375rem;
+      color: #999;
+    }
+
+    .preview-actions {
+      padding: 0.75rem 1rem;
+      border-top: 1px solid var(--border-color);
+      background: white;
+      display: flex;
+      gap: 0.375rem;
+      flex-wrap: wrap;
+    }
+
+    .preview-actions button {
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* Gallery/Editor Toggle */
+    .gallery-view { display: block; }
+    .gallery-view.hidden { display: none; }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .template-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .template-grid {
+        grid-template-columns: 1fr;
+      }
+      .editor-body {
+        flex-direction: column;
+      }
+      .editor-left, .editor-right {
+        width: 100%;
+        max-height: 200px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ======= GALLERY VIEW ======= -->
+  <div class="gallery-view" id="galleryView">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <h1><i class="fa-solid fa-scroll" style="color: var(--accent); font-size: 1.25rem;"></i> Certificate Templates</h1>
+        <p class="subtitle">Design and manage certificate, letter, and document templates</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn-outline-accent"><i class="fa-solid fa-file-import"></i> Import Template</button>
+        <button class="btn-primary-accent" onclick="openEditor('new')"><i class="fa-solid fa-plus"></i> New Template</button>
+      </div>
+    </div>
+
+    <!-- Template Gallery -->
+    <div class="template-grid">
+
+      <!-- Donation Receipt -->
+      <div class="template-card" onclick="openEditor('receipt')">
+        <div class="template-card-preview">
+          <div class="type-icon"><i class="fa-solid fa-receipt"></i></div>
+          <div class="status-dot active"></div>
+          <div class="preview-doc">
+            <div class="preview-header-bar"></div>
+            <div class="preview-line short"></div>
+            <div class="preview-line medium"></div>
+            <div class="preview-block"></div>
+            <div class="preview-line long"></div>
+            <div class="preview-line short"></div>
+            <div class="preview-sig"></div>
+          </div>
+        </div>
+        <div class="template-card-body">
+          <div class="template-type">Receipt</div>
+          <h5>Donation Receipt</h5>
+          <p class="template-desc">Tax receipt with 80G details, donor information, and donation amount</p>
+          <div class="template-card-footer">
+            <span class="usage-count"><i class="fa-solid fa-copy"></i> Used 3,456 times</span>
+            <div class="card-actions">
+              <span class="default-badge"><i class="fa-solid fa-star" style="font-size: 0.5rem;"></i> Default</span>
+              <button class="btn-sm-action" onclick="event.stopPropagation(); openEditor('receipt')"><i class="fa-solid fa-pen"></i></button>
+              <button class="btn-sm-action" onclick="event.stopPropagation();"><i class="fa-solid fa-eye"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Donor Thank You Letter -->
+      <div class="template-card" onclick="openEditor('letter')">
+        <div class="template-card-preview">
+          <div class="type-icon"><i class="fa-solid fa-envelope-open-text"></i></div>
+          <div class="status-dot active"></div>
+          <div class="preview-doc">
+            <div class="preview-header-bar"></div>
+            <div class="preview-line medium"></div>
+            <div class="preview-line long"></div>
+            <div class="preview-line long"></div>
+            <div class="preview-line medium"></div>
+            <div class="preview-line short"></div>
+            <div class="preview-sig"></div>
+          </div>
+        </div>
+        <div class="template-card-body">
+          <div class="template-type">Letter</div>
+          <h5>Donor Thank You Letter</h5>
+          <p class="template-desc">Personalized thank-you with donation details and impact story</p>
+          <div class="template-card-footer">
+            <span class="usage-count"><i class="fa-solid fa-copy"></i> Used 2,100 times</span>
+            <div class="card-actions">
+              <button class="btn-sm-action" onclick="event.stopPropagation(); openEditor('letter')"><i class="fa-solid fa-pen"></i></button>
+              <button class="btn-sm-action" onclick="event.stopPropagation();"><i class="fa-solid fa-eye"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 80G Tax Certificate -->
+      <div class="template-card" onclick="openEditor('tax')">
+        <div class="template-card-preview">
+          <div class="type-icon"><i class="fa-solid fa-certificate"></i></div>
+          <div class="status-dot active"></div>
+          <div class="preview-doc">
+            <div class="preview-header-bar"></div>
+            <div class="preview-line short"></div>
+            <div class="preview-block"></div>
+            <div class="preview-line long"></div>
+            <div class="preview-line medium"></div>
+            <div class="preview-line long"></div>
+            <div class="preview-sig"></div>
+          </div>
+        </div>
+        <div class="template-card-body">
+          <div class="template-type">Certificate</div>
+          <h5>80G Tax Certificate</h5>
+          <p class="template-desc">India-specific 80G tax deduction certificate for donors</p>
+          <div class="template-card-footer">
+            <span class="usage-count"><i class="fa-solid fa-copy"></i> Used 1,890 times</span>
+            <div class="card-actions">
+              <button class="btn-sm-action" onclick="event.stopPropagation(); openEditor('tax')"><i class="fa-solid fa-pen"></i></button>
+              <button class="btn-sm-action" onclick="event.stopPropagation();"><i class="fa-solid fa-eye"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Annual Giving Statement -->
+      <div class="template-card" onclick="openEditor('statement')">
+        <div class="template-card-preview">
+          <div class="type-icon"><i class="fa-solid fa-file-lines"></i></div>
+          <div class="status-dot active"></div>
+          <div class="preview-doc">
+            <div class="preview-header-bar"></div>
+            <div class="preview-line medium"></div>
+            <div class="preview-block"></div>
+            <div class="preview-block"></div>
+            <div class="preview-line short"></div>
+            <div class="preview-sig"></div>
+          </div>
+        </div>
+        <div class="template-card-body">
+          <div class="template-type">Statement</div>
+          <h5>Annual Giving Statement</h5>
+          <p class="template-desc">Year-end summary of all donations with totals</p>
+          <div class="template-card-footer">
+            <span class="usage-count"><i class="fa-solid fa-copy"></i> Used 820 times</span>
+            <div class="card-actions">
+              <button class="btn-sm-action" onclick="event.stopPropagation(); openEditor('statement')"><i class="fa-solid fa-pen"></i></button>
+              <button class="btn-sm-action" onclick="event.stopPropagation();"><i class="fa-solid fa-eye"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Volunteer Appreciation -->
+      <div class="template-card" onclick="openEditor('volunteer')">
+        <div class="template-card-preview">
+          <div class="type-icon"><i class="fa-solid fa-award"></i></div>
+          <div class="status-dot active"></div>
+          <div class="preview-doc">
+            <div class="preview-header-bar"></div>
+            <div class="preview-line short"></div>
+            <div class="preview-line medium"></div>
+            <div class="preview-line long"></div>
+            <div class="preview-line short"></div>
+            <div class="preview-sig"></div>
+          </div>
+        </div>
+        <div class="template-card-body">
+          <div class="template-type">Certificate</div>
+          <h5>Volunteer Appreciation</h5>
+          <p class="template-desc">Recognition certificate for volunteer service hours</p>
+          <div class="template-card-footer">
+            <span class="usage-count"><i class="fa-solid fa-copy"></i> Used 234 times</span>
+            <div class="card-actions">
+              <button class="btn-sm-action" onclick="event.stopPropagation(); openEditor('volunteer')"><i class="fa-solid fa-pen"></i></button>
+              <button class="btn-sm-action" onclick="event.stopPropagation();"><i class="fa-solid fa-eye"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Membership Card -->
+      <div class="template-card" onclick="openEditor('membership')">
+        <div class="template-card-preview">
+          <div class="type-icon"><i class="fa-solid fa-id-card"></i></div>
+          <div class="status-dot active"></div>
+          <div class="preview-doc" style="aspect-ratio: 85.6/54; height: auto; width: 75%;">
+            <div class="preview-header-bar" style="height: 10px;"></div>
+            <div class="preview-line short"></div>
+            <div class="preview-line medium"></div>
+            <div class="preview-line short"></div>
+          </div>
+        </div>
+        <div class="template-card-body">
+          <div class="template-type">Card</div>
+          <h5>Membership Card</h5>
+          <p class="template-desc">Member ID card with photo, tier, and validity period</p>
+          <div class="template-card-footer">
+            <span class="usage-count"><i class="fa-solid fa-copy"></i> Used 156 times</span>
+            <div class="card-actions">
+              <button class="btn-sm-action" onclick="event.stopPropagation(); openEditor('membership')"><i class="fa-solid fa-pen"></i></button>
+              <button class="btn-sm-action" onclick="event.stopPropagation();"><i class="fa-solid fa-eye"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Event Attendance (Draft) -->
+      <div class="template-card" onclick="openEditor('event')">
+        <div class="template-card-preview">
+          <div class="type-icon"><i class="fa-solid fa-calendar-check"></i></div>
+          <div class="status-dot draft"></div>
+          <div class="preview-doc">
+            <div class="preview-header-bar" style="opacity: 0.4;"></div>
+            <div class="preview-line short"></div>
+            <div class="preview-line medium"></div>
+            <div class="preview-line long"></div>
+            <div class="preview-sig"></div>
+          </div>
+        </div>
+        <div class="template-card-body">
+          <div class="template-type" style="color: var(--text-secondary);">Certificate &middot; Draft</div>
+          <h5>Event Attendance</h5>
+          <p class="template-desc">Event participation/attendance certificate</p>
+          <div class="template-card-footer">
+            <span class="usage-count"><i class="fa-solid fa-copy"></i> Used 0 times</span>
+            <div class="card-actions">
+              <button class="btn-sm-action" onclick="event.stopPropagation(); openEditor('event')"><i class="fa-solid fa-pen"></i></button>
+              <button class="btn-sm-action" onclick="event.stopPropagation();"><i class="fa-solid fa-eye"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Create New -->
+      <div class="template-card create-new" onclick="openEditor('new')">
+        <div class="create-icon"><i class="fa-solid fa-plus"></i></div>
+        <h5>Create New Template</h5>
+        <p>Start from scratch or choose a starter</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======= EDITOR VIEW ======= -->
+  <div class="editor-view" id="editorView">
+
+    <!-- Toolbar -->
+    <div class="editor-toolbar">
+      <div class="editor-toolbar-left">
+        <button class="back-btn" onclick="closeEditor()"><i class="fa-solid fa-arrow-left"></i></button>
+        <h2>Donation Receipt</h2>
+        <span class="default-badge"><i class="fa-solid fa-star" style="font-size: 0.5rem;"></i> Default</span>
+      </div>
+      <div class="editor-toolbar-right">
+        <button class="btn-danger-outline"><i class="fa-solid fa-trash-can"></i> Delete</button>
+        <button class="btn-outline-accent"><i class="fa-solid fa-flask-vial"></i> Generate Test</button>
+        <button class="btn-outline-accent"><i class="fa-solid fa-copy"></i> Save as Copy</button>
+        <button class="btn-primary-accent"><i class="fa-solid fa-floppy-disk"></i> Save Template</button>
+      </div>
+    </div>
+
+    <!-- Editor Body: 3 panels -->
+    <div class="editor-body">
+
+      <!-- Left Panel: Settings -->
+      <div class="editor-left">
+
+        <div class="panel-section">
+          <div class="panel-section-title">Template Settings <i class="fa-solid fa-chevron-down"></i></div>
+          <div>
+            <label class="panel-label">Template Name <span class="required">*</span></label>
+            <input type="text" class="panel-input" value="Donation Receipt">
+
+            <label class="panel-label">Template Type</label>
+            <select class="panel-select">
+              <option selected>Receipt</option>
+              <option>Certificate</option>
+              <option>Letter</option>
+              <option>Statement</option>
+              <option>Card</option>
+              <option>Custom</option>
+            </select>
+
+            <label class="panel-label">Description</label>
+            <input type="text" class="panel-input" value="Standard donation receipt with tax details">
+
+            <div style="display: flex; gap: 0.5rem;">
+              <div style="flex:1;">
+                <label class="panel-label">Page Size</label>
+                <select class="panel-select">
+                  <option selected>A4</option>
+                  <option>Letter</option>
+                  <option>A5</option>
+                  <option>Custom</option>
+                </select>
+              </div>
+              <div style="flex:1;">
+                <label class="panel-label">Orientation</label>
+                <select class="panel-select">
+                  <option selected>Portrait</option>
+                  <option>Landscape</option>
+                </select>
+              </div>
+            </div>
+
+            <label class="panel-label">Margins</label>
+            <div class="margins-grid">
+              <div><label class="panel-label">Top</label><input type="text" class="panel-input" value="20mm"></div>
+              <div><label class="panel-label">Right</label><input type="text" class="panel-input" value="15mm"></div>
+              <div><label class="panel-label">Bottom</label><input type="text" class="panel-input" value="20mm"></div>
+              <div><label class="panel-label">Left</label><input type="text" class="panel-input" value="15mm"></div>
+            </div>
+
+            <div class="toggle-row">
+              <span class="toggle-info">Default Template</span>
+              <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-info">Active</span>
+              <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-section-title">Available Placeholders <i class="fa-solid fa-chevron-down"></i></div>
+          <div>
+            <input type="text" class="placeholder-search" placeholder="Search placeholders...">
+
+            <div class="placeholder-group">
+              <div class="placeholder-group-title">Donor Fields</div>
+              <div class="placeholder-chips">
+                <span class="placeholder-chip" onclick="insertPlaceholder(this)">{{donor_name}}</span>
+                <span class="placeholder-chip" onclick="insertPlaceholder(this)">{{donor_email}}</span>
+                <span class="placeholder-chip" onclick="insertPlaceholder(this)">{{donor_phone}}</span>
+                <span class="placeholder-chip" onclick="insertPlaceholder(this)">{{donor_address}}</span>
+                <span class="placeholder-chip" onclick="insertPlaceholder(this)">{{donor_city}}</span>
+                <span class="placeholder-chip" onclick="insertPlaceholder(this)">{{donor_country}}</span>
+              </div>
+            </div>
+
+            <div class="placeholder-group">
+              <div class="placeholder-group-title">Donation Fields</div>
+              <div class="placeholder-chips">
+                <span class="placeholder-chip" onclick="insertPlaceholder(this)">{{donation_id}}</span>
+                <span class="placeholder-chip" onclick="insertPlaceholder(this)">{{amount}}</span>
+                <span class="placeholder-chip" onclick="insertPlaceholder(this)">{{amount_words}}</span>
+                <span class="placeholder-chip" onclick="insertPlaceholder(this)">{{currency}}</span>
+                <span class="placeholder-chip" onclick="insertPlaceholder(this)">{{currency_symbol}}</span>
+                <span class="placeholder-chip" onclick="insertPlaceholder(this)">{{donation_date}}</span>
+                <span class="placeholder-chip" onclick="insertPlaceholder(this)">{{payment_mode}}</span>
+                <span class="placeholder-chip" onclick="insertPlaceholder(this)">{{purpose}}</span>
+                <span class="placeholder-chip" onclick="insertPlaceholder(this)">{{campaign}}</span>
+              </div>
+            </div>
+
+            <div class="placeholder-group">
+              <div class="placeholder-group-title">Receipt Fields</div>
+              <div class="placeholder-chips">
+                <span class="placeholder-chip" onclick="insertPlaceholder(this)">{{receipt_number}}</span>
+                <span class="placeholder-chip" onclick="insertPlaceholder(this)">{{receipt_date}}</span>
+                <span class="placeholder-chip" onclick="insertPlaceholder(this)">{{financial_year}}</span>
+              </div>
+            </div>
+
+            <div class="placeholder-group">
+              <div class="placeholder-group-title">Organization Fields</div>
+              <div class="placeholder-chips">
+                <span class="placeholder-chip" onclick="insertPlaceholder(this)">{{org_name}}</span>
+                <span class="placeholder-chip" onclick="insertPlaceholder(this)">{{org_logo}}</span>
+                <span class="placeholder-chip" onclick="insertPlaceholder(this)">{{org_address}}</span>
+                <span class="placeholder-chip" onclick="insertPlaceholder(this)">{{org_phone}}</span>
+                <span class="placeholder-chip" onclick="insertPlaceholder(this)">{{org_email}}</span>
+                <span class="placeholder-chip" onclick="insertPlaceholder(this)">{{org_website}}</span>
+                <span class="placeholder-chip" onclick="insertPlaceholder(this)">{{tax_section}}</span>
+                <span class="placeholder-chip" onclick="insertPlaceholder(this)">{{tax_certificate_number}}</span>
+              </div>
+            </div>
+
+            <div class="placeholder-group">
+              <div class="placeholder-group-title">System Fields</div>
+              <div class="placeholder-chips">
+                <span class="placeholder-chip" onclick="insertPlaceholder(this)">{{current_date}}</span>
+                <span class="placeholder-chip" onclick="insertPlaceholder(this)">{{generated_by}}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center Panel: Code Editor -->
+      <div class="editor-center">
+        <div class="editor-tab-bar">
+          <div class="editor-tab">
+            <i class="fa-solid fa-code"></i> template.html
+          </div>
+          <div class="editor-tab-actions">
+            <button><i class="fa-solid fa-wand-magic-sparkles"></i> Format</button>
+          </div>
+        </div>
+        <div class="code-editor">
+          <pre id="codeContent"></pre>
+        </div>
+      </div>
+
+      <!-- Right Panel: Preview -->
+      <div class="editor-right">
+        <div class="preview-header">
+          <h4><i class="fa-solid fa-eye" style="color: var(--accent); margin-right: 0.375rem;"></i> Live Preview</h4>
+          <div class="zoom-controls">
+            <button class="zoom-btn" onclick="setZoom(this, 50)">50%</button>
+            <button class="zoom-btn active" onclick="setZoom(this, 75)">75%</button>
+            <button class="zoom-btn" onclick="setZoom(this, 100)">100%</button>
+          </div>
+        </div>
+        <div class="preview-area">
+          <div class="preview-page" id="previewPage">
+            <div class="prev-header">
+              <div class="prev-logo"><i class="fa-solid fa-heart-pulse"></i></div>
+              <div class="prev-org">Global Humanitarian Foundation</div>
+              <div class="prev-title">DONATION RECEIPT</div>
+            </div>
+            <div style="margin-bottom: 0.375rem;">
+              <div class="prev-field"><span class="label">Receipt No:</span> <strong>REC-2024-00456</strong></div>
+              <div class="prev-field"><span class="label">Date:</span> 15 Mar 2024</div>
+            </div>
+            <div style="margin-bottom: 0.375rem;">Dear <strong>Khalid Al-Mansouri</strong>,</div>
+            <div style="margin-bottom: 0.25rem; font-size: 0.4375rem; color: #666;">Thank you for your generous donation.</div>
+            <div style="background: #f8fafc; padding: 0.25rem; border-radius: 2px; margin-bottom: 0.375rem;">
+              <div class="prev-field"><span class="label">Amount:</span> <span class="prev-amount">$500.00</span></div>
+              <div class="prev-field"><span class="label">In Words:</span> Five Hundred Dollars</div>
+              <div class="prev-field"><span class="label">Purpose:</span> Orphan Care</div>
+              <div class="prev-field"><span class="label">Payment:</span> Online Transfer</div>
+              <div class="prev-field"><span class="label">Date:</span> 15 Mar 2024</div>
+            </div>
+            <div style="font-size: 0.4375rem; color: #666; margin-bottom: 0.25rem;">
+              This donation is exempt under Section 80G.<br>
+              Certificate No: 80G/2024/GHF/1234
+            </div>
+            <div class="prev-sig">
+              <div style="color: #333; font-weight: 600;">Authorized Signatory</div>
+              <div>Global Humanitarian Foundation</div>
+              <div style="margin-top: 0.25rem; font-size: 0.375rem; text-align: center;">123 Main Street, New York | +1-800-GHF | www.ghf.org</div>
+            </div>
+          </div>
+        </div>
+        <div class="preview-actions">
+          <button class="btn-sm-action" style="flex:1;"><i class="fa-solid fa-shuffle"></i> Switch Data</button>
+          <button class="btn-sm-action" style="flex:1;"><i class="fa-solid fa-file-pdf"></i> Download PDF</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Gallery / Editor toggle
+    function openEditor(templateId) {
+      document.getElementById('galleryView').classList.add('hidden');
+      document.getElementById('editorView').classList.add('active');
+    }
+
+    function closeEditor() {
+      document.getElementById('editorView').classList.remove('active');
+      document.getElementById('galleryView').classList.remove('hidden');
+    }
+
+    // Placeholder insert feedback
+    function insertPlaceholder(el) {
+      const text = el.textContent;
+      el.style.background = 'var(--accent)';
+      el.style.color = 'white';
+      el.style.borderColor = 'var(--accent)';
+      setTimeout(() => {
+        el.style.background = '';
+        el.style.color = '';
+        el.style.borderColor = '';
+      }, 500);
+    }
+
+    // Zoom controls
+    function setZoom(btn, level) {
+      document.querySelectorAll('.zoom-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const page = document.getElementById('previewPage');
+      const scale = level / 75;
+      page.style.transform = `scale(${scale})`;
+      page.style.transformOrigin = 'top center';
+    }
+
+    // Render syntax-highlighted code
+    function renderCode() {
+      const lines = [
+        { content: '<span class="hl-comment">&lt;!DOCTYPE html&gt;</span>' },
+        { content: '<span class="hl-tag">&lt;html&gt;</span>' },
+        { content: '<span class="hl-tag">&lt;head&gt;</span>' },
+        { content: '  <span class="hl-tag">&lt;style&gt;</span>' },
+        { content: '    <span class="hl-selector">@page</span> { <span class="hl-prop">size</span>: <span class="hl-val">A4</span>; <span class="hl-prop">margin</span>: <span class="hl-val">20mm 15mm</span>; }' },
+        { content: '    <span class="hl-selector">body</span> { <span class="hl-prop">font-family</span>: <span class="hl-str">\'Arial\'</span>, sans-serif; <span class="hl-prop">color</span>: <span class="hl-val">#333</span>; }' },
+        { content: '    <span class="hl-selector">.header</span> { <span class="hl-prop">text-align</span>: <span class="hl-val">center</span>; <span class="hl-prop">border-bottom</span>: <span class="hl-val">2px solid #0e7490</span>; }' },
+        { content: '    <span class="hl-selector">.logo</span> { <span class="hl-prop">max-height</span>: <span class="hl-val">60px</span>; }' },
+        { content: '    <span class="hl-selector">.title</span> { <span class="hl-prop">font-size</span>: <span class="hl-val">24px</span>; <span class="hl-prop">color</span>: <span class="hl-val">#0e7490</span>; }' },
+        { content: '    <span class="hl-selector">.details-table td</span> { <span class="hl-prop">padding</span>: <span class="hl-val">8px 12px</span>; }' },
+        { content: '    <span class="hl-selector">.amount</span> { <span class="hl-prop">font-size</span>: <span class="hl-val">20px</span>; <span class="hl-prop">font-weight</span>: <span class="hl-val">bold</span>; <span class="hl-prop">color</span>: <span class="hl-val">#0e7490</span>; }' },
+        { content: '    <span class="hl-selector">.footer</span> { <span class="hl-prop">text-align</span>: <span class="hl-val">center</span>; <span class="hl-prop">font-size</span>: <span class="hl-val">11px</span>; <span class="hl-prop">color</span>: <span class="hl-val">#666</span>; }' },
+        { content: '    <span class="hl-selector">.signature</span> { <span class="hl-prop">margin-top</span>: <span class="hl-val">40px</span>; }' },
+        { content: '  <span class="hl-tag">&lt;/style&gt;</span>' },
+        { content: '<span class="hl-tag">&lt;/head&gt;</span>' },
+        { content: '<span class="hl-tag">&lt;body&gt;</span>' },
+        { content: '  <span class="hl-tag">&lt;div</span> <span class="hl-attr">class</span>=<span class="hl-str">"header"</span><span class="hl-tag">&gt;</span>' },
+        { content: '    <span class="hl-tag">&lt;img</span> <span class="hl-attr">src</span>=<span class="hl-str">"<span class="hl-placeholder">{{org_logo}}</span>"</span> <span class="hl-attr">class</span>=<span class="hl-str">"logo"</span> <span class="hl-tag">/&gt;</span>' },
+        { content: '    <span class="hl-tag">&lt;h1&gt;</span><span class="hl-placeholder">{{org_name}}</span><span class="hl-tag">&lt;/h1&gt;</span>' },
+        { content: '    <span class="hl-tag">&lt;h2</span> <span class="hl-attr">class</span>=<span class="hl-str">"title"</span><span class="hl-tag">&gt;</span>DONATION RECEIPT<span class="hl-tag">&lt;/h2&gt;</span>' },
+        { content: '  <span class="hl-tag">&lt;/div&gt;</span>' },
+        { content: '' },
+        { content: '  <span class="hl-tag">&lt;p&gt;</span>Receipt No: <span class="hl-tag">&lt;strong&gt;</span><span class="hl-placeholder">{{receipt_number}}</span><span class="hl-tag">&lt;/strong&gt;</span><span class="hl-tag">&lt;/p&gt;</span>' },
+        { content: '  <span class="hl-tag">&lt;p&gt;</span>Date: <span class="hl-placeholder">{{receipt_date}}</span><span class="hl-tag">&lt;/p&gt;</span>' },
+        { content: '' },
+        { content: '  <span class="hl-tag">&lt;p&gt;</span>Dear <span class="hl-placeholder">{{donor_name}}</span>,<span class="hl-tag">&lt;/p&gt;</span>' },
+        { content: '  <span class="hl-tag">&lt;p&gt;</span>Thank you for your generous donation.<span class="hl-tag">&lt;/p&gt;</span>' },
+        { content: '' },
+        { content: '  <span class="hl-tag">&lt;table</span> <span class="hl-attr">class</span>=<span class="hl-str">"details-table"</span><span class="hl-tag">&gt;</span>' },
+        { content: '    <span class="hl-tag">&lt;tr&gt;&lt;td&gt;</span>Amount:<span class="hl-tag">&lt;/td&gt;&lt;td</span> <span class="hl-attr">class</span>=<span class="hl-str">"amount"</span><span class="hl-tag">&gt;</span><span class="hl-placeholder">{{currency_symbol}}{{amount}}</span><span class="hl-tag">&lt;/td&gt;&lt;/tr&gt;</span>' },
+        { content: '    <span class="hl-tag">&lt;tr&gt;&lt;td&gt;</span>In Words:<span class="hl-tag">&lt;/td&gt;&lt;td&gt;</span><span class="hl-placeholder">{{amount_words}}</span><span class="hl-tag">&lt;/td&gt;&lt;/tr&gt;</span>' },
+        { content: '    <span class="hl-tag">&lt;tr&gt;&lt;td&gt;</span>Purpose:<span class="hl-tag">&lt;/td&gt;&lt;td&gt;</span><span class="hl-placeholder">{{purpose}}</span><span class="hl-tag">&lt;/td&gt;&lt;/tr&gt;</span>' },
+        { content: '    <span class="hl-tag">&lt;tr&gt;&lt;td&gt;</span>Payment Mode:<span class="hl-tag">&lt;/td&gt;&lt;td&gt;</span><span class="hl-placeholder">{{payment_mode}}</span><span class="hl-tag">&lt;/td&gt;&lt;/tr&gt;</span>' },
+        { content: '    <span class="hl-tag">&lt;tr&gt;&lt;td&gt;</span>Date:<span class="hl-tag">&lt;/td&gt;&lt;td&gt;</span><span class="hl-placeholder">{{donation_date}}</span><span class="hl-tag">&lt;/td&gt;&lt;/tr&gt;</span>' },
+        { content: '  <span class="hl-tag">&lt;/table&gt;</span>' },
+        { content: '' },
+        { content: '  <span class="hl-tag">&lt;div</span> <span class="hl-attr">class</span>=<span class="hl-str">"tax-info"</span><span class="hl-tag">&gt;</span>' },
+        { content: '    <span class="hl-tag">&lt;p&gt;</span>This donation is exempt under <span class="hl-placeholder">{{tax_section}}</span>.<span class="hl-tag">&lt;/p&gt;</span>' },
+        { content: '    <span class="hl-tag">&lt;p&gt;</span>Certificate No: <span class="hl-placeholder">{{tax_certificate_number}}</span><span class="hl-tag">&lt;/p&gt;</span>' },
+        { content: '  <span class="hl-tag">&lt;/div&gt;</span>' },
+        { content: '' },
+        { content: '  <span class="hl-tag">&lt;div</span> <span class="hl-attr">class</span>=<span class="hl-str">"signature"</span><span class="hl-tag">&gt;</span>' },
+        { content: '    <span class="hl-tag">&lt;p&gt;</span>Authorized Signatory<span class="hl-tag">&lt;/p&gt;</span>' },
+        { content: '    <span class="hl-tag">&lt;p&gt;</span><span class="hl-placeholder">{{org_name}}</span><span class="hl-tag">&lt;/p&gt;</span>' },
+        { content: '  <span class="hl-tag">&lt;/div&gt;</span>' },
+        { content: '' },
+        { content: '  <span class="hl-tag">&lt;div</span> <span class="hl-attr">class</span>=<span class="hl-str">"footer"</span><span class="hl-tag">&gt;</span>' },
+        { content: '    <span class="hl-tag">&lt;p&gt;</span><span class="hl-placeholder">{{org_address}}</span> | <span class="hl-placeholder">{{org_phone}}</span> | <span class="hl-placeholder">{{org_website}}</span><span class="hl-tag">&lt;/p&gt;</span>' },
+        { content: '  <span class="hl-tag">&lt;/div&gt;</span>' },
+        { content: '<span class="hl-tag">&lt;/body&gt;</span>' },
+        { content: '<span class="hl-tag">&lt;/html&gt;</span>' },
+      ];
+
+      const container = document.getElementById('codeContent');
+      container.innerHTML = lines.map((line, i) =>
+        `<div class="code-line"><span class="line-number">${i + 1}</span><span class="line-content">${line.content || ' '}</span></div>`
+      ).join('');
+    }
+
+    // Init
+    renderCode();
+  </script>
+
+</body>
+
+</html>

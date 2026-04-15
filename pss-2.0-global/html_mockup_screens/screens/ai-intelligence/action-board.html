@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Action Board - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+      --ai-accent: #8b5cf6;
+      --ai-accent-bg: #f5f3ff;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* ─── Page Header ─── */
+    .page-header { margin-bottom: 1.25rem; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.2rem; }
+    .page-header p { font-size: 0.875rem; color: var(--text-secondary); margin: 0; }
+    .header-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+
+    /* ─── Buttons ─── */
+    .btn-primary-accent {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-primary-accent:hover { background: #0c6280; }
+
+    .btn-outline-accent {
+      background: white;
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-outline-accent:hover { border-color: var(--accent); color: var(--accent); }
+
+    .btn-xs {
+      padding: 0.25rem 0.625rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-primary);
+      transition: all 0.15s;
+    }
+    .btn-xs:hover { background: #f8fafc; }
+    .btn-xs.btn-xs-primary { background: var(--accent); color: white; border-color: var(--accent); }
+    .btn-xs.btn-xs-primary:hover { background: #0c6280; }
+    .btn-xs.btn-xs-danger { color: var(--danger-color); border-color: #fecaca; }
+    .btn-xs.btn-xs-danger:hover { background: #fef2f2; }
+
+    .filter-select {
+      padding: 0.45rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      background: white;
+      cursor: pointer;
+    }
+
+    /* ─── Summary Bar ─── */
+    .summary-bar {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      flex-wrap: wrap;
+    }
+    .summary-stat {
+      flex: 1 1 auto;
+      min-width: 200px;
+      padding: 0.25rem 1.25rem;
+      border-right: 1px solid var(--border-color);
+    }
+    .summary-stat:first-child { padding-left: 0; }
+    .summary-stat:last-child { border-right: none; }
+    .summary-stat-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); margin-bottom: 0.25rem; }
+    .summary-stat-value { font-size: 0.9rem; font-weight: 600; color: var(--text-primary); }
+    .summary-stat-sub { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.1rem; }
+    .tag-urgent { color: #dc2626; font-weight: 700; }
+    .tag-high { color: #ea580c; font-weight: 700; }
+    .tag-medium { color: #ca8a04; font-weight: 700; }
+    .tag-low { color: #2563eb; font-weight: 700; }
+
+    /* ─── Kanban ─── */
+    .kanban-wrapper {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+      overflow-x: auto;
+      padding-bottom: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .kanban-col {
+      flex: 0 0 300px;
+      width: 300px;
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: var(--card-radius);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .kanban-col-header {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: white;
+      border-radius: var(--card-radius) var(--card-radius) 0 0;
+    }
+    .kanban-col-header .col-title { font-size: 0.875rem; font-weight: 700; }
+    .kanban-col-header .col-count {
+      margin-left: auto;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.1rem 0.5rem;
+      border-radius: 999px;
+    }
+    .col-urgent .col-count { background: #fee2e2; color: #dc2626; }
+    .col-high .col-count { background: #ffedd5; color: #ea580c; }
+    .col-medium .col-count { background: #fef9c3; color: #ca8a04; }
+    .col-low .col-count { background: #dbeafe; color: #2563eb; }
+
+    .kanban-col-body { padding: 0.75rem; display: flex; flex-direction: column; gap: 0.625rem; }
+
+    /* ─── Action Cards ─── */
+    .action-card {
+      background: white;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+      overflow: hidden;
+      transition: box-shadow 0.15s, transform 0.15s;
+    }
+    .action-card:hover { box-shadow: 0 4px 10px rgba(0,0,0,0.08); transform: translateY(-1px); }
+
+    .action-card-inner { padding: 0.875rem; }
+
+    .action-card-border-urgent { border-left: 4px solid #dc2626; }
+    .action-card-border-high    { border-left: 4px solid #ea580c; }
+    .action-card-border-medium  { border-left: 4px solid #ca8a04; }
+    .action-card-border-low     { border-left: 4px solid #2563eb; }
+
+    .action-card-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      margin-bottom: 0.5rem;
+    }
+    .action-type-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.125rem 0.5rem;
+      border-radius: 999px;
+      background: #f1f5f9;
+      color: var(--text-secondary);
+    }
+    .priority-badge {
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.125rem 0.5rem;
+      border-radius: 999px;
+    }
+    .priority-badge.urgent { background: #fee2e2; color: #dc2626; }
+    .priority-badge.high   { background: #ffedd5; color: #ea580c; }
+    .priority-badge.medium { background: #fef9c3; color: #ca8a04; }
+    .priority-badge.low    { background: #dbeafe; color: #2563eb; }
+
+    .action-card-title {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.375rem;
+    }
+    .action-card-desc {
+      font-size: 0.775rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 0.375rem;
+    }
+    .action-card-desc strong { color: var(--text-primary); font-weight: 600; }
+    .action-card-desc a { color: var(--accent); text-decoration: none; font-weight: 600; cursor: pointer; }
+    .action-card-desc a:hover { text-decoration: underline; }
+
+    .action-why {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      font-style: italic;
+      line-height: 1.45;
+      background: #f8fafc;
+      border-left: 2px solid var(--border-color);
+      padding: 0.375rem 0.5rem;
+      border-radius: 0 4px 4px 0;
+      margin-bottom: 0.625rem;
+    }
+    .action-why::before { content: "AI: "; font-weight: 700; font-style: normal; color: var(--ai-accent); font-size: 0.7rem; }
+
+    .action-card-score {
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+    .score-pill {
+      display: inline-block;
+      padding: 0.1rem 0.45rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+    .score-pill.top { background: var(--ai-accent-bg); color: var(--ai-accent); }
+
+    .action-card-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      flex-wrap: wrap;
+    }
+
+    /* ─── Placeholder card ─── */
+    .action-card-placeholder {
+      background: white;
+      border-radius: 10px;
+      border: 1px dashed var(--border-color);
+      padding: 0.625rem 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-secondary);
+      font-size: 0.775rem;
+    }
+
+    /* ─── Completed Section ─── */
+    .section-toggle-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      user-select: none;
+    }
+    .section-toggle-header .toggle-icon { transition: transform 0.2s; }
+    .section-toggle-header[aria-expanded="false"] .toggle-icon { transform: rotate(-90deg); }
+
+    .dash-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      margin-bottom: 1.25rem;
+    }
+    .dash-card-header {
+      padding: 0.875rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    .dash-card-header h6 { font-size: 0.875rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+    .dash-card-body { padding: 1rem 1.25rem; }
+
+    .table { font-size: 0.8125rem; vertical-align: middle; margin-bottom: 0; }
+    .table thead th { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); border-bottom: 1px solid var(--border-color); background: #f8fafc; padding: 0.5rem 0.75rem; }
+    .table tbody td { padding: 0.625rem 0.75rem; border-bottom: 1px solid #f1f5f9; color: var(--text-primary); }
+    .table tbody tr:last-child td { border-bottom: none; }
+    .table tbody tr:hover td { background: #f8fafc; }
+
+    .result-tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+    }
+    .result-tag.success { background: #dcfce7; color: #16a34a; }
+    .result-tag.pending { background: #f1f5f9; color: var(--text-secondary); }
+    .result-tag.resolved { background: #fef9c3; color: #92400e; }
+
+    /* ─── Modal ─── */
+    .modal-sm-custom .modal-dialog { max-width: 480px; }
+    .modal-header { border-bottom: 1px solid var(--border-color); padding: 1rem 1.25rem; }
+    .modal-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); }
+    .modal-body { padding: 1.25rem; }
+    .modal-footer { border-top: 1px solid var(--border-color); padding: 0.875rem 1.25rem; }
+
+    .priority-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #f1f5f9;
+      gap: 0.75rem;
+    }
+    .priority-row:last-child { border-bottom: none; }
+    .priority-row-label { font-size: 0.8125rem; color: var(--text-primary); font-weight: 500; flex: 1; }
+    .priority-row select {
+      padding: 0.35rem 0.6rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8rem;
+      background: white;
+      color: var(--text-primary);
+      min-width: 110px;
+    }
+
+    /* ─── AI badge ─── */
+    .ai-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--ai-accent);
+      background: var(--ai-accent-bg);
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+    }
+
+    /* ─── Responsive: stack kanban on mobile ─── */
+    @media (max-width: 768px) {
+      .kanban-wrapper { flex-direction: column; overflow-x: visible; }
+      .kanban-col { flex: none; width: 100%; }
+      .summary-stat { border-right: none; border-bottom: 1px solid var(--border-color); padding: 0.5rem 0; }
+      .summary-stat:last-child { border-bottom: none; }
+      .summary-bar { flex-direction: column; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ══════════════════════════════════════════════════════
+       PAGE HEADER
+  ══════════════════════════════════════════════════════ -->
+  <div class="page-header">
+    <div class="d-flex align-items-start justify-content-between flex-wrap gap-2">
+      <div>
+        <h1><i class="fa-solid fa-bolt-lightning me-2" style="color:var(--ai-accent);font-size:1.25rem;"></i>Action Board</h1>
+        <p>AI-recommended daily tasks for maximum donor engagement</p>
+      </div>
+      <div class="header-actions">
+        <select class="filter-select">
+          <option>Today: Apr 12, 2026</option>
+          <option>Tomorrow</option>
+          <option>Next 7 days</option>
+        </select>
+        <select class="filter-select">
+          <option>All Types</option>
+          <option>Call</option>
+          <option>Email</option>
+          <option>Task</option>
+        </select>
+        <select class="filter-select">
+          <option>My Actions</option>
+          <option>All Staff</option>
+          <option>Unassigned</option>
+        </select>
+        <button class="btn-outline-accent" onclick="refreshRecommendations()">
+          <i class="fa-solid fa-rotate me-1"></i>Refresh Recommendations
+        </button>
+        <button class="btn-outline-accent" data-bs-toggle="modal" data-bs-target="#prioritiesModal">
+          <i class="fa-solid fa-sliders me-1"></i>Configure Priorities
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       DAILY SUMMARY BAR
+  ══════════════════════════════════════════════════════ -->
+  <div class="summary-bar">
+    <div class="summary-stat">
+      <div class="summary-stat-label"><i class="fa-solid fa-list-check me-1"></i>Today's Actions</div>
+      <div class="summary-stat-value">18 recommended</div>
+      <div class="summary-stat-sub">
+        <span style="color:var(--success-color);font-weight:600;">5 completed</span> &nbsp;|&nbsp;
+        <span style="color:var(--text-secondary);">3 snoozed</span>
+      </div>
+    </div>
+    <div class="summary-stat">
+      <div class="summary-stat-label"><i class="fa-solid fa-chart-line me-1"></i>Estimated Impact</div>
+      <div class="summary-stat-value" style="color:var(--success-color);">$12,400</div>
+      <div class="summary-stat-sub">in potential revenue today</div>
+    </div>
+    <div class="summary-stat">
+      <div class="summary-stat-label"><i class="fa-solid fa-layer-group me-1"></i>Priority Breakdown</div>
+      <div class="summary-stat-value d-flex align-items-center gap-2 flex-wrap mt-1">
+        <span class="tag-urgent">&#x1F534; 4 Urgent</span>
+        <span class="tag-high">&#x1F7E0; 6 High</span>
+        <span class="tag-medium">&#x1F7E1; 5 Medium</span>
+        <span class="tag-low">&#x1F535; 3 Low</span>
+      </div>
+    </div>
+    <div class="summary-stat" style="text-align:right;">
+      <div class="summary-stat-label">AI Model</div>
+      <div class="summary-stat-value">
+        <span class="ai-badge"><i class="fa-solid fa-microchip"></i> Active</span>
+      </div>
+      <div class="summary-stat-sub">Last run: 7:00 AM today</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       KANBAN BOARD
+  ══════════════════════════════════════════════════════ -->
+  <div class="kanban-wrapper">
+
+    <!-- ── COLUMN 1: URGENT ── -->
+    <div class="kanban-col col-urgent">
+      <div class="kanban-col-header">
+        <span style="font-size:1rem;">&#x1F534;</span>
+        <span class="col-title text-danger">Urgent</span>
+        <span class="col-count">4</span>
+      </div>
+      <div class="kanban-col-body">
+
+        <!-- Card 1: Thank Major Donor -->
+        <div class="action-card action-card-border-urgent">
+          <div class="action-card-inner">
+            <div class="action-card-meta">
+              <span class="action-type-badge"><i class="fa-solid fa-phone fa-xs"></i> Call</span>
+              <span class="priority-badge urgent">Urgent</span>
+            </div>
+            <div class="action-card-title">Thank Major Donor</div>
+            <div class="action-card-desc">
+              <a onclick="navigateTo('contacts/contact-detail')">Khalid Al-Mansouri</a> donated
+              <strong>$5,000</strong> for Orphan Care on Apr 10.<br>
+              <span style="color:var(--danger-color);font-weight:600;"><i class="fa-solid fa-triangle-exclamation fa-xs"></i> No acknowledgment sent — 2 days overdue</span>
+            </div>
+            <div class="action-card-score">
+              Engagement: <span class="score-pill top">96 &bull; Top 2%</span>
+            </div>
+            <div class="action-why">Major donors expect personal acknowledgment within 24 hours. Delay risks engagement score drop and future gift reduction.</div>
+            <div class="action-card-actions">
+              <button class="btn-xs btn-xs-primary" onclick="completeAction(this,'Thank Major Donor')"><i class="fa-solid fa-check fa-xs me-1"></i>Complete</button>
+              <button class="btn-xs" onclick="snoozeAction(this)"><i class="fa-regular fa-clock fa-xs me-1"></i>Snooze 1 day</button>
+              <button class="btn-xs btn-xs-danger" onclick="dismissAction(this)">Dismiss</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Re-engage At-Risk Donor -->
+        <div class="action-card action-card-border-urgent">
+          <div class="action-card-inner">
+            <div class="action-card-meta">
+              <span class="action-type-badge"><i class="fa-solid fa-envelope fa-xs"></i> Email</span>
+              <span class="priority-badge urgent">Urgent</span>
+            </div>
+            <div class="action-card-title">Re-engage At-Risk Donor</div>
+            <div class="action-card-desc">
+              <a onclick="navigateTo('contacts/contact-detail')">Mohamed Ali</a> —
+              <strong style="color:var(--danger-color);">92% churn probability</strong><br>
+              Last donation: 90 days ago ($5,000). Annual value: $15,000.<br>
+              Engagement score dropped <strong>36 points</strong>.
+            </div>
+            <div class="action-why">AI model predicts high churn risk. Personal outreach achieves 3x recovery rate versus bulk email campaigns.</div>
+            <div class="action-card-actions">
+              <button class="btn-xs btn-xs-primary" onclick="completeAction(this,'Re-engage At-Risk Donor')"><i class="fa-solid fa-check fa-xs me-1"></i>Complete</button>
+              <button class="btn-xs" onclick="snoozeAction(this)"><i class="fa-regular fa-clock fa-xs me-1"></i>Snooze</button>
+              <button class="btn-xs btn-xs-danger" onclick="dismissAction(this)">Dismiss</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Follow Up on Pledge -->
+        <div class="action-card action-card-border-urgent">
+          <div class="action-card-inner">
+            <div class="action-card-meta">
+              <span class="action-type-badge"><i class="fa-solid fa-phone fa-xs"></i> Call</span>
+              <span class="priority-badge urgent">Urgent</span>
+            </div>
+            <div class="action-card-title">Follow Up on Pledge</div>
+            <div class="action-card-desc">
+              <a onclick="navigateTo('contacts/contact-detail')">Ravi Sharma</a> — Pledge payment
+              <strong style="color:var(--danger-color);">overdue by 7 days</strong><br>
+              Pledge: $2,000 for Education Fund. Installment 3 of 4 paid.
+            </div>
+            <div class="action-why">Final installment overdue. A quick reminder call typically resolves collection within 24 hours with minimal friction.</div>
+            <div class="action-card-actions">
+              <button class="btn-xs btn-xs-primary" onclick="completeAction(this,'Follow Up on Pledge')"><i class="fa-solid fa-check fa-xs me-1"></i>Complete</button>
+              <button class="btn-xs" onclick="snoozeAction(this)"><i class="fa-regular fa-clock fa-xs me-1"></i>Snooze</button>
+              <button class="btn-xs btn-xs-danger" onclick="dismissAction(this)">Dismiss</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4: Resolve Receipt Gap -->
+        <div class="action-card action-card-border-urgent">
+          <div class="action-card-inner">
+            <div class="action-card-meta">
+              <span class="action-type-badge"><i class="fa-solid fa-clipboard-list fa-xs"></i> Task</span>
+              <span class="priority-badge urgent">Urgent</span>
+            </div>
+            <div class="action-card-title">Resolve Receipt Gap</div>
+            <div class="action-card-desc">
+              Receipt book <a onclick="navigateTo('field-collection/receipt-books')">RB-045</a>,
+              receipt <strong>#4543</strong> — gap detected.<br>
+              Ambassador: Ahmed Salim &bull; Dubai branch.
+            </div>
+            <div class="action-why">Receipt gap flagged by audit system. Must be investigated within 48 hours per compliance policy to avoid escalation.</div>
+            <div class="action-card-actions">
+              <button class="btn-xs btn-xs-primary" onclick="completeAction(this,'Resolve Receipt Gap')"><i class="fa-solid fa-check fa-xs me-1"></i>Complete</button>
+              <button class="btn-xs" onclick="snoozeAction(this)"><i class="fa-regular fa-clock fa-xs me-1"></i>Snooze</button>
+              <button class="btn-xs btn-xs-danger" onclick="dismissAction(this)">Dismiss</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /kanban-col-body -->
+    </div><!-- /col urgent -->
+
+    <!-- ── COLUMN 2: HIGH PRIORITY ── -->
+    <div class="kanban-col col-high">
+      <div class="kanban-col-header">
+        <span style="font-size:1rem;">&#x1F7E0;</span>
+        <span class="col-title" style="color:#ea580c;">High Priority</span>
+        <span class="col-count">6</span>
+      </div>
+      <div class="kanban-col-body">
+
+        <!-- Card 5: Birthday Messages -->
+        <div class="action-card action-card-border-high">
+          <div class="action-card-inner">
+            <div class="action-card-meta">
+              <span class="action-type-badge"><i class="fa-solid fa-envelope fa-xs"></i> Email</span>
+              <span class="priority-badge high">High</span>
+            </div>
+            <div class="action-card-title">Send Birthday Messages</div>
+            <div class="action-card-desc">
+              <strong>12 donors</strong> have birthdays today.<br>
+              Template: "Happy Birthday" with personalised donation CTA.
+            </div>
+            <div class="action-why">Birthday emails achieve 45% open rate and 8% conversion to donation — 4x industry average.</div>
+            <div class="action-card-actions">
+              <button class="btn-xs btn-xs-primary" onclick="completeAction(this,'Send Birthday Messages')"><i class="fa-solid fa-paper-plane fa-xs me-1"></i>Send All</button>
+              <button class="btn-xs">Review List</button>
+              <button class="btn-xs btn-xs-danger" onclick="dismissAction(this)">Dismiss</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 6: Welcome New Donors -->
+        <div class="action-card action-card-border-high">
+          <div class="action-card-inner">
+            <div class="action-card-meta">
+              <span class="action-type-badge"><i class="fa-solid fa-envelope fa-xs"></i> Email</span>
+              <span class="priority-badge high">High</span>
+            </div>
+            <div class="action-card-title">Welcome New Donors</div>
+            <div class="action-card-desc">
+              <strong>5 first-time donors</strong> in the last 48 hours.<br>
+              Send welcome series email #1 to each.
+            </div>
+            <div class="action-why">Welcoming first-time donors within 48 hours increases second-gift probability by 40%.</div>
+            <div class="action-card-actions">
+              <button class="btn-xs btn-xs-primary" onclick="completeAction(this,'Welcome New Donors')"><i class="fa-solid fa-paper-plane fa-xs me-1"></i>Send All</button>
+              <button class="btn-xs">Review List</button>
+              <button class="btn-xs btn-xs-danger" onclick="dismissAction(this)">Dismiss</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Placeholder cards -->
+        <div class="action-card-placeholder">
+          <span style="color:#ea580c;font-size:0.9rem;">&#x1F4C8;</span>
+          <div>
+            <div style="font-weight:600;color:var(--text-primary);font-size:0.8rem;">Upgrade Ask — Mid-tier Donors</div>
+            <div style="font-size:0.72rem;">4 donors ready for upgrade conversation</div>
+          </div>
+        </div>
+        <div class="action-card-placeholder">
+          <span style="color:#ea580c;font-size:0.9rem;">&#x1F4E3;</span>
+          <div>
+            <div style="font-weight:600;color:var(--text-primary);font-size:0.8rem;">Event Follow-up Emails</div>
+            <div style="font-size:0.72rem;">Send post-event thank you to 28 attendees</div>
+          </div>
+        </div>
+        <div class="action-card-placeholder">
+          <span style="color:#ea580c;font-size:0.9rem;">&#x1F504;</span>
+          <div>
+            <div style="font-weight:600;color:var(--text-primary);font-size:0.8rem;">Lapsed Re-engagement Batch</div>
+            <div style="font-size:0.72rem;">Send to 60 donors lapsed 6–12 months</div>
+          </div>
+        </div>
+        <div class="action-card-placeholder">
+          <span style="color:#ea580c;font-size:0.9rem;">&#x1F4CB;</span>
+          <div>
+            <div style="font-weight:600;color:var(--text-primary);font-size:0.8rem;">Monthly Report Review</div>
+            <div style="font-size:0.72rem;">March KPI report awaiting sign-off</div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /col high -->
+
+    <!-- ── COLUMN 3: MEDIUM ── -->
+    <div class="kanban-col col-medium">
+      <div class="kanban-col-header">
+        <span style="font-size:1rem;">&#x1F7E1;</span>
+        <span class="col-title" style="color:#ca8a04;">Medium Priority</span>
+        <span class="col-count">5</span>
+      </div>
+      <div class="kanban-col-body">
+
+        <!-- Card 7: Recurring Failures -->
+        <div class="action-card action-card-border-medium">
+          <div class="action-card-inner">
+            <div class="action-card-meta">
+              <span class="action-type-badge"><i class="fa-solid fa-clipboard-list fa-xs"></i> Task</span>
+              <span class="priority-badge medium">Medium</span>
+            </div>
+            <div class="action-card-title">Review Recurring Failures</div>
+            <div class="action-card-desc">
+              <strong>3 recurring donations</strong> failed payment retry.<br>
+              Total at risk: <strong>$450/month</strong>.
+            </div>
+            <div class="action-why">Final retry attempt reached. Contact donors directly to update payment method before lapsing.</div>
+            <div class="action-card-actions">
+              <button class="btn-xs btn-xs-primary" onclick="navigateTo('fundraising/recurring-donations')"><i class="fa-solid fa-eye fa-xs me-1"></i>View Failures</button>
+              <button class="btn-xs btn-xs-danger" onclick="dismissAction(this)">Dismiss</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Placeholder cards -->
+        <div class="action-card-placeholder">
+          <span style="color:#ca8a04;font-size:0.9rem;">&#x1F4F1;</span>
+          <div>
+            <div style="font-weight:600;color:var(--text-primary);font-size:0.8rem;">WhatsApp Unread Threads</div>
+            <div style="font-size:0.72rem;">7 unanswered messages from donors</div>
+          </div>
+        </div>
+        <div class="action-card-placeholder">
+          <span style="color:#ca8a04;font-size:0.9rem;">&#x1F3F7;&#xFE0F;</span>
+          <div>
+            <div style="font-weight:600;color:var(--text-primary);font-size:0.8rem;">Tag Audit — Untagged Donors</div>
+            <div style="font-size:0.72rem;">41 contacts missing segment tags</div>
+          </div>
+        </div>
+        <div class="action-card-placeholder">
+          <span style="color:#ca8a04;font-size:0.9rem;">&#x1F4C5;</span>
+          <div>
+            <div style="font-weight:600;color:var(--text-primary);font-size:0.8rem;">Schedule Q2 Stewardship Calls</div>
+            <div style="font-size:0.72rem;">Top 10 donors — no contact in 45 days</div>
+          </div>
+        </div>
+        <div class="action-card-placeholder">
+          <span style="color:#ca8a04;font-size:0.9rem;">&#x1F4E7;</span>
+          <div>
+            <div style="font-weight:600;color:var(--text-primary);font-size:0.8rem;">Review Bounced Emails</div>
+            <div style="font-size:0.72rem;">14 hard bounces need manual resolution</div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /col medium -->
+
+    <!-- ── COLUMN 4: LOW ── -->
+    <div class="kanban-col col-low">
+      <div class="kanban-col-header">
+        <span style="font-size:1rem;">&#x1F535;</span>
+        <span class="col-title" style="color:#2563eb;">Low Priority</span>
+        <span class="col-count">3</span>
+      </div>
+      <div class="kanban-col-body">
+
+        <!-- Card 8: Stale Contacts -->
+        <div class="action-card action-card-border-low">
+          <div class="action-card-inner">
+            <div class="action-card-meta">
+              <span class="action-type-badge"><i class="fa-solid fa-clipboard-list fa-xs"></i> Task</span>
+              <span class="priority-badge low">Low</span>
+            </div>
+            <div class="action-card-title">Update Stale Contacts</div>
+            <div class="action-card-desc">
+              <strong>23 contacts</strong> haven't been updated in over 1 year.
+            </div>
+            <div class="action-why">Maintaining data hygiene improves email deliverability and overall engagement accuracy across all campaigns.</div>
+            <div class="action-card-actions">
+              <button class="btn-xs btn-xs-primary" onclick="navigateTo('contacts/contact-list')"><i class="fa-solid fa-list fa-xs me-1"></i>View List</button>
+              <button class="btn-xs btn-xs-danger" onclick="dismissAction(this)">Dismiss</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Placeholder cards -->
+        <div class="action-card-placeholder">
+          <span style="color:#2563eb;font-size:0.9rem;">&#x1F5C4;&#xFE0F;</span>
+          <div>
+            <div style="font-weight:600;color:var(--text-primary);font-size:0.8rem;">Archive Closed Campaigns</div>
+            <div style="font-size:0.72rem;">5 campaigns ended with no closure action</div>
+          </div>
+        </div>
+        <div class="action-card-placeholder">
+          <span style="color:#2563eb;font-size:0.9rem;">&#x2699;&#xFE0F;</span>
+          <div>
+            <div style="font-weight:600;color:var(--text-primary);font-size:0.8rem;">Review Automation Rules</div>
+            <div style="font-size:0.72rem;">3 workflows haven't fired in 30+ days</div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /col low -->
+
+  </div><!-- /kanban-wrapper -->
+
+  <!-- ══════════════════════════════════════════════════════
+       COMPLETED TODAY (COLLAPSIBLE)
+  ══════════════════════════════════════════════════════ -->
+  <div class="dash-card">
+    <div class="dash-card-header">
+      <a class="section-toggle-header text-decoration-none" data-bs-toggle="collapse" data-bs-target="#completedSection" aria-expanded="true" aria-controls="completedSection">
+        <span class="toggle-icon" style="color:var(--text-secondary);"><i class="fa-solid fa-chevron-down fa-xs"></i></span>
+        <h6 style="color:var(--text-primary);">
+          <i class="fa-solid fa-circle-check me-1" style="color:var(--success-color);"></i>
+          Completed Today
+        </h6>
+        <span style="background:#dcfce7;color:#16a34a;font-size:0.7rem;font-weight:700;padding:0.15rem 0.5rem;border-radius:999px;margin-left:0.25rem;">5 done</span>
+      </a>
+    </div>
+    <div class="collapse show" id="completedSection">
+      <div class="dash-card-body p-0">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Action</th>
+              <th>Completed By</th>
+              <th>Time</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-secondary">1</td>
+              <td>
+                <i class="fa-solid fa-phone fa-xs text-secondary me-1"></i>
+                Called <a class="text-decoration-none" style="color:var(--accent);cursor:pointer;" onclick="navigateTo('contacts/contact-detail')">Fatima Al-Zahra</a> (thank you call)
+              </td>
+              <td>Ahmed Salim</td>
+              <td class="text-secondary">10:30 AM</td>
+              <td><span class="result-tag success">Pledged $1,000 more</span></td>
+            </tr>
+            <tr>
+              <td class="text-secondary">2</td>
+              <td>
+                <i class="fa-solid fa-envelope fa-xs text-secondary me-1"></i>
+                Sent LYBUNT email batch (45 donors)
+              </td>
+              <td><span style="color:var(--ai-accent);font-weight:600;"><i class="fa-solid fa-microchip fa-xs me-1"></i>System (auto)</span></td>
+              <td class="text-secondary">8:00 AM</td>
+              <td><span class="result-tag pending">Pending results</span></td>
+            </tr>
+            <tr>
+              <td class="text-secondary">3</td>
+              <td>
+                <i class="fa-solid fa-clipboard-check fa-xs text-secondary me-1"></i>
+                Resolved receipt gap <a class="text-decoration-none" style="color:var(--accent);cursor:pointer;" onclick="navigateTo('field-collection/receipt-books')">#4540</a>
+              </td>
+              <td>Fatima Al-Zahra</td>
+              <td class="text-secondary">9:15 AM</td>
+              <td><span class="result-tag resolved">Voided — lost receipt</span></td>
+            </tr>
+            <tr>
+              <td class="text-secondary">4</td>
+              <td>
+                <i class="fa-solid fa-envelope fa-xs text-secondary me-1"></i>
+                Sent anniversary message to <a class="text-decoration-none" style="color:var(--accent);cursor:pointer;" onclick="navigateTo('contacts/contact-detail')">Sarah Johnson</a>
+              </td>
+              <td><span style="color:var(--ai-accent);font-weight:600;"><i class="fa-solid fa-microchip fa-xs me-1"></i>System (auto)</span></td>
+              <td class="text-secondary">7:05 AM</td>
+              <td><span class="result-tag success">Email opened</span></td>
+            </tr>
+            <tr>
+              <td class="text-secondary">5</td>
+              <td>
+                <i class="fa-solid fa-phone fa-xs text-secondary me-1"></i>
+                Called <a class="text-decoration-none" style="color:var(--accent);cursor:pointer;" onclick="navigateTo('contacts/contact-detail')">Ibrahim Hassan</a> re: lapsed giving
+              </td>
+              <td>Mariam Khalil</td>
+              <td class="text-secondary">11:45 AM</td>
+              <td><span class="result-tag success">Resumed $200/mo</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       CONFIGURE PRIORITIES MODAL
+  ══════════════════════════════════════════════════════ -->
+  <div class="modal fade" id="prioritiesModal" tabindex="-1" aria-labelledby="prioritiesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm-custom">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="prioritiesModalLabel">
+            <i class="fa-solid fa-sliders me-2" style="color:var(--ai-accent);"></i>Configure Action Priorities
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-secondary" style="font-size:0.8125rem;margin-bottom:1rem;">
+            Set the relative weight for each action type. Actions are ranked and displayed using these weights.
+          </p>
+          <div class="priority-row">
+            <div class="priority-row-label"><i class="fa-solid fa-star fa-xs me-1" style="color:#f59e0b;"></i>Major donor follow-up</div>
+            <select>
+              <option selected>High</option>
+              <option>Critical</option>
+              <option>Medium</option>
+              <option>Low</option>
+            </select>
+          </div>
+          <div class="priority-row">
+            <div class="priority-row-label"><i class="fa-solid fa-heart-crack fa-xs me-1" style="color:var(--danger-color);"></i>Churn prevention</div>
+            <select>
+              <option selected>High</option>
+              <option>Critical</option>
+              <option>Medium</option>
+              <option>Low</option>
+            </select>
+          </div>
+          <div class="priority-row">
+            <div class="priority-row-label"><i class="fa-solid fa-handshake fa-xs me-1" style="color:var(--accent);"></i>Pledge follow-up</div>
+            <select>
+              <option selected>High</option>
+              <option>Critical</option>
+              <option>Medium</option>
+              <option>Low</option>
+            </select>
+          </div>
+          <div class="priority-row">
+            <div class="priority-row-label"><i class="fa-solid fa-user-plus fa-xs me-1" style="color:var(--success-color);"></i>New donor welcome</div>
+            <select>
+              <option>High</option>
+              <option>Critical</option>
+              <option selected>Medium</option>
+              <option>Low</option>
+            </select>
+          </div>
+          <div class="priority-row">
+            <div class="priority-row-label"><i class="fa-solid fa-cake-candles fa-xs me-1" style="color:#ec4899;"></i>Birthday / Anniversary</div>
+            <select>
+              <option>High</option>
+              <option>Critical</option>
+              <option selected>Medium</option>
+              <option>Low</option>
+            </select>
+          </div>
+          <div class="priority-row">
+            <div class="priority-row-label"><i class="fa-solid fa-database fa-xs me-1" style="color:var(--text-secondary);"></i>Data hygiene</div>
+            <select>
+              <option>High</option>
+              <option>Critical</option>
+              <option>Medium</option>
+              <option selected>Low</option>
+            </select>
+          </div>
+          <div class="priority-row">
+            <div class="priority-row-label"><i class="fa-solid fa-file-lines fa-xs me-1" style="color:var(--text-secondary);"></i>Report review</div>
+            <select>
+              <option>High</option>
+              <option>Critical</option>
+              <option>Medium</option>
+              <option selected>Low</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-outline-accent" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn-primary-accent" onclick="savePriorities()">
+            <i class="fa-solid fa-floppy-disk me-1"></i>Save Priorities
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Toast Feedback ── -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index:1100;">
+    <div id="actionToast" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true" style="background:var(--text-primary);">
+      <div class="d-flex">
+        <div class="toast-body" id="toastMsg" style="font-size:0.8125rem;"></div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Cross-screen navigation
+    function navigateTo(path) {
+      if (window.parent && window.parent.loadContent) {
+        window.parent.loadContent(path);
+      } else {
+        console.log('Navigate to:', path);
+      }
+    }
+
+    // Action interactions
+    function completeAction(btn, name) {
+      const card = btn.closest('.action-card');
+      card.style.opacity = '0.45';
+      card.style.pointerEvents = 'none';
+      showToast('✓ Marked complete: ' + name);
+    }
+
+    function snoozeAction(btn) {
+      const card = btn.closest('.action-card');
+      card.style.opacity = '0.5';
+      card.style.pointerEvents = 'none';
+      showToast('Snoozed — will reappear tomorrow.');
+    }
+
+    function dismissAction(btn) {
+      const card = btn.closest('.action-card, .action-card-placeholder');
+      card.style.transition = 'opacity 0.25s, transform 0.25s';
+      card.style.opacity = '0';
+      card.style.transform = 'scale(0.95)';
+      setTimeout(() => card.remove(), 270);
+    }
+
+    function refreshRecommendations() {
+      showToast('Refreshing AI recommendations...');
+    }
+
+    function savePriorities() {
+      const modal = bootstrap.Modal.getInstance(document.getElementById('prioritiesModal'));
+      modal.hide();
+      showToast('Priority weights saved. Recommendations will update on next refresh.');
+    }
+
+    function showToast(msg) {
+      document.getElementById('toastMsg').textContent = msg;
+      const toast = new bootstrap.Toast(document.getElementById('actionToast'), { delay: 3000 });
+      toast.show();
+    }
+
+    // Collapse toggle icon direction
+    document.querySelectorAll('[data-bs-toggle="collapse"]').forEach(el => {
+      const target = document.querySelector(el.getAttribute('data-bs-target'));
+      if (target) {
+        target.addEventListener('show.bs.collapse', () => el.setAttribute('aria-expanded', 'true'));
+        target.addEventListener('hide.bs.collapse', () => el.setAttribute('aria-expanded', 'false'));
+      }
+    });
+  </script>
+</body>
+</html>

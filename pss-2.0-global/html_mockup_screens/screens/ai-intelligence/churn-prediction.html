@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Churn Prediction - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+      --ai-accent: #8b5cf6;
+      --ai-accent-bg: #f5f3ff;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* ── Page Header ── */
+    .page-header { margin-bottom: 1.5rem; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem; }
+    .page-header p  { font-size: 0.875rem; color: var(--text-secondary); margin: 0; }
+    .header-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+
+    .model-badge {
+      display: inline-flex; align-items: center; gap: 0.375rem;
+      background: var(--ai-accent-bg); color: var(--ai-accent);
+      border: 1px solid #ddd6fe; border-radius: 999px;
+      font-size: 0.75rem; font-weight: 600;
+      padding: 0.3rem 0.75rem;
+    }
+
+    /* ── Buttons ── */
+    .btn-primary-accent {
+      background: var(--ai-accent); color: white; border: none;
+      padding: 0.5rem 1rem; border-radius: 0.5rem;
+      font-size: 0.8125rem; font-weight: 600; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-primary-accent:hover { background: #7c3aed; }
+
+    .btn-outline-accent {
+      background: white; color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      padding: 0.5rem 1rem; border-radius: 0.5rem;
+      font-size: 0.8125rem; font-weight: 500; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-outline-accent:hover { border-color: var(--ai-accent); color: var(--ai-accent); }
+
+    /* ── Risk Summary Cards ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+      background: white; border-radius: var(--card-radius);
+      padding: 1.25rem; box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      display: flex; align-items: flex-start; gap: 1rem;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+
+    .stat-card.card-red    { border-left: 4px solid #ef4444; }
+    .stat-card.card-orange { border-left: 4px solid #f97316; }
+    .stat-card.card-yellow { border-left: 4px solid #eab308; }
+    .stat-card.card-purple { border-left: 4px solid var(--ai-accent); }
+
+    .stat-icon {
+      width: 48px; height: 48px; border-radius: 0.75rem;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.25rem; flex-shrink: 0;
+    }
+    .stat-icon.red    { background: #fef2f2; color: #ef4444; }
+    .stat-icon.orange { background: #fff7ed; color: #f97316; }
+    .stat-icon.yellow { background: #fefce8; color: #eab308; }
+    .stat-icon.purple { background: var(--ai-accent-bg); color: var(--ai-accent); }
+
+    .stat-info { flex: 1; }
+    .stat-value { font-size: 1.625rem; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+    .stat-label { font-size: 0.8125rem; color: var(--text-secondary); font-weight: 600; margin-bottom: 0.125rem; }
+    .stat-subtitle { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; }
+
+    /* ── Dash Card Base ── */
+    .dash-card {
+      background: white; border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow); border: 1px solid var(--border-color);
+    }
+    .dash-card-header {
+      padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .dash-card-header h3 { font-size: 0.9375rem; font-weight: 700; margin: 0; color: var(--text-primary); }
+    .dash-card-body { padding: 1.25rem; }
+    .section-gap { margin-bottom: 1.5rem; }
+
+    /* ── Donut Chart ── */
+    .donut-wrapper {
+      display: flex; align-items: center; gap: 2.5rem; flex-wrap: wrap;
+    }
+    .donut-chart-area {
+      position: relative; width: 180px; height: 180px; flex-shrink: 0;
+    }
+    .donut-circle {
+      width: 180px; height: 180px; border-radius: 50%;
+      background: conic-gradient(
+        #22c55e 0% 80.4%,
+        #eab308 80.4% 91.4%,
+        #f97316 91.4% 96.9%,
+        #ef4444 96.9% 100%
+      );
+    }
+    .donut-hole {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 110px; height: 110px; border-radius: 50%;
+      background: white;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center;
+    }
+    .donut-center-value { font-size: 1rem; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+    .donut-center-label { font-size: 0.6rem; color: var(--text-secondary); font-weight: 500; }
+
+    .donut-legend { display: flex; flex-direction: column; gap: 0.625rem; }
+    .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; }
+    .legend-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+    .legend-item-label { color: var(--text-secondary); flex: 1; }
+    .legend-item-pct { font-weight: 700; color: var(--text-primary); }
+    .legend-item-count { font-size: 0.75rem; color: var(--text-secondary); margin-left: 0.25rem; }
+
+    /* ── Trend / Bar Chart ── */
+    .bar-chart-area {
+      padding-top: 0.5rem;
+    }
+    .bar-chart-grid {
+      display: flex; align-items: flex-end; gap: 0.75rem; height: 180px;
+      border-bottom: 1px solid var(--border-color);
+      border-left: 1px solid var(--border-color);
+      padding: 0 0.5rem 0 0.25rem;
+      position: relative;
+    }
+
+    /* horizontal grid lines */
+    .bar-chart-grid::before {
+      content: '';
+      position: absolute; left: 0; right: 0;
+      top: 33.33%; height: 1px;
+      background: #f1f5f9;
+    }
+    .bar-chart-grid::after {
+      content: '';
+      position: absolute; left: 0; right: 0;
+      top: 66.66%; height: 1px;
+      background: #f1f5f9;
+    }
+
+    .bar-group { flex: 1; display: flex; align-items: flex-end; gap: 2px; }
+    .bar-seg {
+      flex: 1; border-radius: 3px 3px 0 0; min-height: 3px;
+      transition: opacity 0.15s; cursor: default;
+    }
+    .bar-seg:hover { opacity: 0.8; }
+    .bar-seg.high   { background: linear-gradient(180deg, #ef4444, #fca5a5); }
+    .bar-seg.medium { background: linear-gradient(180deg, #f97316, #fdba74); }
+    .bar-seg.low    { background: linear-gradient(180deg, #eab308, #fde047); }
+
+    .bar-x-axis {
+      display: flex; gap: 0.75rem;
+      padding: 0.375rem 0.5rem 0 0.25rem;
+      margin-bottom: 0.5rem;
+    }
+    .bar-x-label {
+      flex: 1; text-align: center;
+      font-size: 0.625rem; color: var(--text-secondary); font-weight: 500;
+    }
+
+    .chart-legend {
+      display: flex; gap: 1.25rem; flex-wrap: wrap;
+      font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.75rem;
+    }
+    .chart-legend .dot {
+      width: 10px; height: 10px; border-radius: 2px;
+      display: inline-block; margin-right: 4px; vertical-align: middle;
+    }
+
+    /* ── Table ── */
+    .data-table { width: 100%; font-size: 0.8125rem; }
+    .data-table th {
+      background: #f8fafc; font-weight: 600; color: var(--text-secondary);
+      font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.05em;
+      padding: 0.625rem 0.75rem; border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+    .data-table td {
+      padding: 0.625rem 0.75rem; border-bottom: 1px solid #f1f5f9;
+      color: var(--text-primary); vertical-align: middle;
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: #f8fafc; }
+
+    .risk-badge {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      padding: 0.2rem 0.5rem; border-radius: 999px;
+      font-size: 0.75rem; font-weight: 700;
+    }
+    .risk-badge.high   { background: #fef2f2; color: #dc2626; }
+    .risk-badge.medium { background: #fff7ed; color: #ea580c; }
+
+    .risk-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+    }
+    .risk-dot.high   { background: #ef4444; }
+    .risk-dot.medium { background: #f97316; }
+
+    .score-pill {
+      display: inline-flex; align-items: center; gap: 0.25rem;
+      font-size: 0.8125rem; font-weight: 700; color: var(--text-primary);
+    }
+    .score-pill .drop { color: #ef4444; font-size: 0.7rem; }
+
+    .donor-link {
+      color: var(--accent); font-weight: 600; cursor: pointer;
+      text-decoration: none;
+    }
+    .donor-link:hover { text-decoration: underline; }
+
+    .risk-factors { font-size: 0.75rem; color: var(--text-secondary); max-width: 220px; line-height: 1.4; }
+
+    /* ── Risk Factor Bars ── */
+    .factor-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+    .factor-label { font-size: 0.8125rem; color: var(--text-primary); min-width: 200px; flex-shrink: 0; }
+    .factor-bar-track {
+      flex: 1; height: 18px; background: #f1f5f9; border-radius: 4px; overflow: hidden;
+    }
+    .factor-bar-fill {
+      height: 100%; border-radius: 4px;
+      background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+      display: flex; align-items: center; justify-content: flex-end;
+      padding-right: 0.375rem;
+      font-size: 0.6875rem; font-weight: 700; color: white;
+      transition: width 0.4s;
+    }
+    .factor-pct-label { font-size: 0.8125rem; font-weight: 700; color: var(--ai-accent); min-width: 36px; text-align: right; }
+
+    /* ── Model Performance ── */
+    .perf-metric {
+      text-align: center; padding: 1rem;
+    }
+    .perf-metric-value { font-size: 2rem; font-weight: 700; color: var(--ai-accent); }
+    .perf-metric-label { font-size: 0.75rem; color: var(--text-secondary); font-weight: 500; margin-top: 0.125rem; }
+
+    .training-row { display: flex; gap: 0.5rem; align-items: baseline; }
+    .training-key { font-size: 0.8125rem; color: var(--text-secondary); min-width: 140px; }
+    .training-val { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); }
+
+    .collapse-toggle {
+      background: none; border: none; padding: 0;
+      color: var(--ai-accent); font-size: 0.8125rem; font-weight: 600;
+      cursor: pointer; display: flex; align-items: center; gap: 0.375rem;
+    }
+    .collapse-toggle:hover { opacity: 0.75; }
+
+    /* ── Save dropdown ── */
+    .action-btn {
+      background: var(--ai-accent-bg); color: var(--ai-accent);
+      border: 1px solid #ddd6fe; border-radius: 0.375rem;
+      font-size: 0.75rem; font-weight: 600;
+      padding: 0.3rem 0.6rem; cursor: pointer;
+      white-space: nowrap;
+    }
+    .action-btn:hover { background: #ede9fe; }
+
+    .dropdown-menu { font-size: 0.8125rem; }
+    .dropdown-item { padding: 0.425rem 1rem; }
+  </style>
+</head>
+
+<body>
+
+  <!-- ═══════════════════════════════════════════════
+       PAGE HEADER
+  ════════════════════════════════════════════════ -->
+  <div class="page-header">
+    <div class="d-flex align-items-start justify-content-between flex-wrap gap-2">
+      <div>
+        <h1><i class="fas fa-brain me-2" style="color:var(--ai-accent);"></i>Churn Prediction</h1>
+        <p>AI-powered early warning for donor lapse risk</p>
+        <span class="model-badge mt-1">
+          <i class="fas fa-circle" style="font-size:0.5rem;"></i>
+          Last model update: Apr 10, 2026 &nbsp;|&nbsp; Accuracy: 82%
+        </span>
+      </div>
+      <div class="header-actions">
+        <button class="btn-outline-accent" onclick="void(0)">
+          <i class="fas fa-rotate me-1"></i> Retrain Model
+        </button>
+        <button class="btn-outline-accent" onclick="void(0)">
+          <i class="fas fa-file-export me-1"></i> Export At-Risk List
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       RISK SUMMARY CARDS
+  ════════════════════════════════════════════════ -->
+  <div class="stats-grid">
+    <div class="stat-card card-red">
+      <div class="stat-icon red"><i class="fas fa-triangle-exclamation"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">High Risk (&gt;75%)</div>
+        <div class="stat-value">89</div>
+        <div class="stat-subtitle">Likely to lapse within 60 days</div>
+      </div>
+    </div>
+    <div class="stat-card card-orange">
+      <div class="stat-icon orange"><i class="fas fa-circle-exclamation"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Medium Risk (50–75%)</div>
+        <div class="stat-value">156</div>
+        <div class="stat-subtitle">May lapse within 90 days</div>
+      </div>
+    </div>
+    <div class="stat-card card-yellow">
+      <div class="stat-icon yellow"><i class="fas fa-circle-half-stroke"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Low Risk (25–50%)</div>
+        <div class="stat-value">312</div>
+        <div class="stat-subtitle">Showing early warning signs</div>
+      </div>
+    </div>
+    <div class="stat-card card-purple">
+      <div class="stat-icon purple"><i class="fas fa-sack-dollar"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Revenue at Risk</div>
+        <div class="stat-value">$234,500</div>
+        <div class="stat-subtitle">Annual value of high + medium risk donors</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       ROW: DONUT CHART + TREND CHART
+  ════════════════════════════════════════════════ -->
+  <div class="row g-3 section-gap">
+
+    <!-- Donut -->
+    <div class="col-12 col-xl-4">
+      <div class="dash-card h-100">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-chart-pie me-2" style="color:var(--ai-accent);"></i>Risk Distribution</h3>
+          <span class="badge" style="background:var(--ai-accent-bg);color:var(--ai-accent);font-weight:600;font-size:0.75rem;">2,847 donors</span>
+        </div>
+        <div class="dash-card-body d-flex align-items-center justify-content-center">
+          <div class="donut-wrapper">
+            <div class="donut-chart-area">
+              <div class="donut-circle"></div>
+              <div class="donut-hole">
+                <div class="donut-center-value">2,847</div>
+                <div class="donut-center-label">Active<br>Donors</div>
+              </div>
+            </div>
+            <div class="donut-legend">
+              <div class="legend-item">
+                <div class="legend-dot" style="background:#22c55e;"></div>
+                <span class="legend-item-label">No Risk</span>
+                <span class="legend-item-pct">80.4%</span>
+                <span class="legend-item-count">(2,289)</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot" style="background:#eab308;"></div>
+                <span class="legend-item-label">Low Risk</span>
+                <span class="legend-item-pct">11.0%</span>
+                <span class="legend-item-count">(312)</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot" style="background:#f97316;"></div>
+                <span class="legend-item-label">Medium Risk</span>
+                <span class="legend-item-pct">5.5%</span>
+                <span class="legend-item-count">(156)</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot" style="background:#ef4444;"></div>
+                <span class="legend-item-label">High Risk</span>
+                <span class="legend-item-pct">3.1%</span>
+                <span class="legend-item-count">(89)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trend Bar Chart -->
+    <div class="col-12 col-xl-8">
+      <div class="dash-card h-100">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-chart-bar me-2" style="color:var(--ai-accent);"></i>Churn Risk Trend — Last 6 Months</h3>
+          <span style="font-size:0.75rem;color:var(--text-secondary);">Count of at-risk donors per month</span>
+        </div>
+        <div class="dash-card-body">
+          <div class="bar-chart-area">
+            <!-- Y-axis labels sit above bars for simplicity -->
+            <div style="display:flex;align-items:flex-end;gap:0;">
+              <!-- Y labels -->
+              <div style="display:flex;flex-direction:column;justify-content:space-between;height:180px;width:36px;padding-bottom:0;margin-right:4px;text-align:right;">
+                <span style="font-size:0.6rem;color:var(--text-secondary);">300</span>
+                <span style="font-size:0.6rem;color:var(--text-secondary);">200</span>
+                <span style="font-size:0.6rem;color:var(--text-secondary);">100</span>
+                <span style="font-size:0.6rem;color:var(--text-secondary);">0</span>
+              </div>
+              <!-- Bars -->
+              <div class="bar-chart-grid" style="flex:1;">
+                <!-- Nov -->
+                <div class="bar-group">
+                  <div class="bar-seg high"   style="height:26%;"></div>
+                  <div class="bar-seg medium" style="height:44%;"></div>
+                  <div class="bar-seg low"    style="height:88%;"></div>
+                </div>
+                <!-- Dec -->
+                <div class="bar-group">
+                  <div class="bar-seg high"   style="height:22%;"></div>
+                  <div class="bar-seg medium" style="height:40%;"></div>
+                  <div class="bar-seg low"    style="height:82%;"></div>
+                </div>
+                <!-- Jan -->
+                <div class="bar-group">
+                  <div class="bar-seg high"   style="height:30%;"></div>
+                  <div class="bar-seg medium" style="height:50%;"></div>
+                  <div class="bar-seg low"    style="height:96%;"></div>
+                </div>
+                <!-- Feb -->
+                <div class="bar-group">
+                  <div class="bar-seg high"   style="height:32%;"></div>
+                  <div class="bar-seg medium" style="height:54%;"></div>
+                  <div class="bar-seg low"    style="height:100%;"></div>
+                </div>
+                <!-- Mar -->
+                <div class="bar-group">
+                  <div class="bar-seg high"   style="height:28%;"></div>
+                  <div class="bar-seg medium" style="height:47%;"></div>
+                  <div class="bar-seg low"    style="height:90%;"></div>
+                </div>
+                <!-- Apr -->
+                <div class="bar-group">
+                  <div class="bar-seg high"   style="height:30%;"></div>
+                  <div class="bar-seg medium" style="height:52%;"></div>
+                  <div class="bar-seg low"    style="height:92%;"></div>
+                </div>
+              </div>
+            </div>
+            <div class="bar-x-axis" style="padding-left:40px;">
+              <div class="bar-x-label">Nov '25</div>
+              <div class="bar-x-label">Dec '25</div>
+              <div class="bar-x-label">Jan '26</div>
+              <div class="bar-x-label">Feb '26</div>
+              <div class="bar-x-label">Mar '26</div>
+              <div class="bar-x-label">Apr '26</div>
+            </div>
+            <div class="chart-legend">
+              <span><span class="dot" style="background:#ef4444;"></span>High Risk</span>
+              <span><span class="dot" style="background:#f97316;"></span>Medium Risk</span>
+              <span><span class="dot" style="background:#eab308;"></span>Low Risk</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       HIGH-RISK DONORS TABLE
+  ════════════════════════════════════════════════ -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3>
+        <i class="fas fa-circle-exclamation me-2" style="color:#ef4444;"></i>
+        High-Risk Donors
+        <span class="badge ms-2" style="background:#fef2f2;color:#dc2626;font-size:0.75rem;">89 requiring action</span>
+      </h3>
+      <div class="d-flex gap-2 align-items-center">
+        <select class="form-select form-select-sm" style="font-size:0.8125rem;width:auto;">
+          <option>All Risk Levels</option>
+          <option selected>High Risk Only</option>
+          <option>Medium Risk Only</option>
+        </select>
+        <button class="btn-outline-accent">
+          <i class="fas fa-filter me-1"></i> Filter
+        </button>
+      </div>
+    </div>
+    <div class="dash-card-body p-0">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Risk</th>
+              <th>Donor</th>
+              <th>Score</th>
+              <th>Churn Prob.</th>
+              <th>Key Risk Factors</th>
+              <th>Last Donation</th>
+              <th>Annual Value</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Row 1 -->
+            <tr>
+              <td>
+                <span class="risk-badge high">
+                  <span class="risk-dot high"></span>High
+                </span>
+              </td>
+              <td>
+                <a class="donor-link" onclick="parent.loadContent('contacts/contact-detail')">
+                  Mohamed Ali
+                </a>
+              </td>
+              <td>
+                <span class="score-pill">
+                  42 <span class="drop"><i class="fas fa-arrow-down"></i> 36pts</span>
+                </span>
+              </td>
+              <td>
+                <span style="font-weight:700;color:#dc2626;">92%</span>
+                <div style="margin-top:4px;height:4px;background:#fecaca;border-radius:2px;">
+                  <div style="width:92%;height:100%;background:#ef4444;border-radius:2px;"></div>
+                </div>
+              </td>
+              <td><div class="risk-factors">No donation 90d, email unengaged, score dropped 36 pts</div></td>
+              <td><div>Jan 12, 2026</div><div style="font-size:0.75rem;color:var(--text-secondary);">$5,000</div></td>
+              <td><span style="font-weight:700;">$15,000</span></td>
+              <td>
+                <div class="dropdown">
+                  <button class="action-btn dropdown-toggle" data-bs-toggle="dropdown">
+                    Save <i class="fas fa-caret-down ms-1"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-envelope me-2 text-muted"></i>Send Personal Email</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-phone me-2 text-muted"></i>Schedule Call</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fab fa-whatsapp me-2 text-muted"></i>Send WhatsApp</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-rotate me-2 text-muted"></i>Add to Re-engagement Campaign</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-user-tie me-2 text-muted"></i>Assign to Staff</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-secondary" href="#"><i class="fas fa-bell-slash me-2"></i>Dismiss Alert</a></li>
+                  </ul>
+                </div>
+              </td>
+            </tr>
+            <!-- Row 2 -->
+            <tr>
+              <td>
+                <span class="risk-badge high">
+                  <span class="risk-dot high"></span>High
+                </span>
+              </td>
+              <td>
+                <a class="donor-link" onclick="parent.loadContent('contacts/contact-detail')">
+                  Amina Hassan
+                </a>
+              </td>
+              <td>
+                <span class="score-pill">
+                  38 <span class="drop"><i class="fas fa-arrow-down"></i> 29pts</span>
+                </span>
+              </td>
+              <td>
+                <span style="font-weight:700;color:#dc2626;">88%</span>
+                <div style="margin-top:4px;height:4px;background:#fecaca;border-radius:2px;">
+                  <div style="width:88%;height:100%;background:#ef4444;border-radius:2px;"></div>
+                </div>
+              </td>
+              <td><div class="risk-factors">Recurring cancelled, no event attendance 6 months</div></td>
+              <td><div>Feb 15, 2026</div><div style="font-size:0.75rem;color:var(--text-secondary);">$200</div></td>
+              <td><span style="font-weight:700;">$2,400</span></td>
+              <td>
+                <div class="dropdown">
+                  <button class="action-btn dropdown-toggle" data-bs-toggle="dropdown">
+                    Save <i class="fas fa-caret-down ms-1"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-envelope me-2 text-muted"></i>Send Personal Email</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-phone me-2 text-muted"></i>Schedule Call</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fab fa-whatsapp me-2 text-muted"></i>Send WhatsApp</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-rotate me-2 text-muted"></i>Add to Re-engagement Campaign</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-user-tie me-2 text-muted"></i>Assign to Staff</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-secondary" href="#"><i class="fas fa-bell-slash me-2"></i>Dismiss Alert</a></li>
+                  </ul>
+                </div>
+              </td>
+            </tr>
+            <!-- Row 3 -->
+            <tr>
+              <td>
+                <span class="risk-badge high">
+                  <span class="risk-dot high"></span>High
+                </span>
+              </td>
+              <td>
+                <a class="donor-link" onclick="parent.loadContent('contacts/contact-detail')">
+                  Ahmad Nasser
+                </a>
+              </td>
+              <td>
+                <span class="score-pill">
+                  45 <span class="drop"><i class="fas fa-arrow-down"></i> 22pts</span>
+                </span>
+              </td>
+              <td>
+                <span style="font-weight:700;color:#dc2626;">85%</span>
+                <div style="margin-top:4px;height:4px;background:#fecaca;border-radius:2px;">
+                  <div style="width:85%;height:100%;background:#ef4444;border-radius:2px;"></div>
+                </div>
+              </td>
+              <td><div class="risk-factors">Donation frequency halved, bounced last 2 emails</div></td>
+              <td><div>Mar 1, 2026</div><div style="font-size:0.75rem;color:var(--text-secondary);">$300</div></td>
+              <td><span style="font-weight:700;">$3,600</span></td>
+              <td>
+                <div class="dropdown">
+                  <button class="action-btn dropdown-toggle" data-bs-toggle="dropdown">
+                    Save <i class="fas fa-caret-down ms-1"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-envelope me-2 text-muted"></i>Send Personal Email</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-phone me-2 text-muted"></i>Schedule Call</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fab fa-whatsapp me-2 text-muted"></i>Send WhatsApp</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-rotate me-2 text-muted"></i>Add to Re-engagement Campaign</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-user-tie me-2 text-muted"></i>Assign to Staff</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-secondary" href="#"><i class="fas fa-bell-slash me-2"></i>Dismiss Alert</a></li>
+                  </ul>
+                </div>
+              </td>
+            </tr>
+            <!-- Row 4 -->
+            <tr>
+              <td>
+                <span class="risk-badge medium">
+                  <span class="risk-dot medium"></span>Medium
+                </span>
+              </td>
+              <td>
+                <a class="donor-link" onclick="parent.loadContent('contacts/contact-detail')">
+                  Fatima Ibrahim
+                </a>
+              </td>
+              <td>
+                <span class="score-pill">
+                  52 <span class="drop"><i class="fas fa-arrow-down"></i> 18pts</span>
+                </span>
+              </td>
+              <td>
+                <span style="font-weight:700;color:#ea580c;">72%</span>
+                <div style="margin-top:4px;height:4px;background:#fed7aa;border-radius:2px;">
+                  <div style="width:72%;height:100%;background:#f97316;border-radius:2px;"></div>
+                </div>
+              </td>
+              <td><div class="risk-factors">Event no-shows, declining donation amounts</div></td>
+              <td><div>Mar 20, 2026</div><div style="font-size:0.75rem;color:var(--text-secondary);">$150</div></td>
+              <td><span style="font-weight:700;">$1,800</span></td>
+              <td>
+                <div class="dropdown">
+                  <button class="action-btn dropdown-toggle" data-bs-toggle="dropdown">
+                    Save <i class="fas fa-caret-down ms-1"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-envelope me-2 text-muted"></i>Send Personal Email</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-phone me-2 text-muted"></i>Schedule Call</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fab fa-whatsapp me-2 text-muted"></i>Send WhatsApp</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-rotate me-2 text-muted"></i>Add to Re-engagement Campaign</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-user-tie me-2 text-muted"></i>Assign to Staff</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-secondary" href="#"><i class="fas fa-bell-slash me-2"></i>Dismiss Alert</a></li>
+                  </ul>
+                </div>
+              </td>
+            </tr>
+            <!-- Row 5 -->
+            <tr>
+              <td>
+                <span class="risk-badge medium">
+                  <span class="risk-dot medium"></span>Medium
+                </span>
+              </td>
+              <td>
+                <a class="donor-link" onclick="parent.loadContent('contacts/contact-detail')">
+                  Omar Yusuf
+                </a>
+              </td>
+              <td>
+                <span class="score-pill">
+                  55 <span class="drop"><i class="fas fa-arrow-down"></i> 14pts</span>
+                </span>
+              </td>
+              <td>
+                <span style="font-weight:700;color:#ea580c;">68%</span>
+                <div style="margin-top:4px;height:4px;background:#fed7aa;border-radius:2px;">
+                  <div style="width:68%;height:100%;background:#f97316;border-radius:2px;"></div>
+                </div>
+              </td>
+              <td><div class="risk-factors">Switched from monthly to sporadic giving</div></td>
+              <td><div>Mar 5, 2026</div><div style="font-size:0.75rem;color:var(--text-secondary);">$100</div></td>
+              <td><span style="font-weight:700;">$1,200</span></td>
+              <td>
+                <div class="dropdown">
+                  <button class="action-btn dropdown-toggle" data-bs-toggle="dropdown">
+                    Save <i class="fas fa-caret-down ms-1"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-envelope me-2 text-muted"></i>Send Personal Email</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-phone me-2 text-muted"></i>Schedule Call</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fab fa-whatsapp me-2 text-muted"></i>Send WhatsApp</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-rotate me-2 text-muted"></i>Add to Re-engagement Campaign</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-user-tie me-2 text-muted"></i>Assign to Staff</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-secondary" href="#"><i class="fas fa-bell-slash me-2"></i>Dismiss Alert</a></li>
+                  </ul>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- Table footer -->
+      <div class="d-flex align-items-center justify-content-between px-3 py-2" style="border-top:1px solid var(--border-color);font-size:0.8125rem;color:var(--text-secondary);">
+        <span>Showing top 5 of 89 high-risk donors</span>
+        <button class="btn-outline-accent">View All 89 Donors</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       RISK FACTOR ANALYSIS
+  ════════════════════════════════════════════════ -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-magnifying-glass-chart me-2" style="color:var(--ai-accent);"></i>Risk Factor Analysis</h3>
+      <span style="font-size:0.75rem;color:var(--text-secondary);">Top signals driving churn predictions</span>
+    </div>
+    <div class="dash-card-body">
+      <div class="mb-1">
+        <div class="factor-row">
+          <div class="factor-label">No donation &gt;60 days</div>
+          <div class="factor-bar-track">
+            <div class="factor-bar-fill" style="width:34%;">34%</div>
+          </div>
+          <div class="factor-pct-label">34%</div>
+        </div>
+        <div class="factor-row">
+          <div class="factor-label">Declining engagement score</div>
+          <div class="factor-bar-track">
+            <div class="factor-bar-fill" style="width:24%;">24%</div>
+          </div>
+          <div class="factor-pct-label">24%</div>
+        </div>
+        <div class="factor-row">
+          <div class="factor-label">Email disengagement</div>
+          <div class="factor-bar-track">
+            <div class="factor-bar-fill" style="width:15%;">15%</div>
+          </div>
+          <div class="factor-pct-label">15%</div>
+        </div>
+        <div class="factor-row">
+          <div class="factor-label">Recurring cancellation</div>
+          <div class="factor-bar-track">
+            <div class="factor-bar-fill" style="width:12%;">12%</div>
+          </div>
+          <div class="factor-pct-label">12%</div>
+        </div>
+        <div class="factor-row">
+          <div class="factor-label">Event no-shows</div>
+          <div class="factor-bar-track">
+            <div class="factor-bar-fill" style="width:8%;">8%</div>
+          </div>
+          <div class="factor-pct-label">8%</div>
+        </div>
+        <div class="factor-row" style="margin-bottom:0;">
+          <div class="factor-label">Reduced donation amounts</div>
+          <div class="factor-bar-track">
+            <div class="factor-bar-fill" style="width:7%;">7%</div>
+          </div>
+          <div class="factor-pct-label">7%</div>
+        </div>
+      </div>
+      <div class="mt-3 pt-2" style="border-top:1px solid var(--border-color);font-size:0.75rem;color:var(--text-secondary);">
+        <i class="fas fa-circle-info me-1" style="color:var(--ai-accent);"></i>
+        Percentages represent the relative contribution of each factor to the overall churn prediction model (feature importance scores).
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       MODEL PERFORMANCE (collapsible)
+  ════════════════════════════════════════════════ -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-microchip me-2" style="color:var(--ai-accent);"></i>Model Performance</h3>
+      <button class="collapse-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#modelPerfBody" aria-expanded="true">
+        <i class="fas fa-chevron-up" id="modelChevron"></i>
+        <span id="modelToggleLabel">Collapse</span>
+      </button>
+    </div>
+    <div class="collapse show" id="modelPerfBody">
+      <div class="dash-card-body">
+
+        <!-- Metric row -->
+        <div class="row g-0 mb-3" style="border:1px solid var(--border-color);border-radius:10px;overflow:hidden;">
+          <div class="col-4 perf-metric" style="border-right:1px solid var(--border-color);">
+            <div class="perf-metric-value">82%</div>
+            <div class="perf-metric-label">Accuracy</div>
+            <div style="font-size:0.7rem;color:var(--text-secondary);margin-top:0.25rem;">Overall correct predictions</div>
+          </div>
+          <div class="col-4 perf-metric" style="border-right:1px solid var(--border-color);">
+            <div class="perf-metric-value">78%</div>
+            <div class="perf-metric-label">Precision</div>
+            <div style="font-size:0.7rem;color:var(--text-secondary);margin-top:0.25rem;">True churn among predicted churn</div>
+          </div>
+          <div class="col-4 perf-metric">
+            <div class="perf-metric-value">85%</div>
+            <div class="perf-metric-label">Recall</div>
+            <div style="font-size:0.7rem;color:var(--text-secondary);margin-top:0.25rem;">Actual churners correctly flagged</div>
+          </div>
+        </div>
+
+        <!-- Training info -->
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <div style="background:#f8fafc;border-radius:8px;padding:1rem;">
+              <div style="font-size:0.8125rem;font-weight:700;color:var(--text-primary);margin-bottom:0.625rem;">
+                <i class="fas fa-database me-2" style="color:var(--ai-accent);"></i>Training Data
+              </div>
+              <div class="training-row mb-2">
+                <span class="training-key">Training window</span>
+                <span class="training-val">18 months</span>
+              </div>
+              <div class="training-row mb-2">
+                <span class="training-key">Churned donors</span>
+                <span class="training-val">1,234 donors</span>
+              </div>
+              <div class="training-row mb-2">
+                <span class="training-key">Retained donors</span>
+                <span class="training-val">4,567 donors</span>
+              </div>
+              <div class="training-row">
+                <span class="training-key">Total training samples</span>
+                <span class="training-val">5,801 donors</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div style="background:#f8fafc;border-radius:8px;padding:1rem;">
+              <div style="font-size:0.8125rem;font-weight:700;color:var(--text-primary);margin-bottom:0.625rem;">
+                <i class="fas fa-clock-rotate-left me-2" style="color:var(--ai-accent);"></i>Model History
+              </div>
+              <div class="training-row mb-2">
+                <span class="training-key">Last trained</span>
+                <span class="training-val">Apr 10, 2026</span>
+              </div>
+              <div class="training-row mb-2">
+                <span class="training-key">Algorithm</span>
+                <span class="training-val">Gradient Boosting (XGBoost)</span>
+              </div>
+              <div class="training-row mb-2">
+                <span class="training-key">Feature count</span>
+                <span class="training-val">42 features</span>
+              </div>
+              <div class="training-row">
+                <span class="training-key">Next scheduled retrain</span>
+                <span class="training-val">May 10, 2026</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Note -->
+        <div class="mt-3 p-2 d-flex align-items-start gap-2" style="background:var(--ai-accent-bg);border-radius:8px;border:1px solid #ddd6fe;">
+          <i class="fas fa-lightbulb mt-1" style="color:var(--ai-accent);font-size:0.875rem;flex-shrink:0;"></i>
+          <span style="font-size:0.8125rem;color:var(--ai-accent);">
+            Model retrains monthly using the latest 18 months of donation, engagement, and communication data. Manual retraining can be triggered above if significant data changes occur.
+          </span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Toggle chevron and label on collapse
+    const collapseEl = document.getElementById('modelPerfBody');
+    const chevron    = document.getElementById('modelChevron');
+    const label      = document.getElementById('modelToggleLabel');
+
+    collapseEl.addEventListener('show.bs.collapse', () => {
+      chevron.classList.replace('fa-chevron-down', 'fa-chevron-up');
+      label.textContent = 'Collapse';
+    });
+    collapseEl.addEventListener('hide.bs.collapse', () => {
+      chevron.classList.replace('fa-chevron-up', 'fa-chevron-down');
+      label.textContent = 'Expand';
+    });
+  </script>
+</body>
+
+</html>

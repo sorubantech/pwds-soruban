@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Members - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --membership-accent: #d97706;
+      --membership-bg: #fffbeb;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #0c6577;
+      border-color: #0c6577;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* KPI Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .kpi-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.875rem;
+    }
+
+    .kpi-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 0.625rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.125rem;
+      flex-shrink: 0;
+    }
+
+    .kpi-icon.members { background: #ecfeff; color: #0e7490; }
+    .kpi-icon.revenue { background: #f0fdf4; color: #16a34a; }
+    .kpi-icon.renewals { background: #fffbeb; color: #d97706; }
+    .kpi-icon.new-members { background: #eff6ff; color: #2563eb; }
+
+    .kpi-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .kpi-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      margin-bottom: 0.125rem;
+    }
+
+    .kpi-value {
+      font-size: 1.375rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .kpi-sub {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.125rem;
+    }
+
+    .kpi-sub .up { color: var(--success-color); font-weight: 600; }
+    .kpi-sub .risk { color: var(--danger-color); font-weight: 600; }
+
+    /* List Card */
+    .list-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .search-input {
+      position: relative;
+      flex: 1;
+      min-width: 240px;
+    }
+
+    .search-input i {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .search-input input {
+      width: 100%;
+      padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .search-input input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .filter-chips {
+      display: flex;
+      gap: 0.375rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-chip {
+      padding: 0.3125rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .filter-chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .filter-chip.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    /* Advanced Filters */
+    .advanced-filters {
+      display: none;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      background: #f8fafc;
+    }
+
+    .advanced-filters.show {
+      display: block;
+    }
+
+    .filter-group label {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.25rem;
+      display: block;
+    }
+
+    .filter-group select,
+    .filter-group input {
+      width: 100%;
+      padding: 0.375rem 0.625rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+    }
+
+    .filter-group select:focus,
+    .filter-group input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Bulk Actions */
+    .bulk-actions {
+      display: none;
+      padding: 0.75rem 1.25rem;
+      background: var(--accent-bg);
+      border-bottom: 1px solid #cffafe;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .bulk-actions.show {
+      display: flex;
+    }
+
+    .bulk-actions .selected-count {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .bulk-btn {
+      padding: 0.3125rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid var(--accent);
+      background: white;
+      color: var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .bulk-btn:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Table */
+    .table-container {
+      overflow-x: auto;
+    }
+
+    .member-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1100px;
+    }
+
+    .member-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .member-table th:hover {
+      color: var(--accent);
+    }
+
+    .member-table th .sort-icon {
+      margin-left: 0.25rem;
+      font-size: 0.5625rem;
+      opacity: 0.4;
+    }
+
+    .member-table th.sorted .sort-icon {
+      opacity: 1;
+      color: var(--accent);
+    }
+
+    .member-table td {
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      vertical-align: middle;
+    }
+
+    .member-table tr:hover td {
+      background: #f8fafc;
+    }
+
+    .member-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Tier Badge */
+    .tier-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.1875rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .tier-badge.platinum { background: #f3f4f6; color: #374151; }
+    .tier-badge.gold { background: #fffbeb; color: #92400e; }
+    .tier-badge.silver { background: #f1f5f9; color: #475569; }
+    .tier-badge.bronze { background: #fef3c7; color: #92400e; }
+    .tier-badge.lifetime { background: #fef3c7; color: #d97706; }
+
+    /* Status Badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .status-badge .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+
+    .status-badge.active .dot { background: var(--success-color); }
+    .status-badge.active { color: #15803d; }
+
+    .status-badge.expires-soon .dot { background: var(--warning-color); }
+    .status-badge.expires-soon { color: #b45309; }
+
+    .status-badge.expired .dot { background: var(--danger-color); }
+    .status-badge.expired { color: #dc2626; }
+
+    .status-badge.pending .dot { background: #6366f1; }
+    .status-badge.pending { color: #4f46e5; }
+
+    /* Contact link */
+    .contact-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+
+    .contact-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Action buttons */
+    .action-btn {
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .action-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .action-btn.primary {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .action-btn.primary:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    .action-btn.renew {
+      border-color: var(--membership-accent);
+      color: var(--membership-accent);
+    }
+
+    .action-btn.renew:hover {
+      background: var(--membership-accent);
+      color: white;
+    }
+
+    .action-btn.approve {
+      border-color: var(--success-color);
+      color: #15803d;
+    }
+
+    .action-btn.approve:hover {
+      background: var(--success-color);
+      color: white;
+    }
+
+    /* Dropdown */
+    .dropdown-menu {
+      font-size: 0.8125rem;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border-radius: 0.5rem;
+      padding: 0.25rem;
+    }
+
+    .dropdown-item {
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 0.8125rem;
+    }
+
+    .dropdown-item:hover {
+      background: var(--accent-bg);
+      color: var(--accent);
+    }
+
+    .dropdown-item.text-danger:hover {
+      background: #fef2f2;
+      color: var(--danger-color);
+    }
+
+    /* Pagination */
+    .table-footer {
+      padding: 0.75rem 1.25rem;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .table-info {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .pagination-btns {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .page-btn {
+      padding: 0.25rem 0.625rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      background: white;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .page-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .page-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .clear-filters-btn {
+      font-size: 0.75rem;
+      color: var(--accent);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .clear-filters-btn:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 992px) {
+      .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 576px) {
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-id-card" style="color: var(--membership-accent); margin-right: 0.5rem;"></i>Members</h1>
+      <p class="subtitle">Manage membership registrations and renewals</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="parent.loadContent('membership/member-enrollment')">
+        <i class="fas fa-plus me-1"></i> Enroll Member
+      </button>
+      <button class="btn-outline-accent">
+        <i class="fas fa-file-import me-1"></i> Import
+      </button>
+      <button class="btn-outline-accent">
+        <i class="fas fa-file-export me-1"></i> Export
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Summary Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon members"><i class="fas fa-id-card"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-label">Total Members</div>
+        <div class="kpi-value">179</div>
+        <div class="kpi-sub">Active: 156 &bull; Expired: 18 &bull; Pending: 5</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon revenue"><i class="fas fa-dollar-sign"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-label">Revenue (YTD)</div>
+        <div class="kpi-value">$45,600</div>
+        <div class="kpi-sub"><span class="up"><i class="fas fa-arrow-up"></i> 22%</span> vs last year</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon renewals"><i class="fas fa-calendar-xmark"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-label">Renewals Due (30 days)</div>
+        <div class="kpi-value">23</div>
+        <div class="kpi-sub"><span class="risk">$8,900</span> at risk</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon new-members"><i class="fas fa-user-plus"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-label">New Members (Month)</div>
+        <div class="kpi-value">12</div>
+        <div class="kpi-sub">Top tier: Silver (5)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Member List Card -->
+  <div class="list-card">
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="d-flex gap-3 align-items-center flex-wrap mb-2">
+        <div class="search-input">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Search by name, member ID, email...">
+        </div>
+        <button class="action-btn" onclick="toggleFilters()"><i class="fas fa-sliders me-1"></i>Filters</button>
+        <button class="clear-filters-btn">Clear Filters</button>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <div class="filter-chips">
+          <span class="filter-chip active">All</span>
+          <span class="filter-chip">🥉 Bronze</span>
+          <span class="filter-chip">🥈 Silver</span>
+          <span class="filter-chip">🥇 Gold</span>
+          <span class="filter-chip">💎 Platinum</span>
+          <span class="filter-chip">⭐ Lifetime</span>
+        </div>
+        <div style="border-left: 1px solid var(--border-color); margin: 0 0.25rem;"></div>
+        <div class="filter-chips">
+          <span class="filter-chip active">All Status</span>
+          <span class="filter-chip">Active</span>
+          <span class="filter-chip">Expired</span>
+          <span class="filter-chip">Pending</span>
+          <span class="filter-chip">Cancelled</span>
+          <span class="filter-chip">Suspended</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Advanced Filters -->
+    <div class="advanced-filters" id="advancedFilters">
+      <div class="row g-3">
+        <div class="col-md-3 filter-group">
+          <label>Renewal Due</label>
+          <select>
+            <option>All</option>
+            <option>This Month</option>
+            <option>Next 30 Days</option>
+            <option>Next 90 Days</option>
+            <option>Overdue</option>
+          </select>
+        </div>
+        <div class="col-md-3 filter-group">
+          <label>Join Date From</label>
+          <input type="date">
+        </div>
+        <div class="col-md-3 filter-group">
+          <label>Join Date To</label>
+          <input type="date">
+        </div>
+        <div class="col-md-3 filter-group">
+          <label>Branch</label>
+          <select>
+            <option>All</option>
+            <option>Dubai (HQ)</option>
+            <option>Abu Dhabi</option>
+            <option>Sharjah</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bulk Actions -->
+    <div class="bulk-actions" id="bulkActions">
+      <span class="selected-count">3 selected</span>
+      <button class="bulk-btn"><i class="fas fa-envelope me-1"></i>Send Renewal Reminders</button>
+      <button class="bulk-btn"><i class="fas fa-file-export me-1"></i>Export</button>
+    </div>
+
+    <!-- Table -->
+    <div class="table-container">
+      <table class="member-table">
+        <thead>
+          <tr>
+            <th style="width: 36px;"><input type="checkbox" onclick="toggleBulk(this)"></th>
+            <th class="sorted">Member ID <i class="fas fa-sort sort-icon"></i></th>
+            <th>Name <i class="fas fa-sort sort-icon"></i></th>
+            <th>Contact <i class="fas fa-sort sort-icon"></i></th>
+            <th>Tier <i class="fas fa-sort sort-icon"></i></th>
+            <th>Joined <i class="fas fa-sort sort-icon"></i></th>
+            <th>Expires <i class="fas fa-sort sort-icon"></i></th>
+            <th>Auto-Renew</th>
+            <th>Amount Paid <i class="fas fa-sort sort-icon"></i></th>
+            <th>Status <i class="fas fa-sort sort-icon"></i></th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><input type="checkbox"></td>
+            <td style="font-weight: 600; color: var(--accent);">MEM-001</td>
+            <td>
+              <div style="font-weight: 600;">Khalid Al-Mansouri</div>
+            </td>
+            <td><a class="contact-link" onclick="parent.loadContent('contacts/contact-detail')">CON-1245</a></td>
+            <td><span class="tier-badge platinum">💎 Platinum</span></td>
+            <td>Jan 2024</td>
+            <td>Jan 2027</td>
+            <td><i class="fas fa-check-circle" style="color: var(--success-color);"></i></td>
+            <td style="font-weight: 600;">$1,000</td>
+            <td><span class="status-badge active"><span class="dot"></span> Active</span></td>
+            <td>
+              <div class="d-flex gap-1">
+                <button class="action-btn primary" onclick="parent.loadContent('membership/member-detail')"><i class="fas fa-eye"></i></button>
+                <div class="dropdown">
+                  <button class="action-btn" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-vertical"></i></button>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" onclick="parent.loadContent('membership/member-detail')"><i class="fas fa-eye me-2"></i>View</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-pen me-2"></i>Edit</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-arrows-rotate me-2"></i>Renew</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-arrow-up me-2"></i>Upgrade Tier</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-pause me-2"></i>Suspend</a></li>
+                    <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-ban me-2"></i>Cancel Membership</a></li>
+                  </ul>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><input type="checkbox"></td>
+            <td style="font-weight: 600; color: var(--accent);">MEM-015</td>
+            <td>
+              <div style="font-weight: 600;">Fatima Al-Zahra</div>
+            </td>
+            <td><a class="contact-link" onclick="parent.loadContent('contacts/contact-detail')">CON-1089</a></td>
+            <td><span class="tier-badge gold">🥇 Gold</span></td>
+            <td>Mar 2025</td>
+            <td>Mar 2027</td>
+            <td><i class="fas fa-check-circle" style="color: var(--success-color);"></i></td>
+            <td style="font-weight: 600;">$500</td>
+            <td><span class="status-badge active"><span class="dot"></span> Active</span></td>
+            <td>
+              <div class="d-flex gap-1">
+                <button class="action-btn primary" onclick="parent.loadContent('membership/member-detail')"><i class="fas fa-eye"></i></button>
+                <div class="dropdown">
+                  <button class="action-btn" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-vertical"></i></button>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" onclick="parent.loadContent('membership/member-detail')"><i class="fas fa-eye me-2"></i>View</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-pen me-2"></i>Edit</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-arrows-rotate me-2"></i>Renew</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-arrow-up me-2"></i>Upgrade Tier</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-pause me-2"></i>Suspend</a></li>
+                    <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-ban me-2"></i>Cancel Membership</a></li>
+                  </ul>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><input type="checkbox"></td>
+            <td style="font-weight: 600; color: var(--accent);">MEM-023</td>
+            <td>
+              <div style="font-weight: 600;">Ravi Sharma</div>
+            </td>
+            <td><a class="contact-link" onclick="parent.loadContent('contacts/contact-detail')">CON-0987</a></td>
+            <td><span class="tier-badge silver">🥈 Silver</span></td>
+            <td>Jun 2025</td>
+            <td>Jun 2026</td>
+            <td><i class="fas fa-times-circle" style="color: #cbd5e1;"></i></td>
+            <td style="font-weight: 600;">$150</td>
+            <td><span class="status-badge expires-soon"><span class="dot"></span> Expires Soon</span></td>
+            <td>
+              <div class="d-flex gap-1">
+                <button class="action-btn primary" onclick="parent.loadContent('membership/member-detail')"><i class="fas fa-eye"></i></button>
+                <button class="action-btn renew"><i class="fas fa-arrows-rotate"></i></button>
+                <div class="dropdown">
+                  <button class="action-btn" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-vertical"></i></button>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" onclick="parent.loadContent('membership/member-detail')"><i class="fas fa-eye me-2"></i>View</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-pen me-2"></i>Edit</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-arrows-rotate me-2"></i>Renew</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-arrow-up me-2"></i>Upgrade Tier</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-pause me-2"></i>Suspend</a></li>
+                    <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-ban me-2"></i>Cancel Membership</a></li>
+                  </ul>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><input type="checkbox"></td>
+            <td style="font-weight: 600; color: var(--accent);">MEM-045</td>
+            <td>
+              <div style="font-weight: 600;">James Okonkwo</div>
+            </td>
+            <td><a class="contact-link" onclick="parent.loadContent('contacts/contact-detail')">CON-0876</a></td>
+            <td><span class="tier-badge bronze">🥉 Bronze</span></td>
+            <td>Dec 2024</td>
+            <td>Dec 2025</td>
+            <td><i class="fas fa-times-circle" style="color: #cbd5e1;"></i></td>
+            <td style="font-weight: 600;">$50</td>
+            <td><span class="status-badge expired"><span class="dot"></span> Expired</span></td>
+            <td>
+              <div class="d-flex gap-1">
+                <button class="action-btn primary" onclick="parent.loadContent('membership/member-detail')"><i class="fas fa-eye"></i></button>
+                <button class="action-btn renew"><i class="fas fa-arrows-rotate"></i></button>
+                <div class="dropdown">
+                  <button class="action-btn" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-vertical"></i></button>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" onclick="parent.loadContent('membership/member-detail')"><i class="fas fa-eye me-2"></i>View</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-pen me-2"></i>Edit</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-arrows-rotate me-2"></i>Renew</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-arrow-up me-2"></i>Upgrade Tier</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-pause me-2"></i>Suspend</a></li>
+                    <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-ban me-2"></i>Cancel Membership</a></li>
+                  </ul>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><input type="checkbox"></td>
+            <td style="font-weight: 600; color: var(--accent);">MEM-067</td>
+            <td>
+              <div style="font-weight: 600;">Sarah Ahmed</div>
+            </td>
+            <td><span style="color: var(--text-secondary);">—</span></td>
+            <td><span class="tier-badge silver">🥈 Silver</span></td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+            <td><span class="status-badge pending"><span class="dot"></span> Pending</span></td>
+            <td>
+              <div class="d-flex gap-1">
+                <button class="action-btn approve"><i class="fas fa-check me-1"></i>Approve</button>
+                <button class="action-btn primary" onclick="parent.loadContent('membership/member-detail')"><i class="fas fa-eye"></i></button>
+                <div class="dropdown">
+                  <button class="action-btn" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-vertical"></i></button>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" onclick="parent.loadContent('membership/member-detail')"><i class="fas fa-eye me-2"></i>View</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-pen me-2"></i>Edit</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-ban me-2"></i>Reject</a></li>
+                  </ul>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Table Footer -->
+    <div class="table-footer">
+      <div class="table-info">Showing 1-5 of 179 members</div>
+      <div class="pagination-btns">
+        <button class="page-btn" disabled><i class="fas fa-chevron-left"></i></button>
+        <button class="page-btn active">1</button>
+        <button class="page-btn">2</button>
+        <button class="page-btn">3</button>
+        <button class="page-btn">...</button>
+        <button class="page-btn">36</button>
+        <button class="page-btn"><i class="fas fa-chevron-right"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Filter chips toggle
+    document.querySelectorAll('.filter-chips').forEach(group => {
+      group.querySelectorAll('.filter-chip').forEach(chip => {
+        chip.addEventListener('click', function () {
+          group.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+          this.classList.add('active');
+        });
+      });
+    });
+
+    function toggleFilters() {
+      document.getElementById('advancedFilters').classList.toggle('show');
+    }
+
+    function toggleBulk(master) {
+      const checkboxes = document.querySelectorAll('.member-table tbody input[type="checkbox"]');
+      checkboxes.forEach(cb => cb.checked = master.checked);
+      document.getElementById('bulkActions').classList.toggle('show', master.checked);
+    }
+  </script>
+
+</body>
+
+</html>

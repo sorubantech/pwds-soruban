@@ -1,0 +1,2038 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff Management - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons */
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #0c6577;
+      border-color: #0c6577;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-text {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-text:hover { color: var(--danger-color); }
+
+    /* Summary Cards */
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .summary-card {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1.25rem;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .summary-card .card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.125rem;
+      flex-shrink: 0;
+    }
+
+    .summary-card .card-icon.blue { background: #dbeafe; color: #2563eb; }
+    .summary-card .card-icon.purple { background: #ede9fe; color: #7c3aed; }
+    .summary-card .card-icon.green { background: #dcfce7; color: #16a34a; }
+    .summary-card .card-icon.amber { background: #fef3c7; color: #d97706; }
+
+    .summary-card .card-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .summary-card .card-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.125rem;
+    }
+
+    .summary-card .card-sub {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    /* List Card */
+    .list-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .search-input {
+      position: relative;
+      flex: 1;
+      min-width: 240px;
+    }
+
+    .search-input i {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .search-input input {
+      width: 100%;
+      padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .search-input input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .filter-group label {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.25rem;
+      display: block;
+    }
+
+    .filter-group select {
+      width: 100%;
+      padding: 0.375rem 0.625rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+    }
+
+    .filter-group select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .clear-filters {
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0;
+      white-space: nowrap;
+    }
+
+    .clear-filters:hover {
+      text-decoration: underline;
+    }
+
+    /* Table */
+    .table-container {
+      overflow-x: auto;
+    }
+
+    .staff-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1200px;
+    }
+
+    .staff-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .staff-table th:hover {
+      color: var(--accent);
+    }
+
+    .staff-table th .sort-icon {
+      margin-left: 0.25rem;
+      font-size: 0.5625rem;
+      opacity: 0.5;
+    }
+
+    .staff-table td {
+      padding: 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.8125rem;
+      vertical-align: middle;
+    }
+
+    .staff-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    /* Staff name cell */
+    .staff-name-cell {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+
+    .staff-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--accent-bg);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .staff-name {
+      font-weight: 600;
+      color: var(--accent);
+      cursor: pointer;
+    }
+
+    .staff-name:hover {
+      text-decoration: underline;
+    }
+
+    .staff-id {
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      background: #f1f5f9;
+      padding: 0.125rem 0.5rem;
+      border-radius: 0.25rem;
+    }
+
+    .category-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.1875rem 0.625rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      background: #f1f5f9;
+      color: var(--text-secondary);
+    }
+
+    .category-badge.management { background: #ede9fe; color: #7c3aed; }
+    .category-badge.program { background: #dbeafe; color: #2563eb; }
+    .category-badge.field { background: #dcfce7; color: #16a34a; }
+    .category-badge.admin { background: #fef3c7; color: #d97706; }
+    .category-badge.finance { background: #fce7f3; color: #db2777; }
+    .category-badge.fundraising { background: #ecfeff; color: #0e7490; }
+
+    .user-account {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.8125rem;
+    }
+
+    .user-account .check {
+      color: var(--success-color);
+    }
+
+    .user-account .no-account {
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+    }
+
+    .create-account-link {
+      font-size: 0.6875rem;
+      color: var(--accent);
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .create-account-link:hover {
+      text-decoration: underline;
+    }
+
+    .org-unit-link {
+      color: var(--accent);
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .org-unit-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Status Badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.1875rem 0.625rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+    }
+
+    .status-badge.active {
+      background: #dcfce7;
+      color: #16a34a;
+    }
+
+    .status-badge.inactive {
+      background: #fef2f2;
+      color: #dc2626;
+    }
+
+    .status-badge.on-leave {
+      background: #fef3c7;
+      color: #d97706;
+    }
+
+    /* Action Buttons */
+    .action-btn {
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.375rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .action-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .action-btn.primary {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .actions-cell {
+      display: flex;
+      gap: 0.25rem;
+      align-items: center;
+    }
+
+    .more-menu {
+      position: relative;
+    }
+
+    .more-btn {
+      background: none;
+      border: 1px solid transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0.25rem 0.375rem;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      line-height: 1;
+    }
+
+    .more-btn:hover {
+      background: #f1f5f9;
+      border-color: var(--border-color);
+    }
+
+    .more-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      min-width: 180px;
+      z-index: 100;
+      overflow: hidden;
+    }
+
+    .more-dropdown.show {
+      display: block;
+    }
+
+    .more-dropdown a {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.875rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      text-decoration: none;
+      transition: background 0.1s;
+    }
+
+    .more-dropdown a:hover {
+      background: #f8fafc;
+    }
+
+    .more-dropdown a i {
+      width: 16px;
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+    }
+
+    .more-dropdown a.danger {
+      color: var(--danger-color);
+    }
+
+    .more-dropdown a.danger i {
+      color: var(--danger-color);
+    }
+
+    /* Table Footer */
+    .table-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1.25rem;
+      border-top: 1px solid var(--border-color);
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .pagination {
+      display: flex;
+      gap: 0.25rem;
+      margin: 0;
+    }
+
+    .pagination .page-link {
+      padding: 0.3125rem 0.625rem;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      cursor: pointer;
+      background: white;
+    }
+
+    .pagination .page-link:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .pagination .page-item.active .page-link {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    /* Side Panel */
+    .side-panel-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.3);
+      z-index: 1000;
+    }
+
+    .side-panel-overlay.show {
+      display: block;
+    }
+
+    .side-panel {
+      position: fixed;
+      top: 0;
+      right: -60%;
+      width: 60%;
+      height: 100vh;
+      background: white;
+      box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+      z-index: 1001;
+      transition: right 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .side-panel.show {
+      right: 0;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      background: #f8fafc;
+    }
+
+    .panel-header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .panel-header h2 {
+      font-size: 1.125rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .panel-header-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .panel-close {
+      background: none;
+      border: 1px solid var(--border-color);
+      width: 32px;
+      height: 32px;
+      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+    }
+
+    .panel-close:hover {
+      border-color: var(--danger-color);
+      color: var(--danger-color);
+      background: #fef2f2;
+    }
+
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem;
+    }
+
+    /* Staff Detail Panel */
+    .staff-profile-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .profile-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: var(--accent-bg);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .profile-info h3 {
+      font-size: 1.125rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .profile-info .profile-title {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      margin-top: 0.125rem;
+    }
+
+    .detail-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .detail-section-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.875rem;
+    }
+
+    .detail-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+    }
+
+    .detail-item .detail-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-secondary);
+    }
+
+    .detail-item .detail-value {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .activity-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .activity-stat {
+      background: #f8fafc;
+      border-radius: 0.5rem;
+      padding: 0.75rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .activity-stat .stat-value {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .activity-stat .stat-label {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+    }
+
+    .branch-history {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .history-item {
+      display: flex;
+      gap: 0.75rem;
+      padding: 0.625rem 0;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.8125rem;
+    }
+
+    .history-item:last-child {
+      border-bottom: none;
+    }
+
+    .history-dates {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      min-width: 130px;
+      font-weight: 600;
+    }
+
+    .history-branch {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    /* Staff Form Panel */
+    .form-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      margin-bottom: 0.75rem;
+      overflow: hidden;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.875rem 1.25rem;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+    }
+
+    .section-header:hover { background: #f8fafc; }
+
+    .section-header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+
+    .section-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 0.5rem;
+      background: var(--accent-bg);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+    }
+
+    .section-title {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .section-toggle {
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      transition: transform 0.25s;
+    }
+
+    .section-header.collapsed .section-toggle {
+      transform: rotate(-90deg);
+    }
+
+    .section-body {
+      padding: 0 1.25rem 1.25rem;
+      transition: max-height 0.3s ease;
+      overflow: hidden;
+    }
+
+    .section-body.collapsed {
+      max-height: 0 !important;
+      padding: 0 1.25rem;
+    }
+
+    /* Form Controls */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .form-grid .full-width { grid-column: 1 / -1; }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .form-group label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .form-group label .required {
+      color: var(--danger-color);
+      margin-left: 2px;
+    }
+
+    .form-control, .form-select {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .form-control:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    textarea.form-control {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .form-check-input:checked {
+      background-color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .form-check-input:focus {
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.15);
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+
+    .toggle-switch .form-check-input {
+      width: 2.5rem;
+      height: 1.25rem;
+      cursor: pointer;
+    }
+
+    .toggle-switch label {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    /* Tags Input */
+    .tags-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.375rem;
+      padding: 0.375rem 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      min-height: 38px;
+      align-items: center;
+      cursor: text;
+    }
+
+    .tags-container:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.125rem 0.5rem;
+      background: var(--accent-bg);
+      color: var(--accent);
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .tag .remove-tag {
+      cursor: pointer;
+      font-size: 0.625rem;
+      opacity: 0.7;
+    }
+
+    .tag .remove-tag:hover {
+      opacity: 1;
+    }
+
+    .tags-input {
+      border: none;
+      outline: none;
+      font-size: 0.8125rem;
+      flex: 1;
+      min-width: 80px;
+      padding: 0.125rem 0;
+    }
+
+    /* Info box */
+    .info-box {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      padding: 0.75rem;
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      border-radius: 0.5rem;
+      font-size: 0.75rem;
+      color: #0369a1;
+      margin-top: 0.5rem;
+    }
+
+    .info-box i {
+      margin-top: 0.125rem;
+      flex-shrink: 0;
+    }
+
+    .linked-account {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.625rem 0.875rem;
+      background: #dcfce7;
+      border: 1px solid #bbf7d0;
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: #16a34a;
+      font-weight: 600;
+      margin-top: 0.5rem;
+    }
+
+    .linked-account .unlink-btn {
+      margin-left: auto;
+      font-size: 0.6875rem;
+      color: var(--danger-color);
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .linked-account .unlink-btn:hover {
+      text-decoration: underline;
+    }
+
+    /* Form footer */
+    .form-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      padding: 1.25rem 1.5rem;
+      border-top: 1px solid var(--border-color);
+      background: #f8fafc;
+    }
+
+    /* Photo upload */
+    .photo-upload {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .photo-circle {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: #f1f5f9;
+      border: 2px dashed var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      font-size: 1.25rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .photo-circle:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .photo-upload-text {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .photo-upload-text a {
+      color: var(--accent);
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .photo-upload-text a:hover {
+      text-decoration: underline;
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .summary-cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .summary-cards {
+        grid-template-columns: 1fr;
+      }
+      .side-panel {
+        width: 100%;
+        right: -100%;
+      }
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1>Staff Management</h1>
+      <p class="subtitle">Manage staff across your organization</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="openStaffForm()">
+        <i class="fa-solid fa-plus" style="margin-right:0.375rem"></i>Add Staff
+      </button>
+      <button class="btn-outline-accent">
+        <i class="fa-solid fa-file-import" style="margin-right:0.375rem"></i>Import Staff
+      </button>
+      <button class="btn-outline-accent">
+        <i class="fa-solid fa-file-export" style="margin-right:0.375rem"></i>Export
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Summary Cards -->
+  <div class="summary-cards">
+    <div class="summary-card">
+      <div class="card-icon blue"><i class="fa-solid fa-id-badge"></i></div>
+      <div>
+        <div class="card-value">156</div>
+        <div class="card-label">Total Staff</div>
+        <div class="card-sub">Active: 148 &middot; Inactive: 8</div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="card-icon purple"><i class="fa-solid fa-layer-group"></i></div>
+      <div>
+        <div class="card-value">5</div>
+        <div class="card-label">Categories</div>
+        <div class="card-sub">Program: 45, Field: 38, Admin: 32, Fundraising: 24, Other: 17</div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="card-icon green"><i class="fa-solid fa-building"></i></div>
+      <div>
+        <div class="card-value">12 / 14</div>
+        <div class="card-label">Branches Covered</div>
+        <div class="card-sub">2 branches have no staff</div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="card-icon amber"><i class="fa-solid fa-user-lock"></i></div>
+      <div>
+        <div class="card-value">134 / 156</div>
+        <div class="card-label">Linked User Accounts</div>
+        <div class="card-sub">85.9% have system login</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Staff List Card -->
+  <div class="list-card">
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="d-flex gap-3 flex-wrap align-items-end">
+        <div class="search-input">
+          <i class="fa-solid fa-search"></i>
+          <input type="text" placeholder="Search by name, email, staff ID...">
+        </div>
+        <div class="filter-group">
+          <label>Category</label>
+          <select>
+            <option>All Categories</option>
+            <option>Program Staff</option>
+            <option>Field Officer</option>
+            <option>Administrative</option>
+            <option>Finance</option>
+            <option>Fundraising</option>
+            <option>Communication</option>
+            <option>IT</option>
+            <option>Management</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Org Unit</label>
+          <select>
+            <option>All Units</option>
+            <option>HQ</option>
+            <option>Dubai Branch</option>
+            <option>Mumbai Branch</option>
+            <option>NY Branch</option>
+            <option>Nairobi Branch</option>
+            <option>London Branch</option>
+            <option>Riyadh Branch</option>
+            <option>Delhi Branch</option>
+            <option>Dhaka Branch</option>
+            <option>Cairo Branch</option>
+            <option>Paris Branch</option>
+            <option>LA Branch</option>
+            <option>Chicago Branch</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Status</label>
+          <select>
+            <option>All</option>
+            <option>Active</option>
+            <option>Inactive</option>
+            <option>On Leave</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>User Account</label>
+          <select>
+            <option>All</option>
+            <option>Yes</option>
+            <option>No</option>
+          </select>
+        </div>
+        <button class="clear-filters" style="margin-bottom:0.375rem">Clear Filters</button>
+      </div>
+    </div>
+
+    <!-- Staff Table -->
+    <div class="table-container">
+      <table class="staff-table">
+        <thead>
+          <tr>
+            <th>Staff ID <i class="fa-solid fa-sort sort-icon"></i></th>
+            <th>Name <i class="fa-solid fa-sort sort-icon"></i></th>
+            <th>Category <i class="fa-solid fa-sort sort-icon"></i></th>
+            <th>Org Unit <i class="fa-solid fa-sort sort-icon"></i></th>
+            <th>Role / Title <i class="fa-solid fa-sort sort-icon"></i></th>
+            <th>Email <i class="fa-solid fa-sort sort-icon"></i></th>
+            <th>Phone</th>
+            <th>User Account <i class="fa-solid fa-sort sort-icon"></i></th>
+            <th>Status <i class="fa-solid fa-sort sort-icon"></i></th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="staff-id">STF-001</span></td>
+            <td>
+              <div class="staff-name-cell">
+                <div class="staff-avatar">MA</div>
+                <span class="staff-name" onclick="openStaffDetail('stf001')">Mohammad Al-Rashid</span>
+              </div>
+            </td>
+            <td><span class="category-badge management">Management</span></td>
+            <td><a class="org-unit-link" onclick="parent.loadContent('organization/org-unit-tree')">Dubai Branch</a></td>
+            <td>Branch Manager</td>
+            <td>m.rashid@hopefound.org</td>
+            <td>+971 50-111-2222</td>
+            <td><span class="user-account"><span class="check">&#10004;</span> m.rashid</span></td>
+            <td><span class="status-badge active">&#x1F7E2; Active</span></td>
+            <td>
+              <div class="actions-cell">
+                <button class="action-btn primary" onclick="openStaffDetail('stf001')">View</button>
+                <button class="action-btn" onclick="openStaffForm('stf001')">Edit</button>
+                <div class="more-menu">
+                  <button class="more-btn" onclick="toggleMenu(this)">&#8942;</button>
+                  <div class="more-dropdown">
+                    <a href="#" onclick="openStaffDetail('stf001')"><i class="fa-solid fa-user"></i> View Profile</a>
+                    <a href="#" onclick="openStaffForm('stf001')"><i class="fa-solid fa-pen"></i> Edit</a>
+                    <a href="#"><i class="fa-solid fa-user-shield"></i> Manage User Account</a>
+                    <a href="#"><i class="fa-solid fa-right-left"></i> Transfer</a>
+                    <a href="#" class="danger"><i class="fa-solid fa-ban"></i> Deactivate</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="staff-id">STF-002</span></td>
+            <td>
+              <div class="staff-name-cell">
+                <div class="staff-avatar">FH</div>
+                <span class="staff-name" onclick="openStaffDetail('stf002')">Fatima Hassan</span>
+              </div>
+            </td>
+            <td><span class="category-badge program">Program Staff</span></td>
+            <td><a class="org-unit-link" onclick="parent.loadContent('organization/org-unit-tree')">Dubai Branch</a></td>
+            <td>Program Coordinator</td>
+            <td>f.hassan@hopefound.org</td>
+            <td>+971 50-333-4444</td>
+            <td><span class="user-account"><span class="check">&#10004;</span> f.hassan</span></td>
+            <td><span class="status-badge active">&#x1F7E2; Active</span></td>
+            <td>
+              <div class="actions-cell">
+                <button class="action-btn primary" onclick="openStaffDetail('stf002')">View</button>
+                <button class="action-btn" onclick="openStaffForm('stf002')">Edit</button>
+                <div class="more-menu">
+                  <button class="more-btn" onclick="toggleMenu(this)">&#8942;</button>
+                  <div class="more-dropdown">
+                    <a href="#"><i class="fa-solid fa-user"></i> View Profile</a>
+                    <a href="#"><i class="fa-solid fa-pen"></i> Edit</a>
+                    <a href="#"><i class="fa-solid fa-user-shield"></i> Manage User Account</a>
+                    <a href="#"><i class="fa-solid fa-right-left"></i> Transfer</a>
+                    <a href="#" class="danger"><i class="fa-solid fa-ban"></i> Deactivate</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="staff-id">STF-003</span></td>
+            <td>
+              <div class="staff-name-cell">
+                <div class="staff-avatar">AS</div>
+                <span class="staff-name" onclick="openStaffDetail('stf003')">Ahmed Salim</span>
+              </div>
+            </td>
+            <td><span class="category-badge field">Field Officer</span></td>
+            <td><a class="org-unit-link" onclick="parent.loadContent('organization/org-unit-tree')">Dubai Branch</a></td>
+            <td>Field Collection Agent</td>
+            <td>a.salim@hopefound.org</td>
+            <td>+971 55-555-6666</td>
+            <td><span class="user-account"><span class="check">&#10004;</span> a.salim</span></td>
+            <td><span class="status-badge active">&#x1F7E2; Active</span></td>
+            <td>
+              <div class="actions-cell">
+                <button class="action-btn primary" onclick="openStaffDetail('stf003')">View</button>
+                <button class="action-btn" onclick="openStaffForm('stf003')">Edit</button>
+                <div class="more-menu">
+                  <button class="more-btn" onclick="toggleMenu(this)">&#8942;</button>
+                  <div class="more-dropdown">
+                    <a href="#"><i class="fa-solid fa-user"></i> View Profile</a>
+                    <a href="#"><i class="fa-solid fa-pen"></i> Edit</a>
+                    <a href="#"><i class="fa-solid fa-user-shield"></i> Manage User Account</a>
+                    <a href="#"><i class="fa-solid fa-right-left"></i> Transfer</a>
+                    <a href="#" class="danger"><i class="fa-solid fa-ban"></i> Deactivate</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="staff-id">STF-004</span></td>
+            <td>
+              <div class="staff-name-cell">
+                <div class="staff-avatar">PS</div>
+                <span class="staff-name" onclick="openStaffDetail('stf004')">Priya Sharma</span>
+              </div>
+            </td>
+            <td><span class="category-badge management">Management</span></td>
+            <td><a class="org-unit-link" onclick="parent.loadContent('organization/org-unit-tree')">Mumbai Branch</a></td>
+            <td>Branch Manager</td>
+            <td>p.sharma@hopefound.org</td>
+            <td>+91 98765-11111</td>
+            <td><span class="user-account"><span class="check">&#10004;</span> p.sharma</span></td>
+            <td><span class="status-badge active">&#x1F7E2; Active</span></td>
+            <td>
+              <div class="actions-cell">
+                <button class="action-btn primary" onclick="openStaffDetail('stf004')">View</button>
+                <button class="action-btn" onclick="openStaffForm('stf004')">Edit</button>
+                <div class="more-menu">
+                  <button class="more-btn" onclick="toggleMenu(this)">&#8942;</button>
+                  <div class="more-dropdown">
+                    <a href="#"><i class="fa-solid fa-user"></i> View Profile</a>
+                    <a href="#"><i class="fa-solid fa-pen"></i> Edit</a>
+                    <a href="#"><i class="fa-solid fa-user-shield"></i> Manage User Account</a>
+                    <a href="#"><i class="fa-solid fa-right-left"></i> Transfer</a>
+                    <a href="#" class="danger"><i class="fa-solid fa-ban"></i> Deactivate</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="staff-id">STF-005</span></td>
+            <td>
+              <div class="staff-name-cell">
+                <div class="staff-avatar">JS</div>
+                <span class="staff-name" onclick="openStaffDetail('stf005')">John Smith</span>
+              </div>
+            </td>
+            <td><span class="category-badge management">Management</span></td>
+            <td><a class="org-unit-link" onclick="parent.loadContent('organization/org-unit-tree')">NY Branch</a></td>
+            <td>Branch Manager</td>
+            <td>j.smith@hopefound.org</td>
+            <td>+1 555-0201</td>
+            <td><span class="user-account"><span class="check">&#10004;</span> j.smith</span></td>
+            <td><span class="status-badge active">&#x1F7E2; Active</span></td>
+            <td>
+              <div class="actions-cell">
+                <button class="action-btn primary" onclick="openStaffDetail('stf005')">View</button>
+                <button class="action-btn" onclick="openStaffForm('stf005')">Edit</button>
+                <div class="more-menu">
+                  <button class="more-btn" onclick="toggleMenu(this)">&#8942;</button>
+                  <div class="more-dropdown">
+                    <a href="#"><i class="fa-solid fa-user"></i> View Profile</a>
+                    <a href="#"><i class="fa-solid fa-pen"></i> Edit</a>
+                    <a href="#"><i class="fa-solid fa-user-shield"></i> Manage User Account</a>
+                    <a href="#"><i class="fa-solid fa-right-left"></i> Transfer</a>
+                    <a href="#" class="danger"><i class="fa-solid fa-ban"></i> Deactivate</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="staff-id">STF-006</span></td>
+            <td>
+              <div class="staff-name-cell">
+                <div class="staff-avatar">GW</div>
+                <span class="staff-name" onclick="openStaffDetail('stf006')">Grace Wanjiku</span>
+              </div>
+            </td>
+            <td><span class="category-badge management">Management</span></td>
+            <td><a class="org-unit-link" onclick="parent.loadContent('organization/org-unit-tree')">Nairobi Branch</a></td>
+            <td>Branch Manager</td>
+            <td>g.wanjiku@hopefound.org</td>
+            <td>+254 700-123456</td>
+            <td><span class="user-account"><span class="check">&#10004;</span> g.wanjiku</span></td>
+            <td><span class="status-badge active">&#x1F7E2; Active</span></td>
+            <td>
+              <div class="actions-cell">
+                <button class="action-btn primary" onclick="openStaffDetail('stf006')">View</button>
+                <button class="action-btn" onclick="openStaffForm('stf006')">Edit</button>
+                <div class="more-menu">
+                  <button class="more-btn" onclick="toggleMenu(this)">&#8942;</button>
+                  <div class="more-dropdown">
+                    <a href="#"><i class="fa-solid fa-user"></i> View Profile</a>
+                    <a href="#"><i class="fa-solid fa-pen"></i> Edit</a>
+                    <a href="#"><i class="fa-solid fa-user-shield"></i> Manage User Account</a>
+                    <a href="#"><i class="fa-solid fa-right-left"></i> Transfer</a>
+                    <a href="#" class="danger"><i class="fa-solid fa-ban"></i> Deactivate</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="staff-id">STF-007</span></td>
+            <td>
+              <div class="staff-name-cell">
+                <div class="staff-avatar">AI</div>
+                <span class="staff-name" onclick="openStaffDetail('stf007')">Ali Ibrahim</span>
+              </div>
+            </td>
+            <td><span class="category-badge field">Field Officer</span></td>
+            <td><a class="org-unit-link" onclick="parent.loadContent('organization/org-unit-tree')">Cairo Branch</a></td>
+            <td>Field Agent</td>
+            <td>a.ibrahim@hopefound.org</td>
+            <td>+20 100-123-4567</td>
+            <td>
+              <span class="user-account">
+                <span class="no-account">&#10060; No account</span>
+              </span>
+              <a class="create-account-link" onclick="parent.loadContent('administration/user-management')">[Create Account]</a>
+            </td>
+            <td><span class="status-badge inactive">&#x1F534; Inactive</span></td>
+            <td>
+              <div class="actions-cell">
+                <button class="action-btn primary" onclick="openStaffDetail('stf007')">View</button>
+                <button class="action-btn" onclick="openStaffForm('stf007')">Edit</button>
+                <div class="more-menu">
+                  <button class="more-btn" onclick="toggleMenu(this)">&#8942;</button>
+                  <div class="more-dropdown">
+                    <a href="#"><i class="fa-solid fa-user"></i> View Profile</a>
+                    <a href="#"><i class="fa-solid fa-pen"></i> Edit</a>
+                    <a href="#" onclick="parent.loadContent('administration/user-management')"><i class="fa-solid fa-user-plus"></i> Create User Account</a>
+                    <a href="#"><i class="fa-solid fa-right-left"></i> Transfer</a>
+                    <a href="#" class="danger"><i class="fa-solid fa-check-circle"></i> Activate</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="staff-id">STF-008</span></td>
+            <td>
+              <div class="staff-name-cell">
+                <div class="staff-avatar">RP</div>
+                <span class="staff-name" onclick="openStaffDetail('stf008')">Ravi Patel</span>
+              </div>
+            </td>
+            <td><span class="category-badge finance">Finance</span></td>
+            <td><a class="org-unit-link" onclick="parent.loadContent('organization/org-unit-tree')">HQ</a></td>
+            <td>Finance Manager</td>
+            <td>r.patel@hopefound.org</td>
+            <td>+91 98765-22222</td>
+            <td><span class="user-account"><span class="check">&#10004;</span> r.patel</span></td>
+            <td><span class="status-badge active">&#x1F7E2; Active</span></td>
+            <td>
+              <div class="actions-cell">
+                <button class="action-btn primary" onclick="openStaffDetail('stf008')">View</button>
+                <button class="action-btn" onclick="openStaffForm('stf008')">Edit</button>
+                <div class="more-menu">
+                  <button class="more-btn" onclick="toggleMenu(this)">&#8942;</button>
+                  <div class="more-dropdown">
+                    <a href="#"><i class="fa-solid fa-user"></i> View Profile</a>
+                    <a href="#"><i class="fa-solid fa-pen"></i> Edit</a>
+                    <a href="#"><i class="fa-solid fa-user-shield"></i> Manage User Account</a>
+                    <a href="#"><i class="fa-solid fa-right-left"></i> Transfer</a>
+                    <a href="#" class="danger"><i class="fa-solid fa-ban"></i> Deactivate</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="staff-id">STF-009</span></td>
+            <td>
+              <div class="staff-name-cell">
+                <div class="staff-avatar">SL</div>
+                <span class="staff-name" onclick="openStaffDetail('stf009')">Sophie Laurent</span>
+              </div>
+            </td>
+            <td><span class="category-badge admin">Administrative</span></td>
+            <td><a class="org-unit-link" onclick="parent.loadContent('organization/org-unit-tree')">Paris Branch</a></td>
+            <td>Office Admin</td>
+            <td>s.laurent@hopefound.org</td>
+            <td>+33 6-1234-5678</td>
+            <td><span class="user-account"><span class="check">&#10004;</span> s.laurent</span></td>
+            <td><span class="status-badge inactive">&#x1F534; Inactive</span></td>
+            <td>
+              <div class="actions-cell">
+                <button class="action-btn primary" onclick="openStaffDetail('stf009')">View</button>
+                <button class="action-btn" onclick="openStaffForm('stf009')">Edit</button>
+                <div class="more-menu">
+                  <button class="more-btn" onclick="toggleMenu(this)">&#8942;</button>
+                  <div class="more-dropdown">
+                    <a href="#"><i class="fa-solid fa-user"></i> View Profile</a>
+                    <a href="#"><i class="fa-solid fa-pen"></i> Edit</a>
+                    <a href="#"><i class="fa-solid fa-user-shield"></i> Manage User Account</a>
+                    <a href="#"><i class="fa-solid fa-right-left"></i> Transfer</a>
+                    <a href="#" class="danger"><i class="fa-solid fa-check-circle"></i> Activate</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="staff-id">STF-010</span></td>
+            <td>
+              <div class="staff-name-cell">
+                <div class="staff-avatar">RC</div>
+                <span class="staff-name" onclick="openStaffDetail('stf010')">Rahim Chowdhury</span>
+              </div>
+            </td>
+            <td><span class="category-badge management">Management</span></td>
+            <td><a class="org-unit-link" onclick="parent.loadContent('organization/org-unit-tree')">Dhaka Branch</a></td>
+            <td>Branch Manager</td>
+            <td>r.chowdhury@hopefound.org</td>
+            <td>+880 171-1234567</td>
+            <td><span class="user-account"><span class="check">&#10004;</span> r.chowdhury</span></td>
+            <td><span class="status-badge active">&#x1F7E2; Active</span></td>
+            <td>
+              <div class="actions-cell">
+                <button class="action-btn primary" onclick="openStaffDetail('stf010')">View</button>
+                <button class="action-btn" onclick="openStaffForm('stf010')">Edit</button>
+                <div class="more-menu">
+                  <button class="more-btn" onclick="toggleMenu(this)">&#8942;</button>
+                  <div class="more-dropdown">
+                    <a href="#"><i class="fa-solid fa-user"></i> View Profile</a>
+                    <a href="#"><i class="fa-solid fa-pen"></i> Edit</a>
+                    <a href="#"><i class="fa-solid fa-user-shield"></i> Manage User Account</a>
+                    <a href="#"><i class="fa-solid fa-right-left"></i> Transfer</a>
+                    <a href="#" class="danger"><i class="fa-solid fa-ban"></i> Deactivate</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Table Footer -->
+    <div class="table-footer">
+      <span>Showing 1-10 of 156 staff</span>
+      <ul class="pagination">
+        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+        <li class="page-item active"><span class="page-link">1</span></li>
+        <li class="page-item"><span class="page-link">2</span></li>
+        <li class="page-item"><span class="page-link">3</span></li>
+        <li class="page-item"><span class="page-link">...</span></li>
+        <li class="page-item"><span class="page-link">16</span></li>
+        <li class="page-item"><span class="page-link">&raquo;</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Staff Detail Side Panel -->
+  <div class="side-panel-overlay" id="detailOverlay" onclick="closeStaffDetail()"></div>
+  <div class="side-panel" id="staffDetailPanel">
+    <div class="panel-header">
+      <div class="panel-header-left">
+        <h2>Staff Profile</h2>
+      </div>
+      <div class="panel-header-actions">
+        <button class="btn-outline-accent" style="font-size:0.75rem;padding:0.375rem 0.75rem" onclick="closeStaffDetail();openStaffForm('stf002')">
+          <i class="fa-solid fa-pen" style="margin-right:0.25rem"></i>Edit
+        </button>
+        <button class="panel-close" onclick="closeStaffDetail()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <!-- Profile Header -->
+      <div class="staff-profile-header">
+        <div class="profile-avatar">FH</div>
+        <div class="profile-info">
+          <h3>Fatima Hassan</h3>
+          <div class="profile-title">Program Coordinator &middot; Dubai Branch</div>
+          <div style="margin-top:0.375rem">
+            <span class="status-badge active">&#x1F7E2; Active</span>
+            <span class="category-badge program" style="margin-left:0.375rem">Program Staff</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Employment Details -->
+      <div class="detail-section">
+        <div class="detail-section-title">Employment Details</div>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="detail-label">Staff ID</span>
+            <span class="detail-value">STF-002</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Employment Type</span>
+            <span class="detail-value">Full-time</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Join Date</span>
+            <span class="detail-value">Mar 1, 2024</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Reporting To</span>
+            <span class="detail-value">Mohammad Al-Rashid</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Work Email</span>
+            <span class="detail-value">f.hassan@hopefound.org</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Work Phone</span>
+            <span class="detail-value">+971 50-333-4444</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">User Account</span>
+            <span class="detail-value" style="color:var(--success-color)">&#10004; f.hassan (Program Coordinator)</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Last Login</span>
+            <span class="detail-value">Apr 12, 2026 at 9:15 AM</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activity Summary -->
+      <div class="detail-section">
+        <div class="detail-section-title">Activity Summary</div>
+        <div class="activity-stats">
+          <div class="activity-stat">
+            <div class="stat-value">234</div>
+            <div class="stat-label">Donations processed (YTD)</div>
+          </div>
+          <div class="activity-stat">
+            <div class="stat-value">89</div>
+            <div class="stat-label">Collections made</div>
+          </div>
+          <div class="activity-stat">
+            <div class="stat-value">5</div>
+            <div class="stat-label">Events managed</div>
+          </div>
+          <div class="activity-stat">
+            <div class="stat-value">Apr 12</div>
+            <div class="stat-label">Last login (9:15 AM)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Branch History -->
+      <div class="detail-section">
+        <div class="detail-section-title">Branch History</div>
+        <div class="branch-history">
+          <div class="history-item">
+            <span class="history-dates">Mar 2024 &ndash; Present</span>
+            <span class="history-branch">Dubai Branch</span>
+          </div>
+          <div class="history-item">
+            <span class="history-dates">Jan 2023 &ndash; Feb 2024</span>
+            <span class="history-branch">Mumbai Branch</span>
+          </div>
+          <div class="history-item">
+            <span class="history-dates">Oct 2022 &ndash; Dec 2022</span>
+            <span class="history-branch">HQ Training</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Staff Create/Edit Form Side Panel -->
+  <div class="side-panel-overlay" id="formOverlay" onclick="closeStaffForm()"></div>
+  <div class="side-panel" id="staffFormPanel">
+    <div class="panel-header">
+      <div class="panel-header-left">
+        <h2 id="formTitle">Add New Staff</h2>
+      </div>
+      <div class="panel-header-actions">
+        <button class="panel-close" onclick="closeStaffForm()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+    </div>
+    <div class="panel-body">
+
+      <!-- Section 1: Personal Information -->
+      <div class="form-card">
+        <div class="section-header" onclick="toggleSection(this)">
+          <div class="section-header-left">
+            <div class="section-icon"><i class="fa-solid fa-user"></i></div>
+            <span class="section-title">Personal Information</span>
+          </div>
+          <i class="fa-solid fa-chevron-down section-toggle"></i>
+        </div>
+        <div class="section-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Staff ID</label>
+              <input type="text" class="form-control" value="STF-011" readonly style="background:#f8fafc;color:var(--text-secondary)">
+            </div>
+            <div class="form-group">
+              <!-- spacer -->
+            </div>
+            <div class="form-group">
+              <label>First Name <span class="required">*</span></label>
+              <input type="text" class="form-control" placeholder="Enter first name">
+            </div>
+            <div class="form-group">
+              <label>Last Name <span class="required">*</span></label>
+              <input type="text" class="form-control" placeholder="Enter last name">
+            </div>
+            <div class="form-group full-width">
+              <label>Photo</label>
+              <div class="photo-upload">
+                <div class="photo-circle"><i class="fa-solid fa-camera"></i></div>
+                <div class="photo-upload-text">
+                  <a>Upload photo</a><br>
+                  JPG, PNG. Max 2MB.
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Gender</label>
+              <select class="form-select">
+                <option value="">Select...</option>
+                <option>Male</option>
+                <option>Female</option>
+                <option>Other</option>
+                <option>Prefer not to say</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Date of Birth</label>
+              <input type="date" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>Personal Email</label>
+              <input type="email" class="form-control" placeholder="personal@email.com">
+            </div>
+            <div class="form-group">
+              <label>Personal Phone</label>
+              <input type="text" class="form-control" placeholder="+971 50-000-0000">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Employment Details -->
+      <div class="form-card">
+        <div class="section-header" onclick="toggleSection(this)">
+          <div class="section-header-left">
+            <div class="section-icon"><i class="fa-solid fa-briefcase"></i></div>
+            <span class="section-title">Employment Details</span>
+          </div>
+          <i class="fa-solid fa-chevron-down section-toggle"></i>
+        </div>
+        <div class="section-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Org Unit <span class="required">*</span></label>
+              <select class="form-select">
+                <option value="">Select org unit...</option>
+                <option>HQ</option>
+                <option>Dubai Branch</option>
+                <option>Mumbai Branch</option>
+                <option>NY Branch</option>
+                <option>Nairobi Branch</option>
+                <option>London Branch</option>
+                <option>Riyadh Branch</option>
+                <option>Delhi Branch</option>
+                <option>Dhaka Branch</option>
+                <option>Cairo Branch</option>
+                <option>Paris Branch</option>
+                <option>LA Branch</option>
+                <option>Chicago Branch</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Staff Category <span class="required">*</span></label>
+              <select class="form-select">
+                <option value="">Select category...</option>
+                <option>Management</option>
+                <option>Program Staff</option>
+                <option>Field Officer</option>
+                <option>Administrative</option>
+                <option>Finance</option>
+                <option>Fundraising</option>
+                <option>Communication</option>
+                <option>IT</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Role / Job Title <span class="required">*</span></label>
+              <input type="text" class="form-control" placeholder="e.g. Program Coordinator">
+            </div>
+            <div class="form-group">
+              <label>Employment Type</label>
+              <select class="form-select">
+                <option>Full-time</option>
+                <option>Part-time</option>
+                <option>Contract</option>
+                <option>Volunteer</option>
+                <option>Intern</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Join Date <span class="required">*</span></label>
+              <input type="date" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>End Date</label>
+              <input type="date" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>Reporting To</label>
+              <select class="form-select">
+                <option value="">Select supervisor...</option>
+                <option>Mohammad Al-Rashid (Branch Manager)</option>
+                <option>Priya Sharma (Branch Manager)</option>
+                <option>John Smith (Branch Manager)</option>
+                <option>Grace Wanjiku (Branch Manager)</option>
+                <option>Ravi Patel (Finance Manager)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select class="form-select">
+                <option>Active</option>
+                <option>Inactive</option>
+                <option>On Leave</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Work Email <span class="required">*</span></label>
+              <input type="email" class="form-control" placeholder="name@hopefound.org">
+            </div>
+            <div class="form-group">
+              <label>Work Phone</label>
+              <input type="text" class="form-control" placeholder="+971 50-000-0000">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: System Access -->
+      <div class="form-card">
+        <div class="section-header" onclick="toggleSection(this)">
+          <div class="section-header-left">
+            <div class="section-icon"><i class="fa-solid fa-user-shield"></i></div>
+            <span class="section-title">System Access</span>
+          </div>
+          <i class="fa-solid fa-chevron-down section-toggle"></i>
+        </div>
+        <div class="section-body">
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label>Link to User Account</label>
+              <select class="form-select">
+                <option value="">Select existing user account...</option>
+                <option>m.rashid</option>
+                <option>f.hassan</option>
+                <option>a.salim</option>
+                <option>p.sharma</option>
+                <option>j.smith</option>
+              </select>
+            </div>
+            <div class="form-group full-width" style="text-align:center;padding:0.5rem 0">
+              <span style="font-size:0.75rem;color:var(--text-secondary)">Or</span>
+            </div>
+            <div class="form-group full-width">
+              <button class="btn-outline-accent" style="width:auto" onclick="document.getElementById('newAccountForm').style.display = document.getElementById('newAccountForm').style.display === 'none' ? 'block' : 'none'">
+                <i class="fa-solid fa-user-plus" style="margin-right:0.375rem"></i>Create New User Account
+              </button>
+            </div>
+            <div class="full-width" id="newAccountForm" style="display:none">
+              <div class="form-grid" style="background:#f8fafc;padding:1rem;border-radius:0.5rem;border:1px solid var(--border-color)">
+                <div class="form-group">
+                  <label>Username</label>
+                  <input type="text" class="form-control" placeholder="e.g. f.hassan">
+                </div>
+                <div class="form-group">
+                  <label>Role Assignment</label>
+                  <select class="form-select">
+                    <option value="">Select role...</option>
+                    <option>System Administrator</option>
+                    <option>Branch Manager</option>
+                    <option>Program Coordinator</option>
+                    <option>Field Officer</option>
+                    <option>Finance Officer</option>
+                    <option>Read Only</option>
+                  </select>
+                </div>
+                <div class="form-group full-width">
+                  <div class="toggle-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="welcomeEmail" checked>
+                    <label for="welcomeEmail">Send welcome email</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="info-box" style="margin-top:0.75rem">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>A user account gives this staff member access to PSS 2.0. The role determines what they can see and do.</span>
+          </div>
+
+          <!-- Linked account display (for edit mode) -->
+          <div class="linked-account" style="display:none" id="linkedAccountDisplay">
+            <span>&#10004;</span>
+            <span>f.hassan (Role: Program Coordinator)</span>
+            <span class="unlink-btn">[Unlink]</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 4: Additional Information -->
+      <div class="form-card">
+        <div class="section-header" onclick="toggleSection(this)">
+          <div class="section-header-left">
+            <div class="section-icon"><i class="fa-solid fa-circle-info"></i></div>
+            <span class="section-title">Additional Information</span>
+          </div>
+          <i class="fa-solid fa-chevron-down section-toggle"></i>
+        </div>
+        <div class="section-body">
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label>Skills / Expertise</label>
+              <div class="tags-container">
+                <span class="tag">Project Management <i class="fa-solid fa-xmark remove-tag"></i></span>
+                <span class="tag">Grant Writing <i class="fa-solid fa-xmark remove-tag"></i></span>
+                <input type="text" class="tags-input" placeholder="Add skill...">
+              </div>
+            </div>
+            <div class="form-group full-width">
+              <label>Languages</label>
+              <div class="tags-container">
+                <span class="tag">English <i class="fa-solid fa-xmark remove-tag"></i></span>
+                <span class="tag">Arabic <i class="fa-solid fa-xmark remove-tag"></i></span>
+                <input type="text" class="tags-input" placeholder="Add language...">
+              </div>
+            </div>
+            <div class="form-group full-width">
+              <label>Emergency Contact</label>
+              <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr">
+                <input type="text" class="form-control" placeholder="Name">
+                <input type="text" class="form-control" placeholder="Phone">
+                <input type="text" class="form-control" placeholder="Relationship">
+              </div>
+            </div>
+            <div class="form-group full-width">
+              <label>Notes</label>
+              <textarea class="form-control" placeholder="Additional notes..."></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Form Footer -->
+    <div class="form-footer">
+      <button class="btn-text" onclick="closeStaffForm()">Cancel</button>
+      <button class="btn-outline-accent">Save & Add Another</button>
+      <button class="btn-primary-accent">
+        <i class="fa-solid fa-check" style="margin-right:0.375rem"></i>Save
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Staff Detail Side Panel
+    function openStaffDetail(staffId) {
+      closeStaffForm();
+      document.getElementById('detailOverlay').classList.add('show');
+      document.getElementById('staffDetailPanel').classList.add('show');
+    }
+
+    function closeStaffDetail() {
+      document.getElementById('detailOverlay').classList.remove('show');
+      document.getElementById('staffDetailPanel').classList.remove('show');
+    }
+
+    // Staff Form Side Panel
+    function openStaffForm(staffId) {
+      closeStaffDetail();
+      document.getElementById('formTitle').textContent = staffId ? 'Edit Staff' : 'Add New Staff';
+      document.getElementById('formOverlay').classList.add('show');
+      document.getElementById('staffFormPanel').classList.add('show');
+    }
+
+    function closeStaffForm() {
+      document.getElementById('formOverlay').classList.remove('show');
+      document.getElementById('staffFormPanel').classList.remove('show');
+    }
+
+    // Section Toggle
+    function toggleSection(header) {
+      header.classList.toggle('collapsed');
+      const body = header.nextElementSibling;
+      body.classList.toggle('collapsed');
+    }
+
+    // More Menu
+    function toggleMenu(btn) {
+      document.querySelectorAll('.more-dropdown.show').forEach(d => d.classList.remove('show'));
+      const dropdown = btn.nextElementSibling;
+      dropdown.classList.toggle('show');
+    }
+
+    // Close menus on outside click
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.more-menu')) {
+        document.querySelectorAll('.more-dropdown.show').forEach(d => d.classList.remove('show'));
+      }
+    });
+
+    // Close panels on Escape
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeStaffDetail();
+        closeStaffForm();
+      }
+    });
+  </script>
+
+</body>
+</html>

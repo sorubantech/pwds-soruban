@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff Home - Mobile App</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --field-accent: #059669;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a1a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .phone-frame {
+      width: 375px;
+      height: 812px;
+      background: #ffffff;
+      border-radius: 44px;
+      overflow: hidden;
+      box-shadow: 0 0 0 12px #2d2d2d, 0 0 0 14px #1a1a1a, 0 20px 60px rgba(0,0,0,0.5);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .phone-notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 28px;
+      background: #000;
+      border-radius: 0 0 18px 18px;
+      z-index: 10;
+    }
+
+    .status-bar {
+      background: #000;
+      color: #fff;
+      padding: 8px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 600;
+      height: 48px;
+    }
+
+    .status-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+    }
+
+    /* Agent Header */
+    .agent-header {
+      background: linear-gradient(135deg, #065f46, #059669);
+      color: white;
+      padding: 12px 20px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .agent-header-left {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .agent-org { font-size: 11px; font-weight: 600; opacity: 0.85; }
+    .agent-name { font-size: 15px; font-weight: 700; margin-top: 1px; }
+    .agent-branch { font-size: 11px; opacity: 0.8; }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .notif-icon {
+      width: 34px;
+      height: 34px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .notif-badge {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 16px;
+      height: 16px;
+      background: var(--danger-color);
+      border-radius: 50%;
+      font-size: 9px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #059669;
+    }
+
+    .online-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(255,255,255,0.2);
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    .online-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4ade80;
+    }
+
+    /* Content */
+    .phone-content {
+      flex: 1;
+      overflow-y: auto;
+      background: #f8fafc;
+      padding-bottom: 80px;
+    }
+
+    .phone-content::-webkit-scrollbar { width: 0; }
+
+    /* Clock Card */
+    .clock-card {
+      margin: 14px 16px;
+      background: white;
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      border: 1px solid #f1f5f9;
+    }
+
+    .clock-info {
+      flex: 1;
+    }
+
+    .clock-date {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .clock-status {
+      font-size: 12px;
+      color: var(--success-color);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 2px;
+    }
+
+    .clock-status-dot {
+      width: 7px;
+      height: 7px;
+      background: var(--success-color);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .clock-duration {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 1px;
+    }
+
+    .clock-out-btn {
+      padding: 10px 16px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--danger-color);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .clock-out-btn:active { transform: scale(0.96); }
+
+    /* Quick Actions */
+    .quick-actions {
+      display: flex;
+      gap: 10px;
+      padding: 0 16px 16px;
+    }
+
+    .quick-btn {
+      flex: 1;
+      background: white;
+      border-radius: 14px;
+      padding: 18px 10px;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      border: 1px solid #f1f5f9;
+      cursor: pointer;
+    }
+
+    .quick-btn:active {
+      transform: scale(0.96);
+      border-color: var(--field-accent);
+    }
+
+    .quick-btn-icon {
+      font-size: 26px;
+      margin-bottom: 6px;
+    }
+
+    .quick-btn-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .quick-btn-sub {
+      font-size: 10px;
+      color: var(--text-secondary);
+      margin-top: 1px;
+    }
+
+    /* Summary Row */
+    .summary-title {
+      padding: 0 16px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+
+    .summary-row {
+      display: flex;
+      gap: 8px;
+      padding: 0 16px 16px;
+    }
+
+    .summary-card {
+      flex: 1;
+      background: white;
+      border-radius: 12px;
+      padding: 12px 10px;
+      text-align: center;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      border: 1px solid #f1f5f9;
+    }
+
+    .summary-card-icon {
+      font-size: 20px;
+      margin-bottom: 4px;
+    }
+
+    .summary-card-value {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .summary-card-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-top: 1px;
+    }
+
+    /* Recent Collections */
+    .section-header {
+      padding: 0 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .section-link {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--field-accent);
+      cursor: pointer;
+    }
+
+    .collection-item {
+      background: white;
+      margin: 0 16px 8px;
+      border-radius: 12px;
+      padding: 12px 14px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      border: 1px solid #f1f5f9;
+    }
+
+    .collection-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .collection-donor {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .collection-amount {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--field-accent);
+    }
+
+    .collection-meta {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .collection-sync {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      font-weight: 600;
+      margin-top: 3px;
+    }
+
+    .sync-ok { color: var(--success-color); }
+    .sync-pending { color: var(--warning-color); }
+
+    /* Alerts */
+    .alerts-section {
+      padding: 8px 16px 16px;
+    }
+
+    .alert-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
+
+    .alert-item .alert-icon {
+      flex-shrink: 0;
+      font-size: 14px;
+      margin-top: 1px;
+    }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 80px;
+      background: white;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-around;
+      padding-top: 8px;
+      z-index: 5;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      padding: 4px 8px;
+      min-width: 52px;
+    }
+
+    .nav-item i { font-size: 18px; color: var(--text-secondary); }
+    .nav-item span { font-size: 10px; font-weight: 600; color: var(--text-secondary); }
+    .nav-item.active i { color: var(--field-accent); }
+    .nav-item.active span { color: var(--field-accent); }
+
+    .nav-scan-btn {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #065f46, #059669);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 18px;
+      margin-top: -18px;
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+      cursor: pointer;
+    }
+
+    .home-indicator {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 134px;
+      height: 5px;
+      background: #d1d5db;
+      border-radius: 100px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <span>2:30</span>
+      <div class="status-bar-right">
+        <i class="fas fa-signal" style="font-size: 11px;"></i>
+        <i class="fas fa-wifi" style="font-size: 11px;"></i>
+        <i class="fas fa-battery-full" style="font-size: 13px;"></i>
+      </div>
+    </div>
+
+    <!-- Agent Header -->
+    <div class="agent-header">
+      <div class="agent-header-left">
+        <div class="agent-org"><i class="fas fa-heart me-1"></i> GHF</div>
+        <div class="agent-name">Ahmed Salim</div>
+        <div class="agent-branch">Dubai Branch | Ambassador</div>
+      </div>
+      <div class="header-right">
+        <div class="notif-icon">
+          <i class="fas fa-bell"></i>
+          <div class="notif-badge">3</div>
+        </div>
+        <div class="online-badge">
+          <div class="online-dot"></div>
+          Online
+        </div>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="phone-content">
+
+      <!-- Clock Card -->
+      <div class="clock-card">
+        <div class="clock-info">
+          <div class="clock-date">Today: April 12, 2026</div>
+          <div class="clock-status">
+            <div class="clock-status-dot"></div>
+            Clocked In: 8:05 AM
+          </div>
+          <div class="clock-duration">(6h 25m)</div>
+        </div>
+        <div class="clock-out-btn">
+          <i class="fas fa-stop-circle"></i> Clock Out
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <div class="quick-btn">
+          <div class="quick-btn-icon">📷</div>
+          <div class="quick-btn-label">Scan QR</div>
+          <div class="quick-btn-sub">Quick Entry</div>
+        </div>
+        <div class="quick-btn">
+          <div class="quick-btn-icon">➕</div>
+          <div class="quick-btn-label">New Entry</div>
+          <div class="quick-btn-sub">Collection</div>
+        </div>
+        <div class="quick-btn">
+          <div class="quick-btn-icon">⏰</div>
+          <div class="quick-btn-label">Clock In/Out</div>
+          <div class="quick-btn-sub">Attendance</div>
+        </div>
+      </div>
+
+      <!-- Today's Summary -->
+      <div class="summary-title">Today's Summary</div>
+      <div class="summary-row">
+        <div class="summary-card">
+          <div class="summary-card-icon">💰</div>
+          <div class="summary-card-value">5</div>
+          <div class="summary-card-label">Collections</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-card-icon">💵</div>
+          <div class="summary-card-value">AED 2,300</div>
+          <div class="summary-card-label">Collected</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-card-icon">📋</div>
+          <div class="summary-card-value">3</div>
+          <div class="summary-card-label">Tasks Left</div>
+        </div>
+      </div>
+
+      <!-- Recent Collections -->
+      <div class="section-header">
+        <div class="section-title">Recent Collections</div>
+        <div class="section-link">View All →</div>
+      </div>
+
+      <div class="collection-item">
+        <div class="collection-top">
+          <div class="collection-donor">Khalid Al-Mansouri</div>
+          <div class="collection-amount">AED 500</div>
+        </div>
+        <div class="collection-meta">Orphan Care | 2:15 PM</div>
+        <div class="collection-sync sync-ok"><i class="fas fa-check-circle"></i> Synced</div>
+      </div>
+
+      <div class="collection-item">
+        <div class="collection-top">
+          <div class="collection-donor">Fatima Zahra</div>
+          <div class="collection-amount">AED 200</div>
+        </div>
+        <div class="collection-meta">Education | 1:30 PM</div>
+        <div class="collection-sync sync-ok"><i class="fas fa-check-circle"></i> Synced</div>
+      </div>
+
+      <div class="collection-item">
+        <div class="collection-top">
+          <div class="collection-donor">Ahmad Nasser</div>
+          <div class="collection-amount">AED 1,000</div>
+        </div>
+        <div class="collection-meta">Water | 11:00 AM</div>
+        <div class="collection-sync sync-ok"><i class="fas fa-check-circle"></i> Synced</div>
+      </div>
+
+      <div class="collection-item">
+        <div class="collection-top">
+          <div class="collection-donor">Mohamed Ali</div>
+          <div class="collection-amount">AED 300</div>
+        </div>
+        <div class="collection-meta">General | 10:30 AM</div>
+        <div class="collection-sync sync-pending"><i class="fas fa-clock"></i> Pending sync</div>
+      </div>
+
+      <!-- Alerts -->
+      <div class="section-header" style="margin-top: 8px;">
+        <div class="section-title">Alerts</div>
+      </div>
+      <div class="alerts-section">
+        <div class="alert-item">
+          <span class="alert-icon">⚠️</span>
+          <span>Receipt book RB-045: 55 remaining</span>
+        </div>
+        <div class="alert-item">
+          <span class="alert-icon">⚠️</span>
+          <span>3 tasks pending for today</span>
+        </div>
+        <div class="alert-item">
+          <span class="alert-icon">📋</span>
+          <span>Pending approval: 1 collection</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+      <div class="nav-item active">
+        <i class="fas fa-home"></i>
+        <span>Home</span>
+      </div>
+      <div class="nav-item">
+        <div class="nav-scan-btn">
+          <i class="fas fa-camera"></i>
+        </div>
+        <span style="margin-top: 4px;">Collect</span>
+      </div>
+      <div class="nav-item">
+        <i class="fas fa-clipboard-list"></i>
+        <span>History</span>
+      </div>
+      <div class="nav-item">
+        <i class="fas fa-users"></i>
+        <span>Donors</span>
+      </div>
+      <div class="nav-item">
+        <i class="fas fa-check-circle"></i>
+        <span>Tasks</span>
+      </div>
+      <div class="home-indicator"></div>
+    </div>
+
+  </div>
+
+</body>
+
+</html>

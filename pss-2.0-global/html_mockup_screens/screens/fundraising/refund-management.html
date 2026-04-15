@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Refund Management - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #0c6577;
+      border-color: #0c6577;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* KPI Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1.25rem;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .stat-icon.yellow { background: #fefce8; color: #eab308; }
+    .stat-icon.green { background: #f0fdf4; color: #22c55e; }
+    .stat-icon.blue { background: #eff6ff; color: #3b82f6; }
+
+    .stat-info { flex: 1; }
+
+    .stat-value {
+      font-size: 1.625rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .stat-label {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 0.125rem;
+    }
+
+    .stat-sub {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.15rem;
+    }
+
+    /* Section Card */
+    .section-card {
+      background: white;
+      border-radius: var(--card-radius);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+      margin-bottom: 1.25rem;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      background: white;
+    }
+
+    .section-header h3 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Table */
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    .data-table thead th {
+      background: #f8fafc;
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 2px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    .data-table tbody td {
+      padding: 0.625rem 1rem;
+      border-bottom: 1px solid #f1f5f9;
+      color: var(--text-primary);
+      vertical-align: middle;
+    }
+
+    .data-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    .data-table tbody tr.pending-row {
+      background: #fffdf7;
+    }
+
+    .data-table tbody tr.pending-row:hover {
+      background: #fffbeb;
+    }
+
+    .data-table tbody tr.approved-row {
+      background: #f0fdf8;
+    }
+
+    .refund-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.25rem 0.625rem;
+      border-radius: 9999px;
+    }
+
+    .refund-status.pending { background: #fefce8; color: #ca8a04; }
+    .refund-status.processing { background: #eff6ff; color: #2563eb; }
+    .refund-status.refunded { background: #f0fdf4; color: #16a34a; }
+    .refund-status.rejected { background: #fef2f2; color: #dc2626; }
+
+    .refund-type {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .refund-type.full { background: #fef2f2; color: #dc2626; }
+    .refund-type.partial { background: #fff7ed; color: #d97706; }
+
+    .reason-tag {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      background: #f1f5f9;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+    }
+
+    .donor-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .donor-link:hover {
+      text-decoration: underline;
+    }
+
+    .ref-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+      cursor: pointer;
+      font-size: 0.75rem;
+    }
+
+    .ref-link:hover {
+      text-decoration: underline;
+    }
+
+    .action-btn {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.375rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+    }
+
+    .action-btn:hover {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .action-btn.approve {
+      border-color: var(--success-color);
+      color: var(--success-color);
+    }
+
+    .action-btn.approve:hover {
+      background: var(--success-color);
+      color: white;
+    }
+
+    .action-btn.reject {
+      border-color: var(--danger-color);
+      color: var(--danger-color);
+    }
+
+    .action-btn.reject:hover {
+      background: var(--danger-color);
+      color: white;
+    }
+
+    /* Modal */
+    .modal-header {
+      background: var(--accent);
+      color: white;
+      border-bottom: none;
+    }
+
+    .modal-header.danger {
+      background: var(--danger-color);
+    }
+
+    .modal-header .btn-close {
+      filter: brightness(0) invert(1);
+    }
+
+    .modal-title {
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+    }
+
+    .form-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.3rem;
+    }
+
+    .form-control, .form-select {
+      font-size: 0.8125rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+      padding: 0.5rem 0.75rem;
+    }
+
+    .form-control:focus, .form-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .form-text {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    /* Refund detail in modal */
+    .refund-summary {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .refund-summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.3rem 0;
+      font-size: 0.8125rem;
+    }
+
+    .refund-summary-row .label {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .refund-summary-row .value {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .refund-warning {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      font-size: 0.8125rem;
+      color: #991b1b;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .refund-warning i {
+      margin-top: 0.1rem;
+      flex-shrink: 0;
+    }
+
+    .btn-danger-confirm {
+      background: var(--danger-color);
+      border: 1px solid var(--danger-color);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-danger-confirm:hover {
+      background: #b91c1c;
+      border-color: #b91c1c;
+      color: white;
+    }
+
+    /* Donation preview in new refund modal */
+    .donation-preview {
+      background: var(--accent-bg);
+      border: 1px solid #a5f3fc;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      font-size: 0.8125rem;
+      margin-top: 0.5rem;
+    }
+
+    .donation-preview .dp-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.2rem 0;
+    }
+
+    .donation-preview .dp-label {
+      color: var(--text-secondary);
+    }
+
+    .donation-preview .dp-value {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Breadcrumb */
+    .breadcrumb-nav {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      font-size: 0.8125rem;
+    }
+
+    .breadcrumb-nav a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .breadcrumb-nav a:hover {
+      text-decoration: underline;
+    }
+
+    .breadcrumb-nav .separator {
+      color: var(--text-secondary);
+    }
+
+    .breadcrumb-nav .current {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb-nav">
+    <a href="#" onclick="parent.loadContent('fundraising/donation-list')">Fundraising</a>
+    <span class="separator">/</span>
+    <span class="current">Refund Management</span>
+  </nav>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1>Refund Management</h1>
+      <p class="subtitle">Process and track donation refunds</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" data-bs-toggle="modal" data-bs-target="#newRefundModal">
+        <i class="fas fa-plus me-1"></i> New Refund Request
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon yellow">
+        <i class="fas fa-hourglass-half"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Pending Approval</div>
+        <div class="stat-value">3</div>
+        <div class="stat-sub">$450</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green">
+        <i class="fas fa-check"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Processed This Month</div>
+        <div class="stat-value">8</div>
+        <div class="stat-sub">$1,200</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon blue">
+        <i class="fas fa-rotate-left"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Total Refunded (YTD)</div>
+        <div class="stat-value">$4,800</div>
+        <div class="stat-sub">34 refunds</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Refund Queue Table -->
+  <div class="section-card">
+    <div class="section-header">
+      <h3><i class="fas fa-list-check me-2" style="color:var(--accent)"></i> Refund Queue</h3>
+    </div>
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Refund ID</th>
+            <th>Original Donation</th>
+            <th>Donor</th>
+            <th>Original Amt</th>
+            <th>Refund Amt</th>
+            <th>Type</th>
+            <th>Reason</th>
+            <th>Requested</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Pending rows -->
+          <tr class="pending-row">
+            <td style="font-weight:600">REF-001</td>
+            <td><a class="ref-link" onclick="parent.loadContent('fundraising/donation-detail')">RCP-2026-0870</a></td>
+            <td><a class="donor-link" onclick="parent.loadContent('contacts/contact-detail')">David Miller</a></td>
+            <td>$200</td>
+            <td style="font-weight:700;color:var(--danger-color)">$200</td>
+            <td><span class="refund-type full">Full</span></td>
+            <td><span class="reason-tag">Donor request</span></td>
+            <td>Apr 8</td>
+            <td><span class="refund-status pending"><i class="fas fa-hourglass-half"></i> Pending Approval</span></td>
+            <td>
+              <button class="action-btn approve" data-bs-toggle="modal" data-bs-target="#approveRefundModal"><i class="fas fa-check me-1"></i>Approve</button>
+              <button class="action-btn reject"><i class="fas fa-xmark me-1"></i>Reject</button>
+              <button class="action-btn">View</button>
+            </td>
+          </tr>
+          <tr class="pending-row">
+            <td style="font-weight:600">REF-002</td>
+            <td><a class="ref-link" onclick="parent.loadContent('fundraising/donation-detail')">RCP-2026-0865</a></td>
+            <td><a class="donor-link" onclick="parent.loadContent('contacts/contact-detail')">Emily Chen</a></td>
+            <td>$100</td>
+            <td style="font-weight:700;color:var(--warning-color)">$50</td>
+            <td><span class="refund-type partial">Partial</span></td>
+            <td><span class="reason-tag">Duplicate charge</span></td>
+            <td>Apr 7</td>
+            <td><span class="refund-status pending"><i class="fas fa-hourglass-half"></i> Pending Approval</span></td>
+            <td>
+              <button class="action-btn approve" data-bs-toggle="modal" data-bs-target="#approveRefundModal"><i class="fas fa-check me-1"></i>Approve</button>
+              <button class="action-btn reject"><i class="fas fa-xmark me-1"></i>Reject</button>
+              <button class="action-btn">View</button>
+            </td>
+          </tr>
+          <tr class="pending-row">
+            <td style="font-weight:600">REF-003</td>
+            <td><a class="ref-link" onclick="parent.loadContent('fundraising/donation-detail')">RCP-2026-0860</a></td>
+            <td><span style="color:var(--text-secondary)">Anonymous</span></td>
+            <td>$75</td>
+            <td style="font-weight:700;color:var(--danger-color)">$75</td>
+            <td><span class="refund-type full">Full</span></td>
+            <td><span class="reason-tag">Card fraud</span></td>
+            <td>Apr 6</td>
+            <td><span class="refund-status pending"><i class="fas fa-hourglass-half"></i> Pending Approval</span></td>
+            <td>
+              <button class="action-btn approve" data-bs-toggle="modal" data-bs-target="#approveRefundModal"><i class="fas fa-check me-1"></i>Approve</button>
+              <button class="action-btn reject"><i class="fas fa-xmark me-1"></i>Reject</button>
+              <button class="action-btn">View</button>
+            </td>
+          </tr>
+          <!-- Processing row -->
+          <tr class="approved-row">
+            <td style="font-weight:600">REF-004</td>
+            <td><a class="ref-link" onclick="parent.loadContent('fundraising/donation-detail')">RCP-2026-0840</a></td>
+            <td><a class="donor-link" onclick="parent.loadContent('contacts/contact-detail')">Sakura Tanaka</a></td>
+            <td>&yen;30,000</td>
+            <td style="font-weight:700;color:var(--danger-color)">&yen;30,000</td>
+            <td><span class="refund-type full">Full</span></td>
+            <td><span class="reason-tag">Event cancelled</span></td>
+            <td>Apr 3</td>
+            <td><span class="refund-status processing"><i class="fas fa-spinner fa-spin"></i> Approved &rarr; Processing</span></td>
+            <td>
+              <button class="action-btn">View</button>
+            </td>
+          </tr>
+          <!-- Completed rows -->
+          <tr>
+            <td style="font-weight:600">REF-005</td>
+            <td><a class="ref-link" onclick="parent.loadContent('fundraising/donation-detail')">RCP-2026-0820</a></td>
+            <td><a class="donor-link" onclick="parent.loadContent('contacts/contact-detail')">Carlos Mendez</a></td>
+            <td>$150</td>
+            <td style="font-weight:700">$150</td>
+            <td><span class="refund-type full">Full</span></td>
+            <td><span class="reason-tag">Donor request</span></td>
+            <td>Mar 28</td>
+            <td><span class="refund-status refunded"><i class="fas fa-check-circle"></i> Refunded (Mar 30)</span></td>
+            <td>
+              <button class="action-btn">View</button>
+            </td>
+          </tr>
+          <tr>
+            <td style="font-weight:600">REF-006</td>
+            <td><a class="ref-link" onclick="parent.loadContent('fundraising/donation-detail')">RCP-2026-0800</a></td>
+            <td><a class="donor-link" onclick="parent.loadContent('contacts/contact-detail')">Maria Santos</a></td>
+            <td>R$250</td>
+            <td style="font-weight:700">R$250</td>
+            <td><span class="refund-type full">Full</span></td>
+            <td><span class="reason-tag">Accidental donation</span></td>
+            <td>Mar 25</td>
+            <td><span class="refund-status refunded"><i class="fas fa-check-circle"></i> Refunded (Mar 27)</span></td>
+            <td>
+              <button class="action-btn">View</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- New Refund Request Modal -->
+  <div class="modal fade" id="newRefundModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-rotate-left me-2"></i> New Refund Request</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">Original Donation *</label>
+              <input type="text" class="form-control" placeholder="Search by receipt # or donor name..." value="RCP-2026-0870 - David Miller">
+              <div class="donation-preview">
+                <div class="dp-row">
+                  <span class="dp-label">Receipt #</span>
+                  <span class="dp-value">RCP-2026-0870</span>
+                </div>
+                <div class="dp-row">
+                  <span class="dp-label">Donor</span>
+                  <span class="dp-value">David Miller</span>
+                </div>
+                <div class="dp-row">
+                  <span class="dp-label">Amount</span>
+                  <span class="dp-value">$200.00 USD</span>
+                </div>
+                <div class="dp-row">
+                  <span class="dp-label">Date</span>
+                  <span class="dp-value">Apr 2, 2026</span>
+                </div>
+                <div class="dp-row">
+                  <span class="dp-label">Gateway</span>
+                  <span class="dp-value">Stripe (Visa ****1234)</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Refund Type *</label>
+              <div class="mt-1">
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="refundType" id="fullRefund" checked>
+                  <label class="form-check-label" for="fullRefund" style="font-size:0.8125rem">Full Refund</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="refundType" id="partialRefund">
+                  <label class="form-check-label" for="partialRefund" style="font-size:0.8125rem">Partial Refund</label>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Refund Amount *</label>
+              <div class="input-group">
+                <span class="input-group-text" style="font-size:0.8125rem">$</span>
+                <input type="number" class="form-control" value="200.00">
+              </div>
+              <div class="form-text">Full donation amount pre-filled. Edit for partial refund.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Reason *</label>
+              <select class="form-select">
+                <option selected>Donor Request</option>
+                <option>Duplicate Charge</option>
+                <option>Card Fraud</option>
+                <option>Event Cancelled</option>
+                <option>Accidental</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Refund Method</label>
+              <input type="text" class="form-control" value="Stripe (Visa ****1234) — Original payment" readonly style="background:#f8fafc">
+              <div class="form-text">Automatically matches original payment method</div>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Additional Notes</label>
+              <textarea class="form-control" rows="3" placeholder="Add any context for the refund..."></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn-primary-accent"><i class="fas fa-paper-plane me-1"></i> Submit Refund Request</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Approval Confirmation Modal -->
+  <div class="modal fade" id="approveRefundModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header danger">
+          <h5 class="modal-title"><i class="fas fa-shield-halved me-2"></i> Confirm Refund Approval</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="refund-summary">
+            <div class="refund-summary-row">
+              <span class="label">Refund ID</span>
+              <span class="value">REF-001</span>
+            </div>
+            <div class="refund-summary-row">
+              <span class="label">Original Donation</span>
+              <span class="value">RCP-2026-0870</span>
+            </div>
+            <div class="refund-summary-row">
+              <span class="label">Donor</span>
+              <span class="value">David Miller</span>
+            </div>
+            <div class="refund-summary-row">
+              <span class="label">Refund Amount</span>
+              <span class="value" style="color:var(--danger-color);font-size:1.125rem">$200.00</span>
+            </div>
+            <div class="refund-summary-row">
+              <span class="label">Refund To</span>
+              <span class="value">Visa ****1234 via Stripe</span>
+            </div>
+            <div class="refund-summary-row">
+              <span class="label">Reason</span>
+              <span class="value">Donor request</span>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Approved By</label>
+            <input type="text" class="form-control" value="Super Admin" readonly style="background:#f8fafc">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Note</label>
+            <textarea class="form-control" rows="2" placeholder="Optional approval note..."></textarea>
+          </div>
+
+          <div class="refund-warning">
+            <i class="fas fa-triangle-exclamation"></i>
+            <div>
+              <strong>This will refund $200 to David Miller's Visa ****1234 via Stripe.</strong>
+              This action cannot be undone. The refund will be processed immediately through the payment gateway.
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn-danger-confirm"><i class="fas fa-check me-1"></i> Confirm Refund</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

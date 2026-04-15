@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Donor App — Full Flow Storyboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 40px 24px;
+    }
+    .flow-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .flow-header h1 {
+      font-size: 28px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #0e7490, #06b6d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+    }
+    .flow-header p {
+      font-size: 14px;
+      color: #94a3b8;
+    }
+    .flow-section {
+      margin-bottom: 48px;
+    }
+    .flow-section-title {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #64748b;
+      margin-bottom: 20px;
+      padding-left: 8px;
+      border-left: 3px solid #0e7490;
+    }
+    .screen-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 32px;
+      justify-content: center;
+    }
+    .screen-card {
+      background: #1e293b;
+      border-radius: 16px;
+      padding: 16px;
+      width: 325px;
+    }
+    .screen-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .screen-number {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 900;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .screen-card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+    .screen-card-tag {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+    .arrow-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 0;
+      font-size: 11px;
+      font-weight: 700;
+      color: #475569;
+    }
+    .arrow-label .arrow { color: #0e7490; font-size: 16px; }
+  </style>
+</head>
+<body>
+
+<div class="flow-header">
+  <h1>Donor Mobile App</h1>
+  <p>13-Screen Mobile Flow — Login → Home → Donate → History → Events → Profile</p>
+</div>
+
+<div id="storyboard"></div>
+
+<script>
+// ── Phone frame helper — iPhone 15 Pro style ──
+const PH = (statusColor, content, navBar='') => {
+  const ic = statusColor==='#fff'?'#1e293b':'#fff';
+  const bg = statusColor==='#fff'?'#f8fafc':statusColor;
+  const btm = navBar ? '#fff' : bg;
+  const btmBar = navBar ? '#1a1a1a' : (statusColor==='#fff'?'#1a1a1a':'rgba(255,255,255,.4)');
+  return `<div style="width:293px;height:588px;margin:0 auto;border:4px solid #1a1a1a;border-radius:44px;overflow:hidden;background:${bg};box-shadow:0 2px 0 #333,0 -2px 0 #333,2px 0 0 #333,-2px 0 0 #333,0 10px 40px rgba(0,0,0,.22);display:flex;flex-direction:column;position:relative;">
+    <div style="background:${bg};padding:8px 20px 4px;display:flex;justify-content:space-between;align-items:center;position:relative;flex-shrink:0;z-index:2;">
+      <span style="font-size:10px;font-weight:600;color:${ic};">9:41</span>
+      <div style="position:absolute;left:50%;transform:translateX(-50%);top:6px;width:84px;height:20px;background:#1a1a1a;border-radius:12px;display:flex;align-items:center;justify-content:center;">
+        <div style="width:6px;height:6px;background:#0d1117;border-radius:50%;box-shadow:inset 0 0 1px rgba(255,255,255,.08);"></div>
+      </div>
+      <div style="display:flex;gap:4px;align-items:center;">
+        <svg width="14" height="10" viewBox="0 0 14 10"><rect x="0" y="6" width="2.5" height="4" rx="0.5" fill="${ic}"/><rect x="3.5" y="4" width="2.5" height="6" rx="0.5" fill="${ic}"/><rect x="7" y="2" width="2.5" height="8" rx="0.5" fill="${ic}"/><rect x="10.5" y="0" width="2.5" height="10" rx="0.5" fill="${ic}"/></svg>
+        <svg width="13" height="10" viewBox="0 0 13 10"><path d="M6.5 2C8.4 2 10.1 2.8 11.3 4.1L12.5 2.9C11 1.3 8.9 0.3 6.5 0.3S2 1.3 0.5 2.9L1.7 4.1C2.9 2.8 4.6 2 6.5 2Z" fill="${ic}"/><path d="M6.5 5C7.7 5 8.8 5.5 9.6 6.3L10.8 5.1C9.7 4 8.2 3.3 6.5 3.3S3.3 4 2.2 5.1L3.4 6.3C4.2 5.5 5.3 5 6.5 5Z" fill="${ic}"/><circle cx="6.5" cy="8.5" r="1.5" fill="${ic}"/></svg>
+        <svg width="18" height="10" viewBox="0 0 18 10"><rect x="0" y="1" width="14" height="8" rx="1.5" stroke="${ic}" stroke-width="1" fill="none"/><rect x="1.5" y="2.5" width="9" height="5" rx="0.5" fill="${ic}"/><rect x="15" y="3" width="2" height="4" rx="1" fill="${ic}" opacity="0.4"/></svg>
+      </div>
+    </div>
+    <div style="flex:1;overflow:hidden;position:relative;background:#fff;">${content}</div>
+    ${navBar}
+    <div style="padding:6px 0;display:flex;justify-content:center;flex-shrink:0;background:${btm};"><div style="width:110px;height:4px;background:${btmBar};border-radius:4px;opacity:.25;"></div></div>
+  </div>`;
+};
+
+// ── Donor bottom nav ──
+const DNAV = (active) => {
+  const t = (icon, label, key) => {
+    const isActive = active === key;
+    const color = isActive ? '#0e7490' : '#94a3b8';
+    const weight = isActive ? '700' : '600';
+    const dot = isActive ? `<div style="width:4px;height:4px;background:#0e7490;border-radius:50%;margin:2px auto 0;"></div>` : '';
+    return `<div style="text-align:center;min-width:48px;"><div style="font-size:17px;${isActive?'':'opacity:.5;'}">${icon}</div><div style="font-size:8px;font-weight:${weight};color:${color};">${label}</div>${dot}</div>`;
+  };
+  return `<div style="background:#fff;border-top:1px solid #e2e8f0;display:flex;justify-content:space-around;padding:9px 0 12px;">
+    ${t('🏠','Home','home')}${t('💰','Donate','donate')}${t('📋','Giving','giving')}${t('📅','Events','events')}${t('👤','Profile','profile')}
+  </div>`;
+};
+
+// ── Screen definitions ──
+const sections = [
+  {
+    title: 'Authentication & Onboarding',
+    screens: [
+      { num: '1', numBg: '#3b82f6', title: 'Login — Email & Password', tag: 'Entry', tagBg: '#dbeafe', tagColor: '#1e40af',
+        body: PH('#fff', `
+          <div style="padding:16px 16px 0;text-align:center;">
+            <div style="width:48px;height:48px;background:linear-gradient(135deg,#0e7490,#06b6d4);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;"><span style="color:#fff;font-size:22px;">❤️</span></div>
+            <div style="font-size:12px;font-weight:700;color:#1e293b;">Global Humanitarian Foundation</div>
+            <div style="font-size:9px;color:#94a3b8;margin-top:2px;">Making a difference together</div>
+            <div style="font-size:17px;font-weight:800;color:#1e293b;margin:20px 0 16px;">Welcome Back</div>
+            <div style="text-align:left;">
+              <div style="font-size:9px;font-weight:700;color:#475569;margin-bottom:4px;">EMAIL</div>
+              <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:11px;color:#1e293b;margin-bottom:10px;">khalid@email.com</div>
+              <div style="font-size:9px;font-weight:700;color:#475569;margin-bottom:4px;">PASSWORD</div>
+              <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:11px;color:#94a3b8;display:flex;justify-content:space-between;">••••••••<span style="font-size:12px;">👁</span></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin:10px 0 16px;">
+              <div style="display:flex;align-items:center;gap:4px;font-size:9px;color:#64748b;"><div style="width:14px;height:14px;background:#0e7490;border-radius:3px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:8px;">✓</div>Remember me</div>
+              <div style="font-size:9px;font-weight:700;color:#0e7490;">Forgot Password?</div>
+            </div>
+            <div style="background:linear-gradient(135deg,#0e7490,#06b6d4);border-radius:12px;padding:12px;color:#fff;font-size:13px;font-weight:700;box-shadow:0 4px 12px rgba(14,116,144,.3);">Log In</div>
+            <div style="display:flex;align-items:center;gap:8px;margin:14px 0;">
+              <div style="flex:1;height:1px;background:#e2e8f0;"></div>
+              <div style="font-size:8px;font-weight:600;color:#94a3b8;">or continue with</div>
+              <div style="flex:1;height:1px;background:#e2e8f0;"></div>
+            </div>
+            <div style="display:flex;gap:10px;justify-content:center;">
+              <div style="width:48px;height:40px;border:1.5px solid #e2e8f0;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;">🔵</div>
+              <div style="width:48px;height:40px;border:1.5px solid #e2e8f0;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;">🍎</div>
+              <div style="width:48px;height:40px;border:1.5px solid #e2e8f0;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;">📘</div>
+            </div>
+            <div style="margin-top:14px;font-size:10px;color:#64748b;">Don't have an account? <span style="font-weight:700;color:#0e7490;">Register</span></div>
+          </div>
+        `) },
+
+      { num: '2', numBg: '#8b5cf6', title: 'Register — New Donor', tag: 'Sign up', tagBg: '#ede9fe', tagColor: '#6d28d9',
+        body: PH('#fff', `
+          <div style="padding:0;">
+            <div style="display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid #e2e8f0;">
+              <div style="font-size:12px;color:#0e7490;">←</div>
+              <div style="flex:1;text-align:center;font-size:13px;font-weight:700;color:#1e293b;">Register</div>
+              <div style="width:12px;"></div>
+            </div>
+            <div style="padding:16px;">
+              <div style="font-size:16px;font-weight:800;color:#1e293b;margin-bottom:2px;">Create Your Account</div>
+              <div style="font-size:10px;color:#64748b;margin-bottom:16px;">Join our community of supporters</div>
+              <div style="font-size:9px;font-weight:700;color:#475569;margin-bottom:4px;">FIRST NAME *</div>
+              <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:11px;color:#cbd5e1;margin-bottom:10px;">Enter first name</div>
+              <div style="font-size:9px;font-weight:700;color:#475569;margin-bottom:4px;">LAST NAME *</div>
+              <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:11px;color:#cbd5e1;margin-bottom:10px;">Enter last name</div>
+              <div style="font-size:9px;font-weight:700;color:#475569;margin-bottom:4px;">EMAIL *</div>
+              <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:11px;color:#cbd5e1;margin-bottom:10px;">Enter your email</div>
+              <div style="font-size:9px;font-weight:700;color:#475569;margin-bottom:4px;">PHONE</div>
+              <div style="display:flex;gap:6px;margin-bottom:10px;">
+                <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 8px;font-size:10px;color:#475569;font-weight:700;min-width:52px;text-align:center;">+971</div>
+                <div style="flex:1;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:11px;color:#cbd5e1;">Phone number</div>
+              </div>
+              <div style="font-size:9px;font-weight:700;color:#475569;margin-bottom:4px;">PASSWORD *</div>
+              <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:11px;color:#cbd5e1;margin-bottom:2px;">Create a password</div>
+              <div style="font-size:8px;color:#94a3b8;margin-bottom:10px;">Min 8 chars, 1 uppercase, 1 number</div>
+              <div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:14px;">
+                <div style="width:14px;height:14px;background:#0e7490;border-radius:3px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:8px;margin-top:1px;">✓</div>
+                <div style="font-size:9px;color:#64748b;line-height:1.4;">I agree to the <span style="color:#0e7490;font-weight:700;">Terms</span> & <span style="color:#0e7490;font-weight:700;">Privacy Policy</span></div>
+              </div>
+              <div style="background:linear-gradient(135deg,#0e7490,#06b6d4);border-radius:12px;padding:12px;text-align:center;color:#fff;font-size:13px;font-weight:700;">Create Account</div>
+              <div style="text-align:center;margin-top:12px;font-size:10px;color:#64748b;">Already have an account? <span style="font-weight:700;color:#0e7490;">Log In</span></div>
+            </div>
+          </div>
+        `) },
+
+      { num: '3', numBg: '#f59e0b', title: 'Forgot Password', tag: 'Recovery', tagBg: '#fef3c7', tagColor: '#92400e',
+        body: PH('#fff', `
+          <div style="padding:0;">
+            <div style="display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid #e2e8f0;">
+              <div style="font-size:12px;color:#0e7490;">←</div>
+              <div style="flex:1;text-align:center;font-size:13px;font-weight:700;color:#1e293b;">Forgot Password</div>
+              <div style="width:12px;"></div>
+            </div>
+            <div style="padding:24px 16px;text-align:center;">
+              <div style="width:56px;height:56px;background:#ecfeff;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;"><span style="font-size:24px;">🔒</span></div>
+              <div style="font-size:16px;font-weight:800;color:#1e293b;margin-bottom:6px;">Reset Password</div>
+              <div style="font-size:10px;color:#64748b;line-height:1.5;margin-bottom:24px;">Enter your email address and we'll send<br>you a link to reset your password.</div>
+              <div style="text-align:left;">
+                <div style="font-size:9px;font-weight:700;color:#475569;margin-bottom:4px;">EMAIL</div>
+                <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:11px;color:#cbd5e1;margin-bottom:16px;">Enter your email</div>
+              </div>
+              <div style="background:linear-gradient(135deg,#0e7490,#06b6d4);border-radius:12px;padding:12px;text-align:center;color:#fff;font-size:13px;font-weight:700;">Send Reset Link</div>
+              <div style="margin-top:16px;font-size:10px;color:#64748b;">Remember your password? <span style="font-weight:700;color:#0e7490;">Log In</span></div>
+            </div>
+          </div>
+        `) },
+
+      { num: '4a', numBg: '#06b6d4', title: 'Onboarding — Slide 1', tag: 'First login', tagBg: '#cffafe', tagColor: '#0e7490',
+        body: PH('#fff', `
+          <div style="padding:40px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;height:100%;">
+            <div style="width:120px;height:120px;background:#ecfeff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:48px;margin-top:40px;">❤️🤝</div>
+            <div style="font-size:18px;font-weight:800;color:#1e293b;margin-top:28px;">Track Your Impact</div>
+            <div style="font-size:11px;color:#64748b;margin-top:8px;line-height:1.5;">See exactly how your donations<br>make a difference in real lives.</div>
+            <div style="margin-top:auto;width:100%;display:flex;align-items:center;justify-content:space-between;padding-bottom:20px;">
+              <div style="display:flex;gap:6px;">
+                <div style="width:20px;height:6px;background:#0e7490;border-radius:3px;"></div>
+                <div style="width:6px;height:6px;background:#e2e8f0;border-radius:50%;"></div>
+                <div style="width:6px;height:6px;background:#e2e8f0;border-radius:50%;"></div>
+              </div>
+              <div style="background:#0e7490;color:#fff;border-radius:10px;padding:8px 16px;font-size:11px;font-weight:700;">Next →</div>
+            </div>
+          </div>
+        `) },
+
+      { num: '4b', numBg: '#06b6d4', title: 'Onboarding — Slide 2', tag: 'First login', tagBg: '#cffafe', tagColor: '#0e7490',
+        body: PH('#fff', `
+          <div style="padding:40px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;height:100%;">
+            <div style="width:120px;height:120px;background:#ecfeff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:48px;margin-top:40px;">📱💰</div>
+            <div style="font-size:18px;font-weight:800;color:#1e293b;margin-top:28px;">Give in Seconds</div>
+            <div style="font-size:11px;color:#64748b;margin-top:8px;line-height:1.5;">Quick donate with saved cards,<br>Apple Pay, or Google Pay.</div>
+            <div style="margin-top:auto;width:100%;display:flex;align-items:center;justify-content:space-between;padding-bottom:20px;">
+              <div style="display:flex;gap:6px;">
+                <div style="width:6px;height:6px;background:#e2e8f0;border-radius:50%;"></div>
+                <div style="width:20px;height:6px;background:#0e7490;border-radius:3px;"></div>
+                <div style="width:6px;height:6px;background:#e2e8f0;border-radius:50%;"></div>
+              </div>
+              <div style="background:#0e7490;color:#fff;border-radius:10px;padding:8px 16px;font-size:11px;font-weight:700;">Next →</div>
+            </div>
+          </div>
+        `) },
+
+      { num: '4c', numBg: '#06b6d4', title: 'Onboarding — Slide 3', tag: 'First login', tagBg: '#cffafe', tagColor: '#0e7490',
+        body: PH('#fff', `
+          <div style="padding:40px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;height:100%;">
+            <div style="width:120px;height:120px;background:#ecfeff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:48px;margin-top:40px;">📅🔔</div>
+            <div style="font-size:18px;font-weight:800;color:#1e293b;margin-top:28px;">Stay Connected</div>
+            <div style="font-size:11px;color:#64748b;margin-top:8px;line-height:1.5;">RSVP to events, manage pledges,<br>and get impact updates.</div>
+            <div style="margin-top:auto;width:100%;text-align:center;padding-bottom:20px;">
+              <div style="display:flex;gap:6px;justify-content:center;margin-bottom:16px;">
+                <div style="width:6px;height:6px;background:#e2e8f0;border-radius:50%;"></div>
+                <div style="width:6px;height:6px;background:#e2e8f0;border-radius:50%;"></div>
+                <div style="width:20px;height:6px;background:#0e7490;border-radius:3px;"></div>
+              </div>
+              <div style="background:linear-gradient(135deg,#0e7490,#06b6d4);border-radius:12px;padding:12px;color:#fff;font-size:13px;font-weight:700;box-shadow:0 4px 12px rgba(14,116,144,.3);">Get Started →</div>
+            </div>
+          </div>
+        `) },
+    ]
+  },
+  {
+    title: 'Home Dashboard',
+    screens: [
+      { num: '5', numBg: '#0e7490', title: 'Home — Impact & Giving', tag: 'Tab 1', tagBg: '#ecfeff', tagColor: '#0e7490',
+        body: PH('#0e7490', `
+          <div style="padding:0;">
+            <div style="background:linear-gradient(135deg,#0e7490,#06b6d4);padding:14px 16px 16px;color:#fff;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
+                <div>
+                  <div style="font-size:9px;font-weight:600;opacity:.85;">❤️ Global Humanitarian Foundation</div>
+                  <div style="font-size:15px;font-weight:800;margin-top:2px;">Hello, Khalid 👋</div>
+                </div>
+                <div style="width:34px;height:34px;background:rgba(255,255,255,.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;">👤</div>
+              </div>
+            </div>
+            <div style="padding:12px 14px 0;background:#f8fafc;">
+              <div style="background:linear-gradient(135deg,#0e7490,#0891b2,#06b6d4);border-radius:14px;padding:14px;color:#fff;margin-bottom:10px;">
+                <div style="font-size:9px;font-weight:600;opacity:.9;">Your Impact</div>
+                <div style="font-size:24px;font-weight:800;margin-top:2px;">$42,500</div>
+                <div style="font-size:9px;opacity:.8;">Total Given</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:8px;font-size:8px;font-weight:500;opacity:.95;">
+                  <div>🧒 50 children sponsored</div>
+                  <div>🎓 12 educated</div>
+                  <div>💧 3 wells funded</div>
+                  <div>🏥 8 patients treated</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;">
+                <div style="padding:6px 12px;background:#fff;border-radius:16px;font-size:9px;font-weight:600;color:#1e293b;border:1px solid #e2e8f0;white-space:nowrap;">💰 Donate Now</div>
+                <div style="padding:6px 12px;background:#fff;border-radius:16px;font-size:9px;font-weight:600;color:#1e293b;border:1px solid #e2e8f0;white-space:nowrap;">📅 My Pledges</div>
+                <div style="padding:6px 12px;background:#fff;border-radius:16px;font-size:9px;font-weight:600;color:#1e293b;border:1px solid #e2e8f0;white-space:nowrap;">🎫 Events</div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;">
+                <div style="background:#fff;border-radius:10px;padding:10px 6px;text-align:center;border:1px solid #f1f5f9;"><div style="font-size:14px;font-weight:800;color:#0e7490;">$8,500</div><div style="font-size:7px;font-weight:600;color:#64748b;text-transform:uppercase;">This Year</div></div>
+                <div style="background:#fff;border-radius:10px;padding:10px 6px;text-align:center;border:1px solid #f1f5f9;"><div style="font-size:14px;font-weight:800;color:#0e7490;">8</div><div style="font-size:7px;font-weight:600;color:#64748b;text-transform:uppercase;">Donations</div></div>
+                <div style="background:#fff;border-radius:10px;padding:10px 6px;text-align:center;border:1px solid #f1f5f9;"><div style="font-size:14px;font-weight:800;color:#0e7490;">$1,063</div><div style="font-size:7px;font-weight:600;color:#64748b;text-transform:uppercase;">Avg Gift</div></div>
+              </div>
+              <div style="font-size:11px;font-weight:700;color:#1e293b;margin-bottom:6px;">Recent Giving</div>
+              <div style="background:#fff;border-radius:10px;padding:10px;border:1px solid #f1f5f9;margin-bottom:6px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;"><div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;background:#fef3c7;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;">🧒</div><div><div style="font-size:10px;font-weight:600;color:#1e293b;">Orphan Care</div><div style="font-size:8px;color:#64748b;">Apr 10, 2026</div></div></div><div style="font-size:11px;font-weight:700;color:#1e293b;">$1,500</div></div>
+              </div>
+              <div style="background:#fff;border-radius:10px;padding:10px;border:1px solid #f1f5f9;">
+                <div style="display:flex;justify-content:space-between;align-items:center;"><div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;background:#dbeafe;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;">📚</div><div><div style="font-size:10px;font-weight:600;color:#1e293b;">Education Fund</div><div style="font-size:8px;color:#64748b;">Apr 3, 2026</div></div></div><div style="font-size:11px;font-weight:700;color:#1e293b;">$800</div></div>
+              </div>
+            </div>
+          </div>
+        `, DNAV('home')) },
+    ]
+  },
+  {
+    title: 'Donate Flow (4-step)',
+    screens: [
+      { num: '6', numBg: '#0e7490', title: 'Donate — Select Purpose', tag: 'Step 1/4', tagBg: '#ecfeff', tagColor: '#0e7490',
+        body: PH('#fff', `
+          <div style="padding:0;">
+            <div style="display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid #e2e8f0;">
+              <div style="font-size:12px;color:#0e7490;">←</div>
+              <div style="flex:1;text-align:center;font-size:13px;font-weight:700;color:#1e293b;">Make a Donation</div>
+              <div style="width:28px;height:28px;background:linear-gradient(135deg,#0e7490,#06b6d4);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:800;">GHF</div>
+            </div>
+            <div style="padding:14px 16px 0;">
+              <div style="font-size:11px;font-weight:700;color:#1e293b;margin-bottom:10px;">Select where your gift goes</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;">
+                <div style="padding:8px 4px;border:2px solid #0e7490;border-radius:10px;text-align:center;background:#ecfeff;"><div style="font-size:16px;">🧒</div><div style="font-size:8px;font-weight:600;color:#0e7490;">Orphan Care</div></div>
+                <div style="padding:8px 4px;border:2px solid #e2e8f0;border-radius:10px;text-align:center;"><div style="font-size:16px;">📚</div><div style="font-size:8px;font-weight:600;color:#1e293b;">Education</div></div>
+                <div style="padding:8px 4px;border:2px solid #e2e8f0;border-radius:10px;text-align:center;"><div style="font-size:16px;">💧</div><div style="font-size:8px;font-weight:600;color:#1e293b;">Clean Water</div></div>
+                <div style="padding:8px 4px;border:2px solid #e2e8f0;border-radius:10px;text-align:center;"><div style="font-size:16px;">🏥</div><div style="font-size:8px;font-weight:600;color:#1e293b;">Healthcare</div></div>
+                <div style="padding:8px 4px;border:2px solid #e2e8f0;border-radius:10px;text-align:center;"><div style="font-size:16px;">🍽</div><div style="font-size:8px;font-weight:600;color:#1e293b;">Food</div></div>
+                <div style="padding:8px 4px;border:2px solid #e2e8f0;border-radius:10px;text-align:center;"><div style="font-size:16px;">🕌</div><div style="font-size:8px;font-weight:600;color:#1e293b;">Masjid Fund</div></div>
+              </div>
+              <div style="border:2px dashed #e2e8f0;border-radius:10px;padding:8px;text-align:center;font-size:9px;font-weight:600;color:#64748b;margin-bottom:14px;">❤️ Where most needed — org decides allocation</div>
+              <div style="height:6px;background:#f1f5f9;margin:0 -16px 14px;"></div>
+              <div style="font-size:11px;font-weight:700;color:#1e293b;margin-bottom:8px;">How much would you like to give?</div>
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px;">
+                <div style="padding:8px;border:2px solid #e2e8f0;border-radius:8px;text-align:center;font-size:11px;font-weight:700;color:#1e293b;">$50</div>
+                <div style="padding:8px;border:2px solid #e2e8f0;border-radius:8px;text-align:center;font-size:11px;font-weight:700;color:#1e293b;">$100</div>
+                <div style="padding:8px;border:2px solid #e2e8f0;border-radius:8px;text-align:center;font-size:11px;font-weight:700;color:#1e293b;">$250</div>
+                <div style="padding:8px;border:2px solid #e2e8f0;border-radius:8px;text-align:center;font-size:11px;font-weight:700;color:#1e293b;">$500</div>
+              </div>
+              <div style="border:2px solid #0e7490;border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+                <span style="font-size:16px;font-weight:700;color:#64748b;">$</span>
+                <span style="font-size:18px;font-weight:700;color:#1e293b;">1,500</span>
+              </div>
+              <div style="font-size:8px;color:#64748b;">USD 🇺🇸</div>
+            </div>
+          </div>
+        `) },
+
+      { num: '7', numBg: '#0e7490', title: 'Donate — Payment', tag: 'Step 2/4', tagBg: '#ecfeff', tagColor: '#0e7490',
+        body: PH('#fff', `
+          <div style="padding:0;">
+            <div style="display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid #e2e8f0;">
+              <div style="font-size:12px;color:#0e7490;">←</div>
+              <div style="flex:1;text-align:center;font-size:13px;font-weight:700;color:#1e293b;">Payment</div>
+              <div style="width:12px;"></div>
+            </div>
+            <div style="padding:14px 16px 0;">
+              <div style="background:#ecfeff;border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                <div><div style="font-size:9px;color:#0e7490;font-weight:600;">Orphan Care</div><div style="font-size:16px;font-weight:800;color:#0e7490;">$1,500.00</div></div>
+                <div style="font-size:9px;color:#0e7490;font-weight:600;">Edit</div>
+              </div>
+              <div style="font-size:11px;font-weight:700;color:#1e293b;margin-bottom:10px;">Pay with</div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f1f5f9;">
+                <div style="width:18px;height:18px;border:2px solid #0e7490;border-radius:50%;display:flex;align-items:center;justify-content:center;"><div style="width:10px;height:10px;background:#0e7490;border-radius:50%;"></div></div>
+                <div style="width:30px;height:30px;background:#eff6ff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;">💳</div>
+                <div style="flex:1;"><div style="font-size:10px;font-weight:600;color:#1e293b;">Visa ••••4567</div><div style="font-size:8px;color:#64748b;">Saved card</div></div>
+                <div style="font-size:7px;font-weight:700;background:#ecfeff;color:#0e7490;padding:2px 6px;border-radius:4px;">SAVED</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f1f5f9;">
+                <div style="width:18px;height:18px;border:2px solid #e2e8f0;border-radius:50%;"></div>
+                <div style="width:30px;height:30px;background:#eff6ff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;">💳</div>
+                <div style="flex:1;"><div style="font-size:10px;font-weight:600;color:#1e293b;">Add new card</div><div style="font-size:8px;color:#64748b;">Credit or debit card</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f1f5f9;">
+                <div style="width:18px;height:18px;border:2px solid #e2e8f0;border-radius:50%;"></div>
+                <div style="width:30px;height:30px;background:#f0fdf4;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;">🏦</div>
+                <div style="flex:1;"><div style="font-size:10px;font-weight:600;color:#1e293b;">Bank Transfer</div><div style="font-size:8px;color:#64748b;">Direct bank transfer</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 0;">
+                <div style="width:18px;height:18px;border:2px solid #e2e8f0;border-radius:50%;"></div>
+                <div style="width:30px;height:30px;background:#faf5ff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;">📱</div>
+                <div style="flex:1;"><div style="font-size:10px;font-weight:600;color:#1e293b;">Apple Pay / Google Pay</div><div style="font-size:8px;color:#64748b;">One-tap payment</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;padding:8px 0;">
+                <div style="width:14px;height:14px;border:2px solid #e2e8f0;border-radius:3px;"></div>
+                <div style="font-size:9px;color:#1e293b;">Make this a monthly donation</div>
+              </div>
+              <div style="background:linear-gradient(135deg,#0e7490,#06b6d4);border-radius:12px;padding:12px;text-align:center;color:#fff;font-size:13px;font-weight:700;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 12px rgba(14,116,144,.3);">❤️ Donate $1,500</div>
+            </div>
+          </div>
+        `) },
+
+      { num: '8', numBg: '#22c55e', title: 'Donation Confirmation', tag: 'Thank you', tagBg: '#f0fdf4', tagColor: '#166534',
+        body: PH('#fff', `
+          <div style="padding:20px 16px;text-align:center;">
+            <div style="width:52px;height:52px;background:#f0fdf4;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:12px auto;font-size:24px;color:#22c55e;">✓</div>
+            <div style="font-size:17px;font-weight:800;color:#1e293b;">Thank You, Khalid!</div>
+            <div style="font-size:11px;color:#64748b;margin-top:4px;line-height:1.5;">Your donation of <strong style="color:#0e7490;">$1,500</strong><br>to Orphan Care has been received.</div>
+            <div style="font-size:9px;color:#64748b;margin-top:8px;">Receipt: <strong>REC-4547</strong></div>
+            <div style="font-size:9px;color:#64748b;">Sent to: khalid@email.com</div>
+            <div style="height:1px;background:#e2e8f0;margin:14px 0;"></div>
+            <div style="font-size:9px;font-weight:600;color:#64748b;margin-bottom:4px;">Your gift will provide:</div>
+            <div style="font-size:11px;color:#1e293b;line-height:1.5;">🧒 Education for 3 children<br>for one year</div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:18px;">
+              <div style="background:#0e7490;border-radius:10px;padding:10px;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;">📤 Share Your Giving</div>
+              <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px;color:#0e7490;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;">📄 Download Receipt</div>
+              <div style="font-size:10px;color:#64748b;font-weight:600;padding:6px;">Return Home</div>
+            </div>
+          </div>
+        `) },
+    ]
+  },
+  {
+    title: 'My Donations & Receipts',
+    screens: [
+      { num: '9', numBg: '#0e7490', title: 'Donation History — List', tag: 'Tab 3', tagBg: '#ecfeff', tagColor: '#0e7490',
+        body: PH('#fff', `
+          <div style="padding:0;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #e2e8f0;">
+              <div style="width:28px;"></div>
+              <div style="font-size:13px;font-weight:700;color:#1e293b;">My Giving</div>
+              <div style="display:flex;gap:8px;"><span style="font-size:14px;color:#0e7490;">🔍</span><span style="font-size:14px;color:#0e7490;">📥</span></div>
+            </div>
+            <div style="background:linear-gradient(135deg,#0e7490,#06b6d4);margin:10px 14px;border-radius:12px;padding:14px;color:#fff;display:flex;justify-content:space-between;">
+              <div style="text-align:center;"><div style="font-size:16px;font-weight:800;">$42,500</div><div style="font-size:8px;opacity:.85;">Total Given</div></div>
+              <div style="width:1px;background:rgba(255,255,255,.25);"></div>
+              <div style="text-align:center;"><div style="font-size:16px;font-weight:800;">$8,500</div><div style="font-size:8px;opacity:.85;">This Year</div></div>
+              <div style="width:1px;background:rgba(255,255,255,.25);"></div>
+              <div style="text-align:center;"><div style="font-size:16px;font-weight:800;">24</div><div style="font-size:8px;opacity:.85;">Donations</div></div>
+            </div>
+            <div style="display:flex;gap:6px;padding:6px 14px 10px;overflow-x:auto;">
+              <div style="padding:4px 12px;background:#0e7490;border-radius:14px;font-size:9px;font-weight:600;color:#fff;">All</div>
+              <div style="padding:4px 12px;border:1px solid #e2e8f0;border-radius:14px;font-size:9px;font-weight:600;color:#64748b;">This Year</div>
+              <div style="padding:4px 12px;border:1px solid #e2e8f0;border-radius:14px;font-size:9px;font-weight:600;color:#64748b;">2025</div>
+              <div style="padding:4px 12px;border:1px solid #e2e8f0;border-radius:14px;font-size:9px;font-weight:600;color:#64748b;">2024</div>
+            </div>
+            <div style="padding:0 14px;">
+              <div style="font-size:10px;font-weight:700;color:#1e293b;margin-bottom:6px;">April 2026</div>
+              <div style="background:#fff;border-radius:10px;padding:10px;border:1px solid #f1f5f9;margin-bottom:6px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;"><div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;background:#fef3c7;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;">🧒</div><div><div style="font-size:10px;font-weight:600;color:#1e293b;">Orphan Care</div><div style="font-size:8px;color:#64748b;">Apr 10 · 💳 ••4567</div></div></div><div style="text-align:right;"><div style="font-size:11px;font-weight:700;color:#1e293b;">$1,500</div><div style="font-size:7px;color:#22c55e;font-weight:600;">✓ Receipt</div></div></div>
+              </div>
+              <div style="background:#fff;border-radius:10px;padding:10px;border:1px solid #f1f5f9;margin-bottom:6px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;"><div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;background:#dbeafe;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;">📚</div><div><div style="font-size:10px;font-weight:600;color:#1e293b;">Education</div><div style="font-size:8px;color:#64748b;">Apr 3 · 💳 ••4567</div></div></div><div style="text-align:right;"><div style="font-size:11px;font-weight:700;color:#1e293b;">$800</div><div style="font-size:7px;color:#22c55e;font-weight:600;">✓ Receipt</div></div></div>
+              </div>
+              <div style="font-size:10px;font-weight:700;color:#1e293b;margin:8px 0 6px;">March 2026</div>
+              <div style="background:#fff;border-radius:10px;padding:10px;border:1px solid #f1f5f9;margin-bottom:6px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;"><div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;background:#cffafe;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;">💧</div><div><div style="font-size:10px;font-weight:600;color:#1e293b;">Clean Water</div><div style="font-size:8px;color:#64748b;">Mar 28 · 🏦 Bank</div></div></div><div style="text-align:right;"><div style="font-size:11px;font-weight:700;color:#1e293b;">$700</div><div style="font-size:7px;color:#22c55e;font-weight:600;">✓ Receipt</div></div></div>
+              </div>
+              <div style="background:#fff;border-radius:10px;padding:10px;border:1px solid #f1f5f9;">
+                <div style="display:flex;justify-content:space-between;align-items:center;"><div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;background:#e0e7ff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;">🕌</div><div><div style="font-size:10px;font-weight:600;color:#1e293b;">Masjid Fund</div><div style="font-size:8px;color:#64748b;">Mar 15 · 💵 Cash</div></div></div><div style="text-align:right;"><div style="font-size:11px;font-weight:700;color:#1e293b;">$500</div><div style="font-size:7px;color:#22c55e;font-weight:600;">✓ Receipt</div></div></div>
+              </div>
+            </div>
+          </div>
+        `, DNAV('giving')) },
+
+      { num: '10', numBg: '#0e7490', title: 'Donation Detail & Receipt', tag: 'Detail', tagBg: '#ecfeff', tagColor: '#0e7490',
+        body: PH('#fff', `
+          <div style="padding:0;">
+            <div style="display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid #e2e8f0;">
+              <div style="font-size:12px;color:#0e7490;">←</div>
+              <div style="flex:1;text-align:center;font-size:13px;font-weight:700;color:#1e293b;">Donation Detail</div>
+              <div style="width:12px;"></div>
+            </div>
+            <div style="text-align:center;padding:18px 16px 10px;">
+              <div style="font-size:32px;margin-bottom:4px;">🧒</div>
+              <div style="font-size:15px;font-weight:800;color:#1e293b;">Orphan Care</div>
+              <div style="font-size:22px;font-weight:800;color:#0e7490;margin-top:2px;">$1,500.00 <span style="font-size:11px;color:#64748b;font-weight:500;">USD</span></div>
+            </div>
+            <div style="margin:0 14px;background:#fff;border-radius:10px;border:1px solid #f1f5f9;">
+              <div style="display:flex;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #f1f5f9;"><span style="font-size:10px;color:#64748b;">Date</span><span style="font-size:10px;font-weight:600;color:#1e293b;">Apr 10, 2026</span></div>
+              <div style="display:flex;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #f1f5f9;"><span style="font-size:10px;color:#64748b;">Receipt #</span><span style="font-size:10px;font-weight:600;color:#1e293b;">REC-4547</span></div>
+              <div style="display:flex;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #f1f5f9;"><span style="font-size:10px;color:#64748b;">Payment</span><span style="font-size:10px;font-weight:600;color:#1e293b;">Visa ••••4567</span></div>
+              <div style="display:flex;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #f1f5f9;"><span style="font-size:10px;color:#64748b;">Campaign</span><span style="font-size:10px;font-weight:600;color:#1e293b;">Ramadan Appeal 2026</span></div>
+              <div style="display:flex;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #f1f5f9;"><span style="font-size:10px;color:#64748b;">Status</span><span style="font-size:9px;font-weight:600;background:#f0fdf4;color:#22c55e;padding:2px 8px;border-radius:10px;">✓ Completed</span></div>
+              <div style="display:flex;justify-content:space-between;padding:10px 12px;"><span style="font-size:10px;color:#64748b;">Tax Deductible</span><span style="font-size:9px;font-weight:600;background:#f0fdf4;color:#22c55e;padding:2px 8px;border-radius:10px;">✓ Eligible (80G)</span></div>
+            </div>
+            <div style="margin:10px 14px;background:#ecfeff;border-radius:10px;padding:12px;">
+              <div style="font-size:9px;font-weight:700;color:#0e7490;margin-bottom:4px;">Your Impact</div>
+              <div style="font-size:10px;color:#1e293b;line-height:1.5;">🧒 This provides education for 3 children for one year.</div>
+            </div>
+            <div style="padding:0 14px;display:flex;flex-direction:column;gap:6px;">
+              <div style="background:#0e7490;border-radius:10px;padding:10px;text-align:center;color:#fff;font-size:11px;font-weight:700;">📄 Download Receipt (PDF)</div>
+              <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px;text-align:center;color:#0e7490;font-size:11px;font-weight:700;">📤 Share Receipt</div>
+              <div style="background:#fff;border:1.5px solid #0e7490;border-radius:10px;padding:10px;text-align:center;color:#0e7490;font-size:11px;font-weight:700;">💰 Donate Again</div>
+            </div>
+          </div>
+        `) },
+    ]
+  },
+  {
+    title: 'Pledges & Recurring',
+    screens: [
+      { num: '11', numBg: '#8b5cf6', title: 'Pledges — Active & Completed', tag: 'Sub-screen', tagBg: '#ede9fe', tagColor: '#6d28d9',
+        body: PH('#fff', `
+          <div style="padding:0;">
+            <div style="display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid #e2e8f0;">
+              <div style="font-size:12px;color:#0e7490;">←</div>
+              <div style="flex:1;text-align:center;font-size:13px;font-weight:700;color:#1e293b;">Pledges & Recurring</div>
+              <div style="width:12px;"></div>
+            </div>
+            <div style="display:flex;border-bottom:1px solid #e2e8f0;">
+              <div style="flex:1;text-align:center;padding:10px;font-size:10px;font-weight:700;color:#0e7490;border-bottom:2px solid #0e7490;">Pledges</div>
+              <div style="flex:1;text-align:center;padding:10px;font-size:10px;font-weight:700;color:#94a3b8;">Recurring</div>
+            </div>
+            <div style="padding:12px 14px 0;">
+              <div style="font-size:8px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Active Pledges</div>
+              <div style="background:#fff;border:1px solid #f1f5f9;border-radius:10px;padding:12px;margin-bottom:8px;">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><span style="font-size:16px;">📚</span><span style="font-size:11px;font-weight:700;color:#1e293b;">Education Fund</span></div>
+                <div style="font-size:9px;color:#64748b;margin-bottom:6px;">Pledged: <strong style="color:#1e293b;">$2,000</strong> | Paid: <strong style="color:#1e293b;">$1,500</strong></div>
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+                  <div style="flex:1;height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden;"><div style="width:75%;height:100%;background:linear-gradient(90deg,#0e7490,#06b6d4);border-radius:3px;"></div></div>
+                  <span style="font-size:9px;font-weight:700;color:#0e7490;">75%</span>
+                </div>
+                <div style="font-size:8px;color:#f59e0b;font-weight:600;margin-bottom:8px;">⏰ Next: $500 due May 1, 2026</div>
+                <div style="background:linear-gradient(135deg,#0e7490,#06b6d4);border-radius:8px;padding:8px;text-align:center;color:#fff;font-size:10px;font-weight:700;">💳 Pay $500 Now</div>
+              </div>
+              <div style="background:#fff;border:1px solid #f1f5f9;border-radius:10px;padding:12px;margin-bottom:8px;">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><span style="font-size:16px;">💧</span><span style="font-size:11px;font-weight:700;color:#1e293b;">Clean Water Project</span></div>
+                <div style="font-size:9px;color:#64748b;margin-bottom:6px;">Pledged: <strong style="color:#1e293b;">$1,000</strong> | Paid: <strong style="color:#1e293b;">$250</strong></div>
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+                  <div style="flex:1;height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden;"><div style="width:25%;height:100%;background:linear-gradient(90deg,#0e7490,#06b6d4);border-radius:3px;"></div></div>
+                  <span style="font-size:9px;font-weight:700;color:#0e7490;">25%</span>
+                </div>
+                <div style="font-size:8px;color:#f59e0b;font-weight:600;margin-bottom:8px;">⏰ Next: $250 due Jun 1, 2026</div>
+                <div style="background:linear-gradient(135deg,#0e7490,#06b6d4);border-radius:8px;padding:8px;text-align:center;color:#fff;font-size:10px;font-weight:700;">💳 Pay $250 Now</div>
+              </div>
+              <div style="font-size:8px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin:8px 0 6px;">Completed</div>
+              <div style="background:#fff;border:1px solid #f1f5f9;border-radius:10px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:6px;"><span style="color:#22c55e;font-size:14px;">✓</span><div><div style="font-size:10px;font-weight:600;color:#1e293b;">Orphan Care</div><div style="font-size:8px;color:#64748b;">Completed Dec 2025</div></div></div>
+                <div style="font-size:10px;font-weight:700;color:#22c55e;">$3,000</div>
+              </div>
+            </div>
+          </div>
+        `, DNAV('profile')) },
+
+      { num: '12', numBg: '#8b5cf6', title: 'Recurring — Manage', tag: 'Sub-screen', tagBg: '#ede9fe', tagColor: '#6d28d9',
+        body: PH('#fff', `
+          <div style="padding:0;">
+            <div style="display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid #e2e8f0;">
+              <div style="font-size:12px;color:#0e7490;">←</div>
+              <div style="flex:1;text-align:center;font-size:13px;font-weight:700;color:#1e293b;">Pledges & Recurring</div>
+              <div style="width:12px;"></div>
+            </div>
+            <div style="display:flex;border-bottom:1px solid #e2e8f0;">
+              <div style="flex:1;text-align:center;padding:10px;font-size:10px;font-weight:700;color:#94a3b8;">Pledges</div>
+              <div style="flex:1;text-align:center;padding:10px;font-size:10px;font-weight:700;color:#0e7490;border-bottom:2px solid #0e7490;">Recurring</div>
+            </div>
+            <div style="padding:12px 14px 0;">
+              <div style="font-size:8px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Active Recurring</div>
+              <div style="background:#fff;border:1px solid #f1f5f9;border-radius:10px;padding:12px;margin-bottom:8px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                  <div style="display:flex;align-items:center;gap:6px;"><span style="font-size:16px;">🧒</span><span style="font-size:11px;font-weight:700;color:#1e293b;">Orphan Care</span></div>
+                  <span style="font-size:7px;font-weight:700;background:#f0fdf4;color:#22c55e;padding:2px 6px;border-radius:8px;">Active</span>
+                </div>
+                <div style="font-size:8px;color:#64748b;margin-bottom:2px;">💳 $200/month · Visa ••••4567</div>
+                <div style="font-size:8px;color:#64748b;margin-bottom:2px;">📅 Since: Jan 2024</div>
+                <div style="font-size:8px;color:#64748b;margin-bottom:2px;">⏰ Next charge: May 10, 2026</div>
+                <div style="font-size:8px;color:#64748b;border-top:1px solid #f1f5f9;padding-top:6px;margin-top:6px;">Total contributed: <strong style="color:#1e293b;">$5,400</strong></div>
+                <div style="border:1.5px solid #e2e8f0;border-radius:8px;padding:6px;text-align:center;font-size:9px;font-weight:700;color:#0e7490;margin-top:8px;">▾ Manage</div>
+                <div style="margin-top:6px;padding-top:6px;border-top:1px solid #f1f5f9;">
+                  <div style="font-size:9px;color:#1e293b;padding:4px 0;">💲 Update Amount</div>
+                  <div style="font-size:9px;color:#1e293b;padding:4px 0;">💳 Change Payment Method</div>
+                  <div style="font-size:9px;color:#1e293b;padding:4px 0;">🔄 Change Frequency</div>
+                  <div style="font-size:9px;color:#1e293b;padding:4px 0;">⏸ Pause (1/3/6 months)</div>
+                  <div style="font-size:9px;color:#dc2626;padding:4px 0;">✕ Cancel</div>
+                </div>
+              </div>
+              <div style="font-size:8px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin:8px 0 6px;">Payment Methods</div>
+              <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f1f5f9;"><span>💳</span><div style="flex:1;font-size:10px;font-weight:600;color:#1e293b;">Visa ••••4567 <span style="font-size:7px;background:#ecfeff;color:#0e7490;padding:1px 4px;border-radius:3px;font-weight:700;">Default</span></div><span style="font-size:9px;color:#0e7490;font-weight:600;">Edit</span></div>
+              <div style="display:flex;align-items:center;gap:8px;padding:8px 0;"><span>💳</span><div style="flex:1;font-size:10px;font-weight:600;color:#1e293b;">Mastercard ••••1234</div><span style="font-size:9px;color:#0e7490;font-weight:600;">Edit</span></div>
+              <div style="border:1.5px dashed #e2e8f0;border-radius:8px;padding:8px;text-align:center;font-size:9px;font-weight:600;color:#0e7490;margin-top:8px;">+ Add Payment Method</div>
+            </div>
+          </div>
+        `, DNAV('profile')) },
+    ]
+  },
+  {
+    title: 'Events & RSVP',
+    screens: [
+      { num: '13', numBg: '#f59e0b', title: 'Events — Browse & RSVP', tag: 'Tab 4', tagBg: '#fef3c7', tagColor: '#92400e',
+        body: PH('#fff', `
+          <div style="padding:0;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #e2e8f0;">
+              <div style="width:28px;"></div>
+              <div style="font-size:13px;font-weight:700;color:#1e293b;">Events</div>
+              <span style="font-size:14px;color:#0e7490;">🔍</span>
+            </div>
+            <div style="display:flex;border-bottom:1px solid #e2e8f0;">
+              <div style="flex:1;text-align:center;padding:10px;font-size:10px;font-weight:700;color:#0e7490;border-bottom:2px solid #0e7490;">Upcoming</div>
+              <div style="flex:1;text-align:center;padding:10px;font-size:10px;font-weight:700;color:#94a3b8;">My Tickets</div>
+              <div style="flex:1;text-align:center;padding:10px;font-size:10px;font-weight:700;color:#94a3b8;">Past</div>
+            </div>
+            <div style="padding:10px 14px 0;">
+              <div style="font-size:8px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">This Month</div>
+              <div style="background:#fff;border-radius:12px;border:1px solid #f1f5f9;overflow:hidden;margin-bottom:8px;box-shadow:0 2px 6px rgba(0,0,0,.04);">
+                <div style="height:80px;background:linear-gradient(135deg,#7c3aed,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:32px;">🎉</div>
+                <div style="padding:10px 12px;">
+                  <div style="font-size:12px;font-weight:700;color:#1e293b;">Fundraising Gala 2026</div>
+                  <div style="font-size:8px;color:#64748b;margin-top:2px;">📅 Apr 20, 7:00 PM</div>
+                  <div style="font-size:8px;color:#64748b;">📍 Grand Hyatt Dubai</div>
+                  <div style="display:flex;gap:4px;margin-top:6px;">
+                    <span style="font-size:7px;font-weight:600;background:#fef3c7;color:#d97706;padding:2px 6px;border-radius:8px;">🎫 From $200</span>
+                    <span style="font-size:7px;font-weight:600;background:#fef2f2;color:#dc2626;padding:2px 6px;border-radius:8px;">22 seats left</span>
+                  </div>
+                  <div style="text-align:center;padding:8px 0 2px;font-size:10px;font-weight:700;color:#0e7490;border-top:1px solid #f1f5f9;margin-top:8px;">View Details & RSVP →</div>
+                </div>
+              </div>
+              <div style="background:#fff;border-radius:12px;border:1px solid #f1f5f9;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.04);">
+                <div style="height:80px;background:linear-gradient(135deg,#d97706,#fbbf24);display:flex;align-items:center;justify-content:center;font-size:32px;">🌙</div>
+                <div style="padding:10px 12px;">
+                  <div style="font-size:12px;font-weight:700;color:#1e293b;">Community Iftar</div>
+                  <div style="font-size:8px;color:#64748b;margin-top:2px;">📅 Apr 22, 6:30 PM</div>
+                  <div style="font-size:8px;color:#64748b;">📍 Dubai Community Center</div>
+                  <div style="margin-top:6px;"><span style="font-size:7px;font-weight:600;background:#f0fdf4;color:#22c55e;padding:2px 6px;border-radius:8px;">✓ Free — Open to all</span></div>
+                  <div style="text-align:center;padding:8px 0 2px;font-size:10px;font-weight:700;color:#0e7490;border-top:1px solid #f1f5f9;margin-top:8px;">View Details & RSVP →</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `, DNAV('events')) },
+
+      { num: '14', numBg: '#f59e0b', title: 'Event Detail & Tickets', tag: 'RSVP', tagBg: '#fef3c7', tagColor: '#92400e',
+        body: PH('#fff', `
+          <div style="padding:0;">
+            <div style="display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid #e2e8f0;">
+              <div style="font-size:12px;color:#0e7490;">←</div>
+            </div>
+            <div style="height:100px;background:linear-gradient(135deg,#7c3aed,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:40px;">🎉</div>
+            <div style="padding:12px 14px 0;">
+              <div style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:10px;">Fundraising Gala 2026</div>
+              <div style="font-size:9px;color:#1e293b;margin-bottom:3px;">📅 Saturday, Apr 20, 2026</div>
+              <div style="font-size:9px;color:#1e293b;margin-bottom:3px;">🕖 7:00 PM – 11:00 PM</div>
+              <div style="font-size:9px;color:#1e293b;margin-bottom:1px;">📍 Grand Hyatt Dubai, Ballroom</div>
+              <div style="font-size:8px;color:#0e7490;font-weight:600;margin-bottom:10px;">🗺 Open in Maps</div>
+              <div style="font-size:10px;font-weight:700;color:#1e293b;margin-bottom:8px;">Select Tickets</div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f1f5f9;">
+                <div style="display:flex;align-items:center;gap:6px;"><span style="font-size:12px;">🥇</span><div><div style="font-size:9px;font-weight:600;color:#1e293b;">VIP Table</div><div style="font-size:8px;color:#64748b;">$5,000</div></div></div>
+                <div style="display:flex;align-items:center;gap:6px;"><div style="width:22px;height:22px;border:1px solid #e2e8f0;border-radius:6px;text-align:center;font-size:10px;font-weight:700;color:#0e7490;line-height:22px;">−</div><span style="font-size:10px;font-weight:700;min-width:14px;text-align:center;">0</span><div style="width:22px;height:22px;border:1px solid #e2e8f0;border-radius:6px;text-align:center;font-size:10px;font-weight:700;color:#0e7490;line-height:22px;">+</div></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f1f5f9;">
+                <div style="display:flex;align-items:center;gap:6px;"><span style="font-size:12px;">🎫</span><div><div style="font-size:9px;font-weight:600;color:#1e293b;">Standard</div><div style="font-size:8px;color:#64748b;">$200</div></div></div>
+                <div style="display:flex;align-items:center;gap:6px;"><div style="width:22px;height:22px;border:1px solid #e2e8f0;border-radius:6px;text-align:center;font-size:10px;font-weight:700;color:#0e7490;line-height:22px;">−</div><span style="font-size:10px;font-weight:700;min-width:14px;text-align:center;">1</span><div style="width:22px;height:22px;border:1px solid #e2e8f0;border-radius:6px;text-align:center;font-size:10px;font-weight:700;color:#0e7490;line-height:22px;">+</div></div>
+              </div>
+              <div style="font-size:9px;font-weight:600;color:#1e293b;margin:8px 0 4px;">Dietary Requirements</div>
+              <div style="border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:9px;color:#1e293b;margin-bottom:8px;">Halal ▾</div>
+              <div style="background:#ecfeff;border-radius:8px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <span style="font-size:10px;font-weight:600;color:#1e293b;">Total</span>
+                <span style="font-size:14px;font-weight:800;color:#0e7490;">$200</span>
+              </div>
+              <div style="background:linear-gradient(135deg,#0e7490,#06b6d4);border-radius:10px;padding:10px;text-align:center;color:#fff;font-size:12px;font-weight:700;box-shadow:0 4px 12px rgba(14,116,144,.3);">🎫 Register & Pay $200</div>
+            </div>
+          </div>
+        `) },
+
+      { num: '15', numBg: '#f59e0b', title: 'My Ticket — QR Code', tag: 'Ticket', tagBg: '#fef3c7', tagColor: '#92400e',
+        body: PH('#fff', `
+          <div style="padding:0;">
+            <div style="display:flex;border-bottom:1px solid #e2e8f0;">
+              <div style="flex:1;text-align:center;padding:10px;font-size:10px;font-weight:700;color:#94a3b8;">Upcoming</div>
+              <div style="flex:1;text-align:center;padding:10px;font-size:10px;font-weight:700;color:#0e7490;border-bottom:2px solid #0e7490;">My Tickets</div>
+              <div style="flex:1;text-align:center;padding:10px;font-size:10px;font-weight:700;color:#94a3b8;">Past</div>
+            </div>
+            <div style="padding:16px;text-align:center;">
+              <div style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 4px 16px rgba(0,0,0,.08);">
+                <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:2px;">Fundraising Gala 2026</div>
+                <div style="font-size:10px;color:#64748b;">Apr 20, 7:00 PM</div>
+                <div style="font-size:9px;font-weight:600;color:#0e7490;margin-bottom:14px;">Standard Seat</div>
+                <div style="width:120px;height:120px;background:#f1f5f9;border-radius:10px;margin:0 auto 6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;">
+                  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:2px;width:60px;">
+                    <div style="width:10px;height:10px;background:#1e293b;border-radius:1px;"></div><div style="width:10px;height:10px;background:#fff;"></div><div style="width:10px;height:10px;background:#1e293b;border-radius:1px;"></div><div style="width:10px;height:10px;background:#1e293b;border-radius:1px;"></div><div style="width:10px;height:10px;background:#fff;"></div>
+                    <div style="width:10px;height:10px;background:#fff;"></div><div style="width:10px;height:10px;background:#1e293b;border-radius:1px;"></div><div style="width:10px;height:10px;background:#fff;"></div><div style="width:10px;height:10px;background:#1e293b;border-radius:1px;"></div><div style="width:10px;height:10px;background:#1e293b;border-radius:1px;"></div>
+                    <div style="width:10px;height:10px;background:#1e293b;border-radius:1px;"></div><div style="width:10px;height:10px;background:#1e293b;border-radius:1px;"></div><div style="width:10px;height:10px;background:#fff;"></div><div style="width:10px;height:10px;background:#fff;"></div><div style="width:10px;height:10px;background:#1e293b;border-radius:1px;"></div>
+                    <div style="width:10px;height:10px;background:#fff;"></div><div style="width:10px;height:10px;background:#1e293b;border-radius:1px;"></div><div style="width:10px;height:10px;background:#1e293b;border-radius:1px;"></div><div style="width:10px;height:10px;background:#fff;"></div><div style="width:10px;height:10px;background:#1e293b;border-radius:1px;"></div>
+                    <div style="width:10px;height:10px;background:#1e293b;border-radius:1px;"></div><div style="width:10px;height:10px;background:#fff;"></div><div style="width:10px;height:10px;background:#1e293b;border-radius:1px;"></div><div style="width:10px;height:10px;background:#1e293b;border-radius:1px;"></div><div style="width:10px;height:10px;background:#fff;"></div>
+                  </div>
+                </div>
+                <div style="font-size:9px;font-weight:700;color:#64748b;letter-spacing:1px;margin-bottom:14px;">TICKET-4567</div>
+                <div style="display:flex;gap:8px;justify-content:center;">
+                  <div style="padding:8px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:9px;font-weight:600;color:#0e7490;">📅 Add to Calendar</div>
+                  <div style="padding:8px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:9px;font-weight:600;color:#0e7490;">📤 Share</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `, DNAV('events')) },
+    ]
+  },
+  {
+    title: 'Profile & Settings',
+    screens: [
+      { num: '16', numBg: '#64748b', title: 'Profile — Settings & Account', tag: 'Tab 5', tagBg: '#f1f5f9', tagColor: '#475569',
+        body: PH('#fff', `
+          <div style="padding:0;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #e2e8f0;">
+              <div style="width:28px;"></div>
+              <div style="font-size:13px;font-weight:700;color:#1e293b;">Profile</div>
+              <span style="font-size:14px;color:#0e7490;">⚙️</span>
+            </div>
+            <div style="text-align:center;padding:16px;background:#fff;">
+              <div style="width:52px;height:52px;background:linear-gradient(135deg,#0e7490,#06b6d4);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:700;margin:0 auto 8px;">KA</div>
+              <div style="font-size:14px;font-weight:800;color:#1e293b;">Khalid Al-Mansouri</div>
+              <div style="font-size:10px;color:#64748b;">khalid@email.com</div>
+              <div style="display:inline-flex;align-items:center;gap:3px;font-size:8px;font-weight:700;color:#7c3aed;background:#f5f3ff;padding:2px 8px;border-radius:10px;margin-top:4px;">💎 Platinum Member</div>
+              <div style="display:inline-flex;align-items:center;gap:4px;border:1px solid #e2e8f0;border-radius:14px;padding:4px 12px;font-size:9px;font-weight:600;color:#0e7490;margin-top:8px;">✏️ Edit Profile</div>
+            </div>
+            <div style="padding:0 14px;">
+              <div style="font-size:7px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px;">Account</div>
+              <div style="background:#fff;border-radius:10px;border:1px solid #f1f5f9;">
+                <div style="display:flex;align-items:center;padding:8px 10px;border-bottom:1px solid #f1f5f9;gap:8px;"><div style="width:24px;height:24px;background:#eff6ff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;">👤</div><span style="flex:1;font-size:10px;font-weight:600;color:#1e293b;">Personal Information</span><span style="font-size:10px;color:#cbd5e1;">›</span></div>
+                <div style="display:flex;align-items:center;padding:8px 10px;border-bottom:1px solid #f1f5f9;gap:8px;"><div style="width:24px;height:24px;background:#ecfeff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;">💳</div><span style="flex:1;font-size:10px;font-weight:600;color:#1e293b;">Payment Methods</span><span style="font-size:10px;color:#cbd5e1;">›</span></div>
+                <div style="display:flex;align-items:center;padding:8px 10px;border-bottom:1px solid #f1f5f9;gap:8px;"><div style="width:24px;height:24px;background:#ede9fe;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;">📅</div><span style="flex:1;font-size:10px;font-weight:600;color:#1e293b;">Pledges & Recurring</span><span style="font-size:10px;color:#cbd5e1;">›</span></div>
+                <div style="display:flex;align-items:center;padding:8px 10px;gap:8px;"><div style="width:24px;height:24px;background:#fff7ed;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;">🎫</div><span style="flex:1;font-size:10px;font-weight:600;color:#1e293b;">My Membership</span><span style="font-size:10px;color:#cbd5e1;">›</span></div>
+              </div>
+              <div style="font-size:7px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px;">Preferences</div>
+              <div style="background:#fff;border-radius:10px;border:1px solid #f1f5f9;">
+                <div style="display:flex;align-items:center;padding:8px 10px;border-bottom:1px solid #f1f5f9;gap:8px;"><div style="width:24px;height:24px;background:#fff7ed;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;">🔔</div><span style="flex:1;font-size:10px;font-weight:600;color:#1e293b;">Notifications</span><span style="font-size:10px;color:#cbd5e1;">›</span></div>
+                <div style="display:flex;align-items:center;padding:8px 10px;border-bottom:1px solid #f1f5f9;gap:8px;"><div style="width:24px;height:24px;background:#f0fdf4;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;">📧</div><div style="flex:1;"><div style="font-size:10px;font-weight:600;color:#1e293b;">Communication Prefs</div><div style="font-size:7px;color:#64748b;">Email, SMS, WhatsApp</div></div><span style="font-size:10px;color:#cbd5e1;">›</span></div>
+                <div style="display:flex;align-items:center;padding:8px 10px;border-bottom:1px solid #f1f5f9;gap:8px;"><div style="width:24px;height:24px;background:#eff6ff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;">🏛</div><div style="flex:1;"><div style="font-size:10px;font-weight:600;color:#1e293b;">Tax Settings</div><div style="font-size:7px;color:#64748b;">80G / Tax ID configured</div></div><span style="font-size:10px;color:#cbd5e1;">›</span></div>
+                <div style="display:flex;align-items:center;padding:8px 10px;border-bottom:1px solid #f1f5f9;gap:8px;"><div style="width:24px;height:24px;background:#ecfeff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;">🌐</div><div style="flex:1;"><div style="font-size:10px;font-weight:600;color:#1e293b;">Language</div><div style="font-size:7px;color:#64748b;">English</div></div><span style="font-size:10px;color:#cbd5e1;">›</span></div>
+                <div style="display:flex;align-items:center;padding:8px 10px;gap:8px;"><div style="width:24px;height:24px;background:#f1f5f9;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;">🌙</div><span style="flex:1;font-size:10px;font-weight:600;color:#1e293b;">Dark Mode</span><div style="width:32px;height:18px;background:#e2e8f0;border-radius:9px;position:relative;"><div style="width:14px;height:14px;background:#fff;border-radius:50%;position:absolute;top:2px;left:2px;box-shadow:0 1px 2px rgba(0,0,0,.15);"></div></div></div>
+              </div>
+              <div style="border:1.5px solid #dc2626;border-radius:10px;padding:10px;text-align:center;font-size:11px;font-weight:700;color:#dc2626;margin-top:14px;">🚪 Log Out</div>
+              <div style="text-align:center;font-size:8px;color:#94a3b8;margin-top:8px;">App Version 2.0.1</div>
+            </div>
+          </div>
+        `, DNAV('profile')) },
+
+      { num: '17', numBg: '#64748b', title: 'Notifications', tag: 'Overlay', tagBg: '#f1f5f9', tagColor: '#475569',
+        body: PH('#fff', `
+          <div style="padding:0;">
+            <div style="display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid #e2e8f0;">
+              <div style="font-size:12px;color:#0e7490;">←</div>
+              <div style="flex:1;text-align:center;font-size:13px;font-weight:700;color:#1e293b;">Notifications</div>
+              <div style="width:12px;"></div>
+            </div>
+            <div style="display:flex;gap:6px;padding:10px 14px;overflow-x:auto;">
+              <div style="padding:4px 12px;background:#0e7490;border-radius:14px;font-size:9px;font-weight:600;color:#fff;">All</div>
+              <div style="padding:4px 12px;border:1px solid #e2e8f0;border-radius:14px;font-size:9px;font-weight:600;color:#64748b;">Donations</div>
+              <div style="padding:4px 12px;border:1px solid #e2e8f0;border-radius:14px;font-size:9px;font-weight:600;color:#64748b;">Events</div>
+              <div style="padding:4px 12px;border:1px solid #e2e8f0;border-radius:14px;font-size:9px;font-weight:600;color:#64748b;">Updates</div>
+            </div>
+            <div style="padding:0 14px;">
+              <div style="font-size:8px;font-weight:700;color:#64748b;margin-bottom:6px;">Today</div>
+              <div style="background:#fff;border:1px solid #f1f5f9;border-radius:10px;padding:10px;margin-bottom:6px;">
+                <div style="font-size:10px;font-weight:600;color:#1e293b;"><div style="width:6px;height:6px;background:#0e7490;border-radius:50%;display:inline-block;margin-right:4px;"></div>Thank you for your $1,500 donation!</div>
+                <div style="font-size:8px;color:#64748b;margin-top:2px;">Your donation to Orphan Care has been received. Receipt REC-4547 is ready.</div>
+                <div style="font-size:7px;color:#94a3b8;margin-top:3px;">2 hours ago</div>
+              </div>
+              <div style="background:#fff;border:1px solid #f1f5f9;border-radius:10px;padding:10px;margin-bottom:10px;">
+                <div style="font-size:10px;font-weight:600;color:#1e293b;"><div style="width:6px;height:6px;background:#0e7490;border-radius:50%;display:inline-block;margin-right:4px;"></div>Fundraising Gala reminder</div>
+                <div style="font-size:8px;color:#64748b;margin-top:2px;">Your event is in 8 days! Don't forget to check your ticket details.</div>
+                <div style="font-size:7px;color:#94a3b8;margin-top:3px;">5 hours ago</div>
+              </div>
+              <div style="font-size:8px;font-weight:700;color:#64748b;margin-bottom:6px;">This Week</div>
+              <div style="background:#fff;border:1px solid #f1f5f9;border-radius:10px;padding:10px;margin-bottom:6px;">
+                <div style="font-size:10px;font-weight:600;color:#1e293b;"><div style="width:6px;height:6px;background:#cbd5e1;border-radius:50%;display:inline-block;margin-right:4px;"></div>Pledge payment due</div>
+                <div style="font-size:8px;color:#64748b;margin-top:2px;">Your pledge payment of $500 for Education is due May 1.</div>
+                <div style="background:#0e7490;border-radius:6px;padding:4px 10px;display:inline-flex;align-items:center;gap:4px;font-size:8px;font-weight:600;color:#fff;margin-top:6px;">💳 Pay Now</div>
+                <div style="font-size:7px;color:#94a3b8;margin-top:3px;">3 days ago</div>
+              </div>
+              <div style="background:#fff;border:1px solid #f1f5f9;border-radius:10px;padding:10px;margin-bottom:10px;">
+                <div style="font-size:10px;font-weight:600;color:#1e293b;"><div style="width:6px;height:6px;background:#cbd5e1;border-radius:50%;display:inline-block;margin-right:4px;"></div>Impact update</div>
+                <div style="font-size:8px;color:#64748b;margin-top:2px;">500 children are now in our sponsorship program! Your support makes this possible.</div>
+                <div style="font-size:7px;color:#94a3b8;margin-top:3px;">5 days ago</div>
+              </div>
+              <div style="text-align:center;font-size:10px;font-weight:600;color:#0e7490;">Mark All as Read</div>
+            </div>
+          </div>
+        `) },
+    ]
+  },
+];
+
+// ── Render storyboard ──
+const container = document.getElementById('storyboard');
+sections.forEach((section, si) => {
+  let html = `<div class="flow-section">
+    <div class="flow-section-title">${section.title}</div>
+    <div class="screen-row">`;
+  section.screens.forEach((s, i) => {
+    html += `<div class="screen-card">
+      <div class="screen-card-header">
+        <div class="screen-number" style="background:${s.numBg};">${s.num}</div>
+        <div class="screen-card-title">${s.title}</div>
+        <div class="screen-card-tag" style="background:${s.tagBg};color:${s.tagColor};">${s.tag}</div>
+      </div>
+      ${s.body}
+    </div>`;
+    if (i < section.screens.length - 1) {
+      html += `<div class="arrow-label"><span class="arrow">→</span></div>`;
+    }
+  });
+  html += `</div></div>`;
+  if (si < sections.length - 1) {
+    html += `<div class="arrow-label"><span class="arrow">↓</span> next section</div>`;
+  }
+  container.innerHTML += html;
+});
+</script>
+
+</body>
+</html>

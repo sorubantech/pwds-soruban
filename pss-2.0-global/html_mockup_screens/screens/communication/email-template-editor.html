@@ -1,0 +1,2126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Templates - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #0c6577;
+      border-color: #0c6577;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .btn-sm-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 0.8125rem;
+    }
+
+    .btn-sm-icon:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .btn-sm-icon.danger:hover {
+      border-color: var(--danger-color);
+      color: var(--danger-color);
+      background: #fef2f2;
+    }
+
+    /* View Toggle */
+    .view-toggle {
+      display: flex;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      overflow: hidden;
+      background: white;
+    }
+
+    .view-toggle button {
+      padding: 0.375rem 0.75rem;
+      border: none;
+      background: white;
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .view-toggle button.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    .view-toggle button:not(:last-child) {
+      border-right: 1px solid var(--border-color);
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-bar .search-box {
+      flex: 1;
+      min-width: 200px;
+      max-width: 320px;
+      position: relative;
+    }
+
+    .filter-bar .search-box input {
+      width: 100%;
+      padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      background: white;
+      color: var(--text-primary);
+    }
+
+    .filter-bar .search-box input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .filter-bar .search-box i {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+    }
+
+    .filter-bar select {
+      padding: 0.5rem 2rem 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      background: white;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .filter-bar select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Template Cards Grid */
+    .template-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.25rem;
+    }
+
+    .template-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+      transition: all 0.2s;
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+    }
+
+    .template-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      transform: translateY(-2px);
+    }
+
+    .template-card-preview {
+      height: 180px;
+      background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .template-card-preview .preview-content {
+      width: 85%;
+      height: 85%;
+      background: white;
+      border-radius: 4px;
+      padding: 0.75rem;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
+      overflow: hidden;
+    }
+
+    .preview-header-bar {
+      height: 18px;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+
+    .preview-line {
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 2px;
+    }
+
+    .preview-line.short {
+      width: 60%;
+    }
+
+    .preview-line.medium {
+      width: 80%;
+    }
+
+    .preview-btn-bar {
+      height: 14px;
+      width: 50%;
+      background: var(--accent);
+      border-radius: 2px;
+      margin-top: auto;
+    }
+
+    .template-card-body {
+      padding: 1rem;
+    }
+
+    .template-card-body h5 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin: 0 0 0.375rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .template-card-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .category-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      background: var(--accent-bg);
+      color: var(--accent);
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+    }
+
+    .status-badge.active {
+      background: #dcfce7;
+      color: #16a34a;
+    }
+
+    .status-badge.draft {
+      background: #fef9c3;
+      color: #ca8a04;
+    }
+
+    .status-badge.inactive {
+      background: #f1f5f9;
+      color: #64748b;
+    }
+
+    .template-card-date {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.625rem;
+    }
+
+    .template-card-actions {
+      display: flex;
+      gap: 0.375rem;
+    }
+
+    /* List View Table */
+    .template-table-wrapper {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      display: none;
+    }
+
+    .template-table-wrapper.active {
+      display: block;
+    }
+
+    .template-grid.active {
+      display: grid;
+    }
+
+    .template-grid:not(.active) {
+      display: none;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .data-table thead th {
+      background: #f8fafc;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border-color);
+      text-align: left;
+    }
+
+    .data-table tbody td {
+      padding: 0.75rem 1rem;
+      font-size: 0.8125rem;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+
+    .data-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    /* === EDITOR VIEW === */
+    .editor-view {
+      display: none;
+      height: calc(100vh - 3rem);
+      flex-direction: column;
+    }
+
+    .editor-view.active {
+      display: flex;
+    }
+
+    .gallery-view {
+      display: block;
+    }
+
+    .gallery-view.hidden {
+      display: none;
+    }
+
+    /* Editor Header */
+    .editor-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .editor-header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .back-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .back-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .editor-title-input {
+      font-size: 1.25rem;
+      font-weight: 700;
+      border: 1px solid transparent;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.375rem;
+      background: transparent;
+      color: var(--text-primary);
+      flex: 1;
+      min-width: 0;
+    }
+
+    .editor-title-input:hover {
+      border-color: var(--border-color);
+    }
+
+    .editor-title-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: white;
+    }
+
+    .editor-header-right {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .editor-header select {
+      padding: 0.375rem 0.625rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      font-size: 0.8125rem;
+      background: white;
+    }
+
+    /* Status Toggle */
+    .status-toggle {
+      display: flex;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      overflow: hidden;
+      background: white;
+    }
+
+    .status-toggle button {
+      padding: 0.3rem 0.625rem;
+      border: none;
+      background: white;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .status-toggle button.active {
+      background: var(--success-color);
+      color: white;
+    }
+
+    .status-toggle button.draft-active {
+      background: var(--warning-color);
+      color: white;
+    }
+
+    .status-toggle button.inactive-active {
+      background: #94a3b8;
+      color: white;
+    }
+
+    /* Split Pane */
+    .editor-split {
+      display: flex;
+      flex: 1;
+      gap: 1rem;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .editor-left {
+      flex: 0 0 60%;
+      display: flex;
+      flex-direction: column;
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+
+    .editor-right {
+      flex: 0 0 calc(40% - 1rem);
+      display: flex;
+      flex-direction: column;
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+
+    /* Editor Tabs */
+    .editor-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      background: #f8fafc;
+    }
+
+    .editor-tab {
+      padding: 0.75rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      border: none;
+      background: none;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .editor-tab:hover {
+      color: var(--text-primary);
+    }
+
+    .editor-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Tab Content */
+    .tab-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.25rem;
+    }
+
+    .tab-pane {
+      display: none;
+    }
+
+    .tab-pane.active {
+      display: block;
+    }
+
+    /* Form Fields */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.375rem;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      background: white;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    /* WYSIWYG Toolbar */
+    .wysiwyg-toolbar {
+      display: flex;
+      gap: 0.25rem;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem 0.5rem 0 0;
+      background: #f8fafc;
+      flex-wrap: wrap;
+    }
+
+    .wysiwyg-toolbar button {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: none;
+      border-radius: 0.25rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8125rem;
+      transition: all 0.15s;
+    }
+
+    .wysiwyg-toolbar button:hover {
+      background: var(--accent-bg);
+      color: var(--accent);
+    }
+
+    .toolbar-divider {
+      width: 1px;
+      background: var(--border-color);
+      margin: 0 0.25rem;
+    }
+
+    /* Content Blocks */
+    .content-blocks {
+      border: 1px solid var(--border-color);
+      border-top: none;
+      border-radius: 0 0 0.5rem 0.5rem;
+      min-height: 300px;
+      background: white;
+    }
+
+    .content-block {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #f1f5f9;
+      transition: background 0.15s;
+      cursor: move;
+    }
+
+    .content-block:hover {
+      background: #f8fafc;
+    }
+
+    .block-drag-handle {
+      color: #cbd5e1;
+      cursor: grab;
+      padding-top: 0.25rem;
+      font-size: 0.875rem;
+    }
+
+    .block-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8125rem;
+      flex-shrink: 0;
+    }
+
+    .block-icon.header-block {
+      background: #dbeafe;
+      color: #2563eb;
+    }
+
+    .block-icon.text-block {
+      background: #f3e8ff;
+      color: #9333ea;
+    }
+
+    .block-icon.image-block {
+      background: #fce7f3;
+      color: #db2777;
+    }
+
+    .block-icon.button-block {
+      background: #dcfce7;
+      color: #16a34a;
+    }
+
+    .block-icon.divider-block {
+      background: #f1f5f9;
+      color: #64748b;
+    }
+
+    .block-icon.impact-block {
+      background: #fef3c7;
+      color: #d97706;
+    }
+
+    .block-icon.footer-block {
+      background: #e0e7ff;
+      color: #4f46e5;
+    }
+
+    .block-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .block-body .block-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-bottom: 0.25rem;
+    }
+
+    .block-body .block-content {
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    .block-body .block-content .placeholder-tag {
+      background: #fef3c7;
+      color: #92400e;
+      padding: 0.0625rem 0.375rem;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      font-family: 'SFMono-Regular', Consolas, monospace;
+    }
+
+    .block-actions {
+      display: flex;
+      gap: 0.25rem;
+      flex-shrink: 0;
+    }
+
+    .block-actions button {
+      width: 26px;
+      height: 26px;
+      border: none;
+      background: none;
+      border-radius: 0.25rem;
+      color: #94a3b8;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6875rem;
+      transition: all 0.15s;
+    }
+
+    .block-actions button:hover {
+      background: #f1f5f9;
+      color: var(--text-primary);
+    }
+
+    .block-actions button.delete-btn:hover {
+      background: #fef2f2;
+      color: var(--danger-color);
+    }
+
+    .add-block-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem;
+      border: 2px dashed var(--border-color);
+      margin: 0.75rem;
+      border-radius: 0.5rem;
+      background: none;
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      width: calc(100% - 1.5rem);
+    }
+
+    .add-block-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    /* Block Type Picker */
+    .block-type-picker {
+      display: none;
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      padding: 0.5rem;
+      z-index: 100;
+      width: 320px;
+    }
+
+    .block-type-picker.show {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.25rem;
+    }
+
+    .block-type-option {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.625rem;
+      border: none;
+      background: none;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      transition: background 0.15s;
+    }
+
+    .block-type-option:hover {
+      background: #f1f5f9;
+    }
+
+    /* Placeholder Panel */
+    .placeholder-panel {
+      margin-top: 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      overflow: hidden;
+    }
+
+    .placeholder-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.625rem 0.75rem;
+      background: #f8fafc;
+      cursor: pointer;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      border: none;
+      width: 100%;
+      text-align: left;
+    }
+
+    .placeholder-panel-header:hover {
+      background: #f1f5f9;
+    }
+
+    .placeholder-panel-body {
+      padding: 0.75rem;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .placeholder-group-title {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin: 0.75rem 0 0.375rem;
+    }
+
+    .placeholder-group-title:first-child {
+      margin-top: 0;
+    }
+
+    .placeholder-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.375rem;
+    }
+
+    .placeholder-tag-btn {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+      border-radius: 0.25rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .placeholder-tag-btn:hover {
+      background: #fde68a;
+      border-color: #fbbf24;
+    }
+
+    /* Design Tab */
+    .design-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.625rem 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .design-row:last-child {
+      border-bottom: none;
+    }
+
+    .design-label {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .design-control {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .color-input-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      padding: 0.25rem 0.5rem;
+      background: white;
+    }
+
+    .color-input-wrapper input[type="color"] {
+      width: 24px;
+      height: 24px;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      background: none;
+    }
+
+    .color-input-wrapper span {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      font-family: monospace;
+    }
+
+    .design-select {
+      padding: 0.375rem 0.625rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      font-size: 0.8125rem;
+      background: white;
+    }
+
+    .range-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .range-wrapper input[type="range"] {
+      width: 100px;
+      accent-color: var(--accent);
+    }
+
+    .range-wrapper span {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      min-width: 40px;
+    }
+
+    /* Preview Panel */
+    .preview-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      background: #f8fafc;
+    }
+
+    .preview-header-title {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .device-toggle {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .device-toggle button {
+      padding: 0.25rem 0.5rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+    }
+
+    .device-toggle button.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .preview-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.25rem;
+      background: #e2e8f0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .preview-email {
+      width: 100%;
+      max-width: 600px;
+      background: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+    }
+
+    .preview-email.mobile-view {
+      max-width: 375px;
+    }
+
+    .preview-email-header {
+      background: var(--accent);
+      padding: 1.5rem;
+      text-align: center;
+      color: white;
+    }
+
+    .preview-email-header h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 0.5rem 0 0;
+    }
+
+    .preview-email-body {
+      padding: 2rem 1.5rem;
+      font-size: 0.875rem;
+      line-height: 1.7;
+      color: #374151;
+    }
+
+    .preview-email-body .highlight {
+      background: #fef3c7;
+      color: #92400e;
+      padding: 0.0625rem 0.375rem;
+      border-radius: 0.25rem;
+      font-weight: 600;
+    }
+
+    .preview-impact-block {
+      background: #f8fafc;
+      border-radius: 0.5rem;
+      padding: 1.25rem;
+      margin: 1.25rem 0;
+    }
+
+    .preview-impact-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.375rem 0;
+      font-size: 0.875rem;
+    }
+
+    .preview-cta-btn {
+      display: inline-block;
+      background: var(--accent);
+      color: white;
+      padding: 0.75rem 2rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+      text-decoration: none;
+      margin: 1rem 0;
+    }
+
+    .preview-email-footer {
+      background: #f8fafc;
+      padding: 1.25rem;
+      text-align: center;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .preview-email-footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .preview-email-footer .social-icons {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+    }
+
+    .preview-email-footer .social-icons i {
+      font-size: 1rem;
+      color: #94a3b8;
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .template-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 992px) {
+      .template-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .editor-split {
+        flex-direction: column;
+      }
+
+      .editor-left,
+      .editor-right {
+        flex: none;
+      }
+
+      .editor-right {
+        height: 400px;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .template-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ===================== GALLERY VIEW ===================== -->
+  <div class="gallery-view" id="galleryView">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <h1>Email Templates</h1>
+        <p class="subtitle">Design and manage reusable email templates with merge fields</p>
+      </div>
+      <div class="header-actions">
+        <div class="view-toggle">
+          <button class="active" onclick="switchView('grid')" title="Grid View"><i class="fas fa-th-large"></i></button>
+          <button onclick="switchView('list')" title="List View"><i class="fas fa-list"></i></button>
+        </div>
+        <button class="btn-primary-accent" onclick="openEditor(null)">
+          <i class="fas fa-plus me-1"></i> Create New Template
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Search templates..." oninput="filterTemplates()">
+      </div>
+      <select onchange="filterTemplates()">
+        <option value="">All Categories</option>
+        <option>Thank You</option>
+        <option>Newsletter</option>
+        <option>Event</option>
+        <option>Fundraising</option>
+        <option>Onboarding</option>
+        <option>Alert</option>
+        <option>Tax/Receipt</option>
+      </select>
+      <select onchange="filterTemplates()">
+        <option value="">All Statuses</option>
+        <option>Active</option>
+        <option>Draft</option>
+        <option>Inactive</option>
+      </select>
+    </div>
+
+    <!-- Grid View -->
+    <div class="template-grid active" id="gridView">
+
+      <!-- Card 1 -->
+      <div class="template-card" ondblclick="openEditor('Donation Thank You')">
+        <div class="template-card-preview">
+          <div class="preview-content">
+            <div class="preview-header-bar"></div>
+            <div class="preview-line"></div>
+            <div class="preview-line short"></div>
+            <div class="preview-line medium"></div>
+            <div class="preview-line short"></div>
+            <div class="preview-btn-bar"></div>
+          </div>
+        </div>
+        <div class="template-card-body">
+          <h5>Donation Thank You</h5>
+          <div class="template-card-meta">
+            <span class="category-badge">Thank You</span>
+            <span class="status-badge active">Active</span>
+          </div>
+          <div class="template-card-date"><i class="fas fa-clock me-1"></i>Apr 10, 2026</div>
+          <div class="template-card-actions">
+            <button class="btn-sm-icon" title="Edit" onclick="event.stopPropagation(); openEditor('Donation Thank You')"><i class="fas fa-pen"></i></button>
+            <button class="btn-sm-icon" title="Duplicate"><i class="fas fa-copy"></i></button>
+            <button class="btn-sm-icon" title="Preview"><i class="fas fa-eye"></i></button>
+            <button class="btn-sm-icon danger" title="Delete"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="template-card" ondblclick="openEditor('Monthly Newsletter')">
+        <div class="template-card-preview">
+          <div class="preview-content">
+            <div class="preview-header-bar" style="background: #7c3aed;"></div>
+            <div class="preview-line"></div>
+            <div class="preview-line medium"></div>
+            <div class="preview-line"></div>
+            <div class="preview-line short"></div>
+            <div class="preview-btn-bar" style="background: #7c3aed;"></div>
+          </div>
+        </div>
+        <div class="template-card-body">
+          <h5>Monthly Newsletter</h5>
+          <div class="template-card-meta">
+            <span class="category-badge">Newsletter</span>
+            <span class="status-badge active">Active</span>
+          </div>
+          <div class="template-card-date"><i class="fas fa-clock me-1"></i>Apr 8, 2026</div>
+          <div class="template-card-actions">
+            <button class="btn-sm-icon" title="Edit" onclick="event.stopPropagation(); openEditor('Monthly Newsletter')"><i class="fas fa-pen"></i></button>
+            <button class="btn-sm-icon" title="Duplicate"><i class="fas fa-copy"></i></button>
+            <button class="btn-sm-icon" title="Preview"><i class="fas fa-eye"></i></button>
+            <button class="btn-sm-icon danger" title="Delete"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="template-card" ondblclick="openEditor('Event Invitation')">
+        <div class="template-card-preview">
+          <div class="preview-content">
+            <div class="preview-header-bar" style="background: #db2777;"></div>
+            <div class="preview-line medium"></div>
+            <div class="preview-line short"></div>
+            <div class="preview-line"></div>
+            <div class="preview-btn-bar" style="background: #db2777;"></div>
+          </div>
+        </div>
+        <div class="template-card-body">
+          <h5>Event Invitation</h5>
+          <div class="template-card-meta">
+            <span class="category-badge">Event</span>
+            <span class="status-badge active">Active</span>
+          </div>
+          <div class="template-card-date"><i class="fas fa-clock me-1"></i>Apr 5, 2026</div>
+          <div class="template-card-actions">
+            <button class="btn-sm-icon" title="Edit" onclick="event.stopPropagation(); openEditor('Event Invitation')"><i class="fas fa-pen"></i></button>
+            <button class="btn-sm-icon" title="Duplicate"><i class="fas fa-copy"></i></button>
+            <button class="btn-sm-icon" title="Preview"><i class="fas fa-eye"></i></button>
+            <button class="btn-sm-icon danger" title="Delete"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="template-card" ondblclick="openEditor('Campaign Appeal')">
+        <div class="template-card-preview">
+          <div class="preview-content">
+            <div class="preview-header-bar" style="background: #ea580c;"></div>
+            <div class="preview-line"></div>
+            <div class="preview-line short"></div>
+            <div class="preview-line medium"></div>
+            <div class="preview-btn-bar" style="background: #ea580c;"></div>
+          </div>
+        </div>
+        <div class="template-card-body">
+          <h5>Campaign Appeal</h5>
+          <div class="template-card-meta">
+            <span class="category-badge">Fundraising</span>
+            <span class="status-badge active">Active</span>
+          </div>
+          <div class="template-card-date"><i class="fas fa-clock me-1"></i>Apr 3, 2026</div>
+          <div class="template-card-actions">
+            <button class="btn-sm-icon" title="Edit" onclick="event.stopPropagation(); openEditor('Campaign Appeal')"><i class="fas fa-pen"></i></button>
+            <button class="btn-sm-icon" title="Duplicate"><i class="fas fa-copy"></i></button>
+            <button class="btn-sm-icon" title="Preview"><i class="fas fa-eye"></i></button>
+            <button class="btn-sm-icon danger" title="Delete"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 5 -->
+      <div class="template-card" ondblclick="openEditor('Welcome New Donor')">
+        <div class="template-card-preview">
+          <div class="preview-content">
+            <div class="preview-header-bar" style="background: #16a34a;"></div>
+            <div class="preview-line medium"></div>
+            <div class="preview-line"></div>
+            <div class="preview-line short"></div>
+            <div class="preview-btn-bar" style="background: #16a34a;"></div>
+          </div>
+        </div>
+        <div class="template-card-body">
+          <h5>Welcome New Donor</h5>
+          <div class="template-card-meta">
+            <span class="category-badge">Onboarding</span>
+            <span class="status-badge active">Active</span>
+          </div>
+          <div class="template-card-date"><i class="fas fa-clock me-1"></i>Mar 28, 2026</div>
+          <div class="template-card-actions">
+            <button class="btn-sm-icon" title="Edit" onclick="event.stopPropagation(); openEditor('Welcome New Donor')"><i class="fas fa-pen"></i></button>
+            <button class="btn-sm-icon" title="Duplicate"><i class="fas fa-copy"></i></button>
+            <button class="btn-sm-icon" title="Preview"><i class="fas fa-eye"></i></button>
+            <button class="btn-sm-icon danger" title="Delete"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 6 -->
+      <div class="template-card" ondblclick="openEditor('Recurring Donation Failed')">
+        <div class="template-card-preview">
+          <div class="preview-content">
+            <div class="preview-header-bar" style="background: #dc2626;"></div>
+            <div class="preview-line"></div>
+            <div class="preview-line medium"></div>
+            <div class="preview-line short"></div>
+            <div class="preview-btn-bar" style="background: #dc2626;"></div>
+          </div>
+        </div>
+        <div class="template-card-body">
+          <h5>Recurring Donation Failed</h5>
+          <div class="template-card-meta">
+            <span class="category-badge">Alert</span>
+            <span class="status-badge active">Active</span>
+          </div>
+          <div class="template-card-date"><i class="fas fa-clock me-1"></i>Mar 25, 2026</div>
+          <div class="template-card-actions">
+            <button class="btn-sm-icon" title="Edit" onclick="event.stopPropagation(); openEditor('Recurring Donation Failed')"><i class="fas fa-pen"></i></button>
+            <button class="btn-sm-icon" title="Duplicate"><i class="fas fa-copy"></i></button>
+            <button class="btn-sm-icon" title="Preview"><i class="fas fa-eye"></i></button>
+            <button class="btn-sm-icon danger" title="Delete"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 7 -->
+      <div class="template-card" ondblclick="openEditor('Year-End Giving Summary')">
+        <div class="template-card-preview">
+          <div class="preview-content">
+            <div class="preview-header-bar" style="background: #0284c7;"></div>
+            <div class="preview-line short"></div>
+            <div class="preview-line"></div>
+            <div class="preview-line medium"></div>
+            <div class="preview-btn-bar" style="background: #0284c7;"></div>
+          </div>
+        </div>
+        <div class="template-card-body">
+          <h5>Year-End Giving Summary</h5>
+          <div class="template-card-meta">
+            <span class="category-badge">Tax/Receipt</span>
+            <span class="status-badge draft">Draft</span>
+          </div>
+          <div class="template-card-date"><i class="fas fa-clock me-1"></i>Mar 20, 2026</div>
+          <div class="template-card-actions">
+            <button class="btn-sm-icon" title="Edit" onclick="event.stopPropagation(); openEditor('Year-End Giving Summary')"><i class="fas fa-pen"></i></button>
+            <button class="btn-sm-icon" title="Duplicate"><i class="fas fa-copy"></i></button>
+            <button class="btn-sm-icon" title="Preview"><i class="fas fa-eye"></i></button>
+            <button class="btn-sm-icon danger" title="Delete"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 8 -->
+      <div class="template-card" ondblclick="openEditor('Volunteer Appreciation')">
+        <div class="template-card-preview">
+          <div class="preview-content">
+            <div class="preview-header-bar" style="background: #9333ea;"></div>
+            <div class="preview-line"></div>
+            <div class="preview-line medium"></div>
+            <div class="preview-line"></div>
+            <div class="preview-btn-bar" style="background: #9333ea;"></div>
+          </div>
+        </div>
+        <div class="template-card-body">
+          <h5>Volunteer Appreciation</h5>
+          <div class="template-card-meta">
+            <span class="category-badge">Thank You</span>
+            <span class="status-badge inactive">Inactive</span>
+          </div>
+          <div class="template-card-date"><i class="fas fa-clock me-1"></i>Mar 15, 2026</div>
+          <div class="template-card-actions">
+            <button class="btn-sm-icon" title="Edit" onclick="event.stopPropagation(); openEditor('Volunteer Appreciation')"><i class="fas fa-pen"></i></button>
+            <button class="btn-sm-icon" title="Duplicate"><i class="fas fa-copy"></i></button>
+            <button class="btn-sm-icon" title="Preview"><i class="fas fa-eye"></i></button>
+            <button class="btn-sm-icon danger" title="Delete"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- List View -->
+    <div class="template-table-wrapper" id="listView">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Template Name</th>
+            <th>Category</th>
+            <th>Status</th>
+            <th>Last Modified</th>
+            <th style="text-align:right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Donation Thank You</strong></td>
+            <td><span class="category-badge">Thank You</span></td>
+            <td><span class="status-badge active">Active</span></td>
+            <td>Apr 10, 2026</td>
+            <td style="text-align:right">
+              <button class="btn-sm-icon" title="Edit" onclick="openEditor('Donation Thank You')"><i class="fas fa-pen"></i></button>
+              <button class="btn-sm-icon" title="Duplicate"><i class="fas fa-copy"></i></button>
+              <button class="btn-sm-icon" title="Preview"><i class="fas fa-eye"></i></button>
+              <button class="btn-sm-icon danger" title="Delete"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Monthly Newsletter</strong></td>
+            <td><span class="category-badge">Newsletter</span></td>
+            <td><span class="status-badge active">Active</span></td>
+            <td>Apr 8, 2026</td>
+            <td style="text-align:right">
+              <button class="btn-sm-icon" title="Edit" onclick="openEditor('Monthly Newsletter')"><i class="fas fa-pen"></i></button>
+              <button class="btn-sm-icon" title="Duplicate"><i class="fas fa-copy"></i></button>
+              <button class="btn-sm-icon" title="Preview"><i class="fas fa-eye"></i></button>
+              <button class="btn-sm-icon danger" title="Delete"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Event Invitation</strong></td>
+            <td><span class="category-badge">Event</span></td>
+            <td><span class="status-badge active">Active</span></td>
+            <td>Apr 5, 2026</td>
+            <td style="text-align:right">
+              <button class="btn-sm-icon" title="Edit" onclick="openEditor('Event Invitation')"><i class="fas fa-pen"></i></button>
+              <button class="btn-sm-icon" title="Duplicate"><i class="fas fa-copy"></i></button>
+              <button class="btn-sm-icon" title="Preview"><i class="fas fa-eye"></i></button>
+              <button class="btn-sm-icon danger" title="Delete"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Campaign Appeal</strong></td>
+            <td><span class="category-badge">Fundraising</span></td>
+            <td><span class="status-badge active">Active</span></td>
+            <td>Apr 3, 2026</td>
+            <td style="text-align:right">
+              <button class="btn-sm-icon" title="Edit" onclick="openEditor('Campaign Appeal')"><i class="fas fa-pen"></i></button>
+              <button class="btn-sm-icon" title="Duplicate"><i class="fas fa-copy"></i></button>
+              <button class="btn-sm-icon" title="Preview"><i class="fas fa-eye"></i></button>
+              <button class="btn-sm-icon danger" title="Delete"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Welcome New Donor</strong></td>
+            <td><span class="category-badge">Onboarding</span></td>
+            <td><span class="status-badge active">Active</span></td>
+            <td>Mar 28, 2026</td>
+            <td style="text-align:right">
+              <button class="btn-sm-icon" title="Edit" onclick="openEditor('Welcome New Donor')"><i class="fas fa-pen"></i></button>
+              <button class="btn-sm-icon" title="Duplicate"><i class="fas fa-copy"></i></button>
+              <button class="btn-sm-icon" title="Preview"><i class="fas fa-eye"></i></button>
+              <button class="btn-sm-icon danger" title="Delete"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Recurring Donation Failed</strong></td>
+            <td><span class="category-badge">Alert</span></td>
+            <td><span class="status-badge active">Active</span></td>
+            <td>Mar 25, 2026</td>
+            <td style="text-align:right">
+              <button class="btn-sm-icon" title="Edit" onclick="openEditor('Recurring Donation Failed')"><i class="fas fa-pen"></i></button>
+              <button class="btn-sm-icon" title="Duplicate"><i class="fas fa-copy"></i></button>
+              <button class="btn-sm-icon" title="Preview"><i class="fas fa-eye"></i></button>
+              <button class="btn-sm-icon danger" title="Delete"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Year-End Giving Summary</strong></td>
+            <td><span class="category-badge">Tax/Receipt</span></td>
+            <td><span class="status-badge draft">Draft</span></td>
+            <td>Mar 20, 2026</td>
+            <td style="text-align:right">
+              <button class="btn-sm-icon" title="Edit" onclick="openEditor('Year-End Giving Summary')"><i class="fas fa-pen"></i></button>
+              <button class="btn-sm-icon" title="Duplicate"><i class="fas fa-copy"></i></button>
+              <button class="btn-sm-icon" title="Preview"><i class="fas fa-eye"></i></button>
+              <button class="btn-sm-icon danger" title="Delete"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Volunteer Appreciation</strong></td>
+            <td><span class="category-badge">Thank You</span></td>
+            <td><span class="status-badge inactive">Inactive</span></td>
+            <td>Mar 15, 2026</td>
+            <td style="text-align:right">
+              <button class="btn-sm-icon" title="Edit" onclick="openEditor('Volunteer Appreciation')"><i class="fas fa-pen"></i></button>
+              <button class="btn-sm-icon" title="Duplicate"><i class="fas fa-copy"></i></button>
+              <button class="btn-sm-icon" title="Preview"><i class="fas fa-eye"></i></button>
+              <button class="btn-sm-icon danger" title="Delete"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===================== EDITOR VIEW ===================== -->
+  <div class="editor-view" id="editorView">
+
+    <!-- Editor Header -->
+    <div class="editor-header">
+      <div class="editor-header-left">
+        <button class="back-btn" onclick="closeEditor()" title="Back to Templates">
+          <i class="fas fa-arrow-left"></i>
+        </button>
+        <input type="text" class="editor-title-input" id="editorTitleInput" value="Donation Thank You">
+        <select class="design-select" style="flex-shrink:0">
+          <option>Thank You</option>
+          <option>Newsletter</option>
+          <option>Event</option>
+          <option>Fundraising</option>
+          <option>Onboarding</option>
+          <option>Alert</option>
+          <option>Tax/Receipt</option>
+        </select>
+        <div class="status-toggle">
+          <button class="active" onclick="setEditorStatus(this, 'active')">Active</button>
+          <button onclick="setEditorStatus(this, 'draft')">Draft</button>
+          <button onclick="setEditorStatus(this, 'inactive')">Inactive</button>
+        </div>
+      </div>
+      <div class="editor-header-right">
+        <button class="btn-primary-accent" onclick="alert('Template saved!')"><i class="fas fa-save me-1"></i> Save</button>
+        <button class="btn-outline-accent" onclick="alert('Test email sent!')"><i class="fas fa-paper-plane me-1"></i> Send Test Email</button>
+        <button class="btn-outline-accent"><i class="fas fa-eye me-1"></i> Preview</button>
+      </div>
+    </div>
+
+    <!-- Split Pane -->
+    <div class="editor-split">
+
+      <!-- Left Panel — Editor -->
+      <div class="editor-left">
+        <div class="editor-tabs">
+          <button class="editor-tab active" onclick="switchEditorTab(this, 'contentTab')">Content</button>
+          <button class="editor-tab" onclick="switchEditorTab(this, 'designTab')">Design</button>
+          <button class="editor-tab" onclick="switchEditorTab(this, 'settingsTab')">Settings</button>
+        </div>
+        <div class="tab-content">
+
+          <!-- Tab 1: Content -->
+          <div class="tab-pane active" id="contentTab">
+            <div class="form-group">
+              <label>Subject Line</label>
+              <input type="text" value="Thank you for your generous gift, {{FirstName}}!">
+            </div>
+            <div class="form-group">
+              <label>Preheader Text</label>
+              <input type="text" value="Your donation of {{DonationAmount}} makes a difference">
+            </div>
+
+            <div class="form-group">
+              <label>Email Body</label>
+              <!-- WYSIWYG Toolbar -->
+              <div class="wysiwyg-toolbar">
+                <button title="Bold"><i class="fas fa-bold"></i></button>
+                <button title="Italic"><i class="fas fa-italic"></i></button>
+                <button title="Underline"><i class="fas fa-underline"></i></button>
+                <div class="toolbar-divider"></div>
+                <button title="Insert Link"><i class="fas fa-link"></i></button>
+                <button title="Insert Image"><i class="fas fa-image"></i></button>
+                <div class="toolbar-divider"></div>
+                <button title="Align Left"><i class="fas fa-align-left"></i></button>
+                <button title="Align Center"><i class="fas fa-align-center"></i></button>
+                <button title="Align Right"><i class="fas fa-align-right"></i></button>
+                <div class="toolbar-divider"></div>
+                <button title="Text Color"><i class="fas fa-palette"></i></button>
+                <button title="Font Size"><i class="fas fa-text-height"></i></button>
+              </div>
+
+              <!-- Content Blocks -->
+              <div class="content-blocks">
+                <!-- Header Block -->
+                <div class="content-block">
+                  <i class="fas fa-grip-vertical block-drag-handle"></i>
+                  <div class="block-icon header-block"><i class="fas fa-heading"></i></div>
+                  <div class="block-body">
+                    <div class="block-label">Header Block</div>
+                    <div class="block-content">Organization Logo + "Thank You"</div>
+                  </div>
+                  <div class="block-actions">
+                    <button title="Edit"><i class="fas fa-pen"></i></button>
+                    <button title="Duplicate"><i class="fas fa-copy"></i></button>
+                    <button class="delete-btn" title="Delete"><i class="fas fa-trash"></i></button>
+                  </div>
+                </div>
+
+                <!-- Text Block 1 -->
+                <div class="content-block">
+                  <i class="fas fa-grip-vertical block-drag-handle"></i>
+                  <div class="block-icon text-block"><i class="fas fa-paragraph"></i></div>
+                  <div class="block-body">
+                    <div class="block-label">Text Block</div>
+                    <div class="block-content">
+                      Dear <span class="placeholder-tag">{{FirstName}}</span>,<br>
+                      Thank you for your generous donation of <span class="placeholder-tag">{{DonationAmount}}</span> <span class="placeholder-tag">{{Currency}}</span> on <span class="placeholder-tag">{{DonationDate}}</span>.
+                    </div>
+                  </div>
+                  <div class="block-actions">
+                    <button title="Edit"><i class="fas fa-pen"></i></button>
+                    <button title="Duplicate"><i class="fas fa-copy"></i></button>
+                    <button class="delete-btn" title="Delete"><i class="fas fa-trash"></i></button>
+                  </div>
+                </div>
+
+                <!-- Text Block 2 -->
+                <div class="content-block">
+                  <i class="fas fa-grip-vertical block-drag-handle"></i>
+                  <div class="block-icon text-block"><i class="fas fa-paragraph"></i></div>
+                  <div class="block-body">
+                    <div class="block-label">Text Block</div>
+                    <div class="block-content">
+                      Your contribution to <span class="placeholder-tag">{{Purpose}}</span> is making a real difference in the lives of those we serve.
+                    </div>
+                  </div>
+                  <div class="block-actions">
+                    <button title="Edit"><i class="fas fa-pen"></i></button>
+                    <button title="Duplicate"><i class="fas fa-copy"></i></button>
+                    <button class="delete-btn" title="Delete"><i class="fas fa-trash"></i></button>
+                  </div>
+                </div>
+
+                <!-- Impact Block -->
+                <div class="content-block">
+                  <i class="fas fa-grip-vertical block-drag-handle"></i>
+                  <div class="block-icon impact-block"><i class="fas fa-chart-bar"></i></div>
+                  <div class="block-body">
+                    <div class="block-label">Impact Block</div>
+                    <div class="block-content">
+                      250 children educated &bull; 12 villages with clean water &bull; 3,400 medical consultations
+                    </div>
+                  </div>
+                  <div class="block-actions">
+                    <button title="Edit"><i class="fas fa-pen"></i></button>
+                    <button title="Duplicate"><i class="fas fa-copy"></i></button>
+                    <button class="delete-btn" title="Delete"><i class="fas fa-trash"></i></button>
+                  </div>
+                </div>
+
+                <!-- Button Block -->
+                <div class="content-block">
+                  <i class="fas fa-grip-vertical block-drag-handle"></i>
+                  <div class="block-icon button-block"><i class="fas fa-square"></i></div>
+                  <div class="block-body">
+                    <div class="block-label">Button Block</div>
+                    <div class="block-content">"View Your Receipt" &rarr; <span class="placeholder-tag">{{ReceiptLink}}</span></div>
+                  </div>
+                  <div class="block-actions">
+                    <button title="Edit"><i class="fas fa-pen"></i></button>
+                    <button title="Duplicate"><i class="fas fa-copy"></i></button>
+                    <button class="delete-btn" title="Delete"><i class="fas fa-trash"></i></button>
+                  </div>
+                </div>
+
+                <!-- Text Block 3 -->
+                <div class="content-block">
+                  <i class="fas fa-grip-vertical block-drag-handle"></i>
+                  <div class="block-icon text-block"><i class="fas fa-paragraph"></i></div>
+                  <div class="block-body">
+                    <div class="block-label">Text Block</div>
+                    <div class="block-content">
+                      Receipt Number: <span class="placeholder-tag">{{ReceiptNumber}}</span><br>
+                      With gratitude, <span class="placeholder-tag">{{OrgName}}</span>
+                    </div>
+                  </div>
+                  <div class="block-actions">
+                    <button title="Edit"><i class="fas fa-pen"></i></button>
+                    <button title="Duplicate"><i class="fas fa-copy"></i></button>
+                    <button class="delete-btn" title="Delete"><i class="fas fa-trash"></i></button>
+                  </div>
+                </div>
+
+                <!-- Footer Block -->
+                <div class="content-block">
+                  <i class="fas fa-grip-vertical block-drag-handle"></i>
+                  <div class="block-icon footer-block"><i class="fas fa-shoe-prints"></i></div>
+                  <div class="block-body">
+                    <div class="block-label">Footer Block</div>
+                    <div class="block-content">Unsubscribe | Privacy Policy | Social Icons</div>
+                  </div>
+                  <div class="block-actions">
+                    <button title="Edit"><i class="fas fa-pen"></i></button>
+                    <button title="Duplicate"><i class="fas fa-copy"></i></button>
+                    <button class="delete-btn" title="Delete"><i class="fas fa-trash"></i></button>
+                  </div>
+                </div>
+
+                <!-- Add Block -->
+                <div style="position: relative;">
+                  <button class="add-block-btn" onclick="toggleBlockPicker()">
+                    <i class="fas fa-plus"></i> Add Block
+                  </button>
+                  <div class="block-type-picker" id="blockPicker">
+                    <button class="block-type-option" onclick="toggleBlockPicker()"><div class="block-icon header-block" style="width:24px;height:24px;font-size:0.625rem"><i class="fas fa-heading"></i></div> Header</button>
+                    <button class="block-type-option" onclick="toggleBlockPicker()"><div class="block-icon text-block" style="width:24px;height:24px;font-size:0.625rem"><i class="fas fa-paragraph"></i></div> Text</button>
+                    <button class="block-type-option" onclick="toggleBlockPicker()"><div class="block-icon image-block" style="width:24px;height:24px;font-size:0.625rem"><i class="fas fa-image"></i></div> Image</button>
+                    <button class="block-type-option" onclick="toggleBlockPicker()"><div class="block-icon button-block" style="width:24px;height:24px;font-size:0.625rem"><i class="fas fa-square"></i></div> Button</button>
+                    <button class="block-type-option" onclick="toggleBlockPicker()"><div class="block-icon divider-block" style="width:24px;height:24px;font-size:0.625rem"><i class="fas fa-minus"></i></div> Divider</button>
+                    <button class="block-type-option" onclick="toggleBlockPicker()"><div class="block-icon impact-block" style="width:24px;height:24px;font-size:0.625rem"><i class="fas fa-chart-bar"></i></div> Impact</button>
+                    <button class="block-type-option" onclick="toggleBlockPicker()"><div class="block-icon footer-block" style="width:24px;height:24px;font-size:0.625rem"><i class="fas fa-shoe-prints"></i></div> Footer</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Placeholder Insertion Panel -->
+            <div class="placeholder-panel">
+              <button class="placeholder-panel-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
+                <span><i class="fas fa-code me-2"></i>Insert Placeholder</span>
+                <i class="fas fa-chevron-down"></i>
+              </button>
+              <div class="placeholder-panel-body">
+                <div class="placeholder-group-title">Contact</div>
+                <div class="placeholder-tags">
+                  <button class="placeholder-tag-btn">{{FirstName}}</button>
+                  <button class="placeholder-tag-btn">{{LastName}}</button>
+                  <button class="placeholder-tag-btn">{{FullName}}</button>
+                  <button class="placeholder-tag-btn">{{Email}}</button>
+                  <button class="placeholder-tag-btn">{{Phone}}</button>
+                  <button class="placeholder-tag-btn">{{ContactCode}}</button>
+                  <button class="placeholder-tag-btn">{{Salutation}}</button>
+                </div>
+                <div class="placeholder-group-title">Donation</div>
+                <div class="placeholder-tags">
+                  <button class="placeholder-tag-btn">{{DonationAmount}}</button>
+                  <button class="placeholder-tag-btn">{{Currency}}</button>
+                  <button class="placeholder-tag-btn">{{DonationDate}}</button>
+                  <button class="placeholder-tag-btn">{{ReceiptNumber}}</button>
+                  <button class="placeholder-tag-btn">{{Purpose}}</button>
+                  <button class="placeholder-tag-btn">{{PaymentMode}}</button>
+                </div>
+                <div class="placeholder-group-title">Organization</div>
+                <div class="placeholder-tags">
+                  <button class="placeholder-tag-btn">{{OrgName}}</button>
+                  <button class="placeholder-tag-btn">{{OrgAddress}}</button>
+                  <button class="placeholder-tag-btn">{{OrgPhone}}</button>
+                  <button class="placeholder-tag-btn">{{OrgEmail}}</button>
+                  <button class="placeholder-tag-btn">{{OrgLogo}}</button>
+                  <button class="placeholder-tag-btn">{{OrgWebsite}}</button>
+                </div>
+                <div class="placeholder-group-title">Campaign</div>
+                <div class="placeholder-tags">
+                  <button class="placeholder-tag-btn">{{CampaignName}}</button>
+                  <button class="placeholder-tag-btn">{{CampaignGoal}}</button>
+                  <button class="placeholder-tag-btn">{{CampaignRaised}}</button>
+                  <button class="placeholder-tag-btn">{{CampaignEndDate}}</button>
+                </div>
+                <div class="placeholder-group-title">Event</div>
+                <div class="placeholder-tags">
+                  <button class="placeholder-tag-btn">{{EventName}}</button>
+                  <button class="placeholder-tag-btn">{{EventDate}}</button>
+                  <button class="placeholder-tag-btn">{{EventVenue}}</button>
+                  <button class="placeholder-tag-btn">{{EventLink}}</button>
+                </div>
+                <div class="placeholder-group-title">System</div>
+                <div class="placeholder-tags">
+                  <button class="placeholder-tag-btn">{{UnsubscribeLink}}</button>
+                  <button class="placeholder-tag-btn">{{ViewInBrowserLink}}</button>
+                  <button class="placeholder-tag-btn">{{CurrentDate}}</button>
+                  <button class="placeholder-tag-btn">{{CurrentYear}}</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 2: Design -->
+          <div class="tab-pane" id="designTab">
+            <div class="design-row">
+              <span class="design-label">Background Color</span>
+              <div class="color-input-wrapper">
+                <input type="color" value="#f4f4f4">
+                <span>#f4f4f4</span>
+              </div>
+            </div>
+            <div class="design-row">
+              <span class="design-label">Content Width</span>
+              <div class="range-wrapper">
+                <input type="range" min="400" max="800" value="600" oninput="this.nextElementSibling.textContent = this.value + 'px'">
+                <span>600px</span>
+              </div>
+            </div>
+            <div class="design-row">
+              <span class="design-label">Font Family</span>
+              <select class="design-select">
+                <option>Arial</option>
+                <option>Helvetica</option>
+                <option>Georgia</option>
+                <option>Verdana</option>
+              </select>
+            </div>
+            <div class="design-row">
+              <span class="design-label">Primary Color</span>
+              <div class="color-input-wrapper">
+                <input type="color" value="#0e7490">
+                <span>#0e7490</span>
+              </div>
+            </div>
+            <div class="design-row">
+              <span class="design-label">Button Style</span>
+              <select class="design-select">
+                <option>Rounded</option>
+                <option>Square</option>
+                <option>Pill</option>
+              </select>
+            </div>
+            <div class="design-row">
+              <span class="design-label">Header Layout</span>
+              <select class="design-select">
+                <option>Logo Left</option>
+                <option>Logo Center</option>
+                <option>No Header</option>
+              </select>
+            </div>
+            <div class="design-row">
+              <span class="design-label">Footer Layout</span>
+              <select class="design-select">
+                <option>Standard</option>
+                <option>Minimal</option>
+                <option>No Footer</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Tab 3: Settings -->
+          <div class="tab-pane" id="settingsTab">
+            <div class="form-group">
+              <label>Template Slug</label>
+              <input type="text" value="donation-thank-you">
+            </div>
+            <div class="form-group">
+              <label>Description</label>
+              <textarea rows="3" placeholder="Internal notes about this template...">Standard thank-you email sent after each donation is processed. Includes receipt info and impact metrics.</textarea>
+            </div>
+            <div class="form-group">
+              <label>Linked Entity Type</label>
+              <select>
+                <option selected>Donation</option>
+                <option>Contact</option>
+                <option>Event</option>
+                <option>Campaign</option>
+                <option>General</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Auto-send Trigger</label>
+              <select>
+                <option>None</option>
+                <option selected>On Donation Received</option>
+                <option>On Event Registration</option>
+                <option>On Contact Created</option>
+                <option>On Membership Renewal</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Language</label>
+              <select>
+                <option selected>English</option>
+                <option>Arabic (RTL)</option>
+                <option>Bengali</option>
+              </select>
+            </div>
+            <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
+              <button class="btn-primary-accent" onclick="alert('Settings saved!')"><i class="fas fa-save me-1"></i> Save</button>
+              <button class="btn-outline-accent" onclick="switchEditorTab(document.querySelector('.editor-tab'), 'contentTab')">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Panel — Live Preview -->
+      <div class="editor-right">
+        <div class="preview-header">
+          <span class="preview-header-title"><i class="fas fa-eye me-1"></i> Live Preview</span>
+          <div class="device-toggle">
+            <button class="active" onclick="setDevice(this, 'desktop')"><i class="fas fa-desktop me-1"></i> Desktop</button>
+            <button onclick="setDevice(this, 'mobile')"><i class="fas fa-mobile-alt me-1"></i> Mobile</button>
+          </div>
+        </div>
+        <div class="preview-body">
+          <div class="preview-email" id="previewEmail">
+            <!-- Header -->
+            <div class="preview-email-header">
+              <i class="fas fa-hand-holding-heart" style="font-size:1.5rem;"></i>
+              <h2>Thank You</h2>
+            </div>
+
+            <!-- Body -->
+            <div class="preview-email-body">
+              <p>Dear <span class="highlight">Sarah</span>,</p>
+              <p>Thank you for your generous donation of <span class="highlight">$500.00</span> <span class="highlight">USD</span> on <span class="highlight">Apr 10, 2026</span>.</p>
+              <p>Your contribution to <span class="highlight">Clean Water Initiative</span> is making a real difference in the lives of those we serve.</p>
+
+              <div class="preview-impact-block">
+                <div class="preview-impact-item"><span style="font-size:1.125rem">&#127891;</span> 250 children educated</div>
+                <div class="preview-impact-item"><span style="font-size:1.125rem">&#128167;</span> 12 villages with clean water</div>
+                <div class="preview-impact-item"><span style="font-size:1.125rem">&#127973;</span> 3,400 medical consultations</div>
+              </div>
+
+              <p style="text-align:center;">
+                <a href="#" class="preview-cta-btn">View Your Receipt</a>
+              </p>
+
+              <p>Receipt Number: <span class="highlight">RCP-2026-001234</span><br>
+                Tax-deductible under <span class="highlight">Section 80G</span></p>
+
+              <p>With gratitude,<br><span class="highlight">Hope Foundation International</span></p>
+            </div>
+
+            <!-- Footer -->
+            <div class="preview-email-footer">
+              <a href="#">Unsubscribe</a> &bull; <a href="#">Privacy Policy</a> &bull; <a href="#">View in Browser</a>
+              <div class="social-icons">
+                <i class="fab fa-facebook"></i>
+                <i class="fab fa-twitter"></i>
+                <i class="fab fa-instagram"></i>
+                <i class="fab fa-linkedin"></i>
+              </div>
+              <p style="margin-top:0.5rem">&copy; 2026 Hope Foundation International. All rights reserved.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // View toggle (Grid / List)
+    function switchView(mode) {
+      const grid = document.getElementById('gridView');
+      const list = document.getElementById('listView');
+      const btns = document.querySelectorAll('.view-toggle button');
+
+      if (mode === 'grid') {
+        grid.classList.add('active');
+        list.classList.remove('active');
+        btns[0].classList.add('active');
+        btns[1].classList.remove('active');
+      } else {
+        grid.classList.remove('active');
+        list.classList.add('active');
+        btns[1].classList.add('active');
+        btns[0].classList.remove('active');
+      }
+    }
+
+    // Open / Close Editor
+    function openEditor(name) {
+      document.getElementById('galleryView').classList.add('hidden');
+      document.getElementById('editorView').classList.add('active');
+      if (name) {
+        document.getElementById('editorTitleInput').value = name;
+      } else {
+        document.getElementById('editorTitleInput').value = 'New Template';
+      }
+    }
+
+    function closeEditor() {
+      document.getElementById('galleryView').classList.remove('hidden');
+      document.getElementById('editorView').classList.remove('active');
+    }
+
+    // Editor tabs
+    function switchEditorTab(btn, tabId) {
+      document.querySelectorAll('.editor-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    // Status toggle
+    function setEditorStatus(btn, status) {
+      const parent = btn.parentElement;
+      parent.querySelectorAll('button').forEach(b => {
+        b.classList.remove('active', 'draft-active', 'inactive-active');
+      });
+      if (status === 'active') btn.classList.add('active');
+      else if (status === 'draft') btn.classList.add('draft-active');
+      else btn.classList.add('inactive-active');
+    }
+
+    // Device toggle (preview)
+    function setDevice(btn, device) {
+      const toggle = btn.parentElement;
+      toggle.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const preview = document.getElementById('previewEmail');
+      if (device === 'mobile') {
+        preview.classList.add('mobile-view');
+      } else {
+        preview.classList.remove('mobile-view');
+      }
+    }
+
+    // Block type picker
+    function toggleBlockPicker() {
+      document.getElementById('blockPicker').classList.toggle('show');
+    }
+
+    // Close picker when clicking outside
+    document.addEventListener('click', function (e) {
+      const picker = document.getElementById('blockPicker');
+      const addBtn = document.querySelector('.add-block-btn');
+      if (picker && !picker.contains(e.target) && e.target !== addBtn && !addBtn.contains(e.target)) {
+        picker.classList.remove('show');
+      }
+    });
+
+    // Filter templates (stub)
+    function filterTemplates() {
+      // In a real app, this would filter the cards/table rows
+    }
+  </script>
+
+</body>
+
+</html>

@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Organizational Unit - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .back-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 1rem;
+    }
+
+    .back-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .breadcrumb-nav {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .breadcrumb-nav a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .breadcrumb-nav a:hover { text-decoration: underline; }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons */
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover { background: #0c6577; border-color: #0c6577; color: white; }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover { background: var(--accent); color: white; }
+
+    .btn-outline-secondary {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-secondary:hover { border-color: var(--text-secondary); color: var(--text-primary); }
+
+    .btn-outline-danger {
+      background: white;
+      border: 1px solid var(--danger-color);
+      color: var(--danger-color);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-danger:hover { background: var(--danger-color); color: white; }
+
+    /* Form Card */
+    .form-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      max-width: 820px;
+      margin: 0 auto;
+    }
+
+    /* Section Header */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      padding: 1rem 1.5rem;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border-color);
+      font-weight: 700;
+      font-size: 0.875rem;
+      color: var(--text-primary);
+    }
+
+    .section-header:not(:first-child) {
+      border-top: 1px solid var(--border-color);
+    }
+
+    .section-header i {
+      color: var(--accent);
+      font-size: 0.9375rem;
+    }
+
+    .section-body {
+      padding: 1.25rem 1.5rem;
+    }
+
+    /* Form Controls */
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .form-row.single {
+      grid-template-columns: 1fr;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3125rem;
+    }
+
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .form-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .form-label .required {
+      color: var(--danger-color);
+      margin-left: 0.125rem;
+    }
+
+    .form-hint {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .form-hint i { font-size: 0.625rem; }
+
+    .form-control-custom {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8125rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      color: var(--text-primary);
+      background: white;
+    }
+
+    .form-control-custom:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .form-control-custom:disabled,
+    .form-control-custom[readonly] {
+      background: #f1f5f9;
+      color: var(--text-secondary);
+      cursor: not-allowed;
+    }
+
+    textarea.form-control-custom {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    select.form-control-custom {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      padding-right: 2rem;
+    }
+
+    /* Toggle Switch */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 40px;
+      height: 22px;
+      background: #cbd5e1;
+      border-radius: 11px;
+      cursor: pointer;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch.on { background: var(--accent); }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      background: white;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .toggle-switch.on::after { transform: translateX(18px); }
+
+    /* Type Selector Cards */
+    .type-options {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+    }
+
+    .type-option {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      border: 2px solid var(--border-color);
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .type-option:hover { border-color: var(--accent-light); }
+
+    .type-option.selected {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .type-option input[type="radio"] {
+      accent-color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .type-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8125rem;
+      flex-shrink: 0;
+    }
+
+    .type-icon.hq { background: #dbeafe; color: #2563eb; }
+    .type-icon.region { background: #dcfce7; color: #16a34a; }
+    .type-icon.branch { background: #fed7aa; color: #ea580c; }
+    .type-icon.subunit { background: #f1f5f9; color: #64748b; }
+
+    .type-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+    }
+
+    .type-desc {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+    }
+
+    /* Parent Tree Dropdown */
+    .tree-dropdown {
+      position: relative;
+    }
+
+    .tree-dropdown-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8125rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      background: white;
+      cursor: pointer;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .tree-dropdown-toggle:hover { border-color: var(--accent); }
+
+    .tree-dropdown-toggle i { color: var(--text-secondary); font-size: 0.75rem; }
+
+    .tree-dropdown-menu {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      margin-top: 0.25rem;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      max-height: 250px;
+      overflow-y: auto;
+      z-index: 100;
+      display: none;
+      padding: 0.375rem 0;
+    }
+
+    .tree-dropdown-menu.show { display: block; }
+
+    .tree-dropdown-search {
+      padding: 0.375rem 0.625rem;
+      margin: 0 0.375rem 0.375rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      width: calc(100% - 0.75rem);
+      outline: none;
+    }
+
+    .tree-dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.4375rem 0.75rem;
+      font-size: 0.8125rem;
+      cursor: pointer;
+      transition: background 0.12s;
+      color: var(--text-primary);
+    }
+
+    .tree-dropdown-item:hover { background: var(--accent-bg); }
+
+    .tree-dropdown-item.selected { background: var(--accent-bg); color: var(--accent); font-weight: 600; }
+
+    .tree-dropdown-item .indent { margin-left: 1rem; }
+    .tree-dropdown-item .indent-2 { margin-left: 2rem; }
+    .tree-dropdown-item .indent-3 { margin-left: 3rem; }
+
+    .tree-dropdown-item .item-icon {
+      font-size: 0.6875rem;
+      width: 16px;
+      text-align: center;
+    }
+
+    .tree-dropdown-item .item-code {
+      font-size: 0.625rem;
+      color: var(--text-secondary);
+      font-family: monospace;
+      margin-left: auto;
+    }
+
+    /* Checkboxes Grid */
+    .checkbox-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.8125rem;
+      cursor: pointer;
+    }
+
+    .checkbox-item input[type="checkbox"] {
+      accent-color: var(--accent);
+    }
+
+    /* Multi-select Tags */
+    .tag-select {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.375rem;
+      padding: 0.375rem 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      min-height: 38px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .tag-select:hover { border-color: var(--accent); }
+
+    .tag-item {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      background: var(--accent-bg);
+      color: var(--accent);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .tag-item .remove-tag {
+      cursor: pointer;
+      font-size: 0.625rem;
+      opacity: 0.7;
+    }
+
+    .tag-item .remove-tag:hover { opacity: 1; }
+
+    .tag-placeholder {
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      padding: 0.125rem 0.25rem;
+    }
+
+    /* Upload Area */
+    .upload-area {
+      border: 2px dashed var(--border-color);
+      border-radius: 0.5rem;
+      padding: 1.25rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .upload-area:hover {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .upload-area i {
+      font-size: 1.5rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.375rem;
+    }
+
+    .upload-area .upload-text {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .upload-area .upload-hint {
+      font-size: 0.6875rem;
+      color: #94a3b8;
+    }
+
+    /* Color Picker */
+    .color-picker-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .color-preview {
+      width: 36px;
+      height: 36px;
+      border-radius: 0.5rem;
+      border: 2px solid var(--border-color);
+      cursor: pointer;
+    }
+
+    .color-hex {
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    /* Form Footer */
+    .form-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .form-footer-left {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    /* Edit mode info */
+    .edit-meta {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      display: flex;
+      gap: 1rem;
+    }
+
+    /* Phone input with code prefix */
+    .phone-input {
+      display: flex;
+      gap: 0;
+    }
+
+    .phone-prefix {
+      padding: 0.5rem 0.625rem;
+      font-size: 0.8125rem;
+      border: 1px solid var(--border-color);
+      border-right: none;
+      border-radius: 0.5rem 0 0 0.5rem;
+      background: #f8fafc;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .phone-input .form-control-custom {
+      border-radius: 0 0.5rem 0.5rem 0;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .form-row { grid-template-columns: 1fr; }
+      .type-options { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" onclick="parent.loadContent('organization/org-unit-tree')" title="Back to tree">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <div>
+        <h1 id="pageTitle">Create Organizational Unit</h1>
+        <p class="breadcrumb-nav">
+          <a href="#" onclick="parent.loadContent('organization/org-unit-tree'); event.preventDefault();">Organization Structure</a>
+          <i class="fas fa-chevron-right mx-1" style="font-size:0.5rem;"></i>
+          <span>Create Unit</span>
+        </p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="saveUnit()"><i class="fas fa-save me-1"></i>Save</button>
+      <button class="btn-outline-accent"><i class="fas fa-plus me-1"></i>Save & Add Another</button>
+      <button class="btn-outline-secondary" onclick="parent.loadContent('organization/org-unit-tree')"><i class="fas fa-times me-1"></i>Cancel</button>
+    </div>
+  </div>
+
+  <!-- Form Card -->
+  <div class="form-card">
+
+    <!-- Section 1: Basic Information -->
+    <div class="section-header">
+      <i class="fas fa-info-circle"></i> Basic Information
+    </div>
+    <div class="section-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Unit Name <span class="required">*</span></label>
+          <input type="text" class="form-control-custom" value="Dubai Branch" placeholder="Enter unit name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Short Name</label>
+          <input type="text" class="form-control-custom" value="Dubai" placeholder="Short/abbreviated name">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Unit Code <span class="required">*</span></label>
+          <input type="text" class="form-control-custom" value="BR-DXB" placeholder="e.g. BR-DXB">
+          <span class="form-hint"><i class="fas fa-info-circle"></i> Unique identifier used in reports and data exports. Auto-generated from type + name.</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <div class="toggle-row">
+            <span style="font-size:0.8125rem; color:var(--text-secondary);">Active</span>
+            <div class="toggle-switch on" onclick="this.classList.toggle('on')"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:1rem;">
+        <label class="form-label">Unit Type <span class="required">*</span></label>
+        <div class="type-options">
+          <label class="type-option" onclick="selectType(this)">
+            <input type="radio" name="unitType" value="hq">
+            <span class="type-icon hq"><i class="fas fa-building"></i></span>
+            <div>
+              <div class="type-label">Headquarters (HQ)</div>
+              <div class="type-desc">Top-level entity (usually only one)</div>
+            </div>
+          </label>
+          <label class="type-option" onclick="selectType(this)">
+            <input type="radio" name="unitType" value="region">
+            <span class="type-icon region"><i class="fas fa-globe"></i></span>
+            <div>
+              <div class="type-label">Region</div>
+              <div class="type-desc">Geographic or operational grouping</div>
+            </div>
+          </label>
+          <label class="type-option selected" onclick="selectType(this)">
+            <input type="radio" name="unitType" value="branch" checked>
+            <span class="type-icon branch"><i class="fas fa-building-flag"></i></span>
+            <div>
+              <div class="type-label">Branch</div>
+              <div class="type-desc">Physical office or operational unit</div>
+            </div>
+          </label>
+          <label class="type-option" onclick="selectType(this)">
+            <input type="radio" name="unitType" value="subunit">
+            <span class="type-icon subunit"><i class="fas fa-file-alt"></i></span>
+            <div>
+              <div class="type-label">Sub-unit / Program</div>
+              <div class="type-desc">Department, program, or project</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Parent Unit <span class="required">*</span></label>
+          <div class="tree-dropdown">
+            <div class="tree-dropdown-toggle" onclick="toggleParentDropdown()">
+              <span>Middle East & Africa Region (REG-MEA)</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="tree-dropdown-menu" id="parentDropdown">
+              <input type="text" class="tree-dropdown-search" placeholder="Search parent units...">
+              <div class="tree-dropdown-item" onclick="selectParent(this)">
+                <span class="item-icon" style="color:#2563eb;"><i class="fas fa-building"></i></span>
+                <span>Hope Foundation (HQ)</span>
+                <span class="item-code">HQ-001</span>
+              </div>
+              <div class="tree-dropdown-item" onclick="selectParent(this)">
+                <span class="indent"></span>
+                <span class="item-icon" style="color:#16a34a;"><i class="fas fa-globe-americas"></i></span>
+                <span>North America Region</span>
+                <span class="item-code">REG-NA</span>
+              </div>
+              <div class="tree-dropdown-item selected" onclick="selectParent(this)">
+                <span class="indent"></span>
+                <span class="item-icon" style="color:#16a34a;"><i class="fas fa-globe-africa"></i></span>
+                <span>Middle East & Africa Region</span>
+                <span class="item-code">REG-MEA</span>
+              </div>
+              <div class="tree-dropdown-item" onclick="selectParent(this)">
+                <span class="indent-2"></span>
+                <span class="item-icon" style="color:#ea580c;"><i class="fas fa-building-flag"></i></span>
+                <span>Dubai Branch</span>
+                <span class="item-code">BR-DXB</span>
+              </div>
+              <div class="tree-dropdown-item" onclick="selectParent(this)">
+                <span class="indent-2"></span>
+                <span class="item-icon" style="color:#ea580c;"><i class="fas fa-building-flag"></i></span>
+                <span>Riyadh Branch</span>
+                <span class="item-code">BR-RYD</span>
+              </div>
+              <div class="tree-dropdown-item" onclick="selectParent(this)">
+                <span class="indent-2"></span>
+                <span class="item-icon" style="color:#ea580c;"><i class="fas fa-building-flag"></i></span>
+                <span>Nairobi Branch</span>
+                <span class="item-code">BR-NBO</span>
+              </div>
+              <div class="tree-dropdown-item" onclick="selectParent(this)">
+                <span class="indent"></span>
+                <span class="item-icon" style="color:#16a34a;"><i class="fas fa-globe-asia"></i></span>
+                <span>South Asia Region</span>
+                <span class="item-code">REG-SA</span>
+              </div>
+              <div class="tree-dropdown-item" onclick="selectParent(this)">
+                <span class="indent"></span>
+                <span class="item-icon" style="color:#16a34a;"><i class="fas fa-globe-europe"></i></span>
+                <span>Europe Region</span>
+                <span class="item-code">REG-EU</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row single">
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-control-custom" placeholder="Brief description of this unit's purpose and scope">Main operational branch serving UAE and Gulf countries</textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Location & Contact -->
+    <div class="section-header">
+      <i class="fas fa-map-marker-alt"></i> Location & Contact
+    </div>
+    <div class="section-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Country <span class="required">*</span></label>
+          <select class="form-control-custom">
+            <option value="">Select country...</option>
+            <option>&#127464;&#127462; Canada</option>
+            <option>&#127466;&#127468; Egypt</option>
+            <option>&#127467;&#127479; France</option>
+            <option>&#127470;&#127475; India</option>
+            <option>&#127472;&#127466; Kenya</option>
+            <option>&#127480;&#127462; Saudi Arabia</option>
+            <option selected>&#127462;&#127466; United Arab Emirates</option>
+            <option>&#127468;&#127463; United Kingdom</option>
+            <option>&#127482;&#127480; United States</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">State / Province</label>
+          <select class="form-control-custom">
+            <option value="">Select state/province...</option>
+            <option>Abu Dhabi</option>
+            <option selected>Dubai</option>
+            <option>Sharjah</option>
+            <option>Ajman</option>
+            <option>Ras Al Khaimah</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">City</label>
+          <select class="form-control-custom">
+            <option value="">Select city...</option>
+            <option selected>Dubai</option>
+            <option>Deira</option>
+            <option>Jebel Ali</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Postal / ZIP Code</label>
+          <input type="text" class="form-control-custom" value="" placeholder="Postal code">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Address Line 1</label>
+          <input type="text" class="form-control-custom" value="Office 401, Business Bay Tower" placeholder="Street address, building">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Address Line 2</label>
+          <input type="text" class="form-control-custom" value="Dubai, UAE" placeholder="Suite, floor, etc.">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <div class="phone-input">
+            <span class="phone-prefix">+971</span>
+            <input type="text" class="form-control-custom" value="4-123-4567" placeholder="Phone number">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-control-custom" value="dubai@hopefoundation.org" placeholder="unit@organization.org">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Timezone</label>
+          <select class="form-control-custom">
+            <option selected>Asia/Dubai (GMT+4)</option>
+            <option>America/New_York (GMT-5)</option>
+            <option>America/Chicago (GMT-6)</option>
+            <option>America/Los_Angeles (GMT-8)</option>
+            <option>Europe/London (GMT+0)</option>
+            <option>Europe/Paris (GMT+1)</option>
+            <option>Africa/Nairobi (GMT+3)</option>
+            <option>Asia/Riyadh (GMT+3)</option>
+            <option>Asia/Kolkata (GMT+5:30)</option>
+            <option>Asia/Dhaka (GMT+6)</option>
+          </select>
+          <span class="form-hint"><i class="fas fa-info-circle"></i> Auto-populated from country, editable</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Management -->
+    <div class="section-header">
+      <i class="fas fa-user-tie"></i> Management
+    </div>
+    <div class="section-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Unit Head / Manager</label>
+          <select class="form-control-custom">
+            <option value="">Select manager...</option>
+            <option selected>Mohammad Al-Rashid — Branch Manager (Dubai Branch)</option>
+            <option>Fatima Hassan — Program Coordinator (Dubai Branch)</option>
+            <option>Ahmed Salim — Field Officer (Dubai Branch)</option>
+            <option>Khalid Ibrahim — Finance Officer (Dubai Branch)</option>
+            <option>Omar Farooq — IT Support (Dubai Branch)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Deputy / Alternate</label>
+          <select class="form-control-custom">
+            <option value="">Select deputy (optional)...</option>
+            <option>Mohammad Al-Rashid — Branch Manager</option>
+            <option selected>Fatima Hassan — Program Coordinator</option>
+            <option>Ahmed Salim — Field Officer</option>
+            <option>Khalid Ibrahim — Finance Officer</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Effective Date</label>
+          <input type="date" class="form-control-custom" value="2024-01-15">
+        </div>
+      </div>
+      <div class="form-row single">
+        <div class="form-group">
+          <label class="form-label">Notes</label>
+          <textarea class="form-control-custom" placeholder="Internal notes about this unit">Main operational hub for Gulf region. Handles both direct fundraising and program implementation for UAE, Oman, and Bahrain.</textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: Fundraising Configuration -->
+    <div class="section-header">
+      <i class="fas fa-hand-holding-usd"></i> Fundraising Configuration
+    </div>
+    <div class="section-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Annual Fundraising Target</label>
+          <div style="position:relative;">
+            <input type="text" class="form-control-custom" value="250,000" placeholder="0.00" style="padding-left:2.5rem;">
+            <span style="position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); font-size:0.8125rem; color:var(--text-secondary); font-weight:600;">AED</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Target Currency</label>
+          <select class="form-control-custom">
+            <option selected>AED (د.إ) — UAE Dirham</option>
+            <option>USD ($) — US Dollar</option>
+            <option>GBP (£) — British Pound</option>
+            <option>INR (₹) — Indian Rupee</option>
+            <option>EUR (€) — Euro</option>
+            <option>SAR (﷼) — Saudi Riyal</option>
+            <option>KES (KSh) — Kenyan Shilling</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Target Period</label>
+          <select class="form-control-custom">
+            <option selected>Calendar Year (Jan - Dec)</option>
+            <option>Fiscal Year (configurable start month)</option>
+            <option>Custom</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Accepts Donations Directly</label>
+          <div class="toggle-row">
+            <span style="font-size:0.8125rem; color:var(--text-secondary);">Yes — this unit collects donations</span>
+            <div class="toggle-switch on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <span class="form-hint"><i class="fas fa-info-circle"></i> If No, donations are allocated to child units only</span>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:1rem;">
+        <label class="form-label">Linked Donation Purposes</label>
+        <div class="tag-select" onclick="this.querySelector('.tag-placeholder')?.remove()">
+          <span class="tag-item">Children's Education <span class="remove-tag">&times;</span></span>
+          <span class="tag-item">Clean Water <span class="remove-tag">&times;</span></span>
+          <span class="tag-item">Orphan Care <span class="remove-tag">&times;</span></span>
+        </div>
+        <span class="form-hint"><i class="fas fa-info-circle"></i> Restrict which donation purposes this unit can collect for. Leave empty for all purposes.</span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Default Payment Methods</label>
+        <div class="checkbox-grid">
+          <label class="checkbox-item"><input type="checkbox" checked> Cash</label>
+          <label class="checkbox-item"><input type="checkbox" checked> Cheque</label>
+          <label class="checkbox-item"><input type="checkbox" checked> Bank Transfer</label>
+          <label class="checkbox-item"><input type="checkbox" checked> Online</label>
+          <label class="checkbox-item"><input type="checkbox"> Mobile Money</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 5: Data Access & Settings -->
+    <div class="section-header">
+      <i class="fas fa-shield-alt"></i> Data Access & Settings
+    </div>
+    <div class="section-body">
+      <div class="form-group" style="margin-bottom:1.25rem;">
+        <label class="form-label">Data Visibility</label>
+        <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.375rem;">
+          <label class="type-option" style="border-width:1px;" onclick="selectVisibility(this)">
+            <input type="radio" name="visibility" value="own">
+            <div>
+              <div class="type-label">&#128274; Own data only</div>
+              <div class="type-desc">Users in this unit see only this unit's records</div>
+            </div>
+          </label>
+          <label class="type-option selected" style="border-width:1px;" onclick="selectVisibility(this)">
+            <input type="radio" name="visibility" value="children" checked>
+            <div>
+              <div class="type-label">&#128065; Include child units</div>
+              <div class="type-desc">Users see this unit + all children (default)</div>
+            </div>
+          </label>
+          <label class="type-option" style="border-width:1px;" onclick="selectVisibility(this)">
+            <input type="radio" name="visibility" value="all">
+            <div>
+              <div class="type-label">&#127760; All units</div>
+              <div class="type-desc">Users see entire organization's data</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Default Currency for Reports</label>
+          <select class="form-control-custom">
+            <option selected>AED (د.إ) — UAE Dirham</option>
+            <option>USD ($) — US Dollar</option>
+            <option>GBP (£) — British Pound</option>
+            <option>INR (₹) — Indian Rupee</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fiscal Year Start Month</label>
+          <select class="form-control-custom">
+            <option selected>January</option>
+            <option>April</option>
+            <option>July</option>
+            <option>October</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Auto-assign contacts by region</label>
+          <div class="toggle-row">
+            <span style="font-size:0.8125rem; color:var(--text-secondary);">Yes</span>
+            <div class="toggle-switch on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <span class="form-hint"><i class="fas fa-info-circle"></i> New contacts from this unit's country/city are auto-assigned to this unit</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 6: Branding (optional) -->
+    <div class="section-header">
+      <i class="fas fa-palette"></i> Branding <span style="font-weight:400; font-size:0.75rem; color:var(--text-secondary); margin-left:0.5rem;">(optional)</span>
+    </div>
+    <div class="section-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Unit Logo</label>
+          <div class="upload-area">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <div class="upload-text">Click to upload logo</div>
+            <div class="upload-hint">PNG, JPG or SVG. Max 2MB. Used in unit-specific reports/receipts.</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Unit Banner</label>
+          <div class="upload-area">
+            <i class="fas fa-image"></i>
+            <div class="upload-text">Click to upload banner</div>
+            <div class="upload-hint">Recommended 1200x300px. Used in campaign pages.</div>
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Primary Color</label>
+          <div class="color-picker-row">
+            <input type="color" value="#0e7490" class="color-preview" style="border:none; padding:0; cursor:pointer;">
+            <span class="color-hex">#0e7490</span>
+            <span class="form-hint"><i class="fas fa-info-circle"></i> Used for unit-specific branded pages and communications</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Footer -->
+    <div class="form-footer">
+      <div class="form-footer-left">
+        <button class="btn-primary-accent" onclick="saveUnit()"><i class="fas fa-save me-1"></i>Save</button>
+        <button class="btn-outline-accent"><i class="fas fa-plus me-1"></i>Save & Add Another</button>
+        <button class="btn-outline-secondary" onclick="parent.loadContent('organization/org-unit-tree')"><i class="fas fa-times me-1"></i>Cancel</button>
+      </div>
+      <!-- Edit mode: show delete + meta -->
+      <div style="display:flex; align-items:center; gap:1rem;">
+        <div class="edit-meta">
+          <span>Created: Jan 15, 2024 by Admin</span>
+          <span>Last Modified: Apr 10, 2026</span>
+        </div>
+        <button class="btn-outline-danger" title="Cannot delete — unit has 2 child units, 12 staff, and 1,234 contacts assigned" disabled style="opacity:0.5; cursor:not-allowed;">
+          <i class="fas fa-trash me-1"></i>Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Type selector
+    function selectType(el) {
+      document.querySelectorAll('.type-option').forEach(o => o.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+
+    // Visibility selector
+    function selectVisibility(el) {
+      el.closest('.form-group').querySelectorAll('.type-option').forEach(o => o.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+
+    // Parent dropdown
+    function toggleParentDropdown() {
+      document.getElementById('parentDropdown').classList.toggle('show');
+    }
+
+    function selectParent(el) {
+      document.querySelectorAll('.tree-dropdown-item').forEach(i => i.classList.remove('selected'));
+      el.classList.add('selected');
+      const name = el.querySelector('span:not(.item-icon):not(.item-code):not(.indent):not(.indent-2):not(.indent-3)');
+      const code = el.querySelector('.item-code');
+      if (name && code) {
+        el.closest('.tree-dropdown').querySelector('.tree-dropdown-toggle span').textContent =
+          name.textContent.trim() + ' (' + code.textContent.trim() + ')';
+      }
+      document.getElementById('parentDropdown').classList.remove('show');
+    }
+
+    // Close dropdown on outside click
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.tree-dropdown')) {
+        document.getElementById('parentDropdown').classList.remove('show');
+      }
+    });
+
+    // Color picker sync
+    document.querySelector('input[type="color"]').addEventListener('input', function () {
+      this.closest('.color-picker-row').querySelector('.color-hex').textContent = this.value;
+    });
+
+    // Save simulation
+    function saveUnit() {
+      alert('Unit saved successfully! (Mockup)');
+      parent.loadContent('organization/org-unit-tree');
+    }
+  </script>
+
+</body>
+</html>

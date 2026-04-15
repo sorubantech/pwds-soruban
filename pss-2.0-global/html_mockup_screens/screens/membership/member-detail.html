@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Member Detail - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --membership-accent: #d97706;
+      --membership-bg: #fffbeb;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .back-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .back-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .member-header-info h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .member-header-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-top: 0.25rem;
+    }
+
+    .member-header-meta span {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .member-id {
+      font-weight: 600;
+      color: var(--accent) !important;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .status-badge .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+
+    .status-badge.active .dot { background: var(--success-color); }
+    .status-badge.active { color: #15803d; }
+
+    .tier-badge-lg {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.8125rem;
+      font-weight: 700;
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    .contact-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.8125rem;
+      cursor: pointer;
+    }
+
+    .contact-link:hover {
+      text-decoration: underline;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #0c6577;
+      border-color: #0c6577;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-membership {
+      background: white;
+      border: 1px solid var(--membership-accent);
+      color: var(--membership-accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-membership:hover {
+      background: var(--membership-accent);
+      color: white;
+    }
+
+    /* Dropdown */
+    .dropdown-menu {
+      font-size: 0.8125rem;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border-radius: 0.5rem;
+      padding: 0.25rem;
+    }
+
+    .dropdown-item {
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 0.8125rem;
+    }
+
+    .dropdown-item:hover {
+      background: var(--accent-bg);
+      color: var(--accent);
+    }
+
+    .dropdown-item.text-danger:hover {
+      background: #fef2f2;
+      color: var(--danger-color);
+    }
+
+    /* Quick Stats Row */
+    .quick-stats {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .stat-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      margin-bottom: 0.375rem;
+    }
+
+    .stat-value {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .stat-sub {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.125rem;
+    }
+
+    /* Tabs */
+    .detail-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+
+    .tab-header {
+      display: flex;
+      border-bottom: 2px solid var(--border-color);
+      background: #f8fafc;
+    }
+
+    .tab-btn {
+      padding: 0.75rem 1.25rem;
+      background: none;
+      border: none;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      position: relative;
+      transition: color 0.15s;
+    }
+
+    .tab-btn:hover {
+      color: var(--accent);
+    }
+
+    .tab-btn.active {
+      color: var(--accent);
+    }
+
+    .tab-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--accent);
+    }
+
+    .tab-content {
+      display: none;
+      padding: 1.25rem;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Info Grid */
+    .info-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .info-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .info-section-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+    }
+
+    .info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+    }
+
+    .info-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .info-value {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    /* Payment Table */
+    .payment-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .payment-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      text-align: left;
+    }
+
+    .payment-table td {
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+    }
+
+    .payment-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .payment-table tr:hover td {
+      background: #f8fafc;
+    }
+
+    .receipt-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .receipt-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Benefits Table */
+    .benefit-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .benefit-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      text-align: left;
+    }
+
+    .benefit-table td {
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+    }
+
+    .benefit-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .benefit-table tr:hover td {
+      background: #f8fafc;
+    }
+
+    .benefit-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .benefit-status.active { color: #15803d; }
+    .benefit-status.available { color: var(--accent); }
+    .benefit-status.not-used { color: var(--text-secondary); }
+
+    .setup-btn {
+      padding: 0.1875rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      border: 1px solid var(--accent);
+      background: white;
+      color: var(--accent);
+      cursor: pointer;
+    }
+
+    .setup-btn:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Activity Timeline */
+    .timeline {
+      position: relative;
+      padding-left: 1.5rem;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 0.4375rem;
+      top: 0.5rem;
+      bottom: 0.5rem;
+      width: 2px;
+      background: var(--border-color);
+    }
+
+    .timeline-item {
+      position: relative;
+      padding-bottom: 1.25rem;
+    }
+
+    .timeline-item:last-child {
+      padding-bottom: 0;
+    }
+
+    .timeline-dot {
+      position: absolute;
+      left: -1.1875rem;
+      top: 0.3125rem;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid white;
+      box-shadow: 0 0 0 2px var(--border-color);
+    }
+
+    .timeline-dot.payment { background: var(--success-color); }
+    .timeline-dot.reminder { background: var(--warning-color); }
+    .timeline-dot.event { background: #8b5cf6; }
+    .timeline-dot.upgrade { background: var(--membership-accent); }
+
+    .timeline-date {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 0.125rem;
+    }
+
+    .timeline-text {
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+    }
+
+    @media (max-width: 992px) {
+      .quick-stats {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 576px) {
+      .quick-stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .info-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" onclick="parent.loadContent('membership/member-list')">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <div class="member-header-info">
+        <h1>
+          <span class="tier-badge-lg">💎 Platinum Member</span>
+          Khalid Al-Mansouri
+        </h1>
+        <div class="member-header-meta">
+          <span class="member-id">MEM-001</span>
+          <span>|</span>
+          <span class="status-badge active"><span class="dot"></span> Active</span>
+          <span>|</span>
+          <span>Since Jan 2024</span>
+          <span>|</span>
+          <a class="contact-link" onclick="parent.loadContent('contacts/contact-detail')"><i class="fas fa-user me-1"></i>CON-1245</a>
+        </div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline-accent"><i class="fas fa-pen me-1"></i>Edit</button>
+      <button class="btn-membership"><i class="fas fa-arrows-rotate me-1"></i>Renew</button>
+      <button class="btn-outline-accent"><i class="fas fa-arrow-up-right-dots me-1"></i>Upgrade/Downgrade</button>
+      <button class="btn-outline-accent"><i class="fas fa-id-card me-1"></i>Send Card</button>
+      <div class="dropdown">
+        <button class="btn-outline-accent" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-vertical"></i></button>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item" href="#"><i class="fas fa-envelope me-2"></i>Send Email</a></li>
+          <li><a class="dropdown-item" href="#"><i class="fas fa-print me-2"></i>Print Certificate</a></li>
+          <li><a class="dropdown-item" href="#"><i class="fas fa-file-pdf me-2"></i>Export PDF</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="#"><i class="fas fa-pause me-2"></i>Suspend</a></li>
+          <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-ban me-2"></i>Cancel Membership</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Stats Row -->
+  <div class="quick-stats">
+    <div class="stat-card">
+      <div class="stat-label">Tier</div>
+      <div class="stat-value">💎 Platinum</div>
+      <div class="stat-sub">$1,000/year</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Member Since</div>
+      <div class="stat-value">Jan 15, 2024</div>
+      <div class="stat-sub">2 years, 3 months</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Expires</div>
+      <div class="stat-value">Jan 15, 2027</div>
+      <div class="stat-sub" style="color: var(--success-color); font-weight: 600;">9 months remaining</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Paid</div>
+      <div class="stat-value">$3,000</div>
+      <div class="stat-sub">3 annual payments</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Benefits Used</div>
+      <div class="stat-value">8 of 10</div>
+      <div class="stat-sub">80% utilization</div>
+    </div>
+  </div>
+
+  <!-- Tabbed Detail Card -->
+  <div class="detail-card">
+    <div class="tab-header">
+      <button class="tab-btn active" onclick="switchTab('overview')"><i class="fas fa-circle-info me-1"></i>Overview</button>
+      <button class="tab-btn" onclick="switchTab('payments')"><i class="fas fa-credit-card me-1"></i>Payment History</button>
+      <button class="tab-btn" onclick="switchTab('benefits')"><i class="fas fa-gift me-1"></i>Benefits</button>
+      <button class="tab-btn" onclick="switchTab('activity')"><i class="fas fa-clock-rotate-left me-1"></i>Activity</button>
+    </div>
+
+    <!-- Tab 1: Overview -->
+    <div class="tab-content active" id="tab-overview">
+      <div class="info-section">
+        <div class="info-section-title">Membership Info</div>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Member ID</span>
+            <span class="info-value">MEM-001</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Tier</span>
+            <span class="info-value">Platinum ($1,000/year)</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Status</span>
+            <span class="info-value"><span class="status-badge active"><span class="dot"></span> Active</span></span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Joined</span>
+            <span class="info-value">Jan 15, 2024</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Current Period</span>
+            <span class="info-value">Jan 15, 2026 – Jan 15, 2027</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Auto-Renew</span>
+            <span class="info-value"><i class="fas fa-check-circle" style="color: var(--success-color); margin-right: 0.25rem;"></i> On (card ending 4567)</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Branch</span>
+            <span class="info-value">Dubai (HQ)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-section-title">Contact Info</div>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Name</span>
+            <span class="info-value">Khalid Al-Mansouri</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Email</span>
+            <span class="info-value">khalid@email.com</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Phone</span>
+            <span class="info-value">+971 50 123 4567</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Also a Donor</span>
+            <span class="info-value" style="color: var(--success-color); font-weight: 600;">$42,500 lifetime donations</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Payment History -->
+    <div class="tab-content" id="tab-payments">
+      <div style="overflow-x: auto;">
+        <table class="payment-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Period</th>
+              <th>Amount</th>
+              <th>Method</th>
+              <th>Receipt</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-weight: 600;">Jan 15, 2026</td>
+              <td>2026-2027</td>
+              <td style="font-weight: 600;">$1,000</td>
+              <td><i class="fas fa-credit-card me-1" style="color: var(--text-secondary);"></i>Credit Card &bull;&bull;&bull;4567</td>
+              <td><a class="receipt-link" href="#">REC-3456</a></td>
+              <td><span style="color: var(--success-color); font-weight: 600;"><i class="fas fa-check-circle me-1"></i>Paid</span></td>
+            </tr>
+            <tr>
+              <td style="font-weight: 600;">Jan 15, 2025</td>
+              <td>2025-2026</td>
+              <td style="font-weight: 600;">$1,000</td>
+              <td><i class="fas fa-credit-card me-1" style="color: var(--text-secondary);"></i>Credit Card &bull;&bull;&bull;4567</td>
+              <td><a class="receipt-link" href="#">REC-2345</a></td>
+              <td><span style="color: var(--success-color); font-weight: 600;"><i class="fas fa-check-circle me-1"></i>Paid</span></td>
+            </tr>
+            <tr>
+              <td style="font-weight: 600;">Jan 15, 2024</td>
+              <td>2024-2025</td>
+              <td style="font-weight: 600;">$1,000</td>
+              <td><i class="fas fa-building-columns me-1" style="color: var(--text-secondary);"></i>Bank Transfer</td>
+              <td><a class="receipt-link" href="#">REC-1234</a></td>
+              <td><span style="color: var(--success-color); font-weight: 600;"><i class="fas fa-check-circle me-1"></i>Paid</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab 3: Benefits -->
+    <div class="tab-content" id="tab-benefits">
+      <div style="overflow-x: auto;">
+        <table class="benefit-table">
+          <thead>
+            <tr>
+              <th>Benefit</th>
+              <th>Status</th>
+              <th>Used</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><i class="fas fa-envelope me-2" style="color: var(--text-secondary);"></i>Quarterly Newsletter</td>
+              <td><span class="benefit-status active"><i class="fas fa-check-circle me-1"></i>Receiving</span></td>
+              <td>4 sent this year</td>
+            </tr>
+            <tr>
+              <td><i class="fas fa-chart-bar me-2" style="color: var(--text-secondary);"></i>Annual Impact Report</td>
+              <td><span class="benefit-status active"><i class="fas fa-check-circle me-1"></i>Sent</span></td>
+              <td>Feb 2026</td>
+            </tr>
+            <tr>
+              <td><i class="fas fa-calendar-check me-2" style="color: var(--text-secondary);"></i>Member-Only Events</td>
+              <td><span class="benefit-status active"><i class="fas fa-check-circle me-1"></i>Invited</span></td>
+              <td>3 attended of 4</td>
+            </tr>
+            <tr>
+              <td><i class="fas fa-vote-yea me-2" style="color: var(--text-secondary);"></i>Voting Rights</td>
+              <td><span class="benefit-status active"><i class="fas fa-check-circle me-1"></i>Eligible</span></td>
+              <td>Voted in AGM 2025</td>
+            </tr>
+            <tr>
+              <td><i class="fas fa-globe me-2" style="color: var(--text-secondary);"></i>Website Recognition</td>
+              <td><span class="benefit-status active"><i class="fas fa-check-circle me-1"></i>Listed</span></td>
+              <td>Donor Wall active</td>
+            </tr>
+            <tr>
+              <td><i class="fas fa-star me-2" style="color: var(--text-secondary);"></i>VIP Seating</td>
+              <td><span class="benefit-status available"><i class="fas fa-check-circle me-1"></i>Available</span></td>
+              <td>Used at 2 events</td>
+            </tr>
+            <tr>
+              <td><i class="fas fa-handshake me-2" style="color: var(--text-secondary);"></i>Director Meeting</td>
+              <td><span class="benefit-status available"><i class="fas fa-check-circle me-1"></i>Available</span></td>
+              <td>Scheduled: May 2026</td>
+            </tr>
+            <tr>
+              <td><i class="fas fa-bookmark me-2" style="color: var(--text-secondary);"></i>Named Sponsorship</td>
+              <td><span class="benefit-status not-used"><i class="fas fa-minus-circle me-1"></i>Not used</span></td>
+              <td>Available — <button class="setup-btn">Set Up</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab 4: Activity -->
+    <div class="tab-content" id="tab-activity">
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-dot payment"></div>
+          <div class="timeline-date">Jan 15, 2026</div>
+          <div class="timeline-text">Annual renewal payment processed ($1,000)</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot reminder"></div>
+          <div class="timeline-date">Dec 2025</div>
+          <div class="timeline-text">Renewal reminder sent (30 days before expiry)</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot event"></div>
+          <div class="timeline-date">Nov 2025</div>
+          <div class="timeline-text">Attended Member Appreciation Dinner</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot upgrade"></div>
+          <div class="timeline-date">Oct 2025</div>
+          <div class="timeline-text">Upgraded from Gold to Platinum</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot event"></div>
+          <div class="timeline-date">Sep 2025</div>
+          <div class="timeline-text">Voted in Annual General Meeting 2025</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot event"></div>
+          <div class="timeline-date">Jul 2025</div>
+          <div class="timeline-text">Attended Summer Gala — VIP seating assigned</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot payment"></div>
+          <div class="timeline-date">Jan 15, 2025</div>
+          <div class="timeline-text">Annual renewal payment processed ($1,000)</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot reminder"></div>
+          <div class="timeline-date">Dec 2024</div>
+          <div class="timeline-text">Renewal reminder sent (30 days before expiry)</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot event"></div>
+          <div class="timeline-date">Mar 2024</div>
+          <div class="timeline-text">Personalized impact report delivered</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot payment"></div>
+          <div class="timeline-date">Jan 15, 2024</div>
+          <div class="timeline-text">Initial membership enrollment — Gold tier ($1,000 via bank transfer)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      document.getElementById('tab-' + tabId).classList.add('active');
+      event.currentTarget.classList.add('active');
+    }
+  </script>
+
+</body>
+
+</html>

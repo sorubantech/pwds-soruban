@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Programs - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --cm-accent: #0d9488;
+      --cm-accent-light: #14b8a6;
+      --cm-accent-bg: #f0fdfa;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--cm-accent);
+      border-color: var(--cm-accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--cm-accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #0b7f74;
+      border-color: #0b7f74;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--cm-accent);
+      color: var(--cm-accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--cm-accent-bg);
+      color: var(--cm-accent);
+    }
+
+    .btn-sm-accent {
+      font-size: 0.75rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 0.375rem;
+    }
+
+    /* Program Cards Grid */
+    .programs-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .programs-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .program-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      transition: box-shadow 0.15s;
+    }
+
+    .program-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .program-card.standby {
+      border: 2px dashed var(--border-color);
+      opacity: 0.75;
+    }
+
+    .program-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .program-card-header .program-icon {
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+
+    .program-card-header .program-name {
+      font-weight: 700;
+      font-size: 0.9375rem;
+      color: var(--text-primary);
+      flex: 1;
+    }
+
+    .badge-active {
+      background: #dcfce7;
+      color: #166534;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+    }
+
+    .badge-standby {
+      background: #fef3c7;
+      color: #92400e;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+    }
+
+    .program-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1rem;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .program-stats .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .program-stats .stat-item i {
+      font-size: 0.75rem;
+      color: var(--cm-accent);
+    }
+
+    .budget-line {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .budget-line .budget-amount {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .budget-line .spent-pct {
+      font-size: 0.75rem;
+      padding: 0.1rem 0.4rem;
+      border-radius: 999px;
+      background: #f0fdfa;
+      color: var(--cm-accent);
+      font-weight: 600;
+    }
+
+    .capacity-bar {
+      height: 6px;
+      border-radius: 3px;
+      background: #e2e8f0;
+      overflow: hidden;
+    }
+
+    .capacity-bar .fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.3s;
+    }
+
+    .fill-green { background: var(--success-color); }
+    .fill-amber { background: var(--warning-color); }
+    .fill-red { background: var(--danger-color); }
+    .fill-teal { background: var(--cm-accent); }
+
+    .program-card-footer {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: auto;
+    }
+
+    .outcomes-badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .outcomes-badge.good { color: var(--success-color); }
+    .outcomes-badge.fair { color: var(--warning-color); }
+
+    /* Detail Panel */
+    .panel-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.35);
+      z-index: 1040;
+      transition: opacity 0.3s;
+    }
+
+    .panel-backdrop.show {
+      display: block;
+    }
+
+    .detail-panel {
+      position: fixed;
+      top: 0;
+      right: -80%;
+      width: 80%;
+      height: 100%;
+      background: white;
+      z-index: 1050;
+      box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+      transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .detail-panel.open {
+      right: 0;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--cm-accent-bg);
+      flex-shrink: 0;
+    }
+
+    .panel-header h2 {
+      font-size: 1.125rem;
+      font-weight: 700;
+      margin: 0;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .panel-close {
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: 0.375rem;
+      transition: all 0.15s;
+    }
+
+    .panel-close:hover {
+      background: #e2e8f0;
+      color: var(--text-primary);
+    }
+
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem;
+    }
+
+    .panel-footer {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border-color);
+      background: #f8fafc;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+
+    .panel-section {
+      margin-bottom: 1.75rem;
+    }
+
+    .panel-section-title {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--cm-accent);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .panel-section-title i {
+      color: var(--cm-accent);
+      font-size: 0.875rem;
+    }
+
+    /* Form styles inside panel */
+    .form-label-sm {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .form-control-sm-custom,
+    .form-select-sm-custom {
+      font-size: 0.8125rem;
+      padding: 0.4rem 0.75rem;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      background: white;
+    }
+
+    .form-control-sm-custom:focus,
+    .form-select-sm-custom:focus {
+      border-color: var(--cm-accent);
+      box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.15);
+      outline: none;
+    }
+
+    .readonly-field {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      padding: 0.4rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      font-family: 'Courier New', monospace;
+    }
+
+    .color-swatch {
+      width: 32px;
+      height: 32px;
+      border-radius: 0.375rem;
+      border: 2px solid var(--border-color);
+      cursor: pointer;
+      display: inline-block;
+    }
+
+    /* Tables inside panel */
+    .panel-table {
+      width: 100%;
+      font-size: 0.8125rem;
+      border-collapse: collapse;
+    }
+
+    .panel-table th {
+      text-transform: uppercase;
+      font-size: 0.6875rem;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+      color: var(--text-secondary);
+      padding: 0.5rem 0.75rem;
+      border-bottom: 2px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    .panel-table td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-primary);
+      vertical-align: middle;
+    }
+
+    .panel-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    /* Tags */
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      background: var(--cm-accent-bg);
+      color: var(--cm-accent);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+
+    .tag .remove {
+      font-size: 0.625rem;
+      cursor: pointer;
+    }
+
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 22px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: #cbd5e1;
+      border-radius: 22px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.2s;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background: var(--cm-accent);
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(18px);
+    }
+
+    .link-accent {
+      color: var(--cm-accent);
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.8125rem;
+    }
+
+    .link-accent:hover {
+      text-decoration: underline;
+      color: #0b7f74;
+    }
+
+    .progress-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.25rem;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1>Programs</h1>
+      <p class="subtitle">Define and manage beneficiary programs and services</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="openNewProgram()">
+        <i class="fas fa-plus me-1"></i> New Program
+      </button>
+    </div>
+  </div>
+
+  <!-- Program Cards Grid -->
+  <div class="programs-grid">
+
+    <!-- 1. Orphan Sponsorship -->
+    <div class="program-card" data-program="orphan-sponsorship">
+      <div class="program-card-header">
+        <span class="program-icon">🧒</span>
+        <span class="program-name">Orphan Sponsorship</span>
+        <span class="badge-active">Active</span>
+      </div>
+      <div class="program-stats">
+        <span class="stat-item"><i class="fas fa-users"></i> 500 beneficiaries</span>
+        <span class="stat-item"><i class="fas fa-expand-arrows-alt"></i> Capacity: 600</span>
+        <span class="stat-item"><i class="fas fa-user-tie"></i> Staff: 4</span>
+        <span class="outcomes-badge good"><i class="fas fa-chart-line"></i> 89% on-track</span>
+      </div>
+      <div class="budget-line">
+        <span>Budget: <span class="budget-amount">$300K/yr</span></span>
+        <span>Spent: $245K</span>
+        <span class="spent-pct">82%</span>
+      </div>
+      <div>
+        <div class="progress-info"><span>Capacity</span><span>500 / 600 (83%)</span></div>
+        <div class="capacity-bar"><div class="fill fill-amber" style="width:83%"></div></div>
+      </div>
+      <div class="program-card-footer">
+        <button class="btn-outline-accent btn-sm-accent" onclick="openDetailPanel('orphan-sponsorship')">
+          <i class="fas fa-cog me-1"></i>Manage
+        </button>
+        <button class="btn-outline-accent btn-sm-accent" onclick="parent.loadContent('case-management/case-dashboard')">
+          <i class="fas fa-chart-pie me-1"></i>Dashboard
+        </button>
+      </div>
+    </div>
+
+    <!-- 2. Children's Education -->
+    <div class="program-card" data-program="childrens-education">
+      <div class="program-card-header">
+        <span class="program-icon">📚</span>
+        <span class="program-name">Children's Education</span>
+        <span class="badge-active">Active</span>
+      </div>
+      <div class="program-stats">
+        <span class="stat-item"><i class="fas fa-users"></i> 420 beneficiaries</span>
+        <span class="stat-item"><i class="fas fa-expand-arrows-alt"></i> Capacity: 500</span>
+        <span class="stat-item"><i class="fas fa-user-tie"></i> Staff: 6</span>
+        <span class="outcomes-badge good"><i class="fas fa-chart-line"></i> 78% on-track</span>
+      </div>
+      <div class="budget-line">
+        <span>Budget: <span class="budget-amount">$200K/yr</span></span>
+        <span>Spent: $145K</span>
+        <span class="spent-pct">73%</span>
+      </div>
+      <div>
+        <div class="progress-info"><span>Capacity</span><span>420 / 500 (84%)</span></div>
+        <div class="capacity-bar"><div class="fill fill-amber" style="width:84%"></div></div>
+      </div>
+      <div class="program-card-footer">
+        <button class="btn-outline-accent btn-sm-accent" onclick="openDetailPanel('childrens-education')">
+          <i class="fas fa-cog me-1"></i>Manage
+        </button>
+        <button class="btn-outline-accent btn-sm-accent" onclick="parent.loadContent('case-management/case-dashboard')">
+          <i class="fas fa-chart-pie me-1"></i>Dashboard
+        </button>
+      </div>
+    </div>
+
+    <!-- 3. Clean Water Initiative -->
+    <div class="program-card" data-program="clean-water">
+      <div class="program-card-header">
+        <span class="program-icon">💧</span>
+        <span class="program-name">Clean Water Initiative</span>
+        <span class="badge-active">Active</span>
+      </div>
+      <div class="program-stats">
+        <span class="stat-item"><i class="fas fa-users"></i> 28 communities</span>
+        <span class="stat-item"><i class="fas fa-expand-arrows-alt"></i> Capacity: 50</span>
+        <span class="stat-item"><i class="fas fa-user-tie"></i> Staff: 3</span>
+        <span class="outcomes-badge good"><i class="fas fa-chart-line"></i> 92% on-track</span>
+      </div>
+      <div class="budget-line">
+        <span>Budget: <span class="budget-amount">$500K/yr</span></span>
+        <span style="font-style:italic; font-size:0.75rem;">(grant-funded)</span>
+      </div>
+      <div>
+        <div class="progress-info"><span>Capacity</span><span>28 / 50 (56%)</span></div>
+        <div class="capacity-bar"><div class="fill fill-green" style="width:56%"></div></div>
+      </div>
+      <div class="program-card-footer">
+        <button class="btn-outline-accent btn-sm-accent" onclick="openDetailPanel('clean-water')">
+          <i class="fas fa-cog me-1"></i>Manage
+        </button>
+        <button class="btn-outline-accent btn-sm-accent" onclick="parent.loadContent('case-management/case-dashboard')">
+          <i class="fas fa-chart-pie me-1"></i>Dashboard
+        </button>
+      </div>
+    </div>
+
+    <!-- 4. Healthcare Outreach -->
+    <div class="program-card" data-program="healthcare-outreach">
+      <div class="program-card-header">
+        <span class="program-icon">🏥</span>
+        <span class="program-name">Healthcare Outreach</span>
+        <span class="badge-active">Active</span>
+      </div>
+      <div class="program-stats">
+        <span class="stat-item"><i class="fas fa-users"></i> 380 beneficiaries</span>
+        <span class="stat-item"><i class="fas fa-expand-arrows-alt"></i> Capacity: 500</span>
+        <span class="stat-item"><i class="fas fa-user-tie"></i> Staff: 5</span>
+        <span class="outcomes-badge good"><i class="fas fa-chart-line"></i> 85% on-track</span>
+      </div>
+      <div class="budget-line">
+        <span>Budget: <span class="budget-amount">$150K/yr</span></span>
+        <span>Spent: $89K</span>
+        <span class="spent-pct">59%</span>
+      </div>
+      <div>
+        <div class="progress-info"><span>Capacity</span><span>380 / 500 (76%)</span></div>
+        <div class="capacity-bar"><div class="fill fill-teal" style="width:76%"></div></div>
+      </div>
+      <div class="program-card-footer">
+        <button class="btn-outline-accent btn-sm-accent" onclick="openDetailPanel('healthcare-outreach')">
+          <i class="fas fa-cog me-1"></i>Manage
+        </button>
+        <button class="btn-outline-accent btn-sm-accent" onclick="parent.loadContent('case-management/case-dashboard')">
+          <i class="fas fa-chart-pie me-1"></i>Dashboard
+        </button>
+      </div>
+    </div>
+
+    <!-- 5. Women Empowerment -->
+    <div class="program-card" data-program="women-empowerment">
+      <div class="program-card-header">
+        <span class="program-icon">👩</span>
+        <span class="program-name">Women Empowerment</span>
+        <span class="badge-active">Active</span>
+      </div>
+      <div class="program-stats">
+        <span class="stat-item"><i class="fas fa-users"></i> 89 beneficiaries</span>
+        <span class="stat-item"><i class="fas fa-expand-arrows-alt"></i> Capacity: 150</span>
+        <span class="stat-item"><i class="fas fa-user-tie"></i> Staff: 2</span>
+        <span class="outcomes-badge fair"><i class="fas fa-chart-line"></i> 74% on-track</span>
+      </div>
+      <div class="budget-line">
+        <span>Budget: <span class="budget-amount">$80K/yr</span></span>
+        <span>Spent: $52K</span>
+        <span class="spent-pct">65%</span>
+      </div>
+      <div>
+        <div class="progress-info"><span>Capacity</span><span>89 / 150 (59%)</span></div>
+        <div class="capacity-bar"><div class="fill fill-green" style="width:59%"></div></div>
+      </div>
+      <div class="program-card-footer">
+        <button class="btn-outline-accent btn-sm-accent" onclick="openDetailPanel('women-empowerment')">
+          <i class="fas fa-cog me-1"></i>Manage
+        </button>
+        <button class="btn-outline-accent btn-sm-accent" onclick="parent.loadContent('case-management/case-dashboard')">
+          <i class="fas fa-chart-pie me-1"></i>Dashboard
+        </button>
+      </div>
+    </div>
+
+    <!-- 6. Food Distribution -->
+    <div class="program-card" data-program="food-distribution">
+      <div class="program-card-header">
+        <span class="program-icon">🍽</span>
+        <span class="program-name">Food Distribution</span>
+        <span class="badge-active">Active</span>
+      </div>
+      <div class="program-stats">
+        <span class="stat-item"><i class="fas fa-users"></i> 340 families</span>
+        <span class="stat-item"><i class="fas fa-expand-arrows-alt"></i> Capacity: 400</span>
+        <span class="stat-item"><i class="fas fa-user-tie"></i> Staff: 3</span>
+        <span class="outcomes-badge good"><i class="fas fa-chart-line"></i> 90% on-track</span>
+      </div>
+      <div class="budget-line">
+        <span>Budget: <span class="budget-amount">$120K/yr</span></span>
+        <span>Spent: $95K</span>
+        <span class="spent-pct">79%</span>
+      </div>
+      <div>
+        <div class="progress-info"><span>Capacity</span><span>340 / 400 (85%)</span></div>
+        <div class="capacity-bar"><div class="fill fill-amber" style="width:85%"></div></div>
+      </div>
+      <div class="program-card-footer">
+        <button class="btn-outline-accent btn-sm-accent" onclick="openDetailPanel('food-distribution')">
+          <i class="fas fa-cog me-1"></i>Manage
+        </button>
+        <button class="btn-outline-accent btn-sm-accent" onclick="parent.loadContent('case-management/case-dashboard')">
+          <i class="fas fa-chart-pie me-1"></i>Dashboard
+        </button>
+      </div>
+    </div>
+
+    <!-- 7. Vocational Training -->
+    <div class="program-card" data-program="vocational-training">
+      <div class="program-card-header">
+        <span class="program-icon">🎓</span>
+        <span class="program-name">Vocational Training</span>
+        <span class="badge-active">Active</span>
+      </div>
+      <div class="program-stats">
+        <span class="stat-item"><i class="fas fa-users"></i> 45 beneficiaries</span>
+        <span class="stat-item"><i class="fas fa-expand-arrows-alt"></i> Capacity: 60</span>
+        <span class="stat-item"><i class="fas fa-user-tie"></i> Staff: 2</span>
+        <span class="outcomes-badge good"><i class="fas fa-chart-line"></i> 82% employed</span>
+      </div>
+      <div class="budget-line">
+        <span>Budget: <span class="budget-amount">$60K/yr</span></span>
+        <span>Spent: $38K</span>
+        <span class="spent-pct">63%</span>
+      </div>
+      <div>
+        <div class="progress-info"><span>Capacity</span><span>45 / 60 (75%)</span></div>
+        <div class="capacity-bar"><div class="fill fill-teal" style="width:75%"></div></div>
+      </div>
+      <div class="program-card-footer">
+        <button class="btn-outline-accent btn-sm-accent" onclick="openDetailPanel('vocational-training')">
+          <i class="fas fa-cog me-1"></i>Manage
+        </button>
+        <button class="btn-outline-accent btn-sm-accent" onclick="parent.loadContent('case-management/case-dashboard')">
+          <i class="fas fa-chart-pie me-1"></i>Dashboard
+        </button>
+      </div>
+    </div>
+
+    <!-- 8. Emergency Relief -->
+    <div class="program-card standby" data-program="emergency-relief">
+      <div class="program-card-header">
+        <span class="program-icon">🆘</span>
+        <span class="program-name">Emergency Relief</span>
+        <span class="badge-standby">Standby</span>
+      </div>
+      <div class="program-stats">
+        <span class="stat-item"><i class="fas fa-users"></i> 0 active</span>
+        <span class="stat-item"><i class="fas fa-bolt"></i> Activated on need</span>
+        <span class="stat-item"><i class="fas fa-user-tie"></i> Staff: 2 (on-call)</span>
+      </div>
+      <div class="budget-line">
+        <span>Budget: <span class="budget-amount">$50K</span></span>
+        <span style="font-style:italic; font-size:0.75rem;">(reserve)</span>
+      </div>
+      <div>
+        <div class="progress-info"><span>Capacity</span><span>0 / &mdash;</span></div>
+        <div class="capacity-bar"><div class="fill fill-green" style="width:0%"></div></div>
+      </div>
+      <div class="program-card-footer">
+        <button class="btn-outline-accent btn-sm-accent" onclick="openDetailPanel('emergency-relief')">
+          <i class="fas fa-cog me-1"></i>Manage
+        </button>
+        <button class="btn-outline-accent btn-sm-accent" onclick="parent.loadContent('case-management/case-dashboard')">
+          <i class="fas fa-chart-pie me-1"></i>Dashboard
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Backdrop -->
+  <div class="panel-backdrop" id="panelBackdrop" onclick="closeDetailPanel()"></div>
+
+  <!-- Detail Panel -->
+  <div class="detail-panel" id="detailPanel">
+    <div class="panel-header">
+      <h2><span>🧒</span> Orphan Sponsorship</h2>
+      <button class="panel-close" onclick="closeDetailPanel()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="panel-body">
+
+      <!-- Section 1: Program Info -->
+      <div class="panel-section">
+        <div class="panel-section-title"><i class="fas fa-info-circle"></i> Program Info</div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label-sm">Program Name <span style="color:var(--danger-color)">*</span></label>
+            <input type="text" class="form-control form-control-sm-custom" value="Orphan Sponsorship">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label-sm">Code</label>
+            <div class="readonly-field">ORPHAN_SPONSOR</div>
+          </div>
+          <div class="col-md-12">
+            <label class="form-label-sm">Description</label>
+            <textarea class="form-control form-control-sm-custom" rows="2" placeholder="Describe the program objectives and scope...">Comprehensive sponsorship program providing financial support, education, healthcare, and psychosocial support to orphaned children across our operational regions.</textarea>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label-sm">Category</label>
+            <select class="form-select form-select-sm-custom">
+              <option selected>Child Welfare</option>
+              <option>Education</option>
+              <option>Healthcare</option>
+              <option>Livelihood</option>
+              <option>WASH</option>
+              <option>Protection</option>
+              <option>Nutrition</option>
+              <option>Emergency</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label-sm">Status</label>
+            <select class="form-select form-select-sm-custom">
+              <option selected>Active</option>
+              <option>Paused</option>
+              <option>Completed</option>
+              <option>Planned</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label-sm">Start Date</label>
+            <input type="month" class="form-control form-control-sm-custom" value="2020-01">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label-sm">End Date</label>
+            <div class="d-flex align-items-center gap-2">
+              <label class="toggle-switch">
+                <input type="checkbox" checked id="ongoingToggle">
+                <span class="toggle-slider"></span>
+              </label>
+              <span style="font-size:0.8125rem; color:var(--text-secondary);">Ongoing</span>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label-sm">Icon</label>
+            <div style="font-size:1.75rem; line-height:1;">🧒</div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label-sm">Color</label>
+            <div class="d-flex align-items-center gap-2">
+              <input type="color" class="color-swatch" value="#0d9488" id="colorPicker" style="border:none; padding:0;">
+              <span style="font-size:0.8125rem; color:var(--text-secondary);" id="colorValue">#0d9488</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Eligibility Criteria -->
+      <div class="panel-section">
+        <div class="panel-section-title"><i class="fas fa-filter"></i> Eligibility Criteria</div>
+        <table class="panel-table" id="criteriaTable">
+          <thead>
+            <tr>
+              <th>Criteria</th>
+              <th>Operator</th>
+              <th>Value</th>
+              <th style="width:40px;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Orphan Status</td>
+              <td>is one of</td>
+              <td>Single Orphan, Double Orphan</td>
+              <td><button class="btn btn-sm text-danger p-0 border-0 bg-transparent"><i class="fas fa-trash-alt"></i></button></td>
+            </tr>
+            <tr>
+              <td>Age</td>
+              <td>between</td>
+              <td>0 and 18</td>
+              <td><button class="btn btn-sm text-danger p-0 border-0 bg-transparent"><i class="fas fa-trash-alt"></i></button></td>
+            </tr>
+            <tr>
+              <td>Vulnerability Level</td>
+              <td>is one of</td>
+              <td>Critical, High</td>
+              <td><button class="btn btn-sm text-danger p-0 border-0 bg-transparent"><i class="fas fa-trash-alt"></i></button></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="d-flex align-items-center justify-content-between mt-2">
+          <button class="btn-outline-accent btn-sm-accent" onclick="addCriteriaRow()">
+            <i class="fas fa-plus me-1"></i> Add Criteria
+          </button>
+          <div class="d-flex align-items-center gap-2">
+            <span style="font-size:0.8125rem; color:var(--text-secondary);">Auto-Suggest</span>
+            <label class="toggle-switch">
+              <input type="checkbox" checked id="autoSuggestToggle">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Capacity & Enrollment -->
+      <div class="panel-section">
+        <div class="panel-section-title"><i class="fas fa-users-cog"></i> Capacity &amp; Enrollment</div>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label-sm">Maximum Capacity</label>
+            <input type="number" class="form-control form-control-sm-custom" value="600">
+          </div>
+          <div class="col-md-8">
+            <label class="form-label-sm">Current Enrollment</label>
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <span style="font-size:0.8125rem; font-weight:600;">500</span>
+              <span style="font-size:0.75rem; color:var(--text-secondary);">(83.3%)</span>
+            </div>
+            <div class="capacity-bar" style="height:8px;">
+              <div class="fill fill-amber" style="width:83.3%"></div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label-sm">Waitlist</label>
+            <div style="font-size:0.8125rem; font-weight:600;">23 beneficiaries</div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label-sm">Enrollment Type</label>
+            <select class="form-select form-select-sm-custom" id="enrollmentType">
+              <option>Open</option>
+              <option selected>Waitlist Only</option>
+              <option>Closed</option>
+              <option>By Referral</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label-sm">Enrollment Requires</label>
+            <div class="d-flex flex-column gap-1" style="font-size:0.8125rem;">
+              <label class="d-flex align-items-center gap-2">
+                <input type="checkbox" checked> Needs assessment
+              </label>
+              <label class="d-flex align-items-center gap-2">
+                <input type="checkbox" checked> Guardian consent
+              </label>
+              <label class="d-flex align-items-center gap-2">
+                <input type="checkbox"> Medical clearance
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 4: Sponsorship Model -->
+      <div class="panel-section">
+        <div class="panel-section-title"><i class="fas fa-hand-holding-usd"></i> Sponsorship Model</div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label-sm">Funding Model</label>
+            <select class="form-select form-select-sm-custom">
+              <option>Individual Sponsorship</option>
+              <option>Pool Funded</option>
+              <option>Grant Funded</option>
+              <option selected>Mixed</option>
+            </select>
+            <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:0.25rem;">Currently: Individual + Pool</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label-sm">Individual Sponsorship Amount</label>
+            <div style="font-size:0.8125rem;">
+              <span style="font-weight:600;">AED 1,800/month</span>
+              <span style="color:var(--text-secondary);">($490)</span>
+            </div>
+          </div>
+          <div class="col-md-12">
+            <label class="form-label-sm">Pool Funding Note</label>
+            <div style="font-size:0.8125rem; color:var(--text-secondary); background:#f8fafc; padding:0.5rem 0.75rem; border-radius:0.375rem; border:1px solid var(--border-color);">
+              Remaining beneficiaries funded from general Orphan Care donations
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 5: Services Included -->
+      <div class="panel-section">
+        <div class="panel-section-title"><i class="fas fa-concierge-bell"></i> Services Included</div>
+        <table class="panel-table">
+          <thead>
+            <tr>
+              <th>Service</th>
+              <th>Frequency</th>
+              <th>Provider</th>
+              <th>Cost/Unit</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Monthly financial support</td>
+              <td>Monthly</td>
+              <td>Auto-transfer</td>
+              <td>AED 1,800</td>
+            </tr>
+            <tr>
+              <td>School fees</td>
+              <td>Termly</td>
+              <td>Direct to school</td>
+              <td>Varies</td>
+            </tr>
+            <tr>
+              <td>Books &amp; supplies</td>
+              <td>Annual</td>
+              <td>Procurement</td>
+              <td>AED 500</td>
+            </tr>
+            <tr>
+              <td>Health check-up</td>
+              <td>Annual</td>
+              <td>Partner clinic</td>
+              <td>AED 300</td>
+            </tr>
+            <tr>
+              <td>Home visit</td>
+              <td>Quarterly</td>
+              <td>Case worker</td>
+              <td>Staff time</td>
+            </tr>
+            <tr>
+              <td>Quarterly update to sponsor</td>
+              <td>Quarterly</td>
+              <td>Case worker</td>
+              <td>Staff time</td>
+            </tr>
+            <tr>
+              <td>Emergency support</td>
+              <td>As needed</td>
+              <td>Case worker</td>
+              <td>Up to AED 2,000</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Section 6: Outcome Metrics -->
+      <div class="panel-section">
+        <div class="panel-section-title"><i class="fas fa-bullseye"></i> Outcome Metrics</div>
+        <table class="panel-table">
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Target</th>
+              <th>Measurement</th>
+              <th>Frequency</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>School attendance</td>
+              <td>&gt;90%</td>
+              <td>School records</td>
+              <td>Monthly</td>
+            </tr>
+            <tr>
+              <td>Grade level appropriate</td>
+              <td>&gt;80% of beneficiaries</td>
+              <td>Assessment</td>
+              <td>Bi-annual</td>
+            </tr>
+            <tr>
+              <td>Health status</td>
+              <td>Good/Fair for &gt;95%</td>
+              <td>Medical check</td>
+              <td>Annual</td>
+            </tr>
+            <tr>
+              <td>Guardian employment</td>
+              <td>&gt;60% employed</td>
+              <td>Survey</td>
+              <td>Annual</td>
+            </tr>
+            <tr>
+              <td>Sponsor retention</td>
+              <td>&gt;85%</td>
+              <td>System data</td>
+              <td>Annual</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Section 7: Staff & Budget -->
+      <div class="panel-section">
+        <div class="panel-section-title"><i class="fas fa-users"></i> Staff &amp; Budget</div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label-sm">Program Lead</label>
+            <select class="form-select form-select-sm-custom">
+              <option selected>Fatima Al-Zahra</option>
+              <option>Ahmed Salim</option>
+              <option>Ravi Kumar</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label-sm">Staff</label>
+            <div class="d-flex flex-wrap gap-1">
+              <span class="tag" onclick="parent.loadContent('organization/staff-management')">Ahmed Salim <i class="fas fa-times remove"></i></span>
+              <span class="tag" onclick="parent.loadContent('organization/staff-management')">Ravi Kumar <i class="fas fa-times remove"></i></span>
+              <span class="tag" onclick="parent.loadContent('organization/staff-management')">Dr. Sarah <i class="fas fa-times remove"></i></span>
+              <span class="tag" onclick="parent.loadContent('organization/staff-management')">James Okonkwo <i class="fas fa-times remove"></i></span>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label-sm">Annual Budget</label>
+            <input type="text" class="form-control form-control-sm-custom" value="$300,000">
+          </div>
+          <div class="col-md-8">
+            <label class="form-label-sm">Funding Sources</label>
+            <div style="font-size:0.8125rem; color:var(--text-secondary);">
+              Individual sponsorships (70%), General donations (20%), Grant - Dubai Cares (10%)
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label-sm">Linked Grant</label>
+            <a class="link-accent d-block" onclick="parent.loadContent('grants/grant-detail')">
+              <i class="fas fa-external-link-alt me-1" style="font-size:0.7rem;"></i> GRT-009 Dubai Cares
+            </a>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label-sm">Linked Donation Purpose</label>
+            <a class="link-accent d-block" onclick="parent.loadContent('fundraising/donation-purposes')">
+              <i class="fas fa-external-link-alt me-1" style="font-size:0.7rem;"></i> Orphan Care
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Panel Footer -->
+    <div class="panel-footer">
+      <button class="btn-primary-accent" onclick="saveProgram()">
+        <i class="fas fa-save me-1"></i> Save Program
+      </button>
+      <button class="btn-outline-accent" onclick="parent.loadContent('case-management/beneficiary-list')">
+        <i class="fas fa-users me-1"></i> View Enrolled Beneficiaries
+      </button>
+      <button class="btn-outline-accent" onclick="parent.loadContent('case-management/case-dashboard')">
+        <i class="fas fa-chart-pie me-1"></i> View Program Dashboard
+      </button>
+      <button class="btn-outline-accent" onclick="closeDetailPanel()" style="margin-left:auto;">
+        Cancel
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Panel open/close
+    function openDetailPanel(programId) {
+      document.getElementById('panelBackdrop').classList.add('show');
+      document.getElementById('detailPanel').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeDetailPanel() {
+      document.getElementById('detailPanel').classList.remove('open');
+      document.getElementById('panelBackdrop').classList.remove('show');
+      document.body.style.overflow = '';
+    }
+
+    function openNewProgram() {
+      openDetailPanel('new');
+    }
+
+    function saveProgram() {
+      alert('Program saved successfully.');
+      closeDetailPanel();
+    }
+
+    // Add criteria row
+    function addCriteriaRow() {
+      const tbody = document.querySelector('#criteriaTable tbody');
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><input type="text" class="form-control form-control-sm-custom" placeholder="Field name"></td>
+        <td>
+          <select class="form-select form-select-sm-custom">
+            <option>is one of</option>
+            <option>equals</option>
+            <option>between</option>
+            <option>greater than</option>
+            <option>less than</option>
+            <option>contains</option>
+          </select>
+        </td>
+        <td><input type="text" class="form-control form-control-sm-custom" placeholder="Value"></td>
+        <td><button class="btn btn-sm text-danger p-0 border-0 bg-transparent" onclick="this.closest('tr').remove()"><i class="fas fa-trash-alt"></i></button></td>
+      `;
+      tbody.appendChild(row);
+    }
+
+    // Color picker sync
+    document.getElementById('colorPicker').addEventListener('input', function () {
+      document.getElementById('colorValue').textContent = this.value;
+    });
+
+    // Enrollment type change
+    document.getElementById('enrollmentType').addEventListener('change', function () {
+      console.log('Enrollment type changed to:', this.value);
+    });
+
+    // Auto-suggest toggle
+    document.getElementById('autoSuggestToggle').addEventListener('change', function () {
+      console.log('Auto-suggest:', this.checked ? 'ON' : 'OFF');
+    });
+  </script>
+
+</body>
+
+</html>

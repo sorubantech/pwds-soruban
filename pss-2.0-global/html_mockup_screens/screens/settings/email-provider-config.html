@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Provider Configuration - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #6366f1;
+      --accent-light: #818cf8;
+      --accent-bg: #eef2ff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons */
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #4f46e5;
+      border-color: #4f46e5;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-sm-action {
+      padding: 0.3rem 0.625rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-sm-action:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    /* Status Banner */
+    .status-banner {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.875rem 1.25rem;
+      border-radius: 0.75rem;
+      margin-bottom: 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+    }
+
+    .status-banner.connected {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      color: #15803d;
+    }
+
+    .status-banner.not-configured {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      color: #92400e;
+    }
+
+    .status-banner .status-icon {
+      font-size: 1.125rem;
+    }
+
+    .status-banner .status-detail {
+      font-weight: 400;
+      color: var(--text-secondary);
+      margin-left: 0.25rem;
+    }
+
+    /* Cards */
+    .card {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      margin-bottom: 1.25rem;
+    }
+
+    .card-header-custom {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-header-custom h3 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card-header-custom h3 i {
+      color: var(--accent);
+    }
+
+    .card-body-custom {
+      padding: 1.25rem;
+    }
+
+    /* Provider Cards */
+    .provider-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .provider-card {
+      border: 2px solid var(--border-color);
+      border-radius: 0.75rem;
+      padding: 1.25rem 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      text-align: center;
+    }
+
+    .provider-card:hover {
+      border-color: var(--accent-light);
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
+    }
+
+    .provider-card.selected {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .provider-card .radio-dot {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border-color);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .provider-card.selected .radio-dot {
+      border-color: var(--accent);
+    }
+
+    .provider-card.selected .radio-dot::after {
+      content: '';
+      width: 10px;
+      height: 10px;
+      background: var(--accent);
+      border-radius: 50%;
+    }
+
+    .provider-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 0.75rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      margin-bottom: 0.625rem;
+    }
+
+    .provider-icon.sendgrid { background: #e0f2fe; color: #0284c7; }
+    .provider-icon.mailgun { background: #fce7f3; color: #db2777; }
+    .provider-icon.aws { background: #fef3c7; color: #d97706; }
+    .provider-icon.smtp { background: #f1f5f9; color: #475569; }
+
+    .provider-card h4 {
+      font-size: 0.875rem;
+      font-weight: 700;
+      margin: 0 0 0.25rem;
+    }
+
+    .provider-card .provider-desc {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin: 0 0 0.375rem;
+    }
+
+    .provider-card .provider-limit {
+      font-size: 0.6875rem;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Form Styles */
+    .form-label-sm {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .form-label-sm .required {
+      color: var(--danger-color);
+    }
+
+    .form-control-sm-custom {
+      font-size: 0.8125rem;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      width: 100%;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .form-control-sm-custom:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+    }
+
+    .form-control-sm-custom:read-only {
+      background: #f8fafc;
+      color: var(--text-secondary);
+    }
+
+    .form-hint {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .input-group-custom {
+      display: flex;
+      gap: 0;
+    }
+
+    .input-group-custom .form-control-sm-custom {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    .input-group-custom .input-addon {
+      display: flex;
+      align-items: center;
+      padding: 0 0.625rem;
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-left: none;
+      border-radius: 0 0.5rem 0.5rem 0;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      transition: color 0.15s;
+      gap: 0.375rem;
+    }
+
+    .input-addon:hover {
+      color: var(--accent);
+    }
+
+    /* DNS Table */
+    .dns-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    .dns-table thead th {
+      background: #f8fafc;
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .dns-table tbody td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.75rem;
+    }
+
+    .dns-table tbody td:last-child {
+      font-family: inherit;
+    }
+
+    .dns-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    /* Identities Table */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    .data-table thead th {
+      background: #f8fafc;
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    .data-table tbody td {
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+
+    .data-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    /* Verified badge */
+    .verified-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--success-color);
+    }
+
+    /* Webhook URL box */
+    .webhook-box {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.8125rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .webhook-box code {
+      color: var(--text-primary);
+      font-size: 0.8125rem;
+    }
+
+    /* Checkbox row */
+    .checkbox-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    .checkbox-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+    }
+
+    .checkbox-item input[type="checkbox"] {
+      accent-color: var(--accent);
+      width: 14px;
+      height: 14px;
+    }
+
+    /* Progress bar */
+    .usage-bar {
+      margin-top: 0.375rem;
+    }
+
+    .usage-bar .bar-track {
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .usage-bar .bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: var(--accent);
+      transition: width 0.3s;
+    }
+
+    .usage-bar .bar-fill.warning {
+      background: var(--warning-color);
+    }
+
+    .usage-bar .bar-fill.danger {
+      background: var(--danger-color);
+    }
+
+    .usage-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    /* Reputation stats */
+    .reputation-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .reputation-item {
+      padding: 0.875rem;
+      border-radius: 0.5rem;
+      background: #f8fafc;
+      border: 1px solid #f1f5f9;
+    }
+
+    .reputation-item .rep-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.375rem;
+      font-weight: 500;
+    }
+
+    .reputation-item .rep-value {
+      font-size: 1.125rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .reputation-item .rep-detail {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .rep-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .rep-dot.green { background: var(--success-color); }
+    .rep-dot.yellow { background: var(--warning-color); }
+    .rep-dot.red { background: var(--danger-color); }
+
+    /* Domain status */
+    .domain-status-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .domain-name {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    /* SMTP Config (Custom) */
+    .smtp-config {
+      display: none;
+    }
+
+    .smtp-config.active {
+      display: block;
+    }
+
+    /* Action Bar */
+    .action-bar {
+      position: sticky;
+      bottom: 0;
+      background: white;
+      border-top: 1px solid var(--border-color);
+      padding: 1rem 1.25rem;
+      margin: 0 -1.5rem -1.5rem;
+      display: flex;
+      gap: 0.5rem;
+      justify-content: flex-end;
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .provider-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+      .reputation-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .provider-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fa-solid fa-envelope" style="color: var(--accent); font-size: 1.25rem;"></i> Email Provider</h1>
+      <p class="subtitle">Configure email service provider, sending domain, and delivery settings</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline-accent"><i class="fa-solid fa-paper-plane"></i> Send Test Email</button>
+      <button class="btn-outline-accent"><i class="fa-solid fa-chart-line"></i> View Delivery Logs</button>
+    </div>
+  </div>
+
+  <!-- Connection Status Banner -->
+  <div class="status-banner connected">
+    <i class="fa-solid fa-circle-check status-icon"></i>
+    <span>Connected to SendGrid</span>
+    <span class="status-detail">— Domain verified, last email sent 2 minutes ago</span>
+  </div>
+
+  <!-- Provider Selection -->
+  <div class="card">
+    <div class="card-header-custom">
+      <h3><i class="fa-solid fa-plug"></i> Email Service Provider</h3>
+    </div>
+    <div class="card-body-custom">
+      <div class="provider-grid">
+        <div class="provider-card selected" onclick="selectProvider(this, 'sendgrid')">
+          <div class="radio-dot"></div>
+          <div class="provider-icon sendgrid"><i class="fa-solid fa-paper-plane"></i></div>
+          <h4>SendGrid</h4>
+          <p class="provider-desc">Cloud-based, high deliverability</p>
+          <span class="provider-limit">Up to 100K/month</span>
+        </div>
+        <div class="provider-card" onclick="selectProvider(this, 'mailgun')">
+          <div class="radio-dot"></div>
+          <div class="provider-icon mailgun"><i class="fa-solid fa-envelope-circle-check"></i></div>
+          <h4>Mailgun</h4>
+          <p class="provider-desc">Developer-friendly, EU hosting</p>
+          <span class="provider-limit">Up to 50K/month</span>
+        </div>
+        <div class="provider-card" onclick="selectProvider(this, 'aws')">
+          <div class="radio-dot"></div>
+          <div class="provider-icon aws"><i class="fa-brands fa-aws"></i></div>
+          <h4>AWS SES</h4>
+          <p class="provider-desc">Cost-effective at scale</p>
+          <span class="provider-limit">Unlimited</span>
+        </div>
+        <div class="provider-card" onclick="selectProvider(this, 'smtp')">
+          <div class="radio-dot"></div>
+          <div class="provider-icon smtp"><i class="fa-solid fa-gear"></i></div>
+          <h4>Custom SMTP</h4>
+          <p class="provider-desc">Any SMTP server</p>
+          <span class="provider-limit">Varies</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- API Settings (SendGrid selected) -->
+  <div class="card" id="apiSettingsCard">
+    <div class="card-header-custom">
+      <h3><i class="fa-solid fa-key"></i> API Settings</h3>
+    </div>
+    <div class="card-body-custom">
+      <div class="form-row" style="margin-bottom: 1rem;">
+        <div class="form-group">
+          <label class="form-label-sm">API Key <span class="required">*</span></label>
+          <div class="input-group-custom">
+            <input type="password" class="form-control-sm-custom" value="sg_k3y_xxxxxxxxxxxxxxxxxxxx" id="apiKeyInput">
+            <span class="input-addon" onclick="togglePassword('apiKeyInput')"><i class="fa-solid fa-eye"></i> Show</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label-sm">API Region</label>
+          <select class="form-control-sm-custom">
+            <option selected>Global</option>
+            <option>EU</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label-sm">Webhook URL <span style="font-weight: 400; color: var(--text-secondary);">(for delivery events)</span></label>
+        <div class="webhook-box">
+          <code>https://api.ghf.org/webhooks/sendgrid</code>
+          <button class="btn-sm-action" onclick="copyWebhook()"><i class="fa-solid fa-copy"></i> Copy URL</button>
+        </div>
+        <p class="form-hint">Provide this URL in your SendGrid dashboard to receive delivery events.</p>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label-sm">Events Tracked</label>
+        <div class="checkbox-row">
+          <label class="checkbox-item"><input type="checkbox" checked> Delivered</label>
+          <label class="checkbox-item"><input type="checkbox" checked> Opened</label>
+          <label class="checkbox-item"><input type="checkbox" checked> Clicked</label>
+          <label class="checkbox-item"><input type="checkbox" checked> Bounced</label>
+          <label class="checkbox-item"><input type="checkbox" checked> Spam Report</label>
+          <label class="checkbox-item"><input type="checkbox" checked> Unsubscribed</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sending Domain -->
+  <div class="card" id="sendingDomainCard">
+    <div class="card-header-custom">
+      <h3><i class="fa-solid fa-globe"></i> Sending Domain</h3>
+      <div style="display: flex; gap: 0.5rem;">
+        <button class="btn-sm-action"><i class="fa-solid fa-rotate"></i> Verify Domain</button>
+        <button class="btn-sm-action"><i class="fa-solid fa-plus"></i> Add New Domain</button>
+      </div>
+    </div>
+    <div class="card-body-custom">
+      <div class="domain-status-row">
+        <span class="domain-name">mail.ghf.org</span>
+        <span class="verified-badge"><i class="fa-solid fa-circle-check"></i> Verified (DNS records confirmed)</span>
+      </div>
+
+      <label class="form-label-sm" style="margin-bottom: 0.5rem;">DNS Records Required</label>
+      <div style="overflow-x: auto;">
+        <table class="dns-table">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Name</th>
+              <th>Value</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>CNAME</td>
+              <td>em1234.mail.ghf.org</td>
+              <td>u1234.wl.sendgrid.net</td>
+              <td><span class="verified-badge"><i class="fa-solid fa-circle-check"></i> Verified</span></td>
+            </tr>
+            <tr>
+              <td>CNAME</td>
+              <td>s1._domainkey.mail.ghf.org</td>
+              <td>s1.domainkey.u1234.wl...</td>
+              <td><span class="verified-badge"><i class="fa-solid fa-circle-check"></i> Verified</span></td>
+            </tr>
+            <tr>
+              <td>CNAME</td>
+              <td>s2._domainkey.mail.ghf.org</td>
+              <td>s2.domainkey.u1234.wl...</td>
+              <td><span class="verified-badge"><i class="fa-solid fa-circle-check"></i> Verified</span></td>
+            </tr>
+            <tr>
+              <td>TXT</td>
+              <td>mail.ghf.org</td>
+              <td>v=spf1 include:sendgrid.net ~all</td>
+              <td><span class="verified-badge"><i class="fa-solid fa-circle-check"></i> Verified</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sending Identities -->
+  <div class="card">
+    <div class="card-header-custom">
+      <h3><i class="fa-solid fa-user-tag"></i> Sending Identities</h3>
+      <button class="btn-sm-action"><i class="fa-solid fa-plus"></i> Add Sending Identity</button>
+    </div>
+    <div class="card-body-custom" style="padding: 0;">
+      <div style="overflow-x: auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>From Name</th>
+              <th>From Email</th>
+              <th>Reply-To</th>
+              <th>Default</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-weight: 600;">Global Humanitarian Foundation</td>
+              <td><code style="font-size: 0.75rem; background: #f1f5f9; padding: 0.125rem 0.375rem; border-radius: 0.25rem;">noreply@mail.ghf.org</code></td>
+              <td>info@ghf.org</td>
+              <td><span class="verified-badge"><i class="fa-solid fa-circle-check"></i></span></td>
+              <td>
+                <div style="display: flex; gap: 0.375rem;">
+                  <button class="btn-sm-action"><i class="fa-solid fa-pen"></i> Edit</button>
+                  <button class="btn-sm-action"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="font-weight: 600;">GHF Fundraising</td>
+              <td><code style="font-size: 0.75rem; background: #f1f5f9; padding: 0.125rem 0.375rem; border-radius: 0.25rem;">fundraising@mail.ghf.org</code></td>
+              <td>fundraising@ghf.org</td>
+              <td></td>
+              <td>
+                <div style="display: flex; gap: 0.375rem;">
+                  <button class="btn-sm-action"><i class="fa-solid fa-pen"></i> Edit</button>
+                  <button class="btn-sm-action"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="font-weight: 600;">GHF Events</td>
+              <td><code style="font-size: 0.75rem; background: #f1f5f9; padding: 0.125rem 0.375rem; border-radius: 0.25rem;">events@mail.ghf.org</code></td>
+              <td>events@ghf.org</td>
+              <td></td>
+              <td>
+                <div style="display: flex; gap: 0.375rem;">
+                  <button class="btn-sm-action"><i class="fa-solid fa-pen"></i> Edit</button>
+                  <button class="btn-sm-action"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sending Limits & Throttling -->
+  <div class="card">
+    <div class="card-header-custom">
+      <h3><i class="fa-solid fa-gauge-high"></i> Sending Limits & Throttling</h3>
+    </div>
+    <div class="card-body-custom">
+      <div class="form-row" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom: 1.25rem;">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label-sm">Daily Limit</label>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="text" class="form-control-sm-custom" value="5,000" style="max-width: 120px;">
+            <span style="font-size: 0.75rem; color: var(--text-secondary);">emails/day</span>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label-sm">Hourly Limit</label>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="text" class="form-control-sm-custom" value="500" style="max-width: 120px;">
+            <span style="font-size: 0.75rem; color: var(--text-secondary);">emails/hour</span>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label-sm">Rate Limit</label>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="text" class="form-control-sm-custom" value="100" style="max-width: 120px;">
+            <span style="font-size: 0.75rem; color: var(--text-secondary);">emails/second</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Daily Usage -->
+      <div style="margin-bottom: 1rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.375rem;">
+          <span class="form-label-sm" style="margin-bottom: 0;">Current Usage Today</span>
+          <span style="font-size: 0.8125rem; font-weight: 700; color: var(--accent);">24.7%</span>
+        </div>
+        <div class="usage-bar">
+          <div class="bar-track">
+            <div class="bar-fill" style="width: 24.7%;"></div>
+          </div>
+          <div class="usage-label">
+            <span>1,234 sent</span>
+            <span>5,000 limit</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monthly Usage -->
+      <div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.375rem;">
+          <span class="form-label-sm" style="margin-bottom: 0;">Monthly Usage</span>
+          <span style="font-size: 0.8125rem; font-weight: 700; color: var(--accent);">28.5%</span>
+        </div>
+        <div class="usage-bar">
+          <div class="bar-track">
+            <div class="bar-fill" style="width: 28.5%;"></div>
+          </div>
+          <div class="usage-label">
+            <span>28,456 sent</span>
+            <span>100,000 limit</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- IP & Reputation -->
+  <div class="card">
+    <div class="card-header-custom">
+      <h3><i class="fa-solid fa-shield-halved"></i> IP & Reputation</h3>
+    </div>
+    <div class="card-body-custom">
+      <div class="reputation-grid">
+        <div class="reputation-item">
+          <div class="rep-label">Sending IP</div>
+          <div class="rep-value" style="font-family: 'SF Mono', monospace; font-size: 0.9375rem;">167.89.123.45</div>
+          <div class="rep-detail">Dedicated IP</div>
+        </div>
+        <div class="reputation-item">
+          <div class="rep-label">IP Reputation</div>
+          <div class="rep-value"><span class="rep-dot green"></span> Good (98/100)</div>
+          <div class="rep-detail">Excellent standing</div>
+        </div>
+        <div class="reputation-item">
+          <div class="rep-label">Domain Reputation</div>
+          <div class="rep-value"><span class="rep-dot green"></span> Good (96/100)</div>
+          <div class="rep-detail">Excellent standing</div>
+        </div>
+        <div class="reputation-item">
+          <div class="rep-label">Bounce Rate</div>
+          <div class="rep-value" style="color: var(--success-color);">0.8%</div>
+          <div class="rep-detail">Target: &lt;2%</div>
+        </div>
+        <div class="reputation-item">
+          <div class="rep-label">Spam Rate</div>
+          <div class="rep-value" style="color: var(--success-color);">0.02%</div>
+          <div class="rep-detail">Target: &lt;0.1%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom SMTP Configuration (hidden by default) -->
+  <div class="card smtp-config" id="smtpConfig">
+    <div class="card-header-custom">
+      <h3><i class="fa-solid fa-server"></i> SMTP Configuration</h3>
+    </div>
+    <div class="card-body-custom">
+      <div class="form-row" style="margin-bottom: 0;">
+        <div class="form-group">
+          <label class="form-label-sm">SMTP Host <span class="required">*</span></label>
+          <input type="text" class="form-control-sm-custom" value="smtp.office365.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label-sm">SMTP Port <span class="required">*</span></label>
+          <select class="form-control-sm-custom">
+            <option>25</option>
+            <option>465</option>
+            <option selected>587</option>
+            <option>2525</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row" style="margin-bottom: 0;">
+        <div class="form-group">
+          <label class="form-label-sm">Encryption</label>
+          <select class="form-control-sm-custom">
+            <option>None</option>
+            <option>SSL/TLS</option>
+            <option selected>STARTTLS</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label-sm">Authentication</label>
+          <select class="form-control-sm-custom">
+            <option>PLAIN</option>
+            <option selected>LOGIN</option>
+            <option>CRAM-MD5</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row" style="margin-bottom: 0;">
+        <div class="form-group">
+          <label class="form-label-sm">Username <span class="required">*</span></label>
+          <input type="text" class="form-control-sm-custom" value="noreply@ghf.org">
+        </div>
+        <div class="form-group">
+          <label class="form-label-sm">Password <span class="required">*</span></label>
+          <div class="input-group-custom">
+            <input type="password" class="form-control-sm-custom" value="mysecretpass" id="smtpPassInput">
+            <span class="input-addon" onclick="togglePassword('smtpPassInput')"><i class="fa-solid fa-eye"></i> Show</span>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top: 0.5rem;">
+        <button class="btn-outline-accent" onclick="testSmtpConnection()"><i class="fa-solid fa-plug-circle-check"></i> Test Connection</button>
+        <span id="smtpTestResult" style="margin-left: 0.75rem; font-size: 0.8125rem; font-weight: 600;"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Bar -->
+  <div class="action-bar">
+    <button class="btn-outline-accent"><i class="fa-solid fa-plug-circle-check"></i> Test Connection</button>
+    <button class="btn-primary-accent"><i class="fa-solid fa-floppy-disk"></i> Save Configuration</button>
+  </div>
+
+  <script>
+    function selectProvider(el, provider) {
+      document.querySelectorAll('.provider-card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+
+      const apiCard = document.getElementById('apiSettingsCard');
+      const domainCard = document.getElementById('sendingDomainCard');
+      const smtpCard = document.getElementById('smtpConfig');
+
+      if (provider === 'smtp') {
+        apiCard.style.display = 'none';
+        smtpCard.classList.add('active');
+      } else {
+        apiCard.style.display = '';
+        smtpCard.classList.remove('active');
+      }
+    }
+
+    function togglePassword(inputId) {
+      const input = document.getElementById(inputId);
+      const icon = input.parentElement.querySelector('.input-addon i');
+      const text = input.parentElement.querySelector('.input-addon');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fa-solid fa-eye-slash';
+        text.innerHTML = '<i class="fa-solid fa-eye-slash"></i> Hide';
+      } else {
+        input.type = 'password';
+        icon.className = 'fa-solid fa-eye';
+        text.innerHTML = '<i class="fa-solid fa-eye"></i> Show';
+      }
+    }
+
+    function copyWebhook() {
+      navigator.clipboard.writeText('https://api.ghf.org/webhooks/sendgrid');
+      const btn = event.target.closest('.btn-sm-action');
+      const orig = btn.innerHTML;
+      btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+      btn.style.color = 'var(--success-color)';
+      btn.style.borderColor = 'var(--success-color)';
+      setTimeout(() => {
+        btn.innerHTML = orig;
+        btn.style.color = '';
+        btn.style.borderColor = '';
+      }, 2000);
+    }
+
+    function testSmtpConnection() {
+      const result = document.getElementById('smtpTestResult');
+      result.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Testing...';
+      result.style.color = 'var(--text-secondary)';
+      setTimeout(() => {
+        result.innerHTML = '<i class="fa-solid fa-circle-check"></i> Connection successful';
+        result.style.color = 'var(--success-color)';
+      }, 1500);
+    }
+  </script>
+
+</body>
+
+</html>

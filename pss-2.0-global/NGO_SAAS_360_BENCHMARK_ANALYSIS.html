@@ -1,0 +1,624 @@
+<!doctype html>
+<html>
+<head>
+<meta charset='UTF-8'><meta name='viewport' content='width=device-width initial-scale=1'><style type='text/css'>html {overflow-x: initial !important;}</style>
+<style type='text/css'  id="style-base">:root { --bg-color: #ffffff; --text-color: #333333; --select-text-bg-color: #B5D6FC; --select-text-font-color: auto; --monospace: "Lucida Console",Consolas,"Courier",monospace; --title-bar-height: 20px; }
+.mac-os-11 { --title-bar-height: 28px; }
+html { font-size: 14px; background-color: var(--bg-color); color: var(--text-color); font-family: "Helvetica Neue", Helvetica, Arial, "Segoe UI Emoji", "SF Pro", sans-serif; -webkit-font-smoothing: antialiased; }
+h1, h2, h3, h4, h5 { white-space: pre-wrap; }
+body { margin: 0px; padding: 0px; height: auto; inset: 0px; font-size: 1rem; line-height: 1.428571; overflow-x: hidden; background: inherit; }
+iframe { margin: auto; }
+a.url { word-break: break-all; }
+a:active, a:hover { outline: 0px; }
+.in-text-selection, ::selection { text-shadow: none; background: var(--select-text-bg-color); color: var(--select-text-font-color); }
+#write { margin: 0px auto; height: auto; width: inherit; word-break: normal; overflow-wrap: break-word; position: relative; white-space: normal; overflow-x: visible; padding-top: 36px; }
+#write.first-line-indent p { text-indent: 2em; }
+#write.first-line-indent li p, #write.first-line-indent p *, #write.first-line-indent svg * { text-indent: 0px; }
+#write.first-line-indent li { margin-left: 2em; }
+.for-image #write { padding-left: 8px; padding-right: 8px; }
+body.typora-export { padding-left: 30px; padding-right: 30px; }
+.typora-export .footnote-line, .typora-export li, .typora-export p { white-space: pre-wrap; }
+.typora-export .task-list-item input { pointer-events: none; }
+@media screen and (max-width: 500px) {
+  body.typora-export { padding-left: 0px; padding-right: 0px; }
+  #write { padding-left: 20px; padding-right: 20px; }
+}
+#write li > figure:last-child { margin-bottom: 0.5rem; }
+#write ol, #write ul { position: relative; }
+img { max-width: 100%; vertical-align: middle; image-orientation: from-image; }
+button, input, select, textarea { color: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-width: inherit; font-size: inherit; line-height: inherit; font-family: inherit; font-size-adjust: inherit; font-kerning: inherit; font-variant-alternates: inherit; font-variant-ligatures: inherit; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-variant-position: inherit; font-variant-emoji: inherit; font-feature-settings: inherit; font-optical-sizing: inherit; font-variation-settings: inherit; }
+input[type="checkbox"], input[type="radio"] { line-height: normal; padding: 0px; }
+*, ::after, ::before { box-sizing: border-box; }
+#write h1, #write h2, #write h3, #write h4, #write h5, #write h6, #write p, #write pre { width: inherit; position: relative; }
+#write svg h1, #write svg h2, #write svg h3, #write svg h4, #write svg h5, #write svg h6, #write svg p { position: static; }
+svg sub, svg sup { position: static; }
+.nodeLabel p { padding-right: 2px; padding-left: 2px; }
+.typora-export .nodeLabel p { padding-right: 0px; padding-left: 0px; }
+foreignObject { overflow: visible; }
+p { line-height: inherit; }
+h1, h2, h3, h4, h5, h6 { break-after: avoid-page; break-inside: avoid; orphans: 4; }
+p { orphans: 4; }
+li p { orphans: 1; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.8rem; }
+h3 { font-size: 1.6rem; }
+h4 { font-size: 1.4rem; }
+h5 { font-size: 1.2rem; }
+h6 { font-size: 1rem; }
+.md-math-block, .md-rawblock, h1, h2, h3, h4, h5, h6, p { margin-top: 1rem; margin-bottom: 1rem; }
+.hidden { display: none; }
+.md-blockmeta { color: rgb(204, 204, 204); font-weight: 700; font-style: italic; }
+a { cursor: pointer; }
+sup.md-footnote { padding: 2px 4px; background-color: rgba(238, 238, 238, 0.7); color: rgb(85, 85, 85); border-radius: 4px; cursor: pointer; }
+sup.md-footnote a, sup.md-footnote a:hover { color: inherit; text-transform: inherit; text-decoration: inherit; }
+#write input[type="checkbox"] { cursor: pointer; width: inherit; height: inherit; }
+figure { overflow-x: auto; margin: 1.2em 0px; max-width: calc(100% + 16px); padding: 0px; }
+figure > table { margin: 0px; }
+thead, tr { break-inside: avoid; break-after: auto; }
+thead { display: table-header-group; }
+table { border-collapse: collapse; border-spacing: 0px; width: 100%; overflow: auto; break-inside: auto; text-align: left; }
+table.md-table td { min-width: 32px; }
+.CodeMirror-gutters { border-right-width: 0px; border-right-style: none; border-right-color: currentcolor; background-color: inherit; }
+.CodeMirror-linenumber { -webkit-user-select: none; }
+.CodeMirror { text-align: left; }
+.CodeMirror-placeholder { opacity: 0.3; }
+.CodeMirror pre { padding: 0px 4px; }
+.CodeMirror-lines { padding: 0px; }
+div.hr:focus { cursor: none; }
+#write pre { white-space: pre-wrap; }
+#write.fences-no-line-wrapping pre { white-space: pre; }
+#write pre.ty-contain-cm { white-space: normal; }
+.CodeMirror-gutters { margin-right: 4px; }
+.md-fences { font-size: 0.9rem; display: block; break-inside: avoid; text-align: left; overflow: visible; white-space: pre; background: inherit; position: relative !important; }
+.md-fences-adv-panel { width: 100%; margin-top: 10px; text-align: center; padding-top: 0px; padding-bottom: 8px; overflow-x: auto; }
+#write .md-fences.mock-cm { white-space: pre-wrap; }
+.md-fences.md-fences-with-lineno { padding-left: 0px; }
+#write.fences-no-line-wrapping .md-fences.mock-cm { white-space: pre; overflow-x: auto; }
+.md-fences.mock-cm.md-fences-with-lineno { padding-left: 8px; }
+.CodeMirror-line, twitterwidget { break-inside: avoid; }
+svg { break-inside: avoid; }
+.footnotes { opacity: 0.8; font-size: 0.9rem; margin-top: 1em; margin-bottom: 1em; }
+.footnotes + .footnotes { margin-top: 0px; }
+.md-reset { margin: 0px; padding: 0px; border: 0px; outline: 0px; vertical-align: top; background: 0px 0px; text-decoration: none; text-shadow: none; float: none; position: static; width: auto; height: auto; white-space: nowrap; cursor: inherit; line-height: normal; font-weight: 400; text-align: left; box-sizing: content-box; direction: ltr; }
+li div { padding-top: 0px; }
+blockquote { margin: 1rem 0px; }
+li .mathjax-block, li p { margin: 0.5rem 0px; }
+li blockquote { margin: 1rem 0px; }
+li { margin: 0px; position: relative; }
+blockquote > :last-child { margin-bottom: 0px; }
+blockquote > :first-child, li > :first-child { margin-top: 0px; }
+.footnotes-area { color: rgb(136, 136, 136); margin-top: 0.714rem; padding-bottom: 0.143rem; white-space: normal; }
+#write .footnote-line { white-space: pre-wrap; }
+@media print {
+  body, html { border: 1px solid transparent; height: 99%; break-after: avoid; break-before: avoid; font-variant-ligatures: no-common-ligatures; }
+  #write { margin-top: 0px; border-color: transparent !important; padding-top: 0px !important; padding-bottom: 0px !important; }
+  .typora-export * { print-color-adjust: exact; }
+  .typora-export #write { break-after: avoid; }
+  .typora-export #write::after { height: 0px; }
+  .is-mac table { break-inside: avoid; }
+  #write > p:nth-child(1) { margin-top: 0px; }
+  .typora-export-show-outline .typora-export-sidebar { display: none; }
+  figure { overflow-x: visible; }
+}
+.footnote-line { margin-top: 0.714em; font-size: 0.7em; }
+a img, img a { cursor: pointer; }
+pre.md-meta-block { font-size: 0.8rem; min-height: 0.8rem; white-space: pre-wrap; background: rgb(204, 204, 204); display: block; overflow-x: hidden; }
+p > .md-image:only-child:not(.md-img-error) img, p > img:only-child { display: block; margin: auto; }
+#write.first-line-indent p > .md-image:only-child:not(.md-img-error) img { left: -2em; position: relative; }
+p > .md-image:only-child { display: inline-block; width: 100%; }
+#write .MathJax_Display { margin: 0.8em 0px 0px; }
+.md-math-block { width: 100%; }
+.md-math-block:not(:empty)::after { display: none; }
+.MathJax_ref { fill: currentcolor; }
+[contenteditable="true"]:active, [contenteditable="true"]:focus, [contenteditable="false"]:active, [contenteditable="false"]:focus { outline: 0px; box-shadow: none; }
+.md-task-list-item { position: relative; list-style-type: none; }
+.task-list-item.md-task-list-item { padding-left: 0px; }
+.md-task-list-item > input { position: absolute; top: 0px; left: 0px; margin-left: -1.2em; margin-top: calc(1em - 10px); border: medium; }
+.math { font-size: 1rem; }
+.md-toc { min-height: 3.58rem; position: relative; font-size: 0.9rem; border-radius: 10px; }
+.md-toc-content { position: relative; margin-left: 0px; }
+.md-toc-content::after, .md-toc::after { display: none; }
+.md-toc-item { display: block; color: rgb(65, 131, 196); }
+.md-toc-item a { text-decoration: none; }
+.md-toc-inner:hover { text-decoration: underline; }
+.md-toc-inner { display: inline-block; cursor: pointer; }
+.md-toc-h1 .md-toc-inner { margin-left: 0px; font-weight: 700; }
+.md-toc-h2 .md-toc-inner { margin-left: 2em; }
+.md-toc-h3 .md-toc-inner { margin-left: 4em; }
+.md-toc-h4 .md-toc-inner { margin-left: 6em; }
+.md-toc-h5 .md-toc-inner { margin-left: 8em; }
+.md-toc-h6 .md-toc-inner { margin-left: 10em; }
+@media screen and (max-width: 48em) {
+  .md-toc-h3 .md-toc-inner { margin-left: 3.5em; }
+  .md-toc-h4 .md-toc-inner { margin-left: 5em; }
+  .md-toc-h5 .md-toc-inner { margin-left: 6.5em; }
+  .md-toc-h6 .md-toc-inner { margin-left: 8em; }
+}
+a.md-toc-inner { font-size: inherit; font-style: inherit; font-weight: inherit; line-height: inherit; }
+.footnote-line a:not(.reversefootnote) { color: inherit; }
+.reversefootnote { font-family: ui-monospace, sans-serif; }
+.md-attr { display: none; }
+.md-fn-count::after { content: "."; }
+code, pre, samp, tt { font-family: var(--monospace); }
+kbd { margin: 0px 0.1em; padding: 0.1em 0.6em; font-size: 0.8em; color: rgb(36, 39, 41); background: rgb(255, 255, 255); border: 1px solid rgb(173, 179, 185); border-radius: 3px; box-shadow: rgba(12, 13, 14, 0.2) 0px 1px 0px, rgb(255, 255, 255) 0px 0px 0px 2px inset; white-space: nowrap; vertical-align: middle; }
+.md-comment { color: rgb(162, 127, 3); opacity: 0.6; font-family: var(--monospace); }
+code { text-align: left; vertical-align: initial; }
+a.md-print-anchor { white-space: pre !important; border-width: medium !important; border-style: none !important; border-color: currentcolor !important; display: inline-block !important; position: absolute !important; width: 1px !important; right: 0px !important; outline: 0px !important; background: 0px 0px !important; text-decoration: initial !important; text-shadow: initial !important; }
+.os-windows.monocolor-emoji .md-emoji { font-family: "Segoe UI Symbol", sans-serif; }
+.md-diagram-panel > svg { max-width: 100%; }
+[lang="flow"] svg, [lang="mermaid"] svg { max-width: 100%; height: auto; }
+[lang="mermaid"] .node text { font-size: 1rem; }
+table tr th { border-bottom-width: 0px; border-bottom-style: none; border-bottom-color: currentcolor; }
+video { max-width: 100%; display: block; margin: 0px auto; }
+iframe { max-width: 100%; width: 100%; border: medium; }
+.highlight td, .highlight tr { border: 0px; }
+mark { background: rgb(255, 255, 0); color: rgb(0, 0, 0); }
+.md-html-inline .md-plain, .md-html-inline strong, mark .md-inline-math, mark strong { color: inherit; }
+.md-expand mark .md-meta { opacity: 0.3 !important; }
+mark .md-meta { color: rgb(0, 0, 0); }
+@media print {
+  .typora-export h1, .typora-export h2, .typora-export h3, .typora-export h4, .typora-export h5, .typora-export h6 { break-inside: avoid; }
+}
+.md-diagram-panel .messageText { stroke: none !important; }
+.md-diagram-panel .start-state { fill: var(--node-fill); }
+.md-diagram-panel .edgeLabel rect { opacity: 1 !important; }
+.md-fences.md-fences-math { font-size: 1em; }
+.md-fences-advanced:not(.md-focus) { padding: 0px; white-space: nowrap; border: 0px; }
+.md-fences-advanced:not(.md-focus) { background: inherit; }
+.mermaid-svg { margin: auto; }
+.typora-export-show-outline .typora-export-content { max-width: 1440px; margin: auto; display: flex; flex-direction: row; }
+.typora-export-sidebar { width: 300px; font-size: 0.8rem; margin-top: 80px; margin-right: 18px; }
+.typora-export-show-outline #write { --webkit-flex: 2; flex: 2 1 0%; }
+.typora-export-sidebar .outline-content { position: fixed; top: 0px; max-height: 100%; overflow: hidden auto; padding-bottom: 30px; padding-top: 60px; width: 300px; }
+@media screen and (max-width: 1024px) {
+  .typora-export-sidebar, .typora-export-sidebar .outline-content { width: 240px; }
+}
+@media screen and (max-width: 800px) {
+  .typora-export-sidebar { display: none; }
+}
+.outline-content li, .outline-content ul { margin-left: 0px; margin-right: 0px; padding-left: 0px; padding-right: 0px; list-style: none; overflow-wrap: anywhere; }
+.outline-content ul { margin-top: 0px; margin-bottom: 0px; }
+.outline-content strong { font-weight: 400; }
+.outline-expander { width: 1rem; height: 1.428571rem; position: relative; display: table-cell; vertical-align: middle; cursor: pointer; padding-left: 4px; }
+.outline-expander::before { content: ""; position: relative; font-family: Ionicons; display: inline-block; font-size: 8px; vertical-align: middle; }
+.outline-item { padding-top: 3px; padding-bottom: 3px; cursor: pointer; }
+.outline-expander:hover::before { content: ""; }
+.outline-h1 > .outline-item { padding-left: 0px; }
+.outline-h2 > .outline-item { padding-left: 1em; }
+.outline-h3 > .outline-item { padding-left: 2em; }
+.outline-h4 > .outline-item { padding-left: 3em; }
+.outline-h5 > .outline-item { padding-left: 4em; }
+.outline-h6 > .outline-item { padding-left: 5em; }
+.outline-label { cursor: pointer; display: table-cell; vertical-align: middle; text-decoration: none; color: inherit; }
+.outline-label:hover { text-decoration: underline; }
+.outline-item:hover { border-color: rgb(245, 245, 245); background-color: var(--item-hover-bg-color); }
+.outline-item:hover { margin-left: -28px; margin-right: -28px; border-left-width: 28px; border-left-style: solid; border-left-color: transparent; border-right-width: 28px; border-right-style: solid; border-right-color: transparent; }
+.outline-item-single .outline-expander::before, .outline-item-single .outline-expander:hover::before { display: none; }
+.outline-item-open > .outline-item > .outline-expander::before { content: ""; }
+.outline-children { display: none; }
+.info-panel-tab-wrapper { display: none; }
+.outline-item-open > .outline-children { display: block; }
+.typora-export .outline-item { padding-top: 1px; padding-bottom: 1px; }
+.typora-export .outline-item:hover { margin-right: -8px; border-right-width: 8px; border-right-style: solid; border-right-color: transparent; }
+.typora-export .outline-expander::before { content: "+"; font-family: inherit; top: -1px; }
+.typora-export .outline-expander:hover::before, .typora-export .outline-item-open > .outline-item > .outline-expander::before { content: "−"; }
+.typora-export-collapse-outline .outline-children { display: none; }
+.typora-export-collapse-outline .outline-item-open > .outline-children, .typora-export-no-collapse-outline .outline-children { display: block; }
+.typora-export-no-collapse-outline .outline-expander::before { content: "" !important; }
+.typora-export-show-outline .outline-item-active > .outline-item .outline-label { font-weight: 700; }
+.md-inline-math-container mjx-container { zoom: 0.95; }
+mjx-container { break-inside: avoid; }
+.md-alert.md-alert-note { border-left-color: rgb(9, 105, 218); }
+.md-alert.md-alert-important { border-left-color: rgb(130, 80, 223); }
+.md-alert.md-alert-warning { border-left-color: rgb(154, 103, 0); }
+.md-alert.md-alert-tip { border-left-color: rgb(31, 136, 61); }
+.md-alert.md-alert-caution { border-left-color: rgb(207, 34, 46); }
+.md-alert { padding: 0px 1em; margin-bottom: 16px; color: inherit; border-left-width: 0.25em; border-left-style: solid; border-left-color: rgb(0, 0, 0); }
+.md-alert-text-note { color: rgb(9, 105, 218); }
+.md-alert-text-important { color: rgb(130, 80, 223); }
+.md-alert-text-warning { color: rgb(154, 103, 0); }
+.md-alert-text-tip { color: rgb(31, 136, 61); }
+.md-alert-text-caution { color: rgb(207, 34, 46); }
+.md-alert-text { font-size: 0.9rem; font-weight: 700; }
+.md-alert-text svg { fill: currentcolor; position: relative; top: 0.125em; margin-right: 1ch; overflow: visible; }
+.md-alert-text-container::after { content: attr(data-text); text-transform: capitalize; pointer-events: none; margin-right: 1ch; }
+
+</style>
+<link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Open+Sans:400italic,700italic,700,400&amp;subset=latin,latin-ext' type='text/css' />
+<style type='text/css'  id="style-theme_css">:root {
+    --side-bar-bg-color: #fafafa;
+    --control-text-color: #777;
+}
+
+@include-when-export url(https://fonts.googleapis.com/css?family=Open+Sans:400italic,700italic,700,400&subset=latin,latin-ext);
+
+/* open-sans-regular - latin-ext_latin */
+  /* open-sans-italic - latin-ext_latin */
+    /* open-sans-700 - latin-ext_latin */
+    /* open-sans-700italic - latin-ext_latin */
+  html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    font-family: "Open Sans","Clear Sans", "Helvetica Neue", Helvetica, Arial, 'Segoe UI Emoji', 'SF Pro', sans-serif;
+    color: rgb(51, 51, 51);
+    line-height: 1.6;
+}
+
+#write {
+    max-width: 860px;
+  	margin: 0 auto;
+  	padding: 30px;
+    padding-bottom: 100px;
+}
+
+@media only screen and (min-width: 1400px) {
+	#write {
+		max-width: 1024px;
+	}
+}
+
+@media only screen and (min-width: 1800px) {
+	#write {
+		max-width: 1200px;
+	}
+}
+
+#write > ul:first-child,
+#write > ol:first-child{
+    margin-top: 30px;
+}
+
+a {
+    color: #4183C4;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    position: relative;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    font-weight: bold;
+    line-height: 1.4;
+    cursor: text;
+}
+h1:hover a.anchor,
+h2:hover a.anchor,
+h3:hover a.anchor,
+h4:hover a.anchor,
+h5:hover a.anchor,
+h6:hover a.anchor {
+    text-decoration: none;
+}
+h1 tt,
+h1 code {
+    font-size: inherit;
+}
+h2 tt,
+h2 code {
+    font-size: inherit;
+}
+h3 tt,
+h3 code {
+    font-size: inherit;
+}
+h4 tt,
+h4 code {
+    font-size: inherit;
+}
+h5 tt,
+h5 code {
+    font-size: inherit;
+}
+h6 tt,
+h6 code {
+    font-size: inherit;
+}
+h1 {
+    font-size: 2.25em;
+    line-height: 1.2;
+    border-bottom: 1px solid #eee;
+}
+h2 {
+    font-size: 1.75em;
+    line-height: 1.225;
+    border-bottom: 1px solid #eee;
+}
+
+/*@media print {
+    .typora-export h1,
+    .typora-export h2 {
+        border-bottom: none;
+        padding-bottom: initial;
+    }
+
+    .typora-export h1::after,
+    .typora-export h2::after {
+        content: "";
+        display: block;
+        height: 100px;
+        margin-top: -96px;
+        border-top: 1px solid #eee;
+    }
+}*/
+
+h3 {
+    font-size: 1.5em;
+    line-height: 1.43;
+}
+h4 {
+    font-size: 1.25em;
+}
+h5 {
+    font-size: 1em;
+}
+h6 {
+   font-size: 1em;
+    color: #777;
+}
+p,
+blockquote,
+ul,
+ol,
+dl,
+table{
+    margin: 0.8em 0;
+}
+li>ol,
+li>ul {
+    margin: 0 0;
+}
+hr {
+    height: 2px;
+    padding: 0;
+    margin: 16px 0;
+    background-color: #e7e7e7;
+    border: 0 none;
+    overflow: hidden;
+    box-sizing: content-box;
+}
+
+li p.first {
+    display: inline-block;
+}
+ul,
+ol {
+    padding-left: 30px;
+}
+ul:first-child,
+ol:first-child {
+    margin-top: 0;
+}
+ul:last-child,
+ol:last-child {
+    margin-bottom: 0;
+}
+blockquote {
+    border-left: 4px solid #dfe2e5;
+    padding: 0 15px;
+    color: #777777;
+}
+blockquote blockquote {
+    padding-right: 0;
+}
+table {
+    padding: 0;
+    word-break: initial;
+}
+table tr {
+    border: 1px solid #dfe2e5;
+    margin: 0;
+    padding: 0;
+}
+table tr:nth-child(2n),
+thead {
+    background-color: #f8f8f8;
+}
+table th {
+    font-weight: bold;
+    border: 1px solid #dfe2e5;
+    border-bottom: 0;
+    margin: 0;
+    padding: 6px 13px;
+}
+table td {
+    border: 1px solid #dfe2e5;
+    margin: 0;
+    padding: 6px 13px;
+}
+table th:first-child,
+table td:first-child {
+    margin-top: 0;
+}
+table th:last-child,
+table td:last-child {
+    margin-bottom: 0;
+}
+
+.CodeMirror-lines {
+    padding-left: 4px;
+}
+
+.code-tooltip {
+    box-shadow: 0 1px 1px 0 rgba(0,28,36,.3);
+    border-top: 1px solid #eef2f2;
+}
+
+.md-fences,
+code,
+tt {
+    border: 1px solid #e7eaed;
+    background-color: #f8f8f8;
+    border-radius: 3px;
+    padding: 0;
+    padding: 2px 4px 0px 4px;
+    font-size: 0.9em;
+}
+
+code {
+    background-color: #f3f4f4;
+    padding: 0 2px 0 2px;
+}
+
+.md-fences {
+    margin-bottom: 15px;
+    margin-top: 15px;
+    padding-top: 8px;
+    padding-bottom: 6px;
+}
+
+
+.md-task-list-item > input {
+  margin-left: -1.3em;
+}
+
+@media print {
+    html {
+        font-size: 13px;
+    }
+    pre {
+        page-break-inside: avoid;
+        word-wrap: break-word;
+    }
+}
+
+.md-fences {
+	background-color: #f8f8f8;
+}
+#write pre.md-meta-block {
+	padding: 1rem;
+    font-size: 85%;
+    line-height: 1.45;
+    background-color: #f7f7f7;
+    border: 0;
+    border-radius: 3px;
+    color: #777777;
+    margin-top: 0 !important;
+}
+
+.mathjax-block>.code-tooltip {
+	bottom: .375rem;
+}
+
+.md-mathjax-midline {
+    background: #fafafa;
+}
+
+#write>h3.md-focus:before{
+	left: -1.5625rem;
+	top: .375rem;
+}
+#write>h4.md-focus:before{
+	left: -1.5625rem;
+	top: .285714286rem;
+}
+#write>h5.md-focus:before{
+	left: -1.5625rem;
+	top: .285714286rem;
+}
+#write>h6.md-focus:before{
+	left: -1.5625rem;
+	top: .285714286rem;
+}
+.md-image>.md-meta {
+    /*border: 1px solid #ddd;*/
+    border-radius: 3px;
+    padding: 2px 0px 0px 4px;
+    font-size: 0.9em;
+    color: inherit;
+}
+
+.md-tag {
+    color: #a7a7a7;
+    opacity: 1;
+}
+
+.md-toc { 
+    margin-top:20px;
+    padding-bottom:20px;
+}
+
+.sidebar-tabs {
+    border-bottom: none;
+}
+
+#typora-quick-open {
+    border: 1px solid #ddd;
+    background-color: #f8f8f8;
+}
+
+#typora-quick-open-item {
+    background-color: #FAFAFA;
+    border-color: #FEFEFE #e5e5e5 #e5e5e5 #eee;
+    border-style: solid;
+    border-width: 1px;
+}
+
+/** focus mode */
+.on-focus-mode blockquote {
+    border-left-color: rgba(85, 85, 85, 0.12);
+}
+
+header, .context-menu, .megamenu-content, footer{
+    font-family: "Segoe UI", "Arial", sans-serif;
+}
+
+.file-node-content:hover .file-node-icon,
+.file-node-content:hover .file-node-open-state{
+    visibility: visible;
+}
+
+.mac-seamless-mode #typora-sidebar {
+    background-color: #fafafa;
+    background-color: var(--side-bar-bg-color);
+}
+
+.mac-os #write{
+    caret-color: AccentColor;
+}
+
+.md-lang {
+    color: #b4654d;
+}
+
+/*.html-for-mac {
+    --item-hover-bg-color: #E6F0FE;
+}*/
+
+#md-notification .btn {
+    border: 0;
+}
+
+.dropdown-menu .divider {
+    border-color: #e5e5e5;
+    opacity: 0.4;
+}
+
+.ty-preferences .window-content {
+    background-color: #fafafa;
+}
+
+.ty-preferences .nav-group-item.active {
+    color: white;
+    background: #999;
+}
+
+.menu-item-container a.menu-style-btn {
+    background-color: #f5f8fa;
+    background-image: linear-gradient( 180deg , hsla(0, 0%, 100%, 0.8), hsla(0, 0%, 100%, 0)); 
+}
+</style>
+<style type='text/css'  id="style-lp">ol, ul {padding-left: 40px}</style>
+<style type='text/css'  id="style-mac-print"> @media print { @page {margin: 0 0 0 0;} body.typora-export {padding-left: 0; padding-right: 0;} #write {padding:0;}}</style>
+
+<title>NGO_SAAS_360_BENCHMARK_ANALYSIS</title>
+</head>
+<body class='typora-export'><div class='typora-export-content'>
+<div id='write'  class=''><h1 id='ngo-saas-platform-----360-degree-competitive-benchmark-analysis'><span>NGO SaaS Platform — 360-Degree Competitive Benchmark Analysis</span></h1><hr /><h2 id='1-purpose'><span>1. Purpose</span></h2><p><span>This document benchmarks the NGO SaaS Platform roadmap against the leading global non-profit CRM and fundraising platforms. The analysis identifies where the roadmap aligns with market expectations, where it leads, and where critical gaps must be addressed before launch.</span></p><p><span>The platforms selected for comparison represent the full spectrum of the market: enterprise incumbents, mid-market all-in-one solutions, retention-focused specialists, and open-source alternatives.</span></p><hr /><h2 id='2-competitive-landscape-----key-players'><span>2. Competitive Landscape — Key Players</span></h2><figure class='table-figure'><table><thead><tr><th><span>Platform</span></th><th><span>Market Segment</span></th><th><span>Strength</span></th><th><span>Pricing Model</span></th></tr></thead><tbody><tr><td><strong><span>Salesforce Nonprofit Cloud</span></strong><span> (Agentforce Nonprofit)</span></td><td><span>Enterprise</span></td><td><span>Unlimited customisation, AI agents, program management, grantmaking, case management</span></td><td><span>10 free licenses via Power of Us; paid from $60/user/month</span></td></tr><tr><td><strong><span>Blackbaud Raiser&#39;s Edge NXT</span></strong></td><td><span>Enterprise</span></td><td><span>Major gift cultivation, wealth screening, AI-driven suggested donation amounts</span></td><td><span>From ~$4,000/year</span></td></tr><tr><td><strong><span>Bloomerang</span></strong></td><td><span>Small–Mid</span></td><td><span>Donor retention analytics, engagement scoring (0–100), churn prediction, constituent timeline</span></td><td><span>From $125/month (contact-based)</span></td></tr><tr><td><strong><span>Neon CRM</span></strong></td><td><span>Mid-Market</span></td><td><span>All-in-one: CRM + fundraising + email + events + membership + P2P + volunteer management</span></td><td><span>From $99/month (revenue-based)</span></td></tr><tr><td><strong><span>DonorDock</span></strong></td><td><span>Small–Mid</span></td><td><span>Action Board (AI daily task surfacing), Smart Nudges, all-inclusive pricing</span></td><td><span>$500/month flat</span></td></tr><tr><td><strong><span>LiveImpact</span></strong></td><td><span>Mid-Market</span></td><td><span>Case management + donor management + AI chat + volunteer-to-donor conversion</span></td><td><span>Modular pricing</span></td></tr><tr><td><strong><span>Givebutter</span></strong></td><td><span>Small / Startup</span></td><td><span>Free entry point (tip-based), peer-to-peer, events, auctions</span></td><td><span>Free + tips; Plus plan contact-based</span></td></tr><tr><td><strong><span>CharityEngine</span></strong></td><td><span>Mid–Large</span></td><td><span>Recurring revenue retention engine, built-in payment processing, advocacy</span></td><td><span>Custom pricing</span></td></tr><tr><td><strong><span>CiviCRM</span></strong></td><td><span>Tech-savvy / Budget</span></td><td><span>Open-source, zero licensing cost, full control</span></td><td><span>Free (hosting + dev costs only)</span></td></tr><tr><td><strong><span>Virtuous</span></strong></td><td><span>Mid–Large</span></td><td><span>Responsive fundraising methodology, AI personalisation, multi-channel automation</span></td><td><span>Premium pricing (custom quotes)</span></td></tr></tbody></table></figure><hr /><h2 id='3-feature-by-feature-benchmark'><span>3. Feature-by-Feature Benchmark</span></h2><p><span>This matrix compares the roadmap&#39;s 12 modules against standard capabilities across the top platforms. Each cell indicates whether the capability is present in the roadmap, present in the market benchmark, or represents a gap.</span></p><h3 id='31-core-crm-and-constituent-management'><span>3.1 Core CRM and Constituent Management</span></h3><figure class='table-figure'><table><thead><tr><th><span>Capability</span></th><th><span>Our Roadmap</span></th><th><span>Market Standard</span></th><th><span>Gap?</span></th></tr></thead><tbody><tr><td><span>Rich constituent profiles (giving history, communication prefs, engagement)</span></td><td><span>Yes (Constituent Module 80%)</span></td><td><span>Universal</span></td><td><span>No</span></td></tr><tr><td><span>Household/family linking</span></td><td><span>Yes (Household feature 80%)</span></td><td><span>Standard (Bloomerang, Neon, Salesforce)</span></td><td><span>No</span></td></tr><tr><td><span>Duplicate detection and merge</span></td><td><span>Yes (80%)</span></td><td><span>Standard</span></td><td><span>No</span></td></tr><tr><td><span>Custom fields</span></td><td><span>Not explicitly stated</span></td><td><span>Universal requirement</span></td><td><strong><span>Yes — must add</span></strong></td></tr><tr><td><span>Constituent timeline (chronological touchpoint view)</span></td><td><span>Not in roadmap</span></td><td><span>Standard (Bloomerang, Neon, DonorDock)</span></td><td><strong><span>Yes — must add</span></strong></td></tr><tr><td><span>Engagement/generosity scoring</span></td><td><span>Not in roadmap</span></td><td><span>Market differentiator (Bloomerang 0–100, Virtuous, DonorDock)</span></td><td><strong><span>Yes — critical gap</span></strong></td></tr><tr><td><span>Tags and segmentation</span></td><td><span>Not explicitly stated</span></td><td><span>Universal</span></td><td><strong><span>Yes — must add</span></strong></td></tr><tr><td><span>Wealth screening / giving capacity indicators</span></td><td><span>Not in roadmap</span></td><td><span>Standard (Bloomerang, Blackbaud, Virtuous)</span></td><td><strong><span>Phase 2+ consideration</span></strong></td></tr><tr><td><span>Data import with field mapping</span></td><td><span>Yes (80%)</span></td><td><span>Standard</span></td><td><span>No</span></td></tr><tr><td><span>Data export (CSV/Excel/PDF)</span></td><td><span>Yes (0% — planned)</span></td><td><span>Standard</span></td><td><span>No — planned</span></td></tr></tbody></table></figure><h3 id='32-fundraising-and-donation-management'><span>3.2 Fundraising and Donation Management</span></h3><figure class='table-figure'><table><thead><tr><th><span>Capability</span></th><th><span>Our Roadmap</span></th><th><span>Market Standard</span></th><th><span>Gap?</span></th></tr></thead><tbody><tr><td><span>Manual/direct donation entry</span></td><td><span>Yes (60%)</span></td><td><span>Universal</span></td><td><span>No</span></td></tr><tr><td><span>Online donation pages (branded, embeddable)</span></td><td><span>Yes (Public Donation 50%)</span></td><td><span>Universal</span></td><td><span>No</span></td></tr><tr><td><span>Recurring donations with webhook management</span></td><td><span>Yes (80%)</span></td><td><span>Universal</span></td><td><span>No</span></td></tr><tr><td><span>Peer-to-peer (P2P) fundraising</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Standard (Neon, Bloomerang, Givebutter, CharityEngine)</span></td><td><strong><span>Yes — critical gap</span></strong></td></tr><tr><td><span>Text-to-give / SMS giving</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Growing standard (Neon, Bloomerang, Givebutter)</span></td><td><strong><span>Yes — should add</span></strong></td></tr><tr><td><span>Crowdfunding campaign pages</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Standard (Givebutter, Neon, LiveImpact)</span></td><td><strong><span>Yes — should add</span></strong></td></tr><tr><td><span>Multiple payment gateway support</span></td><td><span>Yes (0% — planned)</span></td><td><span>Standard</span></td><td><span>No — planned</span></td></tr><tr><td><span>Donation tracing / constituent resolution</span></td><td><span>Yes (0% — planned)</span></td><td><span>Niche but valuable</span></td><td><span>No — planned</span></td></tr><tr><td><span>In-kind gift tracking</span></td><td><span>Yes (60%)</span></td><td><span>Available in some (Salesforce, LiveImpact)</span></td><td><span>No — strong differentiator</span></td></tr><tr><td><span>Bulk donation upload</span></td><td><span>Yes (10%)</span></td><td><span>Standard</span></td><td><span>No</span></td></tr><tr><td><span>Refund handling</span></td><td><span>Yes (0% — planned)</span></td><td><span>Standard</span></td><td><span>No — planned</span></td></tr><tr><td><span>Failed payment retry</span></td><td><span>Yes (0% — planned)</span></td><td><span>Standard</span></td><td><span>No — planned</span></td></tr><tr><td><span>Payment reconciliation</span></td><td><span>Yes (0% — planned)</span></td><td><span>CharityEngine, Salesforce</span></td><td><span>No — planned</span></td></tr><tr><td><span>Corporate/employer matching gifts</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Growing standard (Double the Donation integrations)</span></td><td><strong><span>Yes — should add</span></strong></td></tr><tr><td><span>Pledge management</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Standard (Salesforce, Blackbaud, Neon)</span></td><td><strong><span>Yes — should add</span></strong></td></tr><tr><td><span>Suggested donation amounts (AI-driven)</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Emerging (Blackbaud, Virtuous)</span></td><td><strong><span>Phase 2+ consideration</span></strong></td></tr></tbody></table></figure><h3 id='33-communication-and-marketing'><span>3.3 Communication and Marketing</span></h3><figure class='table-figure'><table><thead><tr><th><span>Capability</span></th><th><span>Our Roadmap</span></th><th><span>Market Standard</span></th><th><span>Gap?</span></th></tr></thead><tbody><tr><td><span>Email template editor</span></td><td><span>Yes (70%)</span></td><td><span>Universal</span></td><td><span>No</span></td></tr><tr><td><span>Bulk email campaigns</span></td><td><span>Yes (80%)</span></td><td><span>Universal</span></td><td><span>No</span></td></tr><tr><td><span>WhatsApp integration</span></td><td><span>Yes (0% — planned)</span></td><td><span>Rare — strong differentiator for non-Western markets</span></td><td><span>No — </span><strong><span>competitive advantage</span></strong></td></tr><tr><td><span>SMS/text messaging</span></td><td><strong><span>Not explicitly in roadmap</span></strong></td><td><span>Growing standard (Neon, Bloomerang, DonorDock)</span></td><td><strong><span>Yes — should add</span></strong></td></tr><tr><td><span>Automated communication workflows (triggers)</span></td><td><span>Yes (0% — planned)</span></td><td><span>Market differentiator (Bloomerang, Virtuous, DonorDock)</span></td><td><span>No — planned</span></td></tr><tr><td><span>Notification triggers (receipt, event reminder)</span></td><td><span>Yes (0% — planned)</span></td><td><span>Standard</span></td><td><span>No — planned</span></td></tr><tr><td><span>Direct mail / letter generation</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Standard (Bloomerang, Blackbaud, CharityEngine)</span></td><td><strong><span>Yes — Document Engine could cover this</span></strong></td></tr><tr><td><span>Communication audit (readability scoring)</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Emerging (Bloomerang Ahern Audit)</span></td><td><span>Phase 3 consideration</span></td></tr><tr><td><span>Social media integration</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Common (Bloomerang social listening, Givebutter social sharing)</span></td><td><strong><span>Yes — should consider</span></strong></td></tr></tbody></table></figure><h3 id='34-event-management'><span>3.4 Event Management</span></h3><figure class='table-figure'><table><thead><tr><th><span>Capability</span></th><th><span>Our Roadmap</span></th><th><span>Market Standard</span></th><th><span>Gap?</span></th></tr></thead><tbody><tr><td><span>Event creation and management</span></td><td><span>Yes (Organisation Module — Event 70%)</span></td><td><span>Standard</span></td><td><span>No</span></td></tr><tr><td><span>Public event registration page</span></td><td><span>Yes (0% — planned)</span></td><td><span>Standard</span></td><td><span>No — planned</span></td></tr><tr><td><span>Ticketing and attendance tracking</span></td><td><span>Partially (Mobile App — attendance)</span></td><td><span>Standard (Neon, Givebutter, Giveffect)</span></td><td><strong><span>Needs explicit inclusion</span></strong></td></tr><tr><td><span>Auction / silent auction tools</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Common (Givebutter, Bloomerang, CharityEngine, LiveImpact)</span></td><td><strong><span>Phase 2+ consideration</span></strong></td></tr><tr><td><span>Event-linked donations</span></td><td><span>Yes (Mobile App — event donation flow)</span></td><td><span>Standard</span></td><td><span>No</span></td></tr><tr><td><span>Post-event analytics</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Standard</span></td><td><strong><span>Yes — add to Reports</span></strong></td></tr></tbody></table></figure><h3 id='35-volunteer-management'><span>3.5 Volunteer Management</span></h3><figure class='table-figure'><table><thead><tr><th><span>Capability</span></th><th><span>Our Roadmap</span></th><th><span>Market Standard</span></th><th><span>Gap?</span></th></tr></thead><tbody><tr><td><span>Volunteer recruitment and profiles</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Standard module (Neon, Bloomerang, Golden, LiveImpact)</span></td><td><strong><span>Yes — critical gap</span></strong></td></tr><tr><td><span>Volunteer hour tracking</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Standard (Neon, Golden, Salesforce)</span></td><td><strong><span>Yes — critical gap</span></strong></td></tr><tr><td><span>Volunteer scheduling</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Standard (Golden, Neon)</span></td><td><strong><span>Yes — critical gap</span></strong></td></tr><tr><td><span>Volunteer-to-donor conversion</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Emerging differentiator (Golden, LiveImpact)</span></td><td><strong><span>Phase 2+ opportunity</span></strong></td></tr></tbody></table></figure><p><em><span>Note: The Field Ambassador module covers field fundraising agents but does not address general volunteer management, which is a distinct and expected capability in the NGO sector.</span></em></p><h3 id='36-membership-management'><span>3.6 Membership Management</span></h3><figure class='table-figure'><table><thead><tr><th><span>Capability</span></th><th><span>Our Roadmap</span></th><th><span>Market Standard</span></th><th><span>Gap?</span></th></tr></thead><tbody><tr><td><span>Membership tiers and renewals</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Standard (Neon, Bloomerang, Sumac, CharityEngine)</span></td><td><strong><span>Yes — significant gap</span></strong></td></tr><tr><td><span>Member portal</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Standard (Neon, Salesforce)</span></td><td><strong><span>Yes — significant gap</span></strong></td></tr><tr><td><span>Membership reporting</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Standard</span></td><td><strong><span>Yes</span></strong></td></tr></tbody></table></figure><h3 id='37-grant-management'><span>3.7 Grant Management</span></h3><figure class='table-figure'><table><thead><tr><th><span>Capability</span></th><th><span>Our Roadmap</span></th><th><span>Market Standard</span></th><th><span>Gap?</span></th></tr></thead><tbody><tr><td><span>Grant tracking (applications, deadlines, reporting)</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Standard (Salesforce, Neon, LiveImpact, Sumac)</span></td><td><strong><span>Yes — significant gap</span></strong></td></tr><tr><td><span>Grant budget management</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Salesforce Nonprofit Cloud (dedicated module)</span></td><td><span>Enterprise consideration</span></td></tr><tr><td><span>Funder reporting</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Standard</span></td><td><strong><span>Yes</span></strong></td></tr></tbody></table></figure><h3 id='38-program-and-case-management'><span>3.8 Program and Case Management</span></h3><figure class='table-figure'><table><thead><tr><th><span>Capability</span></th><th><span>Our Roadmap</span></th><th><span>Market Standard</span></th><th><span>Gap?</span></th></tr></thead><tbody><tr><td><span>Program delivery tracking</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Salesforce, LiveImpact, Sumac</span></td><td><strong><span>Gap for service-delivery NGOs</span></strong></td></tr><tr><td><span>Case management / client intake</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Salesforce, LiveImpact</span></td><td><strong><span>Gap for service-delivery NGOs</span></strong></td></tr><tr><td><span>Outcome measurement</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Salesforce Nonprofit Cloud</span></td><td><span>Enterprise consideration</span></td></tr></tbody></table></figure><h3 id='39-ai-and-intelligence'><span>3.9 AI and Intelligence</span></h3><figure class='table-figure'><table><thead><tr><th><span>Capability</span></th><th><span>Our Roadmap</span></th><th><span>Market Standard</span></th><th><span>Gap?</span></th></tr></thead><tbody><tr><td><span>Donor engagement scoring</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Market standard (Bloomerang, Virtuous, DonorDock)</span></td><td><strong><span>Yes — critical gap</span></strong></td></tr><tr><td><span>Churn/lapse prediction</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Bloomerang, Virtuous (AI alerts 60–90 days before lapse)</span></td><td><strong><span>Yes — critical gap</span></strong></td></tr><tr><td><span>Next-best-action recommendations</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>DonorDock (Action Board), Bloomerang, Virtuous</span></td><td><strong><span>Yes — should add</span></strong></td></tr><tr><td><span>AI-assisted communication drafting</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>DonorDock (Otto AI), Bloomerang, LiveImpact</span></td><td><strong><span>Phase 2+ opportunity</span></strong></td></tr><tr><td><span>AI-powered reporting / natural language queries</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>LiveImpact (AI Chat), Salesforce (Einstein)</span></td><td><strong><span>Phase 2+ opportunity</span></strong></td></tr><tr><td><span>Predictive analytics for fundraising</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Virtuous, Blackbaud, StratusLIVE</span></td><td><strong><span>Phase 3 opportunity</span></strong></td></tr></tbody></table></figure><h3 id='310-reporting-and-analytics'><span>3.10 Reporting and Analytics</span></h3><figure class='table-figure'><table><thead><tr><th><span>Capability</span></th><th><span>Our Roadmap</span></th><th><span>Market Standard</span></th><th><span>Gap?</span></th></tr></thead><tbody><tr><td><span>Standard reports per module</span></td><td><span>Yes (70% in mature modules)</span></td><td><span>Universal</span></td><td><span>No</span></td></tr><tr><td><span>Custom report builder</span></td><td><strong><span>Not explicitly stated</span></strong></td><td><span>Standard (Salesforce, Blackbaud, Neon)</span></td><td><strong><span>Yes — must add</span></strong></td></tr><tr><td><span>Dashboard with KPI widgets</span></td><td><span>Yes (dashboards in multiple modules)</span></td><td><span>Universal</span></td><td><span>No</span></td></tr><tr><td><span>Donor retention rate dashboard</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Bloomerang (signature feature)</span></td><td><strong><span>Yes — should add</span></strong></td></tr><tr><td><span>Export capabilities (CSV/Excel/PDF)</span></td><td><span>Yes (0% — planned across modules)</span></td><td><span>Universal</span></td><td><span>No — planned</span></td></tr><tr><td><span>Scheduled/automated report delivery</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Common</span></td><td><strong><span>Should add</span></strong></td></tr></tbody></table></figure><h3 id='311-integrations-and-api'><span>3.11 Integrations and API</span></h3><figure class='table-figure'><table><thead><tr><th><span>Capability</span></th><th><span>Our Roadmap</span></th><th><span>Market Standard</span></th><th><span>Gap?</span></th></tr></thead><tbody><tr><td><span>Payment gateways (Stripe, PayPal, etc.)</span></td><td><span>Yes (gateway module planned)</span></td><td><span>Universal</span></td><td><span>No</span></td></tr><tr><td><span>Accounting software (QuickBooks, Xero, Sage)</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Standard (Bloomerang, Neon, LiveImpact)</span></td><td><strong><span>Yes — critical gap</span></strong></td></tr><tr><td><span>Email marketing platforms (Mailchimp, Constant Contact)</span></td><td><span>Built-in email (not third-party integration)</span></td><td><span>Both approaches exist</span></td><td><span>Low risk</span></td></tr><tr><td><span>Open API / webhook support</span></td><td><strong><span>Not explicitly stated</span></strong></td><td><span>Expected for SaaS products</span></td><td><strong><span>Must include</span></strong></td></tr><tr><td><span>Zapier / integration marketplace</span></td><td><strong><span>Not in roadmap</span></strong></td><td><span>Standard (Neon, Bloomerang, DonorDock)</span></td><td><strong><span>Should add</span></strong></td></tr></tbody></table></figure><h3 id='312-mobile-experience'><span>3.12 Mobile Experience</span></h3><figure class='table-figure'><table><thead><tr><th><span>Capability</span></th><th><span>Our Roadmap</span></th><th><span>Market Standard</span></th><th><span>Gap?</span></th></tr></thead><tbody><tr><td><span>Donor mobile app</span></td><td><span>Yes (0% — planned)</span></td><td><span>Uncommon as native app; responsive web is standard</span></td><td><strong><span>Competitive advantage</span></strong></td></tr><tr><td><span>Staff/field agent mobile app</span></td><td><span>Yes (0% — planned)</span></td><td><span>Rare at this level of detail</span></td><td><strong><span>Strong differentiator</span></strong></td></tr><tr><td><span>Push notifications</span></td><td><span>Yes (planned — FCM/APNs)</span></td><td><span>Rare in nonprofit CRMs</span></td><td><strong><span>Competitive advantage</span></strong></td></tr><tr><td><span>QR code-based collection</span></td><td><span>Yes (planned)</span></td><td><span>Very rare</span></td><td><strong><span>Strong differentiator</span></strong></td></tr></tbody></table></figure><hr /><h2 id='4-competitive-positioning-summary'><span>4. Competitive Positioning Summary</span></h2><h3 id='41-where-the-roadmap-leads-the-market'><span>4.1 Where the Roadmap Leads the Market</span></h3><p><span>These are genuine differentiators that most competitors do not offer:</span></p><ol start='' ><li><p><strong><span>WhatsApp-native communication</span></strong><span> — Most Western CRMs offer email and SMS only. WhatsApp integration is a decisive advantage in South Asia, Africa, Latin America, and the Middle East, where WhatsApp is the primary communication channel.</span></p></li><li><p><strong><span>Field Ambassador module</span></strong><span> — No major competitor offers a dedicated field fundraising agent workflow with QR collection, leaderboards, territory assignment, and performance monitoring. This is unique.</span></p></li><li><p><strong><span>Native mobile app for both donors and staff</span></strong><span> — Most platforms rely on responsive web. A purpose-built mobile experience with push notifications, offline collection, and QR scanning is a market-leading capability.</span></p></li><li><p><strong><span>Multi-tenant SaaS architecture with tenant onboarding pipeline</span></strong><span> — The self-service onboarding flow (lead capture through go-live) is more sophisticated than most competitors, which rely on manual onboarding by sales teams.</span></p></li><li><p><strong><span>In-kind gift tracking with valuation</span></strong><span> — Only Salesforce and a few enterprise platforms handle this natively. Including it positions the product well for organisations that receive non-cash donations.</span></p></li></ol><h3 id='42-where-the-roadmap-matches-the-market'><span>4.2 Where the Roadmap Matches the Market</span></h3><p><span>These capabilities align with market expectations and must be delivered to competitive parity:</span></p><ol start='' ><li><p><strong><span>Constituent management</span></strong><span> — Rich profiles, import/export, duplicate merge, household linking. Solid foundation at 80% completion.</span></p></li><li><p><strong><span>Fundraising engine</span></strong><span> — Online donation pages, recurring giving, multiple gateways, refund handling, bulk upload. Comprehensive coverage planned.</span></p></li><li><p><strong><span>Communication</span></strong><span> — Email template editor, bulk campaigns, automated workflows, notification triggers. Standard coverage.</span></p></li><li><p><strong><span>Audit and compliance</span></strong><span> — Trail tracking, user activity logs, retention policies. Matches enterprise expectations (Salesforce, Blackbaud).</span></p></li><li><p><strong><span>Document engine</span></strong><span> — Receipt generation, tax receipts, bulk processing, template customisation. Good coverage for the segment.</span></p></li><li><p><strong><span>Role-based access and authentication</span></strong><span> — Standard security module. Meets expectations.</span></p></li></ol><h3 id='43-where-the-roadmap-has-critical-gaps'><span>4.3 Where the Roadmap Has Critical Gaps</span></h3><p><span>These are capabilities that the market expects as standard and that must be addressed to avoid disqualification during procurement evaluations:</span></p><figure class='table-figure'><table><thead><tr><th><span>Gap</span></th><th><span>Severity</span></th><th><span>Rationale</span></th><th><span>Recommended Phase</span></th></tr></thead><tbody><tr><td><strong><span>Donor engagement scoring</span></strong></td><td><span>Critical</span></td><td><span>Bloomerang, Virtuous, DonorDock all offer this. It is now a baseline expectation for any retention-focused platform.</span></td><td><span>Phase 1</span></td></tr><tr><td><strong><span>Volunteer management</span></strong></td><td><span>Critical</span></td><td><span>Neon, Bloomerang, Salesforce, Golden, LiveImpact all include this. NGOs manage volunteers as actively as donors. The Field Ambassador module does not cover this.</span></td><td><span>Phase 2</span></td></tr><tr><td><strong><span>Peer-to-peer fundraising</span></strong></td><td><span>High</span></td><td><span>Neon, Bloomerang, Givebutter, CharityEngine, LiveImpact all offer P2P. It is the fastest-growing digital fundraising channel.</span></td><td><span>Phase 2</span></td></tr><tr><td><strong><span>Grant tracking</span></strong></td><td><span>High</span></td><td><span>Salesforce, Neon, LiveImpact, Sumac all include grant management. Many NGOs depend on grants as a primary revenue source.</span></td><td><span>Phase 2</span></td></tr><tr><td><strong><span>Membership management</span></strong></td><td><span>High</span></td><td><span>Neon, Bloomerang, Sumac, CharityEngine offer membership tiers, renewals, and member portals. Critical for associations and membership-based NGOs.</span></td><td><span>Phase 2</span></td></tr><tr><td><strong><span>Accounting integration</span></strong></td><td><span>High</span></td><td><span>QuickBooks, Xero, and Sage Intacct integrations are standard. Financial teams expect seamless data flow.</span></td><td><span>Phase 1</span></td></tr><tr><td><strong><span>Pledge management</span></strong></td><td><span>Medium</span></td><td><span>Salesforce, Blackbaud, Neon handle multi-year pledges with payment schedules. Important for major gift programmes.</span></td><td><span>Phase 2</span></td></tr><tr><td><strong><span>Custom fields</span></strong></td><td><span>Medium</span></td><td><span>Every competitor supports custom fields on constituent and donation records. Essential for tenants with unique data requirements.</span></td><td><span>Phase 1</span></td></tr><tr><td><strong><span>Open API / webhooks</span></strong></td><td><span>Medium</span></td><td><span>Expected for any SaaS product. Enables tenant-driven integrations without vendor dependency.</span></td><td><span>Phase 1</span></td></tr><tr><td><strong><span>SMS/text messaging</span></strong></td><td><span>Medium</span></td><td><span>Neon, Bloomerang, DonorDock offer text messaging. Important in markets where SMS is preferred over email.</span></td><td><span>Phase 2</span></td></tr></tbody></table></figure><hr /><h2 id='5-ai-strategy-gap'><span>5. AI Strategy Gap</span></h2><p><span>AI is no longer optional in the non-profit CRM market. Every major platform launched or expanded AI capabilities between 2024 and 2026. The roadmap currently contains no AI features. This section outlines the minimum viable AI strategy.</span></p><h3 id='51-market-ai-capabilities-2026'><span>5.1 Market AI Capabilities (2026)</span></h3><figure class='table-figure'><table><thead><tr><th><span>Platform</span></th><th><span>AI Feature</span></th></tr></thead><tbody><tr><td><span>Bloomerang</span></td><td><span>Engagement scoring (0–100), churn prediction with 60–90 day early warning, next-best-action suggestions, AI-assisted communication</span></td></tr><tr><td><span>Salesforce (Agentforce Nonprofit)</span></td><td><span>Autonomous AI agents for donor inquiries, automated report generation, donor segmentation, grant reporting</span></td></tr><tr><td><span>Virtuous</span></td><td><span>Responsive fundraising AI, multi-channel personalisation, real-time donor insights, predictive analytics</span></td></tr><tr><td><span>DonorDock</span></td><td><span>Action Board (AI daily task surfacing), Smart Nudges, Otto AI (communication drafting)</span></td></tr><tr><td><span>LiveImpact</span></td><td><span>AI Chat (natural language reporting), AI Smart Search, decision support</span></td></tr><tr><td><span>Blackbaud</span></td><td><span>AI-driven suggested donation amounts, donor insights based on capacity and propensity</span></td></tr><tr><td><span>StratusLIVE</span></td><td><span>AI-enabled constituent intelligence, predictive segmentation</span></td></tr></tbody></table></figure><h3 id='52-recommended-ai-roadmap'><span>5.2 Recommended AI Roadmap</span></h3><figure class='table-figure'><table><thead><tr><th><span>Priority</span></th><th><span>Capability</span></th><th><span>Description</span></th><th><span>Phase</span></th></tr></thead><tbody><tr><td><span>1</span></td><td><span>Engagement scoring</span></td><td><span>Compute a composite score (0–100) per constituent based on giving recency, frequency, monetary value, communication opens, event attendance, and volunteer activity. Display as a colour-coded indicator on every profile.</span></td><td><span>Phase 1</span></td></tr><tr><td><span>2</span></td><td><span>Lapse/churn prediction</span></td><td><span>Flag constituents whose engagement score has dropped significantly. Surface early warnings 60–90 days before predicted lapse.</span></td><td><span>Phase 2</span></td></tr><tr><td><span>3</span></td><td><span>Next-best-action engine</span></td><td><span>Recommend daily tasks to staff: who to call, who to thank, who to re-engage, which milestones to acknowledge.</span></td><td><span>Phase 2</span></td></tr><tr><td><span>4</span></td><td><span>AI-assisted communication</span></td><td><span>Draft personalised thank-you emails, donation appeals, and follow-ups based on constituent history.</span></td><td><span>Phase 3</span></td></tr><tr><td><span>5</span></td><td><span>Natural language reporting</span></td><td><span>Allow staff to ask questions in plain language (&quot;show me top 10 donors this quarter&quot;) and receive instant charts and data.</span></td><td><span>Phase 3</span></td></tr></tbody></table></figure><hr /><h2 id='6-revised-phase-recommendations'><span>6. Revised Phase Recommendations</span></h2><p><span>Based on the benchmark analysis, the following adjustments to the delivery phases are recommended.</span></p><h3 id='phase-1-----foundation-updated'><span>Phase 1 — Foundation (Updated)</span></h3><p><em><span>Original scope retained, plus:</span></em></p><ul><li><p><span>Custom fields support across Constituent and Fundraising modules</span></p></li><li><p><span>Donor engagement scoring (composite metric on every profile)</span></p></li><li><p><span>Open API and webhook framework</span></p></li><li><p><span>Accounting integration (QuickBooks, Xero)</span></p></li><li><p><span>Constituent timeline (chronological touchpoint view)</span></p></li><li><p><span>Donor retention rate dashboard</span></p></li><li><p><span>Tags and segmentation engine</span></p></li></ul><h3 id='phase-2-----engagement-and-growth-updated'><span>Phase 2 — Engagement and Growth (Updated)</span></h3><p><em><span>Original scope retained, plus:</span></em></p><ul><li><p><span>Volunteer management module (recruitment, scheduling, hour tracking, profiles)</span></p></li><li><p><span>Peer-to-peer fundraising</span></p></li><li><p><span>Grant tracking (applications, deadlines, funder reporting)</span></p></li><li><p><span>Membership management (tiers, renewals, member portal)</span></p></li><li><p><span>Pledge management</span></p></li><li><p><span>SMS/text messaging</span></p></li><li><p><span>Lapse/churn prediction (AI)</span></p></li><li><p><span>Next-best-action recommendations (AI)</span></p></li><li><p><span>Crowdfunding campaign pages</span></p></li><li><p><span>Corporate/employer matching gift support</span></p></li></ul><h3 id='phase-3-----scale-and-intelligence-updated'><span>Phase 3 — Scale and Intelligence (Updated)</span></h3><p><em><span>Original scope retained, plus:</span></em></p><ul><li><p><span>AI-assisted communication drafting</span></p></li><li><p><span>Natural language reporting</span></p></li><li><p><span>Auction/silent auction tools</span></p></li><li><p><span>Social media integration</span></p></li><li><p><span>Predictive fundraising analytics</span></p></li><li><p><span>Advanced event management (ticketing, post-event analytics)</span></p></li><li><p><span>Volunteer-to-donor conversion tracking</span></p></li></ul><hr /><h2 id='7-swot-analysis'><span>7. SWOT Analysis</span></h2><h3 id='strengths'><span>Strengths</span></h3><ul><li><p><strong><span>WhatsApp-native communication</span></strong><span> gives a decisive edge in non-Western markets where most competitors have no presence.</span></p></li><li><p><strong><span>Field Ambassador module</span></strong><span> is unique. No competitor offers a comparable field agent workflow with QR collection, leaderboards, and territory management.</span></p></li><li><p><strong><span>Native mobile app</span></strong><span> for both donors and staff exceeds the responsive-web standard used by most platforms.</span></p></li><li><p><strong><span>Multi-tenant SaaS with self-service onboarding</span></strong><span> is architecturally modern and scales more efficiently than per-client-deployment models.</span></p></li><li><p><strong><span>In-kind gift tracking</span></strong><span> with valuation and receipt behaviour is rare outside enterprise platforms.</span></p></li><li><p><strong><span>Global tax receipt configurability</span></strong><span> (80G India, 501(c)(3) US, Gift Aid UK) positions the platform for multi-country deployment from day one.</span></p></li></ul><h3 id='weaknesses'><span>Weaknesses</span></h3><ul><li><p><strong><span>No AI capabilities</span></strong><span> in the current roadmap. Every major competitor now ships engagement scoring, churn prediction, or AI-assisted communication as standard.</span></p></li><li><p><strong><span>No volunteer management</span></strong><span> — a core module in Neon, Bloomerang, Salesforce, and LiveImpact. NGOs manage volunteers as actively as donors.</span></p></li><li><p><strong><span>No peer-to-peer fundraising</span></strong><span> — the fastest-growing digital fundraising channel, offered by Neon, Bloomerang, Givebutter, CharityEngine, and LiveImpact.</span></p></li><li><p><strong><span>No grant management</span></strong><span> — a primary revenue source for many NGOs, with dedicated modules in Salesforce, Neon, LiveImpact, and Sumac.</span></p></li><li><p><strong><span>No membership management</span></strong><span> — critical for associations, museums, cultural organisations, and member-based NGOs.</span></p></li><li><p><strong><span>No accounting integration</span></strong><span> — financial teams expect seamless data flow to QuickBooks, Xero, or Sage Intacct.</span></p></li><li><p><strong><span>No open API documented</span></strong><span> — limits tenant-driven integrations and ecosystem growth.</span></p></li></ul><h3 id='opportunities'><span>Opportunities</span></h3><ul><li><p><strong><span>Emerging markets</span></strong><span> (India, Africa, Latin America, Southeast Asia) are underserved by Western CRM platforms. WhatsApp integration, regional payment gateways, and multi-currency/multi-language support create a strong positioning.</span></p></li><li><p><strong><span>AI-first engagement layer</span></strong><span> built natively (not bolted on) could leapfrog competitors who retrofitted AI onto legacy architectures.</span></p></li><li><p><strong><span>Field fundraising digitalisation</span></strong><span> — the ambassador module addresses a real operational need in faith-based, health, and community organisations that rely on field staff for collections.</span></p></li><li><p><strong><span>Price-sensitive market segment</span></strong><span> — small-to-mid NGOs in developing markets cannot afford Salesforce or Blackbaud. Competitive pricing with comprehensive features fills a genuine void.</span></p></li><li><p><strong><span>Integration marketplace</span></strong><span> — an open API and Zapier-style connectors would attract tenants who need to connect with their existing tools.</span></p></li></ul><h3 id='threats'><span>Threats</span></h3><ul><li><p><strong><span>Salesforce&#39;s free license programme</span></strong><span> (10 Enterprise licenses via Power of Us) creates a powerful pull for larger NGOs. The AI agent capabilities (Agentforce) are advancing rapidly.</span></p></li><li><p><strong><span>Bloomerang&#39;s retention focus</span></strong><span> sets a high bar for engagement scoring and churn prediction. Launching without these features risks being dismissed as a basic donor database.</span></p></li><li><p><strong><span>Market consolidation</span></strong><span> — Bonterra has acquired multiple platforms (EveryAction, Network for Good, CyberGrants). Consolidation reduces the number of competitors but increases their feature breadth.</span></p></li><li><p><strong><span>Open-source alternative</span></strong><span> (CiviCRM) offers zero licensing cost for technically capable organisations. The value proposition must clearly exceed what a free tool provides.</span></p></li><li><p><strong><span>Feature expectations rising</span></strong><span> — the 2026 nonprofit CRM buyer expects AI, P2P fundraising, volunteer management, and accounting integration as baseline capabilities, not premium add-ons.</span></p></li></ul><hr /><h2 id='8-strategic-recommendations'><span>8. Strategic Recommendations</span></h2><p><strong><span>Recommendation 1: Add engagement scoring to Phase 1.</span></strong><span> This single feature is the strongest signal to buyers that the platform is retention-focused. Bloomerang built an entire brand around it. Implementing a composite score based on recency, frequency, monetary value, and communication engagement is technically feasible and strategically essential.</span></p><p><strong><span>Recommendation 2: Add a Volunteer Management module to Phase 2.</span></strong><span> This is the most-cited feature across every competitor comparison. NGOs that manage both donors and volunteers expect a single platform. The Field Ambassador module is not a substitute.</span></p><p><strong><span>Recommendation 3: Add peer-to-peer fundraising to Phase 2.</span></strong><span> P2P is the fastest-growing fundraising channel. Neon, Bloomerang, Givebutter, and LiveImpact all offer it. Omitting it narrows the addressable market.</span></p><p><strong><span>Recommendation 4: Prioritise accounting integration in Phase 1.</span></strong><span> QuickBooks and Xero integrations are table stakes. Financial teams will block adoption if they must manually reconcile donations.</span></p><p><strong><span>Recommendation 5: Publish an open API specification alongside the Phase 1 launch.</span></strong><span> SaaS buyers evaluate integration capability as a top-three selection criterion. An API-first architecture enables ecosystem growth without building every integration in-house.</span></p><p><strong><span>Recommendation 6: Position WhatsApp, Field Ambassador, and the native mobile app as primary differentiators in marketing.</span></strong><span> These are genuine competitive advantages that no major Western platform matches. Lead with these in product positioning, particularly for emerging markets.</span></p><p><strong><span>Recommendation 7: Consider a grant tracking module for Phase 2.</span></strong><span> Many NGOs depend on grants as their primary or secondary funding source. Including even basic grant tracking (applications, deadlines, amounts, funder reporting) would significantly broaden the addressable market.</span></p><p><strong><span>Recommendation 8: Build the AI layer natively, not as an aftermarket add-on.</span></strong><span> The engagement scoring engine should feed into dashboards, communication triggers, and the next-best-action recommendations from day one. Retrofitting AI onto a legacy architecture is the mistake that cost Blackbaud and DonorPerfect years of technical debt.</span></p><hr /><h2 id='9-conclusion'><span>9. Conclusion</span></h2><p><span>The roadmap has a strong foundation. The Constituent, Fundraising, Communication, and Organisation modules are well-conceived, and the Field Ambassador, WhatsApp, and mobile app capabilities are genuine market differentiators that no major competitor matches.</span></p><p><span>The critical risk is not what the roadmap includes — it is what it omits. Engagement scoring, volunteer management, peer-to-peer fundraising, grant tracking, membership management, and accounting integration are baseline expectations in the 2026 non-profit CRM market. Launching without these capabilities would position the platform as a niche donor database rather than a competitive all-in-one NGO platform.</span></p><p><span>The recommended approach is to absorb engagement scoring, custom fields, accounting integration, an open API, and a constituent timeline into Phase 1. Volunteer management, P2P, grants, memberships, and the initial AI prediction layer should follow in Phase 2. This positions the platform as feature-competitive at launch while preserving the unique advantages that set it apart from every Western competitor.</span></p><hr /><p><em><span>This document is confidential and proprietary. Distribution is restricted to authorised personnel.</span></em></p></div></div>
+</body>
+</html>

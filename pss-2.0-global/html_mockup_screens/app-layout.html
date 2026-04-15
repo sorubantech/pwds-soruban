@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PeopleServe 2.0 - NGO Management Platform</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-end: #06b6d4;
+      --accent-light: #ecfeff;
+      --sidebar-width: 280px;
+      --header-height: 60px;
+      --sidebar-bg: #ffffff;
+      --border-color: #e2e8f0;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --hover-bg: #f0fdfa;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      overflow: hidden;
+      height: 100vh;
+      font-size: 14px;
+    }
+
+    /* -- Header -- */
+    .app-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: var(--header-height);
+      background: linear-gradient(135deg, var(--accent), var(--accent-end));
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1.25rem;
+      z-index: 1050;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .sidebar-toggle {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.25rem;
+      cursor: pointer;
+      padding: 0.375rem;
+      border-radius: 0.375rem;
+      transition: background 0.2s;
+    }
+
+    .sidebar-toggle:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      font-weight: 700;
+      font-size: 1.125rem;
+      letter-spacing: -0.025em;
+    }
+
+    .header-logo i {
+      font-size: 1.375rem;
+    }
+
+    .header-logo .header-subtitle {
+      font-size: 0.625rem;
+      font-weight: 400;
+      opacity: 0.85;
+      display: block;
+      letter-spacing: 0.02em;
+    }
+
+    .role-badge {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .header-icon-btn {
+      position: relative;
+      background: rgba(255, 255, 255, 0.15);
+      border: none;
+      color: white;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-size: 0.9375rem;
+    }
+
+    .header-icon-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .notification-badge {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      background: #f43f5e;
+      color: white;
+      font-size: 0.5625rem;
+      font-weight: 700;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--accent);
+    }
+
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.8125rem;
+      cursor: pointer;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+    }
+
+    .user-info {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+    }
+
+    .user-name {
+      font-weight: 600;
+      font-size: 0.8125rem;
+    }
+
+    .user-role-text {
+      font-size: 0.6875rem;
+      opacity: 0.85;
+    }
+
+    /* -- Sidebar -- */
+    .app-sidebar {
+      position: fixed;
+      top: var(--header-height);
+      left: 0;
+      bottom: 0;
+      width: var(--sidebar-width);
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border-color);
+      overflow-y: auto;
+      z-index: 1040;
+      transition: transform 0.3s ease, width 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .app-sidebar.collapsed {
+      transform: translateX(-100%);
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 0.75rem 0;
+    }
+
+    .sidebar-section-title {
+      padding: 0.75rem 1.25rem 0.375rem;
+      font-size: 0.625rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+    }
+
+    .sidebar-section-title:hover {
+      color: var(--text-primary);
+    }
+
+    .sidebar-section-title .toggle-icon {
+      font-size: 0.5rem;
+      transition: transform 0.2s;
+    }
+
+    .sidebar-section-title.collapsed-section .toggle-icon {
+      transform: rotate(-90deg);
+    }
+
+    .sidebar-section-items {
+      overflow: hidden;
+      transition: max-height 0.25s ease;
+    }
+
+    .sidebar-section-items.hidden {
+      max-height: 0 !important;
+    }
+
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5625rem 1.25rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      border-left: 3px solid transparent;
+    }
+
+    .sidebar-item:hover {
+      background: var(--hover-bg);
+      color: var(--text-primary);
+    }
+
+    .sidebar-item.active {
+      background: linear-gradient(90deg, rgba(14, 116, 144, 0.08), transparent);
+      color: var(--accent);
+      border-left-color: var(--accent);
+      font-weight: 600;
+    }
+
+    .sidebar-item i {
+      width: 20px;
+      text-align: center;
+      font-size: 0.9375rem;
+    }
+
+    .sidebar-footer {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .sidebar-footer a {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      padding: 0.5rem 0;
+      transition: color 0.15s;
+    }
+
+    .sidebar-footer a:hover {
+      color: var(--danger-color);
+    }
+
+    /* -- Content Area -- */
+    .app-content {
+      position: fixed;
+      top: var(--header-height);
+      left: var(--sidebar-width);
+      right: 0;
+      bottom: 0;
+      transition: left 0.3s ease;
+      background: #f1f5f9;
+    }
+
+    .app-content.expanded {
+      left: 0;
+    }
+
+    .content-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #f1f5f9;
+    }
+
+    /* -- Responsive -- */
+    @media (max-width: 992px) {
+      .app-sidebar {
+        transform: translateX(-100%);
+      }
+
+      .app-sidebar.mobile-open {
+        transform: translateX(0);
+        box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .app-content {
+        left: 0;
+      }
+
+      .user-info {
+        display: none;
+      }
+    }
+
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      top: var(--header-height);
+      background: rgba(0, 0, 0, 0.3);
+      z-index: 1035;
+    }
+
+    .sidebar-overlay.active {
+      display: block;
+    }
+
+    /* Scrollbar styling */
+    .app-sidebar::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .app-sidebar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .app-sidebar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+
+    .app-sidebar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-left">
+      <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle Sidebar">
+        <i class="fas fa-bars"></i>
+      </button>
+      <div class="header-logo">
+        <i class="fas fa-hand-holding-heart"></i>
+        <div>
+          <span>PeopleServe 2.0</span>
+          <span class="header-subtitle">NGO Management Platform</span>
+        </div>
+      </div>
+      <span class="role-badge" id="roleBadge">Super Admin</span>
+    </div>
+    <div class="header-right">
+      <button class="header-icon-btn" title="Notifications" onclick="loadContent('communication/notification-center')">
+        <i class="fas fa-bell"></i>
+        <span class="notification-badge">23</span>
+      </button>
+      <div class="user-avatar" id="userAvatar">SA</div>
+      <div class="user-info">
+        <span class="user-name" id="userName">Super Admin</span>
+        <span class="user-role-text" id="userRole">Super Admin</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Sidebar Overlay (mobile) -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+  <!-- Sidebar -->
+  <aside class="app-sidebar" id="appSidebar">
+    <nav class="sidebar-nav">
+
+      <!-- MAIN -->
+      <div class="sidebar-section-title" onclick="toggleSection(this)">
+        Main <i class="fas fa-chevron-down toggle-icon"></i>
+      </div>
+      <div class="sidebar-section-items">
+        <a class="sidebar-item active" onclick="loadContent('dashboard')" data-screen="dashboard">
+          <i class="fas fa-gauge-high"></i><span>Dashboard</span>
+        </a>
+      </div>
+
+      <!-- CRM & CONTACTS -->
+      <div class="sidebar-section-title" onclick="toggleSection(this)">
+        CRM & Contacts <i class="fas fa-chevron-down toggle-icon"></i>
+      </div>
+      <div class="sidebar-section-items">
+        <a class="sidebar-item" onclick="loadContent('contacts/contact-list')" data-screen="contacts/contact-list">
+          <i class="fas fa-address-book"></i><span>All Contacts</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('contacts/family-management')" data-screen="contacts/family-management">
+          <i class="fas fa-people-roof"></i><span>Families</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('contacts/tags-segmentation')" data-screen="contacts/tags-segmentation">
+          <i class="fas fa-tags"></i><span>Tags & Segments</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('contacts/duplicate-merge')" data-screen="contacts/duplicate-merge">
+          <i class="fas fa-clone"></i><span>Duplicate Detection</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('contacts/contact-import')" data-screen="contacts/contact-import">
+          <i class="fas fa-file-import"></i><span>Import Contacts</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('contacts/contact-types')" data-screen="contacts/contact-types">
+          <i class="fas fa-shapes"></i><span>Contact Types</span>
+        </a>
+      </div>
+
+      <!-- FUNDRAISING -->
+      <div class="sidebar-section-title" onclick="toggleSection(this)">
+        Fundraising <i class="fas fa-chevron-down toggle-icon"></i>
+      </div>
+      <div class="sidebar-section-items">
+        <a class="sidebar-item" onclick="loadContent('fundraising/donation-list')" data-screen="fundraising/donation-list">
+          <i class="fas fa-hand-holding-heart"></i><span>All Donations</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('fundraising/recurring-donations')" data-screen="fundraising/recurring-donations">
+          <i class="fas fa-repeat"></i><span>Recurring Donations</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('fundraising/online-donation-setup')" data-screen="fundraising/online-donation-setup">
+          <i class="fas fa-globe"></i><span>Online Donation Pages</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('fundraising/cheque-donations')" data-screen="fundraising/cheque-donations">
+          <i class="fas fa-money-check"></i><span>Cheque Tracking</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('fundraising/inkind-donations')" data-screen="fundraising/inkind-donations">
+          <i class="fas fa-gift"></i><span>In-Kind Donations</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('fundraising/pledge-management')" data-screen="fundraising/pledge-management">
+          <i class="fas fa-handshake"></i><span>Pledges</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('fundraising/bulk-donation-upload')" data-screen="fundraising/bulk-donation-upload">
+          <i class="fas fa-upload"></i><span>Bulk Upload</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('fundraising/donation-purposes')" data-screen="fundraising/donation-purposes">
+          <i class="fas fa-layer-group"></i><span>Purposes & Categories</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('fundraising/receipt-management')" data-screen="fundraising/receipt-management">
+          <i class="fas fa-receipt"></i><span>Receipts & Tax</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('fundraising/payment-gateway-config')" data-screen="fundraising/payment-gateway-config">
+          <i class="fas fa-credit-card"></i><span>Payment Gateways</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('fundraising/payment-reconciliation')" data-screen="fundraising/payment-reconciliation">
+          <i class="fas fa-scale-balanced"></i><span>Reconciliation</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('fundraising/refund-management')" data-screen="fundraising/refund-management">
+          <i class="fas fa-rotate-left"></i><span>Refunds</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('fundraising/p2p-campaign-list')" data-screen="fundraising/p2p-campaign-list">
+          <i class="fas fa-people-arrows"></i><span>P2P Campaigns</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('fundraising/p2p-fundraiser-list')" data-screen="fundraising/p2p-fundraiser-list">
+          <i class="fas fa-user-group"></i><span>P2P Fundraisers</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('fundraising/crowdfunding-page')" data-screen="fundraising/crowdfunding-page">
+          <i class="fas fa-bullhorn"></i><span>Crowdfunding</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('fundraising/matching-gifts')" data-screen="fundraising/matching-gifts">
+          <i class="fas fa-building-columns"></i><span>Matching Gifts</span>
+        </a>
+      </div>
+
+      <!-- COMMUNICATION -->
+      <div class="sidebar-section-title" onclick="toggleSection(this)">
+        Communication <i class="fas fa-chevron-down toggle-icon"></i>
+      </div>
+      <div class="sidebar-section-items">
+        <a class="sidebar-item" onclick="loadContent('communication/email-template-editor')" data-screen="communication/email-template-editor">
+          <i class="fas fa-palette"></i><span>Email Templates</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('communication/email-campaign-list')" data-screen="communication/email-campaign-list">
+          <i class="fas fa-envelope"></i><span>Email Campaigns</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('communication/email-analytics')" data-screen="communication/email-analytics">
+          <i class="fas fa-chart-line"></i><span>Email Analytics</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('communication/whatsapp-setup')" data-screen="communication/whatsapp-setup">
+          <i class="fab fa-whatsapp"></i><span>WhatsApp Setup</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('communication/whatsapp-template-editor')" data-screen="communication/whatsapp-template-editor">
+          <i class="fas fa-file-lines"></i><span>WhatsApp Templates</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('communication/whatsapp-campaigns')" data-screen="communication/whatsapp-campaigns">
+          <i class="fas fa-paper-plane"></i><span>WhatsApp Campaigns</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('communication/whatsapp-conversations')" data-screen="communication/whatsapp-conversations">
+          <i class="fas fa-comments"></i><span>WhatsApp Conversations</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('communication/sms-setup')" data-screen="communication/sms-setup">
+          <i class="fas fa-gear"></i><span>SMS Setup</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('communication/sms-templates')" data-screen="communication/sms-templates">
+          <i class="fas fa-file-lines"></i><span>SMS Templates</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('communication/sms-campaigns')" data-screen="communication/sms-campaigns">
+          <i class="fas fa-comment-sms"></i><span>SMS Campaigns</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('communication/notification-templates')" data-screen="communication/notification-templates">
+          <i class="fas fa-bell-concierge"></i><span>Notification Templates</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('communication/notification-center')" data-screen="communication/notification-center">
+          <i class="fas fa-bell"></i><span>Notifications</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('communication/automation-workflows')" data-screen="communication/automation-workflows">
+          <i class="fas fa-robot"></i><span>Automation Workflows</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('communication/saved-filters')" data-screen="communication/saved-filters">
+          <i class="fas fa-filter"></i><span>Saved Filters</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('communication/placeholder-management')" data-screen="communication/placeholder-management">
+          <i class="fas fa-code"></i><span>Placeholders</span>
+        </a>
+      </div>
+
+      <!-- CASE MANAGEMENT -->
+      <div class="sidebar-section-title" onclick="toggleSection(this)">
+        Case Management <i class="fas fa-chevron-down toggle-icon"></i>
+      </div>
+      <div class="sidebar-section-items">
+        <a class="sidebar-item" onclick="loadContent('case-management/beneficiary-list')" data-screen="case-management/beneficiary-list">
+          <i class="fas fa-people-group"></i><span>Beneficiary List</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('case-management/beneficiary-form')" data-screen="case-management/beneficiary-form">
+          <i class="fas fa-user-plus"></i><span>Register Beneficiary</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('case-management/case-list')" data-screen="case-management/case-list">
+          <i class="fas fa-folder-open"></i><span>Case List</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('case-management/program-management')" data-screen="case-management/program-management">
+          <i class="fas fa-hand-holding-heart"></i><span>Program Management</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('case-management/case-dashboard')" data-screen="case-management/case-dashboard">
+          <i class="fas fa-chart-pie"></i><span>Case Dashboard</span>
+        </a>
+      </div>
+
+      <!-- ORGANIZATION -->
+      <div class="sidebar-section-title" onclick="toggleSection(this)">
+        Organization <i class="fas fa-chevron-down toggle-icon"></i>
+      </div>
+      <div class="sidebar-section-items">
+        <a class="sidebar-item" onclick="loadContent('organization/org-unit-tree')" data-screen="organization/org-unit-tree">
+          <i class="fas fa-sitemap"></i><span>Org Structure</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('organization/campaign-list')" data-screen="organization/campaign-list">
+          <i class="fas fa-bullseye"></i><span>Campaigns</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('organization/event-list')" data-screen="organization/event-list">
+          <i class="fas fa-calendar-days"></i><span>Events</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('organization/event-ticketing')" data-screen="organization/event-ticketing">
+          <i class="fas fa-ticket"></i><span>Event Ticketing</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('organization/auction-management')" data-screen="organization/auction-management">
+          <i class="fas fa-gavel"></i><span>Auction Management</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('organization/event-analytics')" data-screen="organization/event-analytics">
+          <i class="fas fa-chart-column"></i><span>Post-Event Analytics</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('organization/branch-management')" data-screen="organization/branch-management">
+          <i class="fas fa-code-branch"></i><span>Branches</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('organization/staff-management')" data-screen="organization/staff-management">
+          <i class="fas fa-id-badge"></i><span>Staff</span>
+        </a>
+      </div>
+
+      <!-- FIELD COLLECTION -->
+      <div class="sidebar-section-title" onclick="toggleSection(this)">
+        Field Collection <i class="fas fa-chevron-down toggle-icon"></i>
+      </div>
+      <div class="sidebar-section-items">
+        <a class="sidebar-item" onclick="loadContent('field-collection/ambassador-list')" data-screen="field-collection/ambassador-list">
+          <i class="fas fa-user-secret"></i><span>Ambassadors</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('field-collection/collection-form')" data-screen="field-collection/collection-form">
+          <i class="fas fa-plus-circle"></i><span>Record Collection</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('field-collection/collection-list')" data-screen="field-collection/collection-list">
+          <i class="fas fa-money-bill-wave"></i><span>Collections</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('field-collection/receipt-books')" data-screen="field-collection/receipt-books">
+          <i class="fas fa-book"></i><span>Receipt Books</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('field-collection/ambassador-dashboard')" data-screen="field-collection/ambassador-dashboard">
+          <i class="fas fa-ranking-star"></i><span>Performance</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('field-collection/collection-distribution')" data-screen="field-collection/collection-distribution">
+          <i class="fas fa-chart-pie"></i><span>Collection Distribution</span>
+        </a>
+      </div>
+
+      <!-- VOLUNTEER -->
+      <div class="sidebar-section-title" onclick="toggleSection(this)">
+        Volunteer <i class="fas fa-chevron-down toggle-icon"></i>
+      </div>
+      <div class="sidebar-section-items">
+        <a class="sidebar-item" onclick="loadContent('volunteer/volunteer-list')" data-screen="volunteer/volunteer-list">
+          <i class="fas fa-hands-helping"></i><span>Volunteer List</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('volunteer/volunteer-form')" data-screen="volunteer/volunteer-form">
+          <i class="fas fa-user-plus"></i><span>Register Volunteer</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('volunteer/volunteer-scheduling')" data-screen="volunteer/volunteer-scheduling">
+          <i class="fas fa-calendar-check"></i><span>Scheduling</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('volunteer/hour-tracking')" data-screen="volunteer/hour-tracking">
+          <i class="fas fa-clock"></i><span>Hour Tracking</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('volunteer/volunteer-dashboard')" data-screen="volunteer/volunteer-dashboard">
+          <i class="fas fa-chart-pie"></i><span>Volunteer Dashboard</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('volunteer/volunteer-conversion')" data-screen="volunteer/volunteer-conversion">
+          <i class="fas fa-arrow-right-arrow-left"></i><span>Donor Conversion</span>
+        </a>
+      </div>
+
+      <!-- MEMBERSHIP -->
+      <div class="sidebar-section-title" onclick="toggleSection(this)">
+        Membership <i class="fas fa-chevron-down toggle-icon"></i>
+      </div>
+      <div class="sidebar-section-items">
+        <a class="sidebar-item" onclick="loadContent('membership/member-list')" data-screen="membership/member-list">
+          <i class="fas fa-id-card"></i><span>Members</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('membership/member-enrollment')" data-screen="membership/member-enrollment">
+          <i class="fas fa-user-plus"></i><span>Enroll Member</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('membership/membership-tiers')" data-screen="membership/membership-tiers">
+          <i class="fas fa-layer-group"></i><span>Tiers & Plans</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('membership/membership-renewals')" data-screen="membership/membership-renewals">
+          <i class="fas fa-arrows-rotate"></i><span>Renewals</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('membership/member-portal')" data-screen="membership/member-portal">
+          <i class="fas fa-door-open"></i><span>Member Portal</span>
+        </a>
+      </div>
+
+      <!-- GRANTS -->
+      <div class="sidebar-section-title" onclick="toggleSection(this)">
+        Grants <i class="fas fa-chevron-down toggle-icon"></i>
+      </div>
+      <div class="sidebar-section-items">
+        <a class="sidebar-item" onclick="loadContent('grants/grant-list')" data-screen="grants/grant-list">
+          <i class="fas fa-file-invoice-dollar"></i><span>All Grants</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('grants/grant-form')" data-screen="grants/grant-form">
+          <i class="fas fa-file-circle-plus"></i><span>New Application</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('grants/grant-calendar')" data-screen="grants/grant-calendar">
+          <i class="fas fa-calendar"></i><span>Grant Calendar</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('grants/grant-reporting')" data-screen="grants/grant-reporting">
+          <i class="fas fa-file-lines"></i><span>Funder Reports</span>
+        </a>
+      </div>
+
+      <!-- AI & INTELLIGENCE -->
+      <div class="sidebar-section-title" onclick="toggleSection(this)">
+        AI & Intelligence <i class="fas fa-chevron-down toggle-icon"></i>
+      </div>
+      <div class="sidebar-section-items">
+        <a class="sidebar-item" onclick="loadContent('ai-intelligence/engagement-scoring')" data-screen="ai-intelligence/engagement-scoring">
+          <i class="fas fa-brain"></i><span>Engagement Scores</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('ai-intelligence/churn-prediction')" data-screen="ai-intelligence/churn-prediction">
+          <i class="fas fa-chart-line"></i><span>Churn Prediction</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('ai-intelligence/action-board')" data-screen="ai-intelligence/action-board">
+          <i class="fas fa-list-check"></i><span>Action Board</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('ai-intelligence/ai-draft')" data-screen="ai-intelligence/ai-draft">
+          <i class="fas fa-wand-magic-sparkles"></i><span>AI Draft</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('ai-intelligence/nl-reporting')" data-screen="ai-intelligence/nl-reporting">
+          <i class="fas fa-message-bot"></i><span>Ask Your Data</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('ai-intelligence/predictive-analytics')" data-screen="ai-intelligence/predictive-analytics">
+          <i class="fas fa-chart-line"></i><span>Predictive Analytics</span>
+        </a>
+      </div>
+
+      <!-- REPORTS -->
+      <div class="sidebar-section-title" onclick="toggleSection(this)">
+        Reports <i class="fas fa-chevron-down toggle-icon"></i>
+      </div>
+      <div class="sidebar-section-items">
+        <a class="sidebar-item" onclick="loadContent('reports/report-catalog')" data-screen="reports/report-catalog">
+          <i class="fas fa-chart-bar"></i><span>Report Catalog</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('reports/custom-report-builder')" data-screen="reports/custom-report-builder">
+          <i class="fas fa-wrench"></i><span>Custom Builder</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('reports/retention-dashboard')" data-screen="reports/retention-dashboard">
+          <i class="fas fa-chart-pie"></i><span>Retention Dashboard</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('reports/fundraising-summary')" data-screen="reports/fundraising-summary">
+          <i class="fas fa-hand-holding-dollar"></i><span>Fundraising Summary</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('reports/powerbi-viewer')" data-screen="reports/powerbi-viewer">
+          <i class="fas fa-chart-area"></i><span>PowerBI Reports</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('reports/html-reports')" data-screen="reports/html-reports">
+          <i class="fas fa-code"></i><span>HTML Reports</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('reports/scheduled-reports')" data-screen="reports/scheduled-reports">
+          <i class="fas fa-clock"></i><span>Scheduled Reports</span>
+        </a>
+      </div>
+
+      <!-- ADMINISTRATION -->
+      <div class="sidebar-section-title" onclick="toggleSection(this)">
+        Administration <i class="fas fa-chevron-down toggle-icon"></i>
+      </div>
+      <div class="sidebar-section-items">
+        <a class="sidebar-item" onclick="loadContent('administration/user-management')" data-screen="administration/user-management">
+          <i class="fas fa-users-gear"></i><span>Users</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('administration/role-management')" data-screen="administration/role-management">
+          <i class="fas fa-user-shield"></i><span>Roles</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('administration/role-capability-matrix')" data-screen="administration/role-capability-matrix">
+          <i class="fas fa-key"></i><span>Permissions</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('administration/menu-management')" data-screen="administration/menu-management">
+          <i class="fas fa-bars"></i><span>Menus & Modules</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('administration/audit-trail')" data-screen="administration/audit-trail">
+          <i class="fas fa-clipboard-list"></i><span>Audit Trail</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('administration/company-settings')" data-screen="administration/company-settings">
+          <i class="fas fa-gear"></i><span>Company Settings</span>
+        </a>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="sidebar-section-title" onclick="toggleSection(this)">
+        Settings <i class="fas fa-chevron-down toggle-icon"></i>
+      </div>
+      <div class="sidebar-section-items">
+        <a class="sidebar-item" onclick="loadContent('settings/master-data')" data-screen="settings/master-data">
+          <i class="fas fa-database"></i><span>Master Data</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('settings/grid-configuration')" data-screen="settings/grid-configuration">
+          <i class="fas fa-table-columns"></i><span>Grid Config</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('settings/dashboard-config')" data-screen="settings/dashboard-config">
+          <i class="fas fa-grip"></i><span>Dashboards & Widgets</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('settings/org-settings')" data-screen="settings/org-settings">
+          <i class="fas fa-sliders"></i><span>Org Settings</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('settings/custom-fields')" data-screen="settings/custom-fields">
+          <i class="fas fa-puzzle-piece"></i><span>Custom Fields</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('settings/currency-management')" data-screen="settings/currency-management">
+          <i class="fas fa-coins"></i><span>Currency</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('settings/region-hierarchy')" data-screen="settings/region-hierarchy">
+          <i class="fas fa-map"></i><span>Regions</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('settings/document-types')" data-screen="settings/document-types">
+          <i class="fas fa-file-circle-check"></i><span>Document Types</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('settings/email-provider-config')" data-screen="settings/email-provider-config">
+          <i class="fas fa-server"></i><span>Email Providers</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('settings/certificate-templates')" data-screen="settings/certificate-templates">
+          <i class="fas fa-certificate"></i><span>Certificates</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('settings/api-management')" data-screen="settings/api-management">
+          <i class="fas fa-key"></i><span>API Keys</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('settings/accounting-integration')" data-screen="settings/accounting-integration">
+          <i class="fas fa-calculator"></i><span>Accounting</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('settings/social-media-integration')" data-screen="settings/social-media-integration">
+          <i class="fas fa-share-nodes"></i><span>Social Media</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('settings/integration-marketplace')" data-screen="settings/integration-marketplace">
+          <i class="fas fa-store"></i><span>Marketplace</span>
+        </a>
+      </div>
+
+      <!-- MOBILE APP PREVIEWS -->
+      <div class="sidebar-section-title" onclick="toggleSection(this)">
+        📱 Mobile App Previews <span style="font-size:0.65rem;background:#6366f1;color:#fff;padding:1px 6px;border-radius:8px;margin-left:6px;vertical-align:middle;">Preview</span> <i class="fas fa-chevron-down toggle-icon"></i>
+      </div>
+      <div class="sidebar-section-items">
+        <a class="sidebar-item" onclick="loadContent('mobile/donor-app-flow')" data-screen="mobile/donor-app-flow">
+          <i class="fas fa-mobile-screen"></i><span>Donor App Flow</span>
+        </a>
+        <a class="sidebar-item" onclick="loadContent('mobile/staff-app-flow')" data-screen="mobile/staff-app-flow">
+          <i class="fas fa-mobile-screen"></i><span>Staff / Ambassador App Flow</span>
+        </a>
+      </div>
+
+    </nav>
+
+    <!-- Sidebar Footer -->
+    <div class="sidebar-footer">
+      <a href="login.html" onclick="sessionStorage.clear();">
+        <i class="fas fa-arrow-right-from-bracket"></i>
+        <span>Logout</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- Content Area -->
+  <main class="app-content" id="appContent">
+    <iframe class="content-iframe" id="contentFrame"></iframe>
+  </main>
+
+  <script>
+    let sidebarCollapsed = false;
+
+    // Load user session
+    (function initSession() {
+      const session = JSON.parse(sessionStorage.getItem('userSession') || '{}');
+      const username = session.username || 'superadmin';
+      const role = session.role || 'Super Admin';
+
+      document.getElementById('roleBadge').textContent = role;
+      document.getElementById('userName').textContent = username;
+      document.getElementById('userRole').textContent = role;
+      document.getElementById('userAvatar').textContent = username.substring(0, 2).toUpperCase();
+    })();
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('appSidebar');
+      const content = document.getElementById('appContent');
+      const overlay = document.getElementById('sidebarOverlay');
+      const isMobile = window.innerWidth <= 992;
+
+      if (isMobile) {
+        sidebar.classList.toggle('mobile-open');
+        overlay.classList.toggle('active');
+      } else {
+        sidebarCollapsed = !sidebarCollapsed;
+        sidebar.classList.toggle('collapsed', sidebarCollapsed);
+        content.classList.toggle('expanded', sidebarCollapsed);
+      }
+    }
+
+    function closeSidebar() {
+      const sidebar = document.getElementById('appSidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      sidebar.classList.remove('mobile-open');
+      overlay.classList.remove('active');
+    }
+
+    function loadContent(screenName) {
+      const iframe = document.getElementById('contentFrame');
+      iframe.src = 'screens/' + screenName + '.html';
+
+      // Update active state
+      document.querySelectorAll('.sidebar-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      const activeItem = document.querySelector('.sidebar-item[data-screen="' + screenName + '"]');
+      if (activeItem) {
+        activeItem.classList.add('active');
+      }
+
+      // Close mobile sidebar after navigation
+      if (window.innerWidth <= 992) {
+        closeSidebar();
+      }
+    }
+
+    function toggleSection(header) {
+      header.classList.toggle('collapsed-section');
+      const items = header.nextElementSibling;
+      if (items) {
+        items.classList.toggle('hidden');
+      }
+    }
+
+    // Load default screen
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      const screen = params.get('screen') || 'dashboard';
+      loadContent(screen);
+    })();
+
+    // Handle responsive resize
+    window.addEventListener('resize', function () {
+      const sidebar = document.getElementById('appSidebar');
+      const content = document.getElementById('appContent');
+      const overlay = document.getElementById('sidebarOverlay');
+
+      if (window.innerWidth > 992) {
+        sidebar.classList.remove('mobile-open');
+        overlay.classList.remove('active');
+        if (!sidebarCollapsed) {
+          sidebar.classList.remove('collapsed');
+          content.classList.remove('expanded');
+        }
+      }
+    });
+  </script>
+</body>
+
+</html>

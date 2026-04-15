@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Engagement Score Detail - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+      --ai-accent: #8b5cf6;
+      --ai-accent-bg: #f5f3ff;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    .page-header { margin-bottom: 1.5rem; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem; }
+    .page-header p { font-size: 0.875rem; color: var(--text-secondary); margin: 0; }
+
+    .btn-back {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 1px solid var(--border-color); background: white;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-secondary); cursor: pointer; transition: all 0.15s; flex-shrink: 0;
+    }
+    .btn-back:hover { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
+
+    .dash-card {
+      background: white; border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow); border: 1px solid var(--border-color);
+    }
+    .dash-card-header {
+      padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .dash-card-header h3 { font-size: 0.9375rem; font-weight: 700; margin: 0; color: var(--text-primary); }
+    .dash-card-body { padding: 1.25rem; }
+    .section-gap { margin-bottom: 1.5rem; }
+
+    /* Score Gauge */
+    .score-overview {
+      display: flex; align-items: center; gap: 2rem; flex-wrap: wrap;
+    }
+    .gauge-container {
+      width: 180px; height: 180px; position: relative; flex-shrink: 0;
+    }
+    .gauge-ring {
+      width: 100%; height: 100%; border-radius: 50%;
+      background: conic-gradient(
+        #22c55e 0deg 345.6deg,
+        #e2e8f0 345.6deg 360deg
+      );
+      display: flex; align-items: center; justify-content: center;
+    }
+    .gauge-inner {
+      width: 140px; height: 140px; border-radius: 50%; background: white;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .gauge-score { font-size: 2.5rem; font-weight: 800; color: #15803d; line-height: 1; }
+    .gauge-label { font-size: 0.75rem; font-weight: 600; color: #22c55e; margin-top: 0.25rem; }
+
+    .score-meta { flex: 1; min-width: 200px; }
+    .score-meta-item {
+      display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .score-meta-item:last-child { border-bottom: none; }
+    .score-meta-item i { width: 20px; text-align: center; color: var(--ai-accent); font-size: 0.875rem; }
+    .score-meta-label { font-size: 0.75rem; color: var(--text-secondary); }
+    .score-meta-value { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); }
+
+    /* Sparkline */
+    .sparkline-container {
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .sparkline {
+      display: flex; align-items: flex-end; gap: 2px; height: 30px;
+    }
+    .spark-bar {
+      width: 6px; border-radius: 2px 2px 0 0;
+      background: var(--ai-accent); opacity: 0.6;
+    }
+    .spark-bar:last-child { opacity: 1; }
+
+    /* Factor Breakdown */
+    .factor-row {
+      display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .factor-row:last-child { border-bottom: none; }
+    .factor-name { width: 160px; font-size: 0.8125rem; font-weight: 500; color: var(--text-primary); flex-shrink: 0; }
+    .factor-score-badge {
+      width: 48px; text-align: center; font-size: 0.75rem; font-weight: 700;
+      padding: 0.2rem 0.4rem; border-radius: 0.375rem; flex-shrink: 0;
+    }
+    .factor-score-high { background: #f0fdf4; color: #15803d; }
+    .factor-score-good { background: #f0fdf4; color: #16a34a; }
+    .factor-bar-track {
+      flex: 1; height: 10px; background: #f1f5f9; border-radius: 9999px; overflow: hidden;
+    }
+    .factor-bar-fill { height: 100%; border-radius: 9999px; transition: width 0.5s; }
+    .factor-weight { width: 45px; text-align: center; font-size: 0.6875rem; color: var(--text-secondary); font-weight: 600; flex-shrink: 0; }
+    .factor-contrib { width: 60px; text-align: right; font-size: 0.8125rem; font-weight: 700; color: var(--ai-accent); flex-shrink: 0; }
+    .factor-detail { width: 180px; font-size: 0.6875rem; color: var(--text-secondary); flex-shrink: 0; text-align: right; }
+
+    .factor-total {
+      display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0;
+      font-weight: 700; font-size: 0.875rem; border-top: 2px solid var(--border-color); margin-top: 0.25rem;
+    }
+    .factor-total .factor-name { font-weight: 700; }
+
+    /* Activity Table */
+    .data-table { width: 100%; font-size: 0.8125rem; }
+    .data-table th {
+      background: #f8fafc; font-weight: 600; color: var(--text-secondary);
+      font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.05em;
+      padding: 0.625rem 0.75rem; border-bottom: 1px solid var(--border-color);
+    }
+    .data-table td {
+      padding: 0.625rem 0.75rem; border-bottom: 1px solid #f1f5f9;
+      color: var(--text-primary); vertical-align: middle;
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+
+    .impact-positive { color: var(--success-color); font-weight: 600; font-size: 0.75rem; }
+    .score-change { font-weight: 700; }
+    .score-change.up { color: var(--success-color); }
+
+    /* Recommendations */
+    .recommendation-card {
+      display: flex; align-items: flex-start; gap: 0.75rem; padding: 1rem;
+      border: 1px solid var(--border-color); border-radius: 0.75rem;
+      background: #fefce8; margin-bottom: 0.75rem; transition: all 0.15s;
+    }
+    .recommendation-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .recommendation-card:nth-child(2) { background: var(--accent-bg); }
+    .recommendation-card:nth-child(3) { background: var(--ai-accent-bg); }
+    .recommendation-card:nth-child(4) { background: #f0fdf4; }
+    .rec-icon { font-size: 1.25rem; flex-shrink: 0; margin-top: 0.125rem; }
+    .rec-text { flex: 1; }
+    .rec-title { font-weight: 700; font-size: 0.875rem; color: var(--text-primary); margin-bottom: 0.125rem; }
+    .rec-desc { font-size: 0.8125rem; color: var(--text-secondary); }
+
+    @media (max-width: 768px) {
+      .score-overview { flex-direction: column; align-items: center; }
+      .factor-detail { display: none; }
+      .factor-name { width: 120px; }
+    }
+    @media (max-width: 576px) {
+      body { padding: 1rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header d-flex align-items-start gap-3">
+    <button class="btn-back" onclick="parent.loadContent('contacts/contact-detail')" title="Back to Contact">
+      <i class="fas fa-arrow-left"></i>
+    </button>
+    <div>
+      <h1><i class="fas fa-brain me-2" style="color: var(--ai-accent);"></i>Engagement Score: Khalid Al-Mansouri</h1>
+      <p>Detailed engagement breakdown and activity analysis</p>
+    </div>
+  </div>
+
+  <!-- Score Overview -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-gauge-high me-2" style="color: var(--ai-accent);"></i>Score Overview</h3>
+    </div>
+    <div class="dash-card-body">
+      <div class="score-overview">
+        <!-- Circular Gauge -->
+        <div class="gauge-container">
+          <div class="gauge-ring">
+            <div class="gauge-inner">
+              <div class="gauge-score">96</div>
+              <div class="gauge-label">Highly Engaged</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Score Metadata -->
+        <div class="score-meta">
+          <div class="score-meta-item">
+            <i class="fas fa-chart-line"></i>
+            <div>
+              <div class="score-meta-label">Score Trend (Last 12 Months)</div>
+              <div class="sparkline-container">
+                <div class="sparkline">
+                  <div class="spark-bar" style="height: 70%;"></div>
+                  <div class="spark-bar" style="height: 72%;"></div>
+                  <div class="spark-bar" style="height: 68%;"></div>
+                  <div class="spark-bar" style="height: 75%;"></div>
+                  <div class="spark-bar" style="height: 78%;"></div>
+                  <div class="spark-bar" style="height: 80%;"></div>
+                  <div class="spark-bar" style="height: 82%;"></div>
+                  <div class="spark-bar" style="height: 85%;"></div>
+                  <div class="spark-bar" style="height: 88%;"></div>
+                  <div class="spark-bar" style="height: 90%;"></div>
+                  <div class="spark-bar" style="height: 93%;"></div>
+                  <div class="spark-bar" style="height: 96%;"></div>
+                </div>
+                <span style="font-size: 0.75rem; color: var(--success-color); font-weight: 600;">Steady High</span>
+              </div>
+            </div>
+          </div>
+          <div class="score-meta-item">
+            <i class="fas fa-ranking-star"></i>
+            <div>
+              <div class="score-meta-label">Percentile</div>
+              <div class="score-meta-value">Top 2% of all contacts</div>
+            </div>
+          </div>
+          <div class="score-meta-item">
+            <i class="fas fa-calendar-check"></i>
+            <div>
+              <div class="score-meta-label">Score Since</div>
+              <div class="score-meta-value">First calculated Jan 2024</div>
+            </div>
+          </div>
+          <div class="score-meta-item">
+            <i class="fas fa-arrow-up"></i>
+            <div>
+              <div class="score-meta-label">30-Day Change</div>
+              <div class="score-meta-value" style="color: var(--success-color);">+7 points</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Factor Breakdown -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-chart-pie me-2" style="color: var(--ai-accent);"></i>Factor Breakdown</h3>
+      <span style="font-size: 0.75rem; color: var(--text-secondary);">How the score is calculated</span>
+    </div>
+    <div class="dash-card-body">
+      <!-- Donation Recency -->
+      <div class="factor-row">
+        <div class="factor-name">Donation Recency</div>
+        <div class="factor-score-badge factor-score-high">98</div>
+        <div class="factor-bar-track">
+          <div class="factor-bar-fill" style="width: 98%; background: linear-gradient(90deg, #15803d, #22c55e);"></div>
+        </div>
+        <div class="factor-weight">25%</div>
+        <div class="factor-contrib">24.5 pts</div>
+        <div class="factor-detail">Last donation: 2 days ago</div>
+      </div>
+
+      <!-- Donation Frequency -->
+      <div class="factor-row">
+        <div class="factor-name">Donation Frequency</div>
+        <div class="factor-score-badge factor-score-high">95</div>
+        <div class="factor-bar-track">
+          <div class="factor-bar-fill" style="width: 95%; background: linear-gradient(90deg, #15803d, #22c55e);"></div>
+        </div>
+        <div class="factor-weight">20%</div>
+        <div class="factor-contrib">19.0 pts</div>
+        <div class="factor-detail">12 donations/year (avg: 4)</div>
+      </div>
+
+      <!-- Donation Monetary -->
+      <div class="factor-row">
+        <div class="factor-name">Donation Monetary</div>
+        <div class="factor-score-badge factor-score-high">92</div>
+        <div class="factor-bar-track">
+          <div class="factor-bar-fill" style="width: 92%; background: linear-gradient(90deg, #16a34a, #4ade80);"></div>
+        </div>
+        <div class="factor-weight">20%</div>
+        <div class="factor-contrib">18.4 pts</div>
+        <div class="factor-detail">$42,500 lifetime (top 3%)</div>
+      </div>
+
+      <!-- Email Engagement -->
+      <div class="factor-row">
+        <div class="factor-name">Email Engagement</div>
+        <div class="factor-score-badge factor-score-high">95</div>
+        <div class="factor-bar-track">
+          <div class="factor-bar-fill" style="width: 95%; background: linear-gradient(90deg, #2563eb, #3b82f6);"></div>
+        </div>
+        <div class="factor-weight">15%</div>
+        <div class="factor-contrib">14.3 pts</div>
+        <div class="factor-detail">95% open, 45% click rate</div>
+      </div>
+
+      <!-- Event Participation -->
+      <div class="factor-row">
+        <div class="factor-name">Event Participation</div>
+        <div class="factor-score-badge factor-score-good">88</div>
+        <div class="factor-bar-track">
+          <div class="factor-bar-fill" style="width: 88%; background: linear-gradient(90deg, #7c3aed, #a78bfa);"></div>
+        </div>
+        <div class="factor-weight">10%</div>
+        <div class="factor-contrib">8.8 pts</div>
+        <div class="factor-detail">8 events attended (12 invited)</div>
+      </div>
+
+      <!-- Communication Response -->
+      <div class="factor-row">
+        <div class="factor-name">Communication Response</div>
+        <div class="factor-score-badge factor-score-good">90</div>
+        <div class="factor-bar-track">
+          <div class="factor-bar-fill" style="width: 90%; background: linear-gradient(90deg, #0e7490, #06b6d4);"></div>
+        </div>
+        <div class="factor-weight">5%</div>
+        <div class="factor-contrib">4.5 pts</div>
+        <div class="factor-detail">Replies to 60% of WhatsApp</div>
+      </div>
+
+      <!-- Volunteer Activity -->
+      <div class="factor-row">
+        <div class="factor-name">Volunteer Activity</div>
+        <div class="factor-score-badge factor-score-good">85</div>
+        <div class="factor-bar-track">
+          <div class="factor-bar-fill" style="width: 85%; background: linear-gradient(90deg, #d97706, #fbbf24);"></div>
+        </div>
+        <div class="factor-weight">5%</div>
+        <div class="factor-contrib">4.3 pts</div>
+        <div class="factor-detail">24 hours volunteered</div>
+      </div>
+
+      <!-- Total -->
+      <div class="factor-total">
+        <div class="factor-name">Composite Score</div>
+        <div class="factor-score-badge" style="background: var(--ai-accent-bg); color: var(--ai-accent); font-size: 0.875rem; width: 48px;">96</div>
+        <div style="flex: 1;"></div>
+        <div class="factor-weight" style="font-weight: 700; color: var(--text-primary);">100%</div>
+        <div class="factor-contrib" style="font-size: 0.875rem;">93.8 &rarr; 96</div>
+        <div class="factor-detail" style="color: var(--ai-accent); font-weight: 600;">Rounded + loyalty bonus</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Score History Chart -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-chart-area me-2" style="color: var(--ai-accent);"></i>Score History (Last 24 Months)</h3>
+    </div>
+    <div class="dash-card-body">
+      <svg viewBox="0 0 800 220" preserveAspectRatio="xMidYMid meet" style="width: 100%; height: 220px;">
+        <!-- Grid -->
+        <line x1="50" y1="20" x2="780" y2="20" stroke="#f1f5f9" stroke-width="1"/>
+        <line x1="50" y1="60" x2="780" y2="60" stroke="#f1f5f9" stroke-width="1"/>
+        <line x1="50" y1="100" x2="780" y2="100" stroke="#f1f5f9" stroke-width="1"/>
+        <line x1="50" y1="140" x2="780" y2="140" stroke="#f1f5f9" stroke-width="1"/>
+        <line x1="50" y1="180" x2="780" y2="180" stroke="#e2e8f0" stroke-width="1"/>
+        <line x1="50" y1="20" x2="50" y2="180" stroke="#e2e8f0" stroke-width="1"/>
+        <!-- Y labels -->
+        <text x="45" y="24" text-anchor="end" font-size="9" fill="#94a3b8">100</text>
+        <text x="45" y="64" text-anchor="end" font-size="9" fill="#94a3b8">75</text>
+        <text x="45" y="104" text-anchor="end" font-size="9" fill="#94a3b8">50</text>
+        <text x="45" y="144" text-anchor="end" font-size="9" fill="#94a3b8">25</text>
+        <text x="45" y="184" text-anchor="end" font-size="9" fill="#94a3b8">0</text>
+        <!-- Score line - steady increase from ~65 to 96 over 24 months -->
+        <polyline points="80,108 110,104 140,110 170,100 200,96 230,92 260,98 290,88 320,80 350,76 380,72 410,68 440,64 470,60 500,56 530,52 560,48 590,44 620,40 650,38 680,36 710,32 740,30 770,26"
+                  fill="none" stroke="#8b5cf6" stroke-width="2.5"/>
+        <!-- Area fill -->
+        <polygon points="80,108 110,104 140,110 170,100 200,96 230,92 260,98 290,88 320,80 350,76 380,72 410,68 440,64 470,60 500,56 530,52 560,48 590,44 620,40 650,38 680,36 710,32 740,30 770,26 770,180 80,180"
+                 fill="url(#areaGrad)" opacity="0.15"/>
+        <defs>
+          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#8b5cf6"/>
+            <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <!-- Annotation: $5,000 donation -->
+        <circle cx="440" cy="64" r="5" fill="#22c55e" stroke="white" stroke-width="2"/>
+        <line x1="440" y1="48" x2="440" y2="64" stroke="#22c55e" stroke-width="1" stroke-dasharray="3,2"/>
+        <rect x="395" y="32" width="90" height="16" rx="4" fill="#f0fdf4" stroke="#22c55e" stroke-width="0.5"/>
+        <text x="440" y="43" text-anchor="middle" font-size="7.5" fill="#15803d" font-weight="600">$5,000 donation</text>
+        <!-- Annotation: Attended Gala -->
+        <circle cx="560" cy="48" r="5" fill="#3b82f6" stroke="white" stroke-width="2"/>
+        <line x1="560" y1="32" x2="560" y2="48" stroke="#3b82f6" stroke-width="1" stroke-dasharray="3,2"/>
+        <rect x="522" y="18" width="76" height="16" rx="4" fill="#eff6ff" stroke="#3b82f6" stroke-width="0.5"/>
+        <text x="560" y="29" text-anchor="middle" font-size="7.5" fill="#2563eb" font-weight="600">Attended Gala</text>
+        <!-- Annotation: 3 months no activity (dip at month 7) -->
+        <circle cx="260" cy="98" r="5" fill="#f59e0b" stroke="white" stroke-width="2"/>
+        <line x1="260" y1="82" x2="260" y2="98" stroke="#f59e0b" stroke-width="1" stroke-dasharray="3,2"/>
+        <rect x="208" y="68" width="104" height="16" rx="4" fill="#fffbeb" stroke="#f59e0b" stroke-width="0.5"/>
+        <text x="260" y="79" text-anchor="middle" font-size="7.5" fill="#d97706" font-weight="600">3 months no activity</text>
+        <!-- X labels (every 3 months) -->
+        <text x="80" y="198" text-anchor="middle" font-size="8" fill="#94a3b8">May '24</text>
+        <text x="170" y="198" text-anchor="middle" font-size="8" fill="#94a3b8">Aug '24</text>
+        <text x="260" y="198" text-anchor="middle" font-size="8" fill="#94a3b8">Nov '24</text>
+        <text x="350" y="198" text-anchor="middle" font-size="8" fill="#94a3b8">Feb '25</text>
+        <text x="440" y="198" text-anchor="middle" font-size="8" fill="#94a3b8">May '25</text>
+        <text x="530" y="198" text-anchor="middle" font-size="8" fill="#94a3b8">Aug '25</text>
+        <text x="620" y="198" text-anchor="middle" font-size="8" fill="#94a3b8">Nov '25</text>
+        <text x="710" y="198" text-anchor="middle" font-size="8" fill="#94a3b8">Feb '26</text>
+        <text x="770" y="198" text-anchor="middle" font-size="8" fill="#94a3b8">Apr '26</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Recent Activities Affecting Score -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-clock-rotate-left me-2" style="color: var(--ai-accent);"></i>Recent Activities Affecting Score</h3>
+    </div>
+    <div class="dash-card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Activity</th>
+              <th>Impact</th>
+              <th>Score Change</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="white-space: nowrap;">Apr 10</td>
+              <td>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span style="width: 28px; height: 28px; border-radius: 50%; background: #f0fdf4; color: #22c55e; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; flex-shrink: 0;"><i class="fas fa-hand-holding-dollar"></i></span>
+                  Donated $1,500 (Orphan Care)
+                </div>
+              </td>
+              <td><span class="impact-positive">Recency +5, Monetary +2</span></td>
+              <td><span class="score-change up">+3 &rarr; 96</span></td>
+            </tr>
+            <tr>
+              <td style="white-space: nowrap;">Apr 5</td>
+              <td>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span style="width: 28px; height: 28px; border-radius: 50%; background: #eff6ff; color: #3b82f6; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; flex-shrink: 0;"><i class="fas fa-envelope-open"></i></span>
+                  Opened Ramadan email campaign
+                </div>
+              </td>
+              <td><span class="impact-positive">Email engagement +1</span></td>
+              <td><span class="score-change up">+1 &rarr; 93</span></td>
+            </tr>
+            <tr>
+              <td style="white-space: nowrap;">Mar 28</td>
+              <td>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span style="width: 28px; height: 28px; border-radius: 50%; background: var(--ai-accent-bg); color: var(--ai-accent); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; flex-shrink: 0;"><i class="fas fa-calendar-check"></i></span>
+                  Attended fundraising dinner
+                </div>
+              </td>
+              <td><span class="impact-positive">Event participation +3</span></td>
+              <td><span class="score-change up">+2 &rarr; 92</span></td>
+            </tr>
+            <tr>
+              <td style="white-space: nowrap;">Mar 15</td>
+              <td>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span style="width: 28px; height: 28px; border-radius: 50%; background: #f0fdf4; color: #22c55e; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; flex-shrink: 0;"><i class="fab fa-whatsapp"></i></span>
+                  Replied to WhatsApp message
+                </div>
+              </td>
+              <td><span class="impact-positive">Communication +2</span></td>
+              <td><span class="score-change up">+1 &rarr; 90</span></td>
+            </tr>
+            <tr>
+              <td style="white-space: nowrap;">Mar 1</td>
+              <td>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span style="width: 28px; height: 28px; border-radius: 50%; background: #f0fdf4; color: #22c55e; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; flex-shrink: 0;"><i class="fas fa-hand-holding-dollar"></i></span>
+                  Donated $2,000 (Education)
+                </div>
+              </td>
+              <td><span class="impact-positive">Recency +5, Frequency +2</span></td>
+              <td><span class="score-change up">+4 &rarr; 89</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recommendations -->
+  <div class="dash-card">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-lightbulb me-2" style="color: var(--ai-accent);"></i>AI Recommendations</h3>
+    </div>
+    <div class="dash-card-body">
+      <div class="recommendation-card">
+        <div class="rec-icon">&#11088;</div>
+        <div class="rec-text">
+          <div class="rec-title">High-value donor</div>
+          <div class="rec-desc">Assign dedicated relationship manager for personalized stewardship</div>
+        </div>
+      </div>
+      <div class="recommendation-card">
+        <div class="rec-icon">&#128222;</div>
+        <div class="rec-text">
+          <div class="rec-title">Personal outreach</div>
+          <div class="rec-desc">Schedule quarterly check-in call to maintain engagement</div>
+        </div>
+      </div>
+      <div class="recommendation-card">
+        <div class="rec-icon">&#127881;</div>
+        <div class="rec-text">
+          <div class="rec-title">Invite to VIP events</div>
+          <div class="rec-desc">Eligible for major donor recognition events and exclusive briefings</div>
+        </div>
+      </div>
+      <div class="recommendation-card">
+        <div class="rec-icon">&#128231;</div>
+        <div class="rec-text">
+          <div class="rec-title">Major donor communications</div>
+          <div class="rec-desc">Opt into premium update newsletter with impact reports and behind-the-scenes content</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

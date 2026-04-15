@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grid Configuration - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --settings-accent: #6366f1;
+      --settings-accent-bg: #eef2ff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+    .page-header .subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 0; }
+
+    .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+    .btn-accent {
+      background: var(--settings-accent); color: #fff; border: none;
+      font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem;
+      border-radius: 0.5rem; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-accent:hover { background: #4f46e5; color: #fff; }
+
+    .btn-outline {
+      background: #fff; color: var(--text-primary); border: 1px solid var(--border-color);
+      font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem;
+      border-radius: 0.5rem; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-outline:hover { border-color: var(--settings-accent); color: var(--settings-accent); }
+
+    .btn-outline-danger {
+      background: #fff; color: var(--danger-color); border: 1px solid #fecaca;
+      font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem;
+      border-radius: 0.5rem; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-outline-danger:hover { background: #fef2f2; border-color: var(--danger-color); }
+
+    /* Card */
+    .config-card {
+      background: #fff; border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow); border: 1px solid var(--border-color);
+      margin-bottom: 1.25rem;
+    }
+
+    .config-card-header {
+      padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .config-card-header h3 {
+      font-size: 0.9375rem; font-weight: 700; margin: 0;
+    }
+
+    .config-card-body { padding: 1.25rem; }
+
+    /* Grid Selector */
+    .grid-selector {
+      background: #fff; border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow); border: 1px solid var(--border-color);
+      padding: 1.25rem; margin-bottom: 1.25rem;
+    }
+
+    .grid-selector label {
+      font-size: 0.8125rem; font-weight: 600; margin-bottom: 0.375rem; display: block;
+    }
+
+    .grid-selector select {
+      padding: 0.5rem 0.75rem; font-size: 0.8125rem;
+      border: 1px solid var(--border-color); border-radius: 0.5rem;
+      min-width: 300px; outline: none; transition: border-color 0.15s;
+    }
+
+    .grid-selector select:focus { border-color: var(--settings-accent); }
+
+    /* Column Config Table */
+    .col-config-table {
+      width: 100%; font-size: 0.8125rem; border-collapse: collapse;
+    }
+
+    .col-config-table thead th {
+      background: #f8fafc; font-weight: 600; color: var(--text-secondary);
+      font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.05em;
+      padding: 0.625rem 0.625rem; border-bottom: 1px solid var(--border-color);
+      position: sticky; top: 0; z-index: 1; white-space: nowrap;
+    }
+
+    .col-config-table tbody td {
+      padding: 0.5rem 0.625rem; border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+
+    .col-config-table tbody tr:hover { background: #fafafe; }
+
+    .drag-handle {
+      cursor: grab; color: #cbd5e1; font-size: 0.875rem;
+    }
+    .drag-handle:hover { color: var(--settings-accent); }
+
+    .toggle-check {
+      width: 16px; height: 16px; accent-color: var(--settings-accent);
+      cursor: pointer;
+    }
+
+    .field-key {
+      font-family: 'Courier New', monospace; font-size: 0.75rem;
+      background: #f1f5f9; padding: 0.15rem 0.375rem;
+      border-radius: 0.25rem; color: var(--text-secondary);
+    }
+
+    .filter-badge {
+      font-size: 0.6875rem; font-weight: 600; padding: 0.2rem 0.5rem;
+      border-radius: 999px; background: var(--settings-accent-bg);
+      color: var(--settings-accent);
+    }
+
+    .width-input {
+      width: 70px; padding: 0.25rem 0.5rem; font-size: 0.75rem;
+      border: 1px solid var(--border-color); border-radius: 0.375rem;
+      text-align: center; outline: none;
+    }
+    .width-input:focus { border-color: var(--settings-accent); }
+
+    /* Settings Rows */
+    .settings-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+
+    .setting-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.75rem 0; border-bottom: 1px solid #f1f5f9;
+    }
+
+    .setting-item:last-child { border-bottom: none; }
+
+    .setting-label {
+      font-size: 0.8125rem; font-weight: 600; color: var(--text-primary);
+    }
+
+    .setting-desc {
+      font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.125rem;
+    }
+
+    .setting-control select, .setting-control input[type="number"] {
+      padding: 0.375rem 0.625rem; font-size: 0.8125rem;
+      border: 1px solid var(--border-color); border-radius: 0.375rem; outline: none;
+    }
+
+    .setting-control select:focus, .setting-control input[type="number"]:focus {
+      border-color: var(--settings-accent);
+    }
+
+    /* Default Sort / Filter */
+    .sort-row {
+      display: flex; gap: 0.75rem; align-items: center; margin-bottom: 0.75rem;
+    }
+
+    .sort-row label {
+      font-size: 0.8125rem; font-weight: 600; min-width: 110px; color: var(--text-primary);
+    }
+
+    .sort-row select {
+      padding: 0.375rem 0.625rem; font-size: 0.8125rem;
+      border: 1px solid var(--border-color); border-radius: 0.375rem; outline: none;
+    }
+    .sort-row select:focus { border-color: var(--settings-accent); }
+
+    .filter-row {
+      display: flex; gap: 0.75rem; align-items: center; margin-bottom: 0.5rem;
+    }
+
+    .filter-row select {
+      padding: 0.375rem 0.625rem; font-size: 0.8125rem;
+      border: 1px solid var(--border-color); border-radius: 0.375rem; outline: none;
+    }
+
+    .btn-add-filter {
+      background: none; border: 1px dashed var(--border-color); color: var(--settings-accent);
+      font-size: 0.8125rem; font-weight: 600; padding: 0.375rem 0.75rem;
+      border-radius: 0.375rem; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-add-filter:hover { border-color: var(--settings-accent); background: var(--settings-accent-bg); }
+
+    /* Actions Bar */
+    .actions-bar {
+      background: #fff; border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow); border: 1px solid var(--border-color);
+      padding: 1rem 1.25rem; display: flex; justify-content: flex-end;
+      gap: 0.5rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .col-config-table { display: block; overflow-x: auto; }
+      .grid-selector select { min-width: 100%; }
+    }
+
+    @media (max-width: 576px) {
+      body { padding: 1rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-table-columns me-2" style="color: var(--settings-accent);"></i>Grid Configuration</h1>
+      <p class="subtitle">Customize table columns, filters, and defaults for all list screens</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline-danger"><i class="fas fa-rotate-left me-1"></i> Reset All to Defaults</button>
+    </div>
+  </div>
+
+  <!-- Grid Selector -->
+  <div class="grid-selector">
+    <label>Select Grid <span style="color: var(--danger-color);">*</span></label>
+    <select>
+      <optgroup label="Contacts">
+        <option>Contact List</option>
+        <option>Family List</option>
+        <option>Tags List</option>
+      </optgroup>
+      <optgroup label="Fundraising">
+        <option selected>Donation List</option>
+        <option>Recurring List</option>
+        <option>Pledge List</option>
+        <option>Cheque List</option>
+        <option>In-Kind List</option>
+        <option>Refund List</option>
+        <option>Receipt List</option>
+      </optgroup>
+      <optgroup label="Communication">
+        <option>Email Campaign List</option>
+        <option>SMS Campaign List</option>
+        <option>WhatsApp Campaign List</option>
+        <option>Notification List</option>
+      </optgroup>
+      <optgroup label="Organization">
+        <option>Campaign List</option>
+        <option>Event List</option>
+        <option>Branch List</option>
+        <option>Staff List</option>
+      </optgroup>
+      <optgroup label="Field Collection">
+        <option>Ambassador List</option>
+        <option>Collection List</option>
+        <option>Receipt Book List</option>
+      </optgroup>
+      <optgroup label="Reports">
+        <option>Scheduled Reports</option>
+      </optgroup>
+      <optgroup label="Administration">
+        <option>User List</option>
+        <option>Role List</option>
+        <option>Audit Trail</option>
+      </optgroup>
+    </select>
+  </div>
+
+  <!-- Column Configuration -->
+  <div class="config-card">
+    <div class="config-card-header">
+      <h3><i class="fas fa-columns me-2" style="color: var(--settings-accent);"></i>Column Configuration</h3>
+      <span style="font-size: 0.75rem; color: var(--text-secondary);">Donation List &mdash; 14 columns</span>
+    </div>
+    <div class="config-card-body" style="padding: 0; overflow-x: auto;">
+      <table class="col-config-table">
+        <thead>
+          <tr>
+            <th style="width: 36px;"></th>
+            <th style="width: 36px;">#</th>
+            <th>Column Name</th>
+            <th>Field Key</th>
+            <th style="text-align: center;">Visible</th>
+            <th style="text-align: center;">Searchable</th>
+            <th style="text-align: center;">Sortable</th>
+            <th>Filter</th>
+            <th>Width</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+            <td>1</td>
+            <td><strong>Donation ID</strong></td>
+            <td><span class="field-key">donation_id</span></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check" checked></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check" checked></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check" checked></td>
+            <td><span class="filter-badge">Text</span></td>
+            <td><input type="text" class="width-input" value="120px"></td>
+          </tr>
+          <tr>
+            <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+            <td>2</td>
+            <td><strong>Donor Name</strong></td>
+            <td><span class="field-key">donor_name</span></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check" checked></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check" checked></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check" checked></td>
+            <td><span class="filter-badge">Text</span></td>
+            <td><input type="text" class="width-input" value="200px"></td>
+          </tr>
+          <tr>
+            <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+            <td>3</td>
+            <td><strong>Date</strong></td>
+            <td><span class="field-key">donation_date</span></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check" checked></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check"></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check" checked></td>
+            <td><span class="filter-badge">Date Range</span></td>
+            <td><input type="text" class="width-input" value="120px"></td>
+          </tr>
+          <tr>
+            <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+            <td>4</td>
+            <td><strong>Amount</strong></td>
+            <td><span class="field-key">amount</span></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check" checked></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check"></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check" checked></td>
+            <td><span class="filter-badge">Number Range</span></td>
+            <td><input type="text" class="width-input" value="120px"></td>
+          </tr>
+          <tr>
+            <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+            <td>5</td>
+            <td><strong>Currency</strong></td>
+            <td><span class="field-key">currency</span></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check" checked></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check"></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check" checked></td>
+            <td><span class="filter-badge">Select</span></td>
+            <td><input type="text" class="width-input" value="80px"></td>
+          </tr>
+          <tr>
+            <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+            <td>6</td>
+            <td><strong>Purpose</strong></td>
+            <td><span class="field-key">purpose</span></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check" checked></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check" checked></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check" checked></td>
+            <td><span class="filter-badge">Select</span></td>
+            <td><input type="text" class="width-input" value="180px"></td>
+          </tr>
+          <tr>
+            <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+            <td>7</td>
+            <td><strong>Payment Mode</strong></td>
+            <td><span class="field-key">payment_mode</span></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check" checked></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check"></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check" checked></td>
+            <td><span class="filter-badge">Select</span></td>
+            <td><input type="text" class="width-input" value="140px"></td>
+          </tr>
+          <tr>
+            <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+            <td>8</td>
+            <td><strong>Campaign</strong></td>
+            <td><span class="field-key">campaign</span></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check"></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check"></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check" checked></td>
+            <td><span class="filter-badge">Select</span></td>
+            <td><input type="text" class="width-input" value="160px"></td>
+          </tr>
+          <tr>
+            <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+            <td>9</td>
+            <td><strong>Branch</strong></td>
+            <td><span class="field-key">branch</span></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check" checked></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check"></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check" checked></td>
+            <td><span class="filter-badge">Select</span></td>
+            <td><input type="text" class="width-input" value="120px"></td>
+          </tr>
+          <tr>
+            <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+            <td>10</td>
+            <td><strong>Receipt #</strong></td>
+            <td><span class="field-key">receipt_number</span></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check" checked></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check" checked></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check" checked></td>
+            <td><span class="filter-badge">Text</span></td>
+            <td><input type="text" class="width-input" value="120px"></td>
+          </tr>
+          <tr>
+            <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+            <td>11</td>
+            <td><strong>Receipt Status</strong></td>
+            <td><span class="field-key">receipt_status</span></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check"></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check"></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check" checked></td>
+            <td><span class="filter-badge">Select</span></td>
+            <td><input type="text" class="width-input" value="120px"></td>
+          </tr>
+          <tr>
+            <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+            <td>12</td>
+            <td><strong>Status</strong></td>
+            <td><span class="field-key">status</span></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check" checked></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check"></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check" checked></td>
+            <td><span class="filter-badge">Select</span></td>
+            <td><input type="text" class="width-input" value="100px"></td>
+          </tr>
+          <tr>
+            <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+            <td>13</td>
+            <td><strong>Created By</strong></td>
+            <td><span class="field-key">created_by</span></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check"></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check"></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check" checked></td>
+            <td><span class="filter-badge">Select</span></td>
+            <td><input type="text" class="width-input" value="140px"></td>
+          </tr>
+          <tr>
+            <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+            <td>14</td>
+            <td><strong>Created Date</strong></td>
+            <td><span class="field-key">created_date</span></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check"></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check"></td>
+            <td style="text-align: center;"><input type="checkbox" class="toggle-check" checked></td>
+            <td><span class="filter-badge">Date Range</span></td>
+            <td><input type="text" class="width-input" value="120px"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Default Sort & Default Filters (side by side) -->
+  <div class="row g-3 mb-3">
+    <div class="col-lg-6">
+      <div class="config-card" style="height: 100%;">
+        <div class="config-card-header">
+          <h3><i class="fas fa-arrow-down-a-z me-2" style="color: var(--settings-accent);"></i>Default Sort</h3>
+        </div>
+        <div class="config-card-body">
+          <div class="sort-row">
+            <label>Sort By:</label>
+            <select>
+              <option>Donation ID</option>
+              <option>Donor Name</option>
+              <option selected>Date</option>
+              <option>Amount</option>
+              <option>Status</option>
+            </select>
+            <select>
+              <option>Ascending</option>
+              <option selected>Descending</option>
+            </select>
+          </div>
+          <div class="sort-row">
+            <label>Secondary Sort:</label>
+            <select>
+              <option>Donation ID</option>
+              <option>Donor Name</option>
+              <option>Date</option>
+              <option selected>Amount</option>
+              <option>Status</option>
+            </select>
+            <select>
+              <option>Ascending</option>
+              <option selected>Descending</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="config-card" style="height: 100%;">
+        <div class="config-card-header">
+          <h3><i class="fas fa-filter me-2" style="color: var(--settings-accent);"></i>Default Filters</h3>
+          <span style="font-size: 0.6875rem; color: var(--text-secondary);">Pre-applied when grid first loads</span>
+        </div>
+        <div class="config-card-body">
+          <div class="filter-row">
+            <select>
+              <option selected>Status</option>
+              <option>Branch</option>
+              <option>Purpose</option>
+              <option>Payment Mode</option>
+              <option>Currency</option>
+            </select>
+            <select>
+              <option selected>Active</option>
+              <option>Inactive</option>
+              <option>Cancelled</option>
+              <option>All</option>
+            </select>
+          </div>
+          <div class="filter-row">
+            <select>
+              <option>Status</option>
+              <option>Branch</option>
+              <option>Purpose</option>
+              <option>Payment Mode</option>
+              <option selected>Date Range</option>
+            </select>
+            <select>
+              <option selected>This Month</option>
+              <option>Last Month</option>
+              <option>This Quarter</option>
+              <option>This Year</option>
+              <option>Custom</option>
+            </select>
+          </div>
+          <button class="btn-add-filter"><i class="fas fa-plus me-1"></i> Add Default Filter</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Grid Behavior -->
+  <div class="config-card">
+    <div class="config-card-header">
+      <h3><i class="fas fa-sliders me-2" style="color: var(--settings-accent);"></i>Grid Behavior</h3>
+    </div>
+    <div class="config-card-body">
+      <div class="settings-grid">
+        <div>
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Rows Per Page</div>
+              <div class="setting-desc">Number of rows to display per page</div>
+            </div>
+            <div class="setting-control">
+              <select>
+                <option>10</option>
+                <option selected>25</option>
+                <option>50</option>
+                <option>100</option>
+              </select>
+            </div>
+          </div>
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Enable Column Resize</div>
+              <div class="setting-desc">Allow users to resize columns by dragging</div>
+            </div>
+            <div class="setting-control">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" checked>
+              </div>
+            </div>
+          </div>
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Enable Column Reorder</div>
+              <div class="setting-desc">Users can drag columns to reorder</div>
+            </div>
+            <div class="setting-control">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" checked>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Enable Row Selection</div>
+              <div class="setting-desc">Show checkbox column for bulk actions</div>
+            </div>
+            <div class="setting-control">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" checked>
+              </div>
+            </div>
+          </div>
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Freeze Columns</div>
+              <div class="setting-desc">First N columns stay fixed on scroll</div>
+            </div>
+            <div class="setting-control">
+              <select>
+                <option>0</option>
+                <option>1</option>
+                <option selected>2</option>
+                <option>3</option>
+              </select>
+            </div>
+          </div>
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Show Summary Row</div>
+              <div class="setting-desc">Show totals at the bottom of the grid</div>
+            </div>
+            <div class="setting-control">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Export Columns -->
+      <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+        <div class="setting-label" style="margin-bottom: 0.5rem;">Export Columns</div>
+        <div class="d-flex gap-3">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="exportColumns" checked>
+            <label class="form-check-label" style="font-size: 0.8125rem;">All columns</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="exportColumns">
+            <label class="form-check-label" style="font-size: 0.8125rem;">Visible columns only</label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions Bar -->
+  <div class="actions-bar">
+    <button class="btn-outline"><i class="fas fa-rotate-left me-1"></i> Reset to Default</button>
+    <button class="btn-outline"><i class="fas fa-eye me-1"></i> Preview Grid</button>
+    <button class="btn-accent"><i class="fas fa-check me-1"></i> Save Configuration</button>
+  </div>
+
+</body>
+
+</html>

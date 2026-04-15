@@ -1,0 +1,1849 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>All Donations - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #0c6577;
+      border-color: #0c6577;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Export dropdown */
+    .export-wrapper {
+      position: relative;
+    }
+
+    .export-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 0.25rem;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      z-index: 100;
+      min-width: 180px;
+      overflow: hidden;
+    }
+
+    .export-dropdown.show {
+      display: block;
+    }
+
+    .export-dropdown a {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      text-decoration: none;
+      transition: background 0.1s;
+    }
+
+    .export-dropdown a:hover {
+      background: #f8fafc;
+      color: var(--accent);
+    }
+
+    .export-dropdown a i {
+      width: 16px;
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    /* KPI Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1.25rem;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .stat-icon.green { background: #f0fdf4; color: #22c55e; }
+    .stat-icon.blue { background: #eff6ff; color: #3b82f6; }
+    .stat-icon.purple { background: #faf5ff; color: #a855f7; }
+    .stat-icon.teal { background: var(--accent-bg); color: var(--accent); }
+    .stat-icon.orange { background: #fff7ed; color: #f97316; }
+
+    .stat-info { flex: 1; }
+
+    .stat-value {
+      font-size: 1.625rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .stat-label {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 0.125rem;
+    }
+
+    .stat-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .stat-subtitle .positive { color: var(--success-color); font-weight: 600; }
+
+    /* Mini pie chart */
+    .mini-pie {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: conic-gradient(var(--accent) 0% 65%, #f97316 65% 100%);
+      flex-shrink: 0;
+    }
+
+    /* Card */
+    .list-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .search-input {
+      position: relative;
+      flex: 1;
+      min-width: 240px;
+    }
+
+    .search-input i {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .search-input input {
+      width: 100%;
+      padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .search-input input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .date-range {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .date-range input[type="date"] {
+      padding: 0.375rem 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      color: var(--text-primary);
+    }
+
+    .date-range input[type="date"]:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .date-range-sep {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    /* Filter Chips */
+    .filter-chips {
+      display: flex;
+      gap: 0.375rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-chip {
+      padding: 0.3125rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .filter-chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .filter-chip.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    /* Advanced Filters Panel */
+    .advanced-filters {
+      display: none;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      background: #f8fafc;
+    }
+
+    .advanced-filters.show {
+      display: block;
+    }
+
+    .filter-group label {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.25rem;
+      display: block;
+    }
+
+    .filter-group select,
+    .filter-group input {
+      width: 100%;
+      padding: 0.375rem 0.625rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+    }
+
+    .filter-group select:focus,
+    .filter-group input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Bulk Actions Bar */
+    .bulk-actions {
+      display: none;
+      padding: 0.75rem 1.25rem;
+      background: var(--accent-bg);
+      border-bottom: 1px solid #cffafe;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .bulk-actions.show {
+      display: flex;
+    }
+
+    .bulk-actions .selected-count {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .bulk-btn {
+      padding: 0.3125rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid var(--accent);
+      background: white;
+      color: var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .bulk-btn:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Table */
+    .table-container {
+      overflow-x: auto;
+    }
+
+    .donation-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1200px;
+    }
+
+    .donation-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .donation-table th:hover {
+      color: var(--accent);
+    }
+
+    .donation-table th .sort-icon {
+      margin-left: 0.25rem;
+      font-size: 0.5625rem;
+      opacity: 0.4;
+    }
+
+    .donation-table th.sorted .sort-icon {
+      opacity: 1;
+      color: var(--accent);
+    }
+
+    .donation-table td {
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      vertical-align: middle;
+    }
+
+    .donation-table tr:hover td {
+      background: #f8fafc;
+    }
+
+    .donation-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Receipt link */
+    .receipt-link {
+      color: var(--accent);
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .receipt-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Contact cell */
+    .contact-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.6875rem;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .contact-name-cell {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .contact-name-link {
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .contact-name-link:hover {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+
+    /* Purpose badge */
+    .purpose-badge {
+      font-size: 0.6875rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      white-space: nowrap;
+      background: #eff6ff;
+      color: #1e40af;
+    }
+
+    .purpose-badge.education { background: #faf5ff; color: #7c3aed; }
+    .purpose-badge.water { background: #ecfeff; color: #0e7490; }
+    .purpose-badge.general { background: #f1f5f9; color: #475569; }
+    .purpose-badge.medical { background: #fef2f2; color: #dc2626; }
+    .purpose-badge.community { background: #fff7ed; color: #c2410c; }
+
+    /* Amount cell */
+    .amount-cell {
+      font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+      font-weight: 600;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .currency-label {
+      font-size: 0.625rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    /* Mode cell */
+    .mode-cell {
+      white-space: nowrap;
+    }
+
+    .mode-icon {
+      font-size: 0.75rem;
+      margin-right: 0.25rem;
+    }
+
+    .mode-icon.online { color: var(--accent); }
+    .mode-icon.receipt { color: #f97316; }
+    .mode-icon.cheque { color: #3b82f6; }
+    .mode-icon.inkind { color: #a855f7; }
+    .mode-icon.recurring { color: #22c55e; }
+
+    /* Status badge */
+    .status-badge {
+      font-size: 0.6875rem;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .status-badge.completed { background: #f0fdf4; color: #166534; }
+    .status-badge.pending { background: #fefce8; color: #854d0e; }
+    .status-badge.failed { background: #fef2f2; color: #991b1b; }
+    .status-badge.refunded { background: #f1f5f9; color: #475569; }
+    .status-badge.received { background: #f0fdf4; color: #166534; }
+
+    /* Receipt sent */
+    .receipt-yes { color: var(--success-color); }
+    .receipt-no { color: var(--danger-color); }
+
+    /* Actions Menu */
+    .actions-menu {
+      position: relative;
+    }
+
+    .actions-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      transition: all 0.15s;
+    }
+
+    .actions-btn:hover {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .actions-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 0.25rem;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      z-index: 100;
+      min-width: 160px;
+      overflow: hidden;
+    }
+
+    .actions-dropdown.show {
+      display: block;
+    }
+
+    .actions-dropdown a {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      text-decoration: none;
+      transition: background 0.1s;
+    }
+
+    .actions-dropdown a:hover {
+      background: #f8fafc;
+      color: var(--accent);
+    }
+
+    .actions-dropdown a i {
+      width: 16px;
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .actions-dropdown a:hover i {
+      color: var(--accent);
+    }
+
+    .actions-dropdown a.danger {
+      color: var(--danger-color);
+    }
+
+    .actions-dropdown a.danger i {
+      color: var(--danger-color);
+    }
+
+    .actions-dropdown a.disabled {
+      opacity: 0.45;
+      pointer-events: none;
+      cursor: default;
+    }
+
+    /* Receipt Preview Modal */
+    .receipt-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .receipt-modal-overlay.show {
+      display: flex;
+    }
+
+    .receipt-modal {
+      background: white;
+      border-radius: 0.75rem;
+      width: 560px;
+      max-width: 94vw;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    }
+
+    .receipt-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .receipt-modal-header h5 {
+      margin: 0;
+      font-size: 0.9375rem;
+      font-weight: 600;
+    }
+
+    .receipt-modal-close {
+      background: none;
+      border: none;
+      font-size: 1.125rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0.25rem;
+      line-height: 1;
+    }
+
+    .receipt-modal-close:hover {
+      color: var(--text-primary);
+    }
+
+    .receipt-modal-body {
+      padding: 1.5rem 1.25rem;
+    }
+
+    .receipt-preview {
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      background: #fafbfc;
+    }
+
+    .receipt-org-header {
+      text-align: center;
+      margin-bottom: 1.25rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid var(--accent);
+    }
+
+    .receipt-org-header .org-name {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 0.125rem;
+    }
+
+    .receipt-org-header .org-detail {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .receipt-title {
+      text-align: center;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1.25rem;
+      color: var(--text-primary);
+    }
+
+    .receipt-field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .receipt-field label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-secondary);
+      display: block;
+      margin-bottom: 0.125rem;
+    }
+
+    .receipt-field .value {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .receipt-amount-box {
+      text-align: center;
+      padding: 0.75rem;
+      background: var(--accent-bg);
+      border-radius: 0.375rem;
+      margin-bottom: 1rem;
+    }
+
+    .receipt-amount-box .amount-label {
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .receipt-amount-box .amount-value {
+      font-size: 1.375rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .receipt-footer-note {
+      text-align: center;
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      border-top: 1px solid var(--border-color);
+      padding-top: 0.75rem;
+      margin-top: 0.75rem;
+    }
+
+    .receipt-modal-footer {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.25rem;
+      border-top: 1px solid var(--border-color);
+      justify-content: flex-end;
+    }
+
+    .receipt-modal-footer button {
+      padding: 0.4rem 0.875rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      transition: all 0.15s;
+    }
+
+    .receipt-modal-footer button:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .receipt-modal-footer button.btn-accent {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .receipt-modal-footer button.btn-accent:hover {
+      background: #0c6577;
+    }
+
+    /* Pagination */
+    .table-footer {
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--border-color);
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .table-footer .showing-text {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .page-size-select {
+      padding: 0.25rem 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .pagination {
+      display: flex;
+      gap: 0.25rem;
+      align-items: center;
+      margin: 0;
+      list-style: none;
+      padding: 0;
+    }
+
+    .pagination .page-btn {
+      min-width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: white;
+      cursor: pointer;
+      transition: all 0.15s;
+      padding: 0 0.375rem;
+    }
+
+    .pagination .page-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .pagination .page-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .pagination .page-btn.disabled {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .pagination .page-ellipsis {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      padding: 0 0.25rem;
+    }
+
+    /* Column Customization */
+    .column-config-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      transition: all 0.15s;
+    }
+
+    .column-config-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .column-config-panel {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 0.25rem;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      z-index: 200;
+      min-width: 220px;
+      padding: 0.75rem;
+    }
+
+    .column-config-panel.show {
+      display: block;
+    }
+
+    .column-config-panel h4 {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .column-config-panel label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      padding: 0.25rem 0;
+      cursor: pointer;
+    }
+
+    .column-config-panel label input[type="checkbox"] {
+      accent-color: var(--accent);
+    }
+
+    /* Checkbox */
+    .form-check-input {
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    /* Advanced filter toggle button */
+    .adv-filter-toggle {
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .adv-filter-toggle:hover,
+    .adv-filter-toggle.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      }
+
+      .table-footer {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    @media (max-width: 576px) {
+      body { padding: 1rem; }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1>All Donations</h1>
+      <p class="subtitle">4,567 donations &middot; April 2026</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="parent.loadContent('fundraising/donation-form')">
+        <i class="fas fa-plus me-1"></i> New Donation
+      </button>
+      <div class="export-wrapper">
+        <button class="btn-outline-accent" onclick="toggleExport(event)">
+          <i class="fas fa-file-export me-1"></i> Export <i class="fas fa-caret-down ms-1"></i>
+        </button>
+        <div class="export-dropdown" id="exportDropdown">
+          <a href="#" onclick="exportData('csv')"><i class="fas fa-file-csv"></i> Export as CSV</a>
+          <a href="#" onclick="exportData('excel')"><i class="fas fa-file-excel"></i> Export as Excel</a>
+          <a href="#" onclick="exportData('pdf')"><i class="fas fa-file-pdf"></i> Export as PDF</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Summary Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon green">
+        <i class="fas fa-hand-holding-dollar"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Total Donations (This Month)</div>
+        <div class="stat-value">$45,230</div>
+        <div class="stat-subtitle"><span class="positive">+18.7%</span> vs last month</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon blue">
+        <i class="fas fa-hashtag"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Donation Count</div>
+        <div class="stat-value">342</div>
+        <div class="stat-subtitle">Avg: $132.25</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon purple">
+        <i class="fas fa-repeat"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Recurring Active</div>
+        <div class="stat-value">890</div>
+        <div class="stat-subtitle">$22,500/month</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon teal">
+        <i class="fas fa-globe"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Online vs Offline</div>
+        <div class="d-flex align-items-center gap-2 mt-1">
+          <div class="mini-pie"></div>
+          <div>
+            <div style="font-size: 0.8125rem; font-weight: 600;">65% Online</div>
+            <div style="font-size: 0.6875rem; color: var(--text-secondary);">35% Offline</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon orange">
+        <i class="fas fa-clock"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Pending Processing</div>
+        <div class="stat-value">12</div>
+        <div class="stat-subtitle">$3,450 pending</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Card -->
+  <div class="list-card">
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+        <div class="search-input">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Search by receipt #, contact name, amount..." id="searchInput">
+        </div>
+        <div class="date-range">
+          <input type="date" value="2026-04-01">
+          <span class="date-range-sep">&mdash;</span>
+          <input type="date" value="2026-04-12">
+        </div>
+        <button class="adv-filter-toggle" onclick="toggleAdvancedFilters(this)">
+          <i class="fas fa-sliders me-1"></i> Advanced Filters
+        </button>
+        <div style="position: relative; margin-left: auto;">
+          <button class="column-config-btn" onclick="toggleColumnConfig(event)" title="Customize Columns">
+            <i class="fas fa-gear"></i>
+          </button>
+          <div class="column-config-panel" id="columnConfigPanel">
+            <h4>Show Columns</h4>
+            <label><input type="checkbox" checked> Receipt #</label>
+            <label><input type="checkbox" checked> Date</label>
+            <label><input type="checkbox" checked> Contact</label>
+            <label><input type="checkbox" checked> Purpose</label>
+            <label><input type="checkbox" checked> Amount</label>
+            <label><input type="checkbox" checked> Currency</label>
+            <label><input type="checkbox" checked> Mode</label>
+            <label><input type="checkbox" checked> Status</label>
+            <label><input type="checkbox" checked> Receipt Sent</label>
+          </div>
+        </div>
+      </div>
+      <div class="filter-chips">
+        <span class="filter-chip active" onclick="setFilter(this)">All</span>
+        <span class="filter-chip" onclick="setFilter(this)">Online</span>
+        <span class="filter-chip" onclick="setFilter(this)">Receipt</span>
+        <span class="filter-chip" onclick="setFilter(this)">Cheque</span>
+        <span class="filter-chip" onclick="setFilter(this)">In-Kind</span>
+        <span class="filter-chip" onclick="setFilter(this)">Recurring</span>
+        <span class="filter-chip" onclick="setFilter(this)">Pending</span>
+      </div>
+    </div>
+
+    <!-- Advanced Filters Panel -->
+    <div class="advanced-filters" id="advancedFilters">
+      <div class="row g-3">
+        <div class="col-md-3 col-sm-6 filter-group">
+          <label>Donation Purpose</label>
+          <select multiple size="3">
+            <option>Children's Education</option>
+            <option>Clean Water</option>
+            <option>General Fund</option>
+            <option>Medical Aid</option>
+            <option>Community Development</option>
+          </select>
+        </div>
+        <div class="col-md-3 col-sm-6 filter-group">
+          <label>Donation Category</label>
+          <select>
+            <option value="">All Categories</option>
+            <option>Individual</option>
+            <option>Corporate</option>
+            <option>Foundation</option>
+            <option>Government</option>
+          </select>
+        </div>
+        <div class="col-md-3 col-sm-6 filter-group">
+          <label>Payment Mode</label>
+          <select multiple size="3">
+            <option>Cash</option>
+            <option>Cheque</option>
+            <option>Online</option>
+            <option>Bank Transfer</option>
+            <option>UPI</option>
+          </select>
+        </div>
+        <div class="col-md-3 col-sm-6 filter-group">
+          <label>Currency</label>
+          <select>
+            <option value="">All Currencies</option>
+            <option>USD</option>
+            <option>INR</option>
+            <option>AED</option>
+            <option>GBP</option>
+            <option>BRL</option>
+            <option>NGN</option>
+            <option>MAD</option>
+            <option>JPY</option>
+          </select>
+        </div>
+        <div class="col-md-3 col-sm-6 filter-group">
+          <label>Amount Range</label>
+          <div class="d-flex gap-2">
+            <input type="number" placeholder="Min" min="0">
+            <input type="number" placeholder="Max" min="0">
+          </div>
+        </div>
+        <div class="col-md-3 col-sm-6 filter-group">
+          <label>Payment Status</label>
+          <select>
+            <option value="">All Statuses</option>
+            <option>Completed</option>
+            <option>Pending</option>
+            <option>Failed</option>
+            <option>Refunded</option>
+          </select>
+        </div>
+        <div class="col-md-3 col-sm-6 filter-group">
+          <label>Branch</label>
+          <select>
+            <option value="">All Branches</option>
+            <option>Head Office</option>
+            <option>North Region</option>
+            <option>South Region</option>
+            <option>East Region</option>
+            <option>West Region</option>
+          </select>
+        </div>
+        <div class="col-md-3 col-sm-6 filter-group">
+          <label>Organizational Unit</label>
+          <select>
+            <option value="">All Units</option>
+            <option>Fundraising Dept</option>
+            <option>Field Operations</option>
+            <option>Programs</option>
+            <option>Admin</option>
+          </select>
+        </div>
+        <div class="col-12 d-flex align-items-end gap-2 mt-2">
+          <button class="btn-primary-accent" style="padding: 0.375rem 1rem; font-size: 0.75rem;">
+            <i class="fas fa-check me-1"></i> Apply
+          </button>
+          <button class="btn-outline-accent" style="padding: 0.375rem 1rem; font-size: 0.75rem;" onclick="clearFilters()">
+            <i class="fas fa-times me-1"></i> Clear
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bulk Actions Bar -->
+    <div class="bulk-actions" id="bulkActions">
+      <span class="selected-count" id="selectedCount">0 donations selected</span>
+      <button class="bulk-btn"><i class="fas fa-receipt me-1"></i> Send Receipts</button>
+      <button class="bulk-btn"><i class="fas fa-file-export me-1"></i> Export Selected</button>
+      <button class="bulk-btn"><i class="fas fa-arrows-rotate me-1"></i> Bulk Status Update</button>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-container">
+      <table class="donation-table">
+        <thead>
+          <tr>
+            <th style="width: 36px;">
+              <input type="checkbox" class="form-check-input" id="selectAll" onchange="toggleSelectAll(this)">
+            </th>
+            <th class="sorted">Receipt # <i class="fas fa-sort-down sort-icon"></i></th>
+            <th>Date <i class="fas fa-sort sort-icon"></i></th>
+            <th>Contact <i class="fas fa-sort sort-icon"></i></th>
+            <th>Purpose <i class="fas fa-sort sort-icon"></i></th>
+            <th style="text-align: right;">Amount <i class="fas fa-sort sort-icon"></i></th>
+            <th>Currency <i class="fas fa-sort sort-icon"></i></th>
+            <th>Mode <i class="fas fa-sort sort-icon"></i></th>
+            <th>Status <i class="fas fa-sort sort-icon"></i></th>
+            <th>Receipt Sent</th>
+            <th style="width: 44px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Row 1 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td><a class="receipt-link" onclick="parent.loadContent('fundraising/donation-detail')">RCP-2026-0892</a></td>
+            <td>Apr 10, 2026</td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background: #3b82f6;">SJ</div>
+                <a class="contact-name-link" onclick="parent.loadContent('contacts/contact-detail')">Sarah Johnson</a>
+              </div>
+            </td>
+            <td><span class="purpose-badge education">Children's Education</span></td>
+            <td class="amount-cell">$500.00</td>
+            <td><span class="currency-label">USD</span></td>
+            <td class="mode-cell"><i class="fas fa-globe mode-icon online"></i> Online (Stripe)</td>
+            <td><span class="status-badge completed">Completed</span></td>
+            <td class="text-center"><span class="receipt-yes"><i class="fas fa-check-circle"></i></span></td>
+            <td>
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a onclick="parent.loadContent('fundraising/donation-detail')"><i class="fas fa-eye"></i> View</a>
+                  <a onclick="parent.loadContent('fundraising/donation-form')"><i class="fas fa-pen"></i> Edit</a>
+                  <a href="#" onclick="event.preventDefault(); openReceiptModal('RCP-2026-0892', 'Sarah Johnson', '$500.00', 'Apr 10, 2026', 'Children\'s Education')"><i class="fas fa-file-invoice"></i> View Receipt</a>
+                  <a href="#"><i class="fas fa-receipt"></i> Send Receipt</a>
+                  <a onclick="parent.loadContent('fundraising/refund-management')"><i class="fas fa-rotate-left"></i> Refund</a>
+                  <a class="danger" href="#"><i class="fas fa-trash"></i> Delete</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 2 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td><a class="receipt-link" onclick="parent.loadContent('fundraising/donation-detail')">RCP-2026-0891</a></td>
+            <td>Apr 10, 2026</td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background: #8b5cf6;">AA</div>
+                <a class="contact-name-link" onclick="parent.loadContent('contacts/contact-detail')">Ahmad Al-Hassan</a>
+              </div>
+            </td>
+            <td><span class="purpose-badge water">Clean Water</span></td>
+            <td class="amount-cell">AED 4,500</td>
+            <td><span class="currency-label">AED</span></td>
+            <td class="mode-cell"><i class="fas fa-globe mode-icon online"></i> Online (PayPal)</td>
+            <td><span class="status-badge completed">Completed</span></td>
+            <td class="text-center"><span class="receipt-yes"><i class="fas fa-check-circle"></i></span></td>
+            <td>
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a onclick="parent.loadContent('fundraising/donation-detail')"><i class="fas fa-eye"></i> View</a>
+                  <a onclick="parent.loadContent('fundraising/donation-form')"><i class="fas fa-pen"></i> Edit</a>
+                  <a href="#" onclick="event.preventDefault(); openReceiptModal('RCP-2026-0891', 'Ahmad Al-Hassan', 'AED 4,500', 'Apr 10, 2026', 'Clean Water')"><i class="fas fa-file-invoice"></i> View Receipt</a>
+                  <a href="#"><i class="fas fa-receipt"></i> Send Receipt</a>
+                  <a onclick="parent.loadContent('fundraising/refund-management')"><i class="fas fa-rotate-left"></i> Refund</a>
+                  <a class="danger" href="#"><i class="fas fa-trash"></i> Delete</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 3 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td><a class="receipt-link" onclick="parent.loadContent('fundraising/donation-detail')">RCP-2026-0890</a></td>
+            <td>Apr 9, 2026</td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background: #f97316;">RK</div>
+                <a class="contact-name-link" onclick="parent.loadContent('contacts/contact-detail')">Ravi Krishnan</a>
+              </div>
+            </td>
+            <td><span class="purpose-badge general">General Fund</span></td>
+            <td class="amount-cell">&#8377;8,000</td>
+            <td><span class="currency-label">INR</span></td>
+            <td class="mode-cell"><i class="fas fa-file-lines mode-icon receipt"></i> Receipt (#RB-0045)</td>
+            <td><span class="status-badge completed">Completed</span></td>
+            <td class="text-center"><span class="receipt-yes"><i class="fas fa-check-circle"></i></span></td>
+            <td>
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a onclick="parent.loadContent('fundraising/donation-detail')"><i class="fas fa-eye"></i> View</a>
+                  <a onclick="parent.loadContent('fundraising/donation-form')"><i class="fas fa-pen"></i> Edit</a>
+                  <a href="#" onclick="event.preventDefault(); openReceiptModal('RCP-2026-0890', 'Ravi Krishnan', '₹8,000', 'Apr 9, 2026', 'General Fund')"><i class="fas fa-file-invoice"></i> View Receipt</a>
+                  <a href="#"><i class="fas fa-receipt"></i> Send Receipt</a>
+                  <a onclick="parent.loadContent('fundraising/refund-management')"><i class="fas fa-rotate-left"></i> Refund</a>
+                  <a class="danger" href="#"><i class="fas fa-trash"></i> Delete</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 4 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td><a class="receipt-link" onclick="parent.loadContent('fundraising/donation-detail')">RCP-2026-0889</a></td>
+            <td>Apr 9, 2026</td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background: #22c55e;">GE</div>
+                <a class="contact-name-link" onclick="parent.loadContent('contacts/contact-detail')">Green Earth Foundation</a>
+              </div>
+            </td>
+            <td><span class="purpose-badge medical">Medical Aid</span></td>
+            <td class="amount-cell">$5,000.00</td>
+            <td><span class="currency-label">USD</span></td>
+            <td class="mode-cell"><i class="fas fa-money-check mode-icon cheque"></i> Cheque (#4521)</td>
+            <td><span class="status-badge pending">Pending Clearance</span></td>
+            <td class="text-center"><span class="receipt-no"><i class="fas fa-times-circle"></i></span></td>
+            <td>
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a onclick="parent.loadContent('fundraising/donation-detail')"><i class="fas fa-eye"></i> View</a>
+                  <a onclick="parent.loadContent('fundraising/donation-form')"><i class="fas fa-pen"></i> Edit</a>
+                  <a class="disabled" href="#" title="Receipt not generated yet"><i class="fas fa-file-invoice"></i> View Receipt</a>
+                  <a href="#"><i class="fas fa-receipt"></i> Send Receipt</a>
+                  <a onclick="parent.loadContent('fundraising/refund-management')"><i class="fas fa-rotate-left"></i> Refund</a>
+                  <a class="danger" href="#"><i class="fas fa-trash"></i> Delete</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 5 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td><a class="receipt-link" onclick="parent.loadContent('fundraising/donation-detail')">RCP-2026-0888</a></td>
+            <td>Apr 8, 2026</td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background: #ec4899;">MS</div>
+                <a class="contact-name-link" onclick="parent.loadContent('contacts/contact-detail')">Maria Santos</a>
+              </div>
+            </td>
+            <td><span class="purpose-badge education">Education</span></td>
+            <td class="amount-cell">R$250.00</td>
+            <td><span class="currency-label">BRL</span></td>
+            <td class="mode-cell"><i class="fas fa-globe mode-icon online"></i> Online (Stripe)</td>
+            <td><span class="status-badge completed">Completed</span></td>
+            <td class="text-center"><span class="receipt-yes"><i class="fas fa-check-circle"></i></span></td>
+            <td>
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a onclick="parent.loadContent('fundraising/donation-detail')"><i class="fas fa-eye"></i> View</a>
+                  <a onclick="parent.loadContent('fundraising/donation-form')"><i class="fas fa-pen"></i> Edit</a>
+                  <a href="#" onclick="event.preventDefault(); openReceiptModal('RCP-2026-0888', 'Maria Santos', 'R$250.00', 'Apr 8, 2026', 'Education')"><i class="fas fa-file-invoice"></i> View Receipt</a>
+                  <a href="#"><i class="fas fa-receipt"></i> Send Receipt</a>
+                  <a onclick="parent.loadContent('fundraising/refund-management')"><i class="fas fa-rotate-left"></i> Refund</a>
+                  <a class="danger" href="#"><i class="fas fa-trash"></i> Delete</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 6 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td><a class="receipt-link" onclick="parent.loadContent('fundraising/donation-detail')">RCP-2026-0887</a></td>
+            <td>Apr 8, 2026</td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background: #ef4444;">JO</div>
+                <a class="contact-name-link" onclick="parent.loadContent('contacts/contact-detail')">James Okonkwo</a>
+              </div>
+            </td>
+            <td><span class="purpose-badge community">Community Dev</span></td>
+            <td class="amount-cell">&#8358;50,000</td>
+            <td><span class="currency-label">NGN</span></td>
+            <td class="mode-cell"><i class="fas fa-file-lines mode-icon receipt"></i> Receipt (#RB-0067)</td>
+            <td><span class="status-badge completed">Completed</span></td>
+            <td class="text-center"><span class="receipt-yes"><i class="fas fa-check-circle"></i></span></td>
+            <td>
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a onclick="parent.loadContent('fundraising/donation-detail')"><i class="fas fa-eye"></i> View</a>
+                  <a onclick="parent.loadContent('fundraising/donation-form')"><i class="fas fa-pen"></i> Edit</a>
+                  <a href="#" onclick="event.preventDefault(); openReceiptModal('RCP-2026-0887', 'James Okonkwo', '₦50,000', 'Apr 8, 2026', 'Community Dev')"><i class="fas fa-file-invoice"></i> View Receipt</a>
+                  <a href="#"><i class="fas fa-receipt"></i> Send Receipt</a>
+                  <a onclick="parent.loadContent('fundraising/refund-management')"><i class="fas fa-rotate-left"></i> Refund</a>
+                  <a class="danger" href="#"><i class="fas fa-trash"></i> Delete</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 7 - Failed recurring -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td><span style="color: var(--text-secondary);">&mdash;</span></td>
+            <td>Apr 7, 2026</td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background: #64748b;">DM</div>
+                <a class="contact-name-link" onclick="parent.loadContent('contacts/contact-detail')">David Miller</a>
+              </div>
+            </td>
+            <td><span class="purpose-badge education">Children's Education</span></td>
+            <td class="amount-cell">$50.00</td>
+            <td><span class="currency-label">USD</span></td>
+            <td class="mode-cell"><i class="fas fa-repeat mode-icon recurring"></i> Recurring (Stripe)</td>
+            <td><span class="status-badge failed">Failed (Card Expired)</span></td>
+            <td class="text-center"><span class="receipt-no"><i class="fas fa-times-circle"></i></span></td>
+            <td>
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a onclick="parent.loadContent('fundraising/donation-detail')"><i class="fas fa-eye"></i> View</a>
+                  <a onclick="parent.loadContent('fundraising/donation-form')"><i class="fas fa-pen"></i> Edit</a>
+                  <a class="disabled" href="#" title="Receipt not generated yet"><i class="fas fa-file-invoice"></i> View Receipt</a>
+                  <a href="#"><i class="fas fa-receipt"></i> Send Receipt</a>
+                  <a onclick="parent.loadContent('fundraising/refund-management')"><i class="fas fa-rotate-left"></i> Refund</a>
+                  <a class="danger" href="#"><i class="fas fa-trash"></i> Delete</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 8 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td><a class="receipt-link" onclick="parent.loadContent('fundraising/donation-detail')">RCP-2026-0885</a></td>
+            <td>Apr 7, 2026</td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background: #a855f7;">FZ</div>
+                <a class="contact-name-link" onclick="parent.loadContent('contacts/contact-detail')">Fatima Zahra</a>
+              </div>
+            </td>
+            <td><span class="purpose-badge general">General Fund</span></td>
+            <td class="amount-cell">MAD 1,500</td>
+            <td><span class="currency-label">MAD</span></td>
+            <td class="mode-cell"><i class="fas fa-globe mode-icon online"></i> Online (Stripe)</td>
+            <td><span class="status-badge completed">Completed</span></td>
+            <td class="text-center"><span class="receipt-yes"><i class="fas fa-check-circle"></i></span></td>
+            <td>
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a onclick="parent.loadContent('fundraising/donation-detail')"><i class="fas fa-eye"></i> View</a>
+                  <a onclick="parent.loadContent('fundraising/donation-form')"><i class="fas fa-pen"></i> Edit</a>
+                  <a href="#" onclick="event.preventDefault(); openReceiptModal('RCP-2026-0885', 'Fatima Zahra', 'MAD 1,500', 'Apr 7, 2026', 'General Fund')"><i class="fas fa-file-invoice"></i> View Receipt</a>
+                  <a href="#"><i class="fas fa-receipt"></i> Send Receipt</a>
+                  <a onclick="parent.loadContent('fundraising/refund-management')"><i class="fas fa-rotate-left"></i> Refund</a>
+                  <a class="danger" href="#"><i class="fas fa-trash"></i> Delete</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 9 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td><a class="receipt-link" onclick="parent.loadContent('fundraising/donation-detail')">RCP-2026-0884</a></td>
+            <td>Apr 6, 2026</td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background: #e11d48;">ST</div>
+                <a class="contact-name-link" onclick="parent.loadContent('contacts/contact-detail')">Sakura Tanaka</a>
+              </div>
+            </td>
+            <td><span class="purpose-badge education">Education</span></td>
+            <td class="amount-cell">&yen;30,000</td>
+            <td><span class="currency-label">JPY</span></td>
+            <td class="mode-cell"><i class="fas fa-globe mode-icon online"></i> Online (PayPal)</td>
+            <td><span class="status-badge completed">Completed</span></td>
+            <td class="text-center"><span class="receipt-yes"><i class="fas fa-check-circle"></i></span></td>
+            <td>
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a onclick="parent.loadContent('fundraising/donation-detail')"><i class="fas fa-eye"></i> View</a>
+                  <a onclick="parent.loadContent('fundraising/donation-form')"><i class="fas fa-pen"></i> Edit</a>
+                  <a href="#" onclick="event.preventDefault(); openReceiptModal('RCP-2026-0884', 'Sakura Tanaka', '¥30,000', 'Apr 6, 2026', 'Education')"><i class="fas fa-file-invoice"></i> View Receipt</a>
+                  <a href="#"><i class="fas fa-receipt"></i> Send Receipt</a>
+                  <a onclick="parent.loadContent('fundraising/refund-management')"><i class="fas fa-rotate-left"></i> Refund</a>
+                  <a class="danger" href="#"><i class="fas fa-trash"></i> Delete</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 10 - Refunded -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td><span style="color: var(--text-secondary);">&mdash;</span></td>
+            <td>Apr 5, 2026</td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background: #06b6d4;">EC</div>
+                <a class="contact-name-link" onclick="parent.loadContent('contacts/contact-detail')">Emily Chen</a>
+              </div>
+            </td>
+            <td><span class="purpose-badge water">Clean Water</span></td>
+            <td class="amount-cell">$200.00</td>
+            <td><span class="currency-label">USD</span></td>
+            <td class="mode-cell"><i class="fas fa-globe mode-icon online"></i> Online (Stripe)</td>
+            <td><span class="status-badge refunded">Refunded</span></td>
+            <td class="text-center"><span class="receipt-no"><i class="fas fa-times-circle"></i></span></td>
+            <td>
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a onclick="parent.loadContent('fundraising/donation-detail')"><i class="fas fa-eye"></i> View</a>
+                  <a onclick="parent.loadContent('fundraising/donation-form')"><i class="fas fa-pen"></i> Edit</a>
+                  <a class="disabled" href="#" title="Receipt not generated yet"><i class="fas fa-file-invoice"></i> View Receipt</a>
+                  <a href="#"><i class="fas fa-receipt"></i> Send Receipt</a>
+                  <a onclick="parent.loadContent('fundraising/refund-management')"><i class="fas fa-rotate-left"></i> Refund</a>
+                  <a class="danger" href="#"><i class="fas fa-trash"></i> Delete</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 11 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td><a class="receipt-link" onclick="parent.loadContent('fundraising/donation-detail')">RCP-2026-0882</a></td>
+            <td>Apr 5, 2026</td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background: #94a3b8;">AN</div>
+                <a class="contact-name-link" onclick="parent.loadContent('contacts/contact-detail')">Anonymous</a>
+              </div>
+            </td>
+            <td><span class="purpose-badge medical">Medical Aid</span></td>
+            <td class="amount-cell">$75.00</td>
+            <td><span class="currency-label">USD</span></td>
+            <td class="mode-cell"><i class="fas fa-globe mode-icon online"></i> Online (Stripe)</td>
+            <td><span class="status-badge completed">Completed</span></td>
+            <td class="text-center"><span class="receipt-yes"><i class="fas fa-check-circle"></i></span></td>
+            <td>
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a onclick="parent.loadContent('fundraising/donation-detail')"><i class="fas fa-eye"></i> View</a>
+                  <a onclick="parent.loadContent('fundraising/donation-form')"><i class="fas fa-pen"></i> Edit</a>
+                  <a href="#" onclick="event.preventDefault(); openReceiptModal('RCP-2026-0882', 'Anonymous', '$75.00', 'Apr 5, 2026', 'Medical Aid')"><i class="fas fa-file-invoice"></i> View Receipt</a>
+                  <a href="#"><i class="fas fa-receipt"></i> Send Receipt</a>
+                  <a onclick="parent.loadContent('fundraising/refund-management')"><i class="fas fa-rotate-left"></i> Refund</a>
+                  <a class="danger" href="#"><i class="fas fa-trash"></i> Delete</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 12 - In-Kind -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td><a class="receipt-link" onclick="parent.loadContent('fundraising/donation-detail')">IK-2026-0023</a></td>
+            <td>Apr 4, 2026</td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background: #f59e0b;">CM</div>
+                <a class="contact-name-link" onclick="parent.loadContent('contacts/contact-detail')">Carlos Mendez</a>
+              </div>
+            </td>
+            <td><span class="purpose-badge general">General Fund</span></td>
+            <td class="amount-cell">$1,200 est.</td>
+            <td><span class="currency-label">USD</span></td>
+            <td class="mode-cell"><i class="fas fa-gift mode-icon inkind"></i> In-Kind (Medical Supplies)</td>
+            <td><span class="status-badge received">Received</span></td>
+            <td class="text-center"><span class="receipt-yes"><i class="fas fa-check-circle"></i></span></td>
+            <td>
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a onclick="parent.loadContent('fundraising/donation-detail')"><i class="fas fa-eye"></i> View</a>
+                  <a onclick="parent.loadContent('fundraising/donation-form')"><i class="fas fa-pen"></i> Edit</a>
+                  <a href="#" onclick="event.preventDefault(); openReceiptModal('IK-2026-0023', 'Carlos Mendez', '$1,200 est.', 'Apr 4, 2026', 'General Fund')"><i class="fas fa-file-invoice"></i> View Receipt</a>
+                  <a href="#"><i class="fas fa-receipt"></i> Send Receipt</a>
+                  <a onclick="parent.loadContent('fundraising/refund-management')"><i class="fas fa-rotate-left"></i> Refund</a>
+                  <a class="danger" href="#"><i class="fas fa-trash"></i> Delete</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Table Footer / Pagination -->
+    <div class="table-footer">
+      <div class="d-flex align-items-center gap-3">
+        <span class="showing-text">Showing 1-12 of 4,567 donations</span>
+        <div class="d-flex align-items-center gap-1">
+          <span style="font-size: 0.75rem; color: var(--text-secondary);">Show</span>
+          <select class="page-size-select">
+            <option>10</option>
+            <option selected>25</option>
+            <option>50</option>
+            <option>100</option>
+          </select>
+        </div>
+      </div>
+      <div class="pagination">
+        <button class="page-btn disabled"><i class="fas fa-chevron-left"></i></button>
+        <button class="page-btn active">1</button>
+        <button class="page-btn">2</button>
+        <button class="page-btn">3</button>
+        <span class="page-ellipsis">...</span>
+        <button class="page-btn">183</button>
+        <button class="page-btn"><i class="fas fa-chevron-right"></i></button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Receipt Preview Modal -->
+  <div class="receipt-modal-overlay" id="receiptModal" onclick="closeReceiptModal(event)">
+    <div class="receipt-modal" onclick="event.stopPropagation()">
+      <div class="receipt-modal-header">
+        <h5 id="receiptModalTitle">Receipt Preview — RCP-2026-XXXX</h5>
+        <button class="receipt-modal-close" onclick="closeReceiptModal()">&times;</button>
+      </div>
+      <div class="receipt-modal-body">
+        <div class="receipt-preview">
+          <div class="receipt-org-header">
+            <div class="org-name">PeopleServe Global Foundation</div>
+            <div class="org-detail">123 Charity Lane, Suite 400, New York, NY 10001</div>
+            <div class="org-detail">Tax ID: 12-3456789 &bull; contact@peopleserve.org</div>
+          </div>
+          <div class="receipt-title">Donation Receipt</div>
+          <div class="receipt-field-grid">
+            <div class="receipt-field">
+              <label>Receipt Number</label>
+              <div class="value" id="rcptNumber">RCP-2026-0892</div>
+            </div>
+            <div class="receipt-field">
+              <label>Date</label>
+              <div class="value" id="rcptDate">Apr 10, 2026</div>
+            </div>
+            <div class="receipt-field">
+              <label>Donor Name</label>
+              <div class="value" id="rcptDonor">Sarah Johnson</div>
+            </div>
+            <div class="receipt-field">
+              <label>Purpose</label>
+              <div class="value" id="rcptPurpose">Children's Education</div>
+            </div>
+          </div>
+          <div class="receipt-amount-box">
+            <div class="amount-label">Amount Received</div>
+            <div class="amount-value" id="rcptAmount">$500.00</div>
+          </div>
+          <div class="receipt-footer-note">
+            This receipt is issued in acknowledgment of your generous donation.<br>
+            No goods or services were provided in exchange for this contribution.
+          </div>
+        </div>
+      </div>
+      <div class="receipt-modal-footer">
+        <button class="btn-accent" onclick="alert('Downloading PDF...')"><i class="fas fa-download"></i> Download PDF</button>
+        <button onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+        <button onclick="alert('Receipt resent successfully!')"><i class="fas fa-paper-plane"></i> Resend</button>
+        <button onclick="closeReceiptModal()"><i class="fas fa-times"></i> Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Toggle advanced filters
+    function toggleAdvancedFilters(btn) {
+      const panel = document.getElementById('advancedFilters');
+      panel.classList.toggle('show');
+      btn.classList.toggle('active');
+    }
+
+    // Filter chip selection
+    function setFilter(chip) {
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+    }
+
+    // Clear advanced filters
+    function clearFilters() {
+      document.querySelectorAll('#advancedFilters select').forEach(s => {
+        for (let opt of s.options) opt.selected = false;
+      });
+      document.querySelectorAll('#advancedFilters input').forEach(i => i.value = '');
+    }
+
+    // Select all checkboxes
+    function toggleSelectAll(checkbox) {
+      document.querySelectorAll('.row-check').forEach(cb => {
+        cb.checked = checkbox.checked;
+      });
+      updateBulkBar();
+    }
+
+    // Update bulk actions bar
+    function updateBulkBar() {
+      const checked = document.querySelectorAll('.row-check:checked');
+      const bar = document.getElementById('bulkActions');
+      const count = document.getElementById('selectedCount');
+
+      if (checked.length > 0) {
+        bar.classList.add('show');
+        count.textContent = checked.length + ' donation' + (checked.length > 1 ? 's' : '') + ' selected';
+      } else {
+        bar.classList.remove('show');
+      }
+
+      const allChecks = document.querySelectorAll('.row-check');
+      const selectAll = document.getElementById('selectAll');
+      selectAll.checked = checked.length === allChecks.length && allChecks.length > 0;
+      selectAll.indeterminate = checked.length > 0 && checked.length < allChecks.length;
+    }
+
+    // Toggle action dropdown
+    function toggleActions(event, btn) {
+      event.stopPropagation();
+      document.querySelectorAll('.actions-dropdown.show').forEach(d => d.classList.remove('show'));
+      const dropdown = btn.nextElementSibling;
+      dropdown.classList.toggle('show');
+    }
+
+    // Toggle column config
+    function toggleColumnConfig(event) {
+      event.stopPropagation();
+      document.getElementById('columnConfigPanel').classList.toggle('show');
+    }
+
+    // Toggle export dropdown
+    function toggleExport(event) {
+      event.stopPropagation();
+      document.getElementById('exportDropdown').classList.toggle('show');
+    }
+
+    // Export placeholder
+    function exportData(format) {
+      alert('Exporting donations as ' + format.toUpperCase() + '...');
+      document.getElementById('exportDropdown').classList.remove('show');
+    }
+
+    // Receipt preview modal
+    function openReceiptModal(receiptNo, donor, amount, date, purpose) {
+      document.getElementById('receiptModalTitle').textContent = 'Receipt Preview — ' + receiptNo;
+      document.getElementById('rcptNumber').textContent = receiptNo;
+      document.getElementById('rcptDonor').textContent = donor;
+      document.getElementById('rcptAmount').textContent = amount;
+      document.getElementById('rcptDate').textContent = date;
+      document.getElementById('rcptPurpose').textContent = purpose;
+      document.getElementById('receiptModal').classList.add('show');
+      // Close any open action dropdowns
+      document.querySelectorAll('.actions-dropdown.show').forEach(d => d.classList.remove('show'));
+    }
+
+    function closeReceiptModal(event) {
+      if (!event || event.target === document.getElementById('receiptModal')) {
+        document.getElementById('receiptModal').classList.remove('show');
+      }
+    }
+
+    // Close dropdowns on outside click
+    document.addEventListener('click', function () {
+      document.querySelectorAll('.actions-dropdown.show').forEach(d => d.classList.remove('show'));
+      document.getElementById('columnConfigPanel').classList.remove('show');
+      document.getElementById('exportDropdown').classList.remove('show');
+    });
+  </script>
+
+</body>
+
+</html>

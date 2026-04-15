@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SMS Campaigns - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+      --sms-blue: #2563EB;
+      --sms-blue-light: #dbeafe;
+      --sms-chat-bg: #f0f0f0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;
+    }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+    .page-header .subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 0; }
+    .header-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+
+    /* Buttons */
+    .btn-primary-accent {
+      background: var(--accent); border-color: var(--accent); color: white;
+      font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem;
+      border-radius: 0.5rem; border: 1px solid var(--accent); cursor: pointer; transition: all 0.15s;
+    }
+    .btn-primary-accent:hover { background: #0c6577; border-color: #0c6577; color: white; }
+
+    .btn-outline-accent {
+      background: white; border: 1px solid var(--accent); color: var(--accent);
+      font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem;
+      border-radius: 0.5rem; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-outline-accent:hover { background: var(--accent); color: white; }
+
+    .btn-secondary {
+      background: white; border: 1px solid var(--border-color); color: var(--text-secondary);
+      font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem;
+      border-radius: 0.5rem; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-secondary:hover { border-color: var(--text-secondary); color: var(--text-primary); }
+
+    /* KPI Stats Grid */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 1rem; margin-bottom: 1.25rem;
+    }
+    .stat-card {
+      background: white; border-radius: var(--card-radius); padding: 1.25rem;
+      box-shadow: var(--card-shadow); border: 1px solid var(--border-color);
+      display: flex; align-items: flex-start; gap: 1rem; transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .stat-icon {
+      width: 48px; height: 48px; border-radius: 0.75rem; display: flex;
+      align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;
+    }
+    .stat-icon.sms { background: var(--sms-blue-light); color: var(--sms-blue); }
+    .stat-icon.blue { background: #eff6ff; color: #3b82f6; }
+    .stat-icon.green { background: #f0fdf4; color: #22c55e; }
+    .stat-icon.purple { background: #faf5ff; color: #a855f7; }
+    .stat-info { flex: 1; }
+    .stat-value { font-size: 1.625rem; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+    .stat-label { font-size: 0.8125rem; color: var(--text-secondary); font-weight: 500; }
+    .stat-detail { font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.25rem; }
+    .stat-detail .positive { color: var(--success-color); font-weight: 600; }
+
+    /* List Card */
+    .list-card {
+      background: white; border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow); border: 1px solid var(--border-color); overflow: hidden;
+    }
+
+    /* Table */
+    .table-container { overflow-x: auto; }
+    .campaign-table { width: 100%; border-collapse: collapse; min-width: 1300px; }
+    .campaign-table th {
+      background: #f8fafc; font-weight: 600; color: var(--text-secondary);
+      font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.05em;
+      padding: 0.625rem 0.75rem; border-bottom: 1px solid var(--border-color); white-space: nowrap;
+    }
+    .campaign-table td {
+      padding: 0.75rem; border-bottom: 1px solid var(--border-color);
+      font-size: 0.8125rem; vertical-align: middle;
+    }
+    .campaign-table tbody tr:hover { background: #f8fafc; }
+    .campaign-name { font-weight: 600; color: var(--text-primary); cursor: pointer; }
+    .campaign-name:hover { color: var(--accent); }
+    .template-ref { font-family: 'Consolas','Monaco',monospace; font-size: 0.75rem; color: var(--text-secondary); }
+
+    /* Status Badges */
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1875rem 0.625rem;
+      border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; white-space: nowrap;
+    }
+    .status-badge.active { background: #f0fdf4; color: #15803d; }
+    .status-badge.sent { background: #f0fdf4; color: #15803d; }
+    .status-badge.scheduled { background: #eff6ff; color: #1d4ed8; }
+    .status-badge.draft { background: #f8fafc; color: var(--text-secondary); }
+
+    /* Rate Bars */
+    .rate-bar { display: flex; align-items: center; gap: 0.5rem; }
+    .rate-bar .bar-track { width: 50px; height: 6px; background: #f1f5f9; border-radius: 3px; overflow: hidden; }
+    .rate-bar .bar-fill { height: 100%; border-radius: 3px; }
+    .rate-bar .bar-fill.green { background: var(--success-color); }
+    .rate-bar .bar-fill.yellow { background: var(--warning-color); }
+    .rate-bar .bar-fill.red { background: var(--danger-color); }
+    .rate-value { font-weight: 600; font-size: 0.8125rem; min-width: 40px; }
+
+    /* Action Buttons */
+    .action-btn {
+      padding: 0.25rem 0.5rem; border: 1px solid var(--border-color); background: white;
+      border-radius: 0.375rem; font-size: 0.6875rem; font-weight: 600;
+      color: var(--text-secondary); cursor: pointer; transition: all 0.15s; white-space: nowrap;
+    }
+    .action-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .action-btn.primary { border-color: var(--accent); color: var(--accent); }
+    .action-btn.primary:hover { background: var(--accent); color: white; }
+    .action-btn.danger { color: var(--danger-color); }
+    .action-btn.danger:hover { border-color: var(--danger-color); background: var(--danger-color); color: white; }
+    .action-btn.warning { color: #92400e; }
+    .action-btn.warning:hover { border-color: var(--warning-color); background: var(--warning-color); color: white; }
+
+    .cost-value { font-size: 0.8125rem; color: var(--text-secondary); }
+    .cost-warn { color: var(--warning-color); font-weight: 600; }
+    .dnd-value { font-size: 0.8125rem; color: var(--text-secondary); font-style: italic; }
+
+    /* ======================== */
+    /* WIZARD VIEW              */
+    /* ======================== */
+    .wizard-view { display: none; }
+    .wizard-view.active { display: block; }
+    .list-view { display: block; }
+    .list-view.hidden { display: none; }
+
+    /* Step Progress */
+    .step-progress {
+      display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;
+      background: white; border-radius: var(--card-radius); padding: 1.25rem 2rem;
+      box-shadow: var(--card-shadow); border: 1px solid var(--border-color);
+    }
+    .step-item { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; transition: all 0.15s; }
+    .step-number {
+      width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center;
+      justify-content: center; font-size: 0.8125rem; font-weight: 700;
+      border: 2px solid var(--border-color); color: var(--text-secondary); background: white;
+      transition: all 0.2s; flex-shrink: 0;
+    }
+    .step-item.active .step-number { background: var(--accent); border-color: var(--accent); color: white; }
+    .step-item.completed .step-number { background: var(--success-color); border-color: var(--success-color); color: white; }
+    .step-label { font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
+    .step-item.active .step-label { color: var(--accent); }
+    .step-item.completed .step-label { color: var(--success-color); }
+    .step-connector { flex: 1; height: 2px; background: var(--border-color); margin: 0 1rem; min-width: 40px; max-width: 100px; }
+    .step-connector.completed { background: var(--success-color); }
+
+    /* Step Content Card */
+    .step-content-card {
+      background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color); padding: 1.5rem; margin-bottom: 1.25rem;
+    }
+    .step-content-card .step-title { font-size: 1.125rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .step-content-card .step-desc { font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 1.25rem; }
+    .step-content { display: none; }
+    .step-content.active { display: block; }
+
+    /* Form Controls */
+    .form-label-custom { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.375rem; display: block; }
+    .form-label-custom .required { color: var(--danger-color); }
+    .form-control-custom {
+      width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--border-color);
+      border-radius: 0.5rem; font-size: 0.8125rem; color: var(--text-primary); transition: border-color 0.15s;
+    }
+    .form-control-custom:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14,116,144,0.1); }
+    .form-hint { font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.25rem; }
+
+    /* Radio Card Options */
+    .radio-card-group { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .radio-card {
+      flex: 1; min-width: 180px; border: 2px solid var(--border-color); border-radius: 0.75rem;
+      padding: 1rem; cursor: pointer; transition: all 0.15s;
+    }
+    .radio-card:hover { border-color: var(--accent); }
+    .radio-card.selected { border-color: var(--accent); background: var(--accent-bg); }
+    .radio-card .rc-icon { font-size: 1.25rem; margin-bottom: 0.5rem; }
+    .radio-card .rc-title { font-size: 0.875rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .radio-card .rc-desc { font-size: 0.75rem; color: var(--text-secondary); }
+
+    /* Audience Preview */
+    .audience-preview {
+      background: #f8fafc; border: 1px solid var(--border-color); border-radius: 0.75rem;
+      padding: 1.25rem; margin: 1rem 0;
+    }
+    .audience-row { display: flex; justify-content: space-between; padding: 0.375rem 0; font-size: 0.8125rem; }
+    .audience-row .label { color: var(--text-secondary); }
+    .audience-row .value { font-weight: 600; }
+    .audience-row .value.highlight { color: var(--accent); font-size: 1rem; }
+
+    /* Summary Table */
+    .summary-table { width: 100%; }
+    .summary-table td { padding: 0.5rem 0; font-size: 0.8125rem; border-bottom: 1px solid #f1f5f9; }
+    .summary-table td:first-child { color: var(--text-secondary); width: 160px; }
+    .summary-table td:last-child { font-weight: 600; }
+
+    /* Checklist */
+    .checklist-item {
+      display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.5rem 0; font-size: 0.8125rem;
+    }
+    .checklist-item .check-icon { font-size: 1rem; flex-shrink: 0; margin-top: 0.1rem; }
+    .checklist-item .check-icon.success { color: var(--success-color); }
+    .checklist-item .check-icon.warning { color: var(--warning-color); }
+
+    /* Info box */
+    .info-box {
+      background: var(--accent-bg); border: 1px solid #a5f3fc; border-radius: 0.5rem;
+      padding: 0.75rem 1rem; font-size: 0.75rem; color: var(--accent);
+      display: flex; align-items: flex-start; gap: 0.5rem; margin-top: 0.5rem;
+    }
+    .info-box i { margin-top: 0.125rem; flex-shrink: 0; }
+    .info-box.warning { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+
+    /* SMS Phone Preview */
+    .sms-preview-compact {
+      background: var(--sms-chat-bg); border-radius: 0.75rem; padding: 1rem;
+      max-width: 320px; margin: 1rem auto;
+    }
+    .sms-bubble-compact {
+      background: var(--sms-blue); color: white; border-radius: 16px 16px 4px 16px;
+      padding: 0.75rem 1rem; font-size: 0.8125rem; line-height: 1.5;
+      max-width: 90%; margin-left: auto; box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .sms-bubble-compact .bubble-meta { text-align: right; font-size: 0.625rem; opacity: 0.7; margin-top: 0.375rem; }
+
+    /* Country Distribution */
+    .country-dist { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.75rem; }
+    .country-chip {
+      display: flex; align-items: center; gap: 0.375rem; padding: 0.375rem 0.75rem;
+      background: #f8fafc; border: 1px solid var(--border-color); border-radius: 9999px;
+      font-size: 0.75rem; font-weight: 600;
+    }
+
+    /* Wizard Footer */
+    .wizard-footer {
+      display: flex; align-items: center; justify-content: space-between; margin-top: 1.25rem; flex-wrap: wrap; gap: 0.75rem;
+    }
+
+    /* ======================== */
+    /* REPORT VIEW              */
+    /* ======================== */
+    .report-view { display: none; }
+    .report-view.active { display: block; }
+
+    .report-header {
+      background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color); padding: 1.25rem; margin-bottom: 1.25rem;
+    }
+    .report-header h2 { font-size: 1.25rem; font-weight: 700; margin: 0 0 0.5rem; }
+
+    .report-meta { display: flex; gap: 2rem; flex-wrap: wrap; }
+    .report-meta-item { font-size: 0.8125rem; }
+    .report-meta-item .meta-label { color: var(--text-secondary); }
+    .report-meta-item .meta-value { font-weight: 600; }
+
+    /* Delivery Funnel */
+    .delivery-funnel {
+      display: flex; align-items: center; gap: 0.5rem; padding: 1.25rem;
+      background: white; border-radius: var(--card-radius); border: 1px solid var(--border-color);
+      box-shadow: var(--card-shadow); margin-bottom: 1.25rem; flex-wrap: wrap; justify-content: center;
+    }
+    .funnel-step {
+      text-align: center; padding: 0.75rem 1.25rem; border-radius: 0.5rem;
+      background: #f8fafc; min-width: 120px;
+    }
+    .funnel-step .funnel-value { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); }
+    .funnel-step .funnel-label { font-size: 0.6875rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+    .funnel-step .funnel-pct { font-size: 0.75rem; color: var(--success-color); font-weight: 600; }
+    .funnel-step.fail .funnel-pct { color: var(--danger-color); }
+    .funnel-step.scrub .funnel-pct { color: var(--warning-color); }
+    .funnel-arrow { font-size: 1.25rem; color: var(--border-color); }
+
+    .report-card {
+      background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color); margin-bottom: 1.25rem; overflow: hidden;
+    }
+    .report-card-header {
+      padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color);
+      font-size: 0.9375rem; font-weight: 700;
+    }
+    .report-card-body { padding: 1.25rem; }
+
+    .report-table { width: 100%; border-collapse: collapse; }
+    .report-table th {
+      background: #f8fafc; font-weight: 600; color: var(--text-secondary);
+      font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.05em;
+      padding: 0.625rem 0.75rem; border-bottom: 1px solid var(--border-color); text-align: left;
+    }
+    .report-table td {
+      padding: 0.625rem 0.75rem; border-bottom: 1px solid var(--border-color);
+      font-size: 0.8125rem; vertical-align: middle;
+    }
+    .report-table tbody tr:hover { background: #f8fafc; }
+
+    /* Toggle Switch */
+    .toggle-switch { position: relative; width: 40px; height: 22px; display: inline-block; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; inset: 0; background: #cbd5e1; border-radius: 11px;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .toggle-slider::before {
+      content: ''; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px;
+      background: white; border-radius: 50%; transition: transform 0.2s;
+    }
+    .toggle-switch input:checked + .toggle-slider { background: var(--accent); }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); }
+
+    /* Modal */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-box {
+      background: white; border-radius: var(--card-radius); padding: 1.5rem; max-width: 480px;
+      width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .modal-box h5 { font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem; }
+    .modal-box p { font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 1.25rem; line-height: 1.6; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 0.5rem; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .step-progress { padding: 1rem; }
+      .step-label { display: none; }
+    }
+    @media (max-width: 576px) { .stats-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+
+<body>
+
+  <!-- ==================== CAMPAIGN LIST VIEW ==================== -->
+  <div class="list-view" id="listView">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <h1><i class="fas fa-comment-sms" style="color: var(--sms-blue);"></i> SMS Campaigns</h1>
+        <p class="subtitle">Send targeted SMS messages to your audience</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn-primary-accent" onclick="showWizard()">
+          <i class="fas fa-plus me-1"></i> New Campaign
+        </button>
+      </div>
+    </div>
+
+    <!-- KPI Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon sms"><i class="fas fa-comment-sms"></i></div>
+        <div class="stat-info">
+          <div class="stat-value">8</div>
+          <div class="stat-label">Campaigns Sent (Month)</div>
+          <div class="stat-detail">This week: <strong>2</strong></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon blue"><i class="fas fa-paper-plane"></i></div>
+        <div class="stat-info">
+          <div class="stat-value">3,456</div>
+          <div class="stat-label">Messages Sent (Month)</div>
+          <div class="stat-detail">Segments: <strong>4,012</strong></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green"><i class="fas fa-check"></i></div>
+        <div class="stat-info">
+          <div class="stat-value">95.2%</div>
+          <div class="stat-label">Delivery Rate</div>
+          <div class="stat-detail">vs Email: 92.1% <span class="positive">(&#8593; higher)</span></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon purple"><i class="fas fa-dollar-sign"></i></div>
+        <div class="stat-info">
+          <div class="stat-value">$187.20</div>
+          <div class="stat-label">Total Cost (Month)</div>
+          <div class="stat-detail">Avg/campaign: <strong>$23.40</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Campaign Table -->
+    <div class="list-card">
+      <div class="table-container">
+        <table class="campaign-table">
+          <thead>
+            <tr>
+              <th>Campaign Name</th>
+              <th>Template</th>
+              <th>Status</th>
+              <th>Recipients</th>
+              <th>Sent</th>
+              <th>Delivered</th>
+              <th>Failed</th>
+              <th>DND Skipped</th>
+              <th>Cost</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Row 1: Donation Receipts (Auto) -->
+            <tr>
+              <td><span class="campaign-name">Donation Receipts (Auto)</span></td>
+              <td><span class="template-ref">donation_receipt_sms</span></td>
+              <td><span class="status-badge active"><i class="fas fa-circle" style="font-size: 0.375rem;"></i> Active (Auto)</span></td>
+              <td>Auto</td>
+              <td>1,234</td>
+              <td>
+                <div class="rate-bar">
+                  <div class="bar-track"><div class="bar-fill green" style="width: 95.5%;"></div></div>
+                  <span class="rate-value">1,178 (95.5%)</span>
+                </div>
+              </td>
+              <td>56 (4.5%)</td>
+              <td><span class="dnd-value">23</span></td>
+              <td><span class="cost-value">$49.36</span></td>
+              <td>Always</td>
+              <td>
+                <button class="action-btn">View Log</button>
+                <button class="action-btn warning">Pause</button>
+              </td>
+            </tr>
+            <!-- Row 2: Ramadan Appeal -->
+            <tr>
+              <td><span class="campaign-name" onclick="showReport()">Ramadan Appeal</span></td>
+              <td><span class="template-ref">campaign_appeal_sms</span></td>
+              <td><span class="status-badge sent"><i class="fas fa-check"></i> Sent</span></td>
+              <td>2,100</td>
+              <td>2,100</td>
+              <td>
+                <div class="rate-bar">
+                  <div class="bar-track"><div class="bar-fill green" style="width: 95%;"></div></div>
+                  <span class="rate-value">1,995 (95.0%)</span>
+                </div>
+              </td>
+              <td>105 (5.0%)</td>
+              <td><span class="dnd-value">87</span></td>
+              <td><span class="cost-value">$84.00</span></td>
+              <td>Apr 1</td>
+              <td>
+                <button class="action-btn primary" onclick="showReport()">View Report</button>
+                <button class="action-btn">Duplicate</button>
+              </td>
+            </tr>
+            <!-- Row 3: Event Reminder: Gala -->
+            <tr>
+              <td><span class="campaign-name">Event Reminder: Gala</span></td>
+              <td><span class="template-ref">event_reminder_sms</span></td>
+              <td><span class="status-badge sent"><i class="fas fa-check"></i> Sent</span></td>
+              <td>890</td>
+              <td>890</td>
+              <td>
+                <div class="rate-bar">
+                  <div class="bar-track"><div class="bar-fill green" style="width: 97.4%;"></div></div>
+                  <span class="rate-value">867 (97.4%)</span>
+                </div>
+              </td>
+              <td>23 (2.6%)</td>
+              <td><span class="dnd-value">12</span></td>
+              <td><span class="cost-value">$35.60</span></td>
+              <td>Mar 28</td>
+              <td>
+                <button class="action-btn primary">View Report</button>
+                <button class="action-btn">Duplicate</button>
+              </td>
+            </tr>
+            <!-- Row 4: Pledge Reminders (Auto) -->
+            <tr>
+              <td><span class="campaign-name">Pledge Reminders (Auto)</span></td>
+              <td><span class="template-ref">pledge_reminder_sms</span></td>
+              <td><span class="status-badge active"><i class="fas fa-circle" style="font-size: 0.375rem;"></i> Active (Auto)</span></td>
+              <td>Auto</td>
+              <td>67</td>
+              <td>
+                <div class="rate-bar">
+                  <div class="bar-track"><div class="bar-fill green" style="width: 95.5%;"></div></div>
+                  <span class="rate-value">64 (95.5%)</span>
+                </div>
+              </td>
+              <td>3 (4.5%)</td>
+              <td><span class="dnd-value">2</span></td>
+              <td><span class="cost-value">$2.68</span></td>
+              <td>Always</td>
+              <td>
+                <button class="action-btn">View Log</button>
+                <button class="action-btn warning">Pause</button>
+              </td>
+            </tr>
+            <!-- Row 5: Monthly Thank You (Scheduled) -->
+            <tr>
+              <td><span class="campaign-name">Monthly Thank You</span></td>
+              <td><span class="template-ref">donation_thankyou_sms</span></td>
+              <td><span class="status-badge scheduled"><i class="fas fa-calendar"></i> Scheduled</span></td>
+              <td>4,120</td>
+              <td>—</td>
+              <td>—</td>
+              <td>—</td>
+              <td><span class="dnd-value">Est. ~110</span></td>
+              <td><span class="cost-value">Est. $164.80</span></td>
+              <td>Apr 15</td>
+              <td>
+                <button class="action-btn">Edit</button>
+                <button class="action-btn danger">Cancel</button>
+              </td>
+            </tr>
+            <!-- Row 6: Failed Payment Alert (Auto) -->
+            <tr>
+              <td><span class="campaign-name">Failed Payment Alert (Auto)</span></td>
+              <td><span class="template-ref">recurring_failed_sms</span></td>
+              <td><span class="status-badge active"><i class="fas fa-circle" style="font-size: 0.375rem;"></i> Active (Auto)</span></td>
+              <td>Auto</td>
+              <td>12</td>
+              <td>
+                <div class="rate-bar">
+                  <div class="bar-track"><div class="bar-fill green" style="width: 100%;"></div></div>
+                  <span class="rate-value">12 (100%)</span>
+                </div>
+              </td>
+              <td>0</td>
+              <td><span class="dnd-value">0</span></td>
+              <td><span class="cost-value">$0.48</span></td>
+              <td>Always</td>
+              <td>
+                <button class="action-btn">View Log</button>
+                <button class="action-btn warning">Pause</button>
+              </td>
+            </tr>
+            <!-- Row 7: Year-End Appeal (Draft) -->
+            <tr>
+              <td><span class="campaign-name">Year-End Appeal</span></td>
+              <td><span class="template-ref">year_end_appeal_sms</span></td>
+              <td><span class="status-badge draft"><i class="fas fa-file-alt"></i> Draft</span></td>
+              <td>3,500</td>
+              <td>—</td>
+              <td>—</td>
+              <td>—</td>
+              <td>—</td>
+              <td><span class="cost-warn">Est. $280.00 <i class="fas fa-exclamation-triangle"></i></span></td>
+              <td>—</td>
+              <td>
+                <button class="action-btn">Edit</button>
+                <button class="action-btn danger">Delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==================== WIZARD VIEW (3-step) ==================== -->
+  <div class="wizard-view" id="wizardView">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <h1><i class="fas fa-comment-sms" style="color: var(--sms-blue);"></i> Create SMS Campaign</h1>
+      </div>
+      <div class="header-actions">
+        <button class="btn-secondary" onclick="showList()"><i class="fas fa-times me-1"></i> Cancel</button>
+      </div>
+    </div>
+
+    <!-- Step Progress -->
+    <div class="step-progress">
+      <div class="step-item active" id="stepItem1">
+        <div class="step-number" id="stepNum1">1</div>
+        <span class="step-label">Campaign Setup</span>
+      </div>
+      <div class="step-connector" id="stepConn1"></div>
+      <div class="step-item" id="stepItem2">
+        <div class="step-number" id="stepNum2">2</div>
+        <span class="step-label">Select Audience</span>
+      </div>
+      <div class="step-connector" id="stepConn2"></div>
+      <div class="step-item" id="stepItem3">
+        <div class="step-number" id="stepNum3">3</div>
+        <span class="step-label">Review &amp; Send</span>
+      </div>
+    </div>
+
+    <!-- Step 1: Campaign Setup -->
+    <div class="step-content active" id="step1">
+      <div class="step-content-card">
+        <div class="step-title">Campaign Setup</div>
+        <div class="step-desc">Configure your SMS campaign details and scheduling</div>
+
+        <div style="margin-bottom: 1rem;">
+          <label class="form-label-custom">Campaign Name <span class="required">*</span></label>
+          <input type="text" class="form-control-custom" value="Ramadan Appeal 2026" placeholder="Enter campaign name">
+        </div>
+
+        <div style="margin-bottom: 1.25rem;">
+          <label class="form-label-custom">Campaign Type</label>
+          <div class="radio-card-group">
+            <div class="radio-card selected" onclick="selectCard(this)">
+              <div class="rc-icon">&#128226;</div>
+              <div class="rc-title">Broadcast</div>
+              <div class="rc-desc">One-time bulk send to selected audience</div>
+            </div>
+            <div class="radio-card" onclick="selectCard(this)">
+              <div class="rc-icon">&#128260;</div>
+              <div class="rc-title">Automated</div>
+              <div class="rc-desc">Triggered by system event (links to automation workflows)</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+          <label class="form-label-custom">Template <span class="required">*</span></label>
+          <select class="form-control-custom">
+            <option value="">Select a template...</option>
+            <option selected>campaign_appeal_sms — Promotional · English · 158 chars · 1 segment</option>
+            <option>donation_receipt_sms — Transactional · English · 142 chars · 1 segment</option>
+            <option>donation_thankyou_sms — Promotional · English · 155 chars · 1 segment</option>
+            <option>event_reminder_sms — Transactional · English · 148 chars · 1 segment</option>
+            <option>pledge_reminder_sms — Transactional · English · 145 chars · 1 segment</option>
+            <option>recurring_failed_sms — Transactional · English · 136 chars · 1 segment</option>
+            <option>year_end_appeal_sms — Promotional · English · 290 chars · 2 segments ⚠️</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+          <label class="form-label-custom">Sender ID</label>
+          <select class="form-control-custom">
+            <option selected>HopeFound (Alphanumeric — no replies)</option>
+            <option>+1 415 555 0100 (Phone number — replies enabled)</option>
+          </select>
+          <div class="form-hint"><i class="fas fa-info-circle me-1"></i> Alphanumeric sender IDs are not supported in US/Canada. Phone number will be used automatically for those recipients.</div>
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+          <label class="form-label-custom">Schedule</label>
+          <div class="radio-card-group">
+            <div class="radio-card selected" onclick="selectCard(this)">
+              <div class="rc-icon">&#128640;</div>
+              <div class="rc-title">Send Now</div>
+              <div class="rc-desc">Send immediately after confirmation</div>
+            </div>
+            <div class="radio-card" onclick="selectCard(this)">
+              <div class="rc-icon">&#128197;</div>
+              <div class="rc-title">Schedule</div>
+              <div class="rc-desc">Choose date, time, and timezone</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #f8fafc; border-radius: 0.5rem;">
+          <label class="toggle-switch" style="flex-shrink: 0;">
+            <input type="checkbox" checked>
+            <span class="toggle-slider"></span>
+          </label>
+          <div>
+            <div style="font-size: 0.8125rem; font-weight: 600;">Respect Quiet Hours</div>
+            <div style="font-size: 0.6875rem; color: var(--text-secondary);">Messages to recipients in quiet hours will be queued until 9:00 AM their local time</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wizard-footer">
+        <div></div>
+        <button class="btn-primary-accent" onclick="nextStep(2)">Next <i class="fas fa-arrow-right ms-1"></i></button>
+      </div>
+    </div>
+
+    <!-- Step 2: Select Audience -->
+    <div class="step-content" id="step2">
+      <div class="step-content-card">
+        <div class="step-title">Select Audience</div>
+        <div class="step-desc">Choose who will receive this SMS campaign</div>
+
+        <div style="margin-bottom: 1.25rem;">
+          <label class="form-label-custom">Recipient Source</label>
+          <div class="radio-card-group">
+            <div class="radio-card" onclick="selectCard(this)">
+              <div class="rc-icon">&#128203;</div>
+              <div class="rc-title">Saved Segment</div>
+            </div>
+            <div class="radio-card" onclick="selectCard(this)">
+              <div class="rc-icon">&#128269;</div>
+              <div class="rc-title">Saved Filter</div>
+            </div>
+            <div class="radio-card" onclick="selectCard(this)">
+              <div class="rc-icon">&#127991;&#65039;</div>
+              <div class="rc-title">By Tag</div>
+            </div>
+            <div class="radio-card" onclick="selectCard(this)">
+              <div class="rc-icon">&#128193;</div>
+              <div class="rc-title">Import List</div>
+            </div>
+            <div class="radio-card selected" onclick="selectCard(this)">
+              <div class="rc-icon">&#128101;</div>
+              <div class="rc-title">All Opted-in</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audience Preview -->
+        <div class="audience-preview">
+          <h6 style="font-size: 0.8125rem; font-weight: 700; margin-bottom: 0.75rem;"><i class="fas fa-users me-1" style="color: var(--accent);"></i> Audience Preview</h6>
+          <div class="audience-row">
+            <span class="label">Total Contacts</span>
+            <span class="value">4,120</span>
+          </div>
+          <div class="audience-row">
+            <span class="label">With mobile number</span>
+            <span class="value">3,980 (96.6%)</span>
+          </div>
+          <div class="audience-row">
+            <span class="label">Opted-in for SMS</span>
+            <span class="value">3,650 (88.6%)</span>
+          </div>
+          <div class="audience-row">
+            <span class="label">On DND registry <i class="fas fa-ban" style="color: var(--danger-color); font-size: 0.625rem;"></i></span>
+            <span class="value" style="color: var(--danger-color);">~110 (will be scrubbed)</span>
+          </div>
+          <hr style="margin: 0.5rem 0; border-color: var(--border-color);">
+          <div class="audience-row">
+            <span class="label" style="font-weight: 600; color: var(--text-primary);">Net Recipients (estimated)</span>
+            <span class="value highlight">~3,540</span>
+          </div>
+        </div>
+
+        <!-- Exclusions -->
+        <div style="margin-bottom: 1rem;">
+          <h6 style="font-size: 0.8125rem; font-weight: 700; margin-bottom: 0.5rem;"><i class="fas fa-filter me-1" style="color: var(--accent);"></i> Exclusions</h6>
+          <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; cursor: pointer;">
+              <input type="checkbox"> Exclude tag / Exclude segment
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; cursor: pointer;">
+              <input type="checkbox" checked> Exclude recently messaged (within
+              <select style="padding: 0.2rem 0.5rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 0.75rem;">
+                <option>12 hours</option>
+                <option selected>24 hours</option>
+                <option>48 hours</option>
+              </select>)
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; cursor: pointer;">
+              <input type="checkbox" checked> Skip contacts who replied STOP
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; cursor: not-allowed; color: var(--text-secondary);">
+              <input type="checkbox" checked disabled> Skip contacts on DND registry (mandatory)
+            </label>
+          </div>
+        </div>
+
+        <!-- Cost Estimate -->
+        <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 0.75rem; padding: 1rem; margin-bottom: 1rem;">
+          <h6 style="font-size: 0.8125rem; font-weight: 700; margin-bottom: 0.5rem;"><i class="fas fa-calculator me-1" style="color: var(--accent);"></i> Cost Estimate</h6>
+          <div class="audience-row">
+            <span class="label">Template segments</span>
+            <span class="value">1 segment per message</span>
+          </div>
+          <div class="audience-row">
+            <span class="label">Net recipients</span>
+            <span class="value">~3,540</span>
+          </div>
+          <div class="audience-row">
+            <span class="label" style="font-weight: 600;">Estimated cost</span>
+            <span class="value highlight">3,540 &times; $0.04 = ~$141.60</span>
+          </div>
+          <div class="info-box" style="margin-top: 0.75rem; margin-bottom: 0;">
+            <i class="fas fa-info-circle"></i>
+            <span>Actual cost may vary by recipient country. International SMS may cost more.</span>
+          </div>
+        </div>
+
+        <!-- Country Distribution -->
+        <div>
+          <h6 style="font-size: 0.8125rem; font-weight: 700; margin-bottom: 0.5rem;"><i class="fas fa-globe me-1" style="color: var(--accent);"></i> Country Distribution (top 5)</h6>
+          <div class="country-dist">
+            <span class="country-chip">&#127482;&#127480; US: 1,890</span>
+            <span class="country-chip">&#127470;&#127475; India: 856</span>
+            <span class="country-chip">&#127468;&#127463; UK: 412</span>
+            <span class="country-chip">&#127462;&#127466; UAE: 198</span>
+            <span class="country-chip">&#127463;&#127479; Brazil: 184</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="wizard-footer">
+        <button class="btn-secondary" onclick="prevStep(1)"><i class="fas fa-arrow-left me-1"></i> Back</button>
+        <button class="btn-primary-accent" onclick="nextStep(3)">Next <i class="fas fa-arrow-right ms-1"></i></button>
+      </div>
+    </div>
+
+    <!-- Step 3: Review & Send -->
+    <div class="step-content" id="step3">
+      <div class="step-content-card">
+        <div class="step-title">Review &amp; Send</div>
+        <div class="step-desc">Review your campaign details before sending</div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+          <!-- Left: Summary -->
+          <div>
+            <h6 style="font-size: 0.8125rem; font-weight: 700; margin-bottom: 0.75rem;">Campaign Summary</h6>
+            <table class="summary-table">
+              <tr><td>Campaign</td><td>Ramadan Appeal 2026</td></tr>
+              <tr><td>Type</td><td>Broadcast</td></tr>
+              <tr><td>Template</td><td>campaign_appeal_sms (Promotional, English)</td></tr>
+              <tr><td>Segments/msg</td><td>1</td></tr>
+              <tr><td>Sender ID</td><td>HopeFound (Alphanumeric)</td></tr>
+              <tr><td>Recipients</td><td>~3,540 (after DND scrub)</td></tr>
+              <tr><td>Estimated Cost</td><td>~$141.60</td></tr>
+              <tr><td>Schedule</td><td>Send Now</td></tr>
+              <tr><td>Quiet Hours</td><td>Respect (Promotional)</td></tr>
+            </table>
+          </div>
+
+          <!-- Right: SMS Preview -->
+          <div>
+            <h6 style="font-size: 0.8125rem; font-weight: 700; margin-bottom: 0.75rem; text-align: center;">SMS Preview</h6>
+            <div class="sms-preview-compact">
+              <div style="text-align: center; font-size: 0.625rem; color: #999; margin-bottom: 0.5rem; font-weight: 600;">Today, 10:00 AM</div>
+              <div class="sms-bubble-compact">
+                Dear Sarah, your generous support makes a difference during this blessed month of Ramadan. Give today and help us reach our goal. Donate: hopefound.org/give -HopeFound
+                <div class="bubble-meta">10:00 AM <i class="fas fa-check-double" style="margin-left: 0.25rem;"></i></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pre-send Checklist -->
+        <div style="margin-top: 1.25rem; padding: 1rem; background: #f8fafc; border-radius: 0.75rem;">
+          <h6 style="font-size: 0.8125rem; font-weight: 700; margin-bottom: 0.75rem;"><i class="fas fa-clipboard-check me-1" style="color: var(--accent);"></i> Pre-send Checklist</h6>
+          <div class="checklist-item">
+            <i class="fas fa-check-circle check-icon success"></i>
+            <span>Template active</span>
+          </div>
+          <div class="checklist-item">
+            <i class="fas fa-check-circle check-icon success"></i>
+            <span>Recipients selected (~3,540)</span>
+          </div>
+          <div class="checklist-item">
+            <i class="fas fa-check-circle check-icon success"></i>
+            <span>All recipients opted-in for SMS</span>
+          </div>
+          <div class="checklist-item">
+            <i class="fas fa-check-circle check-icon success"></i>
+            <span>DND registry scrubbed (est. 110 contacts removed)</span>
+          </div>
+          <div class="checklist-item">
+            <i class="fas fa-exclamation-triangle check-icon warning"></i>
+            <span>Budget warning: Estimated cost ($141.60) exceeds remaining budget ($112.80). <a href="#" style="color: var(--accent);">Increase budget cap</a> or reduce audience.</span>
+          </div>
+          <div class="checklist-item">
+            <i class="fas fa-exclamation-triangle check-icon warning"></i>
+            <span>234 contacts messaged in last 24 hours (will still send)</span>
+          </div>
+          <div class="checklist-item">
+            <i class="fas fa-exclamation-triangle check-icon warning"></i>
+            <span>Quiet hours: 198 UAE recipients — messages will queue until 9:00 AM GST</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="wizard-footer">
+        <button class="btn-secondary" onclick="prevStep(2)"><i class="fas fa-arrow-left me-1"></i> Back</button>
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="btn-outline-accent"><i class="fas fa-save me-1"></i> Save Draft</button>
+          <button class="btn-primary-accent" onclick="showSendModal()"><i class="fas fa-paper-plane me-1"></i> Send Now</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== REPORT VIEW ==================== -->
+  <div class="report-view" id="reportView">
+
+    <!-- Back Button -->
+    <div style="margin-bottom: 1rem;">
+      <button class="btn-secondary" onclick="showList()"><i class="fas fa-arrow-left me-1"></i> Back to Campaigns</button>
+    </div>
+
+    <!-- Report Header -->
+    <div class="report-header">
+      <h2><i class="fas fa-comment-sms me-2" style="color: var(--sms-blue);"></i> Ramadan Appeal — Campaign Report</h2>
+      <div class="report-meta">
+        <div class="report-meta-item"><span class="meta-label">Template: </span><span class="meta-value">campaign_appeal_sms</span></div>
+        <div class="report-meta-item"><span class="meta-label">Sender: </span><span class="meta-value">HopeFound</span></div>
+        <div class="report-meta-item"><span class="meta-label">Sent: </span><span class="meta-value">April 1, 2026 at 10:00 AM</span></div>
+        <div class="report-meta-item"><span class="meta-label">Recipients: </span><span class="meta-value">2,100</span></div>
+      </div>
+    </div>
+
+    <!-- Delivery Funnel -->
+    <div class="delivery-funnel">
+      <div class="funnel-step">
+        <div class="funnel-value">2,187</div>
+        <div class="funnel-label">Queued</div>
+      </div>
+      <div class="funnel-arrow"><i class="fas fa-arrow-right"></i></div>
+      <div class="funnel-step scrub">
+        <div class="funnel-value">87</div>
+        <div class="funnel-label">DND Scrubbed</div>
+        <div class="funnel-pct">Removed</div>
+      </div>
+      <div class="funnel-arrow"><i class="fas fa-arrow-right"></i></div>
+      <div class="funnel-step">
+        <div class="funnel-value">2,100</div>
+        <div class="funnel-label">Sent</div>
+      </div>
+      <div class="funnel-arrow"><i class="fas fa-arrow-right"></i></div>
+      <div class="funnel-step">
+        <div class="funnel-value">1,995</div>
+        <div class="funnel-label">Delivered</div>
+        <div class="funnel-pct">95.0%</div>
+      </div>
+      <div class="funnel-arrow"><i class="fas fa-arrow-right"></i></div>
+      <div class="funnel-step fail">
+        <div class="funnel-value">105</div>
+        <div class="funnel-label">Failed</div>
+        <div class="funnel-pct">5.0%</div>
+      </div>
+    </div>
+
+    <!-- Delivery Breakdown -->
+    <div class="report-card">
+      <div class="report-card-header"><i class="fas fa-chart-pie me-2" style="color: var(--accent);"></i> Delivery Breakdown</div>
+      <div class="report-card-body">
+        <table class="report-table">
+          <thead>
+            <tr><th>Status</th><th>Count</th><th>%</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><i class="fas fa-check-circle" style="color: var(--success-color); margin-right: 0.375rem;"></i> Delivered</td>
+              <td><strong>1,995</strong></td>
+              <td>95.0%</td>
+            </tr>
+            <tr>
+              <td><i class="fas fa-times-circle" style="color: var(--danger-color); margin-right: 0.375rem;"></i> Failed</td>
+              <td><strong>105</strong></td>
+              <td>5.0%</td>
+            </tr>
+            <tr>
+              <td colspan="3" style="font-size: 0.75rem; color: var(--text-secondary); padding-left: 1.5rem;">
+                Failed reasons: Invalid number (42), Carrier rejected (28), DND blocked (18), Network error (17)
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Delivery by Country -->
+    <div class="report-card">
+      <div class="report-card-header"><i class="fas fa-globe me-2" style="color: var(--accent);"></i> Delivery by Country</div>
+      <div class="report-card-body" style="padding: 0;">
+        <div class="table-container">
+          <table class="report-table">
+            <thead>
+              <tr><th>Country</th><th>Sent</th><th>Delivered</th><th>Failed</th><th>Cost</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>&#127482;&#127480; United States</td>
+                <td>1,050</td>
+                <td>1,008 (96.0%)</td>
+                <td>42 (4.0%)</td>
+                <td>$42.00</td>
+              </tr>
+              <tr>
+                <td>&#127470;&#127475; India</td>
+                <td>520</td>
+                <td>494 (95.0%)</td>
+                <td>26 (5.0%)</td>
+                <td>$5.20</td>
+              </tr>
+              <tr>
+                <td>&#127468;&#127463; United Kingdom</td>
+                <td>280</td>
+                <td>272 (97.1%)</td>
+                <td>8 (2.9%)</td>
+                <td>$16.80</td>
+              </tr>
+              <tr>
+                <td>&#127462;&#127466; UAE</td>
+                <td>150</td>
+                <td>138 (92.0%)</td>
+                <td>12 (8.0%)</td>
+                <td>$13.50</td>
+              </tr>
+              <tr>
+                <td>&#127463;&#127479; Brazil</td>
+                <td>100</td>
+                <td>83 (83.0%)</td>
+                <td>17 (17.0%)</td>
+                <td>$3.00</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reply Summary -->
+    <div class="report-card">
+      <div class="report-card-header"><i class="fas fa-reply me-2" style="color: var(--accent);"></i> Reply Summary</div>
+      <div class="report-card-body">
+        <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+          <div>
+            <div style="font-size: 0.75rem; color: var(--text-secondary);">Total Inbound Replies</div>
+            <div style="font-size: 1.25rem; font-weight: 700;">45</div>
+          </div>
+          <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
+            <span class="country-chip">STOP (8)</span>
+            <span class="country-chip">DONATE (12)</span>
+            <span class="country-chip">YES (6)</span>
+            <span class="country-chip">Other (19)</span>
+          </div>
+        </div>
+        <button class="btn-outline-accent" style="font-size: 0.75rem;">View All Replies</button>
+      </div>
+    </div>
+
+    <!-- Recipient Table -->
+    <div class="report-card">
+      <div class="report-card-header"><i class="fas fa-users me-2" style="color: var(--accent);"></i> Recipients</div>
+      <div class="report-card-body" style="padding: 0;">
+        <div class="table-container">
+          <table class="report-table">
+            <thead>
+              <tr><th>Contact</th><th>Phone</th><th>Country</th><th>Status</th><th>Delivered At</th><th>Reply</th><th>Cost</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Sarah Johnson</strong></td>
+                <td>+1 555-0101</td>
+                <td>&#127482;&#127480; US</td>
+                <td><i class="fas fa-check-circle" style="color: var(--success-color);"></i> Delivered</td>
+                <td>Apr 1, 10:01</td>
+                <td>—</td>
+                <td>$0.04</td>
+              </tr>
+              <tr>
+                <td><strong>Ahmad Al-Hassan</strong></td>
+                <td>+971 50-123-4567</td>
+                <td>&#127462;&#127466; UAE</td>
+                <td><i class="fas fa-check-circle" style="color: var(--success-color);"></i> Delivered</td>
+                <td>Apr 1, 13:00 <span style="font-size: 0.625rem; color: var(--warning-color);">(queued - quiet hrs)</span></td>
+                <td>—</td>
+                <td>$0.09</td>
+              </tr>
+              <tr>
+                <td><strong>Ravi Krishnan</strong></td>
+                <td>+91 98765-43210</td>
+                <td>&#127470;&#127475; India</td>
+                <td><i class="fas fa-ban" style="color: var(--danger-color);"></i> DND Blocked</td>
+                <td>—</td>
+                <td>—</td>
+                <td>$0.00</td>
+              </tr>
+              <tr>
+                <td><strong>Maria Santos</strong></td>
+                <td>+55 11-99876-5432</td>
+                <td>&#127463;&#127479; Brazil</td>
+                <td><i class="fas fa-times-circle" style="color: var(--danger-color);"></i> Failed</td>
+                <td>—</td>
+                <td style="font-size: 0.75rem; color: var(--text-secondary);">Carrier rejected</td>
+                <td>$0.00</td>
+              </tr>
+              <tr>
+                <td><strong>Emily Chen</strong></td>
+                <td>+1 555-0104</td>
+                <td>&#127482;&#127480; US</td>
+                <td><i class="fas fa-check-circle" style="color: var(--success-color);"></i> Delivered</td>
+                <td>Apr 1, 10:01</td>
+                <td><span style="background: #fef2f2; color: var(--danger-color); padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600;">"STOP"</span></td>
+                <td>$0.04</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SEND CONFIRMATION MODAL ==================== -->
+  <div class="modal-overlay" id="sendModal">
+    <div class="modal-box">
+      <h5><i class="fas fa-paper-plane me-2" style="color: var(--sms-blue);"></i> Confirm SMS Campaign Send</h5>
+      <p>You are about to send <strong>~3,540 SMS messages</strong> (~3,540 segments). Estimated cost: <strong>~$141.60</strong>. Messages to recipients in quiet-hour zones will be queued. This action cannot be undone.</p>
+      <div class="info-box warning" style="margin-bottom: 1rem;">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>Estimated cost ($141.60) exceeds remaining budget ($112.80). You may want to increase the budget cap first.</span>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeSendModal()">Cancel</button>
+        <button class="btn-primary-accent" onclick="closeSendModal()"><i class="fas fa-check me-1"></i> Confirm &amp; Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---- View Switching ----
+    function showWizard() {
+      document.getElementById('listView').classList.add('hidden');
+      document.getElementById('wizardView').classList.add('active');
+      document.getElementById('reportView').classList.remove('active');
+      goToStep(1);
+    }
+    function showList() {
+      document.getElementById('listView').classList.remove('hidden');
+      document.getElementById('wizardView').classList.remove('active');
+      document.getElementById('reportView').classList.remove('active');
+    }
+    function showReport() {
+      document.getElementById('listView').classList.add('hidden');
+      document.getElementById('wizardView').classList.remove('active');
+      document.getElementById('reportView').classList.add('active');
+    }
+
+    // ---- Step Navigation ----
+    let currentStep = 1;
+
+    function goToStep(step) {
+      currentStep = step;
+      for (let i = 1; i <= 3; i++) {
+        document.getElementById('step' + i).classList.toggle('active', i === step);
+        const item = document.getElementById('stepItem' + i);
+        const num = document.getElementById('stepNum' + i);
+        item.className = 'step-item';
+        if (i < step) {
+          item.classList.add('completed');
+          num.innerHTML = '<i class="fas fa-check"></i>';
+        } else if (i === step) {
+          item.classList.add('active');
+          num.textContent = i;
+        } else {
+          num.textContent = i;
+        }
+        if (i < 3) {
+          document.getElementById('stepConn' + i).className = 'step-connector' + (i < step ? ' completed' : '');
+        }
+      }
+    }
+    function nextStep(step) { goToStep(step); }
+    function prevStep(step) { goToStep(step); }
+
+    // ---- Radio Card Selection ----
+    function selectCard(el) {
+      const group = el.parentElement;
+      group.querySelectorAll('.radio-card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+
+    // ---- Modal ----
+    function showSendModal() { document.getElementById('sendModal').classList.add('show'); }
+    function closeSendModal() { document.getElementById('sendModal').classList.remove('show'); }
+  </script>
+
+</body>
+</html>

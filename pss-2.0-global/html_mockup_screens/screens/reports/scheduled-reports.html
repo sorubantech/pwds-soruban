@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scheduled Reports - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --report-accent: #7c3aed;
+      --report-accent-bg: #f5f3ff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .btn-primary-accent {
+      background: var(--report-accent);
+      border-color: var(--report-accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--report-accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #6d28d9;
+      border-color: #6d28d9;
+      color: white;
+    }
+
+    /* Summary Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1.25rem;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .stat-icon.purple { background: var(--report-accent-bg); color: var(--report-accent); }
+    .stat-icon.green { background: #f0fdf4; color: var(--success-color); }
+    .stat-icon.blue { background: #eff6ff; color: #3b82f6; }
+
+    .stat-info { flex: 1; }
+
+    .stat-value {
+      font-size: 1.625rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .stat-label {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 0.125rem;
+    }
+
+    .stat-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    /* Table Card */
+    .table-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+    }
+
+    .table-card-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .table-card-header h3 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .data-table {
+      width: 100%;
+      font-size: 0.8125rem;
+    }
+
+    .data-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    .data-table td {
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+      color: var(--text-primary);
+      vertical-align: middle;
+    }
+
+    .data-table tr:last-child td { border-bottom: none; }
+
+    .data-table tr:hover td {
+      background: #f8fafc;
+    }
+
+    .report-name-cell {
+      font-weight: 600;
+      color: var(--report-accent);
+      cursor: pointer;
+    }
+
+    .report-name-cell:hover {
+      text-decoration: underline;
+    }
+
+    .badge-type {
+      font-size: 0.6875rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+
+    .badge-type.standard { background: #eff6ff; color: #3b82f6; }
+    .badge-type.custom { background: #fff7ed; color: #f97316; }
+    .badge-type.html { background: var(--report-accent-bg); color: var(--report-accent); }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+    }
+
+    .status-badge.active { background: #f0fdf4; color: var(--success-color); }
+    .status-badge.paused { background: #fef3c7; color: var(--warning-color); }
+    .status-badge.error { background: #fef2f2; color: var(--danger-color); }
+
+    .last-run-success { color: var(--success-color); }
+    .last-run-failed { color: var(--danger-color); }
+
+    .btn-sm-action {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.625rem;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+      font-weight: 500;
+    }
+
+    .btn-sm-action:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-sm-action.primary {
+      border-color: var(--report-accent);
+      color: var(--report-accent);
+    }
+
+    .btn-sm-action.primary:hover {
+      background: var(--report-accent);
+      color: white;
+    }
+
+    .btn-sm-action.danger:hover {
+      border-color: var(--danger-color);
+      color: var(--danger-color);
+    }
+
+    .btn-sm-action.success {
+      border-color: var(--success-color);
+      color: var(--success-color);
+    }
+
+    .btn-sm-action.success:hover {
+      background: var(--success-color);
+      color: white;
+    }
+
+    .btn-3dot {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 0.25rem;
+      position: relative;
+    }
+
+    .btn-3dot:hover { color: var(--text-primary); }
+
+    .dropdown-menu-custom {
+      position: absolute;
+      right: 0;
+      top: 100%;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      min-width: 160px;
+      z-index: 100;
+      display: none;
+      padding: 0.25rem 0;
+    }
+
+    .dropdown-menu-custom.show { display: block; }
+
+    .dropdown-item-custom {
+      padding: 0.5rem 1rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: background 0.1s;
+    }
+
+    .dropdown-item-custom:hover { background: #f8fafc; }
+
+    .dropdown-item-custom.danger { color: var(--danger-color); }
+    .dropdown-item-custom.danger:hover { background: #fef2f2; }
+
+    .action-cell {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      position: relative;
+    }
+
+    /* History Table */
+    .history-section {
+      margin-top: 1.5rem;
+    }
+
+    .history-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+    }
+
+    .history-card-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .history-card-header h3 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .btn-close-history {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 1040;
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 3rem;
+    }
+
+    .modal-overlay.show { display: flex; }
+
+    .modal-box {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      width: 640px;
+      max-width: 95%;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: white;
+      z-index: 10;
+      border-radius: var(--card-radius) var(--card-radius) 0 0;
+    }
+
+    .modal-header h3 {
+      font-size: 1.125rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+    }
+
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      position: sticky;
+      bottom: 0;
+      background: white;
+      border-radius: 0 0 var(--card-radius) var(--card-radius);
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.375rem;
+    }
+
+    .form-group label .required {
+      color: var(--danger-color);
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      font-family: inherit;
+      transition: border-color 0.15s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    .form-group .help-text {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .form-row .form-group {
+      flex: 1;
+      margin-bottom: 0;
+    }
+
+    .section-divider {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      margin: 1.25rem 0 0.75rem 0;
+      padding-bottom: 0.375rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .checkbox-row input[type="checkbox"] {
+      margin-top: 3px;
+      width: auto;
+    }
+
+    .checkbox-content {
+      flex: 1;
+    }
+
+    .checkbox-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .checkbox-sub {
+      margin-top: 0.5rem;
+      padding-left: 0;
+    }
+
+    .email-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.375rem;
+      padding: 0.375rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      min-height: 38px;
+      align-items: center;
+    }
+
+    .email-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      background: var(--report-accent-bg);
+      color: var(--report-accent);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 9999px;
+    }
+
+    .email-chip .remove {
+      cursor: pointer;
+      opacity: 0.6;
+    }
+
+    .email-chip .remove:hover { opacity: 1; }
+
+    .email-chips input {
+      border: none;
+      outline: none;
+      flex: 1;
+      min-width: 120px;
+      font-size: 0.8125rem;
+      padding: 0.25rem;
+      box-shadow: none !important;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.25rem 0;
+    }
+
+    .toggle-label {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 40px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #cbd5e1;
+      border-radius: 22px;
+      transition: 0.3s;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background-color: var(--accent);
+    }
+
+    .toggle-switch input:checked + .toggle-slider:before {
+      transform: translateX(18px);
+    }
+
+    .btn-save {
+      background: var(--report-accent);
+      color: white;
+      border: none;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1.25rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-save:hover { background: #6d28d9; }
+
+    .btn-cancel {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1.25rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-cancel:hover {
+      border-color: var(--text-secondary);
+      color: var(--text-primary);
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      .data-table {
+        display: block;
+        overflow-x: auto;
+      }
+      .form-row {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-calendar-alt me-2" style="color: var(--report-accent);"></i>Scheduled Reports</h1>
+      <p class="subtitle">Manage automatic report generation and delivery</p>
+    </div>
+    <button class="btn-primary-accent" onclick="openModal()">
+      <i class="fas fa-plus me-1"></i> New Schedule
+    </button>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon purple"><i class="fas fa-clock"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Active Schedules</div>
+        <div class="stat-value">12</div>
+        <div class="stat-subtitle">Next run: Today, 8:00 PM</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green"><i class="fas fa-paper-plane"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Reports Delivered (This Month)</div>
+        <div class="stat-value">34</div>
+        <div class="stat-subtitle">100% success rate</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Recipients</div>
+        <div class="stat-value">18</div>
+        <div class="stat-subtitle">unique emails &bull; 5 shared drives</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scheduled Reports Table -->
+  <div class="table-card">
+    <div class="table-card-header">
+      <h3><i class="fas fa-list me-2" style="color: var(--report-accent);"></i>All Scheduled Reports</h3>
+    </div>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Report Name</th>
+            <th>Type</th>
+            <th>Frequency</th>
+            <th>Next Run</th>
+            <th>Recipients</th>
+            <th>Last Run</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td class="report-name-cell">Monthly Donation Summary</td>
+            <td><span class="badge-type standard">Standard</span></td>
+            <td>Monthly (1st)</td>
+            <td>May 1, 8:00 AM</td>
+            <td>board@ghf.org, cfo@ghf.org</td>
+            <td><span class="last-run-success">Apr 1 <i class="fas fa-check-circle"></i></span></td>
+            <td><span class="status-badge active"><i class="fas fa-circle" style="font-size: 0.5rem;"></i> Active</span></td>
+            <td>
+              <div class="action-cell">
+                <button class="btn-sm-action" onclick="openModal()">Edit</button>
+                <button class="btn-sm-action primary">Run Now</button>
+                <div style="position: relative;">
+                  <button class="btn-3dot" onclick="toggleDropdown(this)"><i class="fas fa-ellipsis-v"></i></button>
+                  <div class="dropdown-menu-custom">
+                    <div class="dropdown-item-custom" onclick="showHistory()"><i class="fas fa-history"></i> View History</div>
+                    <div class="dropdown-item-custom"><i class="fas fa-copy"></i> Duplicate</div>
+                    <div class="dropdown-item-custom"><i class="fas fa-pause"></i> Pause</div>
+                    <div class="dropdown-item-custom danger"><i class="fas fa-trash"></i> Delete</div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td class="report-name-cell">Weekly Collection Report</td>
+            <td><span class="badge-type standard">Standard</span></td>
+            <td>Weekly (Mon)</td>
+            <td>Apr 14, 7:00 AM</td>
+            <td>ops-team@ghf.org</td>
+            <td><span class="last-run-success">Apr 7 <i class="fas fa-check-circle"></i></span></td>
+            <td><span class="status-badge active"><i class="fas fa-circle" style="font-size: 0.5rem;"></i> Active</span></td>
+            <td>
+              <div class="action-cell">
+                <button class="btn-sm-action" onclick="openModal()">Edit</button>
+                <button class="btn-sm-action primary">Run Now</button>
+                <div style="position: relative;">
+                  <button class="btn-3dot" onclick="toggleDropdown(this)"><i class="fas fa-ellipsis-v"></i></button>
+                  <div class="dropdown-menu-custom">
+                    <div class="dropdown-item-custom" onclick="showHistory()"><i class="fas fa-history"></i> View History</div>
+                    <div class="dropdown-item-custom"><i class="fas fa-copy"></i> Duplicate</div>
+                    <div class="dropdown-item-custom"><i class="fas fa-pause"></i> Pause</div>
+                    <div class="dropdown-item-custom danger"><i class="fas fa-trash"></i> Delete</div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td class="report-name-cell">LYBUNT Alert</td>
+            <td><span class="badge-type custom">Custom</span></td>
+            <td>Weekly (Wed)</td>
+            <td>Apr 16, 9:00 AM</td>
+            <td>fundraising@ghf.org</td>
+            <td><span class="last-run-success">Apr 9 <i class="fas fa-check-circle"></i></span></td>
+            <td><span class="status-badge active"><i class="fas fa-circle" style="font-size: 0.5rem;"></i> Active</span></td>
+            <td>
+              <div class="action-cell">
+                <button class="btn-sm-action" onclick="openModal()">Edit</button>
+                <button class="btn-sm-action primary">Run Now</button>
+                <div style="position: relative;">
+                  <button class="btn-3dot" onclick="toggleDropdown(this)"><i class="fas fa-ellipsis-v"></i></button>
+                  <div class="dropdown-menu-custom">
+                    <div class="dropdown-item-custom" onclick="showHistory()"><i class="fas fa-history"></i> View History</div>
+                    <div class="dropdown-item-custom"><i class="fas fa-copy"></i> Duplicate</div>
+                    <div class="dropdown-item-custom"><i class="fas fa-pause"></i> Pause</div>
+                    <div class="dropdown-item-custom danger"><i class="fas fa-trash"></i> Delete</div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td class="report-name-cell">Branch Performance</td>
+            <td><span class="badge-type standard">Standard</span></td>
+            <td>Monthly (5th)</td>
+            <td>May 5, 8:00 AM</td>
+            <td>managers@ghf.org</td>
+            <td><span class="last-run-success">Apr 5 <i class="fas fa-check-circle"></i></span></td>
+            <td><span class="status-badge active"><i class="fas fa-circle" style="font-size: 0.5rem;"></i> Active</span></td>
+            <td>
+              <div class="action-cell">
+                <button class="btn-sm-action" onclick="openModal()">Edit</button>
+                <button class="btn-sm-action primary">Run Now</button>
+                <div style="position: relative;">
+                  <button class="btn-3dot" onclick="toggleDropdown(this)"><i class="fas fa-ellipsis-v"></i></button>
+                  <div class="dropdown-menu-custom">
+                    <div class="dropdown-item-custom" onclick="showHistory()"><i class="fas fa-history"></i> View History</div>
+                    <div class="dropdown-item-custom"><i class="fas fa-copy"></i> Duplicate</div>
+                    <div class="dropdown-item-custom"><i class="fas fa-pause"></i> Pause</div>
+                    <div class="dropdown-item-custom danger"><i class="fas fa-trash"></i> Delete</div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td class="report-name-cell">Receipt Book Audit</td>
+            <td><span class="badge-type standard">Standard</span></td>
+            <td>Weekly (Fri)</td>
+            <td>Apr 18, 6:00 PM</td>
+            <td>audit@ghf.org</td>
+            <td><span class="last-run-success">Apr 11 <i class="fas fa-check-circle"></i></span></td>
+            <td><span class="status-badge active"><i class="fas fa-circle" style="font-size: 0.5rem;"></i> Active</span></td>
+            <td>
+              <div class="action-cell">
+                <button class="btn-sm-action" onclick="openModal()">Edit</button>
+                <button class="btn-sm-action primary">Run Now</button>
+                <div style="position: relative;">
+                  <button class="btn-3dot" onclick="toggleDropdown(this)"><i class="fas fa-ellipsis-v"></i></button>
+                  <div class="dropdown-menu-custom">
+                    <div class="dropdown-item-custom" onclick="showHistory()"><i class="fas fa-history"></i> View History</div>
+                    <div class="dropdown-item-custom"><i class="fas fa-copy"></i> Duplicate</div>
+                    <div class="dropdown-item-custom"><i class="fas fa-pause"></i> Pause</div>
+                    <div class="dropdown-item-custom danger"><i class="fas fa-trash"></i> Delete</div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td class="report-name-cell">Quarterly Board Package</td>
+            <td><span class="badge-type html">HTML</span></td>
+            <td>Quarterly (1st)</td>
+            <td>Jul 1, 8:00 AM</td>
+            <td>board@ghf.org</td>
+            <td><span class="last-run-success">Apr 1 <i class="fas fa-check-circle"></i></span></td>
+            <td><span class="status-badge active"><i class="fas fa-circle" style="font-size: 0.5rem;"></i> Active</span></td>
+            <td>
+              <div class="action-cell">
+                <button class="btn-sm-action" onclick="openModal()">Edit</button>
+                <button class="btn-sm-action primary">Run Now</button>
+                <div style="position: relative;">
+                  <button class="btn-3dot" onclick="toggleDropdown(this)"><i class="fas fa-ellipsis-v"></i></button>
+                  <div class="dropdown-menu-custom">
+                    <div class="dropdown-item-custom" onclick="showHistory()"><i class="fas fa-history"></i> View History</div>
+                    <div class="dropdown-item-custom"><i class="fas fa-copy"></i> Duplicate</div>
+                    <div class="dropdown-item-custom"><i class="fas fa-pause"></i> Pause</div>
+                    <div class="dropdown-item-custom danger"><i class="fas fa-trash"></i> Delete</div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td class="report-name-cell">Campaign Progress Update</td>
+            <td><span class="badge-type standard">Standard</span></td>
+            <td>Daily</td>
+            <td>Apr 13, 8:00 AM</td>
+            <td>campaigns@ghf.org</td>
+            <td><span class="last-run-success">Apr 12 <i class="fas fa-check-circle"></i></span></td>
+            <td><span class="status-badge active"><i class="fas fa-circle" style="font-size: 0.5rem;"></i> Active</span></td>
+            <td>
+              <div class="action-cell">
+                <button class="btn-sm-action" onclick="openModal()">Edit</button>
+                <button class="btn-sm-action primary">Run Now</button>
+                <div style="position: relative;">
+                  <button class="btn-3dot" onclick="toggleDropdown(this)"><i class="fas fa-ellipsis-v"></i></button>
+                  <div class="dropdown-menu-custom">
+                    <div class="dropdown-item-custom" onclick="showHistory()"><i class="fas fa-history"></i> View History</div>
+                    <div class="dropdown-item-custom"><i class="fas fa-copy"></i> Duplicate</div>
+                    <div class="dropdown-item-custom"><i class="fas fa-pause"></i> Pause</div>
+                    <div class="dropdown-item-custom danger"><i class="fas fa-trash"></i> Delete</div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td class="report-name-cell">Annual Giving Statement</td>
+            <td><span class="badge-type standard">Standard</span></td>
+            <td>Yearly (Jan 15)</td>
+            <td>Jan 15, 2027</td>
+            <td>all-donors@ghf.org</td>
+            <td><span class="last-run-success">Jan 15 <i class="fas fa-check-circle"></i></span></td>
+            <td><span class="status-badge active"><i class="fas fa-circle" style="font-size: 0.5rem;"></i> Active</span></td>
+            <td>
+              <div class="action-cell">
+                <button class="btn-sm-action" onclick="openModal()">Edit</button>
+                <button class="btn-sm-action primary">Run Now</button>
+                <div style="position: relative;">
+                  <button class="btn-3dot" onclick="toggleDropdown(this)"><i class="fas fa-ellipsis-v"></i></button>
+                  <div class="dropdown-menu-custom">
+                    <div class="dropdown-item-custom" onclick="showHistory()"><i class="fas fa-history"></i> View History</div>
+                    <div class="dropdown-item-custom"><i class="fas fa-copy"></i> Duplicate</div>
+                    <div class="dropdown-item-custom"><i class="fas fa-pause"></i> Pause</div>
+                    <div class="dropdown-item-custom danger"><i class="fas fa-trash"></i> Delete</div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>9</td>
+            <td class="report-name-cell" style="color: var(--text-secondary);">Old Monthly Report</td>
+            <td><span class="badge-type standard">Standard</span></td>
+            <td>Monthly (1st)</td>
+            <td>&mdash;</td>
+            <td>cfo@ghf.org</td>
+            <td><span class="last-run-success">Mar 1 <i class="fas fa-check-circle"></i></span></td>
+            <td><span class="status-badge paused"><i class="fas fa-pause" style="font-size: 0.5rem;"></i> Paused</span></td>
+            <td>
+              <div class="action-cell">
+                <button class="btn-sm-action success">Resume</button>
+                <button class="btn-sm-action" onclick="openModal()">Edit</button>
+                <div style="position: relative;">
+                  <button class="btn-3dot" onclick="toggleDropdown(this)"><i class="fas fa-ellipsis-v"></i></button>
+                  <div class="dropdown-menu-custom">
+                    <div class="dropdown-item-custom" onclick="showHistory()"><i class="fas fa-history"></i> View History</div>
+                    <div class="dropdown-item-custom"><i class="fas fa-copy"></i> Duplicate</div>
+                    <div class="dropdown-item-custom danger"><i class="fas fa-trash"></i> Delete</div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>10</td>
+            <td class="report-name-cell" style="color: var(--danger-color);">Failed Weekly Test</td>
+            <td><span class="badge-type custom">Custom</span></td>
+            <td>Weekly</td>
+            <td>&mdash;</td>
+            <td>test@ghf.org</td>
+            <td><span class="last-run-failed">Apr 7 <i class="fas fa-times-circle"></i></span></td>
+            <td><span class="status-badge error"><i class="fas fa-circle" style="font-size: 0.5rem;"></i> Error</span></td>
+            <td>
+              <div class="action-cell">
+                <button class="btn-sm-action danger">Fix</button>
+                <button class="btn-sm-action" onclick="openModal()">Edit</button>
+                <div style="position: relative;">
+                  <button class="btn-3dot" onclick="toggleDropdown(this)"><i class="fas fa-ellipsis-v"></i></button>
+                  <div class="dropdown-menu-custom">
+                    <div class="dropdown-item-custom" onclick="showHistory()"><i class="fas fa-history"></i> View History</div>
+                    <div class="dropdown-item-custom"><i class="fas fa-copy"></i> Duplicate</div>
+                    <div class="dropdown-item-custom"><i class="fas fa-pause"></i> Pause</div>
+                    <div class="dropdown-item-custom danger"><i class="fas fa-trash"></i> Delete</div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Run History Section -->
+  <div class="history-section" id="historySection" style="display: none;">
+    <div class="history-card">
+      <div class="history-card-header">
+        <h3><i class="fas fa-history me-2" style="color: var(--report-accent);"></i>Run History: Monthly Donation Summary</h3>
+        <button class="btn-close-history" onclick="hideHistory()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Run Date</th>
+              <th>Status</th>
+              <th>Duration</th>
+              <th>File Size</th>
+              <th>Recipients</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Apr 1, 2026, 8:00 AM</td>
+              <td><span class="last-run-success"><i class="fas fa-check-circle me-1"></i> Delivered</span></td>
+              <td>12s</td>
+              <td>245 KB</td>
+              <td>2 emails sent</td>
+              <td>
+                <button class="btn-sm-action me-1"><i class="fas fa-download"></i> Download</button>
+                <button class="btn-sm-action"><i class="fas fa-redo"></i> Resend</button>
+              </td>
+            </tr>
+            <tr>
+              <td>Mar 1, 2026, 8:00 AM</td>
+              <td><span class="last-run-success"><i class="fas fa-check-circle me-1"></i> Delivered</span></td>
+              <td>15s</td>
+              <td>238 KB</td>
+              <td>2 emails sent</td>
+              <td>
+                <button class="btn-sm-action me-1"><i class="fas fa-download"></i> Download</button>
+                <button class="btn-sm-action"><i class="fas fa-redo"></i> Resend</button>
+              </td>
+            </tr>
+            <tr>
+              <td>Feb 1, 2026, 8:00 AM</td>
+              <td><span class="last-run-success"><i class="fas fa-check-circle me-1"></i> Delivered</span></td>
+              <td>11s</td>
+              <td>220 KB</td>
+              <td>2 emails sent</td>
+              <td>
+                <button class="btn-sm-action me-1"><i class="fas fa-download"></i> Download</button>
+                <button class="btn-sm-action"><i class="fas fa-redo"></i> Resend</button>
+              </td>
+            </tr>
+            <tr>
+              <td>Jan 1, 2026, 8:00 AM</td>
+              <td><span class="last-run-failed"><i class="fas fa-times-circle me-1"></i> Failed</span></td>
+              <td>45s</td>
+              <td>&mdash;</td>
+              <td style="color: var(--danger-color);">Error: SMTP timeout</td>
+              <td>
+                <button class="btn-sm-action primary me-1"><i class="fas fa-redo"></i> Retry</button>
+                <button class="btn-sm-action"><i class="fas fa-exclamation-circle"></i> View Error</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create/Edit Schedule Modal -->
+  <div class="modal-overlay" id="scheduleModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3><i class="fas fa-calendar-plus me-2" style="color: var(--report-accent);"></i>Create Schedule</h3>
+        <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Report Selection -->
+        <div class="form-group">
+          <label>Report <span class="required">*</span></label>
+          <select>
+            <optgroup label="Standard Reports">
+              <option>Monthly Donation Summary</option>
+              <option>Weekly Collection Report</option>
+              <option>Branch Performance</option>
+              <option>Receipt Book Audit</option>
+              <option>Annual Giving Statement</option>
+            </optgroup>
+            <optgroup label="Custom Reports">
+              <option>LYBUNT Alert</option>
+              <option>Campaign Progress Update</option>
+            </optgroup>
+            <optgroup label="HTML Reports">
+              <option>Quarterly Board Package</option>
+              <option>80G Certificate Report</option>
+              <option>Tax Receipt Summary</option>
+            </optgroup>
+          </select>
+          <div class="help-text">Comprehensive monthly summary of all donations by branch, purpose, and payment mode.</div>
+        </div>
+
+        <!-- Report Parameters -->
+        <div class="section-divider">Report Parameters</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Date Range</label>
+            <select>
+              <option>Last Week</option>
+              <option selected>Last Month</option>
+              <option>Last Quarter</option>
+              <option>Last Year</option>
+              <option>Custom</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Branch</label>
+            <select>
+              <option selected>All</option>
+              <option>Dubai</option>
+              <option>Mumbai</option>
+              <option>Delhi</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Purpose</label>
+            <select>
+              <option selected>All</option>
+              <option>Orphan Care</option>
+              <option>Education</option>
+              <option>Clean Water</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Schedule -->
+        <div class="section-divider">Schedule</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Frequency</label>
+            <select id="frequencySelect" onchange="updateFrequencyOptions()">
+              <option>Daily</option>
+              <option>Weekly</option>
+              <option selected>Monthly</option>
+              <option>Quarterly</option>
+              <option>Yearly</option>
+            </select>
+          </div>
+          <div class="form-group" id="dayOfGroup">
+            <label>Day</label>
+            <select>
+              <option selected>1st</option>
+              <option>5th</option>
+              <option>10th</option>
+              <option>15th</option>
+              <option>20th</option>
+              <option>Last day</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Time</label>
+            <select>
+              <option>06:00 AM</option>
+              <option>07:00 AM</option>
+              <option selected>08:00 AM</option>
+              <option>09:00 AM</option>
+              <option>12:00 PM</option>
+              <option>06:00 PM</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Timezone</label>
+            <select>
+              <option>UTC+0 London</option>
+              <option selected>UTC+4 Dubai</option>
+              <option>UTC+5:30 Mumbai</option>
+              <option>UTC+6 Dhaka</option>
+              <option>UTC+3 Nairobi</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Output Format -->
+        <div class="form-group">
+          <label>Output Format</label>
+          <select>
+            <option selected>PDF</option>
+            <option>Excel</option>
+            <option>CSV</option>
+            <option>HTML</option>
+          </select>
+        </div>
+
+        <!-- Delivery -->
+        <div class="section-divider">Delivery</div>
+
+        <div class="checkbox-row">
+          <input type="checkbox" checked>
+          <div class="checkbox-content">
+            <div class="checkbox-label">Email</div>
+            <div class="checkbox-sub">
+              <div class="form-group" style="margin-top: 0.5rem;">
+                <label style="font-weight: 500;">To</label>
+                <div class="email-chips">
+                  <span class="email-chip">board@ghf.org <span class="remove"><i class="fas fa-times"></i></span></span>
+                  <span class="email-chip">cfo@ghf.org <span class="remove"><i class="fas fa-times"></i></span></span>
+                  <input type="text" placeholder="Add email...">
+                </div>
+              </div>
+              <div class="form-group">
+                <label style="font-weight: 500;">Subject</label>
+                <input type="text" value="Monthly Donation Summary - {month} {year}">
+              </div>
+              <div class="form-group">
+                <label style="font-weight: 500;">Message</label>
+                <textarea rows="2">Please find attached the monthly donation summary report.</textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="checkbox-row">
+          <input type="checkbox">
+          <div class="checkbox-content">
+            <div class="checkbox-label">Save to shared drive</div>
+          </div>
+        </div>
+
+        <div class="checkbox-row">
+          <input type="checkbox">
+          <div class="checkbox-content">
+            <div class="checkbox-label">In-app notification (with download link)</div>
+          </div>
+        </div>
+
+        <!-- Options -->
+        <div class="section-divider">Options</div>
+        <div class="toggle-row">
+          <label class="toggle-switch">
+            <input type="checkbox">
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label">Don't send if no data (skip empty reports)</span>
+        </div>
+        <div class="toggle-row">
+          <label class="toggle-switch">
+            <input type="checkbox" checked>
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label">Include comparison with previous period</span>
+        </div>
+        <div class="toggle-row">
+          <label class="toggle-switch">
+            <input type="checkbox">
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label">Password-protect attachment</span>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn-save" onclick="closeModal()"><i class="fas fa-save me-1"></i> Save Schedule</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openModal() {
+      document.getElementById('scheduleModal').classList.add('show');
+    }
+
+    function closeModal() {
+      document.getElementById('scheduleModal').classList.remove('show');
+    }
+
+    function toggleDropdown(btn) {
+      // Close all other dropdowns
+      document.querySelectorAll('.dropdown-menu-custom.show').forEach(d => d.classList.remove('show'));
+      const menu = btn.nextElementSibling;
+      menu.classList.toggle('show');
+    }
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.btn-3dot') && !e.target.closest('.dropdown-menu-custom')) {
+        document.querySelectorAll('.dropdown-menu-custom.show').forEach(d => d.classList.remove('show'));
+      }
+    });
+
+    function showHistory() {
+      document.querySelectorAll('.dropdown-menu-custom.show').forEach(d => d.classList.remove('show'));
+      document.getElementById('historySection').style.display = 'block';
+      document.getElementById('historySection').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function hideHistory() {
+      document.getElementById('historySection').style.display = 'none';
+    }
+
+    function updateFrequencyOptions() {
+      // Placeholder for dynamic frequency option updates
+    }
+  </script>
+
+</body>
+
+</html>

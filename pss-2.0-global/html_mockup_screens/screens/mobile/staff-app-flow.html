@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff / Ambassador App — Full Flow Storyboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 40px 24px;
+    }
+    .flow-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .flow-header h1 {
+      font-size: 28px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #10b981, #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+    }
+    .flow-header p {
+      font-size: 14px;
+      color: #94a3b8;
+    }
+    .flow-section {
+      margin-bottom: 48px;
+    }
+    .flow-section-title {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #64748b;
+      margin-bottom: 20px;
+      padding-left: 8px;
+      border-left: 3px solid #10b981;
+    }
+    .screen-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 32px;
+      justify-content: center;
+    }
+    .screen-card {
+      background: #1e293b;
+      border-radius: 16px;
+      padding: 16px;
+      width: 325px;
+    }
+    .screen-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .screen-number {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 900;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .screen-card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+    .screen-card-tag {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+    .arrow-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 0;
+      font-size: 11px;
+      font-weight: 700;
+      color: #475569;
+    }
+    .arrow-label .arrow { color: #10b981; font-size: 16px; }
+  </style>
+</head>
+<body>
+
+<div class="flow-header">
+  <h1>Staff / Ambassador App</h1>
+  <p>16-Screen Mobile Flow — Login → Collect → Activity → End of Day</p>
+</div>
+
+<div id="storyboard"></div>
+
+<script>
+// ── Phone frame helper — iPhone 15 Pro style (from mobile-data.js) ──
+const PH = (statusColor, content, navBar='') => {
+  const ic = statusColor==='#fff'?'#1e293b':'#fff';
+  const bg = statusColor==='#fff'?'#f8fafc':statusColor;
+  const btm = navBar ? '#fff' : bg;
+  const btmBar = navBar ? '#1a1a1a' : (statusColor==='#fff'?'#1a1a1a':'rgba(255,255,255,.4)');
+  return `<div style="width:293px;height:588px;margin:0 auto;border:4px solid #1a1a1a;border-radius:44px;overflow:hidden;background:${bg};box-shadow:0 2px 0 #333,0 -2px 0 #333,2px 0 0 #333,-2px 0 0 #333,0 10px 40px rgba(0,0,0,.22);display:flex;flex-direction:column;position:relative;">
+    <div style="background:${bg};padding:8px 20px 4px;display:flex;justify-content:space-between;align-items:center;position:relative;flex-shrink:0;z-index:2;">
+      <span style="font-size:10px;font-weight:600;color:${ic};">9:41</span>
+      <div style="position:absolute;left:50%;transform:translateX(-50%);top:6px;width:84px;height:20px;background:#1a1a1a;border-radius:12px;display:flex;align-items:center;justify-content:center;">
+        <div style="width:6px;height:6px;background:#0d1117;border-radius:50%;box-shadow:inset 0 0 1px rgba(255,255,255,.08);"></div>
+      </div>
+      <div style="display:flex;gap:4px;align-items:center;">
+        <svg width="14" height="10" viewBox="0 0 14 10"><rect x="0" y="6" width="2.5" height="4" rx="0.5" fill="${ic}"/><rect x="3.5" y="4" width="2.5" height="6" rx="0.5" fill="${ic}"/><rect x="7" y="2" width="2.5" height="8" rx="0.5" fill="${ic}"/><rect x="10.5" y="0" width="2.5" height="10" rx="0.5" fill="${ic}"/></svg>
+        <svg width="13" height="10" viewBox="0 0 13 10"><path d="M6.5 2C8.4 2 10.1 2.8 11.3 4.1L12.5 2.9C11 1.3 8.9 0.3 6.5 0.3S2 1.3 0.5 2.9L1.7 4.1C2.9 2.8 4.6 2 6.5 2Z" fill="${ic}"/><path d="M6.5 5C7.7 5 8.8 5.5 9.6 6.3L10.8 5.1C9.7 4 8.2 3.3 6.5 3.3S3.3 4 2.2 5.1L3.4 6.3C4.2 5.5 5.3 5 6.5 5Z" fill="${ic}"/><circle cx="6.5" cy="8.5" r="1.5" fill="${ic}"/></svg>
+        <svg width="18" height="10" viewBox="0 0 18 10"><rect x="0" y="1" width="14" height="8" rx="1.5" stroke="${ic}" stroke-width="1" fill="none"/><rect x="1.5" y="2.5" width="9" height="5" rx="0.5" fill="${ic}"/><rect x="15" y="3" width="2" height="4" rx="1" fill="${ic}" opacity="0.4"/></svg>
+      </div>
+    </div>
+    <div style="flex:1;overflow:hidden;position:relative;background:#fff;">${content}</div>
+    ${navBar}
+    <div style="padding:6px 0;display:flex;justify-content:center;flex-shrink:0;background:${btm};"><div style="width:110px;height:4px;background:${btmBar};border-radius:4px;opacity:.25;"></div></div>
+  </div>`;
+};
+
+// ── Staff bottom nav ──
+const DNAV_S = (active) => {
+  const t = (icon, label, key) => {
+    const isActive = active === key;
+    const color = isActive ? '#10b981' : '#94a3b8';
+    const weight = isActive ? '700' : '600';
+    const dot = isActive ? `<div style="width:4px;height:4px;background:#10b981;border-radius:50%;margin:2px auto 0;"></div>` : '';
+    return `<div style="text-align:center;"><div style="font-size:17px;${isActive?'':'opacity:.5;'}">${icon}</div><div style="font-size:8px;font-weight:${weight};color:${color};">${label}</div>${dot}</div>`;
+  };
+  const collect = `<div style="text-align:center;"><div style="width:42px;height:42px;background:#1e293b;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:-14px auto 0;box-shadow:0 4px 12px rgba(0,0,0,.16);"><span style="color:#fff;font-size:20px;font-weight:300;">+</span></div><div style="font-size:8px;font-weight:700;color:#1e293b;margin-top:2px;">Collect</div></div>`;
+  return `<div style="background:#fff;border-top:1px solid #e2e8f0;display:flex;justify-content:space-around;padding:9px 0 12px;">
+    ${t('🏠','Home','home')}${t('👥','Contacts','contacts')}${collect}${t('📋','Activity','activity')}${t('☰','More','more')}
+  </div>`;
+};
+
+// ── Screen definitions ──
+const sections = [
+  {
+    title: 'Authentication & Onboarding',
+    screens: [
+      { num: '1', numBg: '#3b82f6', title: 'Login — Email or Mobile', tag: 'Shared', tagBg: '#dbeafe', tagColor: '#1e40af',
+        body: PH('#fff', `
+          <div style="padding:16px 16px 0;">
+            <div style="text-align:center;margin-bottom:24px;">
+              <div style="width:48px;height:48px;background:#d1fae5;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;"><span style="font-size:24px;">🤲</span></div>
+              <div style="font-size:16px;font-weight:800;color:#1e293b;">Welcome</div>
+              <div style="font-size:10px;color:#64748b;margin-top:2px;">Sign in with your email or mobile</div>
+            </div>
+            <div style="display:flex;background:#f1f5f9;border-radius:10px;padding:2px;margin-bottom:16px;">
+              <div style="flex:1;text-align:center;padding:8px;background:#fff;border-radius:8px;font-size:10px;font-weight:700;color:#3b82f6;box-shadow:0 1px 3px rgba(0,0,0,.08);">📱 Mobile</div>
+              <div style="flex:1;text-align:center;padding:8px;font-size:10px;font-weight:600;color:#94a3b8;">✉️ Email</div>
+            </div>
+            <div style="margin-bottom:12px;">
+              <div style="font-size:9px;font-weight:700;color:#475569;margin-bottom:4px;">MOBILE NUMBER</div>
+              <div style="display:flex;gap:6px;">
+                <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 8px;font-size:11px;color:#475569;font-weight:700;min-width:55px;text-align:center;">+971 ▾</div>
+                <div style="flex:1;background:#f8fafc;border:1.5px solid #10b981;border-radius:10px;padding:10px 12px;font-size:11px;color:#1e293b;">50 123 4567</div>
+              </div>
+            </div>
+            <div style="background:#10b981;border-radius:12px;padding:12px;text-align:center;color:#fff;font-size:12px;font-weight:700;margin-top:20px;box-shadow:0 4px 12px rgba(16,185,129,.3);">Send OTP →</div>
+            <div style="text-align:center;margin-top:16px;font-size:9px;color:#94a3b8;">Same app for Donors & Staff</div>
+          </div>
+        `) },
+
+      { num: '2', numBg: '#8b5cf6', title: 'Branch & Role Selection', tag: 'Staff path', tagBg: '#ede9fe', tagColor: '#6d28d9',
+        body: PH('#fff', `
+          <div style="padding:16px 16px 0;">
+            <div style="text-align:center;margin-bottom:20px;">
+              <div style="width:48px;height:48px;background:#d1fae5;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;"><span style="font-size:24px;">👤</span></div>
+              <div style="font-size:16px;font-weight:800;color:#1e293b;">Welcome, Ahmed!</div>
+              <div style="font-size:10px;color:#64748b;margin-top:4px;">Select your branch & role</div>
+            </div>
+            <div style="font-size:9px;font-weight:700;color:#475569;margin-bottom:6px;">SELECT BRANCH</div>
+            <div style="border:2px solid #10b981;border-radius:14px;padding:12px;margin-bottom:8px;background:#f0fdf4;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:36px;height:36px;background:#10b981;border-radius:10px;display:flex;align-items:center;justify-content:center;"><span style="font-size:16px;">🏢</span></div>
+                <div style="flex:1;"><div style="font-size:11px;font-weight:700;color:#1e293b;">Dubai (HQ)</div><div style="font-size:8px;color:#64748b;">Role: Field Ambassador</div></div>
+                <div style="width:16px;height:16px;background:#10b981;border-radius:50%;display:flex;align-items:center;justify-content:center;"><span style="color:#fff;font-size:8px;">✓</span></div>
+              </div>
+            </div>
+            <div style="border:2px solid #e2e8f0;border-radius:14px;padding:12px;margin-bottom:14px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:36px;height:36px;background:#f1f5f9;border-radius:10px;display:flex;align-items:center;justify-content:center;"><span style="font-size:16px;">🏢</span></div>
+                <div style="flex:1;"><div style="font-size:11px;font-weight:700;color:#1e293b;">Abu Dhabi</div><div style="font-size:8px;color:#64748b;">Role: Field Ambassador</div></div>
+                <div style="width:16px;height:16px;border:2px solid #e2e8f0;border-radius:50%;"></div>
+              </div>
+            </div>
+            <div style="background:#10b981;border-radius:12px;padding:12px;text-align:center;color:#fff;font-size:12px;font-weight:700;box-shadow:0 4px 12px rgba(16,185,129,.3);">Continue →</div>
+            <div style="text-align:center;margin-top:14px;font-size:8px;color:#94a3b8;">Last login: Apr 12, 2:30 PM<br>App v2.0.1</div>
+          </div>
+        `) },
+
+      { num: '3', numBg: '#f59e0b', title: 'Offline PIN Setup', tag: 'First time', tagBg: '#fef3c7', tagColor: '#92400e',
+        body: PH('#fff', `
+          <div style="padding:16px 16px 0;text-align:center;">
+            <div style="width:48px;height:48px;background:#d1fae5;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;"><span style="font-size:22px;">🔐</span></div>
+            <div style="font-size:16px;font-weight:800;color:#1e293b;margin-bottom:4px;">Set Offline PIN</div>
+            <div style="font-size:10px;color:#64748b;margin-bottom:24px;line-height:1.4;">Use this PIN when there's<br>no internet connection.</div>
+            <div style="display:flex;gap:10px;justify-content:center;margin-bottom:28px;">
+              <div style="width:40px;height:48px;background:#f0fdf4;border:2px solid #10b981;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#1e293b;">•</div>
+              <div style="width:40px;height:48px;background:#f0fdf4;border:2px solid #10b981;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#1e293b;">•</div>
+              <div style="width:40px;height:48px;background:#f0fdf4;border:2px solid #10b981;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#1e293b;">•</div>
+              <div style="width:40px;height:48px;background:#f8fafc;border:2px solid #e2e8f0;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#cbd5e1;">_</div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:200px;margin:0 auto;">
+              <div style="height:44px;background:#f8fafc;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#1e293b;">1</div>
+              <div style="height:44px;background:#f8fafc;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#1e293b;">2</div>
+              <div style="height:44px;background:#f8fafc;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#1e293b;">3</div>
+              <div style="height:44px;background:#f8fafc;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#1e293b;">4</div>
+              <div style="height:44px;background:#f8fafc;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#1e293b;">5</div>
+              <div style="height:44px;background:#f8fafc;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#1e293b;">6</div>
+              <div style="height:44px;background:#f8fafc;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#1e293b;">7</div>
+              <div style="height:44px;background:#f8fafc;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#1e293b;">8</div>
+              <div style="height:44px;background:#f8fafc;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#1e293b;">9</div>
+              <div style="height:44px;"></div>
+              <div style="height:44px;background:#f8fafc;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#1e293b;">0</div>
+              <div style="height:44px;display:flex;align-items:center;justify-content:center;font-size:14px;color:#94a3b8;">⌫</div>
+            </div>
+            <div style="margin-top:16px;font-size:9px;color:#10b981;font-weight:600;">Also enable fingerprint? →</div>
+          </div>
+        `) },
+    ]
+  },
+  {
+    title: 'Home Dashboard',
+    screens: [
+      { num: '4', numBg: '#10b981', title: 'Staff Home — Dashboard', tag: 'Main screen', tagBg: '#d1fae5', tagColor: '#065f46',
+        body: PH('#fff', `
+          <div style="padding:16px 16px 0;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+              <div style="width:40px;height:40px;background:linear-gradient(135deg,#10b981,#059669);border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:900;">AS</div>
+              <div style="flex:1;">
+                <div style="font-size:10px;color:#94a3b8;">Good morning</div>
+                <div style="font-size:14px;font-weight:800;color:#1e293b;">Ahmed Salim</div>
+                <div style="font-size:8px;color:#64748b;">Dubai Branch · Field Ambassador</div>
+              </div>
+              <div style="display:flex;gap:6px;">
+                <div style="width:28px;height:28px;background:#f0fdf4;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;position:relative;">🔔<div style="position:absolute;top:-2px;right:-2px;width:8px;height:8px;background:#ef4444;border-radius:50%;border:1.5px solid #fff;"></div></div>
+                <div style="width:28px;height:28px;background:#f0fdf4;border-radius:8px;display:flex;align-items:center;justify-content:center;"><div style="width:6px;height:6px;background:#10b981;border-radius:50%;"></div></div>
+              </div>
+            </div>
+            <div style="background:linear-gradient(135deg,#065f46,#10b981);border-radius:16px;padding:14px;margin-bottom:12px;color:#fff;">
+              <div style="font-size:8px;font-weight:700;opacity:.7;text-transform:uppercase;letter-spacing:.5px;">Today's Collection</div>
+              <div style="display:flex;align-items:baseline;gap:8px;margin-top:4px;">
+                <div style="font-size:24px;font-weight:900;">AED 2,300</div>
+                <div style="font-size:9px;opacity:.7;">5 donations</div>
+              </div>
+              <div style="background:rgba(255,255,255,.2);border-radius:4px;height:4px;margin-top:8px;"><div style="background:#fff;height:4px;border-radius:4px;width:65%;"></div></div>
+              <div style="display:flex;gap:16px;margin-top:10px;">
+                <div><div style="font-size:7px;opacity:.6;">Clocked In</div><div style="font-size:11px;font-weight:800;">8:05 AM</div></div>
+                <div><div style="font-size:7px;opacity:.6;">Tasks Left</div><div style="font-size:11px;font-weight:800;">3</div></div>
+                <div><div style="font-size:7px;opacity:.6;">Book</div><div style="font-size:11px;font-weight:800;">RB-045</div></div>
+              </div>
+            </div>
+            <div style="background:#1e293b;border-radius:14px;padding:12px;margin-bottom:10px;display:flex;align-items:center;gap:12px;">
+              <div style="width:48px;height:48px;background:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                <div style="width:36px;height:36px;background:repeating-conic-gradient(#1e293b 0% 25%, #fff 0% 50%) 50%/8px 8px;border-radius:4px;"></div>
+              </div>
+              <div style="flex:1;"><div style="font-size:11px;font-weight:800;color:#fff;">My QR Code</div><div style="font-size:8px;color:#94a3b8;">Donor scans → Donate instantly</div></div>
+              <span style="color:#fff;font-size:14px;">→</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
+              <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:8px;text-align:center;"><div style="font-size:18px;margin-bottom:2px;">💰</div><div style="font-size:9px;font-weight:700;color:#065f46;">Collect</div></div>
+              <div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:12px;padding:8px;text-align:center;"><div style="font-size:18px;margin-bottom:2px;">🔍</div><div style="font-size:9px;font-weight:700;color:#1d4ed8;">Contacts</div></div>
+              <div style="background:#faf5ff;border:1.5px solid #ddd6fe;border-radius:12px;padding:8px;text-align:center;"><div style="font-size:18px;margin-bottom:2px;">🙏</div><div style="font-size:9px;font-weight:700;color:#7c3aed;">Prayer</div></div>
+            </div>
+            <div style="font-size:10px;font-weight:800;color:#1e293b;margin-bottom:6px;">Alerts</div>
+            <div style="display:flex;flex-direction:column;gap:4px;">
+              <div style="display:flex;align-items:center;gap:8px;padding:8px;background:#fef2f2;border-radius:8px;"><span style="font-size:12px;">⚠️</span><div style="flex:1;font-size:9px;font-weight:600;color:#991b1b;">Receipt book RB-045: 55 left</div></div>
+              <div style="display:flex;align-items:center;gap:8px;padding:8px;background:#fffbeb;border-radius:8px;"><span style="font-size:12px;">📋</span><div style="flex:1;font-size:9px;font-weight:600;color:#92400e;">3 tasks pending for today</div></div>
+            </div>
+          </div>
+        `, DNAV_S('home')) },
+    ]
+  },
+  {
+    title: 'Collect Donation (3-step flow)',
+    screens: [
+      { num: '5', numBg: '#10b981', title: 'Collect — Find Donor', tag: 'Step 1/3', tagBg: '#d1fae5', tagColor: '#065f46',
+        body: PH('#fff', `
+          <div style="padding:16px 16px 0;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+              <div style="width:28px;height:28px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;">←</div>
+              <div style="font-size:14px;font-weight:800;color:#1e293b;flex:1;">Collect Donation</div>
+              <div style="font-size:9px;color:#94a3b8;font-weight:700;">1 / 3</div>
+            </div>
+            <div style="display:flex;gap:4px;margin-bottom:16px;">
+              <div style="flex:1;height:3px;background:#10b981;border-radius:2px;"></div>
+              <div style="flex:1;height:3px;background:#e2e8f0;border-radius:2px;"></div>
+              <div style="flex:1;height:3px;background:#e2e8f0;border-radius:2px;"></div>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:14px;">
+              <div style="flex:1;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:11px;color:#94a3b8;">Search name, phone, ID...</div>
+              <div style="width:40px;height:40px;background:#1e293b;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;">📷</div>
+            </div>
+            <div style="font-size:9px;font-weight:700;color:#94a3b8;margin-bottom:8px;">RECENT DONORS</div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#f0fdf4;border:1.5px solid #10b981;border-radius:10px;">
+                <div style="width:36px;height:36px;background:#10b981;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:800;">KM</div>
+                <div style="flex:1;"><div style="font-size:11px;font-weight:700;color:#1e293b;">Khalid Al-Mansouri</div><div style="font-size:8px;color:#64748b;">CON-1245 · +971 50 123 4567</div></div>
+                <div style="text-align:right;"><div style="font-size:8px;color:#64748b;">Today</div><div style="font-size:9px;font-weight:700;color:#10b981;">AED 500</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;">
+                <div style="width:36px;height:36px;background:#3b82f6;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:800;">FZ</div>
+                <div style="flex:1;"><div style="font-size:11px;font-weight:700;color:#1e293b;">Fatima Zahra</div><div style="font-size:8px;color:#64748b;">CON-1089 · +971 50 234 5678</div></div>
+                <div style="text-align:right;"><div style="font-size:8px;color:#64748b;">Today</div><div style="font-size:9px;font-weight:700;color:#3b82f6;">AED 200</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;">
+                <div style="width:36px;height:36px;background:#8b5cf6;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:800;">AN</div>
+                <div style="flex:1;"><div style="font-size:11px;font-weight:700;color:#1e293b;">Ahmad Nasser</div><div style="font-size:8px;color:#64748b;">CON-0765 · +971 50 345 6789</div></div>
+                <div style="text-align:right;"><div style="font-size:8px;color:#64748b;">Today</div><div style="font-size:9px;font-weight:700;color:#8b5cf6;">AED 1,000</div></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;margin-top:10px;">
+              <div style="flex:1;display:flex;align-items:center;gap:6px;padding:10px;background:#eff6ff;border:1.5px dashed #3b82f6;border-radius:10px;"><span style="font-size:14px;">➕</span><div style="font-size:9px;font-weight:700;color:#3b82f6;">New Donor</div></div>
+              <div style="flex:1;display:flex;align-items:center;gap:6px;padding:10px;background:#f8fafc;border:1.5px dashed #94a3b8;border-radius:10px;"><span style="font-size:14px;">👤</span><div style="font-size:9px;font-weight:700;color:#64748b;">Anonymous</div></div>
+            </div>
+          </div>
+        `) },
+
+      { num: '6', numBg: '#10b981', title: 'Collect — Amount & Details', tag: 'Step 2/3', tagBg: '#d1fae5', tagColor: '#065f46',
+        body: PH('#fff', `
+          <div style="padding:16px 16px 0;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+              <div style="width:28px;height:28px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;">←</div>
+              <div style="font-size:14px;font-weight:800;color:#1e293b;flex:1;">Donation Details</div>
+              <div style="font-size:9px;color:#94a3b8;font-weight:700;">2 / 3</div>
+            </div>
+            <div style="display:flex;gap:4px;margin-bottom:14px;">
+              <div style="flex:1;height:3px;background:#10b981;border-radius:2px;"></div>
+              <div style="flex:1;height:3px;background:#10b981;border-radius:2px;"></div>
+              <div style="flex:1;height:3px;background:#e2e8f0;border-radius:2px;"></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;padding:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;margin-bottom:14px;">
+              <div style="width:28px;height:28px;background:#10b981;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:800;">KM</div>
+              <div style="flex:1;font-size:10px;font-weight:700;color:#065f46;">Khalid Al-Mansouri · CON-1245</div>
+              <span style="font-size:9px;color:#94a3b8;">✕</span>
+            </div>
+            <div style="font-size:9px;font-weight:700;color:#475569;margin-bottom:4px;">AMOUNT</div>
+            <div style="background:#f8fafc;border:1.5px solid #10b981;border-radius:12px;padding:14px;text-align:center;margin-bottom:12px;"><div style="font-size:28px;font-weight:900;color:#1e293b;">AED 500</div></div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">
+              <div style="padding:6px 12px;background:#f1f5f9;border-radius:8px;font-size:9px;font-weight:700;color:#475569;">100</div>
+              <div style="padding:6px 12px;background:#f1f5f9;border-radius:8px;font-size:9px;font-weight:700;color:#475569;">250</div>
+              <div style="padding:6px 12px;background:#10b981;border-radius:8px;font-size:9px;font-weight:700;color:#fff;">500</div>
+              <div style="padding:6px 12px;background:#f1f5f9;border-radius:8px;font-size:9px;font-weight:700;color:#475569;">1,000</div>
+              <div style="padding:6px 12px;background:#f1f5f9;border-radius:8px;font-size:9px;font-weight:700;color:#475569;">Other</div>
+            </div>
+            <div style="font-size:9px;font-weight:700;color:#475569;margin-bottom:4px;">PAYMENT MODE</div>
+            <div style="display:flex;gap:6px;margin-bottom:12px;">
+              <div style="flex:1;padding:8px;background:#10b981;border-radius:10px;text-align:center;font-size:9px;font-weight:700;color:#fff;">💵 Cash</div>
+              <div style="flex:1;padding:8px;background:#f1f5f9;border-radius:10px;text-align:center;font-size:9px;font-weight:700;color:#475569;">📝 Cheque</div>
+              <div style="flex:1;padding:8px;background:#f1f5f9;border-radius:10px;text-align:center;font-size:9px;font-weight:700;color:#475569;">📲 Mobile</div>
+            </div>
+            <div style="font-size:9px;font-weight:700;color:#475569;margin-bottom:4px;">PURPOSE</div>
+            <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:10px;color:#1e293b;margin-bottom:10px;display:flex;justify-content:space-between;"><span>🧒 Orphan Care</span><span style="color:#94a3b8;">▾</span></div>
+            <div style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;margin-bottom:10px;">
+              <span style="font-size:8px;font-weight:600;color:#065f46;">📖 Receipt: REC-4548 · Book: RB-045 (auto)</span>
+            </div>
+            <div style="background:#10b981;border-radius:12px;padding:12px;text-align:center;color:#fff;font-size:12px;font-weight:700;">Continue →</div>
+          </div>
+        `) },
+
+      { num: '7', numBg: '#10b981', title: 'Collect — Prayer & Save', tag: 'Step 3/3', tagBg: '#d1fae5', tagColor: '#065f46',
+        body: PH('#fff', `
+          <div style="padding:16px 16px 0;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+              <div style="width:28px;height:28px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;">←</div>
+              <div style="font-size:14px;font-weight:800;color:#1e293b;flex:1;">Prayer & Save</div>
+              <div style="font-size:9px;color:#94a3b8;font-weight:700;">3 / 3</div>
+            </div>
+            <div style="display:flex;gap:4px;margin-bottom:16px;">
+              <div style="flex:1;height:3px;background:#10b981;border-radius:2px;"></div>
+              <div style="flex:1;height:3px;background:#10b981;border-radius:2px;"></div>
+              <div style="flex:1;height:3px;background:#10b981;border-radius:2px;"></div>
+            </div>
+            <div style="background:#f0fdf4;border-radius:10px;padding:10px;margin-bottom:14px;display:flex;justify-content:space-between;font-size:9px;">
+              <div><span style="color:#64748b;">Donor:</span> <b>Khalid Al-Mansouri</b></div>
+              <div><span style="color:#64748b;">Amount:</span> <b style="color:#10b981;">AED 500 Cash</b></div>
+            </div>
+            <div style="font-size:9px;font-weight:700;color:#475569;margin-bottom:4px;">PRAYER REQUEST (optional)</div>
+            <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px;margin-bottom:8px;min-height:70px;">
+              <div style="font-size:10px;color:#94a3b8;">Donor's prayer request...</div>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:14px;">
+              <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;background:#faf5ff;border:1px solid #ede9fe;border-radius:8px;font-size:9px;font-weight:700;color:#7c3aed;">🎤 Voice</div>
+              <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;font-size:9px;font-weight:700;color:#1d4ed8;">📷 Photo</div>
+            </div>
+            <div style="font-size:9px;font-weight:700;color:#475569;margin-bottom:6px;">SEND RECEIPT</div>
+            <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:14px;">
+              <div style="display:flex;align-items:center;gap:8px;padding:8px;background:#f8fafc;border-radius:8px;">
+                <div style="width:16px;height:16px;background:#10b981;border-radius:4px;display:flex;align-items:center;justify-content:center;"><span style="color:#fff;font-size:8px;font-weight:900;">✓</span></div>
+                <span style="font-size:9px;font-weight:600;color:#475569;flex:1;">WhatsApp receipt</span>
+                <span style="font-size:8px;color:#94a3b8;">+971 50...</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;padding:8px;background:#f8fafc;border-radius:8px;">
+                <div style="width:16px;height:16px;background:#e2e8f0;border-radius:4px;"></div>
+                <span style="font-size:9px;font-weight:600;color:#475569;">SMS receipt</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <div style="flex:1;background:#10b981;border-radius:12px;padding:12px;text-align:center;color:#fff;font-size:11px;font-weight:700;">Save & New</div>
+              <div style="flex:1;background:#1e293b;border-radius:12px;padding:12px;text-align:center;color:#fff;font-size:11px;font-weight:700;">Save & Close</div>
+            </div>
+            <div style="text-align:center;margin-top:6px;font-size:8px;color:#94a3b8;">📡 Will sync when online</div>
+          </div>
+        `) },
+    ]
+  },
+  {
+    title: 'Post-Collection',
+    screens: [
+      { num: '8', numBg: '#10b981', title: 'Donation Success', tag: 'Confirmation', tagBg: '#d1fae5', tagColor: '#065f46',
+        body: PH('#fff', `
+          <div style="padding:16px 16px 0;text-align:center;">
+            <div style="width:56px;height:56px;background:#d1fae5;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;"><span style="font-size:28px;">✅</span></div>
+            <div style="font-size:16px;font-weight:900;color:#065f46;">Donation Saved!</div>
+            <div style="font-size:10px;color:#64748b;margin-top:4px;">Receipt #REC-4548 generated</div>
+            <div style="background:#f0fdf4;border-radius:14px;padding:12px;margin:16px 0;text-align:left;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:9px;color:#64748b;">Donor</span><span style="font-size:10px;font-weight:700;">Khalid Al-Mansouri</span></div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:9px;color:#64748b;">Amount</span><span style="font-size:10px;font-weight:800;">AED 500</span></div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:9px;color:#64748b;">Mode</span><span style="font-size:10px;font-weight:700;">Cash</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="font-size:9px;color:#64748b;">Purpose</span><span style="font-size:10px;font-weight:700;">Orphan Care</span></div>
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:10px;">
+              <div style="flex:1;padding:8px;background:#eff6ff;border-radius:10px;text-align:center;font-size:9px;font-weight:700;color:#3b82f6;">📄 Receipt</div>
+              <div style="flex:1;padding:8px;background:#f0fdf4;border-radius:10px;text-align:center;font-size:9px;font-weight:700;color:#065f46;">📤 Share</div>
+              <div style="flex:1;padding:8px;background:#f8fafc;border-radius:10px;text-align:center;font-size:9px;font-weight:700;color:#475569;">🖨 Print</div>
+            </div>
+            <div style="background:#f8fafc;border-radius:10px;padding:8px;margin-bottom:10px;">
+              <div style="font-size:8px;color:#94a3b8;font-weight:700;">TODAY'S RUNNING TOTAL</div>
+              <div style="font-size:18px;font-weight:900;color:#1e293b;">AED 2,800 <span style="font-size:9px;color:#10b981;">↑ 6th donation</span></div>
+            </div>
+            <div style="background:#10b981;border-radius:12px;padding:12px;color:#fff;font-size:12px;font-weight:700;margin-bottom:8px;">Collect Next Donation</div>
+            <div style="font-size:10px;color:#64748b;font-weight:600;">← Back to Home</div>
+          </div>
+        `, DNAV_S('home')) },
+    ]
+  },
+  {
+    title: 'Contact Management',
+    screens: [
+      { num: '9', numBg: '#3b82f6', title: 'Contact 360° View', tag: 'Donor profile', tagBg: '#dbeafe', tagColor: '#1e40af',
+        body: PH('#fff', `
+          <div style="padding:16px 16px 0;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+              <div style="width:28px;height:28px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;">←</div>
+              <div style="flex:1;font-size:14px;font-weight:800;color:#1e293b;">Contact</div>
+              <div style="width:28px;height:28px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;">✏️</div>
+            </div>
+            <div style="text-align:center;margin-bottom:14px;">
+              <div style="width:52px;height:52px;background:linear-gradient(135deg,#10b981,#059669);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;color:#fff;font-size:18px;font-weight:900;">KM</div>
+              <div style="font-size:14px;font-weight:800;color:#1e293b;">Khalid Al-Mansouri</div>
+              <div style="font-size:9px;color:#64748b;">CON-1245 · Donor since 2022</div>
+            </div>
+            <div style="display:flex;justify-content:center;gap:12px;margin-bottom:14px;">
+              <div style="text-align:center;"><div style="width:36px;height:36px;background:#d1fae5;border-radius:10px;display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:14px;">📞</div><div style="font-size:7px;color:#64748b;margin-top:2px;">Call</div></div>
+              <div style="text-align:center;"><div style="width:36px;height:36px;background:#dbeafe;border-radius:10px;display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:14px;">💬</div><div style="font-size:7px;color:#64748b;margin-top:2px;">SMS</div></div>
+              <div style="text-align:center;"><div style="width:36px;height:36px;background:#d1fae5;border-radius:10px;display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:14px;">📱</div><div style="font-size:7px;color:#64748b;margin-top:2px;">WhatsApp</div></div>
+              <div style="text-align:center;"><div style="width:36px;height:36px;background:#fef3c7;border-radius:10px;display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:14px;">✉️</div><div style="font-size:7px;color:#64748b;margin-top:2px;">Email</div></div>
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:12px;">
+              <div style="flex:1;background:#f0fdf4;border-radius:8px;padding:8px;text-align:center;"><div style="font-size:13px;font-weight:900;color:#065f46;">AED 42.5K</div><div style="font-size:7px;color:#64748b;font-weight:700;">TOTAL</div></div>
+              <div style="flex:1;background:#eff6ff;border-radius:8px;padding:8px;text-align:center;"><div style="font-size:13px;font-weight:900;color:#1d4ed8;">Monthly</div><div style="font-size:7px;color:#64748b;font-weight:700;">FREQUENCY</div></div>
+              <div style="flex:1;background:#faf5ff;border-radius:8px;padding:8px;text-align:center;"><div style="font-size:13px;font-weight:900;color:#7c3aed;">AED 500</div><div style="font-size:7px;color:#64748b;font-weight:700;">USUAL</div></div>
+            </div>
+            <div style="font-size:9px;font-weight:700;color:#94a3b8;margin-bottom:6px;">RECENT (by me)</div>
+            <div style="display:flex;flex-direction:column;gap:4px;">
+              <div style="display:flex;align-items:center;gap:8px;padding:6px;background:#f8fafc;border-radius:6px;"><span style="font-size:10px;">🧒</span><div style="flex:1;font-size:9px;">Orphan Care · Apr 12</div><div style="font-size:9px;font-weight:700;">AED 500</div></div>
+              <div style="display:flex;align-items:center;gap:8px;padding:6px;background:#f8fafc;border-radius:6px;"><span style="font-size:10px;">🧒</span><div style="flex:1;font-size:9px;">Orphan Care · Mar 12</div><div style="font-size:9px;font-weight:700;">AED 500</div></div>
+              <div style="display:flex;align-items:center;gap:8px;padding:6px;background:#f8fafc;border-radius:6px;"><span style="font-size:10px;">🧒</span><div style="flex:1;font-size:9px;">Orphan Care · Feb 10</div><div style="font-size:9px;font-weight:700;">AED 500</div></div>
+            </div>
+            <div style="background:#10b981;border-radius:12px;padding:12px;text-align:center;color:#fff;font-size:12px;font-weight:700;margin-top:12px;">💰 Collect Donation</div>
+          </div>
+        `, DNAV_S('contacts')) },
+
+      { num: '10', numBg: '#3b82f6', title: 'New Contact — Quick Create', tag: 'Field-optimized', tagBg: '#dbeafe', tagColor: '#1e40af',
+        body: PH('#fff', `
+          <div style="padding:16px 16px 0;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+              <div style="width:28px;height:28px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;">←</div>
+              <div style="font-size:14px;font-weight:800;color:#1e293b;">New Donor</div>
+            </div>
+            <div style="font-size:9px;font-weight:700;color:#475569;margin-bottom:4px;">NAME <span style="color:#ef4444;">*</span></div>
+            <div style="background:#f8fafc;border:1.5px solid #10b981;border-radius:10px;padding:10px 12px;font-size:11px;color:#1e293b;margin-bottom:10px;">Mariam Yusuf</div>
+            <div style="font-size:9px;font-weight:700;color:#475569;margin-bottom:4px;">MOBILE <span style="color:#ef4444;">*</span></div>
+            <div style="display:flex;gap:4px;margin-bottom:10px;">
+              <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px 6px;font-size:9px;color:#475569;font-weight:700;">+971</div>
+              <div style="flex:1;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 10px;font-size:11px;color:#1e293b;">50 567 8901</div>
+            </div>
+            <div style="font-size:9px;font-weight:700;color:#475569;margin-bottom:4px;">EMAIL</div>
+            <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:11px;color:#94a3b8;margin-bottom:10px;">mariam@email.com</div>
+            <div style="font-size:9px;font-weight:700;color:#475569;margin-bottom:4px;">AREA (optional)</div>
+            <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:11px;color:#94a3b8;margin-bottom:14px;">Bur Dubai</div>
+            <div style="background:#10b981;border-radius:12px;padding:12px;text-align:center;color:#fff;font-size:12px;font-weight:700;">Create & Collect Donation →</div>
+            <div style="text-align:center;margin-top:6px;font-size:8px;color:#94a3b8;">Minimal fields now. Full profile later on desktop.</div>
+          </div>
+        `) },
+    ]
+  },
+  {
+    title: 'Collection History & QR Code',
+    screens: [
+      { num: '11', numBg: '#10b981', title: 'Collection History', tag: 'Sync status', tagBg: '#d1fae5', tagColor: '#065f46',
+        body: PH('#fff', `
+          <div style="padding:16px 16px 0;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+              <div style="width:28px;height:28px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;">←</div>
+              <div style="font-size:14px;font-weight:800;color:#1e293b;flex:1;">Collection History</div>
+              <div style="width:28px;height:28px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;">🔄</div>
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:12px;">
+              <div style="padding:6px 12px;background:#10b981;border-radius:8px;font-size:9px;font-weight:700;color:#fff;">Today</div>
+              <div style="padding:6px 12px;background:#f1f5f9;border-radius:8px;font-size:9px;font-weight:700;color:#475569;">Week</div>
+              <div style="padding:6px 12px;background:#f1f5f9;border-radius:8px;font-size:9px;font-weight:700;color:#475569;">Month</div>
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:12px;">
+              <div style="flex:1;background:#f0fdf4;border-radius:8px;padding:6px;text-align:center;"><div style="font-size:13px;font-weight:900;color:#065f46;">AED 2,300</div><div style="font-size:7px;color:#64748b;">Collected</div></div>
+              <div style="flex:1;background:#eff6ff;border-radius:8px;padding:6px;text-align:center;"><div style="font-size:13px;font-weight:900;color:#1d4ed8;">5</div><div style="font-size:7px;color:#64748b;">Donations</div></div>
+              <div style="flex:1;background:#faf5ff;border-radius:8px;padding:6px;text-align:center;"><div style="font-size:13px;font-weight:900;color:#7c3aed;">98%</div><div style="font-size:7px;color:#64748b;">Synced</div></div>
+            </div>
+            <div style="font-size:9px;font-weight:700;color:#94a3b8;margin-bottom:6px;">APRIL 12 (TODAY)</div>
+            <div style="display:flex;flex-direction:column;gap:4px;">
+              <div style="display:flex;align-items:center;gap:8px;padding:8px;background:#f8fafc;border-radius:8px;">
+                <span style="font-size:10px;">✅</span>
+                <div style="flex:1;"><div style="font-size:9px;font-weight:700;color:#1e293b;">Khalid Al-Mansouri</div><div style="font-size:7px;color:#64748b;">Cash · REC-4547 · 2:15 PM</div></div>
+                <div style="font-size:10px;font-weight:800;color:#065f46;">AED 500</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;padding:8px;background:#f8fafc;border-radius:8px;">
+                <span style="font-size:10px;">✅</span>
+                <div style="flex:1;"><div style="font-size:9px;font-weight:700;color:#1e293b;">Fatima Zahra</div><div style="font-size:7px;color:#64748b;">Cash · REC-4546 · 1:30 PM</div></div>
+                <div style="font-size:10px;font-weight:800;color:#065f46;">AED 200</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;padding:8px;background:#f8fafc;border-radius:8px;">
+                <span style="font-size:10px;">✅</span>
+                <div style="flex:1;"><div style="font-size:9px;font-weight:700;color:#1e293b;">Ahmad Nasser</div><div style="font-size:7px;color:#64748b;">Cheque · REC-4545 · 11:00 AM</div></div>
+                <div style="font-size:10px;font-weight:800;color:#065f46;">AED 1,000</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;padding:8px;background:#fffbeb;border-radius:8px;border-left:3px solid #f59e0b;">
+                <span style="font-size:10px;">⏳</span>
+                <div style="flex:1;"><div style="font-size:9px;font-weight:700;color:#1e293b;">Mohamed Ali</div><div style="font-size:7px;color:#92400e;">Pending sync · 10:30 AM</div></div>
+                <div style="font-size:10px;font-weight:800;color:#92400e;">AED 300</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;padding:8px;background:#f8fafc;border-radius:8px;">
+                <span style="font-size:10px;">✅</span>
+                <div style="flex:1;"><div style="font-size:9px;font-weight:700;color:#1e293b;">Sarah Ahmed</div><div style="font-size:7px;color:#64748b;">Cash · REC-4543 · 10:00 AM</div></div>
+                <div style="font-size:10px;font-weight:800;color:#065f46;">AED 300</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;padding:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;margin-top:10px;">
+              <div style="width:6px;height:6px;background:#10b981;border-radius:50%;"></div>
+              <span style="font-size:8px;font-weight:600;color:#065f46;flex:1;">51/52 synced (98%)</span>
+              <span style="font-size:8px;font-weight:700;color:#10b981;">Sync Now</span>
+            </div>
+          </div>
+        `, DNAV_S('activity')) },
+
+      { num: '12', numBg: '#1e293b', title: 'My QR Code', tag: 'Ambassador tool', tagBg: '#f1f5f9', tagColor: '#475569',
+        body: PH('#fff', `
+          <div style="padding:16px 16px 0;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+              <div style="width:28px;height:28px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;">←</div>
+              <div style="font-size:14px;font-weight:800;color:#1e293b;flex:1;">My QR Code</div>
+              <div style="width:28px;height:28px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;">📤</div>
+            </div>
+            <div style="background:#f8fafc;border-radius:20px;padding:20px;text-align:center;margin-bottom:14px;border:1.5px solid #e2e8f0;">
+              <div style="width:160px;height:160px;background:repeating-conic-gradient(#1e293b 0% 25%, #fff 0% 50%) 50%/12px 12px;border-radius:12px;margin:0 auto 12px;border:6px solid #fff;box-shadow:0 2px 12px rgba(0,0,0,.08);"></div>
+              <div style="font-size:12px;font-weight:800;color:#1e293b;">Ahmed Salim</div>
+              <div style="font-size:9px;color:#64748b;">Dubai Branch · AMB-0078</div>
+            </div>
+            <div style="font-size:9px;font-weight:700;color:#475569;margin-bottom:6px;">DONOR SCANS → GETS</div>
+            <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:14px;">
+              <div style="display:flex;align-items:center;gap:8px;padding:8px;background:#f0fdf4;border-radius:8px;"><span style="font-size:12px;">💰</span><div style="flex:1;font-size:9px;font-weight:700;color:#065f46;">Donate Now</div><div style="font-size:8px;color:#64748b;">Purpose + Amount + Pay</div></div>
+              <div style="display:flex;align-items:center;gap:8px;padding:8px;background:#faf5ff;border-radius:8px;"><span style="font-size:12px;">🙏</span><div style="flex:1;font-size:9px;font-weight:700;color:#7c3aed;">Submit Prayer</div><div style="font-size:8px;color:#64748b;">Text or voice</div></div>
+            </div>
+            <div style="font-size:9px;font-weight:700;color:#475569;margin-bottom:6px;">MY QR STATS</div>
+            <div style="display:flex;gap:6px;margin-bottom:14px;">
+              <div style="flex:1;background:#f0fdf4;border-radius:8px;padding:6px;text-align:center;"><div style="font-size:13px;font-weight:900;color:#065f46;">85</div><div style="font-size:7px;color:#64748b;">Scans</div></div>
+              <div style="flex:1;background:#eff6ff;border-radius:8px;padding:6px;text-align:center;"><div style="font-size:13px;font-weight:900;color:#1d4ed8;">22</div><div style="font-size:7px;color:#64748b;">Donations</div></div>
+              <div style="flex:1;background:#faf5ff;border-radius:8px;padding:6px;text-align:center;"><div style="font-size:13px;font-weight:900;color:#7c3aed;">AED 5.2K</div><div style="font-size:7px;color:#64748b;">Collected</div></div>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <div style="flex:1;background:#1e293b;border-radius:12px;padding:10px;text-align:center;color:#fff;font-size:10px;font-weight:700;">📤 Share Link</div>
+              <div style="flex:1;background:#f1f5f9;border-radius:12px;padding:10px;text-align:center;font-size:10px;font-weight:700;color:#475569;">📥 Save Image</div>
+            </div>
+          </div>
+        `) },
+    ]
+  },
+  {
+    title: 'Prayer & Activity',
+    screens: [
+      { num: '13', numBg: '#8b5cf6', title: 'Prayer Capture', tag: 'Voice + Photo', tagBg: '#ede9fe', tagColor: '#6d28d9',
+        body: PH('#fff', `
+          <div style="padding:16px 16px 0;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+              <div style="width:28px;height:28px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;">←</div>
+              <div style="font-size:14px;font-weight:800;color:#1e293b;">Capture Prayer</div>
+            </div>
+            <div style="font-size:9px;font-weight:700;color:#475569;margin-bottom:4px;">LINK TO DONOR</div>
+            <div style="display:flex;align-items:center;gap:8px;padding:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;margin-bottom:12px;">
+              <div style="width:28px;height:28px;background:#10b981;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:800;">KM</div>
+              <div style="flex:1;font-size:10px;font-weight:700;color:#065f46;">Khalid Al-Mansouri</div>
+            </div>
+            <div style="font-size:9px;font-weight:700;color:#475569;margin-bottom:6px;">CATEGORY</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+              <div style="padding:6px 12px;background:#8b5cf6;border-radius:8px;font-size:9px;font-weight:700;color:#fff;">🏥 Health</div>
+              <div style="padding:6px 12px;background:#f1f5f9;border-radius:8px;font-size:9px;font-weight:700;color:#475569;">👨‍👩‍👧 Family</div>
+              <div style="padding:6px 12px;background:#f1f5f9;border-radius:8px;font-size:9px;font-weight:700;color:#475569;">💼 Career</div>
+              <div style="padding:6px 12px;background:#f1f5f9;border-radius:8px;font-size:9px;font-weight:700;color:#475569;">🙏 Spiritual</div>
+            </div>
+            <div style="font-size:9px;font-weight:700;color:#475569;margin-bottom:4px;">PRAYER REQUEST</div>
+            <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px;min-height:80px;margin-bottom:8px;">
+              <div style="font-size:10px;color:#1e293b;line-height:1.6;">Please pray for my mother who is undergoing treatment...</div>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:14px;">
+              <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:10px;background:#faf5ff;border:1.5px solid #ddd6fe;border-radius:10px;font-size:10px;font-weight:700;color:#7c3aed;">🎤 Voice</div>
+              <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:10px;background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;font-size:10px;font-weight:700;color:#1d4ed8;">📷 Photo</div>
+            </div>
+            <div style="background:#8b5cf6;border-radius:12px;padding:12px;text-align:center;color:#fff;font-size:12px;font-weight:700;">Save Prayer</div>
+          </div>
+        `) },
+
+      { num: '14', numBg: '#3b82f6', title: 'Activity Timeline', tag: 'Activity tab', tagBg: '#dbeafe', tagColor: '#1e40af',
+        body: PH('#fff', `
+          <div style="padding:16px 16px 0;">
+            <div style="font-size:14px;font-weight:800;color:#1e293b;margin-bottom:12px;">My Activity</div>
+            <div style="display:flex;gap:6px;margin-bottom:12px;">
+              <div style="padding:6px 12px;background:#1e293b;border-radius:8px;font-size:9px;font-weight:700;color:#fff;">Today</div>
+              <div style="padding:6px 12px;background:#f1f5f9;border-radius:8px;font-size:9px;font-weight:700;color:#475569;">Week</div>
+              <div style="padding:6px 12px;background:#f1f5f9;border-radius:8px;font-size:9px;font-weight:700;color:#475569;">Month</div>
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:14px;">
+              <div style="flex:1;background:#f0fdf4;border-radius:8px;padding:6px;text-align:center;"><div style="font-size:13px;font-weight:900;color:#065f46;">AED 2,300</div><div style="font-size:7px;color:#64748b;">Collected</div></div>
+              <div style="flex:1;background:#eff6ff;border-radius:8px;padding:6px;text-align:center;"><div style="font-size:13px;font-weight:900;color:#1d4ed8;">5</div><div style="font-size:7px;color:#64748b;">Donations</div></div>
+              <div style="flex:1;background:#faf5ff;border-radius:8px;padding:6px;text-align:center;"><div style="font-size:13px;font-weight:900;color:#7c3aed;">2</div><div style="font-size:7px;color:#64748b;">Prayers</div></div>
+            </div>
+            <div style="font-size:9px;font-weight:700;color:#94a3b8;margin-bottom:6px;">TIMELINE</div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <div style="display:flex;gap:8px;align-items:flex-start;">
+                <div style="font-size:8px;color:#94a3b8;min-width:36px;text-align:right;padding-top:2px;">2:15p</div>
+                <div style="flex:1;padding:8px;background:#f0fdf4;border-radius:8px;border-left:3px solid #10b981;"><div style="font-size:9px;font-weight:700;color:#065f46;">💰 AED 500</div><div style="font-size:8px;color:#64748b;">Khalid · Cash · Orphan Care</div></div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:flex-start;">
+                <div style="font-size:8px;color:#94a3b8;min-width:36px;text-align:right;padding-top:2px;">1:30p</div>
+                <div style="flex:1;padding:8px;background:#f0fdf4;border-radius:8px;border-left:3px solid #10b981;"><div style="font-size:9px;font-weight:700;color:#065f46;">💰 AED 200</div><div style="font-size:8px;color:#64748b;">Fatima · Cash · Education</div></div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:flex-start;">
+                <div style="font-size:8px;color:#94a3b8;min-width:36px;text-align:right;padding-top:2px;">11:00a</div>
+                <div style="flex:1;padding:8px;background:#faf5ff;border-radius:8px;border-left:3px solid #8b5cf6;"><div style="font-size:9px;font-weight:700;color:#7c3aed;">🙏 Prayer Captured</div><div style="font-size:8px;color:#64748b;">Ahmad · Health · Urgent</div></div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:flex-start;">
+                <div style="font-size:8px;color:#94a3b8;min-width:36px;text-align:right;padding-top:2px;">10:30a</div>
+                <div style="flex:1;padding:8px;background:#fffbeb;border-radius:8px;border-left:3px solid #f59e0b;"><div style="font-size:9px;font-weight:700;color:#92400e;">📍 Field Visit</div><div style="font-size:8px;color:#64748b;">Mohamed Ali · Deira · Follow-up</div></div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:flex-start;">
+                <div style="font-size:8px;color:#94a3b8;min-width:36px;text-align:right;padding-top:2px;">8:05a</div>
+                <div style="flex:1;padding:8px;background:#eff6ff;border-radius:8px;border-left:3px solid #3b82f6;"><div style="font-size:9px;font-weight:700;color:#1d4ed8;">⏰ Clocked In</div><div style="font-size:8px;color:#64748b;">Dubai HQ · GPS verified</div></div>
+              </div>
+            </div>
+          </div>
+        `, DNAV_S('activity')) },
+    ]
+  },
+  {
+    title: 'Receipt Book, Tasks & Route',
+    screens: [
+      { num: '15', numBg: '#f59e0b', title: 'Receipt Book & Territory', tag: 'Field tools', tagBg: '#fef3c7', tagColor: '#92400e',
+        body: PH('#fff', `
+          <div style="padding:16px 16px 0;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+              <div style="width:28px;height:28px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;">←</div>
+              <div style="font-size:14px;font-weight:800;color:#1e293b;">Receipt Book & Territory</div>
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:14px;">
+              <div style="flex:1;padding:8px;background:#10b981;border-radius:10px;text-align:center;font-size:9px;font-weight:700;color:#fff;">📖 Receipt Book</div>
+              <div style="flex:1;padding:8px;background:#f1f5f9;border-radius:10px;text-align:center;font-size:9px;font-weight:700;color:#475569;">📍 Territory</div>
+            </div>
+            <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:14px;padding:14px;margin-bottom:12px;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                <span style="font-size:16px;">📖</span>
+                <div><div style="font-size:12px;font-weight:800;color:#1e293b;">RB-045</div><div style="font-size:8px;color:#64748b;">Range: 4501 – 4600</div></div>
+              </div>
+              <div style="display:flex;gap:12px;margin-bottom:8px;">
+                <div><div style="font-size:7px;color:#64748b;">Used</div><div style="font-size:13px;font-weight:800;color:#1e293b;">46</div></div>
+                <div><div style="font-size:7px;color:#64748b;">Voided</div><div style="font-size:13px;font-weight:800;color:#1e293b;">0</div></div>
+                <div><div style="font-size:7px;color:#64748b;">Remaining</div><div style="font-size:13px;font-weight:800;color:#10b981;">54</div></div>
+              </div>
+              <div style="background:#e2e8f0;border-radius:4px;height:6px;margin-bottom:4px;"><div style="background:#10b981;height:6px;border-radius:4px;width:46%;"></div></div>
+              <div style="font-size:8px;color:#10b981;font-weight:700;text-align:right;">46% used</div>
+              <div style="border-top:1px solid #e2e8f0;margin-top:8px;padding-top:8px;display:flex;justify-content:space-between;font-size:8px;">
+                <div><span style="color:#64748b;">Next:</span> <b>#4547</b></div>
+                <div><span style="color:#64748b;">Issued:</span> <b>Mar 1</b></div>
+              </div>
+            </div>
+            <div style="font-size:9px;font-weight:700;color:#94a3b8;margin-bottom:6px;">TODAY'S USAGE</div>
+            <div style="display:flex;flex-direction:column;gap:3px;margin-bottom:10px;">
+              <div style="display:flex;align-items:center;padding:6px 8px;background:#f8fafc;border-radius:6px;font-size:9px;gap:8px;"><b style="min-width:40px;">#4547</b><span>✅</span><span style="flex:1;color:#64748b;">Khalid</span><span style="font-weight:700;color:#065f46;">AED 500</span></div>
+              <div style="display:flex;align-items:center;padding:6px 8px;background:#f8fafc;border-radius:6px;font-size:9px;gap:8px;"><b style="min-width:40px;">#4546</b><span>✅</span><span style="flex:1;color:#64748b;">Fatima</span><span style="font-weight:700;color:#065f46;">AED 200</span></div>
+              <div style="display:flex;align-items:center;padding:6px 8px;background:#fffbeb;border-radius:6px;font-size:9px;gap:8px;"><b style="min-width:40px;">#4544</b><span>⏳</span><span style="flex:1;color:#92400e;">Mohamed</span><span style="font-weight:700;color:#92400e;">AED 300</span></div>
+            </div>
+            <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:10px;display:flex;align-items:center;gap:8px;">
+              <span style="font-size:12px;">⚠️</span>
+              <div style="flex:1;font-size:9px;font-weight:600;color:#92400e;">Book >75% used?</div>
+              <div style="font-size:9px;font-weight:700;color:#92400e;background:#fff;padding:4px 8px;border-radius:6px;">Request New</div>
+            </div>
+          </div>
+        `) },
+
+      { num: '16', numBg: '#3b82f6', title: 'Tasks & Route Planner', tag: 'Field work', tagBg: '#dbeafe', tagColor: '#1e40af',
+        body: PH('#fff', `
+          <div style="padding:16px 16px 0;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+              <div style="width:28px;height:28px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;">←</div>
+              <div style="font-size:14px;font-weight:800;color:#1e293b;flex:1;">Tasks & Route</div>
+              <div style="width:28px;height:28px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;">🔔</div>
+            </div>
+            <div style="font-size:9px;font-weight:700;color:#94a3b8;margin-bottom:6px;">TODAY (3 remaining)</div>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
+              <div style="padding:10px;background:#fef2f2;border-radius:10px;border-left:3px solid #ef4444;">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><div style="width:6px;height:6px;background:#ef4444;border-radius:50%;"></div><div style="font-size:10px;font-weight:700;color:#1e293b;">Visit Ali Rashid</div></div>
+                <div style="font-size:8px;color:#64748b;">Last: 75 days · Deira · AED 200 expected</div>
+                <div style="display:flex;gap:6px;margin-top:6px;">
+                  <div style="flex:1;padding:6px;background:#fff;border-radius:6px;text-align:center;font-size:8px;font-weight:700;color:#475569;">📍 Navigate</div>
+                  <div style="flex:1;padding:6px;background:#10b981;border-radius:6px;text-align:center;font-size:8px;font-weight:700;color:#fff;">✓ Complete</div>
+                </div>
+              </div>
+              <div style="padding:10px;background:#fffbeb;border-radius:10px;border-left:3px solid #f59e0b;">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><div style="width:6px;height:6px;background:#f59e0b;border-radius:50%;"></div><div style="font-size:10px;font-weight:700;color:#1e293b;">Follow up: Pending cheque</div></div>
+                <div style="font-size:8px;color:#64748b;">Ahmad Nasser · AED 1,000 · Due today</div>
+                <div style="display:flex;gap:6px;margin-top:6px;">
+                  <div style="flex:1;padding:6px;background:#fff;border-radius:6px;text-align:center;font-size:8px;font-weight:700;color:#475569;">📞 Call</div>
+                  <div style="flex:1;padding:6px;background:#10b981;border-radius:6px;text-align:center;font-size:8px;font-weight:700;color:#fff;">✓ Complete</div>
+                </div>
+              </div>
+            </div>
+            <div style="font-size:9px;font-weight:700;color:#94a3b8;margin-bottom:6px;">OPTIMIZED ROUTE (3 stops)</div>
+            <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:10px;margin-bottom:12px;">
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:22px;height:22px;background:#10b981;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:800;">1</div>
+                  <div style="flex:1;"><div style="font-size:9px;font-weight:700;color:#1e293b;">Ali Rashid — Deira</div><div style="font-size:7px;color:#64748b;">2.1 km from you</div></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:22px;height:22px;background:#3b82f6;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:800;">2</div>
+                  <div style="flex:1;"><div style="font-size:9px;font-weight:700;color:#1e293b;">Fatima Begum — Deira</div><div style="font-size:7px;color:#64748b;">0.5 km</div></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:22px;height:22px;background:#8b5cf6;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:800;">3</div>
+                  <div style="flex:1;"><div style="font-size:9px;font-weight:700;color:#1e293b;">Hassan Omar — Bur Dubai</div><div style="font-size:7px;color:#64748b;">3 km</div></div>
+                </div>
+              </div>
+              <div style="background:#1e293b;border-radius:10px;padding:10px;text-align:center;color:#fff;font-size:10px;font-weight:700;margin-top:8px;">🗺 Open in Google Maps</div>
+            </div>
+          </div>
+        `) },
+    ]
+  },
+  {
+    title: 'End of Day & Profile',
+    screens: [
+      { num: 'EOD', numBg: '#f59e0b', title: 'End of Day — Cash Handover', tag: 'Reconciliation', tagBg: '#fef3c7', tagColor: '#92400e',
+        body: PH('#fff', `
+          <div style="padding:16px 16px 0;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+              <div style="width:28px;height:28px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;">←</div>
+              <div style="font-size:14px;font-weight:800;color:#1e293b;">End of Day</div>
+            </div>
+            <div style="background:linear-gradient(135deg,#92400e,#f59e0b);border-radius:14px;padding:14px;color:#fff;margin-bottom:14px;">
+              <div style="font-size:8px;font-weight:700;opacity:.7;">TODAY'S SUMMARY · Apr 12, 2026</div>
+              <div style="display:flex;gap:12px;margin-top:8px;">
+                <div><div style="font-size:7px;opacity:.6;">Total</div><div style="font-size:18px;font-weight:900;">AED 2,300</div></div>
+                <div><div style="font-size:7px;opacity:.6;">Donations</div><div style="font-size:16px;font-weight:800;">5</div></div>
+                <div><div style="font-size:7px;opacity:.6;">Visits</div><div style="font-size:16px;font-weight:800;">3</div></div>
+              </div>
+            </div>
+            <div style="font-size:9px;font-weight:700;color:#475569;margin-bottom:6px;">BY PAYMENT MODE</div>
+            <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:14px;">
+              <div style="display:flex;align-items:center;gap:8px;padding:8px;background:#f0fdf4;border-radius:8px;"><span style="font-size:12px;">💵</span><span style="flex:1;font-size:10px;font-weight:700;color:#1e293b;">Cash</span><span style="font-size:8px;color:#64748b;">4 donations</span><span style="font-size:11px;font-weight:800;color:#065f46;">AED 1,300</span></div>
+              <div style="display:flex;align-items:center;gap:8px;padding:8px;background:#f8fafc;border-radius:8px;"><span style="font-size:12px;">📝</span><span style="flex:1;font-size:10px;font-weight:700;color:#1e293b;">Cheque</span><span style="font-size:8px;color:#64748b;">1 donation</span><span style="font-size:11px;font-weight:800;color:#1e293b;">AED 1,000</span></div>
+            </div>
+            <div style="background:#fef3c7;border:1.5px solid #fde68a;border-radius:12px;padding:12px;margin-bottom:14px;">
+              <div style="font-size:9px;font-weight:700;color:#92400e;margin-bottom:4px;">💵 CASH TO HAND OVER</div>
+              <div style="font-size:24px;font-weight:900;color:#1e293b;">AED 1,300</div>
+              <div style="font-size:8px;color:#64748b;margin-top:2px;">Count cash and hand to accounts team</div>
+            </div>
+            <div style="font-size:9px;font-weight:700;color:#475569;margin-bottom:4px;">RECEIVED BY</div>
+            <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:10px;color:#94a3b8;margin-bottom:10px;display:flex;justify-content:space-between;">Select accounts staff <span>▾</span></div>
+            <div style="background:#f59e0b;border-radius:12px;padding:12px;text-align:center;color:#fff;font-size:12px;font-weight:700;">Confirm Handover</div>
+            <div style="text-align:center;margin-top:6px;font-size:8px;color:#94a3b8;">Both staff get confirmation notification</div>
+          </div>
+        `) },
+
+      { num: '⚙', numBg: '#64748b', title: 'Profile & Settings', tag: 'More tab', tagBg: '#f1f5f9', tagColor: '#475569',
+        body: PH('#fff', `
+          <div style="padding:16px 16px 0;">
+            <div style="text-align:center;margin-bottom:14px;">
+              <div style="width:52px;height:52px;background:linear-gradient(135deg,#10b981,#059669);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;color:#fff;font-size:18px;font-weight:900;">AS</div>
+              <div style="font-size:14px;font-weight:800;color:#1e293b;">Ahmed Salim</div>
+              <div style="font-size:9px;color:#64748b;">Field Ambassador · Dubai Branch</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;padding:10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;margin-bottom:12px;">
+              <div style="width:8px;height:8px;background:#10b981;border-radius:50%;"></div>
+              <div style="flex:1;font-size:9px;font-weight:700;color:#065f46;">All data synced</div>
+              <div style="font-size:8px;color:#64748b;">2 min ago</div>
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:12px;">
+              <div style="flex:1;background:#f0fdf4;border-radius:8px;padding:6px;text-align:center;"><div style="font-size:11px;font-weight:900;color:#065f46;">52</div><div style="font-size:7px;color:#64748b;">Collections</div></div>
+              <div style="flex:1;background:#eff6ff;border-radius:8px;padding:6px;text-align:center;"><div style="font-size:11px;font-weight:900;color:#1d4ed8;">AED 24.5K</div><div style="font-size:7px;color:#64748b;">This Month</div></div>
+              <div style="flex:1;background:#faf5ff;border-radius:8px;padding:6px;text-align:center;"><div style="font-size:11px;font-weight:900;color:#7c3aed;">156h</div><div style="font-size:7px;color:#64748b;">Hours</div></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:2px;">
+              <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#f8fafc;border-radius:10px;"><span style="font-size:14px;">👤</span><span style="flex:1;font-size:10px;font-weight:700;color:#1e293b;">My Info</span><span style="color:#94a3b8;font-size:12px;">→</span></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#f8fafc;border-radius:10px;"><span style="font-size:14px;">📊</span><span style="flex:1;font-size:10px;font-weight:700;color:#1e293b;">My Performance</span><span style="color:#94a3b8;font-size:12px;">→</span></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#f8fafc;border-radius:10px;"><span style="font-size:14px;">🔔</span><span style="flex:1;font-size:10px;font-weight:700;color:#1e293b;">Notifications</span><span style="color:#94a3b8;font-size:12px;">→</span></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#f8fafc;border-radius:10px;"><span style="font-size:14px;">🌐</span><span style="flex:1;font-size:10px;font-weight:700;color:#1e293b;">Language</span><span style="font-size:10px;color:#10b981;font-weight:700;">English →</span></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#f8fafc;border-radius:10px;"><span style="font-size:14px;">📡</span><span style="flex:1;font-size:10px;font-weight:700;color:#1e293b;">Offline Data</span><span style="font-size:9px;color:#64748b;">Cached →</span></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#eff6ff;border-radius:10px;"><span style="font-size:14px;">🔄</span><span style="flex:1;font-size:10px;font-weight:700;color:#3b82f6;">Switch to Donor Mode</span><span style="color:#3b82f6;font-size:12px;">→</span></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#fef2f2;border-radius:10px;margin-top:4px;"><span style="font-size:14px;">🚪</span><span style="flex:1;font-size:10px;font-weight:700;color:#ef4444;">Logout</span></div>
+            </div>
+          </div>
+        `, DNAV_S('more')) },
+    ]
+  },
+];
+
+// ── Render ──
+const container = document.getElementById('storyboard');
+sections.forEach(section => {
+  const sectionDiv = document.createElement('div');
+  sectionDiv.className = 'flow-section';
+  sectionDiv.innerHTML = `<div class="flow-section-title">${section.title}</div>`;
+
+  const row = document.createElement('div');
+  row.className = 'screen-row';
+
+  section.screens.forEach(screen => {
+    const card = document.createElement('div');
+    card.className = 'screen-card';
+    card.innerHTML = `
+      <div class="screen-card-header">
+        <div class="screen-number" style="background:${screen.numBg};">${screen.num}</div>
+        <div class="screen-card-title">${screen.title}</div>
+        <div class="screen-card-tag" style="background:${screen.tagBg};color:${screen.tagColor};">${screen.tag}</div>
+      </div>
+      ${screen.body}
+    `;
+    row.appendChild(card);
+  });
+
+  sectionDiv.appendChild(row);
+  container.appendChild(sectionDiv);
+});
+</script>
+
+</body>
+</html>

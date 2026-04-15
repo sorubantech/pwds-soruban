@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event Ticketing - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --events-accent: #7c3aed;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
+    .page-header-left { display: flex; align-items: flex-start; gap: 1rem; }
+    .back-btn { width: 36px; height: 36px; border-radius: 0.5rem; border: 1px solid var(--border-color); background: white; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; font-size: 1rem; margin-top: 0.25rem; }
+    .back-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+    .breadcrumb-nav { font-size: 0.75rem; color: var(--text-secondary); margin: 0 0 0.25rem 0; }
+    .breadcrumb-nav a { color: var(--accent); text-decoration: none; cursor: pointer; }
+    .breadcrumb-nav a:hover { text-decoration: underline; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+    .page-subtitle { font-size: 0.8125rem; color: var(--text-secondary); margin-top: 0.25rem; }
+    .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: flex-start; }
+    .btn-primary-accent { background: var(--accent); border-color: var(--accent); color: white; font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid var(--accent); cursor: pointer; transition: all 0.15s; }
+    .btn-primary-accent:hover { background: #0c6577; border-color: #0c6577; color: white; }
+    .btn-outline-accent { background: white; border: 1px solid var(--accent); color: var(--accent); font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.15s; }
+    .btn-outline-accent:hover { background: var(--accent); color: white; }
+
+    /* Event selector */
+    .event-selector { padding: 0.4rem 0.75rem; font-size: 0.8125rem; border: 1px solid var(--border-color); border-radius: 0.5rem; background: white; color: var(--text-primary); cursor: pointer; font-weight: 600; outline: none; min-width: 240px; }
+    .event-selector:focus { border-color: var(--accent); }
+
+    /* Summary Bar */
+    .summary-bar { background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); padding: 1rem 1.5rem; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; }
+    .summary-bar-left { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+    .summary-bar-left .event-name { font-weight: 700; font-size: 0.9375rem; color: var(--text-primary); }
+    .summary-bar-left .divider { color: var(--border-color); }
+    .summary-bar-left span { font-size: 0.8125rem; color: var(--text-secondary); }
+    .summary-bar-right { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; }
+    .summary-stat { text-align: center; }
+    .summary-stat .val { font-size: 1rem; font-weight: 700; color: var(--text-primary); }
+    .summary-stat .lbl { font-size: 0.6875rem; color: var(--text-secondary); }
+    .summary-stat .progress-inline { display: flex; align-items: center; gap: 0.375rem; }
+    .reg-status { display: inline-flex; align-items: center; gap: 0.375rem; font-size: 0.8125rem; font-weight: 600; color: var(--success-color); }
+
+    /* Dash Card */
+    .dash-card { background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); }
+    .dash-card-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+    .dash-card-header h3 { font-size: 0.9375rem; font-weight: 700; margin: 0; color: var(--text-primary); }
+    .dash-card-body { padding: 1.25rem; }
+
+    /* Section Gap */
+    .section-gap { margin-bottom: 1.25rem; }
+
+    /* Table */
+    .data-table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+    .data-table th { padding: 0.625rem 0.75rem; font-size: 0.6875rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color); text-align: left; white-space: nowrap; }
+    .data-table td { padding: 0.625rem 0.75rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover { background: #f8fafc; }
+
+    /* Small action buttons in tables */
+    .action-btn { font-size: 0.6875rem; padding: 0.25rem 0.5rem; border-radius: 0.25rem; border: 1px solid var(--border-color); background: white; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+    .action-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* More menu dropdown */
+    .more-menu-wrap { position: relative; display: inline-block; }
+    .more-btn { width: 28px; height: 28px; border-radius: 0.375rem; border: 1px solid var(--border-color); background: white; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem; transition: all 0.15s; }
+    .more-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .more-dropdown { display: none; position: absolute; right: 0; top: 34px; background: white; border: 1px solid var(--border-color); border-radius: 0.5rem; box-shadow: 0 4px 16px rgba(0,0,0,0.12); min-width: 160px; z-index: 100; padding: 0.375rem 0; }
+    .more-dropdown.show { display: block; }
+    .more-dropdown a { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; font-size: 0.8125rem; color: var(--text-primary); text-decoration: none; cursor: pointer; }
+    .more-dropdown a:hover { background: var(--accent-bg); color: var(--accent); }
+    .more-dropdown a i { width: 16px; text-align: center; color: var(--text-secondary); }
+
+    /* Status badges */
+    .status-on-sale { color: var(--success-color); font-weight: 600; font-size: 0.75rem; }
+    .status-sold-out { color: var(--text-secondary); font-weight: 600; font-size: 0.75rem; }
+    .ticket-expired { opacity: 0.55; }
+
+    /* Form styles */
+    .form-section { margin-bottom: 1rem; }
+    .form-section label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.375rem; }
+    .form-section label .required { color: var(--danger-color); }
+    .form-input { width: 100%; padding: 0.5rem 0.75rem; font-size: 0.8125rem; border: 1px solid var(--border-color); border-radius: 0.5rem; outline: none; background: white; color: var(--text-primary); transition: border-color 0.15s; }
+    .form-input:focus { border-color: var(--accent); }
+    .form-input-sm { width: auto; min-width: 120px; }
+    .form-select { padding: 0.5rem 0.75rem; font-size: 0.8125rem; border: 1px solid var(--border-color); border-radius: 0.5rem; outline: none; background: white; color: var(--text-primary); cursor: pointer; }
+    .form-select:focus { border-color: var(--accent); }
+    .form-textarea { width: 100%; padding: 0.5rem 0.75rem; font-size: 0.8125rem; border: 1px solid var(--border-color); border-radius: 0.5rem; outline: none; resize: vertical; min-height: 60px; color: var(--text-primary); }
+    .form-textarea:focus { border-color: var(--accent); }
+    .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+    .form-hint { font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.25rem; }
+
+    /* Benefits checklist */
+    .benefits-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .benefit-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; color: var(--text-primary); }
+    .benefit-item input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px; }
+    .add-link { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.8125rem; font-weight: 600; color: var(--accent); cursor: pointer; text-decoration: none; background: none; border: none; padding: 0.25rem 0; }
+    .add-link:hover { text-decoration: underline; }
+
+    /* Toggle switch */
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 0.625rem 0; border-bottom: 1px solid #f1f5f9; }
+    .toggle-row:last-child { border-bottom: none; }
+    .toggle-label { font-size: 0.8125rem; font-weight: 500; color: var(--text-primary); }
+    .toggle-sublabel { font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.125rem; }
+    .toggle-switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #cbd5e1; border-radius: 22px; transition: 0.2s; }
+    .toggle-slider:before { content: ""; position: absolute; height: 16px; width: 16px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s; }
+    .toggle-switch input:checked + .toggle-slider { background: var(--accent); }
+    .toggle-switch input:checked + .toggle-slider:before { transform: translateX(18px); }
+
+    /* Collapsible card */
+    .card-collapsible .collapse-toggle { cursor: pointer; user-select: none; }
+    .card-collapsible .collapse-toggle i.fa-chevron-down { transition: transform 0.2s; }
+    .card-collapsible .collapse-toggle.collapsed i.fa-chevron-down { transform: rotate(-90deg); }
+    .card-collapsible-body { overflow: hidden; transition: max-height 0.3s ease; }
+    .card-collapsible-body.collapsed { max-height: 0 !important; padding: 0 1.25rem !important; }
+
+    /* Preview frame */
+    .preview-frame-wrap { border: 2px solid var(--border-color); border-radius: 0.75rem; overflow: hidden; transition: max-width 0.3s; margin: 0 auto; background: white; }
+    .preview-frame-wrap.desktop { max-width: 100%; }
+    .preview-frame-wrap.mobile { max-width: 375px; }
+    .preview-toolbar { display: flex; align-items: center; gap: 0.5rem; background: #f8fafc; border-bottom: 1px solid var(--border-color); padding: 0.5rem 1rem; }
+    .preview-toolbar .device-btn { padding: 0.25rem 0.625rem; font-size: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.375rem; background: white; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+    .preview-toolbar .device-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .preview-content { padding: 1.5rem; }
+
+    /* Preview internal styles */
+    .preview-banner { background: linear-gradient(135deg, #7c3aed, #a855f7); border-radius: 0.75rem; height: 120px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.875rem; margin-bottom: 1rem; }
+    .preview-event-title { font-size: 1.125rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .preview-event-meta { font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 1rem; }
+    .preview-ticket-row { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; margin-bottom: 0.5rem; }
+    .preview-ticket-info { flex: 1; }
+    .preview-ticket-name { font-size: 0.8125rem; font-weight: 600; }
+    .preview-ticket-price { font-size: 0.75rem; color: var(--text-secondary); }
+    .preview-qty { display: flex; align-items: center; gap: 0.375rem; }
+    .preview-qty button { width: 26px; height: 26px; border-radius: 0.25rem; border: 1px solid var(--border-color); background: white; cursor: pointer; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; }
+    .preview-qty span { font-size: 0.8125rem; font-weight: 600; min-width: 20px; text-align: center; }
+    .preview-subtotal { display: flex; justify-content: space-between; font-size: 0.875rem; font-weight: 700; padding: 0.75rem 0; border-top: 1px solid var(--border-color); margin-top: 0.5rem; }
+    .preview-register-btn { width: 100%; padding: 0.75rem; background: var(--events-accent); color: white; border: none; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 700; cursor: pointer; margin-top: 0.75rem; }
+
+    /* Custom questions */
+    .question-item { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; background: #f8fafc; border-radius: 0.5rem; margin-bottom: 0.5rem; font-size: 0.8125rem; }
+    .question-item .q-type { font-size: 0.6875rem; color: var(--text-secondary); background: white; padding: 0.125rem 0.5rem; border-radius: 9999px; border: 1px solid var(--border-color); }
+
+    /* Checkbox group */
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 1rem; }
+    .checkbox-group label { display: flex; align-items: center; gap: 0.375rem; font-size: 0.8125rem; color: var(--text-primary); cursor: pointer; }
+    .checkbox-group input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px; }
+
+    /* Table footer / pagination */
+    .table-footer { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1.25rem; border-top: 1px solid var(--border-color); font-size: 0.75rem; color: var(--text-secondary); flex-wrap: wrap; gap: 0.5rem; }
+    .pagination-btns { display: flex; gap: 0.25rem; }
+    .pagination-btns button { width: 28px; height: 28px; border-radius: 0.375rem; border: 1px solid var(--border-color); background: white; color: var(--text-secondary); cursor: pointer; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+    .pagination-btns button:hover { border-color: var(--accent); color: var(--accent); }
+    .pagination-btns button.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+    /* Inline progress bar */
+    .inline-progress { display: flex; align-items: center; gap: 0.5rem; }
+    .inline-progress-track { flex: 1; height: 6px; background: #e2e8f0; border-radius: 9999px; overflow: hidden; min-width: 60px; }
+    .inline-progress-fill { height: 100%; border-radius: 9999px; transition: width 0.3s; }
+    .inline-progress-text { font-size: 0.75rem; font-weight: 600; white-space: nowrap; min-width: 40px; }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .form-row { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .summary-bar { flex-direction: column; align-items: flex-start; }
+      .form-row { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 480px) {
+      .page-header { flex-direction: column; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" onclick="parent.loadContent('organization/event-list')">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <div>
+        <p class="breadcrumb-nav"><a onclick="parent.loadContent('organization/event-list')">Events</a> &rsaquo; Event Ticketing</p>
+        <h1>Event Ticketing</h1>
+        <p class="page-subtitle">Configure tickets, pricing, and registration for events</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <select class="event-selector" onchange="alert('Switching to: ' + this.value)">
+        <option>Fundraising Gala 2026</option>
+        <option>Annual Charity Walk 2026</option>
+        <option>Youth Leadership Summit</option>
+        <option>Community Iftar Night</option>
+      </select>
+      <button class="btn-outline-accent" onclick="alert('Opening public page preview...')">
+        <i class="fas fa-external-link-alt me-1"></i> Preview Public Page
+      </button>
+      <button class="btn-outline-accent" onclick="alert('Registration link copied to clipboard!')">
+        <i class="fas fa-share-alt me-1"></i> Share Registration Link
+      </button>
+    </div>
+  </div>
+
+  <!-- Event Summary Bar -->
+  <div class="summary-bar section-gap">
+    <div class="summary-bar-left">
+      <span class="event-name">Fundraising Gala 2026</span>
+      <span class="divider">|</span>
+      <span><i class="fas fa-calendar-alt me-1"></i> Apr 20, 2026</span>
+      <span class="divider">|</span>
+      <span><i class="fas fa-map-marker-alt me-1"></i> Grand Hyatt Dubai</span>
+    </div>
+    <div class="summary-bar-right">
+      <div class="summary-stat">
+        <div class="val">300</div>
+        <div class="lbl">Capacity</div>
+      </div>
+      <div class="summary-stat">
+        <div class="val" style="color: var(--accent);">234 <span style="font-size: 0.75rem; font-weight: 500; color: var(--text-secondary);">(78%)</span></div>
+        <div class="lbl">Registered</div>
+      </div>
+      <div class="summary-stat">
+        <div class="val" style="color: var(--success-color);">$67,800</div>
+        <div class="lbl">Revenue</div>
+      </div>
+      <div>
+        <span class="reg-status">&#128994; Open</span>
+        <div style="font-size: 0.6875rem; color: var(--text-secondary);">closes Apr 18</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ticket Types Configuration -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-ticket-alt me-2" style="color: var(--events-accent);"></i> Ticket Types</h3>
+      <button class="btn-primary-accent" onclick="toggleTicketForm()">
+        <i class="fas fa-plus me-1"></i> Add Ticket Type
+      </button>
+    </div>
+    <div class="dash-card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Ticket</th>
+              <th>Price</th>
+              <th>Qty Available</th>
+              <th>Sold</th>
+              <th>Revenue</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>&#129351; VIP Table (10 seats)</strong></td>
+              <td>$5,000/table</td>
+              <td>10 tables</td>
+              <td>
+                <div class="inline-progress">
+                  <div class="inline-progress-track"><div class="inline-progress-fill" style="width:70%; background: var(--success-color);"></div></div>
+                  <span class="inline-progress-text">7</span>
+                </div>
+              </td>
+              <td><strong>$35,000</strong></td>
+              <td><span class="status-on-sale">&#128994; On Sale</span></td>
+              <td>
+                <div style="display: flex; gap: 0.375rem; align-items: center;">
+                  <button class="action-btn" onclick="alert('Edit VIP Table ticket')">Edit</button>
+                  <div class="more-menu-wrap">
+                    <button class="more-btn" onclick="toggleMenu(this)">&#8943;</button>
+                    <div class="more-dropdown">
+                      <a onclick="alert('Duplicate ticket...')"><i class="fas fa-copy"></i> Duplicate</a>
+                      <a onclick="alert('Pause sales...')"><i class="fas fa-pause"></i> Pause Sales</a>
+                      <a onclick="alert('Delete ticket...')" style="color: var(--danger-color);"><i class="fas fa-trash" style="color: var(--danger-color);"></i> Delete</a>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>&#127915; Premium Seat</strong></td>
+              <td>$500/person</td>
+              <td>50</td>
+              <td>
+                <div class="inline-progress">
+                  <div class="inline-progress-track"><div class="inline-progress-fill" style="width:84%; background: var(--success-color);"></div></div>
+                  <span class="inline-progress-text">42</span>
+                </div>
+              </td>
+              <td><strong>$21,000</strong></td>
+              <td><span class="status-on-sale">&#128994; On Sale</span></td>
+              <td>
+                <div style="display: flex; gap: 0.375rem; align-items: center;">
+                  <button class="action-btn" onclick="alert('Edit Premium Seat ticket')">Edit</button>
+                  <div class="more-menu-wrap">
+                    <button class="more-btn" onclick="toggleMenu(this)">&#8943;</button>
+                    <div class="more-dropdown">
+                      <a onclick="alert('Duplicate ticket...')"><i class="fas fa-copy"></i> Duplicate</a>
+                      <a onclick="alert('Pause sales...')"><i class="fas fa-pause"></i> Pause Sales</a>
+                      <a onclick="alert('Delete ticket...')" style="color: var(--danger-color);"><i class="fas fa-trash" style="color: var(--danger-color);"></i> Delete</a>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>&#127915; Standard Seat</strong></td>
+              <td>$200/person</td>
+              <td>100</td>
+              <td>
+                <div class="inline-progress">
+                  <div class="inline-progress-track"><div class="inline-progress-fill" style="width:78%; background: var(--success-color);"></div></div>
+                  <span class="inline-progress-text">78</span>
+                </div>
+              </td>
+              <td><strong>$15,600</strong></td>
+              <td><span class="status-on-sale">&#128994; On Sale</span></td>
+              <td>
+                <div style="display: flex; gap: 0.375rem; align-items: center;">
+                  <button class="action-btn" onclick="alert('Edit Standard Seat ticket')">Edit</button>
+                  <div class="more-menu-wrap">
+                    <button class="more-btn" onclick="toggleMenu(this)">&#8943;</button>
+                    <div class="more-dropdown">
+                      <a onclick="alert('Duplicate ticket...')"><i class="fas fa-copy"></i> Duplicate</a>
+                      <a onclick="alert('Pause sales...')"><i class="fas fa-pause"></i> Pause Sales</a>
+                      <a onclick="alert('Delete ticket...')" style="color: var(--danger-color);"><i class="fas fa-trash" style="color: var(--danger-color);"></i> Delete</a>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>&#127903; Standing</strong></td>
+              <td>$100/person</td>
+              <td>100</td>
+              <td>
+                <div class="inline-progress">
+                  <div class="inline-progress-track"><div class="inline-progress-fill" style="width:67%; background: var(--warning-color);"></div></div>
+                  <span class="inline-progress-text">67</span>
+                </div>
+              </td>
+              <td><strong>$6,700</strong></td>
+              <td><span class="status-on-sale">&#128994; On Sale</span></td>
+              <td>
+                <div style="display: flex; gap: 0.375rem; align-items: center;">
+                  <button class="action-btn" onclick="alert('Edit Standing ticket')">Edit</button>
+                  <div class="more-menu-wrap">
+                    <button class="more-btn" onclick="toggleMenu(this)">&#8943;</button>
+                    <div class="more-dropdown">
+                      <a onclick="alert('Duplicate ticket...')"><i class="fas fa-copy"></i> Duplicate</a>
+                      <a onclick="alert('Pause sales...')"><i class="fas fa-pause"></i> Pause Sales</a>
+                      <a onclick="alert('Delete ticket...')" style="color: var(--danger-color);"><i class="fas fa-trash" style="color: var(--danger-color);"></i> Delete</a>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>&#127381; Complimentary</strong></td>
+              <td>Free</td>
+              <td>40</td>
+              <td>
+                <div class="inline-progress">
+                  <div class="inline-progress-track"><div class="inline-progress-fill" style="width:85%; background: var(--accent);"></div></div>
+                  <span class="inline-progress-text">34</span>
+                </div>
+              </td>
+              <td>$0</td>
+              <td><span class="status-on-sale">&#128994; Available</span></td>
+              <td>
+                <div style="display: flex; gap: 0.375rem; align-items: center;">
+                  <button class="action-btn" onclick="alert('Edit Complimentary ticket')">Edit</button>
+                  <div class="more-menu-wrap">
+                    <button class="more-btn" onclick="toggleMenu(this)">&#8943;</button>
+                    <div class="more-dropdown">
+                      <a onclick="alert('Duplicate ticket...')"><i class="fas fa-copy"></i> Duplicate</a>
+                      <a onclick="alert('Pause sales...')"><i class="fas fa-pause"></i> Pause Sales</a>
+                      <a onclick="alert('Delete ticket...')" style="color: var(--danger-color);"><i class="fas fa-trash" style="color: var(--danger-color);"></i> Delete</a>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr class="ticket-expired">
+              <td><strong>&#127915; Early Bird (expired)</strong></td>
+              <td>$150/person</td>
+              <td>50</td>
+              <td>
+                <div class="inline-progress">
+                  <div class="inline-progress-track"><div class="inline-progress-fill" style="width:100%; background: var(--text-secondary);"></div></div>
+                  <span class="inline-progress-text">50</span>
+                </div>
+              </td>
+              <td><strong>$7,500</strong></td>
+              <td><span class="status-sold-out">&#9208; Sold Out</span></td>
+              <td>
+                <div style="display: flex; gap: 0.375rem; align-items: center;">
+                  <div class="more-menu-wrap">
+                    <button class="more-btn" onclick="toggleMenu(this)">&#8943;</button>
+                    <div class="more-dropdown">
+                      <a onclick="alert('Duplicate ticket...')"><i class="fas fa-copy"></i> Duplicate</a>
+                      <a onclick="alert('View details...')"><i class="fas fa-eye"></i> View Details</a>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Ticket Type Form -->
+  <div class="dash-card section-gap" id="ticketFormCard">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-plus-circle me-2" style="color: var(--accent);"></i> Add Ticket Type</h3>
+      <button style="background: none; border: none; cursor: pointer; color: var(--text-secondary); font-size: 1rem;" onclick="toggleTicketForm()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="dash-card-body">
+      <div class="form-row" style="margin-bottom: 1rem;">
+        <div class="form-section">
+          <label>Ticket Name <span class="required">*</span></label>
+          <input type="text" class="form-input" placeholder="e.g., VIP Table, Standard Seat">
+        </div>
+        <div class="form-section">
+          <label>Pricing Type</label>
+          <select class="form-select" style="width: 100%;" onchange="toggleGroupSize(this)">
+            <option>Per person</option>
+            <option>Per table</option>
+            <option>Per group</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-section" style="margin-bottom: 1rem;">
+        <label>Description</label>
+        <textarea class="form-textarea" placeholder="Describe what's included with this ticket type..."></textarea>
+      </div>
+      <div class="form-row" style="margin-bottom: 1rem;">
+        <div class="form-section">
+          <label>Price <span class="required">*</span></label>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <select class="form-select" style="width: 80px;">
+              <option>USD</option>
+              <option>AED</option>
+              <option>GBP</option>
+              <option>EUR</option>
+            </select>
+            <input type="number" class="form-input" placeholder="0.00" style="flex: 1;">
+          </div>
+        </div>
+        <div class="form-section" id="groupSizeField" style="display: none;">
+          <label>Group Size</label>
+          <input type="number" class="form-input" placeholder="e.g., 10 seats per table" min="1">
+        </div>
+        <div class="form-section">
+          <label>Quantity Available <span class="required">*</span></label>
+          <input type="number" class="form-input" placeholder="e.g., 100" min="1">
+        </div>
+      </div>
+      <div class="form-row" style="margin-bottom: 1rem;">
+        <div class="form-section">
+          <label>Sale Start Date</label>
+          <input type="date" class="form-input" value="2026-03-01">
+        </div>
+        <div class="form-section">
+          <label>Sale End Date</label>
+          <input type="date" class="form-input" value="2026-04-18">
+        </div>
+      </div>
+      <div class="form-row" style="margin-bottom: 1rem;">
+        <div class="form-section">
+          <label>Min Per Order</label>
+          <input type="number" class="form-input" value="1" min="1">
+        </div>
+        <div class="form-section">
+          <label>Max Per Order</label>
+          <input type="number" class="form-input" value="10" min="1">
+        </div>
+      </div>
+      <div class="form-section" style="margin-bottom: 1rem;">
+        <label>Benefits</label>
+        <div class="benefits-list">
+          <div class="benefit-item">
+            <input type="checkbox" checked> <span>VIP lounge access</span>
+          </div>
+          <div class="benefit-item">
+            <input type="checkbox" checked> <span>Meet &amp; greet</span>
+          </div>
+          <div class="benefit-item">
+            <input type="checkbox"> <span>Premium dinner menu</span>
+          </div>
+          <div class="benefit-item">
+            <input type="checkbox"> <span>Gift bag</span>
+          </div>
+          <button class="add-link" onclick="alert('Add custom benefit')"><i class="fas fa-plus"></i> Add Benefit</button>
+        </div>
+      </div>
+      <div class="form-row" style="margin-bottom: 1rem;">
+        <div class="form-section">
+          <label>Visibility</label>
+          <select class="form-select" style="width: 100%;">
+            <option>Public</option>
+            <option>Hidden</option>
+            <option>Password protected</option>
+          </select>
+        </div>
+        <div class="form-section">
+          <label>Discount Code</label>
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <label class="toggle-switch" style="margin: 0;">
+              <input type="checkbox" id="discountToggle" onchange="document.getElementById('discountInput').style.display = this.checked ? 'block' : 'none'">
+              <span class="toggle-slider"></span>
+            </label>
+            <input type="text" class="form-input" id="discountInput" placeholder="e.g., EARLYVIP20" style="display: none; flex: 1;">
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end; padding-top: 0.75rem; border-top: 1px solid var(--border-color);">
+        <button class="btn-outline-accent" onclick="toggleTicketForm()">Cancel</button>
+        <button class="btn-primary-accent" onclick="alert('Ticket type saved!')">
+          <i class="fas fa-check me-1"></i> Save Ticket Type
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Registration Settings -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-cog me-2" style="color: var(--accent);"></i> Registration Settings</h3>
+    </div>
+    <div class="dash-card-body">
+      <!-- Toggles Section -->
+      <div style="margin-bottom: 1.25rem;">
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Registration Open</div>
+            <div class="toggle-sublabel">Open: Mar 1, 2026 &mdash; Close: Apr 18, 2026</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Waitlist</div>
+            <div class="toggle-sublabel">Allow signups when capacity is reached; auto-promote when spots open</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Approval Required</div>
+            <div class="toggle-sublabel">Manually approve each registration before confirming</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Custom Questions -->
+      <div style="margin-bottom: 1.25rem;">
+        <label style="font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.75rem; display: block;">
+          <i class="fas fa-clipboard-question me-1" style="color: var(--accent);"></i> Custom Questions
+        </label>
+        <div class="question-item">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fas fa-grip-vertical" style="color: var(--border-color); cursor: grab;"></i>
+            <span>Dietary requirements</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="q-type">Dropdown</span>
+            <button class="action-btn" onclick="alert('Edit question')"><i class="fas fa-pen"></i></button>
+          </div>
+        </div>
+        <div class="question-item">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fas fa-grip-vertical" style="color: var(--border-color); cursor: grab;"></i>
+            <span>Accessibility needs</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="q-type">Text</span>
+            <button class="action-btn" onclick="alert('Edit question')"><i class="fas fa-pen"></i></button>
+          </div>
+        </div>
+        <div class="question-item">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fas fa-grip-vertical" style="color: var(--border-color); cursor: grab;"></i>
+            <span>How did you hear about this event?</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="q-type">Dropdown</span>
+            <button class="action-btn" onclick="alert('Edit question')"><i class="fas fa-pen"></i></button>
+          </div>
+        </div>
+        <button class="add-link" onclick="alert('Add custom question')" style="margin-top: 0.375rem;">
+          <i class="fas fa-plus"></i> Add Question
+        </button>
+      </div>
+
+      <!-- Email & Check-in Settings -->
+      <div style="border-top: 1px solid var(--border-color); padding-top: 1rem;">
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Confirmation Email</div>
+            <div class="toggle-sublabel">Send automatic confirmation with ticket details and QR code</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Reminder Emails</div>
+            <div class="toggle-sublabel" style="margin-top: 0.375rem;">
+              <div class="checkbox-group">
+                <label><input type="checkbox" checked> 7 days before</label>
+                <label><input type="checkbox" checked> 1 day before</label>
+              </div>
+            </div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">QR Code Check-in</div>
+            <div class="toggle-sublabel">Generate unique QR codes for each registrant for event-day check-in</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Public Registration Page Preview -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-eye me-2" style="color: var(--events-accent);"></i> Public Registration Page Preview</h3>
+    </div>
+    <div class="dash-card-body">
+      <div class="preview-frame-wrap desktop" id="previewFrame">
+        <div class="preview-toolbar">
+          <span style="font-size: 0.75rem; color: var(--text-secondary); margin-right: auto;">
+            <i class="fas fa-globe me-1"></i> events.peopleserve.org/fundraising-gala-2026
+          </span>
+          <button class="device-btn active" onclick="switchPreview('desktop', this)"><i class="fas fa-desktop me-1"></i> Desktop</button>
+          <button class="device-btn" onclick="switchPreview('mobile', this)"><i class="fas fa-mobile-alt me-1"></i> Mobile</button>
+        </div>
+        <div class="preview-content">
+          <div class="preview-banner">
+            <div style="text-align: center;">
+              <div style="font-size: 1.5rem; margin-bottom: 0.25rem;"><i class="fas fa-image"></i></div>
+              <div>Event Banner Image</div>
+            </div>
+          </div>
+          <div class="preview-event-title">Fundraising Gala 2026</div>
+          <div class="preview-event-meta">
+            <i class="fas fa-calendar-alt me-1"></i> April 20, 2026 &bull; 7:00 PM &ndash; 11:00 PM
+            &nbsp;&nbsp;
+            <i class="fas fa-map-marker-alt me-1"></i> Grand Hyatt Dubai
+          </div>
+          <div style="font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.5;">
+            Join us for an unforgettable evening of philanthropy, networking, and entertainment. All proceeds support community development programs across the region.
+          </div>
+          <div style="font-size: 0.8125rem; font-weight: 700; margin-bottom: 0.75rem;">Select Tickets</div>
+
+          <div class="preview-ticket-row">
+            <div class="preview-ticket-info">
+              <div class="preview-ticket-name">VIP Table (10 seats)</div>
+              <div class="preview-ticket-price">$5,000/table &bull; 3 remaining</div>
+            </div>
+            <div class="preview-qty">
+              <button onclick="adjustQty(this, -1)">-</button>
+              <span>0</span>
+              <button onclick="adjustQty(this, 1)">+</button>
+            </div>
+          </div>
+          <div class="preview-ticket-row">
+            <div class="preview-ticket-info">
+              <div class="preview-ticket-name">Premium Seat</div>
+              <div class="preview-ticket-price">$500/person &bull; 8 remaining</div>
+            </div>
+            <div class="preview-qty">
+              <button onclick="adjustQty(this, -1)">-</button>
+              <span>0</span>
+              <button onclick="adjustQty(this, 1)">+</button>
+            </div>
+          </div>
+          <div class="preview-ticket-row">
+            <div class="preview-ticket-info">
+              <div class="preview-ticket-name">Standard Seat</div>
+              <div class="preview-ticket-price">$200/person &bull; 22 remaining</div>
+            </div>
+            <div class="preview-qty">
+              <button onclick="adjustQty(this, -1)">-</button>
+              <span>2</span>
+              <button onclick="adjustQty(this, 1)">+</button>
+            </div>
+          </div>
+          <div class="preview-ticket-row">
+            <div class="preview-ticket-info">
+              <div class="preview-ticket-name">Standing</div>
+              <div class="preview-ticket-price">$100/person &bull; 33 remaining</div>
+            </div>
+            <div class="preview-qty">
+              <button onclick="adjustQty(this, -1)">-</button>
+              <span>0</span>
+              <button onclick="adjustQty(this, 1)">+</button>
+            </div>
+          </div>
+
+          <div class="preview-subtotal">
+            <span>Subtotal</span>
+            <span>$400.00</span>
+          </div>
+          <button class="preview-register-btn" onclick="alert('Registration form would open here')">
+            Register Now
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Registrant List -->
+  <div class="dash-card card-collapsible section-gap">
+    <div class="dash-card-header collapse-toggle" onclick="toggleCollapse(this)">
+      <h3><i class="fas fa-users me-2" style="color: var(--accent);"></i> Registrants <span style="font-weight: 400; color: var(--text-secondary); font-size: 0.8125rem;">(234 total)</span></h3>
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <input type="text" placeholder="Search registrants..." style="padding: 0.375rem 0.75rem; font-size: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.375rem; outline: none; width: 180px;" onclick="event.stopPropagation()">
+          <select style="padding: 0.375rem 0.5rem; font-size: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.375rem; outline: none; background: white; cursor: pointer;" onclick="event.stopPropagation()">
+            <option>All Tickets</option>
+            <option>VIP Table</option>
+            <option>Premium Seat</option>
+            <option>Standard Seat</option>
+            <option>Standing</option>
+            <option>Complimentary</option>
+          </select>
+        </div>
+        <i class="fas fa-chevron-down" style="color: var(--text-secondary); font-size: 0.75rem;"></i>
+      </div>
+    </div>
+    <div class="card-collapsible-body" id="registrantBody" style="max-height: 2000px;">
+      <div style="padding: 0;">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Ticket</th>
+                <th>Qty</th>
+                <th>Amount</th>
+                <th>Registered</th>
+                <th>Check-in</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><a href="#" onclick="parent.loadContent('contacts/contact-detail'); return false;" style="color: var(--accent); text-decoration: none; font-weight: 600;">Ahmed Al-Rashid</a></td>
+                <td style="color: var(--text-secondary);">ahmed.rashid@example.com</td>
+                <td>VIP Table</td>
+                <td>2 tables</td>
+                <td><strong>$10,000</strong></td>
+                <td style="color: var(--text-secondary);">Mar 5, 2026</td>
+                <td><input type="checkbox" style="accent-color: var(--accent); width: 16px; height: 16px;"></td>
+                <td>
+                  <div style="display: flex; gap: 0.375rem;">
+                    <button class="action-btn" title="Download QR Code" onclick="alert('Downloading QR code for Ahmed...')"><i class="fas fa-qrcode"></i></button>
+                    <button class="action-btn" title="Edit" onclick="alert('Edit registration')"><i class="fas fa-pen"></i></button>
+                    <button class="action-btn" title="Cancel Registration" onclick="alert('Cancel registration?')" style="border-color: var(--danger-color); color: var(--danger-color);"><i class="fas fa-times"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><a href="#" onclick="parent.loadContent('contacts/contact-detail'); return false;" style="color: var(--accent); text-decoration: none; font-weight: 600;">Sarah Johnson</a></td>
+                <td style="color: var(--text-secondary);">sarah.j@globalfund.org</td>
+                <td>Premium Seat</td>
+                <td>4</td>
+                <td><strong>$2,000</strong></td>
+                <td style="color: var(--text-secondary);">Mar 8, 2026</td>
+                <td><input type="checkbox" style="accent-color: var(--accent); width: 16px; height: 16px;"></td>
+                <td>
+                  <div style="display: flex; gap: 0.375rem;">
+                    <button class="action-btn" title="Download QR Code" onclick="alert('Downloading QR code...')"><i class="fas fa-qrcode"></i></button>
+                    <button class="action-btn" title="Edit" onclick="alert('Edit registration')"><i class="fas fa-pen"></i></button>
+                    <button class="action-btn" title="Cancel Registration" onclick="alert('Cancel registration?')" style="border-color: var(--danger-color); color: var(--danger-color);"><i class="fas fa-times"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><a href="#" onclick="parent.loadContent('contacts/contact-detail'); return false;" style="color: var(--accent); text-decoration: none; font-weight: 600;">Fatima Al-Sayed</a></td>
+                <td style="color: var(--text-secondary);">fatima.sayed@email.com</td>
+                <td>Standard Seat</td>
+                <td>2</td>
+                <td><strong>$400</strong></td>
+                <td style="color: var(--text-secondary);">Mar 12, 2026</td>
+                <td><input type="checkbox" style="accent-color: var(--accent); width: 16px; height: 16px;"></td>
+                <td>
+                  <div style="display: flex; gap: 0.375rem;">
+                    <button class="action-btn" title="Download QR Code" onclick="alert('Downloading QR code...')"><i class="fas fa-qrcode"></i></button>
+                    <button class="action-btn" title="Edit" onclick="alert('Edit registration')"><i class="fas fa-pen"></i></button>
+                    <button class="action-btn" title="Cancel Registration" onclick="alert('Cancel registration?')" style="border-color: var(--danger-color); color: var(--danger-color);"><i class="fas fa-times"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><a href="#" onclick="parent.loadContent('contacts/contact-detail'); return false;" style="color: var(--accent); text-decoration: none; font-weight: 600;">David Chen</a></td>
+                <td style="color: var(--text-secondary);">d.chen@techcorp.io</td>
+                <td>VIP Table</td>
+                <td>1 table</td>
+                <td><strong>$5,000</strong></td>
+                <td style="color: var(--text-secondary);">Mar 15, 2026</td>
+                <td><input type="checkbox" style="accent-color: var(--accent); width: 16px; height: 16px;"></td>
+                <td>
+                  <div style="display: flex; gap: 0.375rem;">
+                    <button class="action-btn" title="Download QR Code" onclick="alert('Downloading QR code...')"><i class="fas fa-qrcode"></i></button>
+                    <button class="action-btn" title="Edit" onclick="alert('Edit registration')"><i class="fas fa-pen"></i></button>
+                    <button class="action-btn" title="Cancel Registration" onclick="alert('Cancel registration?')" style="border-color: var(--danger-color); color: var(--danger-color);"><i class="fas fa-times"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><a href="#" onclick="parent.loadContent('contacts/contact-detail'); return false;" style="color: var(--accent); text-decoration: none; font-weight: 600;">Maria Gonzalez</a></td>
+                <td style="color: var(--text-secondary);">m.gonzalez@ngo-alliance.org</td>
+                <td>Standing</td>
+                <td>6</td>
+                <td><strong>$600</strong></td>
+                <td style="color: var(--text-secondary);">Mar 20, 2026</td>
+                <td><input type="checkbox" style="accent-color: var(--accent); width: 16px; height: 16px;"></td>
+                <td>
+                  <div style="display: flex; gap: 0.375rem;">
+                    <button class="action-btn" title="Download QR Code" onclick="alert('Downloading QR code...')"><i class="fas fa-qrcode"></i></button>
+                    <button class="action-btn" title="Edit" onclick="alert('Edit registration')"><i class="fas fa-pen"></i></button>
+                    <button class="action-btn" title="Cancel Registration" onclick="alert('Cancel registration?')" style="border-color: var(--danger-color); color: var(--danger-color);"><i class="fas fa-times"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><a href="#" onclick="parent.loadContent('contacts/contact-detail'); return false;" style="color: var(--accent); text-decoration: none; font-weight: 600;">Khalid Mohammed</a></td>
+                <td style="color: var(--text-secondary);">khalid.m@dubai-charity.ae</td>
+                <td>Complimentary</td>
+                <td>2</td>
+                <td>$0</td>
+                <td style="color: var(--text-secondary);">Apr 1, 2026</td>
+                <td><input type="checkbox" style="accent-color: var(--accent); width: 16px; height: 16px;"></td>
+                <td>
+                  <div style="display: flex; gap: 0.375rem;">
+                    <button class="action-btn" title="Download QR Code" onclick="alert('Downloading QR code...')"><i class="fas fa-qrcode"></i></button>
+                    <button class="action-btn" title="Edit" onclick="alert('Edit registration')"><i class="fas fa-pen"></i></button>
+                    <button class="action-btn" title="Cancel Registration" onclick="alert('Cancel registration?')" style="border-color: var(--danger-color); color: var(--danger-color);"><i class="fas fa-times"></i></button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="table-footer">
+        <span>Showing 1&ndash;6 of 234 registrants</span>
+        <div class="pagination-btns">
+          <button disabled><i class="fas fa-chevron-left"></i></button>
+          <button class="active">1</button>
+          <button>2</button>
+          <button>3</button>
+          <button>...</button>
+          <button>39</button>
+          <button><i class="fas fa-chevron-right"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Toggle more-menu dropdowns
+    function toggleMenu(btn) {
+      const dropdown = btn.nextElementSibling;
+      document.querySelectorAll('.more-dropdown.show').forEach(d => {
+        if (d !== dropdown) d.classList.remove('show');
+      });
+      dropdown.classList.toggle('show');
+    }
+
+    // Close dropdowns on outside click
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.more-menu-wrap')) {
+        document.querySelectorAll('.more-dropdown.show').forEach(d => d.classList.remove('show'));
+      }
+    });
+
+    // Toggle ticket form card visibility
+    function toggleTicketForm() {
+      const card = document.getElementById('ticketFormCard');
+      card.style.display = card.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // Toggle group size field based on pricing type
+    function toggleGroupSize(select) {
+      const field = document.getElementById('groupSizeField');
+      field.style.display = (select.value === 'Per table' || select.value === 'Per group') ? 'block' : 'none';
+    }
+
+    // Switch preview between desktop and mobile
+    function switchPreview(mode, btn) {
+      const frame = document.getElementById('previewFrame');
+      frame.classList.remove('desktop', 'mobile');
+      frame.classList.add(mode);
+      document.querySelectorAll('.preview-toolbar .device-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    // Adjust quantity in preview
+    function adjustQty(btn, delta) {
+      const span = btn.parentElement.querySelector('span');
+      let val = parseInt(span.textContent) + delta;
+      if (val < 0) val = 0;
+      if (val > 10) val = 10;
+      span.textContent = val;
+    }
+
+    // Collapsible card toggle
+    function toggleCollapse(header) {
+      const body = header.nextElementSibling;
+      const icon = header.querySelector('.fa-chevron-down');
+      if (body.classList.contains('collapsed')) {
+        body.classList.remove('collapsed');
+        body.style.maxHeight = '2000px';
+        if (icon) icon.style.transform = 'rotate(0deg)';
+        header.classList.remove('collapsed');
+      } else {
+        body.classList.add('collapsed');
+        body.style.maxHeight = '0';
+        body.style.padding = '0 1.25rem';
+        if (icon) icon.style.transform = 'rotate(-90deg)';
+        header.classList.add('collapsed');
+      }
+    }
+  </script>
+
+</body>
+</html>

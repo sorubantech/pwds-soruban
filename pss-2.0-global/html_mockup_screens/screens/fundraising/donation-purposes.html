@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Purposes & Categories - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #0c6577;
+      border-color: #0c6577;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Tabs */
+    .tab-nav {
+      display: flex;
+      gap: 0;
+      margin-bottom: 1.25rem;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .tab-btn {
+      padding: 0.75rem 1.5rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .tab-btn:hover {
+      color: var(--accent);
+    }
+
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-btn .count-badge {
+      background: #f1f5f9;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      padding: 0.1rem 0.45rem;
+      border-radius: 9999px;
+      font-weight: 700;
+    }
+
+    .tab-btn.active .count-badge {
+      background: var(--accent-bg);
+      color: var(--accent);
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* Card */
+    .list-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+    }
+
+    /* Table */
+    .table-responsive {
+      overflow-x: auto;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    .data-table thead th {
+      background: #f8fafc;
+      padding: 0.75rem 1rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      font-size: 0.6875rem;
+      letter-spacing: 0.05em;
+      border-bottom: 2px solid var(--border-color);
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .data-table tbody tr {
+      border-bottom: 1px solid var(--border-color);
+      transition: background 0.15s;
+    }
+
+    .data-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    .data-table tbody td {
+      padding: 0.75rem 1rem;
+      vertical-align: middle;
+      color: var(--text-primary);
+    }
+
+    .data-table tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    /* Purpose Code Badge */
+    .purpose-code {
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: #f1f5f9;
+      color: var(--text-primary);
+      padding: 0.2rem 0.5rem;
+      border-radius: 0.25rem;
+      border: 1px solid var(--border-color);
+    }
+
+    /* Status Badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+    }
+
+    .status-badge.active {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .status-badge.inactive {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .status-dot.active {
+      background: #22c55e;
+    }
+
+    .status-dot.inactive {
+      background: #f59e0b;
+    }
+
+    /* Category Badge */
+    .cat-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 9999px;
+      background: var(--accent-bg);
+      color: var(--accent);
+    }
+
+    .group-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 9999px;
+      background: #ede9fe;
+      color: #6d28d9;
+    }
+
+    /* Progress Bar (inline) */
+    .target-progress {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .target-bar-wrap {
+      flex: 1;
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      overflow: hidden;
+      min-width: 60px;
+    }
+
+    .target-bar {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s;
+    }
+
+    .target-bar.low {
+      background: var(--danger-color);
+    }
+
+    .target-bar.mid {
+      background: var(--warning-color);
+    }
+
+    .target-bar.high {
+      background: var(--success-color);
+    }
+
+    .target-bar.full {
+      background: var(--accent);
+    }
+
+    .target-text {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      min-width: 90px;
+    }
+
+    /* Action Buttons */
+    .action-btn {
+      background: none;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 0.3rem 0.5rem;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      font-size: 0.75rem;
+      transition: all 0.15s;
+    }
+
+    .action-btn:hover {
+      background: #f8fafc;
+      color: var(--text-primary);
+      border-color: #cbd5e1;
+    }
+
+    .action-btn.delete:hover {
+      background: #fef2f2;
+      color: var(--danger-color);
+      border-color: #fca5a5;
+    }
+
+    /* Order Number */
+    .order-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #f1f5f9;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    /* Count link */
+    .count-link {
+      color: var(--accent);
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .count-link:hover {
+      text-decoration: underline;
+      color: #0c6577;
+    }
+
+    /* Modal */
+    .modal-header-accent {
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      color: white;
+      border-radius: var(--card-radius) var(--card-radius) 0 0;
+    }
+
+    .modal-header-accent .btn-close {
+      filter: brightness(0) invert(1);
+    }
+
+    .modal-content {
+      border-radius: var(--card-radius);
+      border: none;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    }
+
+    .form-label {
+      font-weight: 600;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      margin-bottom: 0.35rem;
+    }
+
+    .form-control,
+    .form-select {
+      font-size: 0.8125rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+      padding: 0.5rem 0.75rem;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .form-switch .form-check-input:checked {
+      background-color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .required-star {
+      color: var(--danger-color);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body {
+        padding: 1rem;
+      }
+
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .tab-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.75rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-layer-group me-2" style="color: var(--accent);"></i>Purposes & Categories</h1>
+      <p class="subtitle">Manage donation allocation structure</p>
+    </div>
+    <div class="header-actions" id="headerActions">
+      <button class="btn-outline-accent" onclick="alert('Export list')">
+        <i class="fas fa-download me-1"></i> Export
+      </button>
+      <button class="btn-primary-accent" id="addBtn" data-bs-toggle="modal" data-bs-target="#purposeModal" onclick="openNewPurpose()">
+        <i class="fas fa-plus me-1"></i> New Purpose
+      </button>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('purposes', this)">
+      <i class="fas fa-bullseye"></i> Purposes <span class="count-badge">8</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('categories', this)">
+      <i class="fas fa-folder"></i> Categories <span class="count-badge">6</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('groups', this)">
+      <i class="fas fa-object-group"></i> Groups <span class="count-badge">4</span>
+    </button>
+  </div>
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- TAB 1: Donation Purposes                    -->
+  <!-- ════════════════════════════════════════════ -->
+  <div class="tab-panel active" id="tab-purposes">
+    <div class="list-card">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Code</th>
+              <th>Purpose Name</th>
+              <th>Category</th>
+              <th>Group</th>
+              <th>Org Unit</th>
+              <th>Target / Raised</th>
+              <th>Start</th>
+              <th>End</th>
+              <th>Order</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td><span class="purpose-code">EDU-001</span></td>
+              <td><strong>Children's Education Fund</strong></td>
+              <td><span class="cat-badge">Education</span></td>
+              <td><span class="group-badge">Program Funds</span></td>
+              <td>Education Dept</td>
+              <td>
+                <div class="target-progress">
+                  <div class="target-bar-wrap"><div class="target-bar mid" style="width:42.5%"></div></div>
+                  <span class="target-text">$42,500 / $100,000 (42.5%)</span>
+                </div>
+              </td>
+              <td>Jan 2026</td>
+              <td>Dec 2026</td>
+              <td><span class="order-num">1</span></td>
+              <td><span class="status-badge active"><span class="status-dot active"></span> Active</span></td>
+              <td>
+                <button class="action-btn" title="Edit" onclick="openEditPurpose(0)" data-bs-toggle="modal" data-bs-target="#purposeModal"><i class="fas fa-pen"></i></button>
+                <button class="action-btn delete" title="Delete" onclick="alert('Delete purpose?')"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td><span class="purpose-code">EDU-002</span></td>
+              <td><strong>Scholarship Program</strong></td>
+              <td><span class="cat-badge">Education</span></td>
+              <td><span class="group-badge">Program Funds</span></td>
+              <td>Education Dept</td>
+              <td>
+                <div class="target-progress">
+                  <div class="target-bar-wrap"><div class="target-bar mid" style="width:36.4%"></div></div>
+                  <span class="target-text">$18,200 / $50,000 (36.4%)</span>
+                </div>
+              </td>
+              <td>Jan 2026</td>
+              <td>Dec 2026</td>
+              <td><span class="order-num">2</span></td>
+              <td><span class="status-badge active"><span class="status-dot active"></span> Active</span></td>
+              <td>
+                <button class="action-btn" title="Edit" onclick="openEditPurpose(1)" data-bs-toggle="modal" data-bs-target="#purposeModal"><i class="fas fa-pen"></i></button>
+                <button class="action-btn delete" title="Delete" onclick="alert('Delete purpose?')"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td><span class="purpose-code">HLT-001</span></td>
+              <td><strong>Medical Aid Fund</strong></td>
+              <td><span class="cat-badge">Health</span></td>
+              <td><span class="group-badge">Program Funds</span></td>
+              <td>Health Dept</td>
+              <td>
+                <div class="target-progress">
+                  <div class="target-bar-wrap"><div class="target-bar mid" style="width:38.5%"></div></div>
+                  <span class="target-text">$28,900 / $75,000 (38.5%)</span>
+                </div>
+              </td>
+              <td>Jan 2026</td>
+              <td>Dec 2026</td>
+              <td><span class="order-num">3</span></td>
+              <td><span class="status-badge active"><span class="status-dot active"></span> Active</span></td>
+              <td>
+                <button class="action-btn" title="Edit" onclick="openEditPurpose(2)" data-bs-toggle="modal" data-bs-target="#purposeModal"><i class="fas fa-pen"></i></button>
+                <button class="action-btn delete" title="Delete" onclick="alert('Delete purpose?')"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td><span class="purpose-code">WAT-001</span></td>
+              <td><strong>Clean Water Initiative</strong></td>
+              <td><span class="cat-badge">Infrastructure</span></td>
+              <td><span class="group-badge" style="background:#fef3c7;color:#92400e;">Capital Funds</span></td>
+              <td>Operations</td>
+              <td>
+                <div class="target-progress">
+                  <div class="target-bar-wrap"><div class="target-bar mid" style="width:42.9%"></div></div>
+                  <span class="target-text">$85,800 / $200,000 (42.9%)</span>
+                </div>
+              </td>
+              <td>Jun 2025</td>
+              <td>Jun 2027</td>
+              <td><span class="order-num">4</span></td>
+              <td><span class="status-badge active"><span class="status-dot active"></span> Active</span></td>
+              <td>
+                <button class="action-btn" title="Edit" onclick="openEditPurpose(3)" data-bs-toggle="modal" data-bs-target="#purposeModal"><i class="fas fa-pen"></i></button>
+                <button class="action-btn delete" title="Delete" onclick="alert('Delete purpose?')"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td><span class="purpose-code">GEN-001</span></td>
+              <td><strong>General Fund</strong></td>
+              <td><span class="cat-badge">General</span></td>
+              <td><span class="group-badge" style="background:#dbeafe;color:#1d4ed8;">Operating</span></td>
+              <td><span class="text-muted">&mdash;</span></td>
+              <td>
+                <div class="target-progress">
+                  <span class="target-text" style="min-width:auto">$34,200 raised (no target)</span>
+                </div>
+              </td>
+              <td><span class="text-muted">&mdash;</span></td>
+              <td><span class="text-muted">&mdash;</span></td>
+              <td><span class="order-num">5</span></td>
+              <td><span class="status-badge active"><span class="status-dot active"></span> Active</span></td>
+              <td>
+                <button class="action-btn" title="Edit" onclick="openEditPurpose(4)" data-bs-toggle="modal" data-bs-target="#purposeModal"><i class="fas fa-pen"></i></button>
+              </td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td><span class="purpose-code">COM-001</span></td>
+              <td><strong>Community Development</strong></td>
+              <td><span class="cat-badge">Community</span></td>
+              <td><span class="group-badge">Program Funds</span></td>
+              <td>Community Dept</td>
+              <td>
+                <div class="target-progress">
+                  <div class="target-bar-wrap"><div class="target-bar mid" style="width:38.8%"></div></div>
+                  <span class="target-text">$15,530 / $40,000 (38.8%)</span>
+                </div>
+              </td>
+              <td>Jan 2026</td>
+              <td>Dec 2026</td>
+              <td><span class="order-num">6</span></td>
+              <td><span class="status-badge active"><span class="status-dot active"></span> Active</span></td>
+              <td>
+                <button class="action-btn" title="Edit" onclick="openEditPurpose(5)" data-bs-toggle="modal" data-bs-target="#purposeModal"><i class="fas fa-pen"></i></button>
+                <button class="action-btn delete" title="Delete" onclick="alert('Delete purpose?')"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td><span class="purpose-code">EMR-001</span></td>
+              <td><strong>Emergency Relief</strong></td>
+              <td><span class="cat-badge">Emergency</span></td>
+              <td><span class="group-badge" style="background:#fce7f3;color:#be185d;">Special Funds</span></td>
+              <td><span class="text-muted">&mdash;</span></td>
+              <td>
+                <div class="target-progress">
+                  <span class="target-text" style="min-width:auto">$8,900 raised (no target)</span>
+                </div>
+              </td>
+              <td><span class="text-muted">&mdash;</span></td>
+              <td><span class="text-muted">&mdash;</span></td>
+              <td><span class="order-num">7</span></td>
+              <td><span class="status-badge active"><span class="status-dot active"></span> Active</span></td>
+              <td>
+                <button class="action-btn" title="Edit" onclick="openEditPurpose(6)" data-bs-toggle="modal" data-bs-target="#purposeModal"><i class="fas fa-pen"></i></button>
+                <button class="action-btn delete" title="Delete" onclick="alert('Delete purpose?')"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+            <tr style="opacity:0.6">
+              <td>8</td>
+              <td><span class="purpose-code">OLD-001</span></td>
+              <td><strong>Legacy Building Fund</strong></td>
+              <td><span class="cat-badge">Infrastructure</span></td>
+              <td><span class="group-badge" style="background:#fef3c7;color:#92400e;">Capital Funds</span></td>
+              <td><span class="text-muted">&mdash;</span></td>
+              <td>
+                <div class="target-progress">
+                  <div class="target-bar-wrap"><div class="target-bar full" style="width:100%"></div></div>
+                  <span class="target-text">$500,000 / $500,000 (100%)</span>
+                </div>
+              </td>
+              <td>Jan 2020</td>
+              <td>Dec 2025</td>
+              <td><span class="order-num">99</span></td>
+              <td><span class="status-badge inactive"><span class="status-dot inactive"></span> Inactive</span></td>
+              <td>
+                <button class="action-btn" title="View"><i class="fas fa-eye"></i></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- TAB 2: Donation Categories                  -->
+  <!-- ════════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-categories">
+    <div class="list-card">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Code</th>
+              <th>Category Name</th>
+              <th>Group</th>
+              <th>Purposes</th>
+              <th>Description</th>
+              <th>Order</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td><span class="purpose-code">Education</span></td>
+              <td><strong>Education Programs</strong></td>
+              <td><span class="group-badge">Program Funds</span></td>
+              <td><a class="count-link">2</a></td>
+              <td>Educational initiatives</td>
+              <td><span class="order-num">1</span></td>
+              <td>
+                <button class="action-btn" title="Edit" data-bs-toggle="modal" data-bs-target="#categoryModal"><i class="fas fa-pen"></i></button>
+                <button class="action-btn delete" title="Delete" onclick="alert('Delete category?')"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td><span class="purpose-code">Health</span></td>
+              <td><strong>Health Services</strong></td>
+              <td><span class="group-badge">Program Funds</span></td>
+              <td><a class="count-link">1</a></td>
+              <td>Healthcare and medical aid</td>
+              <td><span class="order-num">2</span></td>
+              <td>
+                <button class="action-btn" title="Edit" data-bs-toggle="modal" data-bs-target="#categoryModal"><i class="fas fa-pen"></i></button>
+                <button class="action-btn delete" title="Delete" onclick="alert('Delete category?')"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td><span class="purpose-code">Infrastructure</span></td>
+              <td><strong>Infrastructure Projects</strong></td>
+              <td><span class="group-badge" style="background:#fef3c7;color:#92400e;">Capital Funds</span></td>
+              <td><a class="count-link">2</a></td>
+              <td>Building and water projects</td>
+              <td><span class="order-num">3</span></td>
+              <td>
+                <button class="action-btn" title="Edit" data-bs-toggle="modal" data-bs-target="#categoryModal"><i class="fas fa-pen"></i></button>
+                <button class="action-btn delete" title="Delete" onclick="alert('Delete category?')"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td><span class="purpose-code">General</span></td>
+              <td><strong>General Purpose</strong></td>
+              <td><span class="group-badge" style="background:#dbeafe;color:#1d4ed8;">Operating</span></td>
+              <td><a class="count-link">1</a></td>
+              <td>Unrestricted giving</td>
+              <td><span class="order-num">4</span></td>
+              <td>
+                <button class="action-btn" title="Edit" data-bs-toggle="modal" data-bs-target="#categoryModal"><i class="fas fa-pen"></i></button>
+              </td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td><span class="purpose-code">Community</span></td>
+              <td><strong>Community Services</strong></td>
+              <td><span class="group-badge">Program Funds</span></td>
+              <td><a class="count-link">1</a></td>
+              <td>Community development</td>
+              <td><span class="order-num">5</span></td>
+              <td>
+                <button class="action-btn" title="Edit" data-bs-toggle="modal" data-bs-target="#categoryModal"><i class="fas fa-pen"></i></button>
+                <button class="action-btn delete" title="Delete" onclick="alert('Delete category?')"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td><span class="purpose-code">Emergency</span></td>
+              <td><strong>Emergency Response</strong></td>
+              <td><span class="group-badge" style="background:#fce7f3;color:#be185d;">Special Funds</span></td>
+              <td><a class="count-link">1</a></td>
+              <td>Disaster and emergency</td>
+              <td><span class="order-num">6</span></td>
+              <td>
+                <button class="action-btn" title="Edit" data-bs-toggle="modal" data-bs-target="#categoryModal"><i class="fas fa-pen"></i></button>
+                <button class="action-btn delete" title="Delete" onclick="alert('Delete category?')"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- TAB 3: Donation Groups                      -->
+  <!-- ════════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-groups">
+    <div class="list-card">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Code</th>
+              <th>Group Name</th>
+              <th>Categories</th>
+              <th>Description</th>
+              <th>Order</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td><span class="purpose-code">PROG</span></td>
+              <td><strong>Program Funds</strong></td>
+              <td><a class="count-link">3</a></td>
+              <td>Designated program funding</td>
+              <td><span class="order-num">1</span></td>
+              <td>
+                <button class="action-btn" title="Edit" data-bs-toggle="modal" data-bs-target="#groupModal"><i class="fas fa-pen"></i></button>
+                <button class="action-btn delete" title="Delete" onclick="alert('Delete group?')"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td><span class="purpose-code">CAP</span></td>
+              <td><strong>Capital Funds</strong></td>
+              <td><a class="count-link">1</a></td>
+              <td>Capital/infrastructure projects</td>
+              <td><span class="order-num">2</span></td>
+              <td>
+                <button class="action-btn" title="Edit" data-bs-toggle="modal" data-bs-target="#groupModal"><i class="fas fa-pen"></i></button>
+                <button class="action-btn delete" title="Delete" onclick="alert('Delete group?')"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td><span class="purpose-code">OPS</span></td>
+              <td><strong>Operating</strong></td>
+              <td><a class="count-link">1</a></td>
+              <td>General operating expenses</td>
+              <td><span class="order-num">3</span></td>
+              <td>
+                <button class="action-btn" title="Edit" data-bs-toggle="modal" data-bs-target="#groupModal"><i class="fas fa-pen"></i></button>
+                <button class="action-btn delete" title="Delete" onclick="alert('Delete group?')"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td><span class="purpose-code">SPEC</span></td>
+              <td><strong>Special Funds</strong></td>
+              <td><a class="count-link">1</a></td>
+              <td>Special purpose and emergency</td>
+              <td><span class="order-num">4</span></td>
+              <td>
+                <button class="action-btn" title="Edit" data-bs-toggle="modal" data-bs-target="#groupModal"><i class="fas fa-pen"></i></button>
+                <button class="action-btn delete" title="Delete" onclick="alert('Delete group?')"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- Purpose Modal                               -->
+  <!-- ════════════════════════════════════════════ -->
+  <div class="modal fade" id="purposeModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header modal-header-accent">
+          <h5 class="modal-title" id="purposeModalTitle"><i class="fas fa-bullseye me-2"></i>New Purpose</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Purpose Code <span class="required-star">*</span></label>
+              <input type="text" class="form-control" id="purposeCode" placeholder="Auto-generated" value="EDU-003">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Purpose Name <span class="required-star">*</span></label>
+              <input type="text" class="form-control" id="purposeName" placeholder="Enter purpose name">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Category <span class="required-star">*</span></label>
+              <select class="form-select" id="purposeCategory">
+                <option value="">Select category...</option>
+                <option>Education</option>
+                <option>Health</option>
+                <option>Infrastructure</option>
+                <option>General</option>
+                <option>Community</option>
+                <option>Emergency</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Group</label>
+              <input type="text" class="form-control" id="purposeGroup" placeholder="Auto-filled from category" readonly style="background:#f8fafc">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Organizational Unit</label>
+              <select class="form-select" id="purposeOrgUnit">
+                <option value="">Select org unit...</option>
+                <option>Education Dept</option>
+                <option>Health Dept</option>
+                <option>Community Dept</option>
+                <option>Operations</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Target Amount</label>
+              <input type="number" class="form-control" id="purposeTarget" placeholder="0.00">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Start Date</label>
+              <input type="date" class="form-control" id="purposeStart">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">End Date</label>
+              <input type="date" class="form-control" id="purposeEnd">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Description</label>
+              <textarea class="form-control" id="purposeDesc" rows="3" placeholder="Describe the purpose of this fund..."></textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Display Order</label>
+              <input type="number" class="form-control" id="purposeOrder" placeholder="1" value="8">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Status</label>
+              <div class="form-check form-switch mt-2">
+                <input class="form-check-input" type="checkbox" id="purposeStatus" checked>
+                <label class="form-check-label" for="purposeStatus" style="font-size:0.8125rem">Active</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-outline-accent" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn-primary-accent" data-bs-dismiss="modal">
+            <i class="fas fa-check me-1"></i> Save Purpose
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- Category Modal                              -->
+  <!-- ════════════════════════════════════════════ -->
+  <div class="modal fade" id="categoryModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header modal-header-accent">
+          <h5 class="modal-title"><i class="fas fa-folder me-2"></i>New Category</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">Category Code <span class="required-star">*</span></label>
+              <input type="text" class="form-control" placeholder="e.g. Education">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Category Name <span class="required-star">*</span></label>
+              <input type="text" class="form-control" placeholder="Enter category name">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Group <span class="required-star">*</span></label>
+              <select class="form-select">
+                <option value="">Select group...</option>
+                <option>Program Funds</option>
+                <option>Capital Funds</option>
+                <option>Operating</option>
+                <option>Special Funds</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Description</label>
+              <textarea class="form-control" rows="3" placeholder="Describe this category..."></textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Display Order</label>
+              <input type="number" class="form-control" placeholder="1" value="7">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-outline-accent" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn-primary-accent" data-bs-dismiss="modal">
+            <i class="fas fa-check me-1"></i> Save Category
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- Group Modal                                 -->
+  <!-- ════════════════════════════════════════════ -->
+  <div class="modal fade" id="groupModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header modal-header-accent">
+          <h5 class="modal-title"><i class="fas fa-object-group me-2"></i>New Group</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">Group Code <span class="required-star">*</span></label>
+              <input type="text" class="form-control" placeholder="e.g. PROG">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Group Name <span class="required-star">*</span></label>
+              <input type="text" class="form-control" placeholder="Enter group name">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Description</label>
+              <textarea class="form-control" rows="3" placeholder="Describe this group..."></textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Display Order</label>
+              <input type="number" class="form-control" placeholder="1" value="5">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-outline-accent" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn-primary-accent" data-bs-dismiss="modal">
+            <i class="fas fa-check me-1"></i> Save Group
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function switchTab(tabName, btn) {
+      // Update tab buttons
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      // Update tab panels
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('tab-' + tabName).classList.add('active');
+
+      // Update header add button
+      const addBtn = document.getElementById('addBtn');
+      if (tabName === 'purposes') {
+        addBtn.innerHTML = '<i class="fas fa-plus me-1"></i> New Purpose';
+        addBtn.setAttribute('data-bs-target', '#purposeModal');
+        addBtn.onclick = function () { openNewPurpose(); };
+      } else if (tabName === 'categories') {
+        addBtn.innerHTML = '<i class="fas fa-plus me-1"></i> New Category';
+        addBtn.setAttribute('data-bs-target', '#categoryModal');
+        addBtn.onclick = null;
+      } else if (tabName === 'groups') {
+        addBtn.innerHTML = '<i class="fas fa-plus me-1"></i> New Group';
+        addBtn.setAttribute('data-bs-target', '#groupModal');
+        addBtn.onclick = null;
+      }
+    }
+
+    function openNewPurpose() {
+      document.getElementById('purposeModalTitle').innerHTML = '<i class="fas fa-bullseye me-2"></i>New Purpose';
+      document.getElementById('purposeCode').value = 'EDU-003';
+      document.getElementById('purposeName').value = '';
+      document.getElementById('purposeCategory').value = '';
+      document.getElementById('purposeGroup').value = '';
+      document.getElementById('purposeDesc').value = '';
+      document.getElementById('purposeTarget').value = '';
+      document.getElementById('purposeOrder').value = '8';
+      document.getElementById('purposeStatus').checked = true;
+    }
+
+    function openEditPurpose(index) {
+      document.getElementById('purposeModalTitle').innerHTML = '<i class="fas fa-pen me-2"></i>Edit Purpose';
+      const purposes = [
+        { code: 'EDU-001', name: "Children's Education Fund", cat: 'Education', group: 'Program Funds', target: 100000, order: 1 },
+        { code: 'EDU-002', name: 'Scholarship Program', cat: 'Education', group: 'Program Funds', target: 50000, order: 2 },
+        { code: 'HLT-001', name: 'Medical Aid Fund', cat: 'Health', group: 'Program Funds', target: 75000, order: 3 },
+        { code: 'WAT-001', name: 'Clean Water Initiative', cat: 'Infrastructure', group: 'Capital Funds', target: 200000, order: 4 },
+        { code: 'GEN-001', name: 'General Fund', cat: 'General', group: 'Operating', target: '', order: 5 },
+        { code: 'COM-001', name: 'Community Development', cat: 'Community', group: 'Program Funds', target: 40000, order: 6 },
+        { code: 'EMR-001', name: 'Emergency Relief', cat: 'Emergency', group: 'Special Funds', target: '', order: 7 }
+      ];
+      const p = purposes[index];
+      if (p) {
+        document.getElementById('purposeCode').value = p.code;
+        document.getElementById('purposeName').value = p.name;
+        document.getElementById('purposeCategory').value = p.cat;
+        document.getElementById('purposeGroup').value = p.group;
+        document.getElementById('purposeTarget').value = p.target;
+        document.getElementById('purposeOrder').value = p.order;
+      }
+    }
+  </script>
+
+</body>
+
+</html>

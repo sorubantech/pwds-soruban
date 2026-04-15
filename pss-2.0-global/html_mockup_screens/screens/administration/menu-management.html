@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Menu Management - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --admin-accent: #dc2626;
+      --admin-accent-bg: #fef2f2;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn-accent {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      font-weight: 600;
+      font-size: 0.8125rem;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+    }
+
+    .btn-accent:hover { background: #0c6a82; color: #fff; }
+
+    .btn-outline-accent {
+      background: #fff;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      font-weight: 600;
+      font-size: 0.8125rem;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+    }
+
+    .btn-outline-accent:hover { background: var(--accent-bg); color: var(--accent); }
+
+    .btn-outline-danger {
+      background: #fff;
+      color: var(--danger-color);
+      border: 1px solid var(--danger-color);
+      font-weight: 600;
+      font-size: 0.8125rem;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+    }
+
+    .btn-outline-danger:hover { background: var(--admin-accent-bg); color: var(--danger-color); }
+
+    /* Split Layout */
+    .split-layout {
+      display: flex;
+      gap: 1.25rem;
+      min-height: calc(100vh - 120px);
+    }
+
+    /* Left Panel - Tree */
+    .tree-panel {
+      width: 40%;
+      min-width: 320px;
+      background: #fff;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .tree-panel-header {
+      padding: 0.875rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fafbfc;
+    }
+
+    .tree-panel-header h3 {
+      font-size: 0.875rem;
+      font-weight: 700;
+      margin: 0;
+      color: var(--text-primary);
+    }
+
+    .tree-search {
+      position: relative;
+      padding: 0.625rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .tree-search input {
+      width: 100%;
+      padding: 0.4rem 0.75rem 0.4rem 2rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      outline: none;
+    }
+
+    .tree-search input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .tree-search i {
+      position: absolute;
+      left: 1.625rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+    }
+
+    .tree-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.5rem 0;
+    }
+
+    /* Tree Items */
+    .tree-group {
+      margin-bottom: 0.125rem;
+    }
+
+    .tree-parent {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem 0.5rem 0.5rem;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+      user-select: none;
+    }
+
+    .tree-parent:hover {
+      background: #f8fafc;
+    }
+
+    .tree-parent.active {
+      background: var(--accent-bg);
+      border-left-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .tree-parent .drag-handle {
+      color: #cbd5e1;
+      cursor: grab;
+      font-size: 0.75rem;
+    }
+
+    .tree-parent .drag-handle:hover { color: var(--accent); }
+
+    .tree-parent .expand-icon {
+      font-size: 0.5rem;
+      color: var(--text-secondary);
+      transition: transform 0.2s;
+      width: 12px;
+      text-align: center;
+    }
+
+    .tree-parent.collapsed .expand-icon {
+      transform: rotate(-90deg);
+    }
+
+    .tree-parent .menu-icon {
+      font-size: 0.875rem;
+      width: 20px;
+      text-align: center;
+    }
+
+    .tree-parent .order-badge {
+      margin-left: auto;
+      background: #f1f5f9;
+      color: var(--text-secondary);
+      font-size: 0.625rem;
+      font-weight: 600;
+      padding: 0.125rem 0.375rem;
+      border-radius: 4px;
+      min-width: 22px;
+      text-align: center;
+    }
+
+    .tree-parent .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--success-color);
+      flex-shrink: 0;
+    }
+
+    .tree-parent .status-dot.hidden-item {
+      background: #cbd5e1;
+    }
+
+    .tree-children {
+      padding-left: 1.5rem;
+      overflow: hidden;
+      transition: max-height 0.25s ease;
+    }
+
+    .tree-children.collapsed {
+      max-height: 0 !important;
+      overflow: hidden;
+    }
+
+    .tree-child {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.375rem 0.75rem 0.375rem 0.5rem;
+      cursor: pointer;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .tree-child:hover {
+      background: #f8fafc;
+      color: var(--text-primary);
+    }
+
+    .tree-child.active {
+      background: var(--accent-bg);
+      border-left-color: var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .tree-child .drag-handle {
+      color: #cbd5e1;
+      cursor: grab;
+      font-size: 0.625rem;
+    }
+
+    .tree-child .drag-handle:hover { color: var(--accent); }
+
+    .tree-child .child-icon {
+      font-size: 0.8125rem;
+      width: 18px;
+      text-align: center;
+    }
+
+    .tree-child .order-badge {
+      margin-left: auto;
+      background: #f8fafc;
+      color: var(--text-secondary);
+      font-size: 0.5625rem;
+      font-weight: 600;
+      padding: 0.0625rem 0.25rem;
+      border-radius: 3px;
+    }
+
+    /* Right Panel - Editor */
+    .editor-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .editor-card {
+      background: #fff;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+    }
+
+    .editor-card-header {
+      padding: 0.875rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      background: #fafbfc;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .editor-card-header h3 {
+      font-size: 0.875rem;
+      font-weight: 700;
+      margin: 0;
+      color: var(--text-primary);
+    }
+
+    .editor-card-body {
+      padding: 1.25rem;
+    }
+
+    /* Form Styles */
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .form-row.full {
+      grid-template-columns: 1fr;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .form-group label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .form-group label .required {
+      color: var(--danger-color);
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .form-group input[readonly] {
+      background: #f8fafc;
+      color: var(--text-secondary);
+    }
+
+    .form-group .help-text {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+    }
+
+    /* Radio group */
+    .radio-group {
+      display: flex;
+      gap: 1rem;
+      padding: 0.375rem 0;
+    }
+
+    .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.8125rem;
+      cursor: pointer;
+    }
+
+    .radio-option input[type="radio"] {
+      accent-color: var(--accent);
+    }
+
+    /* Toggle */
+    .toggle-switch {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.375rem 0;
+    }
+
+    .toggle-track {
+      width: 36px;
+      height: 20px;
+      background: #cbd5e1;
+      border-radius: 10px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .toggle-track.active {
+      background: var(--accent);
+    }
+
+    .toggle-track .toggle-thumb {
+      width: 16px;
+      height: 16px;
+      background: #fff;
+      border-radius: 50%;
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      transition: left 0.2s;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .toggle-track.active .toggle-thumb {
+      left: 18px;
+    }
+
+    .toggle-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+    }
+
+    /* Badge config */
+    .badge-config {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-end;
+    }
+
+    .badge-config .form-group { flex: 1; }
+
+    .badge-preview {
+      padding: 0.25rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+    }
+
+    /* Icon Picker */
+    .icon-picker {
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      overflow: hidden;
+    }
+
+    .icon-picker-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      background: #fafbfc;
+    }
+
+    .icon-picker-header .current-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--accent-bg);
+      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      font-size: 1rem;
+    }
+
+    .icon-picker-header input {
+      flex: 1;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      padding: 0.3rem 0.5rem;
+      font-size: 0.75rem;
+      outline: none;
+    }
+
+    .icon-picker-header input:focus {
+      border-color: var(--accent);
+    }
+
+    .icon-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+      gap: 2px;
+      padding: 0.5rem;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+
+    .icon-grid-item {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+    }
+
+    .icon-grid-item:hover {
+      background: var(--accent-bg);
+      color: var(--accent);
+    }
+
+    .icon-grid-item.selected {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    /* Target Roles Info */
+    .target-roles-info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.625rem 0.875rem;
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .target-roles-info a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .target-roles-info a:hover { text-decoration: underline; }
+
+    /* Editor Actions */
+    .editor-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border-color);
+      margin-top: 0.75rem;
+    }
+
+    /* Preview Panel */
+    .preview-card {
+      background: #fff;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+    }
+
+    .preview-sidebar {
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      margin: 1rem 1.25rem;
+      overflow: hidden;
+    }
+
+    .preview-parent {
+      padding: 0.5rem 0.875rem;
+      font-weight: 700;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #fafbfc;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .preview-parent .preview-chevron {
+      margin-left: auto;
+      font-size: 0.5rem;
+      color: var(--text-secondary);
+    }
+
+    .preview-child {
+      padding: 0.4375rem 0.875rem 0.4375rem 2rem;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-bottom: 1px solid #f8fafc;
+    }
+
+    .preview-child:last-child { border-bottom: none; }
+
+    .preview-child.highlighted {
+      background: linear-gradient(90deg, rgba(14, 116, 144, 0.08), transparent);
+      color: var(--accent);
+      font-weight: 600;
+      border-left: 3px solid var(--accent);
+      padding-left: calc(2rem - 3px);
+    }
+
+    .preview-child .preview-badge {
+      margin-left: auto;
+      padding: 0.125rem 0.375rem;
+      border-radius: 9999px;
+      font-size: 0.5625rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    /* Context Menu */
+    .context-menu {
+      position: fixed;
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+      z-index: 200;
+      min-width: 170px;
+      padding: 0.375rem 0;
+      display: none;
+    }
+
+    .context-menu.show { display: block; }
+
+    .context-menu-item {
+      padding: 0.5rem 0.875rem;
+      font-size: 0.8125rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    .context-menu-item:hover {
+      background: var(--accent-bg);
+      color: var(--accent);
+    }
+
+    .context-menu-item.danger { color: var(--danger-color); }
+    .context-menu-item.danger:hover { background: var(--admin-accent-bg); }
+
+    .context-menu-divider {
+      height: 1px;
+      background: var(--border-color);
+      margin: 0.25rem 0;
+    }
+
+    /* Empty State */
+    .editor-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+
+    .editor-empty i {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: #cbd5e1;
+    }
+
+    .editor-empty h4 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+      color: var(--text-primary);
+    }
+
+    .editor-empty p {
+      font-size: 0.8125rem;
+      margin: 0;
+    }
+
+    @media (max-width: 900px) {
+      .split-layout { flex-direction: column; }
+      .tree-panel { width: 100%; min-width: auto; max-height: 400px; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fa-solid fa-bars-staggered" style="color: var(--admin-accent); margin-right: 0.5rem;"></i>Menu Management</h1>
+      <p class="subtitle">Configure sidebar navigation structure and ordering</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-accent" onclick="addMenuItem()"><i class="fa-solid fa-plus me-1"></i>Add Menu Item</button>
+      <button class="btn btn-outline-danger" onclick="resetToDefault()"><i class="fa-solid fa-rotate-left me-1"></i>Reset to Default</button>
+    </div>
+  </div>
+
+  <!-- Split Layout -->
+  <div class="split-layout">
+    <!-- Left Panel: Menu Tree -->
+    <div class="tree-panel">
+      <div class="tree-panel-header">
+        <h3><i class="fa-solid fa-sitemap me-2" style="color:var(--accent);"></i>Navigation Tree</h3>
+        <span style="font-size:0.75rem;color:var(--text-secondary);">9 sections, 68 items</span>
+      </div>
+      <div class="tree-search">
+        <i class="fa-solid fa-search"></i>
+        <input type="text" placeholder="Search menu items..." oninput="searchTree(this.value)">
+      </div>
+      <div class="tree-body" id="treeBody">
+
+        <!-- Dashboard -->
+        <div class="tree-group" data-group="dashboard">
+          <div class="tree-parent active" onclick="selectParent(this, 'dashboard')" oncontextmenu="showTreeContext(event, 'dashboard', 'parent')">
+            <i class="fa-solid fa-grip-vertical drag-handle"></i>
+            <i class="fa-solid fa-chevron-down expand-icon" onclick="event.stopPropagation();toggleTree(this)"></i>
+            <span class="menu-icon">📊</span>
+            <span>Dashboard</span>
+            <span class="order-badge">1</span>
+            <span class="status-dot"></span>
+          </div>
+          <div class="tree-children">
+            <div class="tree-child active" onclick="selectChild(this, 'dashboard-home')" oncontextmenu="showTreeContext(event, 'dashboard-home', 'child')">
+              <i class="fa-solid fa-grip-vertical drag-handle"></i>
+              <span class="child-icon">📊</span>
+              <span>Dashboard Home</span>
+              <span class="order-badge">1.1</span>
+            </div>
+            <div class="tree-child" onclick="selectChild(this, 'configure-widgets')" oncontextmenu="showTreeContext(event, 'configure-widgets', 'child')">
+              <i class="fa-solid fa-grip-vertical drag-handle"></i>
+              <span class="child-icon">📊</span>
+              <span>Configure Widgets</span>
+              <span class="order-badge">1.2</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contacts -->
+        <div class="tree-group" data-group="contacts">
+          <div class="tree-parent" onclick="selectParent(this, 'contacts')" oncontextmenu="showTreeContext(event, 'contacts', 'parent')">
+            <i class="fa-solid fa-grip-vertical drag-handle"></i>
+            <i class="fa-solid fa-chevron-down expand-icon" onclick="event.stopPropagation();toggleTree(this)"></i>
+            <span class="menu-icon">👥</span>
+            <span>Contacts</span>
+            <span class="order-badge">2</span>
+            <span class="status-dot"></span>
+          </div>
+          <div class="tree-children">
+            <div class="tree-child" onclick="selectChild(this, 'contact-list')" oncontextmenu="showTreeContext(event, 'contact-list', 'child')">
+              <i class="fa-solid fa-grip-vertical drag-handle"></i>
+              <span class="child-icon">👥</span><span>Contact List</span><span class="order-badge">2.1</span>
+            </div>
+            <div class="tree-child" onclick="selectChild(this, 'contact-form')" oncontextmenu="showTreeContext(event, 'contact-form', 'child')">
+              <i class="fa-solid fa-grip-vertical drag-handle"></i>
+              <span class="child-icon">👤</span><span>Contact Form</span><span class="order-badge">2.2</span>
+            </div>
+            <div class="tree-child" onclick="selectChild(this, 'family-mgmt')" oncontextmenu="showTreeContext(event, 'family-mgmt', 'child')">
+              <i class="fa-solid fa-grip-vertical drag-handle"></i>
+              <span class="child-icon">👨‍👩‍👧</span><span>Family Management</span><span class="order-badge">2.3</span>
+            </div>
+            <div class="tree-child" onclick="selectChild(this, 'dup-merge')" oncontextmenu="showTreeContext(event, 'dup-merge', 'child')">
+              <i class="fa-solid fa-grip-vertical drag-handle"></i>
+              <span class="child-icon">🔄</span><span>Duplicate & Merge</span><span class="order-badge">2.4</span>
+            </div>
+            <div class="tree-child" onclick="selectChild(this, 'tags-seg')" oncontextmenu="showTreeContext(event, 'tags-seg', 'child')">
+              <i class="fa-solid fa-grip-vertical drag-handle"></i>
+              <span class="child-icon">🏷️</span><span>Tags & Segmentation</span><span class="order-badge">2.5</span>
+            </div>
+            <div class="tree-child" onclick="selectChild(this, 'contact-import')" oncontextmenu="showTreeContext(event, 'contact-import', 'child')">
+              <i class="fa-solid fa-grip-vertical drag-handle"></i>
+              <span class="child-icon">📥</span><span>Contact Import</span><span class="order-badge">2.6</span>
+            </div>
+            <div class="tree-child" onclick="selectChild(this, 'contact-types')" oncontextmenu="showTreeContext(event, 'contact-types', 'child')">
+              <i class="fa-solid fa-grip-vertical drag-handle"></i>
+              <span class="child-icon">📋</span><span>Contact Types</span><span class="order-badge">2.7</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fundraising -->
+        <div class="tree-group" data-group="fundraising">
+          <div class="tree-parent" onclick="selectParent(this, 'fundraising')" oncontextmenu="showTreeContext(event, 'fundraising', 'parent')">
+            <i class="fa-solid fa-grip-vertical drag-handle"></i>
+            <i class="fa-solid fa-chevron-down expand-icon" onclick="event.stopPropagation();toggleTree(this)"></i>
+            <span class="menu-icon">💰</span>
+            <span>Fundraising</span>
+            <span class="order-badge">3</span>
+            <span class="status-dot"></span>
+          </div>
+          <div class="tree-children">
+            <div class="tree-child" onclick="selectChild(this, 'donation-list')" oncontextmenu="showTreeContext(event, 'donation-list', 'child')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">📋</span><span>Donation List</span><span class="order-badge">3.1</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'new-donation')" oncontextmenu="showTreeContext(event, 'new-donation', 'child')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">➕</span><span>New Donation</span><span class="order-badge">3.2</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'recurring')" oncontextmenu="showTreeContext(event, 'recurring', 'child')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">🔄</span><span>Recurring Donations</span><span class="order-badge">3.3</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'online-setup')" oncontextmenu="showTreeContext(event, 'online-setup', 'child')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">🌐</span><span>Online Donation Setup</span><span class="order-badge">3.4</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'cheque')" oncontextmenu="showTreeContext(event, 'cheque', 'child')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">📄</span><span>Cheque Tracking</span><span class="order-badge">3.5</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'inkind')" oncontextmenu="showTreeContext(event, 'inkind', 'child')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">🎁</span><span>In-Kind Donations</span><span class="order-badge">3.6</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'bulk-upload')" oncontextmenu="showTreeContext(event, 'bulk-upload', 'child')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">📤</span><span>Bulk Upload</span><span class="order-badge">3.7</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'purposes')" oncontextmenu="showTreeContext(event, 'purposes', 'child')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">📁</span><span>Donation Purposes</span><span class="order-badge">3.8</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'pledges')" oncontextmenu="showTreeContext(event, 'pledges', 'child')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">🤝</span><span>Pledge Management</span><span class="order-badge">3.9</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'gateway')" oncontextmenu="showTreeContext(event, 'gateway', 'child')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">💳</span><span>Payment Gateway</span><span class="order-badge">3.10</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'recon')" oncontextmenu="showTreeContext(event, 'recon', 'child')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">✅</span><span>Reconciliation</span><span class="order-badge">3.11</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'refund')" oncontextmenu="showTreeContext(event, 'refund', 'child')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">↩️</span><span>Refund Management</span><span class="order-badge">3.12</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'receipts')" oncontextmenu="showTreeContext(event, 'receipts', 'child')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">📃</span><span>Receipt Management</span><span class="order-badge">3.13</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'p2p')" oncontextmenu="showTreeContext(event, 'p2p', 'child')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">👥</span><span>P2P Fundraising</span><span class="order-badge">3.14</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'crowdfund')" oncontextmenu="showTreeContext(event, 'crowdfund', 'child')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">🌍</span><span>Crowdfunding</span><span class="order-badge">3.15</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'matching')" oncontextmenu="showTreeContext(event, 'matching', 'child')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">🏢</span><span>Matching Gifts</span><span class="order-badge">3.16</span></div>
+          </div>
+        </div>
+
+        <!-- Communication -->
+        <div class="tree-group" data-group="communication">
+          <div class="tree-parent" onclick="selectParent(this, 'communication')" oncontextmenu="showTreeContext(event, 'communication', 'parent')">
+            <i class="fa-solid fa-grip-vertical drag-handle"></i>
+            <i class="fa-solid fa-chevron-down expand-icon collapsed" onclick="event.stopPropagation();toggleTree(this)"></i>
+            <span class="menu-icon">📧</span>
+            <span>Communication</span>
+            <span class="order-badge">4</span>
+            <span class="status-dot"></span>
+          </div>
+          <div class="tree-children collapsed">
+            <div class="tree-child" onclick="selectChild(this, 'email-templates')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">✉️</span><span>Email Templates</span><span class="order-badge">4.1</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'email-campaigns')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">📨</span><span>Email Campaigns</span><span class="order-badge">4.2</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'sms-setup')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">💬</span><span>SMS Setup</span><span class="order-badge">4.3</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'whatsapp')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">📱</span><span>WhatsApp</span><span class="order-badge">4.4</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'notifications')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">🔔</span><span>Notifications</span><span class="order-badge">4.5</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'automation')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">⚡</span><span>Automation</span><span class="order-badge">4.6</span></div>
+          </div>
+        </div>
+
+        <!-- Organization -->
+        <div class="tree-group" data-group="organization">
+          <div class="tree-parent" onclick="selectParent(this, 'organization')" oncontextmenu="showTreeContext(event, 'organization', 'parent')">
+            <i class="fa-solid fa-grip-vertical drag-handle"></i>
+            <i class="fa-solid fa-chevron-down expand-icon collapsed" onclick="event.stopPropagation();toggleTree(this)"></i>
+            <span class="menu-icon">🏢</span>
+            <span>Organization</span>
+            <span class="order-badge">5</span>
+            <span class="status-dot"></span>
+          </div>
+          <div class="tree-children collapsed">
+            <div class="tree-child" onclick="selectChild(this, 'org-tree')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">🌳</span><span>Org Tree</span><span class="order-badge">5.1</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'campaigns')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">📢</span><span>Campaigns</span><span class="order-badge">5.2</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'events')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">📅</span><span>Events</span><span class="order-badge">5.3</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'branches')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">🏛️</span><span>Branches</span><span class="order-badge">5.4</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'staff')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">👔</span><span>Staff</span><span class="order-badge">5.5</span></div>
+          </div>
+        </div>
+
+        <!-- Field Collection -->
+        <div class="tree-group" data-group="field-collection">
+          <div class="tree-parent" onclick="selectParent(this, 'field-collection')" oncontextmenu="showTreeContext(event, 'field-collection', 'parent')">
+            <i class="fa-solid fa-grip-vertical drag-handle"></i>
+            <i class="fa-solid fa-chevron-down expand-icon collapsed" onclick="event.stopPropagation();toggleTree(this)"></i>
+            <span class="menu-icon">🚶</span>
+            <span>Field Collection</span>
+            <span class="order-badge">6</span>
+            <span class="status-dot"></span>
+          </div>
+          <div class="tree-children collapsed">
+            <div class="tree-child" onclick="selectChild(this, 'ambassadors')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">🧑‍💼</span><span>Ambassadors</span><span class="order-badge">6.1</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'collections')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">💵</span><span>Collections</span><span class="order-badge">6.2</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'receipt-books')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">📖</span><span>Receipt Books</span><span class="order-badge">6.3</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'amb-dashboard')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">📊</span><span>Dashboard</span><span class="order-badge">6.4</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'distribution')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">📦</span><span>Distribution</span><span class="order-badge">6.5</span></div>
+          </div>
+        </div>
+
+        <!-- Reports -->
+        <div class="tree-group" data-group="reports">
+          <div class="tree-parent" onclick="selectParent(this, 'reports')" oncontextmenu="showTreeContext(event, 'reports', 'parent')">
+            <i class="fa-solid fa-grip-vertical drag-handle"></i>
+            <i class="fa-solid fa-chevron-down expand-icon collapsed" onclick="event.stopPropagation();toggleTree(this)"></i>
+            <span class="menu-icon">📊</span>
+            <span>Reports</span>
+            <span class="order-badge">7</span>
+            <span class="status-dot"></span>
+          </div>
+          <div class="tree-children collapsed">
+            <div class="tree-child" onclick="selectChild(this, 'report-catalog')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">📚</span><span>Report Catalog</span><span class="order-badge">7.1</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'custom-builder')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">🔧</span><span>Custom Builder</span><span class="order-badge">7.2</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'retention')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">📈</span><span>Retention</span><span class="order-badge">7.3</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'fundraising-rpt')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">💰</span><span>Fundraising Summary</span><span class="order-badge">7.4</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'powerbi')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">📊</span><span>Power BI</span><span class="order-badge">7.5</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'html-report')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">🌐</span><span>HTML Reports</span><span class="order-badge">7.6</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'scheduled-rpt')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">⏰</span><span>Scheduled Reports</span><span class="order-badge">7.7</span></div>
+          </div>
+        </div>
+
+        <!-- Administration -->
+        <div class="tree-group" data-group="administration">
+          <div class="tree-parent" onclick="selectParent(this, 'administration')" oncontextmenu="showTreeContext(event, 'administration', 'parent')">
+            <i class="fa-solid fa-grip-vertical drag-handle"></i>
+            <i class="fa-solid fa-chevron-down expand-icon collapsed" onclick="event.stopPropagation();toggleTree(this)"></i>
+            <span class="menu-icon">⚙️</span>
+            <span>Administration</span>
+            <span class="order-badge">8</span>
+            <span class="status-dot"></span>
+          </div>
+          <div class="tree-children collapsed">
+            <div class="tree-child" onclick="selectChild(this, 'users')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">👤</span><span>Users</span><span class="order-badge">8.1</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'roles')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">🛡️</span><span>Roles</span><span class="order-badge">8.2</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'matrix')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">📊</span><span>Capability Matrix</span><span class="order-badge">8.3</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'menus')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">📋</span><span>Menu Management</span><span class="order-badge">8.4</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'audit')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">📜</span><span>Audit Trail</span><span class="order-badge">8.5</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'company')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">🏢</span><span>Company Settings</span><span class="order-badge">8.6</span></div>
+          </div>
+        </div>
+
+        <!-- Settings -->
+        <div class="tree-group" data-group="settings">
+          <div class="tree-parent" onclick="selectParent(this, 'settings')" oncontextmenu="showTreeContext(event, 'settings', 'parent')">
+            <i class="fa-solid fa-grip-vertical drag-handle"></i>
+            <i class="fa-solid fa-chevron-down expand-icon collapsed" onclick="event.stopPropagation();toggleTree(this)"></i>
+            <span class="menu-icon">🔧</span>
+            <span>Settings</span>
+            <span class="order-badge">9</span>
+            <span class="status-dot"></span>
+          </div>
+          <div class="tree-children collapsed">
+            <div class="tree-child" onclick="selectChild(this, 'master-data')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">📦</span><span>Master Data</span><span class="order-badge">9.1</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'grid-config')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">⚙️</span><span>Grid Config</span><span class="order-badge">9.2</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'dash-config')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">📊</span><span>Dashboard Config</span><span class="order-badge">9.3</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'org-settings')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">🏢</span><span>Org Settings</span><span class="order-badge">9.4</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'custom-fields')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">📝</span><span>Custom Fields</span><span class="order-badge">9.5</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'currency')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">💱</span><span>Currency & Region</span><span class="order-badge">9.6</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'documents')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">📄</span><span>Documents</span><span class="order-badge">9.7</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'email-provider')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">📧</span><span>Email Provider</span><span class="order-badge">9.8</span></div>
+            <div class="tree-child" onclick="selectChild(this, 'certificates')"><i class="fa-solid fa-grip-vertical drag-handle"></i><span class="child-icon">📜</span><span>Certificates</span><span class="order-badge">9.9</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Right Panel: Editor -->
+    <div class="editor-panel" id="editorPanel">
+
+      <!-- Menu Item Editor -->
+      <div class="editor-card">
+        <div class="editor-card-header">
+          <h3><i class="fa-solid fa-pen-to-square me-2" style="color:var(--accent);"></i>Menu Item Editor</h3>
+          <span style="font-size:0.75rem;color:var(--text-secondary);">Editing: Dashboard Home</span>
+        </div>
+        <div class="editor-card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Menu Label <span class="required">*</span></label>
+              <input type="text" value="Dashboard Home" id="menuLabel">
+            </div>
+            <div class="form-group">
+              <label>Menu Key <span style="font-size:0.625rem;color:var(--text-secondary);text-transform:none;">(system identifier)</span></label>
+              <input type="text" value="dashboard.dashboard-home" readonly>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Parent Menu</label>
+              <select>
+                <option selected>Dashboard</option>
+                <option>Root (Top Level)</option>
+                <option>Contacts</option>
+                <option>Fundraising</option>
+                <option>Communication</option>
+                <option>Organization</option>
+                <option>Field Collection</option>
+                <option>Reports</option>
+                <option>Administration</option>
+                <option>Settings</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Display Order <span class="required">*</span></label>
+              <input type="number" value="1" min="1">
+            </div>
+          </div>
+
+          <!-- Icon Picker -->
+          <div class="form-row full">
+            <div class="form-group">
+              <label>Icon</label>
+              <div class="icon-picker">
+                <div class="icon-picker-header">
+                  <div class="current-icon"><i class="fa-solid fa-chart-line"></i></div>
+                  <input type="text" placeholder="Search icons..." id="iconSearch" oninput="filterIcons(this.value)">
+                  <span style="font-size:0.6875rem;color:var(--text-secondary);">fa-chart-line</span>
+                </div>
+                <div class="icon-grid" id="iconGrid">
+                  <div class="icon-grid-item selected"><i class="fa-solid fa-chart-line"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-chart-bar"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-chart-pie"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-gauge"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-home"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-list"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-table"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-users"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-user"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-heart"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-envelope"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-bell"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-gear"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-shield-halved"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-building"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-calendar"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-file"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-wallet"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-money-bill"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-credit-card"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-receipt"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-magnifying-glass"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-pen"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-trash"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-plus"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-download"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-upload"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-globe"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-map-marker-alt"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-code"></i></div>
+                  <div class="icon-grid-item"><i class="fa-solid fa-database"></i></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row full">
+            <div class="form-group">
+              <label>Screen Path</label>
+              <input type="text" value="dashboard/dashboard-home" placeholder="e.g., fundraising/donation-list">
+              <span class="help-text">Used in loadContent() to load the screen in the iframe</span>
+            </div>
+          </div>
+
+          <div class="form-row full">
+            <div class="form-group">
+              <label>Type</label>
+              <div class="radio-group">
+                <label class="radio-option"><input type="radio" name="menuType" value="internal" checked onchange="toggleTypeFields()"> Internal Screen</label>
+                <label class="radio-option"><input type="radio" name="menuType" value="external" onchange="toggleTypeFields()"> External URL</label>
+                <label class="radio-option"><input type="radio" name="menuType" value="header" onchange="toggleTypeFields()"> Section Header</label>
+                <label class="radio-option"><input type="radio" name="menuType" value="divider" onchange="toggleTypeFields()"> Divider</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row full" id="externalUrlField" style="display:none;">
+            <div class="form-group">
+              <label>External URL</label>
+              <input type="url" placeholder="https://example.com">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Visibility</label>
+              <div class="toggle-switch">
+                <div class="toggle-track active" onclick="this.classList.toggle('active')">
+                  <div class="toggle-thumb"></div>
+                </div>
+                <span class="toggle-label">Visible</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Badge Config -->
+          <div class="form-row full">
+            <div class="form-group">
+              <label>Badge <span style="font-size:0.625rem;color:var(--text-secondary);text-transform:none;">(optional)</span></label>
+              <div class="badge-config">
+                <div class="form-group">
+                  <input type="text" placeholder="Badge text (e.g., New, 3, Beta)" id="badgeText" oninput="updateBadgePreview()">
+                </div>
+                <div class="form-group">
+                  <select id="badgeColor" onchange="updateBadgePreview()">
+                    <option value="#0e7490">Primary</option>
+                    <option value="#22c55e">Success</option>
+                    <option value="#f59e0b">Warning</option>
+                    <option value="#dc2626">Danger</option>
+                    <option value="#6366f1">Info</option>
+                  </select>
+                </div>
+                <span class="badge-preview" id="badgePreview" style="background:#0e7490;display:none;">New</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row full">
+            <div class="form-group">
+              <label>Description <span style="font-size:0.625rem;color:var(--text-secondary);text-transform:none;">(tooltip on hover)</span></label>
+              <textarea rows="2" placeholder="Brief description shown on hover...">Main dashboard with overview widgets and KPIs</textarea>
+            </div>
+          </div>
+
+          <!-- Target Roles -->
+          <div class="form-row full">
+            <div class="form-group">
+              <label>Target Roles</label>
+              <div class="target-roles-info">
+                <i class="fa-solid fa-info-circle" style="color:var(--accent);"></i>
+                <span>Access controlled via Role-Capability Matrix</span>
+                <a href="#" onclick="openMatrix(); return false;">Open Matrix <i class="fa-solid fa-external-link-alt" style="font-size:0.625rem;"></i></a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="editor-actions">
+            <button class="btn btn-outline-danger btn-sm" onclick="deleteItem()"><i class="fa-solid fa-trash me-1"></i>Delete Item</button>
+            <button class="btn btn-outline-accent btn-sm" onclick="cancelEdit()"><i class="fa-solid fa-xmark me-1"></i>Cancel</button>
+            <button class="btn btn-accent btn-sm" onclick="saveItem()"><i class="fa-solid fa-save me-1"></i>Save</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preview Panel -->
+      <div class="preview-card">
+        <div class="editor-card-header">
+          <h3><i class="fa-solid fa-eye me-2" style="color:var(--accent);"></i>Sidebar Preview</h3>
+        </div>
+        <div class="preview-sidebar">
+          <div class="preview-parent">
+            <span>📊</span> Dashboard
+            <span class="preview-chevron"><i class="fa-solid fa-chevron-down"></i></span>
+          </div>
+          <div class="preview-child highlighted">
+            <i class="fa-solid fa-chart-line" style="font-size:0.8125rem;width:18px;text-align:center;"></i>
+            <span>Dashboard Home</span>
+          </div>
+          <div class="preview-child">
+            <i class="fa-solid fa-sliders" style="font-size:0.8125rem;width:18px;text-align:center;"></i>
+            <span>Configure Widgets</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Context Menu -->
+  <div class="context-menu" id="treeContextMenu">
+    <div class="context-menu-item" onclick="contextEdit()"><i class="fa-solid fa-pen"></i> Edit</div>
+    <div class="context-menu-item" onclick="contextAddChild()"><i class="fa-solid fa-plus"></i> Add Child</div>
+    <div class="context-menu-divider"></div>
+    <div class="context-menu-item" onclick="contextMoveUp()"><i class="fa-solid fa-arrow-up"></i> Move Up</div>
+    <div class="context-menu-item" onclick="contextMoveDown()"><i class="fa-solid fa-arrow-down"></i> Move Down</div>
+    <div class="context-menu-item" onclick="contextDuplicate()"><i class="fa-solid fa-clone"></i> Duplicate</div>
+    <div class="context-menu-divider"></div>
+    <div class="context-menu-item" onclick="contextHide()"><i class="fa-solid fa-eye-slash"></i> Hide</div>
+    <div class="context-menu-item danger" onclick="contextDelete()"><i class="fa-solid fa-trash"></i> Delete</div>
+  </div>
+
+  <script>
+    // Tree toggle
+    function toggleTree(icon) {
+      icon.classList.toggle('collapsed');
+      const children = icon.closest('.tree-parent').nextElementSibling;
+      if (children && children.classList.contains('tree-children')) {
+        children.classList.toggle('collapsed');
+      }
+    }
+
+    // Selection
+    function clearSelection() {
+      document.querySelectorAll('.tree-parent, .tree-child').forEach(el => el.classList.remove('active'));
+    }
+
+    function selectParent(el, key) {
+      clearSelection();
+      el.classList.add('active');
+      showToast(`Selected: ${el.querySelector('span:not(.order-badge):not(.status-dot):not(.menu-icon)').textContent.trim()}`);
+    }
+
+    function selectChild(el, key) {
+      clearSelection();
+      el.classList.add('active');
+    }
+
+    // Tree search
+    function searchTree(query) {
+      query = query.toLowerCase();
+      document.querySelectorAll('.tree-group').forEach(group => {
+        const children = group.querySelectorAll('.tree-child');
+        const parent = group.querySelector('.tree-parent');
+        let anyMatch = false;
+        children.forEach(child => {
+          const text = child.textContent.toLowerCase();
+          const match = text.includes(query);
+          child.style.display = match || !query ? '' : 'none';
+          if (match) anyMatch = true;
+        });
+        const parentText = parent.textContent.toLowerCase();
+        const parentMatch = parentText.includes(query);
+        group.style.display = (parentMatch || anyMatch || !query) ? '' : 'none';
+        if (query && anyMatch) {
+          const childrenEl = group.querySelector('.tree-children');
+          const icon = parent.querySelector('.expand-icon');
+          if (childrenEl) childrenEl.classList.remove('collapsed');
+          if (icon) icon.classList.remove('collapsed');
+        }
+      });
+    }
+
+    // Context menu
+    let contextTarget = null;
+    function showTreeContext(e, key, type) {
+      e.preventDefault();
+      contextTarget = { key, type };
+      const menu = document.getElementById('treeContextMenu');
+      menu.style.left = e.clientX + 'px';
+      menu.style.top = e.clientY + 'px';
+      menu.classList.add('show');
+    }
+
+    document.addEventListener('click', () => {
+      document.getElementById('treeContextMenu').classList.remove('show');
+    });
+
+    function contextEdit() { showToast('Edit: ' + contextTarget?.key); }
+    function contextAddChild() { showToast('Add child to: ' + contextTarget?.key); }
+    function contextMoveUp() { showToast('Moved up: ' + contextTarget?.key); }
+    function contextMoveDown() { showToast('Moved down: ' + contextTarget?.key); }
+    function contextDuplicate() { showToast('Duplicated: ' + contextTarget?.key); }
+    function contextHide() { showToast('Hidden: ' + contextTarget?.key); }
+    function contextDelete() {
+      if (confirm('Delete this menu item?')) showToast('Deleted: ' + contextTarget?.key);
+    }
+
+    // Type fields toggle
+    function toggleTypeFields() {
+      const type = document.querySelector('input[name="menuType"]:checked').value;
+      document.getElementById('externalUrlField').style.display = type === 'external' ? '' : 'none';
+    }
+
+    // Icon picker
+    document.querySelectorAll('.icon-grid-item').forEach(item => {
+      item.addEventListener('click', function () {
+        document.querySelectorAll('.icon-grid-item').forEach(i => i.classList.remove('selected'));
+        this.classList.add('selected');
+      });
+    });
+
+    function filterIcons(query) {
+      query = query.toLowerCase();
+      document.querySelectorAll('.icon-grid-item').forEach(item => {
+        const icon = item.querySelector('i');
+        const name = icon ? icon.className : '';
+        item.style.display = name.toLowerCase().includes(query) || !query ? '' : 'none';
+      });
+    }
+
+    // Badge preview
+    function updateBadgePreview() {
+      const text = document.getElementById('badgeText').value;
+      const color = document.getElementById('badgeColor').value;
+      const preview = document.getElementById('badgePreview');
+      if (text) {
+        preview.textContent = text;
+        preview.style.background = color;
+        preview.style.display = '';
+      } else {
+        preview.style.display = 'none';
+      }
+    }
+
+    // Actions
+    function addMenuItem() { showToast('New menu item form ready.'); }
+    function resetToDefault() {
+      if (confirm('Reset all menus to system defaults? This cannot be undone.')) showToast('Menu reset to defaults.');
+    }
+    function saveItem() { showToast('Menu item saved successfully!'); }
+    function cancelEdit() { showToast('Edit cancelled.'); }
+    function deleteItem() {
+      if (confirm('Delete this menu item?')) showToast('Menu item deleted.');
+    }
+    function openMatrix() {
+      if (parent && parent.loadContent) parent.loadContent('administration/role-capability-matrix');
+      else showToast('Navigate to Role-Capability Matrix');
+    }
+
+    // Toast
+    function showToast(msg) {
+      const toast = document.createElement('div');
+      toast.style.cssText = 'position:fixed;top:1rem;right:1rem;background:#1e293b;color:#fff;padding:0.75rem 1.25rem;border-radius:0.5rem;font-size:0.8125rem;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.2);animation:fadeIn 0.3s;';
+      toast.innerHTML = `<i class="fa-solid fa-check-circle me-2" style="color:#22c55e;"></i>${msg}`;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 2500);
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grant Detail - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --grants-accent: #0369a1;
+      --grants-accent-bg: #e0f2fe;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .back-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 1rem;
+    }
+
+    .back-btn:hover {
+      border-color: var(--grants-accent);
+      color: var(--grants-accent);
+      background: var(--grants-accent-bg);
+    }
+
+    .grant-title h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .grant-code {
+      font-size: 0.75rem;
+      background: var(--grants-accent-bg);
+      color: var(--grants-accent);
+      padding: 0.125rem 0.5rem;
+      border-radius: 0.25rem;
+      font-weight: 600;
+    }
+
+    .grant-subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.625rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+
+    .amount-badge {
+      font-weight: 700;
+      color: var(--grants-accent);
+      font-size: 0.875rem;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--grants-accent);
+      border-color: var(--grants-accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--grants-accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #025e8c;
+      border-color: #025e8c;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--grants-accent);
+      color: var(--grants-accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--grants-accent);
+      color: white;
+    }
+
+    .more-actions-btn {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+    }
+
+    .more-actions-btn:hover {
+      border-color: var(--grants-accent);
+      color: var(--grants-accent);
+    }
+
+    /* Quick Stats Row */
+    .quick-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .qs-card {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1rem 1.25rem;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+    }
+
+    .qs-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+    }
+
+    .qs-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .qs-value.accent { color: var(--grants-accent); }
+    .qs-value.success { color: var(--success-color); }
+    .qs-value.warning { color: var(--warning-color); }
+
+    .qs-sub {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.125rem;
+    }
+
+    .progress-bar-full {
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 0.5rem;
+    }
+
+    .progress-bar-full .fill {
+      height: 100%;
+      background: var(--grants-accent);
+      border-radius: 4px;
+      transition: width 0.3s;
+    }
+
+    /* Tabs */
+    .detail-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid var(--border-color);
+      margin-bottom: 1.5rem;
+      overflow-x: auto;
+    }
+
+    .detail-tab {
+      padding: 0.75rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.15s;
+      white-space: nowrap;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+    }
+
+    .detail-tab:hover {
+      color: var(--grants-accent);
+    }
+
+    .detail-tab.active {
+      color: var(--grants-accent);
+      border-bottom-color: var(--grants-accent);
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* Card */
+    .content-card {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1.5rem;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      margin-bottom: 1.25rem;
+    }
+
+    .card-title {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card-title i {
+      color: var(--grants-accent);
+    }
+
+    /* Info Grid */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+
+    .info-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .info-label {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      min-width: 120px;
+    }
+
+    .info-value {
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .info-value a {
+      color: var(--grants-accent);
+      text-decoration: none;
+    }
+
+    .info-value a:hover { text-decoration: underline; }
+
+    /* Data Tables */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    .data-table thead th {
+      background: #f8fafc;
+      padding: 0.75rem;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 2px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    .data-table tbody td {
+      padding: 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+
+    .data-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    .data-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .data-table tfoot td {
+      padding: 0.75rem;
+      font-weight: 700;
+      background: #f8fafc;
+      border-top: 2px solid var(--border-color);
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+    }
+
+    .status-pill.on-track { background: #f0fdf4; color: #22c55e; }
+    .status-pill.at-risk { background: #fef3c7; color: #d97706; }
+    .status-pill.not-started { background: #f1f5f9; color: #64748b; }
+    .status-pill.accepted { background: #f0fdf4; color: #22c55e; }
+    .status-pill.due { background: #fef3c7; color: #d97706; }
+
+    /* Budget Progress Bars */
+    .budget-bar {
+      width: 100%;
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .budget-bar .fill {
+      height: 100%;
+      border-radius: 4px;
+      background: var(--grants-accent);
+    }
+
+    .budget-bar .fill.high { background: var(--warning-color); }
+    .budget-bar .fill.over { background: var(--danger-color); }
+
+    /* Burndown Chart Placeholder */
+    .chart-placeholder {
+      background: #f8fafc;
+      border: 2px dashed var(--border-color);
+      border-radius: 0.75rem;
+      padding: 2rem;
+      text-align: center;
+      color: var(--text-secondary);
+      margin-top: 1rem;
+    }
+
+    .chart-placeholder i {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      color: var(--grants-accent);
+      display: block;
+    }
+
+    /* Action Buttons */
+    .action-btn-sm {
+      background: none;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      padding: 0.25rem 0.625rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .action-btn-sm:hover {
+      border-color: var(--grants-accent);
+      color: var(--grants-accent);
+    }
+
+    .action-btn-sm.primary {
+      background: var(--grants-accent);
+      border-color: var(--grants-accent);
+      color: white;
+    }
+
+    .action-btn-sm.primary:hover {
+      background: #025e8c;
+    }
+
+    /* Documents */
+    .doc-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      margin-bottom: 0.5rem;
+      transition: all 0.15s;
+    }
+
+    .doc-item:hover {
+      border-color: var(--grants-accent);
+      background: #f8fafc;
+    }
+
+    .doc-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.125rem;
+      flex-shrink: 0;
+    }
+
+    .doc-icon.pdf { background: #fee2e2; color: #dc2626; }
+    .doc-icon.excel { background: #f0fdf4; color: #22c55e; }
+    .doc-icon.doc { background: #e0f2fe; color: #0369a1; }
+    .doc-icon.generic { background: #f1f5f9; color: #64748b; }
+
+    .doc-info { flex: 1; }
+
+    .doc-name {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .doc-meta {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+    }
+
+    .doc-action {
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+
+    .doc-action:hover { color: var(--grants-accent); }
+
+    /* Timeline */
+    .timeline {
+      position: relative;
+      padding-left: 2rem;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 0.5rem;
+      top: 0.5rem;
+      bottom: 0.5rem;
+      width: 2px;
+      background: var(--border-color);
+    }
+
+    .timeline-item {
+      position: relative;
+      padding-bottom: 1.5rem;
+    }
+
+    .timeline-item:last-child { padding-bottom: 0; }
+
+    .timeline-dot {
+      position: absolute;
+      left: -1.625rem;
+      top: 0.25rem;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid var(--grants-accent);
+      background: white;
+    }
+
+    .timeline-dot.filled {
+      background: var(--grants-accent);
+    }
+
+    .timeline-date {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.125rem;
+    }
+
+    .timeline-text {
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .timeline-detail {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.125rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .quick-stats { grid-template-columns: 1fr 1fr; }
+      .info-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 576px) {
+      .quick-stats { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" onclick="parent.loadContent('grants/grant-list')" title="Back to Grants">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <div class="grant-title">
+        <h1>
+          <span class="grant-code">GRT-012</span>
+          Clean Water Initiative
+        </h1>
+        <div class="grant-subtitle">
+          <span><i class="fas fa-building-columns"></i> Bill & Melinda Gates Foundation</span>
+          <span class="status-badge">&#x1F7E2; Active</span>
+          <span class="amount-badge">$500,000</span>
+        </div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline-accent"><i class="fas fa-edit"></i> Edit</button>
+      <button class="btn-primary-accent" onclick="parent.loadContent('grants/grant-reporting')"><i class="fas fa-file-lines"></i> Add Report</button>
+      <button class="btn-outline-accent"><i class="fas fa-receipt"></i> Add Expense</button>
+      <button class="more-actions-btn"><i class="fas fa-ellipsis-v"></i></button>
+    </div>
+  </div>
+
+  <!-- Quick Stats -->
+  <div class="quick-stats">
+    <div class="qs-card">
+      <div class="qs-label">Funded Amount</div>
+      <div class="qs-value accent">$500,000</div>
+    </div>
+    <div class="qs-card">
+      <div class="qs-label">Spent</div>
+      <div class="qs-value">$325,000 <span style="font-size:0.75rem; color:var(--text-secondary); font-weight:500;">(65%)</span></div>
+      <div class="progress-bar-full"><div class="fill" style="width:65%"></div></div>
+    </div>
+    <div class="qs-card">
+      <div class="qs-label">Remaining</div>
+      <div class="qs-value success">$175,000</div>
+    </div>
+    <div class="qs-card">
+      <div class="qs-label">Period</div>
+      <div class="qs-value" style="font-size:1rem;">Jan 2025 &mdash; Dec 2026</div>
+      <div class="qs-sub">24 months, 15 remaining</div>
+    </div>
+    <div class="qs-card">
+      <div class="qs-label">Next Report Due</div>
+      <div class="qs-value warning" style="font-size:1rem;">Apr 30, 2026</div>
+      <div class="qs-sub" style="color: var(--warning-color);">18 days remaining</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="detail-tabs">
+    <button class="detail-tab active" onclick="switchTab('overview', this)"><i class="fas fa-info-circle"></i> Overview</button>
+    <button class="detail-tab" onclick="switchTab('budget', this)"><i class="fas fa-coins"></i> Budget</button>
+    <button class="detail-tab" onclick="switchTab('reports', this)"><i class="fas fa-file-lines"></i> Reports</button>
+    <button class="detail-tab" onclick="switchTab('documents', this)"><i class="fas fa-folder-open"></i> Documents</button>
+    <button class="detail-tab" onclick="switchTab('timeline', this)"><i class="fas fa-clock-rotate-left"></i> Timeline</button>
+  </div>
+
+  <!-- Tab 1: Overview -->
+  <div class="tab-panel active" id="tab-overview">
+    <div class="content-card">
+      <div class="card-title"><i class="fas fa-file-contract"></i> Grant Information</div>
+      <div class="info-grid">
+        <div>
+          <div class="info-row"><span class="info-label">Title</span><span class="info-value">Clean Water Initiative</span></div>
+          <div class="info-row" style="margin-top:0.5rem;"><span class="info-label">Funder</span><span class="info-value">Bill & Melinda Gates Foundation</span></div>
+          <div class="info-row" style="margin-top:0.5rem;"><span class="info-label">Funder Contact</span><span class="info-value">Jane Smith (<a href="mailto:jane@gatesfoundation.org">jane@gatesfoundation.org</a>)</span></div>
+          <div class="info-row" style="margin-top:0.5rem;"><span class="info-label">Grant Number</span><span class="info-value">BMGF-2025-4567</span></div>
+        </div>
+        <div>
+          <div class="info-row"><span class="info-label">Amount</span><span class="info-value" style="font-weight:700; color:var(--grants-accent);">$500,000</span></div>
+          <div class="info-row" style="margin-top:0.5rem;"><span class="info-label">Currency</span><span class="info-value">USD</span></div>
+          <div class="info-row" style="margin-top:0.5rem;"><span class="info-label">Start Date</span><span class="info-value">Jan 1, 2025</span></div>
+          <div class="info-row" style="margin-top:0.5rem;"><span class="info-label">End Date</span><span class="info-value">Dec 31, 2026</span></div>
+        </div>
+      </div>
+      <div style="margin-top:1rem;">
+        <div class="info-row"><span class="info-label">Purpose</span><span class="info-value">Provide clean water access to 50 communities in East Africa and South Asia</span></div>
+      </div>
+      <div style="margin-top:0.5rem;">
+        <div class="info-row"><span class="info-label">Branches</span><span class="info-value">Dubai (managing), Nairobi (implementing), Dhaka (implementing)</span></div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <div class="card-title"><i class="fas fa-bullseye"></i> Objectives & Deliverables</div>
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Deliverable</th>
+              <th>Target</th>
+              <th>Progress</th>
+              <th>Due Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>Wells constructed</td>
+              <td>50</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:0.5rem;">
+                  <div class="budget-bar" style="width:80px;"><div class="fill" style="width:64%"></div></div>
+                  <span>32 (64%)</span>
+                </div>
+              </td>
+              <td>Dec 2026</td>
+              <td><span class="status-pill on-track">&#x1F7E2; On Track</span></td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>Communities served</td>
+              <td>50</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:0.5rem;">
+                  <div class="budget-bar" style="width:80px;"><div class="fill" style="width:56%"></div></div>
+                  <span>28 (56%)</span>
+                </div>
+              </td>
+              <td>Dec 2026</td>
+              <td><span class="status-pill on-track">&#x1F7E2; On Track</span></td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>Water quality tests</td>
+              <td>200</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:0.5rem;">
+                  <div class="budget-bar" style="width:80px;"><div class="fill" style="width:73%"></div></div>
+                  <span>145 (73%)</span>
+                </div>
+              </td>
+              <td>Quarterly</td>
+              <td><span class="status-pill on-track">&#x1F7E2; On Track</span></td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>Community training sessions</td>
+              <td>100</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:0.5rem;">
+                  <div class="budget-bar" style="width:80px;"><div class="fill high" style="width:52%"></div></div>
+                  <span>52 (52%)</span>
+                </div>
+              </td>
+              <td>Dec 2026</td>
+              <td><span class="status-pill at-risk">&#x1F7E1; At Risk</span></td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>Final impact assessment</td>
+              <td>1</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:0.5rem;">
+                  <div class="budget-bar" style="width:80px;"><div class="fill" style="width:0%"></div></div>
+                  <span>0 (0%)</span>
+                </div>
+              </td>
+              <td>Dec 2026</td>
+              <td><span class="status-pill not-started">&#x23F3; Not Started</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 2: Budget -->
+  <div class="tab-panel" id="tab-budget">
+    <div class="content-card">
+      <div class="card-title"><i class="fas fa-coins"></i> Budget Breakdown</div>
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Budgeted</th>
+              <th>Spent</th>
+              <th>Remaining</th>
+              <th>% Used</th>
+              <th>Progress</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-weight:600;">Construction & Materials</td>
+              <td>$250,000</td>
+              <td>$178,000</td>
+              <td style="color:var(--success-color);">$72,000</td>
+              <td>71%</td>
+              <td><div class="budget-bar" style="width:120px;"><div class="fill high" style="width:71%"></div></div></td>
+            </tr>
+            <tr>
+              <td style="font-weight:600;">Staff & Labor</td>
+              <td>$100,000</td>
+              <td>$68,000</td>
+              <td style="color:var(--success-color);">$32,000</td>
+              <td>68%</td>
+              <td><div class="budget-bar" style="width:120px;"><div class="fill" style="width:68%"></div></div></td>
+            </tr>
+            <tr>
+              <td style="font-weight:600;">Training & Capacity Building</td>
+              <td>$50,000</td>
+              <td>$28,000</td>
+              <td style="color:var(--success-color);">$22,000</td>
+              <td>56%</td>
+              <td><div class="budget-bar" style="width:120px;"><div class="fill" style="width:56%"></div></div></td>
+            </tr>
+            <tr>
+              <td style="font-weight:600;">Monitoring & Evaluation</td>
+              <td>$40,000</td>
+              <td>$22,000</td>
+              <td style="color:var(--success-color);">$18,000</td>
+              <td>55%</td>
+              <td><div class="budget-bar" style="width:120px;"><div class="fill" style="width:55%"></div></div></td>
+            </tr>
+            <tr>
+              <td style="font-weight:600;">Travel & Transport</td>
+              <td>$30,000</td>
+              <td>$18,000</td>
+              <td style="color:var(--success-color);">$12,000</td>
+              <td>60%</td>
+              <td><div class="budget-bar" style="width:120px;"><div class="fill" style="width:60%"></div></div></td>
+            </tr>
+            <tr>
+              <td style="font-weight:600;">Administration (max 10%)</td>
+              <td>$30,000</td>
+              <td>$11,000</td>
+              <td style="color:var(--success-color);">$19,000</td>
+              <td>37%</td>
+              <td><div class="budget-bar" style="width:120px;"><div class="fill" style="width:37%"></div></div></td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>Total</td>
+              <td>$500,000</td>
+              <td>$325,000</td>
+              <td style="color:var(--success-color);">$175,000</td>
+              <td>65%</td>
+              <td><div class="budget-bar" style="width:120px;"><div class="fill" style="width:65%"></div></div></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <div style="margin-top:1rem;">
+        <button class="btn-primary-accent"><i class="fas fa-plus"></i> Add Expense</button>
+      </div>
+      <div class="chart-placeholder">
+        <i class="fas fa-chart-area"></i>
+        <div style="font-weight:600;">Budget Burn-Down Chart</div>
+        <div style="font-size:0.75rem; margin-top:0.25rem;">Visual showing planned vs actual spend over time</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 3: Reports -->
+  <div class="tab-panel" id="tab-reports">
+    <div class="content-card">
+      <div class="card-title"><i class="fas fa-file-lines"></i> Funder Reports</div>
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Report</th>
+              <th>Type</th>
+              <th>Due Date</th>
+              <th>Submitted</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-weight:600;">Q1 2026 Progress Report</td>
+              <td>Quarterly</td>
+              <td>Apr 30, 2026</td>
+              <td>&mdash;</td>
+              <td><span class="status-pill due">&#x23F3; Due in 18 days</span></td>
+              <td><button class="action-btn-sm primary" onclick="parent.loadContent('grants/grant-reporting')">Create Report</button></td>
+            </tr>
+            <tr>
+              <td style="font-weight:600;">Q4 2025 Progress Report</td>
+              <td>Quarterly</td>
+              <td>Jan 31, 2026</td>
+              <td>Jan 28, 2026</td>
+              <td><span class="status-pill accepted">&#x2705; Accepted</span></td>
+              <td><button class="action-btn-sm">View</button></td>
+            </tr>
+            <tr>
+              <td style="font-weight:600;">Annual Report 2025</td>
+              <td>Annual</td>
+              <td>Feb 28, 2026</td>
+              <td>Feb 25, 2026</td>
+              <td><span class="status-pill accepted">&#x2705; Accepted</span></td>
+              <td><button class="action-btn-sm">View</button></td>
+            </tr>
+            <tr>
+              <td style="font-weight:600;">Q3 2025 Progress Report</td>
+              <td>Quarterly</td>
+              <td>Oct 31, 2025</td>
+              <td>Oct 29, 2025</td>
+              <td><span class="status-pill accepted">&#x2705; Accepted</span></td>
+              <td><button class="action-btn-sm">View</button></td>
+            </tr>
+            <tr>
+              <td style="font-weight:600;">Financial Audit 2025</td>
+              <td>Audit</td>
+              <td>Mar 31, 2026</td>
+              <td>Mar 28, 2026</td>
+              <td><span class="status-pill accepted">&#x2705; Accepted</span></td>
+              <td><button class="action-btn-sm">View</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 4: Documents -->
+  <div class="tab-panel" id="tab-documents">
+    <div class="content-card">
+      <div class="card-title"><i class="fas fa-folder-open"></i> Grant Documents</div>
+      <div class="doc-item">
+        <div class="doc-icon pdf"><i class="fas fa-file-pdf"></i></div>
+        <div class="doc-info">
+          <div class="doc-name">Grant Agreement — BMGF-2025-4567.pdf</div>
+          <div class="doc-meta">Uploaded Jan 5, 2025 &middot; 2.4 MB</div>
+        </div>
+        <span class="doc-action"><i class="fas fa-download"></i></span>
+      </div>
+      <div class="doc-item">
+        <div class="doc-icon excel"><i class="fas fa-file-excel"></i></div>
+        <div class="doc-info">
+          <div class="doc-name">Budget Spreadsheet — CleanWater_Budget_v3.xlsx</div>
+          <div class="doc-meta">Uploaded Jan 5, 2025 &middot; 186 KB</div>
+        </div>
+        <span class="doc-action"><i class="fas fa-download"></i></span>
+      </div>
+      <div class="doc-item">
+        <div class="doc-icon doc"><i class="fas fa-file-word"></i></div>
+        <div class="doc-info">
+          <div class="doc-name">Funder Guidelines — BMGF_Reporting_Guide.docx</div>
+          <div class="doc-meta">Uploaded Jan 5, 2025 &middot; 340 KB</div>
+        </div>
+        <span class="doc-action"><i class="fas fa-download"></i></span>
+      </div>
+      <div class="doc-item">
+        <div class="doc-icon pdf"><i class="fas fa-file-pdf"></i></div>
+        <div class="doc-info">
+          <div class="doc-name">Q4 2025 Progress Report.pdf</div>
+          <div class="doc-meta">Uploaded Jan 28, 2026 &middot; 1.1 MB</div>
+        </div>
+        <span class="doc-action"><i class="fas fa-download"></i></span>
+      </div>
+      <div class="doc-item">
+        <div class="doc-icon generic"><i class="fas fa-file-zipper"></i></div>
+        <div class="doc-info">
+          <div class="doc-name">Receipts_Q4_2025.zip</div>
+          <div class="doc-meta">Uploaded Jan 28, 2026 &middot; 4.7 MB</div>
+        </div>
+        <span class="doc-action"><i class="fas fa-download"></i></span>
+      </div>
+      <div style="margin-top:1rem;">
+        <button class="btn-primary-accent"><i class="fas fa-upload"></i> Upload Document</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 5: Timeline -->
+  <div class="tab-panel" id="tab-timeline">
+    <div class="content-card">
+      <div class="card-title"><i class="fas fa-clock-rotate-left"></i> Activity Timeline</div>
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-dot filled"></div>
+          <div class="timeline-date">Mar 28, 2026</div>
+          <div class="timeline-text">Financial Audit 2025 submitted</div>
+          <div class="timeline-detail">Accepted by funder on Mar 30, 2026</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot filled"></div>
+          <div class="timeline-date">Feb 25, 2026</div>
+          <div class="timeline-text">Annual Report 2025 submitted</div>
+          <div class="timeline-detail">Accepted by funder on Feb 27, 2026</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot filled"></div>
+          <div class="timeline-date">Jan 28, 2026</div>
+          <div class="timeline-text">Q4 2025 Progress Report submitted</div>
+          <div class="timeline-detail">Accepted by funder on Jan 31, 2026</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot filled"></div>
+          <div class="timeline-date">Oct 29, 2025</div>
+          <div class="timeline-text">Q3 2025 Progress Report submitted</div>
+          <div class="timeline-detail">Accepted by funder on Nov 1, 2025</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot filled"></div>
+          <div class="timeline-date">Jul 15, 2025</div>
+          <div class="timeline-text">Second tranche received — $200,000</div>
+          <div class="timeline-detail">Transferred to Dubai operating account</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot filled"></div>
+          <div class="timeline-date">Jun 30, 2025</div>
+          <div class="timeline-text">Phase 2 milestone completed</div>
+          <div class="timeline-detail">20 wells constructed — on schedule</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot filled"></div>
+          <div class="timeline-date">Mar 15, 2025</div>
+          <div class="timeline-text">Phase 1 milestone completed</div>
+          <div class="timeline-detail">Needs assessment report delivered to funder</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot filled"></div>
+          <div class="timeline-date">Jan 10, 2025</div>
+          <div class="timeline-text">First tranche received — $300,000</div>
+          <div class="timeline-detail">Transferred to Dubai operating account</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot filled"></div>
+          <div class="timeline-date">Dec 15, 2024</div>
+          <div class="timeline-text">Grant approved</div>
+          <div class="timeline-detail">Full amount $500,000 approved with 2 tranche disbursement</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-date">Oct 1, 2024</div>
+          <div class="timeline-text">Application submitted</div>
+          <div class="timeline-detail">Submitted via BMGF online portal</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-date">Aug 20, 2024</div>
+          <div class="timeline-text">Prospect identified</div>
+          <div class="timeline-detail">BMGF Global Water Access Program — open call for proposals</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function switchTab(tabName, btn) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('tab-' + tabName).classList.add('active');
+      btn.classList.add('active');
+    }
+  </script>
+
+</body>
+
+</html>

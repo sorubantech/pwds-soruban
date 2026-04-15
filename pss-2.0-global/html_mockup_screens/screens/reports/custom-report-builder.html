@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Custom Report Builder - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --report-accent: #7c3aed;
+      --report-accent-bg: #f5f3ff;
+      --report-accent-hover: #6d28d9;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      font-size: 14px;
+      color: var(--text-primary);
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      background: white;
+      border-bottom: 1px solid var(--border-color);
+      flex-shrink: 0;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Split Layout */
+    .builder-container {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .config-panel {
+      width: 40%;
+      min-width: 360px;
+      border-right: 1px solid var(--border-color);
+      background: white;
+      overflow-y: auto;
+      padding: 1.25rem;
+    }
+
+    .config-panel::-webkit-scrollbar { width: 5px; }
+    .config-panel::-webkit-scrollbar-track { background: transparent; }
+    .config-panel::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+    .preview-panel {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.25rem;
+      background: #f8fafc;
+    }
+
+    .preview-panel::-webkit-scrollbar { width: 5px; }
+    .preview-panel::-webkit-scrollbar-track { background: transparent; }
+    .preview-panel::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+    /* Config Sections */
+    .config-section {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .config-section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+
+    .config-section-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--report-accent);
+      margin-bottom: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .config-section-title .step-num {
+      background: var(--report-accent);
+      color: white;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.625rem;
+      font-weight: 700;
+    }
+
+    .form-label-sm {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.375rem;
+    }
+
+    .form-label-sm .required {
+      color: var(--danger-color);
+    }
+
+    .form-control-sm-custom {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      width: 100%;
+      color: var(--text-primary);
+      background: white;
+    }
+
+    .form-control-sm-custom:focus {
+      outline: none;
+      border-color: var(--report-accent);
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    }
+
+    .form-select-sm-custom {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      background: white;
+      width: 100%;
+    }
+
+    .form-select-sm-custom:focus {
+      outline: none;
+      border-color: var(--report-accent);
+    }
+
+    textarea.form-control-sm-custom {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    /* Radio Group */
+    .entity-radio-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .entity-radio {
+      display: none;
+    }
+
+    .entity-radio-label {
+      padding: 0.375rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .entity-radio:checked + .entity-radio-label {
+      background: var(--report-accent);
+      border-color: var(--report-accent);
+      color: white;
+    }
+
+    .entity-radio-label:hover {
+      border-color: var(--report-accent);
+    }
+
+    /* Checkbox Group */
+    .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
+    }
+
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .check-item input[type="checkbox"] {
+      accent-color: var(--report-accent);
+      width: 15px;
+      height: 15px;
+      cursor: pointer;
+    }
+
+    .check-item label {
+      font-size: 0.8125rem;
+      cursor: pointer;
+      color: var(--text-primary);
+    }
+
+    /* Fields List */
+    .fields-search {
+      padding: 0.4rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.75rem;
+      width: 100%;
+      margin-bottom: 0.625rem;
+    }
+
+    .fields-search:focus {
+      outline: none;
+      border-color: var(--report-accent);
+    }
+
+    .fields-available {
+      max-height: 180px;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      padding: 0.5rem;
+      margin-bottom: 0.875rem;
+    }
+
+    .fields-available::-webkit-scrollbar { width: 4px; }
+    .fields-available::-webkit-scrollbar-track { background: transparent; }
+    .fields-available::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+    .field-group-label {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      margin-top: 0.5rem;
+      margin-bottom: 0.25rem;
+      padding-bottom: 0.25rem;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .field-group-label:first-child {
+      margin-top: 0;
+    }
+
+    .field-check {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.25rem 0;
+    }
+
+    .field-check input[type="checkbox"] {
+      accent-color: var(--report-accent);
+      width: 14px;
+      height: 14px;
+    }
+
+    .field-check label {
+      font-size: 0.8125rem;
+      cursor: pointer;
+    }
+
+    /* Selected Fields Sortable */
+    .selected-fields-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      margin-bottom: 0.375rem;
+      color: var(--text-primary);
+    }
+
+    .selected-fields-list {
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      overflow: hidden;
+    }
+
+    .selected-field-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+      background: white;
+      font-size: 0.8125rem;
+    }
+
+    .selected-field-item:last-child {
+      border-bottom: none;
+    }
+
+    .selected-field-item:hover {
+      background: #fafbfc;
+    }
+
+    .field-drag {
+      color: #cbd5e1;
+      cursor: grab;
+      font-size: 0.75rem;
+    }
+
+    .field-num {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      min-width: 16px;
+    }
+
+    .field-name {
+      flex: 1;
+      font-weight: 500;
+    }
+
+    .field-actions {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .field-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 0.6875rem;
+      padding: 0.125rem 0.25rem;
+      border-radius: 0.25rem;
+      transition: all 0.15s;
+    }
+
+    .field-btn:hover {
+      background: #f1f5f9;
+      color: var(--text-primary);
+    }
+
+    .field-btn.remove:hover {
+      color: var(--danger-color);
+      background: #fef2f2;
+    }
+
+    /* Filter Rows */
+    .filter-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-row select,
+    .filter-row input {
+      padding: 0.4rem 0.625rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      color: var(--text-primary);
+    }
+
+    .filter-row select:focus,
+    .filter-row input:focus {
+      outline: none;
+      border-color: var(--report-accent);
+    }
+
+    .filter-field { width: 130px; }
+    .filter-operator { width: 120px; }
+    .filter-value { flex: 1; min-width: 100px; }
+
+    .btn-remove-filter {
+      background: none;
+      border: none;
+      color: #cbd5e1;
+      cursor: pointer;
+      font-size: 0.875rem;
+      padding: 0.25rem;
+    }
+
+    .btn-remove-filter:hover {
+      color: var(--danger-color);
+    }
+
+    .btn-add-row {
+      background: none;
+      border: 1px dashed var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-add-row:hover {
+      border-color: var(--report-accent);
+      color: var(--report-accent);
+    }
+
+    /* Group & Aggregate */
+    .agg-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      margin-bottom: 0.375rem;
+    }
+
+    .agg-row .agg-field {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      min-width: 120px;
+    }
+
+    .agg-row select {
+      padding: 0.375rem 0.625rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+    }
+
+    /* Preview Panel */
+    .preview-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .preview-header h3 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .preview-badge {
+      font-size: 0.625rem;
+      font-weight: 600;
+      background: var(--report-accent-bg);
+      color: var(--report-accent);
+      padding: 0.2rem 0.5rem;
+      border-radius: 9999px;
+    }
+
+    .preview-meta {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .btn-refresh {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-refresh:hover {
+      border-color: var(--report-accent);
+      color: var(--report-accent);
+    }
+
+    /* Preview Table */
+    .preview-card {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+    }
+
+    .preview-table {
+      width: 100%;
+      font-size: 0.8125rem;
+      border-collapse: collapse;
+    }
+
+    .preview-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    .preview-table td {
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+      color: var(--text-primary);
+    }
+
+    .preview-table tr:last-child td { border-bottom: none; }
+
+    .preview-table tr.group-header td {
+      background: var(--report-accent-bg);
+      font-weight: 700;
+      color: var(--report-accent);
+      font-size: 0.8125rem;
+    }
+
+    .preview-table tr.subtotal td {
+      background: #f8fafc;
+      font-weight: 600;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .preview-table tr.grand-total td {
+      background: var(--report-accent);
+      color: white;
+      font-weight: 700;
+    }
+
+    /* View Toggle */
+    .view-toggle {
+      display: flex;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      overflow: hidden;
+    }
+
+    .view-toggle-btn {
+      padding: 0.375rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+    }
+
+    .view-toggle-btn.active {
+      background: var(--report-accent);
+      color: white;
+    }
+
+    /* Bottom Action Bar */
+    .action-bar {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      padding: 0.875rem 1.5rem;
+      background: white;
+      border-top: 1px solid var(--border-color);
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-report {
+      background: var(--report-accent);
+      border: 1px solid var(--report-accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1.25rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-report:hover {
+      background: var(--report-accent-hover);
+    }
+
+    .btn-outline-report {
+      background: white;
+      border: 1px solid var(--report-accent);
+      color: var(--report-accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1.25rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-report:hover {
+      background: var(--report-accent-bg);
+    }
+
+    .btn-cancel {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1.25rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+    }
+
+    .btn-cancel:hover {
+      border-color: var(--text-secondary);
+      color: var(--text-primary);
+    }
+
+    .btn-export-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .btn-export-dropdown .dropdown-menu-custom {
+      display: none;
+      position: absolute;
+      bottom: 100%;
+      right: 0;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 0.25rem 0;
+      min-width: 120px;
+      z-index: 10;
+      margin-bottom: 0.25rem;
+    }
+
+    .btn-export-dropdown.open .dropdown-menu-custom {
+      display: block;
+    }
+
+    .dropdown-menu-custom a {
+      display: block;
+      padding: 0.375rem 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .dropdown-menu-custom a:hover {
+      background: var(--report-accent-bg);
+      color: var(--report-accent);
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .builder-container {
+        flex-direction: column;
+      }
+      .config-panel {
+        width: 100%;
+        min-width: 0;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        max-height: 50vh;
+      }
+      .preview-panel {
+        max-height: 50vh;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .page-header { padding: 1rem; }
+      .config-panel { padding: 1rem; }
+      .preview-panel { padding: 1rem; }
+      .action-bar { padding: 0.75rem 1rem; }
+      .filter-row { flex-direction: column; }
+      .filter-field, .filter-operator { width: 100%; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-wrench me-2" style="color: var(--report-accent);"></i>Custom Report Builder</h1>
+      <p class="subtitle">Build and save custom reports with flexible field selection</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline-accent" onclick="parent.loadContent('reports/report-catalog')">
+        <i class="fas fa-arrow-left me-1"></i> My Custom Reports
+      </button>
+    </div>
+  </div>
+
+  <!-- Split Layout -->
+  <div class="builder-container">
+    <!-- Left Panel: Config -->
+    <div class="config-panel">
+
+      <!-- Section 1: Report Info -->
+      <div class="config-section">
+        <div class="config-section-title">
+          <span class="step-num">1</span> Report Info
+        </div>
+        <div class="mb-3">
+          <div class="form-label-sm">Report Name <span class="required">*</span></div>
+          <input type="text" class="form-control-sm-custom" value="Monthly Board Report" placeholder="Enter report name">
+        </div>
+        <div class="mb-3">
+          <div class="form-label-sm">Description</div>
+          <textarea class="form-control-sm-custom" rows="2" placeholder="Describe this report...">Summary of donations, donor counts, and campaign progress for monthly board meetings</textarea>
+        </div>
+        <div>
+          <div class="form-label-sm">Category</div>
+          <select class="form-select-sm-custom">
+            <option selected>Fundraising</option>
+            <option>Contacts</option>
+            <option>Communication</option>
+            <option>Organization</option>
+            <option>Field Collection</option>
+            <option>Administration</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Section 2: Data Source -->
+      <div class="config-section">
+        <div class="config-section-title">
+          <span class="step-num">2</span> Data Source
+        </div>
+        <div class="mb-3">
+          <div class="form-label-sm">Primary Entity <span class="required">*</span></div>
+          <div class="entity-radio-group">
+            <input type="radio" name="entity" id="entityDonations" class="entity-radio" checked>
+            <label for="entityDonations" class="entity-radio-label">Donations</label>
+            <input type="radio" name="entity" id="entityContacts" class="entity-radio">
+            <label for="entityContacts" class="entity-radio-label">Contacts</label>
+            <input type="radio" name="entity" id="entityComms" class="entity-radio">
+            <label for="entityComms" class="entity-radio-label">Communications</label>
+            <input type="radio" name="entity" id="entityFieldCol" class="entity-radio">
+            <label for="entityFieldCol" class="entity-radio-label">Field Collections</label>
+            <input type="radio" name="entity" id="entityEvents" class="entity-radio">
+            <label for="entityEvents" class="entity-radio-label">Events</label>
+            <input type="radio" name="entity" id="entityCampaigns" class="entity-radio">
+            <label for="entityCampaigns" class="entity-radio-label">Campaigns</label>
+            <input type="radio" name="entity" id="entityPledges" class="entity-radio">
+            <label for="entityPledges" class="entity-radio-label">Pledges</label>
+            <input type="radio" name="entity" id="entityRecurring" class="entity-radio">
+            <label for="entityRecurring" class="entity-radio-label">Recurring Donations</label>
+          </div>
+        </div>
+        <div>
+          <div class="form-label-sm">Include Related Data</div>
+          <div class="checkbox-group">
+            <div class="check-item">
+              <input type="checkbox" id="relContact" checked>
+              <label for="relContact">Contact details (name, email, phone, city)</label>
+            </div>
+            <div class="check-item">
+              <input type="checkbox" id="relPurpose" checked>
+              <label for="relPurpose">Purpose details (name, category)</label>
+            </div>
+            <div class="check-item">
+              <input type="checkbox" id="relCampaign">
+              <label for="relCampaign">Campaign details (name, goal, status)</label>
+            </div>
+            <div class="check-item">
+              <input type="checkbox" id="relPayment">
+              <label for="relPayment">Payment details (gateway, transaction ID)</label>
+            </div>
+            <div class="check-item">
+              <input type="checkbox" id="relReceipt">
+              <label for="relReceipt">Receipt details (number, date, delivery status)</label>
+            </div>
+            <div class="check-item">
+              <input type="checkbox" id="relBranch">
+              <label for="relBranch">Branch details (name, region)</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Select Fields -->
+      <div class="config-section">
+        <div class="config-section-title">
+          <span class="step-num">3</span> Select Fields
+        </div>
+        <div class="form-label-sm">Available Fields</div>
+        <input type="text" class="fields-search" placeholder="Search fields...">
+        <div class="fields-available">
+          <div class="field-group-label">Donation Fields</div>
+          <div class="field-check"><input type="checkbox" id="fDonDate" checked><label for="fDonDate">Donation Date</label></div>
+          <div class="field-check"><input type="checkbox" id="fAmount" checked><label for="fAmount">Amount</label></div>
+          <div class="field-check"><input type="checkbox" id="fCurrency" checked><label for="fCurrency">Currency</label></div>
+          <div class="field-check"><input type="checkbox" id="fPayMode" checked><label for="fPayMode">Payment Mode</label></div>
+          <div class="field-check"><input type="checkbox" id="fReceipt"><label for="fReceipt">Receipt Number</label></div>
+          <div class="field-check"><input type="checkbox" id="fStatus"><label for="fStatus">Status</label></div>
+          <div class="field-check"><input type="checkbox" id="fCreated" checked><label for="fCreated">Created Date</label></div>
+
+          <div class="field-group-label">Contact Fields</div>
+          <div class="field-check"><input type="checkbox" id="fFullName" checked><label for="fFullName">Full Name</label></div>
+          <div class="field-check"><input type="checkbox" id="fEmail"><label for="fEmail">Email</label></div>
+          <div class="field-check"><input type="checkbox" id="fPhone"><label for="fPhone">Phone</label></div>
+          <div class="field-check"><input type="checkbox" id="fCity" checked><label for="fCity">City</label></div>
+          <div class="field-check"><input type="checkbox" id="fCountry"><label for="fCountry">Country</label></div>
+          <div class="field-check"><input type="checkbox" id="fTags"><label for="fTags">Tags</label></div>
+
+          <div class="field-group-label">Purpose Fields</div>
+          <div class="field-check"><input type="checkbox" id="fPurpose" checked><label for="fPurpose">Purpose Name</label></div>
+          <div class="field-check"><input type="checkbox" id="fPurposeCat"><label for="fPurposeCat">Category</label></div>
+        </div>
+
+        <div class="selected-fields-label">Selected Fields (drag to reorder)</div>
+        <div class="selected-fields-list">
+          <div class="selected-field-item">
+            <i class="fas fa-grip-vertical field-drag"></i>
+            <span class="field-num">1</span>
+            <span class="field-name">Full Name</span>
+            <div class="field-actions">
+              <button class="field-btn"><i class="fas fa-arrow-up"></i></button>
+              <button class="field-btn"><i class="fas fa-arrow-down"></i></button>
+              <button class="field-btn remove"><i class="fas fa-times"></i></button>
+            </div>
+          </div>
+          <div class="selected-field-item">
+            <i class="fas fa-grip-vertical field-drag"></i>
+            <span class="field-num">2</span>
+            <span class="field-name">Donation Date</span>
+            <div class="field-actions">
+              <button class="field-btn"><i class="fas fa-arrow-up"></i></button>
+              <button class="field-btn"><i class="fas fa-arrow-down"></i></button>
+              <button class="field-btn remove"><i class="fas fa-times"></i></button>
+            </div>
+          </div>
+          <div class="selected-field-item">
+            <i class="fas fa-grip-vertical field-drag"></i>
+            <span class="field-num">3</span>
+            <span class="field-name">Amount</span>
+            <div class="field-actions">
+              <button class="field-btn"><i class="fas fa-arrow-up"></i></button>
+              <button class="field-btn"><i class="fas fa-arrow-down"></i></button>
+              <button class="field-btn remove"><i class="fas fa-times"></i></button>
+            </div>
+          </div>
+          <div class="selected-field-item">
+            <i class="fas fa-grip-vertical field-drag"></i>
+            <span class="field-num">4</span>
+            <span class="field-name">Currency</span>
+            <div class="field-actions">
+              <button class="field-btn"><i class="fas fa-arrow-up"></i></button>
+              <button class="field-btn"><i class="fas fa-arrow-down"></i></button>
+              <button class="field-btn remove"><i class="fas fa-times"></i></button>
+            </div>
+          </div>
+          <div class="selected-field-item">
+            <i class="fas fa-grip-vertical field-drag"></i>
+            <span class="field-num">5</span>
+            <span class="field-name">Purpose Name</span>
+            <div class="field-actions">
+              <button class="field-btn"><i class="fas fa-arrow-up"></i></button>
+              <button class="field-btn"><i class="fas fa-arrow-down"></i></button>
+              <button class="field-btn remove"><i class="fas fa-times"></i></button>
+            </div>
+          </div>
+          <div class="selected-field-item">
+            <i class="fas fa-grip-vertical field-drag"></i>
+            <span class="field-num">6</span>
+            <span class="field-name">City</span>
+            <div class="field-actions">
+              <button class="field-btn"><i class="fas fa-arrow-up"></i></button>
+              <button class="field-btn"><i class="fas fa-arrow-down"></i></button>
+              <button class="field-btn remove"><i class="fas fa-times"></i></button>
+            </div>
+          </div>
+          <div class="selected-field-item">
+            <i class="fas fa-grip-vertical field-drag"></i>
+            <span class="field-num">7</span>
+            <span class="field-name">Payment Mode</span>
+            <div class="field-actions">
+              <button class="field-btn"><i class="fas fa-arrow-up"></i></button>
+              <button class="field-btn"><i class="fas fa-arrow-down"></i></button>
+              <button class="field-btn remove"><i class="fas fa-times"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 4: Filters -->
+      <div class="config-section">
+        <div class="config-section-title">
+          <span class="step-num">4</span> Filters
+        </div>
+        <div id="filterRows">
+          <div class="filter-row">
+            <select class="filter-field">
+              <option selected>Donation Date</option>
+              <option>Amount</option>
+              <option>Payment Mode</option>
+              <option>Full Name</option>
+              <option>City</option>
+              <option>Purpose Name</option>
+              <option>Currency</option>
+              <option>Status</option>
+            </select>
+            <select class="filter-operator">
+              <option selected>is between</option>
+              <option>is</option>
+              <option>is before</option>
+              <option>is after</option>
+              <option>is in last N days</option>
+            </select>
+            <input type="text" class="filter-value" value="Apr 1, 2026 — Apr 30, 2026">
+            <button class="btn-remove-filter" onclick="this.parentElement.remove()"><i class="fas fa-times-circle"></i></button>
+          </div>
+          <div class="filter-row">
+            <select class="filter-field">
+              <option>Donation Date</option>
+              <option selected>Amount</option>
+              <option>Payment Mode</option>
+              <option>Full Name</option>
+              <option>City</option>
+              <option>Purpose Name</option>
+              <option>Currency</option>
+              <option>Status</option>
+            </select>
+            <select class="filter-operator">
+              <option>equals</option>
+              <option selected>is greater than</option>
+              <option>is less than</option>
+              <option>is between</option>
+            </select>
+            <input type="text" class="filter-value" value="100">
+            <button class="btn-remove-filter" onclick="this.parentElement.remove()"><i class="fas fa-times-circle"></i></button>
+          </div>
+          <div class="filter-row">
+            <select class="filter-field">
+              <option>Donation Date</option>
+              <option>Amount</option>
+              <option selected>Payment Mode</option>
+              <option>Full Name</option>
+              <option>City</option>
+              <option>Purpose Name</option>
+              <option>Currency</option>
+              <option>Status</option>
+            </select>
+            <select class="filter-operator">
+              <option>is</option>
+              <option selected>is one of</option>
+              <option>is not</option>
+            </select>
+            <input type="text" class="filter-value" value="Cash, Cheque, Bank Transfer">
+            <button class="btn-remove-filter" onclick="this.parentElement.remove()"><i class="fas fa-times-circle"></i></button>
+          </div>
+        </div>
+        <button class="btn-add-row" onclick="addFilterRow()"><i class="fas fa-plus me-1"></i>Add Filter</button>
+      </div>
+
+      <!-- Section 5: Group & Aggregate -->
+      <div class="config-section">
+        <div class="config-section-title">
+          <span class="step-num">5</span> Group & Aggregate
+        </div>
+        <div class="mb-3">
+          <div class="form-label-sm">Group By</div>
+          <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+            <select class="form-select-sm-custom" style="width: auto; flex: 1;">
+              <option>None</option>
+              <option selected>Purpose Name</option>
+              <option>City</option>
+              <option>Payment Mode</option>
+              <option>Currency</option>
+              <option>Full Name</option>
+            </select>
+            <button class="btn-add-row"><i class="fas fa-plus me-1"></i>Add Grouping</button>
+          </div>
+        </div>
+        <div class="mb-3">
+          <div class="form-label-sm">Aggregations</div>
+          <div class="agg-row">
+            <span class="agg-field">Amount:</span>
+            <select>
+              <option selected>Sum</option>
+              <option>Average</option>
+              <option>Count</option>
+              <option>Min</option>
+              <option>Max</option>
+            </select>
+          </div>
+          <div class="agg-row">
+            <span class="agg-field">Donation Date:</span>
+            <select>
+              <option>Sum</option>
+              <option>Average</option>
+              <option selected>Count</option>
+              <option>Min</option>
+              <option>Max</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <div class="checkbox-group" style="flex-direction: row; gap: 1rem;">
+            <div class="check-item">
+              <input type="checkbox" id="showSubtotals" checked>
+              <label for="showSubtotals">Subtotals</label>
+            </div>
+            <div class="check-item">
+              <input type="checkbox" id="showGrandTotal" checked>
+              <label for="showGrandTotal">Grand Total</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 6: Sort -->
+      <div class="config-section">
+        <div class="config-section-title">
+          <span class="step-num">6</span> Sort
+        </div>
+        <div class="filter-row">
+          <select class="filter-field" style="width: 150px;">
+            <option selected>Amount</option>
+            <option>Donation Date</option>
+            <option>Full Name</option>
+            <option>City</option>
+            <option>Purpose Name</option>
+          </select>
+          <select class="filter-operator" style="width: 130px;">
+            <option>Ascending</option>
+            <option selected>Descending</option>
+          </select>
+          <button class="btn-remove-filter" onclick="this.parentElement.remove()"><i class="fas fa-times-circle"></i></button>
+        </div>
+        <div class="filter-row">
+          <select class="filter-field" style="width: 150px;">
+            <option>Amount</option>
+            <option>Donation Date</option>
+            <option>Full Name</option>
+            <option>City</option>
+            <option selected>Purpose Name</option>
+          </select>
+          <select class="filter-operator" style="width: 130px;">
+            <option selected>Ascending</option>
+            <option>Descending</option>
+          </select>
+          <button class="btn-remove-filter" onclick="this.parentElement.remove()"><i class="fas fa-times-circle"></i></button>
+        </div>
+        <button class="btn-add-row"><i class="fas fa-plus me-1"></i>Add Sort</button>
+      </div>
+
+    </div>
+
+    <!-- Right Panel: Preview -->
+    <div class="preview-panel">
+      <div class="preview-header">
+        <div>
+          <h3>
+            <i class="fas fa-table me-1" style="color: var(--report-accent);"></i>
+            Preview
+            <span class="preview-badge">first 25 rows</span>
+          </h3>
+          <div class="preview-meta">Showing 25 of 342 results</div>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <div class="view-toggle">
+            <button class="view-toggle-btn" onclick="showUngrouped(this)">Flat</button>
+            <button class="view-toggle-btn active" onclick="showGrouped(this)">Grouped</button>
+          </div>
+          <button class="btn-refresh" onclick="refreshPreview()"><i class="fas fa-sync-alt me-1"></i>Refresh</button>
+        </div>
+      </div>
+
+      <!-- Ungrouped Preview (hidden by default) -->
+      <div class="preview-card" id="ungroupedPreview" style="display: none;">
+        <div class="table-responsive">
+          <table class="preview-table">
+            <thead>
+              <tr>
+                <th>Full Name</th>
+                <th>Donation Date</th>
+                <th>Amount</th>
+                <th>Currency</th>
+                <th>Purpose</th>
+                <th>City</th>
+                <th>Payment Mode</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Khalid Al-Mansouri</td>
+                <td>Apr 10</td>
+                <td style="font-weight: 600;">$500</td>
+                <td>USD</td>
+                <td>Orphan Care</td>
+                <td>Dubai</td>
+                <td>Bank Transfer</td>
+              </tr>
+              <tr>
+                <td>Fatima Al-Zahra</td>
+                <td>Apr 9</td>
+                <td style="font-weight: 600;">$200</td>
+                <td>USD</td>
+                <td>Education</td>
+                <td>Dubai</td>
+                <td>Cash</td>
+              </tr>
+              <tr>
+                <td>Ravi Sharma</td>
+                <td>Apr 9</td>
+                <td style="font-weight: 600;">$178</td>
+                <td>INR</td>
+                <td>Clean Water</td>
+                <td>Mumbai</td>
+                <td>Cheque</td>
+              </tr>
+              <tr>
+                <td>Amina Hassan</td>
+                <td>Apr 8</td>
+                <td style="font-weight: 600;">$350</td>
+                <td>USD</td>
+                <td>Healthcare</td>
+                <td>Nairobi</td>
+                <td>Bank Transfer</td>
+              </tr>
+              <tr>
+                <td>John Matthews</td>
+                <td>Apr 8</td>
+                <td style="font-weight: 600;">$125</td>
+                <td>USD</td>
+                <td>Orphan Care</td>
+                <td>London</td>
+                <td>Credit Card</td>
+              </tr>
+              <tr>
+                <td>Priya Patel</td>
+                <td>Apr 7</td>
+                <td style="font-weight: 600;">$240</td>
+                <td>INR</td>
+                <td>Education</td>
+                <td>Mumbai</td>
+                <td>Cash</td>
+              </tr>
+              <tr>
+                <td>Omar Al-Rashid</td>
+                <td>Apr 7</td>
+                <td style="font-weight: 600;">$1,000</td>
+                <td>USD</td>
+                <td>Food Distribution</td>
+                <td>Dubai</td>
+                <td>Bank Transfer</td>
+              </tr>
+              <tr>
+                <td>Sarah Williams</td>
+                <td>Apr 6</td>
+                <td style="font-weight: 600;">$75</td>
+                <td>USD</td>
+                <td>Clean Water</td>
+                <td>New York</td>
+                <td>Online Gateway</td>
+              </tr>
+              <tr>
+                <td>Mohamed Ali</td>
+                <td>Apr 5</td>
+                <td style="font-weight: 600;">$450</td>
+                <td>USD</td>
+                <td>Orphan Care</td>
+                <td>Cairo</td>
+                <td>Cash</td>
+              </tr>
+              <tr>
+                <td>Li Wei</td>
+                <td>Apr 5</td>
+                <td style="font-weight: 600;">$300</td>
+                <td>USD</td>
+                <td>Healthcare</td>
+                <td>Singapore</td>
+                <td>Credit Card</td>
+              </tr>
+              <tr>
+                <td colspan="7" style="text-align: center; color: var(--text-secondary); font-style: italic; padding: 1rem;">
+                  ... 15 more rows (25 of 342 total)
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Grouped Preview (shown by default) -->
+      <div class="preview-card" id="groupedPreview">
+        <div class="table-responsive">
+          <table class="preview-table">
+            <thead>
+              <tr>
+                <th>Purpose</th>
+                <th style="text-align: right;">Total Amount</th>
+                <th style="text-align: right;">Avg Amount</th>
+                <th style="text-align: right;">Count</th>
+                <th style="text-align: right;">Cities</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="font-weight: 600;">Orphan Care</td>
+                <td style="text-align: right; font-weight: 600;">$19,200</td>
+                <td style="text-align: right;">$143</td>
+                <td style="text-align: right;">134</td>
+                <td style="text-align: right;">12</td>
+              </tr>
+              <tr>
+                <td style="font-weight: 600;">Education</td>
+                <td style="text-align: right; font-weight: 600;">$14,500</td>
+                <td style="text-align: right;">$148</td>
+                <td style="text-align: right;">98</td>
+                <td style="text-align: right;">10</td>
+              </tr>
+              <tr>
+                <td style="font-weight: 600;">Clean Water</td>
+                <td style="text-align: right; font-weight: 600;">$10,800</td>
+                <td style="text-align: right;">$161</td>
+                <td style="text-align: right;">67</td>
+                <td style="text-align: right;">8</td>
+              </tr>
+              <tr>
+                <td style="font-weight: 600;">Healthcare</td>
+                <td style="text-align: right; font-weight: 600;">$7,600</td>
+                <td style="text-align: right;">$136</td>
+                <td style="text-align: right;">56</td>
+                <td style="text-align: right;">7</td>
+              </tr>
+              <tr>
+                <td style="font-weight: 600;">Food Distribution</td>
+                <td style="text-align: right; font-weight: 600;">$6,200</td>
+                <td style="text-align: right;">$138</td>
+                <td style="text-align: right;">45</td>
+                <td style="text-align: right;">6</td>
+              </tr>
+              <tr class="grand-total">
+                <td>Grand Total</td>
+                <td style="text-align: right;">$58,300</td>
+                <td style="text-align: right;">$146</td>
+                <td style="text-align: right;">400</td>
+                <td style="text-align: right;">&mdash;</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Action Bar -->
+  <div class="action-bar">
+    <button class="btn-cancel" onclick="parent.loadContent('reports/report-catalog')">Cancel</button>
+    <div class="btn-export-dropdown" id="exportDropdown">
+      <button class="btn-outline-report" onclick="toggleExportDropdown()">
+        <i class="fas fa-download me-1"></i>Export <i class="fas fa-caret-up ms-1" style="font-size: 0.625rem;"></i>
+      </button>
+      <div class="dropdown-menu-custom">
+        <a onclick="closeExportDropdown()"><i class="fas fa-file-excel me-2" style="color: #16a34a;"></i>Excel</a>
+        <a onclick="closeExportDropdown()"><i class="fas fa-file-pdf me-2" style="color: #dc2626;"></i>PDF</a>
+        <a onclick="closeExportDropdown()"><i class="fas fa-file-csv me-2" style="color: #3b82f6;"></i>CSV</a>
+      </div>
+    </div>
+    <button class="btn-outline-report"><i class="fas fa-play me-1"></i>Run Full Report</button>
+    <button class="btn-outline-report">Save As New</button>
+    <button class="btn-primary-report"><i class="fas fa-save me-1"></i>Save Report</button>
+  </div>
+
+  <script>
+    // View toggle
+    function showUngrouped(btn) {
+      document.getElementById('ungroupedPreview').style.display = '';
+      document.getElementById('groupedPreview').style.display = 'none';
+      btn.parentElement.querySelectorAll('.view-toggle-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    function showGrouped(btn) {
+      document.getElementById('ungroupedPreview').style.display = 'none';
+      document.getElementById('groupedPreview').style.display = '';
+      btn.parentElement.querySelectorAll('.view-toggle-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    // Refresh preview mock
+    function refreshPreview() {
+      const btn = document.querySelector('.btn-refresh');
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Loading...';
+      setTimeout(() => {
+        btn.innerHTML = '<i class="fas fa-sync-alt me-1"></i>Refresh';
+      }, 800);
+    }
+
+    // Add filter row
+    function addFilterRow() {
+      const container = document.getElementById('filterRows');
+      const row = document.createElement('div');
+      row.className = 'filter-row';
+      row.innerHTML = `
+        <select class="filter-field">
+          <option>Donation Date</option>
+          <option>Amount</option>
+          <option>Payment Mode</option>
+          <option>Full Name</option>
+          <option>City</option>
+          <option>Purpose Name</option>
+          <option>Currency</option>
+          <option>Status</option>
+        </select>
+        <select class="filter-operator">
+          <option>is</option>
+          <option>is between</option>
+          <option>equals</option>
+          <option>contains</option>
+          <option>is one of</option>
+        </select>
+        <input type="text" class="filter-value" placeholder="Enter value...">
+        <button class="btn-remove-filter" onclick="this.parentElement.remove()"><i class="fas fa-times-circle"></i></button>
+      `;
+      container.appendChild(row);
+    }
+
+    // Export dropdown
+    function toggleExportDropdown() {
+      document.getElementById('exportDropdown').classList.toggle('open');
+    }
+
+    function closeExportDropdown() {
+      document.getElementById('exportDropdown').classList.remove('open');
+    }
+
+    // Close export dropdown on outside click
+    document.addEventListener('click', function (e) {
+      const dd = document.getElementById('exportDropdown');
+      if (!dd.contains(e.target)) {
+        dd.classList.remove('open');
+      }
+    });
+
+    // Field search
+    document.querySelector('.fields-search').addEventListener('input', function () {
+      const query = this.value.toLowerCase();
+      document.querySelectorAll('.fields-available .field-check').forEach(item => {
+        const text = item.querySelector('label').textContent.toLowerCase();
+        item.style.display = text.includes(query) ? '' : 'none';
+      });
+    });
+  </script>
+
+</body>
+
+</html>

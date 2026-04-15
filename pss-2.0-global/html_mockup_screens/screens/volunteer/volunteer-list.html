@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Volunteers - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --volunteer: #059669;
+      --volunteer-light: #d1fae5;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--volunteer);
+      border-color: var(--volunteer);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--volunteer);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #047857;
+      border-color: #047857;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* KPI Cards */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .kpi-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      padding: 1.25rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .kpi-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 0.625rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.125rem;
+      flex-shrink: 0;
+    }
+
+    .kpi-icon.green { background: #d1fae5; color: #059669; }
+    .kpi-icon.blue { background: #dbeafe; color: #2563eb; }
+    .kpi-icon.orange { background: #ffedd5; color: #ea580c; }
+    .kpi-icon.purple { background: #f3e8ff; color: #9333ea; }
+
+    .kpi-content { flex: 1; }
+
+    .kpi-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.25rem;
+    }
+
+    .kpi-value {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .kpi-sub {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .kpi-sub .up { color: var(--success-color); font-weight: 600; }
+    .kpi-sub .down { color: var(--danger-color); font-weight: 600; }
+
+    /* Card */
+    .list-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .search-input {
+      position: relative;
+      flex: 1;
+      min-width: 240px;
+    }
+
+    .search-input i {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .search-input input {
+      width: 100%;
+      padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .search-input input:focus {
+      outline: none;
+      border-color: var(--volunteer);
+      box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+    }
+
+    /* Filter Chips */
+    .filter-chips {
+      display: flex;
+      gap: 0.375rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-chip {
+      padding: 0.3125rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .filter-chip:hover {
+      border-color: var(--volunteer);
+      color: var(--volunteer);
+    }
+
+    .filter-chip.active {
+      background: var(--volunteer);
+      border-color: var(--volunteer);
+      color: white;
+    }
+
+    /* Advanced Filters Panel */
+    .advanced-filters {
+      display: none;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      background: #f8fafc;
+    }
+
+    .advanced-filters.show { display: block; }
+
+    .filter-group label {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.25rem;
+      display: block;
+    }
+
+    .filter-group select,
+    .filter-group input {
+      width: 100%;
+      padding: 0.375rem 0.625rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+    }
+
+    .filter-group select:focus,
+    .filter-group input:focus {
+      outline: none;
+      border-color: var(--volunteer);
+    }
+
+    .adv-filter-toggle {
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .adv-filter-toggle:hover,
+    .adv-filter-toggle.active {
+      border-color: var(--volunteer);
+      color: var(--volunteer);
+      background: var(--volunteer-light);
+    }
+
+    /* Bulk Actions Bar */
+    .bulk-actions {
+      display: none;
+      padding: 0.75rem 1.25rem;
+      background: var(--volunteer-light);
+      border-bottom: 1px solid #a7f3d0;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .bulk-actions.show { display: flex; }
+
+    .bulk-actions .selected-count {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--volunteer);
+    }
+
+    .bulk-btn {
+      padding: 0.3125rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid var(--volunteer);
+      background: white;
+      color: var(--volunteer);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .bulk-btn:hover {
+      background: var(--volunteer);
+      color: white;
+    }
+
+    .bulk-btn.danger { border-color: var(--danger-color); color: var(--danger-color); }
+    .bulk-btn.danger:hover { background: var(--danger-color); color: white; }
+
+    /* Table */
+    .table-container { overflow-x: auto; }
+
+    .volunteer-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1200px;
+    }
+
+    .volunteer-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .volunteer-table th:hover { color: var(--volunteer); }
+
+    .volunteer-table th .sort-icon {
+      margin-left: 0.25rem;
+      font-size: 0.5625rem;
+      opacity: 0.4;
+    }
+
+    .volunteer-table th.sorted .sort-icon {
+      opacity: 1;
+      color: var(--volunteer);
+    }
+
+    .volunteer-table td {
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      vertical-align: middle;
+    }
+
+    .volunteer-table tr:hover td { background: #f8fafc; }
+    .volunteer-table tr:last-child td { border-bottom: none; }
+
+    /* Avatar */
+    .vol-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.75rem;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .vol-name-cell {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+
+    .vol-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+
+    .vol-email {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+    }
+
+    /* Contact Code Link */
+    .contact-code {
+      color: var(--accent);
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      font-size: 0.8125rem;
+    }
+
+    .contact-code:hover { text-decoration: underline; }
+
+    /* Skill Tags */
+    .skill-tag {
+      display: inline-block;
+      font-size: 0.625rem;
+      padding: 0.15rem 0.4375rem;
+      border-radius: 0.25rem;
+      font-weight: 600;
+      margin-right: 0.25rem;
+      margin-bottom: 0.125rem;
+      white-space: nowrap;
+    }
+
+    .skill-tag.event { background: #dbeafe; color: #1e40af; }
+    .skill-tag.fundraising { background: #fce7f3; color: #be185d; }
+    .skill-tag.teaching { background: #fef3c7; color: #92400e; }
+    .skill-tag.medical { background: #fce7f3; color: #9d174d; }
+    .skill-tag.it { background: #e0e7ff; color: #4338ca; }
+    .skill-tag.photo { background: #f3e8ff; color: #7c3aed; }
+    .skill-tag.driving { background: #ffedd5; color: #c2410c; }
+    .skill-tag.admin { background: #f1f5f9; color: #475569; }
+    .skill-tag.counseling { background: #fdf2f8; color: #a21caf; }
+    .skill-tag.field { background: #d1fae5; color: #065f46; }
+
+    .tag-more {
+      font-size: 0.625rem;
+      color: var(--volunteer);
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Status Badges */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3125rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      white-space: nowrap;
+    }
+
+    .status-badge.active { background: #d1fae5; color: #065f46; }
+    .status-badge.inactive { background: #fef3c7; color: #92400e; }
+    .status-badge.pending { background: #e0e7ff; color: #3730a3; }
+    .status-badge.leave { background: #f1f5f9; color: #475569; }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .status-dot.active { background: #22c55e; }
+    .status-dot.inactive { background: #f59e0b; }
+    .status-dot.pending { background: #6366f1; }
+    .status-dot.leave { background: #94a3b8; }
+
+    /* Hours Cell */
+    .hours-cell {
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .hours-cell .hours-sub {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+
+    /* Actions Menu */
+    .actions-menu { position: relative; }
+
+    .actions-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      transition: all 0.15s;
+    }
+
+    .actions-btn:hover {
+      background: var(--volunteer);
+      color: white;
+      border-color: var(--volunteer);
+    }
+
+    .actions-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 0.25rem;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      z-index: 100;
+      min-width: 160px;
+      overflow: hidden;
+    }
+
+    .actions-dropdown.show { display: block; }
+
+    .actions-dropdown a {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      text-decoration: none;
+      transition: background 0.1s;
+    }
+
+    .actions-dropdown a:hover {
+      background: #f8fafc;
+      color: var(--volunteer);
+    }
+
+    .actions-dropdown a i {
+      width: 16px;
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .actions-dropdown a:hover i { color: var(--volunteer); }
+    .actions-dropdown a.danger { color: var(--danger-color); }
+    .actions-dropdown a.danger i { color: var(--danger-color); }
+
+    /* Approve Button */
+    .btn-approve {
+      padding: 0.25rem 0.625rem;
+      border-radius: 0.375rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      border: 1px solid var(--volunteer);
+      background: var(--volunteer);
+      color: white;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-approve:hover { background: #047857; }
+
+    .btn-sm-outline {
+      padding: 0.25rem 0.625rem;
+      border-radius: 0.375rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-sm-outline:hover {
+      border-color: var(--volunteer);
+      color: var(--volunteer);
+    }
+
+    /* Pagination */
+    .table-footer {
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--border-color);
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .table-footer .showing-text {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .page-size-select {
+      padding: 0.25rem 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .pagination {
+      display: flex;
+      gap: 0.25rem;
+      align-items: center;
+      margin: 0;
+      list-style: none;
+      padding: 0;
+    }
+
+    .pagination .page-btn {
+      min-width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: white;
+      cursor: pointer;
+      transition: all 0.15s;
+      padding: 0 0.375rem;
+    }
+
+    .pagination .page-btn:hover { border-color: var(--volunteer); color: var(--volunteer); }
+    .pagination .page-btn.active { background: var(--volunteer); border-color: var(--volunteer); color: white; }
+    .pagination .page-btn.disabled { opacity: 0.4; pointer-events: none; }
+    .pagination .page-ellipsis { font-size: 0.75rem; color: var(--text-secondary); padding: 0 0.25rem; }
+
+    /* Checkbox */
+    .form-check-input { accent-color: var(--volunteer); cursor: pointer; }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 992px) {
+      .page-header { flex-direction: column; align-items: flex-start; }
+      .table-footer { flex-direction: column; align-items: flex-start; }
+    }
+
+    @media (max-width: 576px) {
+      body { padding: 1rem; }
+      .kpi-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1>Volunteers</h1>
+      <p class="subtitle">Manage volunteer registrations, skills, and availability</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="parent.loadContent('volunteer/volunteer-form')">
+        <i class="fas fa-plus me-1"></i> Register Volunteer
+      </button>
+      <button class="btn-outline-accent">
+        <i class="fas fa-file-import me-1"></i> Import
+      </button>
+      <button class="btn-outline-accent" onclick="exportVolunteers()">
+        <i class="fas fa-file-export me-1"></i> Export
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Summary Cards -->
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-icon green"><i class="fas fa-hands-helping"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-label">Total Volunteers</div>
+        <div class="kpi-value">234</div>
+        <div class="kpi-sub">Active: 189 &middot; Inactive: 34 &middot; Pending: 11</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon blue"><i class="fas fa-clock"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-label">Hours This Month</div>
+        <div class="kpi-value">1,456</div>
+        <div class="kpi-sub"><span class="up"><i class="fas fa-arrow-up"></i> 12%</span> vs last month</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon orange"><i class="fas fa-calendar-check"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-label">Upcoming Shifts</div>
+        <div class="kpi-value">45</div>
+        <div class="kpi-sub">This week &middot; 23 volunteers scheduled</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon purple"><i class="fas fa-star"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-label">Skill Coverage</div>
+        <div class="kpi-value">18</div>
+        <div class="kpi-sub">Skills tracked &middot; Top: Event Management (67)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Card -->
+  <div class="list-card">
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+        <div class="search-input">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Search by name, email, skill, or phone..." id="searchInput">
+        </div>
+        <button class="adv-filter-toggle" onclick="toggleAdvancedFilters(this)">
+          <i class="fas fa-sliders me-1"></i> Advanced Filters
+        </button>
+      </div>
+      <div class="filter-chips">
+        <span class="filter-chip active" onclick="setFilter(this)">All</span>
+        <span class="filter-chip" onclick="setFilter(this)">Active</span>
+        <span class="filter-chip" onclick="setFilter(this)">Inactive</span>
+        <span class="filter-chip" onclick="setFilter(this)">Pending Approval</span>
+        <span class="filter-chip" onclick="setFilter(this)">On Leave</span>
+      </div>
+    </div>
+
+    <!-- Advanced Filters Panel -->
+    <div class="advanced-filters" id="advancedFilters">
+      <div class="row g-3">
+        <div class="col-md-3 col-sm-6 filter-group">
+          <label>Skills</label>
+          <select multiple size="4">
+            <option>Event Management</option>
+            <option>Fundraising</option>
+            <option>Teaching/Training</option>
+            <option>Medical/Healthcare</option>
+            <option>IT/Technology</option>
+            <option>Photography</option>
+            <option>Driving</option>
+            <option>Public Speaking</option>
+          </select>
+        </div>
+        <div class="col-md-3 col-sm-6 filter-group">
+          <label>Availability</label>
+          <select>
+            <option value="">All</option>
+            <option>Weekdays</option>
+            <option>Weekends</option>
+            <option>Evenings</option>
+            <option>Full-time</option>
+            <option>Part-time</option>
+          </select>
+        </div>
+        <div class="col-md-3 col-sm-6 filter-group">
+          <label>Branch</label>
+          <select>
+            <option value="">All Branches</option>
+            <option>Dubai (HQ)</option>
+            <option>Abu Dhabi</option>
+            <option>Sharjah</option>
+            <option>Riyadh</option>
+          </select>
+        </div>
+        <div class="col-md-3 col-sm-6 filter-group">
+          <label>Hours Logged</label>
+          <select>
+            <option value="">All</option>
+            <option>> 100 hours</option>
+            <option>> 50 hours</option>
+            <option>> 20 hours</option>
+            <option>None yet</option>
+          </select>
+        </div>
+        <div class="col-md-6 d-flex align-items-end gap-2">
+          <button class="btn-primary-accent" style="padding: 0.375rem 1rem; font-size: 0.75rem;">
+            <i class="fas fa-check me-1"></i> Apply Filters
+          </button>
+          <button class="btn-outline-accent" style="padding: 0.375rem 1rem; font-size: 0.75rem;" onclick="clearFilters()">
+            <i class="fas fa-times me-1"></i> Clear Filters
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bulk Actions Bar -->
+    <div class="bulk-actions" id="bulkActions">
+      <span class="selected-count" id="selectedCount">0 volunteers selected</span>
+      <button class="bulk-btn"><i class="fas fa-calendar-plus me-1"></i> Assign to Shift</button>
+      <button class="bulk-btn"><i class="fas fa-envelope me-1"></i> Send Message</button>
+      <button class="bulk-btn"><i class="fas fa-check-circle me-1"></i> Activate</button>
+      <button class="bulk-btn danger"><i class="fas fa-ban me-1"></i> Deactivate</button>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-container">
+      <table class="volunteer-table">
+        <thead>
+          <tr>
+            <th style="width: 36px;">
+              <input type="checkbox" class="form-check-input" id="selectAll" onchange="toggleSelectAll(this)">
+            </th>
+            <th class="sorted">Volunteer <i class="fas fa-sort-up sort-icon"></i></th>
+            <th>Contact <i class="fas fa-sort sort-icon"></i></th>
+            <th>Skills</th>
+            <th>Availability <i class="fas fa-sort sort-icon"></i></th>
+            <th>Hours (Total) <i class="fas fa-sort sort-icon"></i></th>
+            <th>Hours (Month) <i class="fas fa-sort sort-icon"></i></th>
+            <th>Last Active <i class="fas fa-sort sort-icon"></i></th>
+            <th>Status <i class="fas fa-sort sort-icon"></i></th>
+            <th style="width: 120px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Row 1: Ahmed Salim -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td>
+              <div class="vol-name-cell">
+                <div class="vol-avatar" style="background: #059669;">AS</div>
+                <div>
+                  <div class="vol-name">Ahmed Salim</div>
+                  <div class="vol-email">ahmed@gmail.com</div>
+                </div>
+              </div>
+            </td>
+            <td><a class="contact-code" onclick="parent.loadContent('contacts/contact-detail')">CON-1245</a></td>
+            <td>
+              <span class="skill-tag event">Event Mgmt</span>
+              <span class="skill-tag fundraising">Fundraising</span>
+            </td>
+            <td>Weekends</td>
+            <td class="hours-cell">245 hrs</td>
+            <td class="hours-cell">18 hrs</td>
+            <td>Apr 11</td>
+            <td><span class="status-badge active"><span class="status-dot active"></span> Active</span></td>
+            <td>
+              <div class="d-flex gap-1 align-items-center">
+                <button class="btn-sm-outline" onclick="parent.loadContent('volunteer/volunteer-detail')">View</button>
+                <button class="btn-sm-outline" onclick="parent.loadContent('volunteer/volunteer-form')">Edit</button>
+                <div class="actions-menu">
+                  <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                  <div class="actions-dropdown">
+                    <a onclick="parent.loadContent('volunteer/volunteer-detail')"><i class="fas fa-eye"></i> View</a>
+                    <a onclick="parent.loadContent('volunteer/volunteer-form')"><i class="fas fa-pen"></i> Edit</a>
+                    <a onclick="parent.loadContent('volunteer/hour-tracking')"><i class="fas fa-clock"></i> Log Hours</a>
+                    <a onclick="parent.loadContent('volunteer/volunteer-scheduling')"><i class="fas fa-calendar"></i> View Schedule</a>
+                    <a class="danger"><i class="fas fa-ban"></i> Deactivate</a>
+                    <a class="danger"><i class="fas fa-trash"></i> Remove</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 2: Fatima Al-Zahra -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td>
+              <div class="vol-name-cell">
+                <div class="vol-avatar" style="background: #8b5cf6;">FZ</div>
+                <div>
+                  <div class="vol-name">Fatima Al-Zahra</div>
+                  <div class="vol-email">fatima.z@email.com</div>
+                </div>
+              </div>
+            </td>
+            <td><a class="contact-code" onclick="parent.loadContent('contacts/contact-detail')">CON-1089</a></td>
+            <td>
+              <span class="skill-tag teaching">Teaching</span>
+              <span class="skill-tag admin">Admin</span>
+            </td>
+            <td>Weekdays PM</td>
+            <td class="hours-cell">189 hrs</td>
+            <td class="hours-cell">12 hrs</td>
+            <td>Apr 10</td>
+            <td><span class="status-badge active"><span class="status-dot active"></span> Active</span></td>
+            <td>
+              <div class="d-flex gap-1 align-items-center">
+                <button class="btn-sm-outline" onclick="parent.loadContent('volunteer/volunteer-detail')">View</button>
+                <button class="btn-sm-outline" onclick="parent.loadContent('volunteer/volunteer-form')">Edit</button>
+                <div class="actions-menu">
+                  <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                  <div class="actions-dropdown">
+                    <a onclick="parent.loadContent('volunteer/volunteer-detail')"><i class="fas fa-eye"></i> View</a>
+                    <a onclick="parent.loadContent('volunteer/volunteer-form')"><i class="fas fa-pen"></i> Edit</a>
+                    <a onclick="parent.loadContent('volunteer/hour-tracking')"><i class="fas fa-clock"></i> Log Hours</a>
+                    <a onclick="parent.loadContent('volunteer/volunteer-scheduling')"><i class="fas fa-calendar"></i> View Schedule</a>
+                    <a class="danger"><i class="fas fa-ban"></i> Deactivate</a>
+                    <a class="danger"><i class="fas fa-trash"></i> Remove</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 3: Ravi Kumar -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td>
+              <div class="vol-name-cell">
+                <div class="vol-avatar" style="background: #f97316;">RK</div>
+                <div>
+                  <div class="vol-name">Ravi Kumar</div>
+                  <div class="vol-email">ravi.k@email.com</div>
+                </div>
+              </div>
+            </td>
+            <td><a class="contact-code" onclick="parent.loadContent('contacts/contact-detail')">CON-0987</a></td>
+            <td>
+              <span class="skill-tag it">IT</span>
+              <span class="skill-tag photo">Photography</span>
+            </td>
+            <td>Flexible</td>
+            <td class="hours-cell">156 hrs</td>
+            <td class="hours-cell">22 hrs</td>
+            <td>Apr 12</td>
+            <td><span class="status-badge active"><span class="status-dot active"></span> Active</span></td>
+            <td>
+              <div class="d-flex gap-1 align-items-center">
+                <button class="btn-sm-outline" onclick="parent.loadContent('volunteer/volunteer-detail')">View</button>
+                <button class="btn-sm-outline" onclick="parent.loadContent('volunteer/volunteer-form')">Edit</button>
+                <div class="actions-menu">
+                  <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                  <div class="actions-dropdown">
+                    <a onclick="parent.loadContent('volunteer/volunteer-detail')"><i class="fas fa-eye"></i> View</a>
+                    <a onclick="parent.loadContent('volunteer/volunteer-form')"><i class="fas fa-pen"></i> Edit</a>
+                    <a onclick="parent.loadContent('volunteer/hour-tracking')"><i class="fas fa-clock"></i> Log Hours</a>
+                    <a onclick="parent.loadContent('volunteer/volunteer-scheduling')"><i class="fas fa-calendar"></i> View Schedule</a>
+                    <a class="danger"><i class="fas fa-ban"></i> Deactivate</a>
+                    <a class="danger"><i class="fas fa-trash"></i> Remove</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 4: Sarah Ahmed (Inactive) -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td>
+              <div class="vol-name-cell">
+                <div class="vol-avatar" style="background: #ec4899;">SA</div>
+                <div>
+                  <div class="vol-name">Sarah Ahmed</div>
+                  <div class="vol-email">sarah.a@email.com</div>
+                </div>
+              </div>
+            </td>
+            <td><a class="contact-code" onclick="parent.loadContent('contacts/contact-detail')">CON-1456</a></td>
+            <td>
+              <span class="skill-tag medical">Medical</span>
+              <span class="skill-tag counseling">Counseling</span>
+            </td>
+            <td>Weekends</td>
+            <td class="hours-cell">89 hrs</td>
+            <td class="hours-cell">0 hrs</td>
+            <td>Mar 5</td>
+            <td><span class="status-badge inactive"><span class="status-dot inactive"></span> Inactive</span></td>
+            <td>
+              <div class="d-flex gap-1 align-items-center">
+                <button class="btn-sm-outline" onclick="parent.loadContent('volunteer/volunteer-detail')">View</button>
+                <button class="btn-sm-outline" onclick="parent.loadContent('volunteer/volunteer-form')">Edit</button>
+                <div class="actions-menu">
+                  <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                  <div class="actions-dropdown">
+                    <a onclick="parent.loadContent('volunteer/volunteer-detail')"><i class="fas fa-eye"></i> View</a>
+                    <a onclick="parent.loadContent('volunteer/volunteer-form')"><i class="fas fa-pen"></i> Edit</a>
+                    <a onclick="parent.loadContent('volunteer/hour-tracking')"><i class="fas fa-clock"></i> Log Hours</a>
+                    <a onclick="parent.loadContent('volunteer/volunteer-scheduling')"><i class="fas fa-calendar"></i> View Schedule</a>
+                    <a class="danger"><i class="fas fa-ban"></i> Deactivate</a>
+                    <a class="danger"><i class="fas fa-trash"></i> Remove</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 5: James Okonkwo -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td>
+              <div class="vol-name-cell">
+                <div class="vol-avatar" style="background: #2563eb;">JO</div>
+                <div>
+                  <div class="vol-name">James Okonkwo</div>
+                  <div class="vol-email">james.o@email.com</div>
+                </div>
+              </div>
+            </td>
+            <td><a class="contact-code" onclick="parent.loadContent('contacts/contact-detail')">CON-0876</a></td>
+            <td>
+              <span class="skill-tag driving">Driving</span>
+              <span class="skill-tag field">Field Work</span>
+            </td>
+            <td>Full-time</td>
+            <td class="hours-cell">312 hrs</td>
+            <td class="hours-cell">34 hrs</td>
+            <td>Apr 12</td>
+            <td><span class="status-badge active"><span class="status-dot active"></span> Active</span></td>
+            <td>
+              <div class="d-flex gap-1 align-items-center">
+                <button class="btn-sm-outline" onclick="parent.loadContent('volunteer/volunteer-detail')">View</button>
+                <button class="btn-sm-outline" onclick="parent.loadContent('volunteer/volunteer-form')">Edit</button>
+                <div class="actions-menu">
+                  <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                  <div class="actions-dropdown">
+                    <a onclick="parent.loadContent('volunteer/volunteer-detail')"><i class="fas fa-eye"></i> View</a>
+                    <a onclick="parent.loadContent('volunteer/volunteer-form')"><i class="fas fa-pen"></i> Edit</a>
+                    <a onclick="parent.loadContent('volunteer/hour-tracking')"><i class="fas fa-clock"></i> Log Hours</a>
+                    <a onclick="parent.loadContent('volunteer/volunteer-scheduling')"><i class="fas fa-calendar"></i> View Schedule</a>
+                    <a class="danger"><i class="fas fa-ban"></i> Deactivate</a>
+                    <a class="danger"><i class="fas fa-trash"></i> Remove</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 6: Amina Hassan (Pending) -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td>
+              <div class="vol-name-cell">
+                <div class="vol-avatar" style="background: #6366f1;">AH</div>
+                <div>
+                  <div class="vol-name">Amina Hassan</div>
+                  <div class="vol-email">amina.h@email.com</div>
+                </div>
+              </div>
+            </td>
+            <td><span style="color: var(--text-secondary); font-size: 0.75rem; font-style: italic;">-- (New)</span></td>
+            <td>
+              <span class="skill-tag event">Event Mgmt</span>
+            </td>
+            <td>Weekends</td>
+            <td class="hours-cell" style="color: var(--text-secondary);">0 hrs</td>
+            <td class="hours-cell" style="color: var(--text-secondary);">0 hrs</td>
+            <td style="color: var(--text-secondary);">--</td>
+            <td><span class="status-badge pending"><span class="status-dot pending"></span> Pending</span></td>
+            <td>
+              <div class="d-flex gap-1 align-items-center">
+                <button class="btn-approve" onclick="approveVolunteer(this)"><i class="fas fa-check me-1"></i>Approve</button>
+                <button class="btn-sm-outline" onclick="parent.loadContent('volunteer/volunteer-detail')">View</button>
+                <div class="actions-menu">
+                  <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                  <div class="actions-dropdown">
+                    <a onclick="parent.loadContent('volunteer/volunteer-detail')"><i class="fas fa-eye"></i> View</a>
+                    <a onclick="parent.loadContent('volunteer/volunteer-form')"><i class="fas fa-pen"></i> Edit</a>
+                    <a class="danger"><i class="fas fa-trash"></i> Remove</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Table Footer / Pagination -->
+    <div class="table-footer">
+      <div class="d-flex align-items-center gap-3">
+        <span class="showing-text">Showing 1-6 of 234 volunteers</span>
+        <div class="d-flex align-items-center gap-1">
+          <span style="font-size: 0.75rem; color: var(--text-secondary);">Show</span>
+          <select class="page-size-select">
+            <option selected>10</option>
+            <option>25</option>
+            <option>50</option>
+            <option>100</option>
+          </select>
+        </div>
+      </div>
+      <div class="pagination">
+        <button class="page-btn disabled"><i class="fas fa-chevron-left"></i></button>
+        <button class="page-btn active">1</button>
+        <button class="page-btn">2</button>
+        <button class="page-btn">3</button>
+        <span class="page-ellipsis">...</span>
+        <button class="page-btn">24</button>
+        <button class="page-btn"><i class="fas fa-chevron-right"></i></button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Toggle advanced filters
+    function toggleAdvancedFilters(btn) {
+      const panel = document.getElementById('advancedFilters');
+      panel.classList.toggle('show');
+      btn.classList.toggle('active');
+    }
+
+    // Filter chip selection
+    function setFilter(chip) {
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+    }
+
+    // Clear advanced filters
+    function clearFilters() {
+      document.querySelectorAll('#advancedFilters select').forEach(s => {
+        for (let opt of s.options) opt.selected = false;
+      });
+      document.querySelectorAll('#advancedFilters input').forEach(i => i.value = '');
+    }
+
+    // Select all checkboxes
+    function toggleSelectAll(checkbox) {
+      document.querySelectorAll('.row-check').forEach(cb => {
+        cb.checked = checkbox.checked;
+      });
+      updateBulkBar();
+    }
+
+    // Update bulk actions bar
+    function updateBulkBar() {
+      const checked = document.querySelectorAll('.row-check:checked');
+      const bar = document.getElementById('bulkActions');
+      const count = document.getElementById('selectedCount');
+
+      if (checked.length > 0) {
+        bar.classList.add('show');
+        count.textContent = checked.length + ' volunteer' + (checked.length > 1 ? 's' : '') + ' selected';
+      } else {
+        bar.classList.remove('show');
+      }
+
+      const allChecks = document.querySelectorAll('.row-check');
+      const selectAll = document.getElementById('selectAll');
+      selectAll.checked = checked.length === allChecks.length && allChecks.length > 0;
+      selectAll.indeterminate = checked.length > 0 && checked.length < allChecks.length;
+    }
+
+    // Toggle action dropdown
+    function toggleActions(event, btn) {
+      event.stopPropagation();
+      document.querySelectorAll('.actions-dropdown.show').forEach(d => d.classList.remove('show'));
+      const dropdown = btn.nextElementSibling;
+      dropdown.classList.toggle('show');
+    }
+
+    // Approve volunteer
+    function approveVolunteer(btn) {
+      const row = btn.closest('tr');
+      const statusCell = row.querySelector('.status-badge');
+      statusCell.className = 'status-badge active';
+      statusCell.innerHTML = '<span class="status-dot active"></span> Active';
+      btn.style.display = 'none';
+      alert('Volunteer approved successfully!');
+    }
+
+    // Export placeholder
+    function exportVolunteers() {
+      alert('Export will generate a CSV file with the current filtered volunteer list.');
+    }
+
+    // Close dropdowns on outside click
+    document.addEventListener('click', function () {
+      document.querySelectorAll('.actions-dropdown.show').forEach(d => d.classList.remove('show'));
+    });
+  </script>
+
+</body>
+
+</html>

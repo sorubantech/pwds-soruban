@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event Dashboard - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
+    .page-header-left { display: flex; align-items: flex-start; gap: 1rem; }
+    .back-btn { width: 36px; height: 36px; border-radius: 0.5rem; border: 1px solid var(--border-color); background: white; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; font-size: 1rem; margin-top: 0.25rem; }
+    .back-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+    .breadcrumb-nav { font-size: 0.75rem; color: var(--text-secondary); margin: 0 0 0.25rem 0; }
+    .breadcrumb-nav a { color: var(--accent); text-decoration: none; cursor: pointer; }
+    .breadcrumb-nav a:hover { text-decoration: underline; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+    .header-badges { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-top: 0.25rem; }
+    .badge-category { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1875rem 0.5rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; background: #faf5ff; color: #7c3aed; }
+    .badge-status { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1875rem 0.5rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; background: #faf5ff; color: #7c3aed; }
+    .badge-date { font-size: 0.75rem; color: var(--text-secondary); }
+    .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: flex-start; }
+    .btn-primary-accent { background: var(--accent); border-color: var(--accent); color: white; font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid var(--accent); cursor: pointer; transition: all 0.15s; }
+    .btn-primary-accent:hover { background: #0c6577; border-color: #0c6577; color: white; }
+    .btn-outline-accent { background: white; border: 1px solid var(--accent); color: var(--accent); font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.15s; }
+    .btn-outline-accent:hover { background: var(--accent); color: white; }
+
+    /* Goal Progress Hero */
+    .hero-card { background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); padding: 2rem; margin-bottom: 1.25rem; text-align: center; }
+    .hero-raised { font-size: 1rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
+    .hero-raised strong { font-size: 2rem; font-weight: 800; color: var(--text-primary); }
+    .hero-raised .goal-text { font-size: 1rem; color: var(--text-secondary); }
+    .hero-progress-track { height: 20px; background: #e2e8f0; border-radius: 9999px; overflow: hidden; margin: 1rem auto; max-width: 700px; }
+    .hero-progress-fill { height: 100%; border-radius: 9999px; background: linear-gradient(90deg, var(--accent), var(--accent-light)); transition: width 1s ease; position: relative; }
+    .hero-pct { font-size: 1.5rem; font-weight: 800; color: var(--accent); margin-bottom: 0.75rem; }
+    .hero-stats { display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; font-size: 0.875rem; color: var(--text-secondary); }
+    .hero-stats span { display: flex; align-items: center; gap: 0.375rem; }
+    .hero-stats i { color: var(--accent); }
+
+    /* KPI Stats Grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+    .stat-card { background: white; border-radius: var(--card-radius); padding: 1.125rem; box-shadow: var(--card-shadow); border: 1px solid var(--border-color); text-align: center; transition: transform 0.15s, box-shadow 0.15s; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }
+    .stat-value { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+    .stat-label { font-size: 0.75rem; color: var(--text-secondary); font-weight: 500; margin-bottom: 0.25rem; }
+    .stat-subtitle { font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.25rem; }
+
+    /* Dash Card */
+    .dash-card { background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); }
+    .dash-card-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
+    .dash-card-header h3 { font-size: 0.9375rem; font-weight: 700; margin: 0; color: var(--text-primary); }
+    .dash-card-body { padding: 1.25rem; }
+
+    /* Chart Placeholder */
+    .chart-placeholder { background: #f8fafc; border: 1px dashed var(--border-color); border-radius: 0.5rem; height: 250px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-secondary); }
+    .chart-placeholder i { font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5; }
+    .chart-placeholder span { font-size: 0.8125rem; }
+
+    /* Mini bar chart for daily trend */
+    .mini-bars { display: flex; align-items: flex-end; gap: 3px; height: 180px; padding: 0 0.5rem; }
+    .mini-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .mini-bar { width: 100%; max-width: 24px; border-radius: 3px 3px 0 0; background: linear-gradient(180deg, var(--accent), var(--accent-light)); transition: height 0.3s; cursor: pointer; position: relative; }
+    .mini-bar:hover { opacity: 0.85; }
+    .mini-bar-label { font-size: 0.5rem; color: var(--text-secondary); writing-mode: vertical-lr; transform: rotate(180deg); white-space: nowrap; max-height: 50px; overflow: hidden; }
+    .mini-bar-val { font-size: 0.5rem; color: var(--text-primary); font-weight: 600; }
+
+    /* Table */
+    .data-table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+    .data-table th { padding: 0.625rem 0.75rem; font-size: 0.6875rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color); text-align: left; white-space: nowrap; }
+    .data-table td { padding: 0.625rem 0.75rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover { background: #f8fafc; }
+
+    /* Inline progress bar for table cells */
+    .inline-progress { display: flex; align-items: center; gap: 0.5rem; }
+    .inline-progress-track { flex: 1; height: 6px; background: #e2e8f0; border-radius: 9999px; overflow: hidden; min-width: 60px; }
+    .inline-progress-fill { height: 100%; border-radius: 9999px; transition: width 0.3s; }
+    .inline-progress-text { font-size: 0.75rem; font-weight: 600; white-space: nowrap; min-width: 40px; }
+
+    /* Section Gap */
+    .section-gap { margin-bottom: 1.25rem; }
+
+    /* View All Link */
+    .view-all-link { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.8125rem; font-weight: 600; color: var(--accent); text-decoration: none; cursor: pointer; padding: 0.5rem 0; }
+    .view-all-link:hover { text-decoration: underline; }
+
+    /* More menu dropdown */
+    .more-menu-wrap { position: relative; display: inline-block; }
+    .more-btn { width: 36px; height: 36px; border-radius: 0.5rem; border: 1px solid var(--border-color); background: white; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.125rem; transition: all 0.15s; }
+    .more-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .more-dropdown { display: none; position: absolute; right: 0; top: 42px; background: white; border: 1px solid var(--border-color); border-radius: 0.5rem; box-shadow: 0 4px 16px rgba(0,0,0,0.12); min-width: 180px; z-index: 100; padding: 0.375rem 0; }
+    .more-dropdown.show { display: block; }
+    .more-dropdown a { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; font-size: 0.8125rem; color: var(--text-primary); text-decoration: none; cursor: pointer; }
+    .more-dropdown a:hover { background: var(--accent-bg); color: var(--accent); }
+    .more-dropdown a i { width: 16px; text-align: center; color: var(--text-secondary); }
+
+    /* Bulk actions bar */
+    .bulk-actions { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.25rem; border-top: 1px solid var(--border-color); background: #f8fafc; border-radius: 0 0 var(--card-radius) var(--card-radius); }
+    .bulk-actions .btn-sm { font-size: 0.75rem; padding: 0.3rem 0.75rem; border-radius: 0.375rem; border: 1px solid var(--border-color); background: white; color: var(--text-primary); cursor: pointer; transition: all 0.15s; }
+    .bulk-actions .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Table footer / pagination */
+    .table-footer { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1.25rem; border-top: 1px solid var(--border-color); font-size: 0.75rem; color: var(--text-secondary); flex-wrap: wrap; gap: 0.5rem; }
+    .pagination-btns { display: flex; gap: 0.25rem; }
+    .pagination-btns button { width: 28px; height: 28px; border-radius: 0.375rem; border: 1px solid var(--border-color); background: white; color: var(--text-secondary); cursor: pointer; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+    .pagination-btns button:hover { border-color: var(--accent); color: var(--accent); }
+    .pagination-btns button.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+    /* Check-in Mode */
+    .checkin-panel { display: none; background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); padding: 2rem; }
+    .checkin-panel.active { display: block; }
+    .checkin-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem; }
+    .checkin-header h2 { font-size: 1.25rem; font-weight: 700; margin: 0; }
+    .checkin-counter { text-align: center; font-size: 2rem; font-weight: 800; color: var(--accent); margin-bottom: 1.5rem; }
+    .checkin-counter .counter-pct { font-size: 1rem; font-weight: 600; color: var(--text-secondary); }
+    .qr-scanner-area { background: #f8fafc; border: 2px dashed var(--border-color); border-radius: var(--card-radius); height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-secondary); margin-bottom: 1.5rem; }
+    .qr-scanner-area i { font-size: 3rem; margin-bottom: 0.75rem; opacity: 0.4; }
+    .qr-scanner-area span { font-size: 0.875rem; }
+    .checkin-search { width: 100%; max-width: 600px; margin: 0 auto 1.5rem; }
+    .checkin-search input { width: 100%; padding: 0.875rem 1.25rem; font-size: 1rem; border: 2px solid var(--border-color); border-radius: 0.75rem; outline: none; transition: border-color 0.15s; }
+    .checkin-search input:focus { border-color: var(--accent); }
+    .checkin-feed { max-width: 600px; margin: 0 auto; }
+    .checkin-feed-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid #f1f5f9; }
+    .checkin-feed-item:last-child { border-bottom: none; }
+    .checkin-feed-time { font-size: 0.75rem; color: var(--text-secondary); width: 70px; flex-shrink: 0; }
+    .checkin-feed-text { font-size: 0.875rem; color: var(--text-primary); }
+    .checkin-feed-text strong { color: var(--accent); }
+
+    /* Post-event muted section */
+    .post-event-muted { opacity: 0.5; pointer-events: none; }
+    .post-event-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.25rem; }
+    .post-event-block h5 { font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; }
+    .post-event-row { display: flex; justify-content: space-between; font-size: 0.8125rem; padding: 0.25rem 0; color: var(--text-secondary); }
+    .post-event-row span:last-child { font-weight: 600; color: var(--text-primary); }
+
+    /* Search input in card header */
+    .header-search { display: flex; align-items: center; gap: 0.5rem; }
+    .header-search input { padding: 0.375rem 0.75rem; font-size: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.375rem; outline: none; width: 180px; }
+    .header-search input:focus { border-color: var(--accent); }
+    .header-search select { padding: 0.375rem 0.5rem; font-size: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.375rem; outline: none; background: white; cursor: pointer; }
+
+    /* Btn danger outline */
+    .btn-outline-danger { background: white; border: 1px solid var(--danger-color); color: var(--danger-color); font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.15s; }
+    .btn-outline-danger:hover { background: var(--danger-color); color: white; }
+
+    /* Small action buttons in tables */
+    .action-btn { font-size: 0.6875rem; padding: 0.25rem 0.5rem; border-radius: 0.25rem; border: 1px solid var(--border-color); background: white; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+    .action-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .action-btn.promote { border-color: var(--success-color); color: var(--success-color); }
+    .action-btn.promote:hover { background: var(--success-color); color: white; }
+    .action-btn.remove { border-color: var(--danger-color); color: var(--danger-color); }
+    .action-btn.remove:hover { background: var(--danger-color); color: white; }
+
+    /* Annotation labels */
+    .chart-annotations { display: flex; justify-content: center; gap: 1.5rem; margin-top: 0.75rem; flex-wrap: wrap; }
+    .chart-annotation { display: inline-flex; align-items: center; gap: 0.375rem; font-size: 0.6875rem; font-weight: 600; padding: 0.125rem 0.5rem; border-radius: 9999px; }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .stats-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .hero-stats { flex-direction: column; gap: 0.5rem; align-items: center; }
+    }
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Main Content (hidden when check-in mode is active) -->
+  <div id="mainContent">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="page-header-left">
+        <button class="back-btn" onclick="parent.loadContent('organization/event-list')">
+          <i class="fas fa-arrow-left"></i>
+        </button>
+        <div>
+          <p class="breadcrumb-nav"><a onclick="parent.loadContent('organization/event-list')">Events</a> &rsaquo; Annual Charity Gala 2026</p>
+          <h1>Annual Charity Gala 2026</h1>
+          <div class="header-badges">
+            <span class="badge-category">&#127963; In-person</span>
+            <span class="badge-status">&#128197; Upcoming</span>
+            <span class="badge-date">April 25, 2026, 7:00 PM &ndash; 11:00 PM (Asia/Dubai)</span>
+          </div>
+          <div style="margin-top: 0.375rem; font-size: 0.8125rem; color: var(--text-secondary);">
+            Countdown: <strong style="color: var(--accent);">13 days, 8 hours remaining</strong>
+          </div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn-outline-accent" onclick="parent.loadContent('organization/event-form')">
+          <i class="fas fa-pen me-1"></i> Edit Event
+        </button>
+        <button class="btn-outline-accent" onclick="alert('Reminders sent!')">
+          <i class="fas fa-bell me-1"></i> Send Reminder
+        </button>
+        <button class="btn-primary-accent" onclick="toggleCheckinMode()">
+          <i class="fas fa-qrcode me-1"></i> Check-in Mode
+        </button>
+        <div class="more-menu-wrap">
+          <button class="more-btn" onclick="toggleMenu(this)">&#8943;</button>
+          <div class="more-dropdown">
+            <a onclick="alert('Duplicating event...')"><i class="fas fa-copy"></i> Duplicate Event</a>
+            <a onclick="alert('Exporting...')"><i class="fas fa-file-export"></i> Export Registrants</a>
+            <a onclick="alert('Archiving...')"><i class="fas fa-archive"></i> Archive Event</a>
+            <a onclick="alert('Cancelling...')" style="color: var(--danger-color);"><i class="fas fa-times-circle" style="color: var(--danger-color);"></i> Cancel Event</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Registration Progress Hero Section -->
+    <div class="hero-card section-gap">
+      <div class="hero-raised">
+        <strong>345</strong> <span class="goal-text">registered of 400 capacity</span>
+      </div>
+      <div class="hero-progress-track">
+        <div class="hero-progress-fill" style="width: 86.3%;"></div>
+      </div>
+      <div class="hero-pct">86.3%</div>
+      <div class="hero-stats">
+        <span>&#127915; 55 spots left</span>
+        <span>&#128203; 12 on waitlist</span>
+        <span>&#128197; Reg closes Apr 23</span>
+      </div>
+    </div>
+
+    <!-- KPI Cards Row -->
+    <div class="stats-grid section-gap">
+      <div class="stat-card">
+        <div class="stat-label">Registered</div>
+        <div class="stat-value">345</div>
+        <div class="stat-subtitle" style="color: var(--success-color);">+8 this week</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Tickets Sold</div>
+        <div class="stat-value">$89,500</div>
+        <div class="stat-subtitle">Avg: $259/ticket</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Donations Pledged</div>
+        <div class="stat-value">$35,500</div>
+        <div class="stat-subtitle">45 donors pledged</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Waitlist</div>
+        <div class="stat-value">12</div>
+        <div class="stat-subtitle">Auto-promote when spots open</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Check-in Rate</div>
+        <div class="stat-value">&mdash;</div>
+        <div class="stat-subtitle">Available on event day</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Post-event Donations</div>
+        <div class="stat-value">&mdash;</div>
+        <div class="stat-subtitle">Tracked after event</div>
+      </div>
+    </div>
+
+    <!-- Registration by Ticket Type -->
+    <div class="dash-card section-gap">
+      <div class="dash-card-header">
+        <h3><i class="fas fa-ticket-alt me-2" style="color:var(--accent);"></i> Registration by Ticket Type</h3>
+      </div>
+      <div class="dash-card-body" style="padding:0;">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Ticket Type</th>
+                <th>Price</th>
+                <th>Sold</th>
+                <th>Capacity</th>
+                <th>Revenue</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Standard</strong></td>
+                <td>$250</td>
+                <td>234 / 300</td>
+                <td>
+                  <div class="inline-progress">
+                    <div class="inline-progress-track"><div class="inline-progress-fill" style="width:78%; background:var(--success-color);"></div></div>
+                    <span class="inline-progress-text">78.0%</span>
+                  </div>
+                </td>
+                <td><strong>$58,500</strong></td>
+                <td>&#128994; Available</td>
+              </tr>
+              <tr>
+                <td><strong>VIP</strong></td>
+                <td>$500</td>
+                <td>72 / 80</td>
+                <td>
+                  <div class="inline-progress">
+                    <div class="inline-progress-track"><div class="inline-progress-fill" style="width:90%; background:var(--success-color);"></div></div>
+                    <span class="inline-progress-text">90.0%</span>
+                  </div>
+                </td>
+                <td><strong>$36,000</strong></td>
+                <td>&#128993; Almost full</td>
+              </tr>
+              <tr>
+                <td><strong>Student / Youth</strong></td>
+                <td>$100</td>
+                <td>28 / 50</td>
+                <td>
+                  <div class="inline-progress">
+                    <div class="inline-progress-track"><div class="inline-progress-fill" style="width:56%; background:var(--warning-color);"></div></div>
+                    <span class="inline-progress-text">56.0%</span>
+                  </div>
+                </td>
+                <td><strong>$2,800</strong></td>
+                <td>&#128994; Available</td>
+              </tr>
+              <tr>
+                <td><strong>Corporate Table (10)</strong></td>
+                <td>$4,000</td>
+                <td>3 / 5</td>
+                <td>
+                  <div class="inline-progress">
+                    <div class="inline-progress-track"><div class="inline-progress-fill" style="width:60%; background:var(--warning-color);"></div></div>
+                    <span class="inline-progress-text">60.0%</span>
+                  </div>
+                </td>
+                <td><strong>$12,000</strong></td>
+                <td>&#128994; Available</td>
+              </tr>
+              <tr>
+                <td><strong>Free (Volunteers)</strong></td>
+                <td>$0</td>
+                <td>8 / 20</td>
+                <td>
+                  <div class="inline-progress">
+                    <div class="inline-progress-track"><div class="inline-progress-fill" style="width:40%; background:var(--danger-color);"></div></div>
+                    <span class="inline-progress-text">40.0%</span>
+                  </div>
+                </td>
+                <td>&mdash;</td>
+                <td>&#128994; Available</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Registration Trend Chart -->
+    <div class="dash-card section-gap">
+      <div class="dash-card-header">
+        <h3><i class="fas fa-chart-bar me-2" style="color:var(--accent);"></i> Registration Trend</h3>
+        <span style="font-size:0.75rem; color:var(--text-secondary);">Mar 1 &ndash; Apr 12, 2026</span>
+      </div>
+      <div class="dash-card-body">
+        <div class="mini-bars">
+          <div class="mini-bar-col"><div class="mini-bar-val">5</div><div class="mini-bar" style="height:20px;"></div><div class="mini-bar-label">Mar 1</div></div>
+          <div class="mini-bar-col"><div class="mini-bar-val">8</div><div class="mini-bar" style="height:32px;"></div><div class="mini-bar-label">3</div></div>
+          <div class="mini-bar-col"><div class="mini-bar-val">12</div><div class="mini-bar" style="height:48px;"></div><div class="mini-bar-label">5</div></div>
+          <div class="mini-bar-col"><div class="mini-bar-val">18</div><div class="mini-bar" style="height:72px;"></div><div class="mini-bar-label">7</div></div>
+          <div class="mini-bar-col"><div class="mini-bar-val">45</div><div class="mini-bar" style="height:180px; background: linear-gradient(180deg, var(--success-color), #4ade80);" title="Early bird deadline — 45 registrations"></div><div class="mini-bar-label">9</div></div>
+          <div class="mini-bar-col"><div class="mini-bar-val">22</div><div class="mini-bar" style="height:88px;"></div><div class="mini-bar-label">11</div></div>
+          <div class="mini-bar-col"><div class="mini-bar-val">15</div><div class="mini-bar" style="height:60px;"></div><div class="mini-bar-label">13</div></div>
+          <div class="mini-bar-col"><div class="mini-bar-val">10</div><div class="mini-bar" style="height:40px;"></div><div class="mini-bar-label">15</div></div>
+          <div class="mini-bar-col"><div class="mini-bar-val">8</div><div class="mini-bar" style="height:32px;"></div><div class="mini-bar-label">17</div></div>
+          <div class="mini-bar-col"><div class="mini-bar-val">14</div><div class="mini-bar" style="height:56px;"></div><div class="mini-bar-label">19</div></div>
+          <div class="mini-bar-col"><div class="mini-bar-val">11</div><div class="mini-bar" style="height:44px;"></div><div class="mini-bar-label">21</div></div>
+          <div class="mini-bar-col"><div class="mini-bar-val">9</div><div class="mini-bar" style="height:36px;"></div><div class="mini-bar-label">23</div></div>
+          <div class="mini-bar-col"><div class="mini-bar-val">35</div><div class="mini-bar" style="height:140px; background: linear-gradient(180deg, #3b82f6, #93c5fd);" title="Email blast sent — 35 registrations"></div><div class="mini-bar-label">25</div></div>
+          <div class="mini-bar-col"><div class="mini-bar-val">20</div><div class="mini-bar" style="height:80px;"></div><div class="mini-bar-label">27</div></div>
+          <div class="mini-bar-col"><div class="mini-bar-val">16</div><div class="mini-bar" style="height:64px;"></div><div class="mini-bar-label">29</div></div>
+          <div class="mini-bar-col"><div class="mini-bar-val">12</div><div class="mini-bar" style="height:48px;"></div><div class="mini-bar-label">31</div></div>
+          <div class="mini-bar-col"><div class="mini-bar-val">10</div><div class="mini-bar" style="height:40px;"></div><div class="mini-bar-label">Apr 2</div></div>
+          <div class="mini-bar-col"><div class="mini-bar-val">13</div><div class="mini-bar" style="height:52px;"></div><div class="mini-bar-label">4</div></div>
+          <div class="mini-bar-col"><div class="mini-bar-val">8</div><div class="mini-bar" style="height:32px;"></div><div class="mini-bar-label">8</div></div>
+          <div class="mini-bar-col"><div class="mini-bar-val">14</div><div class="mini-bar" style="height:56px;"></div><div class="mini-bar-label">12</div></div>
+        </div>
+        <div class="chart-annotations">
+          <span class="chart-annotation" style="background: #f0fdf4; color: var(--success-color);">
+            <span style="width:10px; height:10px; background:linear-gradient(180deg, var(--success-color), #4ade80); border-radius:2px; display:inline-block;"></span> Early bird deadline (Mar 9)
+          </span>
+          <span class="chart-annotation" style="background: #eff6ff; color: #3b82f6;">
+            <span style="width:10px; height:10px; background:linear-gradient(180deg, #3b82f6, #93c5fd); border-radius:2px; display:inline-block;"></span> Email blast sent (Mar 25)
+          </span>
+          <span class="chart-annotation" style="background: #f8fafc; color: var(--text-secondary);">
+            <span style="width:10px; height:10px; background:linear-gradient(180deg, var(--accent), var(--accent-light)); border-radius:2px; display:inline-block;"></span> Daily Registrations
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Registrants List -->
+    <div class="dash-card section-gap">
+      <div class="dash-card-header">
+        <h3><i class="fas fa-users me-2" style="color:var(--accent);"></i> Registrants</h3>
+        <div class="header-search">
+          <input type="text" placeholder="Search registrants..." />
+          <select>
+            <option value="">All Tickets</option>
+            <option>Standard</option>
+            <option>VIP</option>
+            <option>Student / Youth</option>
+            <option>Corporate Table</option>
+            <option>Free (Volunteers)</option>
+          </select>
+        </div>
+      </div>
+      <div class="dash-card-body" style="padding:0;">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Ticket</th>
+                <th>Amount</th>
+                <th>Registered</th>
+                <th>Status</th>
+                <th>Check-in</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><a style="color:var(--accent); cursor:pointer; text-decoration:none; font-weight:600;" onclick="parent.loadContent('contacts/contact-detail')">Ahmad Al-Hassan</a></td>
+                <td>ahmad@email.com</td>
+                <td>VIP</td>
+                <td><strong>$500</strong></td>
+                <td>Mar 5</td>
+                <td><span style="color:var(--success-color); font-weight:600;">&#9989; Confirmed</span></td>
+                <td><input type="checkbox" disabled /></td>
+                <td>
+                  <button class="action-btn" onclick="alert('Viewing registrant...')">View</button>
+                  <button class="action-btn" onclick="alert('Cancelling registration...')">Cancel</button>
+                </td>
+              </tr>
+              <tr>
+                <td><a style="color:var(--accent); cursor:pointer; text-decoration:none; font-weight:600;" onclick="parent.loadContent('contacts/contact-detail')">Sarah Johnson</a></td>
+                <td>sarah@email.com</td>
+                <td>Corporate (10)</td>
+                <td><strong>$4,000</strong></td>
+                <td>Mar 8</td>
+                <td><span style="color:var(--success-color); font-weight:600;">&#9989; Confirmed</span></td>
+                <td><input type="checkbox" disabled /></td>
+                <td>
+                  <button class="action-btn" onclick="alert('Viewing registrant...')">View</button>
+                  <button class="action-btn" onclick="alert('Cancelling registration...')">Cancel</button>
+                </td>
+              </tr>
+              <tr>
+                <td><a style="color:var(--accent); cursor:pointer; text-decoration:none; font-weight:600;" onclick="parent.loadContent('contacts/contact-detail')">Ravi Krishnan</a></td>
+                <td>ravi@email.com</td>
+                <td>Standard</td>
+                <td><strong>$250</strong></td>
+                <td>Mar 12</td>
+                <td><span style="color:var(--success-color); font-weight:600;">&#9989; Confirmed</span></td>
+                <td><input type="checkbox" disabled /></td>
+                <td>
+                  <button class="action-btn" onclick="alert('Viewing registrant...')">View</button>
+                  <button class="action-btn" onclick="alert('Cancelling registration...')">Cancel</button>
+                </td>
+              </tr>
+              <tr>
+                <td><a style="color:var(--accent); cursor:pointer; text-decoration:none; font-weight:600;" onclick="parent.loadContent('contacts/contact-detail')">Maria Santos</a></td>
+                <td>maria@email.com</td>
+                <td>Student</td>
+                <td><strong>$100</strong></td>
+                <td>Mar 15</td>
+                <td><span style="color:var(--success-color); font-weight:600;">&#9989; Confirmed</span></td>
+                <td><input type="checkbox" disabled /></td>
+                <td>
+                  <button class="action-btn" onclick="alert('Viewing registrant...')">View</button>
+                  <button class="action-btn" onclick="alert('Cancelling registration...')">Cancel</button>
+                </td>
+              </tr>
+              <tr>
+                <td><a style="color:var(--accent); cursor:pointer; text-decoration:none; font-weight:600;" onclick="parent.loadContent('contacts/contact-detail')">James Okonkwo</a></td>
+                <td>james@email.com</td>
+                <td>Standard</td>
+                <td><strong>$250</strong></td>
+                <td>Apr 1</td>
+                <td><span style="color:var(--warning-color); font-weight:600;">&#9203; Waitlisted</span></td>
+                <td>&mdash;</td>
+                <td>
+                  <button class="action-btn promote" onclick="alert('Promoting to confirmed...')">Promote</button>
+                  <button class="action-btn remove" onclick="alert('Removing from waitlist...')">Remove</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Bulk Actions -->
+      <div class="bulk-actions">
+        <button class="btn-sm" onclick="alert('Sending reminders...')"><i class="fas fa-bell me-1"></i> Send Reminder</button>
+        <button class="btn-sm" onclick="alert('Exporting...')"><i class="fas fa-file-export me-1"></i> Export List</button>
+        <button class="btn-sm" onclick="alert('Send communication...')"><i class="fas fa-envelope me-1"></i> Send Communication</button>
+      </div>
+      <!-- Table Footer / Pagination -->
+      <div class="table-footer">
+        <span>Showing 1 to 5 of 345 registrants</span>
+        <div class="pagination-btns">
+          <button disabled><i class="fas fa-chevron-left"></i></button>
+          <button class="active">1</button>
+          <button>2</button>
+          <button>3</button>
+          <button>...</button>
+          <button>69</button>
+          <button><i class="fas fa-chevron-right"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Post-Event Analytics -->
+    <div class="dash-card section-gap">
+      <div class="dash-card-header">
+        <h3><i class="fas fa-chart-line me-2" style="color:var(--accent);"></i> Post-Event Analytics (Available after event)</h3>
+      </div>
+      <div class="dash-card-body post-event-muted">
+        <div class="post-event-grid">
+          <div class="post-event-block">
+            <h5>Attendance Summary</h5>
+            <div class="post-event-row"><span>Registered</span><span>345</span></div>
+            <div class="post-event-row"><span>Attended</span><span>&mdash;</span></div>
+            <div class="post-event-row"><span>No-show</span><span>&mdash;</span></div>
+          </div>
+          <div class="post-event-block">
+            <h5>Event Revenue</h5>
+            <div class="post-event-row"><span>Ticket Sales</span><span>$89,500</span></div>
+            <div class="post-event-row"><span>Donations</span><span>&mdash;</span></div>
+            <div class="post-event-row"><span>Auction</span><span>&mdash;</span></div>
+            <div class="post-event-row"><span>Total</span><span>&mdash;</span></div>
+          </div>
+          <div class="post-event-block">
+            <h5>Follow-up Status</h5>
+            <div class="post-event-row"><span>Thank-you emails</span><span>&mdash;</span></div>
+            <div class="post-event-row"><span>Survey sent</span><span>&mdash;</span></div>
+            <div class="post-event-row"><span>Donation follow-up</span><span>&mdash;</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /mainContent -->
+
+  <!-- Check-in Mode Panel -->
+  <div id="checkinMode" class="checkin-panel">
+    <div class="checkin-header">
+      <h2><i class="fas fa-qrcode me-2" style="color:var(--accent);"></i> Check-in Mode &mdash; Annual Charity Gala 2026</h2>
+      <button class="btn-outline-danger" onclick="toggleCheckinMode()">
+        <i class="fas fa-times me-1"></i> Exit Check-in Mode
+      </button>
+    </div>
+    <div class="checkin-counter">
+      &#9989; 0 / 345 checked in <span class="counter-pct">(0%)</span>
+    </div>
+    <div class="qr-scanner-area">
+      <i class="fas fa-camera"></i>
+      <span>QR Code Scanner</span>
+      <span style="font-size:0.75rem; margin-top:0.25rem;">Point camera at registrant QR code to check in</span>
+    </div>
+    <div class="checkin-search">
+      <input type="text" placeholder="Type name or email to check in..." />
+    </div>
+    <div class="checkin-feed">
+      <h5 style="font-size:0.8125rem; font-weight:700; color:var(--text-secondary); margin-bottom:0.75rem;">Recent Check-ins</h5>
+      <div class="checkin-feed-item">
+        <span class="checkin-feed-time">10:02 AM</span>
+        <span class="checkin-feed-text">&#9989; <strong>Ahmad Al-Hassan</strong> checked in (VIP)</span>
+      </div>
+      <div class="checkin-feed-item">
+        <span class="checkin-feed-time">10:05 AM</span>
+        <span class="checkin-feed-text">&#9989; <strong>Sarah Johnson</strong> checked in (Corporate)</span>
+      </div>
+      <div class="checkin-feed-item">
+        <span class="checkin-feed-time">10:08 AM</span>
+        <span class="checkin-feed-text">&#9989; <strong>Ravi Krishnan</strong> checked in (Standard)</span>
+      </div>
+      <div class="checkin-feed-item">
+        <span class="checkin-feed-time">10:12 AM</span>
+        <span class="checkin-feed-text">&#9989; <strong>Maria Santos</strong> checked in (Student)</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleCheckinMode() {
+      var main = document.getElementById('mainContent');
+      var checkin = document.getElementById('checkinMode');
+      if (checkin.classList.contains('active')) {
+        checkin.classList.remove('active');
+        main.style.display = '';
+      } else {
+        checkin.classList.add('active');
+        main.style.display = 'none';
+      }
+    }
+
+    function toggleMenu(btn) {
+      var dropdown = btn.nextElementSibling;
+      var wasOpen = dropdown.classList.contains('show');
+      // Close all dropdowns first
+      document.querySelectorAll('.more-dropdown').forEach(function(d) { d.classList.remove('show'); });
+      if (!wasOpen) {
+        dropdown.classList.add('show');
+      }
+    }
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.more-menu-wrap')) {
+        document.querySelectorAll('.more-dropdown').forEach(function(d) { d.classList.remove('show'); });
+      }
+    });
+  </script>
+
+</body>
+
+</html>

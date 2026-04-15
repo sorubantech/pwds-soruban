@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Event - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
+    .page-header-left { display: flex; align-items: center; gap: 1rem; }
+    .back-btn { width: 36px; height: 36px; border-radius: 0.5rem; border: 1px solid var(--border-color); background: white; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; font-size: 1rem; }
+    .back-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+    .breadcrumb-nav { font-size: 0.75rem; color: var(--text-secondary); margin: 0; }
+    .breadcrumb-nav a { color: var(--accent); text-decoration: none; cursor: pointer; }
+    .breadcrumb-nav a:hover { text-decoration: underline; }
+    .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .btn-primary-accent { background: var(--accent); border-color: var(--accent); color: white; font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid var(--accent); cursor: pointer; transition: all 0.15s; }
+    .btn-primary-accent:hover { background: #0c6577; border-color: #0c6577; color: white; }
+    .btn-outline-accent { background: white; border: 1px solid var(--accent); color: var(--accent); font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.15s; }
+    .btn-outline-accent:hover { background: var(--accent); color: white; }
+    .btn-text { background: none; border: none; color: var(--text-secondary); font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; cursor: pointer; transition: all 0.15s; }
+    .btn-text:hover { color: var(--danger-color); }
+
+    /* Form Card */
+    .form-card { background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); margin-bottom: 1rem; overflow: hidden; }
+
+    /* Tab Navigation */
+    .tab-nav { display: flex; border-bottom: 2px solid var(--border-color); background: white; border-radius: var(--card-radius) var(--card-radius) 0 0; overflow-x: auto; }
+    .tab-btn { padding: 0.875rem 1.5rem; font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -2px; cursor: pointer; transition: all 0.15s; white-space: nowrap; display: flex; align-items: center; gap: 0.5rem; }
+    .tab-btn:hover { color: var(--accent); background: var(--accent-bg); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-content { display: none; padding: 1.5rem; }
+    .tab-content.active { display: block; }
+
+    /* Form Elements */
+    .form-group { margin-bottom: 1.25rem; }
+    .form-label { display: block; font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.375rem; }
+    .form-label .required { color: var(--danger-color); margin-left: 0.125rem; }
+    .form-control-custom { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 0.8125rem; color: var(--text-primary); transition: border-color 0.15s; background: white; }
+    .form-control-custom:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1); }
+    .form-control-custom::placeholder { color: #94a3b8; }
+    textarea.form-control-custom { min-height: 80px; resize: vertical; }
+    select.form-control-custom { cursor: pointer; }
+    .form-hint { font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.25rem; display: flex; align-items: center; gap: 0.25rem; }
+    .form-hint i { font-size: 0.625rem; }
+    .char-count { font-size: 0.6875rem; color: var(--text-secondary); text-align: right; margin-top: 0.25rem; }
+
+    /* Checkbox / Radio */
+    .checkbox-group, .radio-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    .checkbox-item, .radio-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; cursor: pointer; }
+    .checkbox-item input, .radio-item input { accent-color: var(--accent); width: 16px; height: 16px; cursor: pointer; }
+
+    /* Multi-select chips */
+    .multi-select-box { border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 0.5rem; min-height: 42px; display: flex; flex-wrap: wrap; gap: 0.375rem; align-items: center; cursor: pointer; transition: border-color 0.15s; }
+    .multi-select-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1); }
+    .chip { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1875rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; background: var(--accent-bg); color: var(--accent); }
+    .chip .remove-chip { cursor: pointer; font-size: 0.625rem; opacity: 0.7; transition: opacity 0.15s; }
+    .chip .remove-chip:hover { opacity: 1; }
+    .chip-unchecked { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1875rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background: #f1f5f9; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+    .chip-unchecked:hover { background: var(--accent-bg); color: var(--accent); }
+
+    /* Tag Inputs */
+    .tag-input-box { border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 0.375rem 0.5rem; display: flex; flex-wrap: wrap; gap: 0.375rem; align-items: center; }
+    .tag-input-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1); }
+    .tag { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1875rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; background: var(--accent-bg); color: var(--accent); }
+    .tag .remove-tag { cursor: pointer; font-size: 0.625rem; opacity: 0.7; }
+    .tag .remove-tag:hover { opacity: 1; }
+    .tag-input { border: none; outline: none; font-size: 0.8125rem; min-width: 80px; flex: 1; padding: 0.25rem; }
+
+    /* Rich Text Editor Mock */
+    .rich-editor { border: 1px solid var(--border-color); border-radius: 0.5rem; overflow: hidden; }
+    .rich-toolbar { display: flex; gap: 0.125rem; padding: 0.5rem; border-bottom: 1px solid var(--border-color); background: #f8fafc; flex-wrap: wrap; }
+    .rich-toolbar button { width: 32px; height: 32px; border: 1px solid transparent; border-radius: 0.375rem; background: none; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.8125rem; transition: all 0.15s; }
+    .rich-toolbar button:hover { background: white; border-color: var(--border-color); color: var(--accent); }
+    .rich-toolbar .divider { width: 1px; background: var(--border-color); margin: 0 0.25rem; }
+    .rich-body { min-height: 200px; padding: 1rem; font-size: 0.875rem; line-height: 1.6; color: var(--text-primary); }
+    .rich-body p { margin-bottom: 0.75rem; }
+    .rich-body ul { padding-left: 1.25rem; margin-bottom: 0.75rem; }
+    .rich-body blockquote { border-left: 3px solid var(--accent); padding-left: 0.75rem; color: var(--text-secondary); font-style: italic; margin: 0.75rem 0; }
+
+    /* Upload Area */
+    .upload-area { border: 2px dashed var(--border-color); border-radius: 0.5rem; padding: 1.5rem; text-align: center; cursor: pointer; transition: all 0.15s; }
+    .upload-area:hover { border-color: var(--accent); background: var(--accent-bg); }
+    .upload-area i { font-size: 1.5rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
+    .upload-area p { font-size: 0.8125rem; color: var(--text-secondary); margin: 0; }
+    .upload-area .upload-hint { font-size: 0.6875rem; color: #94a3b8; margin-top: 0.25rem; }
+
+    /* Repeatable Rows */
+    .repeatable-table { width: 100%; font-size: 0.8125rem; }
+    .repeatable-table th { padding: 0.5rem 0.75rem; font-size: 0.6875rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color); text-align: left; }
+    .repeatable-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .repeatable-table input, .repeatable-table select { width: 100%; padding: 0.375rem 0.5rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 0.8125rem; }
+    .repeatable-table input:focus, .repeatable-table select:focus { outline: none; border-color: var(--accent); }
+    .btn-add-row { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.375rem 0.75rem; font-size: 0.75rem; font-weight: 600; color: var(--accent); background: var(--accent-bg); border: 1px solid var(--accent-bg); border-radius: 0.5rem; cursor: pointer; transition: all 0.15s; margin-top: 0.5rem; }
+    .btn-add-row:hover { background: var(--accent); color: white; border-color: var(--accent); }
+    .btn-remove-row { width: 28px; height: 28px; border: 1px solid var(--border-color); border-radius: 0.375rem; background: white; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.75rem; transition: all 0.15s; }
+    .btn-remove-row:hover { border-color: var(--danger-color); color: var(--danger-color); background: #fef2f2; }
+
+    /* Toggle Switch */
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid #f1f5f9; }
+    .toggle-row:last-child { border-bottom: none; }
+    .toggle-label { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); }
+    .toggle-desc { font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.125rem; }
+    .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #cbd5e1; border-radius: 9999px; transition: 0.2s; }
+    .toggle-slider:before { content: ''; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s; }
+    .toggle-switch input:checked + .toggle-slider { background: var(--accent); }
+    .toggle-switch input:checked + .toggle-slider:before { transform: translateX(20px); }
+
+    /* Social Preview Card */
+    .social-preview { border: 1px solid var(--border-color); border-radius: 0.5rem; overflow: hidden; max-width: 400px; }
+    .social-preview-img { width: 100%; height: 120px; background: linear-gradient(135deg, var(--accent), var(--accent-light)); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; }
+    .social-preview-body { padding: 0.75rem; }
+    .social-preview-body .sp-domain { font-size: 0.625rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+    .social-preview-body .sp-title { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); margin: 0.25rem 0; }
+    .social-preview-body .sp-desc { font-size: 0.75rem; color: var(--text-secondary); }
+
+    /* Form Footer */
+    .form-footer { display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem; padding: 1rem 1.5rem; border-top: 1px solid var(--border-color); background: white; border-radius: 0 0 var(--card-radius) var(--card-radius); }
+
+    /* Section Title */
+    .section-title { font-size: 0.875rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); }
+
+    /* Radio Cards */
+    .radio-card-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+    .radio-card { border: 2px solid var(--border-color); border-radius: 0.5rem; padding: 1rem; cursor: pointer; transition: all 0.15s; text-align: center; }
+    .radio-card:hover { border-color: var(--accent-light); background: #fafeff; }
+    .radio-card.selected { border-color: var(--accent); background: var(--accent-bg); }
+    .radio-card input[type="radio"] { display: none; }
+    .radio-card-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .radio-card-title { font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem; }
+    .radio-card-desc { font-size: 0.6875rem; color: var(--text-secondary); }
+
+    /* Speaker Card */
+    .speaker-card { border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 1rem; display: flex; gap: 1rem; align-items: flex-start; margin-bottom: 0.75rem; }
+    .speaker-photo { width: 80px; height: 80px; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 1.5rem; flex-shrink: 0; border: 2px dashed var(--border-color); }
+    .speaker-fields { flex: 1; }
+    .speaker-fields .form-group { margin-bottom: 0.75rem; }
+    .speaker-fields .form-group:last-child { margin-bottom: 0; }
+
+    /* Communication Triggers Table */
+    .comm-table { width: 100%; font-size: 0.8125rem; border-collapse: collapse; }
+    .comm-table th { padding: 0.625rem 0.75rem; font-size: 0.6875rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid var(--border-color); text-align: left; background: #f8fafc; }
+    .comm-table td { padding: 0.625rem 0.75rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .comm-table tr:last-child td { border-bottom: none; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .tab-btn { padding: 0.75rem 1rem; font-size: 0.75rem; }
+      .radio-card-group { grid-template-columns: 1fr; }
+      .speaker-card { flex-direction: column; align-items: center; text-align: center; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" onclick="parent.loadContent('organization/event-list')">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <div>
+        <p class="breadcrumb-nav"><a onclick="parent.loadContent('organization/event-list')">Events</a> &rsaquo; Create Event</p>
+        <h1>Create Event</h1>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-text" onclick="parent.loadContent('organization/event-list')">Cancel</button>
+      <button class="btn-outline-accent" onclick="alert('Saved as draft')">
+        <i class="fas fa-save me-1"></i> Save as Draft
+      </button>
+      <button class="btn-primary-accent" onclick="alert('Published!')">
+        <i class="fas fa-paper-plane me-1"></i> Save &amp; Publish
+      </button>
+    </div>
+  </div>
+
+  <!-- Form Card with Tabs -->
+  <div class="form-card">
+
+    <!-- Tab Navigation -->
+    <div class="tab-nav">
+      <button class="tab-btn active" onclick="switchTab(this, 'tab-basic')">
+        <i class="fas fa-info-circle"></i> Basic Info
+      </button>
+      <button class="tab-btn" onclick="switchTab(this, 'tab-venue')">
+        <i class="fas fa-map-marker-alt"></i> Venue &amp; Schedule
+      </button>
+      <button class="tab-btn" onclick="switchTab(this, 'tab-registration')">
+        <i class="fas fa-ticket-alt"></i> Registration
+      </button>
+      <button class="tab-btn" onclick="switchTab(this, 'tab-content')">
+        <i class="fas fa-microphone"></i> Content &amp; Speakers
+      </button>
+      <button class="tab-btn" onclick="switchTab(this, 'tab-settings')">
+        <i class="fas fa-cog"></i> Settings
+      </button>
+    </div>
+
+    <!-- TAB 1: Basic Info -->
+    <div class="tab-content active" id="tab-basic">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">Event Name <span class="required">*</span></label>
+            <input type="text" class="form-control-custom" placeholder="e.g., Annual Charity Gala 2026" value="Annual Charity Gala 2026">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">Event Code</label>
+            <input type="text" class="form-control-custom" placeholder="Auto-generated" value="GALA-2026">
+            <div class="form-hint"><i class="fas fa-info-circle"></i> Auto-generated from event name, editable</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Event Type <span class="required">*</span></label>
+        <div class="radio-card-group">
+          <label class="radio-card selected" onclick="selectRadioCard(this)">
+            <input type="radio" name="event_type" value="in-person" checked>
+            <div class="radio-card-icon">🏛️</div>
+            <div class="radio-card-title">In-person</div>
+            <div class="radio-card-desc">Physical venue, on-site attendance</div>
+          </label>
+          <label class="radio-card" onclick="selectRadioCard(this)">
+            <input type="radio" name="event_type" value="virtual">
+            <div class="radio-card-icon">💻</div>
+            <div class="radio-card-title">Virtual</div>
+            <div class="radio-card-desc">Online only (Zoom, Teams, webinar)</div>
+          </label>
+          <label class="radio-card" onclick="selectRadioCard(this)">
+            <input type="radio" name="event_type" value="hybrid">
+            <div class="radio-card-icon">🔀</div>
+            <div class="radio-card-title">Hybrid</div>
+            <div class="radio-card-desc">Both physical venue + virtual stream</div>
+          </label>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <select class="form-control-custom">
+              <option value="">Select category...</option>
+              <option selected>🎭 Gala / Dinner</option>
+              <option>🏃 Walkathon / Run</option>
+              <option>🎓 Webinar / Seminar</option>
+              <option>🤝 Volunteer Drive</option>
+              <option>🏘️ Community Gathering</option>
+              <option>🏆 Awards Ceremony</option>
+              <option>🛠️ Workshop / Training</option>
+              <option>🕌 Religious Gathering</option>
+              <option>📋 Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">Owning Org Unit <span class="required">*</span></label>
+            <select class="form-control-custom">
+              <option value="">Select org unit...</option>
+              <option selected>🏢 Hope Foundation (HQ) — All branches</option>
+              <option>&nbsp;&nbsp;&nbsp;🌍 Middle East & Africa Region</option>
+              <option>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🏠 Dubai Branch</option>
+              <option>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🏠 Cairo Branch</option>
+              <option>&nbsp;&nbsp;&nbsp;🌍 South Asia Region</option>
+              <option>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🏠 Mumbai Branch</option>
+              <option>&nbsp;&nbsp;&nbsp;🌍 Americas Region</option>
+              <option>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🏠 NY Branch</option>
+              <option>&nbsp;&nbsp;&nbsp;🌍 Europe Region</option>
+              <option>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🏠 London Branch</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">Linked Campaign</label>
+            <select class="form-control-custom">
+              <option value="">Select campaign (optional)...</option>
+              <option selected>Ramadan Appeal 2026</option>
+              <option>Year-end Giving 2026</option>
+              <option>Children's Education Fund</option>
+              <option>Emergency Relief Fund</option>
+            </select>
+            <div class="form-hint"><i class="fas fa-info-circle"></i> Donations from this event are attributed to the linked campaign</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select class="form-control-custom">
+              <option>Draft</option>
+              <option selected>Published</option>
+              <option>In Progress</option>
+              <option>Completed</option>
+              <option>Cancelled</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Description <span class="required">*</span></label>
+        <textarea class="form-control-custom" rows="3">Join us for an unforgettable evening of celebration, inspiration, and generosity at our Annual Charity Gala.</textarea>
+      </div>
+    </div>
+
+    <!-- TAB 2: Venue & Schedule -->
+    <div class="tab-content" id="tab-venue">
+      <div class="section-title">Schedule</div>
+      <div class="row">
+        <div class="col-md-4">
+          <div class="form-group">
+            <label class="form-label">Start Date & Time <span class="required">*</span></label>
+            <div class="d-flex gap-2">
+              <input type="date" class="form-control-custom" value="2026-04-25">
+              <input type="time" class="form-control-custom" value="19:00" style="max-width: 120px;">
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="form-group">
+            <label class="form-label">End Date & Time <span class="required">*</span></label>
+            <div class="d-flex gap-2">
+              <input type="date" class="form-control-custom" value="2026-04-25">
+              <input type="time" class="form-control-custom" value="23:00" style="max-width: 120px;">
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="form-group">
+            <label class="form-label">Timezone <span class="required">*</span></label>
+            <select class="form-control-custom">
+              <option value="">Select timezone...</option>
+              <option selected>Asia/Dubai (GMT+4)</option>
+              <option>Asia/Kolkata (GMT+5:30)</option>
+              <option>Europe/London (GMT+0)</option>
+              <option>America/New_York (GMT-5)</option>
+              <option>America/Los_Angeles (GMT-8)</option>
+              <option>Asia/Riyadh (GMT+3)</option>
+              <option>Australia/Sydney (GMT+11)</option>
+            </select>
+            <div class="form-hint"><i class="fas fa-info-circle"></i> All times displayed to registrants will use this timezone</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Show countdown on registration page</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="section-title" style="margin-top: 1.5rem;">Venue</div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">Venue Name <span class="required">*</span></label>
+            <input type="text" class="form-control-custom" value="Grand Ballroom, Hilton Dubai">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">Address</label>
+            <input type="text" class="form-control-custom" value="Al Habtoor City, Sheikh Zayed Road, Dubai">
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">City</label>
+            <input type="text" class="form-control-custom" value="Dubai">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">Country</label>
+            <select class="form-control-custom">
+              <option value="">Select country...</option>
+              <option selected>🇦🇪 UAE</option>
+              <option>🇸🇦 Saudi Arabia</option>
+              <option>🇮🇳 India</option>
+              <option>🇬🇧 United Kingdom</option>
+              <option>🇺🇸 United States</option>
+              <option>🇪🇬 Egypt</option>
+              <option>🇦🇺 Australia</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">Map Link</label>
+            <input type="url" class="form-control-custom" placeholder="https://maps.google.com/...">
+            <div class="form-hint"><i class="fas fa-info-circle"></i> Embedded map shown on event page</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">Parking Info</label>
+            <textarea class="form-control-custom" rows="2" style="min-height: 42px;">Complimentary valet parking available</textarea>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">Dress Code</label>
+            <input type="text" class="form-control-custom" value="Black tie / Formal">
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title" style="margin-top: 1.5rem;">Virtual Platform</div>
+      <div class="form-hint" style="margin-bottom: 0.75rem; margin-top: -0.75rem;"><i class="fas fa-info-circle"></i> Applicable for Virtual and Hybrid event types</div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">Platform</label>
+            <select class="form-control-custom">
+              <option selected>Zoom</option>
+              <option>Microsoft Teams</option>
+              <option>Google Meet</option>
+              <option>Custom URL</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">Meeting / Webinar URL</label>
+            <input type="url" class="form-control-custom" placeholder="https://zoom.us/j/...">
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">Meeting ID</label>
+            <input type="text" class="form-control-custom" placeholder="e.g., 123 456 7890">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">Passcode</label>
+            <input type="text" class="form-control-custom" placeholder="e.g., abc123">
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Dial-in Numbers</label>
+        <textarea class="form-control-custom" rows="2" placeholder="Enter dial-in numbers for phone attendees..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Send link to registrants</label>
+        <div class="radio-group" style="margin-top: 0.375rem;">
+          <label class="radio-item">
+            <input type="radio" name="send_link"> <strong>📧 Immediately upon registration</strong>
+          </label>
+          <label class="radio-item">
+            <input type="radio" name="send_link" checked> <strong>⏰ 1 hour before event</strong>
+          </label>
+          <label class="radio-item">
+            <input type="radio" name="send_link"> <strong>📅 Day before event</strong>
+          </label>
+          <label class="radio-item">
+            <input type="radio" name="send_link"> <strong>🔒 Only on event day</strong>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Registration -->
+    <div class="tab-content" id="tab-registration">
+      <div class="toggle-row" style="border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.25rem;">
+        <div>
+          <div class="toggle-label">Registration Required</div>
+          <div class="toggle-desc">Attendees must register before the event</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="row">
+        <div class="col-md-4">
+          <div class="form-group">
+            <label class="form-label">Capacity <span class="required">*</span></label>
+            <input type="number" class="form-control-custom" value="400">
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="form-group">
+            <label class="form-label">Waitlist when full</label>
+            <div style="padding-top: 0.375rem;">
+              <label class="toggle-switch">
+                <input type="checkbox" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="form-group">
+            <label class="form-label">Waitlist capacity</label>
+            <input type="number" class="form-control-custom" value="50">
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title" style="margin-top: 0.5rem;">Registration Period</div>
+      <div class="row">
+        <div class="col-md-4">
+          <div class="form-group">
+            <label class="form-label">Registration Opens</label>
+            <input type="date" class="form-control-custom" value="2026-03-01">
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="form-group">
+            <label class="form-label">Registration Closes</label>
+            <input type="date" class="form-control-custom" value="2026-04-23">
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="form-group">
+            <label class="form-label">Early Bird Deadline</label>
+            <input type="date" class="form-control-custom" value="2026-03-31">
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title" style="margin-top: 0.5rem;">Ticket / Registration Types</div>
+      <div style="overflow-x: auto;">
+        <table class="repeatable-table">
+          <thead>
+            <tr>
+              <th>Ticket Type</th>
+              <th style="width: 100px;">Price</th>
+              <th style="width: 90px;">Capacity</th>
+              <th style="width: 110px;">Early Bird Price</th>
+              <th style="width: 70px;">Available</th>
+              <th style="width: 40px;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input type="text" value="Standard"></td>
+              <td><input type="text" value="$250"></td>
+              <td><input type="number" value="300"></td>
+              <td><input type="text" value="$200"></td>
+              <td style="text-align: center;"><input type="checkbox" checked style="width:16px; height:16px; accent-color: var(--accent);"></td>
+              <td><button class="btn-remove-row"><i class="fas fa-times"></i></button></td>
+            </tr>
+            <tr>
+              <td><input type="text" value="VIP"></td>
+              <td><input type="text" value="$500"></td>
+              <td><input type="number" value="80"></td>
+              <td><input type="text" value="$400"></td>
+              <td style="text-align: center;"><input type="checkbox" checked style="width:16px; height:16px; accent-color: var(--accent);"></td>
+              <td><button class="btn-remove-row"><i class="fas fa-times"></i></button></td>
+            </tr>
+            <tr>
+              <td><input type="text" value="Student / Youth"></td>
+              <td><input type="text" value="$100"></td>
+              <td><input type="number" value="50"></td>
+              <td><input type="text" value="$75"></td>
+              <td style="text-align: center;"><input type="checkbox" checked style="width:16px; height:16px; accent-color: var(--accent);"></td>
+              <td><button class="btn-remove-row"><i class="fas fa-times"></i></button></td>
+            </tr>
+            <tr>
+              <td><input type="text" value="Corporate Table (10 seats)"></td>
+              <td><input type="text" value="$4,000"></td>
+              <td><input type="number" value="5"></td>
+              <td><input type="text" value="$3,500"></td>
+              <td style="text-align: center;"><input type="checkbox" checked style="width:16px; height:16px; accent-color: var(--accent);"></td>
+              <td><button class="btn-remove-row"><i class="fas fa-times"></i></button></td>
+            </tr>
+            <tr>
+              <td><input type="text" value="Free (Volunteers/Staff)"></td>
+              <td><input type="text" value="$0"></td>
+              <td><input type="number" value="20"></td>
+              <td><input type="text" value="—"></td>
+              <td style="text-align: center;"><input type="checkbox" checked style="width:16px; height:16px; accent-color: var(--accent);"></td>
+              <td><button class="btn-remove-row"><i class="fas fa-times"></i></button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <button class="btn-add-row"><i class="fas fa-plus"></i> Add Ticket Type</button>
+      <div class="form-hint" style="margin-top: 0.5rem;"><i class="fas fa-info-circle"></i> Set price to $0 for free events or free categories</div>
+
+      <div class="section-title" style="margin-top: 1.5rem;">Registration Form Fields</div>
+      <div class="checkbox-group">
+        <label class="checkbox-item"><input type="checkbox" checked disabled> Full Name <span class="required">*</span> <span style="font-size:0.6875rem; color:var(--text-secondary); margin-left:0.25rem;">(always required)</span></label>
+        <label class="checkbox-item"><input type="checkbox" checked disabled> Email <span class="required">*</span> <span style="font-size:0.6875rem; color:var(--text-secondary); margin-left:0.25rem;">(always required)</span></label>
+        <label class="checkbox-item"><input type="checkbox" checked> Phone</label>
+        <label class="checkbox-item"><input type="checkbox"> Organization / Company</label>
+        <label class="checkbox-item"><input type="checkbox"> Dietary Requirements</label>
+        <label class="checkbox-item"><input type="checkbox"> Accessibility Needs</label>
+        <label class="checkbox-item"><input type="checkbox"> T-shirt Size (for walkathons)</label>
+        <label class="checkbox-item"><input type="checkbox"> Emergency Contact</label>
+      </div>
+      <button class="btn-add-row" style="margin-top: 0.75rem;"><i class="fas fa-plus"></i> Add Custom Field</button>
+
+      <div class="section-title" style="margin-top: 1.5rem;">Confirmation Settings</div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Send confirmation email</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div style="padding: 0.5rem 0 0.75rem 0;">
+        <div class="form-group" style="margin-bottom: 0.75rem;">
+          <label class="form-label">Confirmation template</label>
+          <select class="form-control-custom" style="max-width: 350px;">
+            <option value="">Select template...</option>
+            <option selected>event_registration_confirmation</option>
+            <option>general_confirmation</option>
+          </select>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Send reminder before event</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div style="padding: 0.5rem 0 0.75rem 0;">
+        <div class="form-group" style="margin-bottom: 0.75rem;">
+          <label class="form-label">Reminder timing</label>
+          <select class="form-control-custom" style="max-width: 350px;">
+            <option>24 hours before</option>
+            <option>1 hour before</option>
+            <option selected>Both (24 hours + 1 hour)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reminder channels</label>
+          <div class="checkbox-group" style="flex-direction: row; flex-wrap: wrap; gap: 1rem;">
+            <label class="checkbox-item"><input type="checkbox" checked> Email</label>
+            <label class="checkbox-item"><input type="checkbox" checked> WhatsApp</label>
+            <label class="checkbox-item"><input type="checkbox"> SMS</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: Content & Speakers -->
+    <div class="tab-content" id="tab-content">
+      <div class="form-group">
+        <label class="form-label">Event Banner / Cover Image</label>
+        <div class="upload-area">
+          <i class="fas fa-cloud-upload-alt"></i>
+          <p>Click or drag to upload image</p>
+          <div class="upload-hint">Recommended: 1200x630px</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Detailed Description / Agenda</label>
+        <div class="rich-editor">
+          <div class="rich-toolbar">
+            <button title="Bold"><i class="fas fa-bold"></i></button>
+            <button title="Italic"><i class="fas fa-italic"></i></button>
+            <div class="divider"></div>
+            <button title="Bullet List"><i class="fas fa-list-ul"></i></button>
+            <button title="Numbered List"><i class="fas fa-list-ol"></i></button>
+            <div class="divider"></div>
+            <button title="Link"><i class="fas fa-link"></i></button>
+            <button title="Image"><i class="fas fa-image"></i></button>
+            <div class="divider"></div>
+            <button title="Heading"><i class="fas fa-heading"></i></button>
+            <button title="Quote"><i class="fas fa-quote-right"></i></button>
+          </div>
+          <div class="rich-body" contenteditable="true">
+            <p><strong>7:00 PM</strong> — Registration & Welcome Reception</p>
+            <p><strong>7:30 PM</strong> — Dinner Served</p>
+            <p><strong>8:00 PM</strong> — Opening Address by Chairman</p>
+            <p><strong>8:15 PM</strong> — Keynote: "Building Hope in Challenging Times"</p>
+            <p><strong>8:45 PM</strong> — Impact Video Presentation</p>
+            <p><strong>9:00 PM</strong> — Live Fundraising Auction</p>
+            <p><strong>9:30 PM</strong> — Donor Recognition Awards</p>
+            <p><strong>10:00 PM</strong> — Entertainment & Networking</p>
+            <p><strong>11:00 PM</strong> — Close</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title" style="margin-top: 1.5rem;">Speakers / Special Guests</div>
+
+      <div class="speaker-card">
+        <div class="speaker-photo">
+          <i class="fas fa-user"></i>
+        </div>
+        <div class="speaker-fields">
+          <div class="form-group">
+            <label class="form-label">Name</label>
+            <input type="text" class="form-control-custom" value="Dr. Ahmad Khalil">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Title / Role</label>
+            <input type="text" class="form-control-custom" value="Chairman, Hope Foundation">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Short Bio</label>
+            <textarea class="form-control-custom" rows="2" maxlength="200" style="min-height: 50px;">Leading humanitarian efforts across 12 countries...</textarea>
+            <div class="char-count">52 / 200</div>
+          </div>
+        </div>
+        <button class="btn-remove-row" style="margin-top: 0.25rem;"><i class="fas fa-times"></i></button>
+      </div>
+
+      <div class="speaker-card">
+        <div class="speaker-photo">
+          <i class="fas fa-user"></i>
+        </div>
+        <div class="speaker-fields">
+          <div class="form-group">
+            <label class="form-label">Name</label>
+            <input type="text" class="form-control-custom" value="Sarah Johnson">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Title / Role</label>
+            <input type="text" class="form-control-custom" value="Major Donor & Advocate">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Short Bio</label>
+            <textarea class="form-control-custom" rows="2" maxlength="200" style="min-height: 50px;">A passionate supporter of children's education...</textarea>
+            <div class="char-count">50 / 200</div>
+          </div>
+        </div>
+        <button class="btn-remove-row" style="margin-top: 0.25rem;"><i class="fas fa-times"></i></button>
+      </div>
+
+      <button class="btn-add-row"><i class="fas fa-plus"></i> Add Speaker</button>
+
+      <div class="section-title" style="margin-top: 2rem;">Event Gallery (for completed events)</div>
+      <div class="upload-area">
+        <i class="fas fa-images"></i>
+        <p>Click or drag to upload photos</p>
+        <div class="upload-hint">Upload event photos after the event for the event page gallery</div>
+      </div>
+    </div>
+
+    <!-- TAB 5: Settings -->
+    <div class="tab-content" id="tab-settings">
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Public Event Page</div>
+          <div class="toggle-desc">Event is visible on the public website</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div style="padding: 0.5rem 0 1rem 0;">
+        <div class="form-group">
+          <label class="form-label">Custom URL</label>
+          <input type="text" class="form-control-custom" value="events.hopefoundation.org/gala-2026">
+        </div>
+      </div>
+
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Accept Donations During Event</div>
+          <div class="toggle-desc">Allow attendees and visitors to donate during the event</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div style="padding: 0.5rem 0 1rem 0;">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="form-label">Linked Donation Purpose</label>
+              <select class="form-control-custom">
+                <option selected>General Fund</option>
+                <option>Children's Education</option>
+                <option>Orphan Care</option>
+                <option>Emergency Relief</option>
+                <option>Healthcare</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Suggested Amounts</label>
+          <div class="tag-input-box">
+            <span class="tag">$100 <span class="remove-tag" onclick="this.parentElement.remove()">&times;</span></span>
+            <span class="tag">$250 <span class="remove-tag" onclick="this.parentElement.remove()">&times;</span></span>
+            <span class="tag">$500 <span class="remove-tag" onclick="this.parentElement.remove()">&times;</span></span>
+            <span class="tag">$1000 <span class="remove-tag" onclick="this.parentElement.remove()">&times;</span></span>
+            <span class="tag">$5000 <span class="remove-tag" onclick="this.parentElement.remove()">&times;</span></span>
+            <input type="text" class="tag-input" placeholder="Add amount...">
+          </div>
+        </div>
+        <div class="toggle-row" style="border-bottom: none; padding-bottom: 0;">
+          <div>
+            <div class="toggle-label">Show fundraising goal</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="row" style="margin-top: 0.5rem;">
+          <div class="col-md-4">
+            <div class="form-group">
+              <label class="form-label">Goal Amount</label>
+              <input type="text" class="form-control-custom" value="$150,000">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">QR Code for Check-in</div>
+          <div class="toggle-desc">Generates unique QR per registrant for on-site attendance scanning</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Post-event Survey</div>
+          <div class="toggle-desc">Send a survey to attendees after the event</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="section-title" style="margin-top: 1.5rem;">Social Sharing</div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">Share Title</label>
+            <input type="text" class="form-control-custom" value="Annual Charity Gala 2026">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Share Description</label>
+            <input type="text" class="form-control-custom" maxlength="160" value="Join us for an unforgettable evening of celebration, inspiration, and generosity">
+            <div class="char-count">79 / 160</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Share Image</label>
+            <div class="form-hint" style="margin-bottom:0;"><i class="fas fa-info-circle"></i> Uses event banner by default, or upload separate</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Preview</label>
+          <div class="social-preview">
+            <div class="social-preview-img"><i class="fas fa-image"></i></div>
+            <div class="social-preview-body">
+              <div class="sp-domain">events.hopefoundation.org</div>
+              <div class="sp-title">Annual Charity Gala 2026</div>
+              <div class="sp-desc">Join us for an unforgettable evening of celebration, inspiration, and generosity</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title" style="margin-top: 1.5rem;">Communication Triggers</div>
+      <div style="overflow-x: auto; border: 1px solid var(--border-color); border-radius: 0.5rem;">
+        <table class="comm-table">
+          <thead>
+            <tr>
+              <th>Trigger</th>
+              <th>Channel</th>
+              <th>Timing</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Registration confirmed</strong></td>
+              <td><span class="chip" style="margin-right:0.25rem;">Email</span> <span class="chip">WhatsApp</span></td>
+              <td>Immediately</td>
+            </tr>
+            <tr>
+              <td><strong>Event reminder</strong></td>
+              <td><span class="chip" style="margin-right:0.25rem;">Email</span> <span class="chip">WhatsApp</span></td>
+              <td>24hr before</td>
+            </tr>
+            <tr>
+              <td><strong>Post-event thank you</strong></td>
+              <td><span class="chip">Email</span></td>
+              <td>1 day after</td>
+            </tr>
+            <tr>
+              <td><strong>Post-event survey</strong></td>
+              <td><span class="chip">Email</span></td>
+              <td>2 days after</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Form Footer -->
+    <div class="form-footer">
+      <button class="btn-text" onclick="parent.loadContent('organization/event-list')">Cancel</button>
+      <button class="btn-outline-accent" onclick="alert('Saved as draft')">
+        <i class="fas fa-save me-1"></i> Save as Draft
+      </button>
+      <button class="btn-primary-accent" onclick="alert('Published!')">
+        <i class="fas fa-paper-plane me-1"></i> Save &amp; Publish
+      </button>
+    </div>
+  </div>
+
+  <script>
+    function switchTab(btn, tabId) {
+      document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    function selectRadioCard(card) {
+      document.querySelectorAll('.radio-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      card.querySelector('input[type="radio"]').checked = true;
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Grant Application - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --grants-accent: #0369a1;
+      --grants-accent-bg: #e0f2fe;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .back-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 1rem;
+    }
+
+    .back-btn:hover {
+      border-color: var(--grants-accent);
+      color: var(--grants-accent);
+      background: var(--grants-accent-bg);
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0.125rem 0 0 0;
+    }
+
+    /* Form Actions (sticky footer) */
+    .form-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--grants-accent);
+      border-color: var(--grants-accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1.25rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--grants-accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #025e8c;
+      border-color: #025e8c;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--grants-accent);
+      color: var(--grants-accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1.25rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--grants-accent);
+      color: white;
+    }
+
+    .btn-cancel {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1.25rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-cancel:hover {
+      border-color: var(--danger-color);
+      color: var(--danger-color);
+    }
+
+    /* Form Sections */
+    .form-section {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1.5rem;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      margin-bottom: 1.25rem;
+    }
+
+    .section-title {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .section-title i {
+      color: var(--grants-accent);
+    }
+
+    .section-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--grants-accent);
+      color: white;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* Form Controls */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+
+    .form-group {
+      margin-bottom: 0;
+    }
+
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.375rem;
+    }
+
+    .form-label .required {
+      color: var(--danger-color);
+      margin-left: 0.125rem;
+    }
+
+    .form-control-custom {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8125rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      background: white;
+      color: var(--text-primary);
+      transition: all 0.15s;
+    }
+
+    .form-control-custom:focus {
+      outline: none;
+      border-color: var(--grants-accent);
+      box-shadow: 0 0 0 3px rgba(3, 105, 161, 0.1);
+    }
+
+    .form-control-custom::placeholder {
+      color: #94a3b8;
+    }
+
+    select.form-control-custom {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      padding-right: 2rem;
+    }
+
+    textarea.form-control-custom {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .form-hint {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .add-new-link {
+      font-size: 0.75rem;
+      color: var(--grants-accent);
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      margin-top: 0.25rem;
+    }
+
+    .add-new-link:hover { text-decoration: underline; }
+
+    /* Budget Table */
+    .budget-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    .budget-table thead th {
+      background: #f8fafc;
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .budget-table tbody td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+
+    .budget-table tbody tr:last-child td { border-bottom: none; }
+
+    .budget-table tfoot td {
+      padding: 0.625rem 0.75rem;
+      font-weight: 700;
+      background: #f8fafc;
+      border-top: 2px solid var(--border-color);
+    }
+
+    .budget-table input {
+      width: 100%;
+      padding: 0.375rem 0.5rem;
+      font-size: 0.8125rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      background: white;
+      color: var(--text-primary);
+    }
+
+    .budget-table input:focus {
+      outline: none;
+      border-color: var(--grants-accent);
+      box-shadow: 0 0 0 2px rgba(3, 105, 161, 0.1);
+    }
+
+    .remove-row-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 0.875rem;
+      padding: 0.25rem;
+    }
+
+    .remove-row-btn:hover { color: var(--danger-color); }
+
+    .add-row-btn {
+      background: none;
+      border: 1px dashed var(--border-color);
+      border-radius: 0.375rem;
+      padding: 0.5rem 1rem;
+      font-size: 0.8125rem;
+      color: var(--grants-accent);
+      cursor: pointer;
+      width: 100%;
+      margin-top: 0.5rem;
+      transition: all 0.15s;
+    }
+
+    .add-row-btn:hover {
+      border-color: var(--grants-accent);
+      background: var(--grants-accent-bg);
+    }
+
+    .admin-warning {
+      font-size: 0.75rem;
+      color: var(--warning-color);
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      margin-top: 0.5rem;
+    }
+
+    /* Milestone Table */
+    .milestone-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    .milestone-table thead th {
+      background: #f8fafc;
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .milestone-table tbody td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+
+    .milestone-table tbody tr:last-child td { border-bottom: none; }
+
+    .milestone-table input {
+      width: 100%;
+      padding: 0.375rem 0.5rem;
+      font-size: 0.8125rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      background: white;
+      color: var(--text-primary);
+    }
+
+    .milestone-table input:focus {
+      outline: none;
+      border-color: var(--grants-accent);
+      box-shadow: 0 0 0 2px rgba(3, 105, 161, 0.1);
+    }
+
+    /* Attachments */
+    .attachment-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .attachment-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      transition: all 0.15s;
+    }
+
+    .attachment-item:hover {
+      border-color: var(--grants-accent);
+      background: #fafbfc;
+    }
+
+    .attachment-check {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--grants-accent);
+    }
+
+    .attachment-info { flex: 1; }
+
+    .attachment-name {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .attachment-status {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+    }
+
+    .upload-btn {
+      background: var(--grants-accent-bg);
+      border: 1px solid var(--grants-accent);
+      color: var(--grants-accent);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .upload-btn:hover {
+      background: var(--grants-accent);
+      color: white;
+    }
+
+    /* Toggle Switch */
+    .toggle-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #cbd5e1;
+      border-radius: 12px;
+      transition: 0.2s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.2s;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background: var(--grants-accent);
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(20px);
+    }
+
+    .toggle-label {
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    /* Rich Text Placeholder */
+    .rich-text-placeholder {
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      overflow: hidden;
+    }
+
+    .rich-text-toolbar {
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.375rem 0.5rem;
+      display: flex;
+      gap: 0.125rem;
+      flex-wrap: wrap;
+    }
+
+    .rich-text-toolbar button {
+      background: none;
+      border: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 0.25rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 0.8125rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .rich-text-toolbar button:hover {
+      background: var(--grants-accent-bg);
+      color: var(--grants-accent);
+    }
+
+    .rich-text-body {
+      min-height: 120px;
+      padding: 0.75rem;
+      font-size: 0.8125rem;
+      color: #94a3b8;
+    }
+
+    /* Sticky Footer */
+    .sticky-footer {
+      position: sticky;
+      bottom: 0;
+      background: white;
+      border-top: 1px solid var(--border-color);
+      padding: 1rem 1.5rem;
+      margin: 0 -1.5rem -1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+      z-index: 10;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .form-grid { grid-template-columns: 1fr; }
+      .sticky-footer {
+        margin: 0 -1rem -1rem;
+        padding: 1rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" onclick="parent.loadContent('grants/grant-list')" title="Back to Grants">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <div>
+        <h1><i class="fas fa-file-circle-plus" style="color: var(--grants-accent); margin-right: 0.5rem;"></i>New Grant Application</h1>
+        <p class="subtitle">Submit a new grant application or track a prospect</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 1: Funder Information -->
+  <div class="form-section">
+    <div class="section-title">
+      <span class="section-number">1</span>
+      <i class="fas fa-building-columns"></i> Funder Information
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Funder Name <span class="required">*</span></label>
+        <select class="form-control-custom">
+          <option value="">Search or select funder...</option>
+          <option selected>Bill & Melinda Gates Foundation</option>
+          <option>UNICEF</option>
+          <option>USAID</option>
+          <option>DFID</option>
+          <option>Dubai Cares</option>
+          <option>Ford Foundation</option>
+          <option>Rockefeller Foundation</option>
+        </select>
+        <a class="add-new-link" href="#"><i class="fas fa-plus"></i> Add New Funder</a>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Grant Program</label>
+        <input type="text" class="form-control-custom" value="Global Water Access Program" placeholder="e.g., Annual Open Call">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Funder Contact</label>
+        <input type="text" class="form-control-custom" value="Jane Smith" placeholder="Contact person name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contact Email</label>
+        <input type="email" class="form-control-custom" value="jane@gatesfoundation.org" placeholder="email@example.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contact Phone</label>
+        <input type="tel" class="form-control-custom" placeholder="+1 (555) 000-0000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Funder Website</label>
+        <input type="url" class="form-control-custom" placeholder="https://...">
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Grant Details -->
+  <div class="form-section">
+    <div class="section-title">
+      <span class="section-number">2</span>
+      <i class="fas fa-file-contract"></i> Grant Details
+    </div>
+    <div class="form-grid">
+      <div class="form-group full-width">
+        <label class="form-label">Grant Title <span class="required">*</span></label>
+        <input type="text" class="form-control-custom" value="Clean Water Initiative — East Africa & South Asia" placeholder="Enter grant title">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Amount Requested <span class="required">*</span></label>
+        <div style="display:flex; gap:0.5rem;">
+          <input type="text" class="form-control-custom" value="500,000" placeholder="0.00" style="flex:1;">
+          <select class="form-control-custom" style="width:100px;">
+            <option selected>USD</option>
+            <option>EUR</option>
+            <option>GBP</option>
+            <option>AED</option>
+            <option>INR</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Grant Type</label>
+        <select class="form-control-custom">
+          <option selected>Project</option>
+          <option>Operating/General</option>
+          <option>Capital</option>
+          <option>Research</option>
+          <option>Emergency</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Start Date</label>
+        <input type="month" class="form-control-custom" value="2025-01">
+      </div>
+      <div class="form-group">
+        <label class="form-label">End Date</label>
+        <input type="month" class="form-control-custom" value="2026-12">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Purpose / Program</label>
+        <select class="form-control-custom">
+          <option value="">Select purpose...</option>
+          <option selected>Clean Water</option>
+          <option>Education</option>
+          <option>Healthcare</option>
+          <option>Orphan Care</option>
+          <option>Food Security</option>
+          <option>Women Empowerment</option>
+          <option>Community Development</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Branch <span class="required">*</span></label>
+        <select class="form-control-custom">
+          <option value="">Select branch...</option>
+          <option selected>Dubai</option>
+          <option>Mumbai</option>
+          <option>Nairobi</option>
+          <option>Delhi</option>
+          <option>Dhaka</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Implementing Branches</label>
+        <select class="form-control-custom" multiple style="min-height:80px;">
+          <option>Dubai</option>
+          <option>Mumbai</option>
+          <option selected>Nairobi</option>
+          <option>Delhi</option>
+          <option selected>Dhaka</option>
+        </select>
+        <div class="form-hint">Hold Ctrl/Cmd to select multiple</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: Proposal Narrative -->
+  <div class="form-section">
+    <div class="section-title">
+      <span class="section-number">3</span>
+      <i class="fas fa-pen-fancy"></i> Proposal Narrative
+    </div>
+    <div style="margin-bottom:1rem;">
+      <label class="form-label">Executive Summary <span class="required">*</span></label>
+      <textarea class="form-control-custom" rows="4" placeholder="Brief overview of the proposed project (max 500 words)...">This initiative aims to provide sustainable clean water access to 50 underserved communities across East Africa and South Asia. Through well construction, water quality monitoring, and community training, the project will directly impact an estimated 250,000 individuals over 24 months.</textarea>
+      <div class="form-hint">500 words maximum</div>
+    </div>
+
+    <div style="margin-bottom:1rem;">
+      <label class="form-label">Problem Statement</label>
+      <div class="rich-text-placeholder">
+        <div class="rich-text-toolbar">
+          <button title="Bold"><i class="fas fa-bold"></i></button>
+          <button title="Italic"><i class="fas fa-italic"></i></button>
+          <button title="Underline"><i class="fas fa-underline"></i></button>
+          <button title="Bullet List"><i class="fas fa-list-ul"></i></button>
+          <button title="Numbered List"><i class="fas fa-list-ol"></i></button>
+          <button title="Link"><i class="fas fa-link"></i></button>
+          <button title="Image"><i class="fas fa-image"></i></button>
+        </div>
+        <div class="rich-text-body" contenteditable="true">Describe the problem this grant will address...</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:1rem;">
+      <label class="form-label">Proposed Solution</label>
+      <div class="rich-text-placeholder">
+        <div class="rich-text-toolbar">
+          <button title="Bold"><i class="fas fa-bold"></i></button>
+          <button title="Italic"><i class="fas fa-italic"></i></button>
+          <button title="Underline"><i class="fas fa-underline"></i></button>
+          <button title="Bullet List"><i class="fas fa-list-ul"></i></button>
+          <button title="Numbered List"><i class="fas fa-list-ol"></i></button>
+          <button title="Link"><i class="fas fa-link"></i></button>
+          <button title="Image"><i class="fas fa-image"></i></button>
+        </div>
+        <div class="rich-text-body" contenteditable="true">Describe your proposed approach and methodology...</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:1rem;">
+      <label class="form-label">Expected Outcomes</label>
+      <div class="rich-text-placeholder">
+        <div class="rich-text-toolbar">
+          <button title="Bold"><i class="fas fa-bold"></i></button>
+          <button title="Italic"><i class="fas fa-italic"></i></button>
+          <button title="Underline"><i class="fas fa-underline"></i></button>
+          <button title="Bullet List"><i class="fas fa-list-ul"></i></button>
+          <button title="Numbered List"><i class="fas fa-list-ol"></i></button>
+          <button title="Link"><i class="fas fa-link"></i></button>
+          <button title="Image"><i class="fas fa-image"></i></button>
+        </div>
+        <div class="rich-text-body" contenteditable="true">Describe measurable outcomes and impact targets...</div>
+      </div>
+    </div>
+
+    <div>
+      <label class="form-label">Sustainability Plan</label>
+      <div class="rich-text-placeholder">
+        <div class="rich-text-toolbar">
+          <button title="Bold"><i class="fas fa-bold"></i></button>
+          <button title="Italic"><i class="fas fa-italic"></i></button>
+          <button title="Underline"><i class="fas fa-underline"></i></button>
+          <button title="Bullet List"><i class="fas fa-list-ul"></i></button>
+          <button title="Numbered List"><i class="fas fa-list-ol"></i></button>
+          <button title="Link"><i class="fas fa-link"></i></button>
+          <button title="Image"><i class="fas fa-image"></i></button>
+        </div>
+        <div class="rich-text-body" contenteditable="true">Describe how the project will be sustained beyond the grant period...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 4: Budget -->
+  <div class="form-section">
+    <div class="section-title">
+      <span class="section-number">4</span>
+      <i class="fas fa-coins"></i> Budget
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="budget-table" id="budgetTable">
+        <thead>
+          <tr>
+            <th style="width:30%;">Category</th>
+            <th style="width:20%;">Amount</th>
+            <th style="width:40%;">Description</th>
+            <th style="width:10%;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><input type="text" value="Construction"></td>
+            <td><input type="text" value="250,000" class="budget-amount" oninput="updateBudgetTotal()"></td>
+            <td><input type="text" value="Well construction materials and labor"></td>
+            <td><button class="remove-row-btn" title="Remove"><i class="fas fa-times"></i></button></td>
+          </tr>
+          <tr>
+            <td><input type="text" value="Staff"></td>
+            <td><input type="text" value="100,000" class="budget-amount" oninput="updateBudgetTotal()"></td>
+            <td><input type="text" value="Project staff salaries"></td>
+            <td><button class="remove-row-btn" title="Remove"><i class="fas fa-times"></i></button></td>
+          </tr>
+          <tr>
+            <td><input type="text" value="Training"></td>
+            <td><input type="text" value="50,000" class="budget-amount" oninput="updateBudgetTotal()"></td>
+            <td><input type="text" value="Community training programs"></td>
+            <td><button class="remove-row-btn" title="Remove"><i class="fas fa-times"></i></button></td>
+          </tr>
+          <tr>
+            <td><input type="text" value="M&E"></td>
+            <td><input type="text" value="40,000" class="budget-amount" oninput="updateBudgetTotal()"></td>
+            <td><input type="text" value="Monitoring and evaluation"></td>
+            <td><button class="remove-row-btn" title="Remove"><i class="fas fa-times"></i></button></td>
+          </tr>
+          <tr>
+            <td><input type="text" value="Travel"></td>
+            <td><input type="text" value="30,000" class="budget-amount" oninput="updateBudgetTotal()"></td>
+            <td><input type="text" value="Field visits and transport"></td>
+            <td><button class="remove-row-btn" title="Remove"><i class="fas fa-times"></i></button></td>
+          </tr>
+          <tr>
+            <td><input type="text" value="Admin"></td>
+            <td><input type="text" value="30,000" class="budget-amount" oninput="updateBudgetTotal()"></td>
+            <td><input type="text" value="Administrative overhead (6%)"></td>
+            <td><button class="remove-row-btn" title="Remove"><i class="fas fa-times"></i></button></td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>Total</td>
+            <td id="budgetTotal"><strong>$500,000</strong></td>
+            <td colspan="2"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    <button class="add-row-btn" onclick="addBudgetRow()"><i class="fas fa-plus"></i> Add Budget Line</button>
+    <div class="admin-warning" id="adminWarning">
+      <i class="fas fa-exclamation-triangle"></i> Admin costs at 6% — within typical funder limit of 10%
+    </div>
+  </div>
+
+  <!-- Section 5: Milestones & Reporting -->
+  <div class="form-section">
+    <div class="section-title">
+      <span class="section-number">5</span>
+      <i class="fas fa-flag-checkered"></i> Milestones & Reporting
+    </div>
+    <div style="overflow-x:auto; margin-bottom:1rem;">
+      <table class="milestone-table" id="milestoneTable">
+        <thead>
+          <tr>
+            <th style="width:30%;">Milestone</th>
+            <th style="width:20%;">Target Date</th>
+            <th style="width:40%;">Deliverable</th>
+            <th style="width:10%;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><input type="text" value="Phase 1: Assessment"></td>
+            <td><input type="month" value="2025-03"></td>
+            <td><input type="text" value="Needs assessment report"></td>
+            <td><button class="remove-row-btn" title="Remove"><i class="fas fa-times"></i></button></td>
+          </tr>
+          <tr>
+            <td><input type="text" value="Phase 2: Construction"></td>
+            <td><input type="month" value="2025-06"></td>
+            <td><input type="text" value="20 wells completed"></td>
+            <td><button class="remove-row-btn" title="Remove"><i class="fas fa-times"></i></button></td>
+          </tr>
+          <tr>
+            <td><input type="text" value="Phase 3: Expansion"></td>
+            <td><input type="month" value="2025-12"></td>
+            <td><input type="text" value="50 wells completed"></td>
+            <td><button class="remove-row-btn" title="Remove"><i class="fas fa-times"></i></button></td>
+          </tr>
+          <tr>
+            <td><input type="text" value="Final Evaluation"></td>
+            <td><input type="month" value="2026-12"></td>
+            <td><input type="text" value="Impact assessment"></td>
+            <td><button class="remove-row-btn" title="Remove"><i class="fas fa-times"></i></button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <button class="add-row-btn" onclick="addMilestoneRow()"><i class="fas fa-plus"></i> Add Milestone</button>
+
+    <div class="form-grid" style="margin-top:1.25rem;">
+      <div class="form-group">
+        <label class="form-label">Reporting Frequency</label>
+        <select class="form-control-custom">
+          <option>Monthly</option>
+          <option selected>Quarterly</option>
+          <option>Semi-Annual</option>
+          <option>Annual</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Financial Reporting</label>
+        <select class="form-control-custom">
+          <option>Monthly</option>
+          <option selected>Quarterly</option>
+          <option>Semi-Annual</option>
+          <option>Annual</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Audit Required</label>
+        <div class="toggle-group" style="margin-top:0.375rem;">
+          <label class="toggle-switch">
+            <input type="checkbox" checked>
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label">Yes, annual audit required</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 6: Attachments -->
+  <div class="form-section">
+    <div class="section-title">
+      <span class="section-number">6</span>
+      <i class="fas fa-paperclip"></i> Attachments
+    </div>
+    <label class="form-label" style="margin-bottom:0.75rem;">Required Documents</label>
+    <div class="attachment-list">
+      <div class="attachment-item">
+        <input type="checkbox" class="attachment-check" checked>
+        <div class="attachment-info">
+          <div class="attachment-name">Organization registration certificate</div>
+          <div class="attachment-status">org-cert-2024.pdf uploaded</div>
+        </div>
+        <button class="upload-btn"><i class="fas fa-check"></i> Uploaded</button>
+      </div>
+      <div class="attachment-item">
+        <input type="checkbox" class="attachment-check" checked>
+        <div class="attachment-info">
+          <div class="attachment-name">Latest audited financial statements</div>
+          <div class="attachment-status">audit-2024.pdf uploaded</div>
+        </div>
+        <button class="upload-btn"><i class="fas fa-check"></i> Uploaded</button>
+      </div>
+      <div class="attachment-item">
+        <input type="checkbox" class="attachment-check" checked>
+        <div class="attachment-info">
+          <div class="attachment-name">Board of directors list</div>
+          <div class="attachment-status">board-list-2025.pdf uploaded</div>
+        </div>
+        <button class="upload-btn"><i class="fas fa-check"></i> Uploaded</button>
+      </div>
+      <div class="attachment-item">
+        <input type="checkbox" class="attachment-check">
+        <div class="attachment-info">
+          <div class="attachment-name">Letters of support</div>
+          <div class="attachment-status" style="color: var(--warning-color);">Optional — not uploaded</div>
+        </div>
+        <button class="upload-btn"><i class="fas fa-upload"></i> Upload</button>
+      </div>
+      <div class="attachment-item">
+        <input type="checkbox" class="attachment-check">
+        <div class="attachment-info">
+          <div class="attachment-name">Previous grant reports</div>
+          <div class="attachment-status" style="color: var(--warning-color);">Optional — not uploaded</div>
+        </div>
+        <button class="upload-btn"><i class="fas fa-upload"></i> Upload</button>
+      </div>
+    </div>
+    <div style="margin-top:0.75rem;">
+      <button class="add-row-btn"><i class="fas fa-plus"></i> Add Document</button>
+    </div>
+  </div>
+
+  <!-- Section 7: Internal Notes -->
+  <div class="form-section">
+    <div class="section-title">
+      <span class="section-number">7</span>
+      <i class="fas fa-lock"></i> Internal Notes
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Stage <span class="required">*</span></label>
+        <select class="form-control-custom">
+          <option>Prospect</option>
+          <option selected>Application</option>
+          <option>Submitted</option>
+          <option>Under Review</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Assigned Staff</label>
+        <select class="form-control-custom">
+          <option value="">Select staff...</option>
+          <option selected>Ahmed Salim</option>
+          <option>Fatima Khan</option>
+          <option>John Mwangi</option>
+          <option>Priya Sharma</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Priority</label>
+        <select class="form-control-custom">
+          <option>Low</option>
+          <option>Medium</option>
+          <option selected>High</option>
+          <option>Critical</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Submission Deadline</label>
+        <input type="date" class="form-control-custom" value="2026-04-30">
+      </div>
+      <div class="form-group full-width">
+        <label class="form-label">Internal Notes</label>
+        <textarea class="form-control-custom" rows="3" placeholder="Notes visible only to internal staff...">Strong alignment with BMGF priorities. Jane Smith has been responsive. Leverage prior USAID relationship for supporting references.</textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sticky Footer Actions -->
+  <div class="sticky-footer">
+    <button class="btn-cancel" onclick="parent.loadContent('grants/grant-list')">Cancel</button>
+    <div class="form-actions">
+      <button class="btn-primary-accent"><i class="fas fa-save"></i> Save as Draft</button>
+      <button class="btn-outline-accent"><i class="fas fa-paper-plane"></i> Submit Application</button>
+    </div>
+  </div>
+
+  <script>
+    function addBudgetRow() {
+      const tbody = document.querySelector('#budgetTable tbody');
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><input type="text" placeholder="Category name"></td>
+        <td><input type="text" placeholder="0" class="budget-amount" oninput="updateBudgetTotal()"></td>
+        <td><input type="text" placeholder="Description"></td>
+        <td><button class="remove-row-btn" title="Remove" onclick="this.closest('tr').remove(); updateBudgetTotal();"><i class="fas fa-times"></i></button></td>
+      `;
+      tbody.appendChild(row);
+    }
+
+    function addMilestoneRow() {
+      const tbody = document.querySelector('#milestoneTable tbody');
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><input type="text" placeholder="Milestone name"></td>
+        <td><input type="month"></td>
+        <td><input type="text" placeholder="Deliverable"></td>
+        <td><button class="remove-row-btn" title="Remove" onclick="this.closest('tr').remove();"><i class="fas fa-times"></i></button></td>
+      `;
+      tbody.appendChild(row);
+    }
+
+    function updateBudgetTotal() {
+      const amounts = document.querySelectorAll('.budget-amount');
+      let total = 0;
+      amounts.forEach(input => {
+        const val = parseFloat(input.value.replace(/,/g, '')) || 0;
+        total += val;
+      });
+      document.getElementById('budgetTotal').innerHTML = '<strong>$' + total.toLocaleString() + '</strong>';
+    }
+
+    // Wire up remove buttons
+    document.querySelectorAll('.remove-row-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        this.closest('tr').remove();
+        updateBudgetTotal();
+      });
+    });
+  </script>
+
+</body>
+
+</html>

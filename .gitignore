@@ -1,0 +1,24 @@
+# =============================================================
+# Soruban Skills & Agents Repository - .gitignore
+# =============================================================
+# Each project folder below contains:
+#   - .claude/  (skills, agents, templates) --> TRACKED
+#   - html mockups, docs                    --> TRACKED
+#   - Client repos mapped to their own remote git --> EXCLUDED (add here per project)
+# =============================================================
+
+# ---- pss-2.0-global: client-mapped repos ----
+pss-2.0-global/PSS_2.0_Backend/
+pss-2.0-global/PSS_2.0_Frontend/
+
+# ---- future projects: add client repo exclusions below ----
+# example-project/ExampleClient_Backend/
+# example-project/ExampleClient_Frontend/
+
+# =============================================================
+# Common ignores
+# =============================================================
+Thumbs.db
+.DS_Store
+*.log
+*.tmp

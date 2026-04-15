@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matching Gifts - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+    .page-header .subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 0; }
+    .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .btn-primary-accent { background: var(--accent); border-color: var(--accent); color: white; font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid var(--accent); cursor: pointer; transition: all 0.15s; }
+    .btn-primary-accent:hover { background: #0c6577; border-color: #0c6577; color: white; }
+    .btn-outline-accent { background: white; border: 1px solid var(--accent); color: var(--accent); font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.15s; }
+    .btn-outline-accent:hover { background: var(--accent); color: white; }
+
+    /* KPI Stats Grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+    .stat-card { background: white; border-radius: var(--card-radius); padding: 1.25rem; box-shadow: var(--card-shadow); border: 1px solid var(--border-color); display: flex; align-items: flex-start; gap: 1rem; transition: transform 0.15s, box-shadow 0.15s; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }
+    .stat-icon { width: 48px; height: 48px; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; }
+    .stat-icon.green { background: #f0fdf4; color: #22c55e; }
+    .stat-icon.blue { background: #eff6ff; color: #3b82f6; }
+    .stat-icon.amber { background: #fffbeb; color: #f59e0b; }
+    .stat-icon.teal { background: var(--accent-bg); color: var(--accent); }
+    .stat-info { flex: 1; }
+    .stat-value { font-size: 1.625rem; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+    .stat-label { font-size: 0.8125rem; color: var(--text-secondary); font-weight: 500; margin-bottom: 0.125rem; }
+    .stat-subtitle { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; }
+
+    /* List Card */
+    .list-card { background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); }
+
+    /* Tab Navigation */
+    .tab-nav { display: flex; border-bottom: 2px solid var(--border-color); padding: 0 1.25rem; background: white; border-radius: var(--card-radius) var(--card-radius) 0 0; overflow-x: auto; }
+    .tab-btn { padding: 0.875rem 1.25rem; font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); border: none; background: none; cursor: pointer; position: relative; white-space: nowrap; transition: color 0.15s; }
+    .tab-btn:hover { color: var(--accent); }
+    .tab-btn.active { color: var(--accent); }
+    .tab-btn.active::after { content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 2px; background: var(--accent); border-radius: 1px 1px 0 0; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Filter Bar */
+    .filter-bar { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+    .search-input { position: relative; flex: 1; min-width: 240px; }
+    .search-input i { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 0.875rem; }
+    .search-input input { width: 100%; padding: 0.5rem 0.75rem 0.5rem 2.25rem; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 0.8125rem; color: var(--text-primary); transition: border-color 0.15s; }
+    .search-input input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1); }
+
+    /* Filter Chips */
+    .filter-chips { display: flex; gap: 0.375rem; flex-wrap: wrap; }
+    .filter-chip { padding: 0.3125rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; border: 1px solid var(--border-color); background: white; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+    .filter-chip:hover { border-color: var(--accent); color: var(--accent); }
+    .filter-chip.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+    /* Table */
+    .table-responsive { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+    thead th { padding: 0.75rem 1rem; text-align: left; font-size: 0.6875rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid var(--border-color); white-space: nowrap; }
+    tbody td { padding: 0.75rem 1rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    tbody tr:hover { background: #f8fafc; }
+    tbody tr:last-child td { border-bottom: none; }
+
+    /* Status Badges */
+    .status-badge { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.25rem 0.625rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; white-space: nowrap; }
+    .status-badge.active { background: #f0fdf4; color: #16a34a; }
+    .status-badge.received { background: #f0fdf4; color: #16a34a; }
+    .status-badge.submitted { background: #eff6ff; color: #2563eb; }
+    .status-badge.eligible { background: #fffbeb; color: #a16207; }
+    .status-badge.rejected { background: #fef2f2; color: #dc2626; }
+    .status-badge.approved { background: #f0fdf4; color: #15803d; }
+    .status-badge.expired { background: #f1f5f9; color: #64748b; }
+
+    /* Action buttons */
+    .action-btn { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.5rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 0.6875rem; font-weight: 500; color: var(--text-secondary); background: white; cursor: pointer; transition: all 0.15s; text-decoration: none; white-space: nowrap; }
+    .action-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+    .action-btn.danger:hover { border-color: var(--danger-color); color: var(--danger-color); background: #fef2f2; }
+
+    /* Match Ratio Display */
+    .match-ratio { font-size: 1.125rem; font-weight: 700; color: var(--accent); }
+
+    /* Table footer */
+    .table-footer { padding: 0.75rem 1.25rem; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; }
+    .table-info { font-size: 0.8125rem; color: var(--text-secondary); }
+
+    /* Company name link */
+    .company-name { font-weight: 600; color: var(--accent); cursor: pointer; text-decoration: none; }
+    .company-name:hover { text-decoration: underline; }
+
+    /* Eligible row highlight */
+    tbody tr.eligible-row { background: #fffbeb; }
+    tbody tr.eligible-row:hover { background: #fef9c3; }
+
+    /* Status Flow Diagram */
+    .status-flow { padding: 1.5rem; display: flex; align-items: center; justify-content: center; gap: 0; flex-wrap: wrap; }
+    .flow-step { display: flex; align-items: center; gap: 0; }
+    .flow-node { padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 600; white-space: nowrap; border: 2px solid; }
+    .flow-node.donation { background: #f1f5f9; border-color: #94a3b8; color: #475569; }
+    .flow-node.eligible-node { background: #fffbeb; border-color: #f59e0b; color: #a16207; }
+    .flow-node.submitted-node { background: #eff6ff; border-color: #3b82f6; color: #2563eb; }
+    .flow-node.approved-node { background: #ecfdf5; border-color: #10b981; color: #059669; }
+    .flow-node.received-node { background: #f0fdf4; border-color: #22c55e; color: #16a34a; }
+    .flow-node.rejected-node { background: #fef2f2; border-color: #dc2626; color: #dc2626; }
+    .flow-arrow { color: var(--text-secondary); font-size: 1rem; padding: 0 0.5rem; }
+    .flow-branch { display: flex; flex-direction: column; align-items: center; position: relative; margin-left: -0.5rem; }
+    .flow-branch-arrow { color: var(--text-secondary); font-size: 0.875rem; transform: rotate(90deg); margin: 0.25rem 0; }
+
+    /* Donor Guidance Styles */
+    .guidance-card { background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); padding: 1.5rem; margin-bottom: 1.25rem; }
+    .guidance-card h5 { font-size: 1rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-primary); }
+    .search-widget { max-width: 600px; }
+    .search-widget .search-group { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+    .search-widget .search-group input { flex: 1; padding: 0.625rem 1rem; border: 2px solid var(--border-color); border-radius: 0.5rem; font-size: 0.875rem; }
+    .search-widget .search-group input:focus { outline: none; border-color: var(--accent); }
+    .result-card { background: var(--accent-bg); border: 1px solid #a5f3fc; border-radius: 0.75rem; padding: 1.25rem; }
+    .result-card .company-title { font-size: 1.125rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.75rem; }
+    .result-detail { display: flex; gap: 2rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .result-detail .detail-item { text-align: center; }
+    .result-detail .detail-label { font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); font-weight: 600; }
+    .result-detail .detail-value { font-size: 1.25rem; font-weight: 700; color: var(--accent); }
+    .result-steps { margin-top: 1rem; }
+    .result-steps ol { padding-left: 1.25rem; margin: 0.5rem 0; }
+    .result-steps li { font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 0.375rem; }
+
+    /* Settings Styles */
+    .settings-section { padding: 1.5rem; }
+    .setting-row { display: flex; align-items: center; justify-content: space-between; padding: 1rem 0; border-bottom: 1px solid var(--border-color); gap: 1rem; flex-wrap: wrap; }
+    .setting-row:last-child { border-bottom: none; }
+    .setting-label { font-size: 0.875rem; font-weight: 500; color: var(--text-primary); }
+    .setting-desc { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.125rem; }
+    .setting-control { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
+
+    /* Toggle Switch */
+    .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #cbd5e1; border-radius: 24px; transition: 0.2s; }
+    .toggle-slider:before { content: ''; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s; }
+    .toggle-switch input:checked + .toggle-slider { background: var(--accent); }
+    .toggle-switch input:checked + .toggle-slider:before { transform: translateX(20px); }
+
+    /* Code Block */
+    .code-block { background: #1e293b; color: #e2e8f0; border-radius: 0.5rem; padding: 1rem; font-family: 'Fira Code', monospace; font-size: 0.75rem; overflow-x: auto; position: relative; line-height: 1.6; }
+    .code-block .copy-btn { position: absolute; top: 0.5rem; right: 0.5rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #e2e8f0; padding: 0.25rem 0.75rem; border-radius: 0.375rem; font-size: 0.6875rem; cursor: pointer; transition: all 0.15s; }
+    .code-block .copy-btn:hover { background: rgba(255,255,255,0.2); }
+
+    /* Inline input */
+    .inline-input { width: 60px; padding: 0.25rem 0.5rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 0.8125rem; text-align: center; }
+    .inline-input:focus { outline: none; border-color: var(--accent); }
+    .inline-select { padding: 0.375rem 0.5rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 0.8125rem; color: var(--text-primary); }
+    .inline-select:focus { outline: none; border-color: var(--accent); }
+
+    /* Modal Overrides */
+    .modal-header { border-bottom: 1px solid var(--border-color); padding: 1.25rem 1.5rem; }
+    .modal-title { font-size: 1.125rem; font-weight: 700; color: var(--text-primary); }
+    .modal-body { padding: 1.5rem; }
+    .modal-footer { border-top: 1px solid var(--border-color); padding: 1rem 1.5rem; }
+    .modal label { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.375rem; }
+    .modal .form-control, .modal .form-select { font-size: 0.8125rem; border-color: var(--border-color); border-radius: 0.5rem; }
+    .modal .form-control:focus, .modal .form-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1); }
+    .modal .form-check-label { font-size: 0.8125rem; font-weight: 400; color: var(--text-primary); }
+    .modal .form-check-input:checked { background-color: var(--accent); border-color: var(--accent); }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .status-flow { flex-direction: column; }
+    }
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-handshake me-2" style="color: var(--accent);"></i>Matching Gifts</h1>
+      <p class="subtitle">Maximize donations through corporate matching programs</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" data-bs-toggle="modal" data-bs-target="#addCompanyModal">
+        <i class="fas fa-plus me-1"></i> Add Company
+      </button>
+      <button class="btn-outline-accent">
+        <i class="fas fa-file-import me-1"></i> Import Companies
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon teal"><i class="fas fa-building"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Matching-Eligible Donations</div>
+        <div class="stat-value">$45,600</div>
+        <div class="stat-subtitle">234 donations</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="fas fa-paper-plane"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Matches Submitted</div>
+        <div class="stat-value">$23,400</div>
+        <div class="stat-subtitle">112 submitted</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green"><i class="fas fa-check-double"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Matches Received</div>
+        <div class="stat-value">$18,200</div>
+        <div class="stat-subtitle">89 received</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon amber"><i class="fas fa-exclamation-triangle"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Unclaimed Potential</div>
+        <div class="stat-value">$22,200</div>
+        <div class="stat-subtitle">122 not yet submitted</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs + Content -->
+  <div class="list-card">
+    <div class="tab-nav">
+      <button class="tab-btn active" onclick="switchTab('companies')">
+        <i class="fas fa-building me-1"></i> Matching Companies
+      </button>
+      <button class="tab-btn" onclick="switchTab('tracker')">
+        <i class="fas fa-list-check me-1"></i> Matching Tracker
+      </button>
+      <button class="tab-btn" onclick="switchTab('guidance')">
+        <i class="fas fa-compass me-1"></i> Donor Guidance
+      </button>
+      <button class="tab-btn" onclick="switchTab('settings')">
+        <i class="fas fa-cog me-1"></i> Settings
+      </button>
+    </div>
+
+    <!-- TAB 1: Matching Companies Database -->
+    <div class="tab-content active" id="tab-companies">
+      <div class="filter-bar">
+        <div class="search-input">
+          <i class="fas fa-search"></i>
+          <input type="text" id="companySearch" placeholder="Search companies by name..." onkeyup="filterCompanies()">
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table id="companiesTable">
+          <thead>
+            <tr>
+              <th>Company</th>
+              <th>Match Ratio</th>
+              <th>Min</th>
+              <th>Max</th>
+              <th>Guidelines</th>
+              <th>Employees (Donors)</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="company-name">Microsoft</span></td>
+              <td><span class="match-ratio">1:1</span></td>
+              <td>$25</td>
+              <td>$15,000/yr</td>
+              <td>Full-time & part-time</td>
+              <td><i class="fas fa-users me-1" style="color:var(--text-secondary);"></i>5 donors</td>
+              <td><span class="status-badge active"><i class="fas fa-circle" style="font-size:6px;"></i> Active</span></td>
+              <td>
+                <button class="action-btn" data-bs-toggle="modal" data-bs-target="#addCompanyModal"><i class="fas fa-edit"></i> Edit</button>
+                <button class="action-btn"><i class="fas fa-users"></i> View Donors</button>
+              </td>
+            </tr>
+            <tr>
+              <td><span class="company-name">Google (Alphabet)</span></td>
+              <td><span class="match-ratio">1:1</span></td>
+              <td>$50</td>
+              <td>$10,000/yr</td>
+              <td>Full-time only</td>
+              <td><i class="fas fa-users me-1" style="color:var(--text-secondary);"></i>3 donors</td>
+              <td><span class="status-badge active"><i class="fas fa-circle" style="font-size:6px;"></i> Active</span></td>
+              <td>
+                <button class="action-btn" data-bs-toggle="modal" data-bs-target="#addCompanyModal"><i class="fas fa-edit"></i> Edit</button>
+                <button class="action-btn"><i class="fas fa-users"></i> View Donors</button>
+              </td>
+            </tr>
+            <tr>
+              <td><span class="company-name">JPMorgan Chase</span></td>
+              <td><span class="match-ratio">1:1</span></td>
+              <td>$25</td>
+              <td>$10,000/yr</td>
+              <td>Full & part-time, retirees</td>
+              <td><i class="fas fa-users me-1" style="color:var(--text-secondary);"></i>2 donors</td>
+              <td><span class="status-badge active"><i class="fas fa-circle" style="font-size:6px;"></i> Active</span></td>
+              <td>
+                <button class="action-btn" data-bs-toggle="modal" data-bs-target="#addCompanyModal"><i class="fas fa-edit"></i> Edit</button>
+                <button class="action-btn"><i class="fas fa-users"></i> View Donors</button>
+              </td>
+            </tr>
+            <tr>
+              <td><span class="company-name">Apple</span></td>
+              <td><span class="match-ratio">1:1</span></td>
+              <td>$1</td>
+              <td>$10,000/yr</td>
+              <td>Full-time only</td>
+              <td><i class="fas fa-users me-1" style="color:var(--text-secondary);"></i>4 donors</td>
+              <td><span class="status-badge active"><i class="fas fa-circle" style="font-size:6px;"></i> Active</span></td>
+              <td>
+                <button class="action-btn" data-bs-toggle="modal" data-bs-target="#addCompanyModal"><i class="fas fa-edit"></i> Edit</button>
+                <button class="action-btn"><i class="fas fa-users"></i> View Donors</button>
+              </td>
+            </tr>
+            <tr>
+              <td><span class="company-name">Bank of America</span></td>
+              <td><span class="match-ratio">1:1</span></td>
+              <td>$25</td>
+              <td>$5,000/yr</td>
+              <td>Full-time only</td>
+              <td><i class="fas fa-users me-1" style="color:var(--text-secondary);"></i>1 donor</td>
+              <td><span class="status-badge active"><i class="fas fa-circle" style="font-size:6px;"></i> Active</span></td>
+              <td>
+                <button class="action-btn" data-bs-toggle="modal" data-bs-target="#addCompanyModal"><i class="fas fa-edit"></i> Edit</button>
+                <button class="action-btn"><i class="fas fa-users"></i> View Donors</button>
+              </td>
+            </tr>
+            <tr>
+              <td><span class="company-name">GE (General Electric)</span></td>
+              <td><span class="match-ratio">1:1</span></td>
+              <td>$25</td>
+              <td>$5,000/yr</td>
+              <td>Full-time, retirees</td>
+              <td><i class="fas fa-users me-1" style="color:var(--text-secondary);"></i>2 donors</td>
+              <td><span class="status-badge active"><i class="fas fa-circle" style="font-size:6px;"></i> Active</span></td>
+              <td>
+                <button class="action-btn" data-bs-toggle="modal" data-bs-target="#addCompanyModal"><i class="fas fa-edit"></i> Edit</button>
+                <button class="action-btn"><i class="fas fa-users"></i> View Donors</button>
+              </td>
+            </tr>
+            <tr>
+              <td><span class="company-name">ExxonMobil</span></td>
+              <td><span class="match-ratio">3:1</span></td>
+              <td>$25</td>
+              <td>$7,500/yr</td>
+              <td>Full-time, retirees, spouses</td>
+              <td><i class="fas fa-users me-1" style="color:var(--text-secondary);"></i>1 donor</td>
+              <td><span class="status-badge active"><i class="fas fa-circle" style="font-size:6px;"></i> Active</span></td>
+              <td>
+                <button class="action-btn" data-bs-toggle="modal" data-bs-target="#addCompanyModal"><i class="fas fa-edit"></i> Edit</button>
+                <button class="action-btn"><i class="fas fa-users"></i> View Donors</button>
+              </td>
+            </tr>
+            <tr>
+              <td><span class="company-name">State Street</span></td>
+              <td><span class="match-ratio">1:1</span></td>
+              <td>$25</td>
+              <td>$10,000/yr</td>
+              <td>Full-time only</td>
+              <td><i class="fas fa-users me-1" style="color:var(--text-secondary);"></i>0 donors</td>
+              <td><span class="status-badge active"><i class="fas fa-circle" style="font-size:6px;"></i> Active</span></td>
+              <td>
+                <button class="action-btn" data-bs-toggle="modal" data-bs-target="#addCompanyModal"><i class="fas fa-edit"></i> Edit</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-footer">
+        <div class="table-info">Showing 8 of 156 companies</div>
+      </div>
+    </div>
+
+    <!-- TAB 2: Matching Gift Tracker -->
+    <div class="tab-content" id="tab-tracker">
+      <div class="filter-bar" style="flex-direction: column; align-items: stretch; gap: 0.75rem;">
+        <div class="filter-chips">
+          <span class="filter-chip active" onclick="filterTracker(this, 'all')">All</span>
+          <span class="filter-chip" onclick="filterTracker(this, 'eligible')">Eligible</span>
+          <span class="filter-chip" onclick="filterTracker(this, 'submitted')">Submitted</span>
+          <span class="filter-chip" onclick="filterTracker(this, 'approved')">Approved</span>
+          <span class="filter-chip" onclick="filterTracker(this, 'received')">Received</span>
+          <span class="filter-chip" onclick="filterTracker(this, 'rejected')">Rejected</span>
+          <span class="filter-chip" onclick="filterTracker(this, 'expired')">Expired</span>
+        </div>
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
+          <select class="inline-select" style="min-width: 160px;">
+            <option value="">All Companies</option>
+            <option>Microsoft</option>
+            <option>Google (Alphabet)</option>
+            <option>JPMorgan Chase</option>
+            <option>Apple</option>
+            <option>Bank of America</option>
+            <option>GE (General Electric)</option>
+            <option>ExxonMobil</option>
+          </select>
+          <input type="date" class="inline-select" style="min-width: 140px;" placeholder="From date">
+          <input type="date" class="inline-select" style="min-width: 140px;" placeholder="To date">
+          <div class="search-input" style="max-width: 240px;">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Search donor...">
+          </div>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table id="trackerTable">
+          <thead>
+            <tr>
+              <th>Donation</th>
+              <th>Donor</th>
+              <th>Amount</th>
+              <th>Company</th>
+              <th>Match Amount</th>
+              <th>Status</th>
+              <th>Submitted</th>
+              <th>Expected</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-status="received">
+              <td><span class="company-name">RCP-2026-0892</span></td>
+              <td>Sarah Johnson</td>
+              <td>$500</td>
+              <td>Microsoft</td>
+              <td><strong>$500</strong></td>
+              <td><span class="status-badge received"><i class="fas fa-circle" style="font-size:6px;"></i> Received</span></td>
+              <td>Mar 15</td>
+              <td>&mdash;</td>
+              <td>
+                <button class="action-btn"><i class="fas fa-eye"></i> View</button>
+              </td>
+            </tr>
+            <tr data-status="submitted">
+              <td><span class="company-name">RCP-2026-0884</span></td>
+              <td>Sakura Tanaka</td>
+              <td>$250</td>
+              <td>Google</td>
+              <td><strong>$250</strong></td>
+              <td><span class="status-badge submitted"><i class="fas fa-circle" style="font-size:6px;"></i> Submitted</span></td>
+              <td>Apr 1</td>
+              <td>May 15</td>
+              <td>
+                <button class="action-btn"><i class="fas fa-eye"></i> View</button>
+                <button class="action-btn"><i class="fas fa-sync-alt"></i> Update Status</button>
+              </td>
+            </tr>
+            <tr data-status="eligible" class="eligible-row">
+              <td><span class="company-name">RCP-2026-0880</span></td>
+              <td>David Miller</td>
+              <td>$100</td>
+              <td>Apple</td>
+              <td><strong>$100</strong></td>
+              <td><span class="status-badge eligible"><i class="fas fa-circle" style="font-size:6px;"></i> Eligible</span></td>
+              <td>&mdash;</td>
+              <td>&mdash;</td>
+              <td>
+                <button class="action-btn"><i class="fas fa-bell"></i> Send Reminder</button>
+                <button class="action-btn"><i class="fas fa-check"></i> Mark Submitted</button>
+              </td>
+            </tr>
+            <tr data-status="eligible" class="eligible-row">
+              <td><span class="company-name">RCP-2026-0878</span></td>
+              <td>Emily Chen</td>
+              <td>$200</td>
+              <td>JPMorgan</td>
+              <td><strong>$200</strong></td>
+              <td><span class="status-badge eligible"><i class="fas fa-circle" style="font-size:6px;"></i> Eligible</span></td>
+              <td>&mdash;</td>
+              <td>&mdash;</td>
+              <td>
+                <button class="action-btn"><i class="fas fa-bell"></i> Send Reminder</button>
+                <button class="action-btn"><i class="fas fa-check"></i> Mark Submitted</button>
+              </td>
+            </tr>
+            <tr data-status="submitted">
+              <td><span class="company-name">RCP-2026-0865</span></td>
+              <td>Tom Wilson</td>
+              <td>$1,000</td>
+              <td>Microsoft</td>
+              <td><strong>$1,000</strong></td>
+              <td><span class="status-badge submitted"><i class="fas fa-circle" style="font-size:6px;"></i> Submitted</span></td>
+              <td>Mar 20</td>
+              <td>May 1</td>
+              <td>
+                <button class="action-btn"><i class="fas fa-eye"></i> View</button>
+                <button class="action-btn"><i class="fas fa-sync-alt"></i> Update Status</button>
+              </td>
+            </tr>
+            <tr data-status="rejected">
+              <td><span class="company-name">RCP-2026-0850</span></td>
+              <td>Lisa Kim</td>
+              <td>$150</td>
+              <td>Bank of America</td>
+              <td><strong>$150</strong></td>
+              <td><span class="status-badge rejected"><i class="fas fa-circle" style="font-size:6px;"></i> Rejected</span></td>
+              <td>Mar 1</td>
+              <td>&mdash;</td>
+              <td>
+                <button class="action-btn"><i class="fas fa-info-circle"></i> View Reason</button>
+                <button class="action-btn"><i class="fas fa-redo"></i> Resubmit</button>
+              </td>
+            </tr>
+            <tr data-status="received">
+              <td><span class="company-name">RCP-2026-0840</span></td>
+              <td>Carlos Mendez</td>
+              <td>$500</td>
+              <td>GE</td>
+              <td><strong style="color: var(--accent);">$1,500</strong> <span style="font-size:0.6875rem; color:var(--text-secondary);">(3:1)</span></td>
+              <td><span class="status-badge received"><i class="fas fa-circle" style="font-size:6px;"></i> Received</span></td>
+              <td>Feb 15</td>
+              <td>&mdash;</td>
+              <td>
+                <button class="action-btn"><i class="fas fa-eye"></i> View</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Status Flow Diagram -->
+      <div style="padding: 1rem 1.25rem; border-top: 1px solid var(--border-color);">
+        <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; text-align: center;">Status Flow</div>
+        <div class="status-flow">
+          <div class="flow-step">
+            <div class="flow-node donation"><i class="fas fa-donate me-1"></i>Donation Received</div>
+            <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-node eligible-node"><i class="fas fa-star me-1"></i>Eligible</div>
+            <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-node submitted-node"><i class="fas fa-paper-plane me-1"></i>Submitted</div>
+            <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+          </div>
+          <div class="flow-step" style="flex-direction: column; align-items: center;">
+            <div style="display: flex; align-items: center;">
+              <div class="flow-node approved-node"><i class="fas fa-thumbs-up me-1"></i>Approved</div>
+              <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+              <div class="flow-node received-node"><i class="fas fa-check-double me-1"></i>Received</div>
+            </div>
+            <div style="margin-top: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+              <div style="width: 1px; height: 16px; background: var(--text-secondary); margin-left: -80px;"></div>
+            </div>
+            <div class="flow-node rejected-node" style="margin-top: 0.25rem; margin-right: 80px;"><i class="fas fa-times-circle me-1"></i>Rejected</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Donor Guidance -->
+    <div class="tab-content" id="tab-guidance">
+      <div style="padding: 1.5rem;">
+        <!-- Matching Gift Search Widget -->
+        <div class="guidance-card">
+          <h5><i class="fas fa-search me-2" style="color: var(--accent);"></i>Does your employer match donations?</h5>
+          <div class="search-widget">
+            <div class="search-group">
+              <input type="text" id="employerSearch" placeholder="Enter your employer name..." value="Microsoft">
+              <button class="btn-primary-accent" onclick="searchEmployer()"><i class="fas fa-search me-1"></i> Search</button>
+            </div>
+            <div class="result-card" id="employerResult">
+              <div class="company-title"><i class="fas fa-building me-2"></i>Microsoft Corporation</div>
+              <div class="result-detail">
+                <div class="detail-item">
+                  <div class="detail-label">Match Ratio</div>
+                  <div class="detail-value">1:1</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Minimum</div>
+                  <div class="detail-value">$25</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Maximum / Year</div>
+                  <div class="detail-value">$15,000</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Eligibility</div>
+                  <div class="detail-value" style="font-size: 0.875rem;">Full-time & Part-time</div>
+                </div>
+              </div>
+              <div class="result-steps">
+                <div style="font-size: 0.8125rem; font-weight: 600; color: var(--text-primary);">How to submit your match:</div>
+                <ol>
+                  <li>Log in to the Microsoft Employee Giving Portal</li>
+                  <li>Search for our organization name</li>
+                  <li>Enter donation amount and date</li>
+                  <li>Upload your donation receipt and submit</li>
+                </ol>
+              </div>
+              <button class="btn-primary-accent" style="margin-top: 0.5rem;">
+                <i class="fas fa-external-link-alt me-1"></i> Go to Microsoft Giving Portal
+              </button>
+            </div>
+            <div style="margin-top: 1rem;">
+              <a href="#" style="color: var(--accent); font-size: 0.8125rem; text-decoration: none;">
+                <i class="fas fa-question-circle me-1"></i> Not listed? Request your employer be added
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Auto-notification Settings -->
+        <div class="guidance-card">
+          <h5><i class="fas fa-bell me-2" style="color: var(--accent);"></i>Auto-notification Settings</h5>
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">After donation, auto-send matching gift reminder</div>
+              <div class="setting-desc">Automatically email donors about matching eligibility</div>
+            </div>
+            <div class="setting-control">
+              <label class="toggle-switch">
+                <input type="checkbox" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Reminder template</div>
+            </div>
+            <div class="setting-control">
+              <select class="inline-select" style="min-width: 220px;">
+                <option>Matching Gift Reminder - Default</option>
+                <option>Matching Gift Reminder - Corporate</option>
+                <option>Matching Gift Reminder - Simple</option>
+              </select>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Reminder timing</div>
+              <div class="setting-desc">When to send the matching gift reminder after donation</div>
+            </div>
+            <div class="setting-control">
+              <select class="inline-select" style="min-width: 180px;">
+                <option>Immediately</option>
+                <option>1 day after</option>
+                <option selected>3 days after</option>
+                <option>1 week after</option>
+              </select>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Follow-up reminder if not submitted</div>
+              <div class="setting-desc">Send an additional reminder after specified days</div>
+            </div>
+            <div class="setting-control">
+              <label class="toggle-switch">
+                <input type="checkbox" checked>
+                <span class="toggle-slider"></span>
+              </label>
+              <input type="number" class="inline-input" value="14" min="1" max="90">
+              <span style="font-size: 0.8125rem; color: var(--text-secondary);">days</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Embed Code -->
+        <div class="guidance-card">
+          <h5><i class="fas fa-code me-2" style="color: var(--accent);"></i>Embed Code</h5>
+          <p style="font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 1rem;">Add the matching gift search widget to your website by embedding this code:</p>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyEmbedCode()"><i class="fas fa-copy me-1"></i> Copy Code</button>
+&lt;iframe
+  src="https://app.peopleserve.com/matching-gifts/widget/org-12345"
+  width="100%"
+  height="400"
+  frameborder="0"
+  style="border: none; border-radius: 12px;"
+  title="Matching Gift Search"&gt;
+&lt;/iframe&gt;
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: Settings -->
+    <div class="tab-content" id="tab-settings">
+      <div class="settings-section">
+        <div class="setting-row">
+          <div>
+            <div class="setting-label">Auto-detect employer from contact record</div>
+            <div class="setting-desc">Automatically identify matching-eligible donors based on employer field</div>
+          </div>
+          <div class="setting-control">
+            <label class="toggle-switch">
+              <input type="checkbox" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div>
+            <div class="setting-label">Minimum donation for matching reminder</div>
+            <div class="setting-desc">Only send matching reminders for donations above this amount</div>
+          </div>
+          <div class="setting-control">
+            <span style="font-size: 0.8125rem; color: var(--text-secondary);">$</span>
+            <input type="number" class="inline-input" value="25" min="1" style="width: 80px;">
+          </div>
+        </div>
+        <div class="setting-row">
+          <div>
+            <div class="setting-label">Auto-send matching reminder email</div>
+            <div class="setting-desc">Automatically send a matching gift reminder to eligible donors</div>
+          </div>
+          <div class="setting-control">
+            <label class="toggle-switch">
+              <input type="checkbox" checked>
+              <span class="toggle-slider"></span>
+            </label>
+            <select class="inline-select" style="min-width: 200px;">
+              <option>Matching Gift Reminder - Default</option>
+              <option>Matching Gift Reminder - Corporate</option>
+              <option>Matching Gift Reminder - Simple</option>
+            </select>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div>
+            <div class="setting-label">Track matching gift revenue separately</div>
+            <div class="setting-desc">Record matched funds as a separate revenue source in reports</div>
+          </div>
+          <div class="setting-control">
+            <label class="toggle-switch">
+              <input type="checkbox" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div>
+            <div class="setting-label">Show matching gift widget on donation thank-you page</div>
+            <div class="setting-desc">Display employer search after a donor completes their donation</div>
+          </div>
+          <div class="setting-control">
+            <label class="toggle-switch">
+              <input type="checkbox" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div>
+            <div class="setting-label">Show matching gift widget on online donation page</div>
+            <div class="setting-desc">Display employer search alongside the donation form</div>
+          </div>
+          <div class="setting-control">
+            <label class="toggle-switch">
+              <input type="checkbox" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div>
+            <div class="setting-label">Matching gift report in year-end statement</div>
+            <div class="setting-desc">Include matching gift summary in annual donor statements</div>
+          </div>
+          <div class="setting-control">
+            <label class="toggle-switch">
+              <input type="checkbox" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+        <div style="padding: 1rem 0; text-align: right;">
+          <button class="btn-primary-accent"><i class="fas fa-save me-1"></i> Save Settings</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Company Modal -->
+  <div class="modal fade" id="addCompanyModal" tabindex="-1" aria-labelledby="addCompanyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content" style="border-radius: var(--card-radius); border: 1px solid var(--border-color);">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addCompanyModalLabel"><i class="fas fa-building me-2" style="color: var(--accent);"></i>Add Matching Company</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label class="form-label">Company Name <span style="color: var(--danger-color);">*</span></label>
+              <input type="text" class="form-control" placeholder="Enter company name">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Match Ratio</label>
+              <select class="form-select">
+                <option value="0.5:1">0.5:1</option>
+                <option value="1:1" selected>1:1</option>
+                <option value="2:1">2:1</option>
+                <option value="3:1">3:1</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Minimum Donation</label>
+              <div class="input-group">
+                <span class="input-group-text" style="font-size: 0.8125rem;">$</span>
+                <input type="number" class="form-control" placeholder="25" value="25">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Maximum per Year</label>
+              <div class="input-group">
+                <span class="input-group-text" style="font-size: 0.8125rem;">$</span>
+                <input type="number" class="form-control" placeholder="10000" value="10000">
+              </div>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Eligibility</label>
+              <div class="d-flex gap-3 flex-wrap">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="eligFullTime" checked>
+                  <label class="form-check-label" for="eligFullTime">Full-time</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="eligPartTime">
+                  <label class="form-check-label" for="eligPartTime">Part-time</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="eligRetirees">
+                  <label class="form-check-label" for="eligRetirees">Retirees</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="eligSpouses">
+                  <label class="form-check-label" for="eligSpouses">Spouses</label>
+                </div>
+              </div>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Submission URL</label>
+              <input type="url" class="form-control" placeholder="https://company.com/matching-gifts">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Submission Process</label>
+              <textarea class="form-control" rows="3" placeholder="Describe how employees submit matching gift requests..."></textarea>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Required Documents</label>
+              <textarea class="form-control" rows="2" placeholder="e.g., Donation receipt, Tax-exempt letter..."></textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Processing Time</label>
+              <input type="text" class="form-control" placeholder="e.g., 4-6 weeks">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Contact Email</label>
+              <input type="email" class="form-control" placeholder="matching@company.com">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Notes</label>
+              <textarea class="form-control" rows="2" placeholder="Additional notes about this company's matching program..."></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-outline-accent" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn-primary-accent"><i class="fas fa-save me-1"></i> Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Tab switching
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+      event.currentTarget.classList.add('active');
+      document.getElementById('tab-' + tabName).classList.add('active');
+    }
+
+    // Filter companies by search
+    function filterCompanies() {
+      const searchText = document.getElementById('companySearch').value.toLowerCase();
+      const rows = document.querySelectorAll('#companiesTable tbody tr');
+      rows.forEach(row => {
+        const companyName = row.querySelector('.company-name').textContent.toLowerCase();
+        row.style.display = companyName.includes(searchText) ? '' : 'none';
+      });
+    }
+
+    // Filter tracker by status chips
+    function filterTracker(chip, status) {
+      // Update active chip
+      document.querySelectorAll('#tab-tracker .filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+
+      // Filter rows
+      const rows = document.querySelectorAll('#trackerTable tbody tr');
+      rows.forEach(row => {
+        if (status === 'all') {
+          row.style.display = '';
+        } else {
+          row.style.display = row.dataset.status === status ? '' : 'none';
+        }
+      });
+    }
+
+    // Search employer in Donor Guidance
+    function searchEmployer() {
+      const query = document.getElementById('employerSearch').value.trim().toLowerCase();
+      const resultCard = document.getElementById('employerResult');
+      if (query.includes('microsoft')) {
+        resultCard.style.display = 'block';
+      } else if (query) {
+        resultCard.style.display = 'block';
+        // In a real app, this would query the database
+      } else {
+        resultCard.style.display = 'none';
+      }
+    }
+
+    // Copy embed code
+    function copyEmbedCode() {
+      const codeBlock = document.querySelector('.code-block');
+      const code = codeBlock.textContent.replace('Copy Code', '').trim();
+      navigator.clipboard.writeText(code).then(() => {
+        const btn = codeBlock.querySelector('.copy-btn');
+        btn.innerHTML = '<i class="fas fa-check me-1"></i> Copied!';
+        setTimeout(() => {
+          btn.innerHTML = '<i class="fas fa-copy me-1"></i> Copy Code';
+        }, 2000);
+      });
+    }
+  </script>
+</body>
+
+</html>

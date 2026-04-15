@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff Login - Mobile App</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --field-accent: #059669;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a1a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .phone-frame {
+      width: 375px;
+      height: 812px;
+      background: #ffffff;
+      border-radius: 44px;
+      overflow: hidden;
+      box-shadow: 0 0 0 12px #2d2d2d, 0 0 0 14px #1a1a1a, 0 20px 60px rgba(0,0,0,0.5);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .phone-notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 28px;
+      background: #000;
+      border-radius: 0 0 18px 18px;
+      z-index: 10;
+    }
+
+    .status-bar {
+      background: #000;
+      color: #fff;
+      padding: 8px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 600;
+      height: 48px;
+    }
+
+    .status-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+    }
+
+    .phone-content {
+      flex: 1;
+      overflow-y: auto;
+      background: #f8fafc;
+    }
+
+    .phone-content::-webkit-scrollbar { width: 0; }
+
+    /* Views */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* Login View */
+    .login-header {
+      background: linear-gradient(135deg, #065f46, #059669);
+      padding: 50px 24px 36px;
+      text-align: center;
+      color: white;
+    }
+
+    .login-logo {
+      width: 64px;
+      height: 64px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin-bottom: 14px;
+    }
+
+    .login-org {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 2px;
+    }
+
+    .login-sub {
+      font-size: 13px;
+      opacity: 0.85;
+      font-weight: 500;
+    }
+
+    .login-form {
+      padding: 28px 24px;
+    }
+
+    .login-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 24px;
+    }
+
+    .form-label-mobile {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .form-input-wrap {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .form-input-mobile {
+      width: 100%;
+      padding: 14px 16px;
+      background: white;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-primary);
+      outline: none;
+    }
+
+    .form-input-mobile:focus {
+      border-color: var(--field-accent);
+    }
+
+    .input-icon-right {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .checkbox-row input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--field-accent);
+      cursor: pointer;
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #065f46, #059669);
+      border: none;
+      border-radius: 14px;
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+    }
+
+    .login-btn:active { transform: scale(0.98); }
+
+    .biometric-btn {
+      width: 100%;
+      padding: 14px;
+      background: white;
+      border: 2px solid var(--border-color);
+      border-radius: 14px;
+      color: var(--text-primary);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .biometric-btn:active { border-color: var(--field-accent); }
+
+    .forgot-text {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .forgot-text a {
+      color: var(--field-accent);
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    /* Branch Selection View */
+    .branch-header {
+      padding: 40px 24px 20px;
+    }
+
+    .welcome-text {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .welcome-name {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 20px;
+    }
+
+    .branch-label {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 14px;
+    }
+
+    .branch-option {
+      background: white;
+      border: 2px solid var(--border-color);
+      border-radius: 14px;
+      padding: 16px;
+      margin: 0 24px 10px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .branch-option.selected {
+      border-color: var(--field-accent);
+      background: #ecfdf5;
+    }
+
+    .branch-radio {
+      width: 22px;
+      height: 22px;
+      border: 2px solid var(--border-color);
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .branch-option.selected .branch-radio {
+      border-color: var(--field-accent);
+      background: var(--field-accent);
+    }
+
+    .branch-radio-inner {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: white;
+      display: none;
+    }
+
+    .branch-option.selected .branch-radio-inner {
+      display: block;
+    }
+
+    .branch-icon {
+      width: 42px;
+      height: 42px;
+      background: #f0fdf4;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .branch-info { flex: 1; }
+
+    .branch-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .branch-role {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .continue-btn {
+      width: calc(100% - 48px);
+      margin: 20px 24px;
+      padding: 16px;
+      background: linear-gradient(135deg, #065f46, #059669);
+      border: none;
+      border-radius: 14px;
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+    }
+
+    .continue-btn:active { transform: scale(0.98); }
+
+    .meta-info {
+      padding: 16px 24px;
+      text-align: center;
+    }
+
+    .meta-line {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* PIN Setup View */
+    .pin-header {
+      padding: 50px 24px 16px;
+      text-align: center;
+    }
+
+    .pin-icon {
+      width: 60px;
+      height: 60px;
+      background: #ecfdf5;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: var(--field-accent);
+      margin-bottom: 16px;
+    }
+
+    .pin-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+
+    .pin-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .pin-dots {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      padding: 30px 24px 24px;
+    }
+
+    .pin-dot {
+      width: 48px;
+      height: 52px;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--text-primary);
+      background: white;
+    }
+
+    .pin-dot.filled {
+      border-color: var(--field-accent);
+      background: #ecfdf5;
+    }
+
+    .pin-keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      padding: 0 48px;
+      max-width: 320px;
+      margin: 0 auto;
+    }
+
+    .pin-key {
+      height: 56px;
+      border: none;
+      border-radius: 14px;
+      background: white;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .pin-key:active {
+      background: #f1f5f9;
+      transform: scale(0.95);
+    }
+
+    .pin-key.empty {
+      background: transparent;
+      box-shadow: none;
+      cursor: default;
+    }
+
+    .pin-key.backspace {
+      background: transparent;
+      box-shadow: none;
+      color: var(--text-secondary);
+      font-size: 18px;
+    }
+
+    .home-indicator {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 134px;
+      height: 5px;
+      background: #d1d5db;
+      border-radius: 100px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <span>9:41</span>
+      <div class="status-bar-right">
+        <i class="fas fa-signal" style="font-size: 11px;"></i>
+        <i class="fas fa-wifi" style="font-size: 11px;"></i>
+        <i class="fas fa-battery-full" style="font-size: 13px;"></i>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="phone-content">
+
+      <!-- Login View -->
+      <div class="view active" id="loginView">
+        <div class="login-header">
+          <div class="login-logo"><i class="fas fa-heart"></i></div>
+          <div class="login-org">Global Humanitarian Foundation</div>
+          <div class="login-sub">Staff Portal</div>
+        </div>
+
+        <div class="login-form">
+          <div class="login-title">Staff Login</div>
+
+          <div class="form-label-mobile">Email</div>
+          <div class="form-input-wrap">
+            <input type="email" class="form-input-mobile" value="ahmed@ghf.org">
+          </div>
+
+          <div class="form-label-mobile">Password</div>
+          <div class="form-input-wrap">
+            <input type="password" class="form-input-mobile" value="password123" id="passwordInput">
+            <i class="fas fa-eye input-icon-right" onclick="togglePassword()"></i>
+          </div>
+
+          <label class="checkbox-row">
+            <input type="checkbox" checked> Remember me
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" checked> Enable offline PIN
+          </label>
+
+          <button class="login-btn" onclick="showView('branch')">Log In</button>
+
+          <button class="biometric-btn">
+            <i class="fas fa-fingerprint" style="color: var(--field-accent); font-size: 20px;"></i>
+            Use Fingerprint
+          </button>
+
+          <div class="forgot-text">Forgot password? <a href="#">Contact admin</a></div>
+        </div>
+      </div>
+
+      <!-- Branch Selection View -->
+      <div class="view" id="branchView">
+        <div class="branch-header">
+          <div class="welcome-text">Welcome back,</div>
+          <div class="welcome-name">Ahmed Salim</div>
+          <div class="branch-label">Select your branch:</div>
+        </div>
+
+        <div class="branch-option selected" onclick="selectBranch(this)">
+          <div class="branch-radio"><div class="branch-radio-inner"></div></div>
+          <div class="branch-icon">🏢</div>
+          <div class="branch-info">
+            <div class="branch-name">Dubai (HQ)</div>
+            <div class="branch-role">Role: Field Ambassador</div>
+          </div>
+        </div>
+
+        <div class="branch-option" onclick="selectBranch(this)">
+          <div class="branch-radio"><div class="branch-radio-inner"></div></div>
+          <div class="branch-icon">🏢</div>
+          <div class="branch-info">
+            <div class="branch-name">Abu Dhabi</div>
+            <div class="branch-role">Role: Field Ambassador</div>
+          </div>
+        </div>
+
+        <button class="continue-btn" onclick="showView('pin')">
+          Continue <i class="fas fa-arrow-right"></i>
+        </button>
+
+        <div class="meta-info">
+          <div class="meta-line">Last login: Apr 12, 2:30 PM</div>
+          <div class="meta-line">App version: 2.0.1</div>
+        </div>
+      </div>
+
+      <!-- PIN Setup View -->
+      <div class="view" id="pinView">
+        <div class="pin-header">
+          <div class="pin-icon"><i class="fas fa-lock"></i></div>
+          <div class="pin-title">Set Offline PIN</div>
+          <div class="pin-desc">Use this PIN when there's no internet connection.</div>
+        </div>
+
+        <div class="pin-dots">
+          <div class="pin-dot filled" id="dot0">•</div>
+          <div class="pin-dot filled" id="dot1">•</div>
+          <div class="pin-dot filled" id="dot2">•</div>
+          <div class="pin-dot" id="dot3"></div>
+        </div>
+
+        <div class="pin-keypad">
+          <button class="pin-key" onclick="enterPin(1)">1</button>
+          <button class="pin-key" onclick="enterPin(2)">2</button>
+          <button class="pin-key" onclick="enterPin(3)">3</button>
+          <button class="pin-key" onclick="enterPin(4)">4</button>
+          <button class="pin-key" onclick="enterPin(5)">5</button>
+          <button class="pin-key" onclick="enterPin(6)">6</button>
+          <button class="pin-key" onclick="enterPin(7)">7</button>
+          <button class="pin-key" onclick="enterPin(8)">8</button>
+          <button class="pin-key" onclick="enterPin(9)">9</button>
+          <button class="pin-key empty"></button>
+          <button class="pin-key" onclick="enterPin(0)">0</button>
+          <button class="pin-key backspace" onclick="deletePin()"><i class="fas fa-delete-left"></i></button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="home-indicator"></div>
+  </div>
+
+  <script>
+    function showView(view) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      const viewMap = { login: 'loginView', branch: 'branchView', pin: 'pinView' };
+      document.getElementById(viewMap[view]).classList.add('active');
+    }
+
+    function togglePassword() {
+      const input = document.getElementById('passwordInput');
+      const icon = input.nextElementSibling;
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+      } else {
+        input.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+      }
+    }
+
+    function selectBranch(el) {
+      document.querySelectorAll('.branch-option').forEach(b => b.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+
+    let pinDigits = [1, 2, 3];
+    function renderPin() {
+      for (let i = 0; i < 4; i++) {
+        const dot = document.getElementById('dot' + i);
+        if (i < pinDigits.length) {
+          dot.textContent = '•';
+          dot.classList.add('filled');
+        } else {
+          dot.textContent = '';
+          dot.classList.remove('filled');
+        }
+      }
+    }
+
+    function enterPin(num) {
+      if (pinDigits.length < 4) {
+        pinDigits.push(num);
+        renderPin();
+      }
+    }
+
+    function deletePin() {
+      if (pinDigits.length > 0) {
+        pinDigits.pop();
+        renderPin();
+      }
+    }
+  </script>
+
+</body>
+
+</html>

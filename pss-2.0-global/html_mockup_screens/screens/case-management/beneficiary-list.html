@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beneficiaries - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --cm-accent: #0d9488;
+      --cm-accent-light: #14b8a6;
+      --cm-accent-bg: #f0fdfa;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--cm-accent);
+      border-color: var(--cm-accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--cm-accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #0b7f74;
+      border-color: #0b7f74;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--cm-accent);
+      color: var(--cm-accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--cm-accent);
+      color: white;
+    }
+
+    /* KPI Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .kpi-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.875rem;
+    }
+
+    .kpi-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 0.625rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.125rem;
+      flex-shrink: 0;
+    }
+
+    .kpi-icon.teal { background: var(--cm-accent-bg); color: var(--cm-accent); }
+    .kpi-icon.blue { background: #eff6ff; color: #3b82f6; }
+    .kpi-icon.green { background: #f0fdf4; color: #22c55e; }
+    .kpi-icon.purple { background: #faf5ff; color: #a855f7; }
+
+    .kpi-content { flex: 1; min-width: 0; }
+
+    .kpi-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+    }
+
+    .kpi-value {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .kpi-sub {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+      line-height: 1.4;
+    }
+
+    .kpi-sub .up { color: var(--success-color); font-weight: 600; }
+
+    /* Card */
+    .list-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .search-input {
+      position: relative;
+      flex: 1;
+      min-width: 240px;
+    }
+
+    .search-input i {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .search-input input {
+      width: 100%;
+      padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .search-input input:focus {
+      outline: none;
+      border-color: var(--cm-accent);
+      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    }
+
+    /* Filter Chips */
+    .filter-chips {
+      display: flex;
+      gap: 0.375rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-chip {
+      padding: 0.3125rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .filter-chip:hover {
+      border-color: var(--cm-accent);
+      color: var(--cm-accent);
+    }
+
+    .filter-chip.active {
+      background: var(--cm-accent);
+      border-color: var(--cm-accent);
+      color: white;
+    }
+
+    /* Advanced Filters */
+    .advanced-filters {
+      display: none;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      background: #f8fafc;
+    }
+
+    .advanced-filters.show { display: block; }
+
+    .adv-filter-toggle {
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .adv-filter-toggle:hover {
+      border-color: var(--cm-accent);
+      color: var(--cm-accent);
+    }
+
+    .filter-group label {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.25rem;
+      display: block;
+    }
+
+    .filter-group select,
+    .filter-group input {
+      width: 100%;
+      padding: 0.375rem 0.625rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+    }
+
+    .filter-group select:focus,
+    .filter-group input:focus {
+      outline: none;
+      border-color: var(--cm-accent);
+    }
+
+    /* Bulk Actions */
+    .bulk-actions {
+      display: none;
+      padding: 0.75rem 1.25rem;
+      background: var(--cm-accent-bg);
+      border-bottom: 1px solid #ccfbf1;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .bulk-actions.show { display: flex; }
+
+    .bulk-actions .selected-count {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--cm-accent);
+    }
+
+    .bulk-btn {
+      padding: 0.3125rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid var(--cm-accent);
+      background: white;
+      color: var(--cm-accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .bulk-btn:hover { background: var(--cm-accent); color: white; }
+
+    /* Table */
+    .table-container { overflow-x: auto; }
+
+    .ben-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1200px;
+    }
+
+    .ben-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .ben-table th:hover { color: var(--cm-accent); }
+
+    .ben-table th .sort-icon {
+      margin-left: 0.25rem;
+      font-size: 0.5625rem;
+      opacity: 0.4;
+    }
+
+    .ben-table th.sorted .sort-icon { opacity: 1; color: var(--cm-accent); }
+
+    .ben-table td {
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      vertical-align: middle;
+    }
+
+    .ben-table tr:hover td { background: #f8fafc; }
+    .ben-table tr:last-child td { border-bottom: none; }
+
+    /* Avatar */
+    .ben-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.75rem;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .ben-name-cell {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+
+    .ben-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+
+    .ben-sub {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+    }
+
+    .ben-code {
+      color: var(--cm-accent);
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .ben-code:hover { text-decoration: underline; }
+
+    /* Program Badges */
+    .program-badge {
+      font-size: 0.625rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      white-space: nowrap;
+      display: inline-block;
+      margin: 0.0625rem;
+    }
+
+    .program-badge.orphan { background: #fef3c7; color: #92400e; }
+    .program-badge.education { background: #eff6ff; color: #1e40af; }
+    .program-badge.healthcare { background: #fdf2f8; color: #9d174d; }
+    .program-badge.women { background: #faf5ff; color: #7c3aed; }
+    .program-badge.food { background: #fff7ed; color: #c2410c; }
+    .program-badge.vocational { background: #f0fdfa; color: #0d9488; }
+    .program-badge.water { background: #ecfeff; color: #0e7490; }
+    .program-badge.relief { background: #fef2f2; color: #991b1b; }
+
+    /* Status */
+    .status-badge {
+      font-size: 0.6875rem;
+      padding: 0.25rem 0.625rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .status-badge.active { background: #f0fdf4; color: #166534; }
+    .status-badge.waitlist { background: #fefce8; color: #854d0e; }
+    .status-badge.graduated { background: #eff6ff; color: #1e40af; }
+    .status-badge.exited { background: #fef2f2; color: #991b1b; }
+    .status-badge.suspended { background: #f8fafc; color: #64748b; }
+
+    /* Sponsor Link */
+    .sponsor-link {
+      color: var(--cm-accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .sponsor-link:hover { text-decoration: underline; }
+
+    .pool-funded {
+      color: var(--text-secondary);
+      font-style: italic;
+      font-size: 0.75rem;
+    }
+
+    /* Actions */
+    .actions-menu { position: relative; }
+
+    .actions-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      transition: all 0.15s;
+    }
+
+    .actions-btn:hover {
+      background: var(--cm-accent);
+      color: white;
+      border-color: var(--cm-accent);
+    }
+
+    .actions-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 0.25rem;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      z-index: 100;
+      min-width: 170px;
+      overflow: hidden;
+    }
+
+    .actions-dropdown.show { display: block; }
+
+    .actions-dropdown a {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      text-decoration: none;
+      transition: background 0.1s;
+    }
+
+    .actions-dropdown a:hover { background: #f8fafc; color: var(--cm-accent); }
+    .actions-dropdown a:hover i { color: var(--cm-accent); }
+
+    .actions-dropdown a i {
+      width: 16px;
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .view-btn {
+      padding: 0.25rem 0.625rem;
+      border-radius: 0.375rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      border: 1px solid var(--cm-accent);
+      background: white;
+      color: var(--cm-accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .view-btn:hover { background: var(--cm-accent); color: white; }
+
+    .enroll-btn {
+      padding: 0.25rem 0.625rem;
+      border-radius: 0.375rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      border: 1px solid var(--success-color);
+      background: white;
+      color: var(--success-color);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .enroll-btn:hover { background: var(--success-color); color: white; }
+
+    /* Pagination */
+    .table-footer {
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--border-color);
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .table-footer .showing-text {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .page-size-select {
+      padding: 0.25rem 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .pagination {
+      display: flex;
+      gap: 0.25rem;
+      align-items: center;
+      margin: 0;
+      list-style: none;
+      padding: 0;
+    }
+
+    .pagination .page-btn {
+      min-width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      background: white;
+      color: var(--text-primary);
+      font-size: 0.8125rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .pagination .page-btn:hover { border-color: var(--cm-accent); color: var(--cm-accent); }
+    .pagination .page-btn.active { background: var(--cm-accent); border-color: var(--cm-accent); color: white; }
+    .pagination .page-btn.disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+      .kpi-grid { grid-template-columns: 1fr; }
+      body { padding: 1rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1>Beneficiaries</h1>
+      <p class="subtitle">Manage individuals and families served by your programs</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="parent.loadContent('case-management/beneficiary-form')">
+        <i class="fas fa-plus me-1"></i> Register Beneficiary
+      </button>
+      <button class="btn-outline-accent">
+        <i class="fas fa-file-import me-1"></i> Import
+      </button>
+      <button class="btn-outline-accent" onclick="exportBeneficiaries()">
+        <i class="fas fa-file-export me-1"></i> Export
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon teal"><i class="fas fa-people-group"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-label">Total Beneficiaries</div>
+        <div class="kpi-value">2,456</div>
+        <div class="kpi-sub">Active: 1,890 &middot; Graduated: 312 &middot; Inactive: 254</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon blue"><i class="fas fa-hand-holding-heart"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-label">Programs Active</div>
+        <div class="kpi-value">8</div>
+        <div class="kpi-sub">Orphan Care (500), Education (420), Healthcare (380)...</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon green"><i class="fas fa-user-plus"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-label">New This Month</div>
+        <div class="kpi-value">45</div>
+        <div class="kpi-sub"><span class="up"><i class="fas fa-arrow-up"></i> 12%</span> vs last month</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon purple"><i class="fas fa-chart-line"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-label">Outcomes Achieved</div>
+        <div class="kpi-value">234</div>
+        <div class="kpi-sub">Graduations, goals met, milestones this year</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Card -->
+  <div class="list-card">
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+        <div class="search-input">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Search by name, beneficiary ID, or phone..." id="searchInput">
+        </div>
+        <button class="adv-filter-toggle" onclick="toggleAdvancedFilters(this)">
+          <i class="fas fa-sliders me-1"></i> Advanced Filters
+        </button>
+      </div>
+      <div class="filter-chips">
+        <span class="filter-chip active" onclick="setFilter(this)">All</span>
+        <span class="filter-chip" onclick="setFilter(this)">Active</span>
+        <span class="filter-chip" onclick="setFilter(this)">Waitlist</span>
+        <span class="filter-chip" onclick="setFilter(this)">Graduated</span>
+        <span class="filter-chip" onclick="setFilter(this)">Exited</span>
+        <span class="filter-chip" onclick="setFilter(this)">Suspended</span>
+        <span class="filter-chip" onclick="setFilter(this)">Deceased</span>
+      </div>
+    </div>
+
+    <!-- Advanced Filters Panel -->
+    <div class="advanced-filters" id="advancedFilters">
+      <div class="row g-3">
+        <div class="col-md-3 col-sm-6 filter-group">
+          <label>Program</label>
+          <select>
+            <option value="">All Programs</option>
+            <option>Orphan Sponsorship</option>
+            <option>Children's Education</option>
+            <option>Clean Water</option>
+            <option>Healthcare Outreach</option>
+            <option>Women Empowerment</option>
+            <option>Food Distribution</option>
+            <option>Vocational Training</option>
+            <option>Emergency Relief</option>
+          </select>
+        </div>
+        <div class="col-md-3 col-sm-6 filter-group">
+          <label>Age Group</label>
+          <select>
+            <option value="">All Ages</option>
+            <option>0-5</option>
+            <option>6-12</option>
+            <option>13-17</option>
+            <option>18-25</option>
+            <option>26-40</option>
+            <option>41-60</option>
+            <option>60+</option>
+          </select>
+        </div>
+        <div class="col-md-3 col-sm-6 filter-group">
+          <label>Gender</label>
+          <select>
+            <option value="">All</option>
+            <option>Male</option>
+            <option>Female</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="col-md-3 col-sm-6 filter-group">
+          <label>Location</label>
+          <select>
+            <option value="">All Locations</option>
+            <option>Dubai, UAE</option>
+            <option>Mumbai, India</option>
+            <option>Delhi, India</option>
+            <option>Nairobi, Kenya</option>
+            <option>Dhaka, Bangladesh</option>
+          </select>
+        </div>
+        <div class="col-md-3 col-sm-6 filter-group">
+          <label>Branch</label>
+          <select>
+            <option value="">All Branches</option>
+            <option>Dubai HQ</option>
+            <option>Mumbai Office</option>
+            <option>Nairobi Office</option>
+            <option>Dhaka Office</option>
+          </select>
+        </div>
+        <div class="col-md-3 col-sm-6 filter-group">
+          <label>Assigned Staff</label>
+          <select>
+            <option value="">All Staff</option>
+            <option>Fatima Al-Zahra</option>
+            <option>Ahmed Salim</option>
+            <option>Ravi Kumar</option>
+            <option>Dr. Sarah</option>
+          </select>
+        </div>
+        <div class="col-md-6 d-flex align-items-end gap-2">
+          <button class="btn-primary-accent" style="padding: 0.375rem 1rem; font-size: 0.75rem;">
+            <i class="fas fa-check me-1"></i> Apply Filters
+          </button>
+          <button class="btn-outline-accent" style="padding: 0.375rem 1rem; font-size: 0.75rem;" onclick="clearFilters()">
+            <i class="fas fa-times me-1"></i> Clear Filters
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bulk Actions Bar -->
+    <div class="bulk-actions" id="bulkActions">
+      <span class="selected-count" id="selectedCount">0 selected</span>
+      <button class="bulk-btn"><i class="fas fa-file-export me-1"></i> Export</button>
+      <button class="bulk-btn"><i class="fas fa-user-tie me-1"></i> Assign Staff</button>
+      <button class="bulk-btn"><i class="fas fa-envelope me-1"></i> Send Communication</button>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-container">
+      <table class="ben-table">
+        <thead>
+          <tr>
+            <th style="width: 36px;">
+              <input type="checkbox" class="form-check-input" id="selectAll" onchange="toggleSelectAll(this)">
+            </th>
+            <th class="sorted">Ben. ID <i class="fas fa-sort-up sort-icon"></i></th>
+            <th>Name <i class="fas fa-sort sort-icon"></i></th>
+            <th>Age <i class="fas fa-sort sort-icon"></i></th>
+            <th>Gender</th>
+            <th>Programs</th>
+            <th>Location <i class="fas fa-sort sort-icon"></i></th>
+            <th>Sponsor</th>
+            <th>Status <i class="fas fa-sort sort-icon"></i></th>
+            <th>Enrolled <i class="fas fa-sort sort-icon"></i></th>
+            <th style="width: 110px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Row 1 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td><a class="ben-code" onclick="parent.loadContent('case-management/beneficiary-detail')">BEN-001</a></td>
+            <td>
+              <div class="ben-name-cell">
+                <div class="ben-avatar" style="background: #0d9488;">YH</div>
+                <div>
+                  <div class="ben-name">Yusuf Hassan</div>
+                  <div class="ben-sub">Orphan Care, Education</div>
+                </div>
+              </div>
+            </td>
+            <td>8</td>
+            <td>M</td>
+            <td>
+              <span class="program-badge orphan">Orphan</span>
+              <span class="program-badge education">Education</span>
+            </td>
+            <td>Dubai, UAE</td>
+            <td><a class="sponsor-link" onclick="parent.loadContent('contacts/contact-detail')">Khalid Al-Mansouri</a></td>
+            <td><span class="status-badge active">Active</span></td>
+            <td>Jan 2024</td>
+            <td>
+              <div class="d-flex align-items-center gap-1">
+                <button class="view-btn" onclick="parent.loadContent('case-management/beneficiary-detail')">View</button>
+                <div class="actions-menu">
+                  <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                  <div class="actions-dropdown">
+                    <a onclick="parent.loadContent('case-management/beneficiary-detail')"><i class="fas fa-eye"></i> View</a>
+                    <a onclick="parent.loadContent('case-management/beneficiary-form')"><i class="fas fa-pen"></i> Edit</a>
+                    <a href="#"><i class="fas fa-layer-group"></i> Add to Program</a>
+                    <a onclick="parent.loadContent('case-management/case-list')"><i class="fas fa-folder-plus"></i> Create Case</a>
+                    <a href="#"><i class="fas fa-sticky-note"></i> Add Note</a>
+                    <a onclick="parent.loadContent('reports/html-report-viewer')"><i class="fas fa-file-lines"></i> Generate Report</a>
+                    <a href="#"><i class="fas fa-archive"></i> Archive</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 2 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td><a class="ben-code" onclick="parent.loadContent('case-management/beneficiary-detail')">BEN-002</a></td>
+            <td>
+              <div class="ben-name-cell">
+                <div class="ben-avatar" style="background: #a855f7;">AM</div>
+                <div>
+                  <div class="ben-name">Amira Mohammed</div>
+                  <div class="ben-sub">Education program</div>
+                </div>
+              </div>
+            </td>
+            <td>12</td>
+            <td>F</td>
+            <td><span class="program-badge education">Education</span></td>
+            <td>Mumbai, India</td>
+            <td><a class="sponsor-link" onclick="parent.loadContent('contacts/contact-detail')">Fatima Al-Zahra</a></td>
+            <td><span class="status-badge active">Active</span></td>
+            <td>Mar 2024</td>
+            <td>
+              <div class="d-flex align-items-center gap-1">
+                <button class="view-btn" onclick="parent.loadContent('case-management/beneficiary-detail')">View</button>
+                <div class="actions-menu">
+                  <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                  <div class="actions-dropdown">
+                    <a onclick="parent.loadContent('case-management/beneficiary-detail')"><i class="fas fa-eye"></i> View</a>
+                    <a onclick="parent.loadContent('case-management/beneficiary-form')"><i class="fas fa-pen"></i> Edit</a>
+                    <a href="#"><i class="fas fa-layer-group"></i> Add to Program</a>
+                    <a onclick="parent.loadContent('case-management/case-list')"><i class="fas fa-folder-plus"></i> Create Case</a>
+                    <a href="#"><i class="fas fa-sticky-note"></i> Add Note</a>
+                    <a onclick="parent.loadContent('reports/html-report-viewer')"><i class="fas fa-file-lines"></i> Generate Report</a>
+                    <a href="#"><i class="fas fa-archive"></i> Archive</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 3 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td><a class="ben-code" onclick="parent.loadContent('case-management/beneficiary-detail')">BEN-003</a></td>
+            <td>
+              <div class="ben-name-cell">
+                <div class="ben-avatar" style="background: #3b82f6;">SO</div>
+                <div>
+                  <div class="ben-name">Samuel Ochieng</div>
+                  <div class="ben-sub">Orphan, Healthcare</div>
+                </div>
+              </div>
+            </td>
+            <td>6</td>
+            <td>M</td>
+            <td>
+              <span class="program-badge orphan">Orphan</span>
+              <span class="program-badge healthcare">Healthcare</span>
+            </td>
+            <td>Nairobi, Kenya</td>
+            <td><span class="pool-funded">Pool funded</span></td>
+            <td><span class="status-badge active">Active</span></td>
+            <td>Jun 2024</td>
+            <td>
+              <div class="d-flex align-items-center gap-1">
+                <button class="view-btn" onclick="parent.loadContent('case-management/beneficiary-detail')">View</button>
+                <div class="actions-menu">
+                  <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                  <div class="actions-dropdown">
+                    <a onclick="parent.loadContent('case-management/beneficiary-detail')"><i class="fas fa-eye"></i> View</a>
+                    <a onclick="parent.loadContent('case-management/beneficiary-form')"><i class="fas fa-pen"></i> Edit</a>
+                    <a href="#"><i class="fas fa-layer-group"></i> Add to Program</a>
+                    <a onclick="parent.loadContent('case-management/case-list')"><i class="fas fa-folder-plus"></i> Create Case</a>
+                    <a href="#"><i class="fas fa-sticky-note"></i> Add Note</a>
+                    <a onclick="parent.loadContent('reports/html-report-viewer')"><i class="fas fa-file-lines"></i> Generate Report</a>
+                    <a href="#"><i class="fas fa-archive"></i> Archive</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 4 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td><a class="ben-code" onclick="parent.loadContent('case-management/beneficiary-detail')">BEN-004</a></td>
+            <td>
+              <div class="ben-name-cell">
+                <div class="ben-avatar" style="background: #f59e0b;">FB</div>
+                <div>
+                  <div class="ben-name">Fatima Begum</div>
+                  <div class="ben-sub">Women Empowerment</div>
+                </div>
+              </div>
+            </td>
+            <td>35</td>
+            <td>F</td>
+            <td><span class="program-badge women">Women Empowerment</span></td>
+            <td>Dhaka, Bangladesh</td>
+            <td><a class="sponsor-link" onclick="parent.loadContent('contacts/contact-detail')">Ravi Sharma</a></td>
+            <td><span class="status-badge active">Active</span></td>
+            <td>Sep 2024</td>
+            <td>
+              <div class="d-flex align-items-center gap-1">
+                <button class="view-btn" onclick="parent.loadContent('case-management/beneficiary-detail')">View</button>
+                <div class="actions-menu">
+                  <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                  <div class="actions-dropdown">
+                    <a onclick="parent.loadContent('case-management/beneficiary-detail')"><i class="fas fa-eye"></i> View</a>
+                    <a onclick="parent.loadContent('case-management/beneficiary-form')"><i class="fas fa-pen"></i> Edit</a>
+                    <a href="#"><i class="fas fa-layer-group"></i> Add to Program</a>
+                    <a onclick="parent.loadContent('case-management/case-list')"><i class="fas fa-folder-plus"></i> Create Case</a>
+                    <a href="#"><i class="fas fa-sticky-note"></i> Add Note</a>
+                    <a onclick="parent.loadContent('reports/html-report-viewer')"><i class="fas fa-file-lines"></i> Generate Report</a>
+                    <a href="#"><i class="fas fa-archive"></i> Archive</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 5 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td><a class="ben-code" onclick="parent.loadContent('case-management/beneficiary-detail')">BEN-005</a></td>
+            <td>
+              <div class="ben-name-cell">
+                <div class="ben-avatar" style="background: #ef4444;">AN</div>
+                <div>
+                  <div class="ben-name">Ahmed Noor</div>
+                  <div class="ben-sub">Education, Food</div>
+                </div>
+              </div>
+            </td>
+            <td>15</td>
+            <td>M</td>
+            <td>
+              <span class="program-badge education">Education</span>
+              <span class="program-badge food">Food</span>
+            </td>
+            <td>Dubai, UAE</td>
+            <td><span class="pool-funded">Pool funded</span></td>
+            <td><span class="status-badge waitlist">Waitlist</span></td>
+            <td>Apr 2026</td>
+            <td>
+              <div class="d-flex align-items-center gap-1">
+                <button class="view-btn" onclick="parent.loadContent('case-management/beneficiary-detail')">View</button>
+                <button class="enroll-btn">Enroll</button>
+                <div class="actions-menu">
+                  <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                  <div class="actions-dropdown">
+                    <a onclick="parent.loadContent('case-management/beneficiary-detail')"><i class="fas fa-eye"></i> View</a>
+                    <a onclick="parent.loadContent('case-management/beneficiary-form')"><i class="fas fa-pen"></i> Edit</a>
+                    <a href="#"><i class="fas fa-layer-group"></i> Add to Program</a>
+                    <a onclick="parent.loadContent('case-management/case-list')"><i class="fas fa-folder-plus"></i> Create Case</a>
+                    <a href="#"><i class="fas fa-sticky-note"></i> Add Note</a>
+                    <a onclick="parent.loadContent('reports/html-report-viewer')"><i class="fas fa-file-lines"></i> Generate Report</a>
+                    <a href="#"><i class="fas fa-archive"></i> Archive</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 6 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td><a class="ben-code" onclick="parent.loadContent('case-management/beneficiary-detail')">BEN-006</a></td>
+            <td>
+              <div class="ben-name-cell">
+                <div class="ben-avatar" style="background: #22c55e;">PD</div>
+                <div>
+                  <div class="ben-name">Priya Devi</div>
+                  <div class="ben-sub">Vocational Training</div>
+                </div>
+              </div>
+            </td>
+            <td>22</td>
+            <td>F</td>
+            <td><span class="program-badge vocational">Vocational Training</span></td>
+            <td>Delhi, India</td>
+            <td><a class="sponsor-link" onclick="parent.loadContent('contacts/contact-detail')">James Okonkwo</a></td>
+            <td><span class="status-badge graduated">Graduated</span></td>
+            <td>Jan 2023</td>
+            <td>
+              <div class="d-flex align-items-center gap-1">
+                <button class="view-btn" onclick="parent.loadContent('case-management/beneficiary-detail')">View</button>
+                <div class="actions-menu">
+                  <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                  <div class="actions-dropdown">
+                    <a onclick="parent.loadContent('case-management/beneficiary-detail')"><i class="fas fa-eye"></i> View</a>
+                    <a onclick="parent.loadContent('case-management/beneficiary-form')"><i class="fas fa-pen"></i> Edit</a>
+                    <a href="#"><i class="fas fa-layer-group"></i> Add to Program</a>
+                    <a onclick="parent.loadContent('case-management/case-list')"><i class="fas fa-folder-plus"></i> Create Case</a>
+                    <a href="#"><i class="fas fa-sticky-note"></i> Add Note</a>
+                    <a onclick="parent.loadContent('reports/html-report-viewer')"><i class="fas fa-file-lines"></i> Generate Report</a>
+                    <a href="#"><i class="fas fa-archive"></i> Archive</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="table-footer">
+      <div class="d-flex align-items-center gap-2">
+        <span class="showing-text">Showing 1-6 of 2,456</span>
+        <select class="page-size-select">
+          <option>25</option>
+          <option>50</option>
+          <option>100</option>
+        </select>
+      </div>
+      <ul class="pagination">
+        <li><button class="page-btn disabled"><i class="fas fa-chevron-left"></i></button></li>
+        <li><button class="page-btn active">1</button></li>
+        <li><button class="page-btn">2</button></li>
+        <li><button class="page-btn">3</button></li>
+        <li><button class="page-btn">...</button></li>
+        <li><button class="page-btn">99</button></li>
+        <li><button class="page-btn"><i class="fas fa-chevron-right"></i></button></li>
+      </ul>
+    </div>
+
+  </div>
+
+  <script>
+    function setFilter(el) {
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function toggleAdvancedFilters(btn) {
+      const panel = document.getElementById('advancedFilters');
+      panel.classList.toggle('show');
+      btn.classList.toggle('active');
+    }
+
+    function clearFilters() {
+      document.getElementById('advancedFilters').querySelectorAll('select').forEach(s => s.selectedIndex = 0);
+    }
+
+    function toggleSelectAll(el) {
+      document.querySelectorAll('.row-check').forEach(c => c.checked = el.checked);
+      updateBulkBar();
+    }
+
+    function updateBulkBar() {
+      const checked = document.querySelectorAll('.row-check:checked').length;
+      const bar = document.getElementById('bulkActions');
+      if (checked > 0) {
+        bar.classList.add('show');
+        document.getElementById('selectedCount').textContent = checked + ' selected';
+      } else {
+        bar.classList.remove('show');
+      }
+    }
+
+    function toggleActions(e, btn) {
+      e.stopPropagation();
+      document.querySelectorAll('.actions-dropdown').forEach(d => d.classList.remove('show'));
+      btn.nextElementSibling.classList.toggle('show');
+    }
+
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.actions-dropdown').forEach(d => d.classList.remove('show'));
+    });
+
+    function exportBeneficiaries() {
+      alert('Export beneficiaries data initiated.');
+    }
+  </script>
+
+</body>
+
+</html>

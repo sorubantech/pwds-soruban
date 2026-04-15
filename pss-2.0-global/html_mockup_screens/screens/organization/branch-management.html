@@ -1,0 +1,1683 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Branch Management - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons */
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #0c6577;
+      border-color: #0c6577;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Summary Cards */
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .summary-card {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1.25rem;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .summary-card .card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.125rem;
+      flex-shrink: 0;
+    }
+
+    .summary-card .card-icon.blue { background: #dbeafe; color: #2563eb; }
+    .summary-card .card-icon.purple { background: #ede9fe; color: #7c3aed; }
+    .summary-card .card-icon.green { background: #dcfce7; color: #16a34a; }
+    .summary-card .card-icon.amber { background: #fef3c7; color: #d97706; }
+
+    .summary-card .card-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .summary-card .card-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.125rem;
+    }
+
+    .summary-card .card-sub {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    /* View Toggle */
+    .view-toggle-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .view-toggle {
+      display: flex;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      overflow: hidden;
+    }
+
+    .view-toggle button {
+      background: white;
+      border: none;
+      padding: 0.4375rem 1rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .view-toggle button.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    .view-toggle button:not(:last-child) {
+      border-right: 1px solid var(--border-color);
+    }
+
+    /* List Card */
+    .list-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .search-input {
+      position: relative;
+      flex: 1;
+      min-width: 240px;
+    }
+
+    .search-input i {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .search-input input {
+      width: 100%;
+      padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .search-input input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .filter-group label {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.25rem;
+      display: block;
+    }
+
+    .filter-group select {
+      width: 100%;
+      padding: 0.375rem 0.625rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+    }
+
+    .filter-group select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .clear-filters {
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0;
+      white-space: nowrap;
+    }
+
+    .clear-filters:hover {
+      text-decoration: underline;
+    }
+
+    /* Table */
+    .table-container {
+      overflow-x: auto;
+    }
+
+    .branch-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1200px;
+    }
+
+    .branch-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .branch-table th:hover {
+      color: var(--accent);
+    }
+
+    .branch-table th .sort-icon {
+      margin-left: 0.25rem;
+      font-size: 0.5625rem;
+      opacity: 0.5;
+    }
+
+    .branch-table th.sorted .sort-icon {
+      opacity: 1;
+      color: var(--accent);
+    }
+
+    .branch-table td {
+      padding: 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.8125rem;
+      vertical-align: middle;
+    }
+
+    .branch-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    .branch-name {
+      font-weight: 600;
+      color: var(--accent);
+      cursor: pointer;
+    }
+
+    .branch-name:hover {
+      text-decoration: underline;
+    }
+
+    .branch-code {
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      background: #f1f5f9;
+      padding: 0.125rem 0.5rem;
+      border-radius: 0.25rem;
+    }
+
+    .country-flag {
+      font-size: 1rem;
+      margin-right: 0.25rem;
+    }
+
+    /* Performance Bar */
+    .perf-bar-container {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      min-width: 140px;
+    }
+
+    .perf-bar {
+      flex: 1;
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .perf-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+
+    .perf-bar-fill.green { background: var(--success-color); }
+    .perf-bar-fill.amber { background: var(--warning-color); }
+    .perf-bar-fill.red { background: var(--danger-color); }
+
+    .perf-pct {
+      font-size: 0.75rem;
+      font-weight: 600;
+      min-width: 40px;
+      text-align: right;
+    }
+
+    .perf-pct.green { color: var(--success-color); }
+    .perf-pct.amber { color: var(--warning-color); }
+    .perf-pct.red { color: var(--danger-color); }
+
+    /* Status Badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.1875rem 0.625rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+    }
+
+    .status-badge.active {
+      background: #dcfce7;
+      color: #16a34a;
+    }
+
+    .status-badge.inactive {
+      background: #fef2f2;
+      color: #dc2626;
+    }
+
+    /* Action Buttons */
+    .action-btn {
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.375rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .action-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .action-btn.primary {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .actions-cell {
+      display: flex;
+      gap: 0.25rem;
+      align-items: center;
+    }
+
+    .more-menu {
+      position: relative;
+    }
+
+    .more-btn {
+      background: none;
+      border: 1px solid transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0.25rem 0.375rem;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      line-height: 1;
+    }
+
+    .more-btn:hover {
+      background: #f1f5f9;
+      border-color: var(--border-color);
+    }
+
+    .more-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      min-width: 160px;
+      z-index: 100;
+      overflow: hidden;
+    }
+
+    .more-dropdown.show {
+      display: block;
+    }
+
+    .more-dropdown a {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.875rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      text-decoration: none;
+      transition: background 0.1s;
+    }
+
+    .more-dropdown a:hover {
+      background: #f8fafc;
+    }
+
+    .more-dropdown a i {
+      width: 16px;
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+    }
+
+    .more-dropdown a.danger {
+      color: var(--danger-color);
+    }
+
+    .more-dropdown a.danger i {
+      color: var(--danger-color);
+    }
+
+    /* Table Footer */
+    .table-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1.25rem;
+      border-top: 1px solid var(--border-color);
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .pagination {
+      display: flex;
+      gap: 0.25rem;
+      margin: 0;
+    }
+
+    .pagination .page-link {
+      padding: 0.3125rem 0.625rem;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      cursor: pointer;
+      background: white;
+    }
+
+    .pagination .page-link:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .pagination .page-item.active .page-link {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    /* Map View */
+    .map-view {
+      display: none;
+      padding: 1.5rem;
+    }
+
+    .map-view.show {
+      display: block;
+    }
+
+    .map-placeholder {
+      width: 100%;
+      height: 500px;
+      background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 50%, #ecfeff 100%);
+      border-radius: 0.75rem;
+      border: 2px dashed var(--border-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .map-placeholder .map-label {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 0.25rem;
+    }
+
+    .map-placeholder .map-sublabel {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      opacity: 0.7;
+    }
+
+    .map-pins {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      justify-content: center;
+      margin-top: 1.5rem;
+    }
+
+    .map-pin {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+
+    .map-pin:hover {
+      transform: scale(1.1);
+    }
+
+    .pin-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    .pin-dot.green { background: var(--success-color); }
+    .pin-dot.amber { background: var(--warning-color); }
+    .pin-dot.red { background: var(--danger-color); }
+
+    .pin-label {
+      font-size: 0.625rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .map-legend {
+      display: flex;
+      gap: 1.25rem;
+      margin-top: 1.25rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .legend-dot.green { background: var(--success-color); }
+    .legend-dot.amber { background: var(--warning-color); }
+    .legend-dot.red { background: var(--danger-color); }
+
+    /* Side Panel */
+    .side-panel-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.3);
+      z-index: 1000;
+    }
+
+    .side-panel-overlay.show {
+      display: block;
+    }
+
+    .side-panel {
+      position: fixed;
+      top: 0;
+      right: -60%;
+      width: 60%;
+      height: 100vh;
+      background: white;
+      box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+      z-index: 1001;
+      transition: right 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .side-panel.show {
+      right: 0;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      background: #f8fafc;
+    }
+
+    .panel-header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .panel-header h2 {
+      font-size: 1.125rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .panel-header-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .panel-close {
+      background: none;
+      border: 1px solid var(--border-color);
+      width: 32px;
+      height: 32px;
+      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+    }
+
+    .panel-close:hover {
+      border-color: var(--danger-color);
+      color: var(--danger-color);
+      background: #fef2f2;
+    }
+
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem;
+    }
+
+    .detail-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .detail-section-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .stat-item {
+      background: #f8fafc;
+      border-radius: 0.5rem;
+      padding: 0.875rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .stat-item .stat-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .stat-item .stat-label {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.125rem;
+    }
+
+    .activity-feed {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .activity-item {
+      display: flex;
+      gap: 0.75rem;
+      padding: 0.625rem 0;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.8125rem;
+    }
+
+    .activity-item:last-child {
+      border-bottom: none;
+    }
+
+    .activity-date {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      min-width: 50px;
+      font-weight: 600;
+    }
+
+    .activity-text {
+      color: var(--text-primary);
+    }
+
+    .staff-mini-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .staff-mini-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 0.75rem;
+      background: #f8fafc;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .staff-avatar-sm {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--accent-bg);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .staff-mini-name {
+      font-weight: 600;
+      font-size: 0.8125rem;
+    }
+
+    .staff-mini-role {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+    }
+
+    .view-all-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--accent);
+      cursor: pointer;
+      text-decoration: none;
+      margin-top: 0.5rem;
+    }
+
+    .view-all-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .summary-cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .summary-cards {
+        grid-template-columns: 1fr;
+      }
+      .side-panel {
+        width: 100%;
+        right: -100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1>Branch Management</h1>
+      <p class="subtitle">Manage and monitor branch offices</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="parent.loadContent('organization/org-unit-form')">
+        <i class="fa-solid fa-plus" style="margin-right:0.375rem"></i>Add Branch
+      </button>
+      <button class="btn-outline-accent">
+        <i class="fa-solid fa-file-export" style="margin-right:0.375rem"></i>Export
+      </button>
+      <button class="btn-outline-accent" onclick="toggleMapView()">
+        <i class="fa-solid fa-map-location-dot" style="margin-right:0.375rem"></i>Map View
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Summary Cards -->
+  <div class="summary-cards">
+    <div class="summary-card">
+      <div class="card-icon blue"><i class="fa-solid fa-building"></i></div>
+      <div>
+        <div class="card-value">14</div>
+        <div class="card-label">Total Branches</div>
+        <div class="card-sub">Active: 12 &middot; Inactive: 2</div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="card-icon purple"><i class="fa-solid fa-users"></i></div>
+      <div>
+        <div class="card-value">156</div>
+        <div class="card-label">Total Staff</div>
+        <div class="card-sub">Avg per branch: 13</div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="card-icon green"><i class="fa-solid fa-coins"></i></div>
+      <div>
+        <div class="card-value">$1,823,000</div>
+        <div class="card-label">YTD Collection (All Branches)</div>
+        <div class="card-sub">Target: $2,450,000 (74.4%)</div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="card-icon amber"><i class="fa-solid fa-trophy"></i></div>
+      <div>
+        <div class="card-value">Mumbai</div>
+        <div class="card-label">Top Performing Branch</div>
+        <div class="card-sub">78.2% of target</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Toggle -->
+  <div class="view-toggle-bar">
+    <div class="view-toggle">
+      <button class="active" id="btnListView" onclick="showListView()">
+        <i class="fa-solid fa-list"></i> List View
+      </button>
+      <button id="btnMapView" onclick="showMapView()">
+        <i class="fa-solid fa-map"></i> Map View
+      </button>
+    </div>
+  </div>
+
+  <!-- List View -->
+  <div class="list-card" id="listView">
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="d-flex gap-3 flex-wrap align-items-end">
+        <div class="search-input">
+          <i class="fa-solid fa-search"></i>
+          <input type="text" placeholder="Search branches by name, code, or city...">
+        </div>
+        <div class="filter-group">
+          <label>Region</label>
+          <select>
+            <option>All Regions</option>
+            <option>North America</option>
+            <option>Middle East & Africa</option>
+            <option>South Asia</option>
+            <option>Europe</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Country</label>
+          <select>
+            <option>All Countries</option>
+            <option>United States</option>
+            <option>UAE</option>
+            <option>Saudi Arabia</option>
+            <option>Kenya</option>
+            <option>Egypt</option>
+            <option>India</option>
+            <option>Bangladesh</option>
+            <option>United Kingdom</option>
+            <option>France</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Status</label>
+          <select>
+            <option>All</option>
+            <option>Active</option>
+            <option>Inactive</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Performance</label>
+          <select>
+            <option>All</option>
+            <option>Above Target (&gt;75%)</option>
+            <option>On Track (50-75%)</option>
+            <option>Below Target (&lt;50%)</option>
+          </select>
+        </div>
+        <button class="clear-filters" style="margin-bottom:0.375rem">Clear Filters</button>
+      </div>
+    </div>
+
+    <!-- Branch Table -->
+    <div class="table-container">
+      <table class="branch-table">
+        <thead>
+          <tr>
+            <th>Branch <i class="fa-solid fa-sort sort-icon"></i></th>
+            <th>Code <i class="fa-solid fa-sort sort-icon"></i></th>
+            <th>Region <i class="fa-solid fa-sort sort-icon"></i></th>
+            <th>Country <i class="fa-solid fa-sort sort-icon"></i></th>
+            <th>City <i class="fa-solid fa-sort sort-icon"></i></th>
+            <th>Head / Manager <i class="fa-solid fa-sort sort-icon"></i></th>
+            <th>Staff <i class="fa-solid fa-sort sort-icon"></i></th>
+            <th>Annual Target <i class="fa-solid fa-sort sort-icon"></i></th>
+            <th>YTD Collected <i class="fa-solid fa-sort sort-icon"></i></th>
+            <th class="sorted">Performance <i class="fa-solid fa-sort-down sort-icon"></i></th>
+            <th>Status <i class="fa-solid fa-sort sort-icon"></i></th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="branch-name" onclick="openBranchDetail('mumbai')">Mumbai</span></td>
+            <td><span class="branch-code">BR-MUM</span></td>
+            <td>South Asia</td>
+            <td><span class="country-flag">&#127470;&#127475;</span> India</td>
+            <td>Mumbai</td>
+            <td>Priya Sharma</td>
+            <td>15</td>
+            <td>$300,000</td>
+            <td>$234,500</td>
+            <td>
+              <div class="perf-bar-container">
+                <div class="perf-bar"><div class="perf-bar-fill green" style="width:78.2%"></div></div>
+                <span class="perf-pct green">78.2%</span>
+              </div>
+            </td>
+            <td><span class="status-badge active">&#x1F7E2; Active</span></td>
+            <td>
+              <div class="actions-cell">
+                <button class="action-btn primary" onclick="openBranchDetail('mumbai')">View</button>
+                <button class="action-btn" onclick="parent.loadContent('organization/org-unit-form')">Edit</button>
+                <div class="more-menu">
+                  <button class="more-btn" onclick="toggleMenu(this)">&#8942;</button>
+                  <div class="more-dropdown">
+                    <a href="#" onclick="openBranchDetail('mumbai')"><i class="fa-solid fa-eye"></i> View Details</a>
+                    <a href="#" onclick="parent.loadContent('organization/org-unit-form')"><i class="fa-solid fa-pen"></i> Edit</a>
+                    <a href="#" onclick="parent.loadContent('organization/staff-management')"><i class="fa-solid fa-users"></i> View Staff</a>
+                    <a href="#"><i class="fa-solid fa-hand-holding-dollar"></i> View Donations</a>
+                    <a href="#" class="danger"><i class="fa-solid fa-ban"></i> Deactivate</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="branch-name" onclick="openBranchDetail('newyork')">New York</span></td>
+            <td><span class="branch-code">BR-NY</span></td>
+            <td>North America</td>
+            <td><span class="country-flag">&#127482;&#127480;</span> US</td>
+            <td>New York</td>
+            <td>John Smith</td>
+            <td>18</td>
+            <td>$400,000</td>
+            <td>$298,000</td>
+            <td>
+              <div class="perf-bar-container">
+                <div class="perf-bar"><div class="perf-bar-fill green" style="width:74.5%"></div></div>
+                <span class="perf-pct green">74.5%</span>
+              </div>
+            </td>
+            <td><span class="status-badge active">&#x1F7E2; Active</span></td>
+            <td>
+              <div class="actions-cell">
+                <button class="action-btn primary" onclick="openBranchDetail('newyork')">View</button>
+                <button class="action-btn" onclick="parent.loadContent('organization/org-unit-form')">Edit</button>
+                <div class="more-menu">
+                  <button class="more-btn" onclick="toggleMenu(this)">&#8942;</button>
+                  <div class="more-dropdown">
+                    <a href="#" onclick="openBranchDetail('newyork')"><i class="fa-solid fa-eye"></i> View Details</a>
+                    <a href="#" onclick="parent.loadContent('organization/org-unit-form')"><i class="fa-solid fa-pen"></i> Edit</a>
+                    <a href="#" onclick="parent.loadContent('organization/staff-management')"><i class="fa-solid fa-users"></i> View Staff</a>
+                    <a href="#"><i class="fa-solid fa-hand-holding-dollar"></i> View Donations</a>
+                    <a href="#" class="danger"><i class="fa-solid fa-ban"></i> Deactivate</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="branch-name" onclick="openBranchDetail('riyadh')">Riyadh</span></td>
+            <td><span class="branch-code">BR-RYD</span></td>
+            <td>MEA</td>
+            <td><span class="country-flag">&#127480;&#127462;</span> KSA</td>
+            <td>Riyadh</td>
+            <td>Ahmed Saleh</td>
+            <td>10</td>
+            <td>$200,000</td>
+            <td>$145,000</td>
+            <td>
+              <div class="perf-bar-container">
+                <div class="perf-bar"><div class="perf-bar-fill amber" style="width:72.5%"></div></div>
+                <span class="perf-pct amber">72.5%</span>
+              </div>
+            </td>
+            <td><span class="status-badge active">&#x1F7E2; Active</span></td>
+            <td>
+              <div class="actions-cell">
+                <button class="action-btn primary" onclick="openBranchDetail('riyadh')">View</button>
+                <button class="action-btn" onclick="parent.loadContent('organization/org-unit-form')">Edit</button>
+                <div class="more-menu">
+                  <button class="more-btn" onclick="toggleMenu(this)">&#8942;</button>
+                  <div class="more-dropdown">
+                    <a href="#"><i class="fa-solid fa-eye"></i> View Details</a>
+                    <a href="#" onclick="parent.loadContent('organization/org-unit-form')"><i class="fa-solid fa-pen"></i> Edit</a>
+                    <a href="#" onclick="parent.loadContent('organization/staff-management')"><i class="fa-solid fa-users"></i> View Staff</a>
+                    <a href="#"><i class="fa-solid fa-hand-holding-dollar"></i> View Donations</a>
+                    <a href="#" class="danger"><i class="fa-solid fa-ban"></i> Deactivate</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="branch-name" onclick="openBranchDetail('dhaka')">Dhaka</span></td>
+            <td><span class="branch-code">BR-DHK</span></td>
+            <td>South Asia</td>
+            <td><span class="country-flag">&#127463;&#127465;</span> Bangladesh</td>
+            <td>Dhaka</td>
+            <td>Rahim Chowdhury</td>
+            <td>8</td>
+            <td>$100,000</td>
+            <td>$67,800</td>
+            <td>
+              <div class="perf-bar-container">
+                <div class="perf-bar"><div class="perf-bar-fill amber" style="width:67.8%"></div></div>
+                <span class="perf-pct amber">67.8%</span>
+              </div>
+            </td>
+            <td><span class="status-badge active">&#x1F7E2; Active</span></td>
+            <td>
+              <div class="actions-cell">
+                <button class="action-btn primary" onclick="openBranchDetail('dhaka')">View</button>
+                <button class="action-btn" onclick="parent.loadContent('organization/org-unit-form')">Edit</button>
+                <div class="more-menu">
+                  <button class="more-btn" onclick="toggleMenu(this)">&#8942;</button>
+                  <div class="more-dropdown">
+                    <a href="#"><i class="fa-solid fa-eye"></i> View Details</a>
+                    <a href="#" onclick="parent.loadContent('organization/org-unit-form')"><i class="fa-solid fa-pen"></i> Edit</a>
+                    <a href="#" onclick="parent.loadContent('organization/staff-management')"><i class="fa-solid fa-users"></i> View Staff</a>
+                    <a href="#"><i class="fa-solid fa-hand-holding-dollar"></i> View Donations</a>
+                    <a href="#" class="danger"><i class="fa-solid fa-ban"></i> Deactivate</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="branch-name" onclick="openBranchDetail('losangeles')">Los Angeles</span></td>
+            <td><span class="branch-code">BR-LA</span></td>
+            <td>North America</td>
+            <td><span class="country-flag">&#127482;&#127480;</span> US</td>
+            <td>Los Angeles</td>
+            <td>Maria Garcia</td>
+            <td>12</td>
+            <td>$200,000</td>
+            <td>$134,000</td>
+            <td>
+              <div class="perf-bar-container">
+                <div class="perf-bar"><div class="perf-bar-fill amber" style="width:67%"></div></div>
+                <span class="perf-pct amber">67.0%</span>
+              </div>
+            </td>
+            <td><span class="status-badge active">&#x1F7E2; Active</span></td>
+            <td>
+              <div class="actions-cell">
+                <button class="action-btn primary" onclick="openBranchDetail('losangeles')">View</button>
+                <button class="action-btn" onclick="parent.loadContent('organization/org-unit-form')">Edit</button>
+                <div class="more-menu">
+                  <button class="more-btn" onclick="toggleMenu(this)">&#8942;</button>
+                  <div class="more-dropdown">
+                    <a href="#"><i class="fa-solid fa-eye"></i> View Details</a>
+                    <a href="#" onclick="parent.loadContent('organization/org-unit-form')"><i class="fa-solid fa-pen"></i> Edit</a>
+                    <a href="#" onclick="parent.loadContent('organization/staff-management')"><i class="fa-solid fa-users"></i> View Staff</a>
+                    <a href="#"><i class="fa-solid fa-hand-holding-dollar"></i> View Donations</a>
+                    <a href="#" class="danger"><i class="fa-solid fa-ban"></i> Deactivate</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="branch-name" onclick="openBranchDetail('chicago')">Chicago</span></td>
+            <td><span class="branch-code">BR-CHI</span></td>
+            <td>North America</td>
+            <td><span class="country-flag">&#127482;&#127480;</span> US</td>
+            <td>Chicago</td>
+            <td>David Lee</td>
+            <td>8</td>
+            <td>$150,000</td>
+            <td>$98,500</td>
+            <td>
+              <div class="perf-bar-container">
+                <div class="perf-bar"><div class="perf-bar-fill amber" style="width:65.7%"></div></div>
+                <span class="perf-pct amber">65.7%</span>
+              </div>
+            </td>
+            <td><span class="status-badge active">&#x1F7E2; Active</span></td>
+            <td>
+              <div class="actions-cell">
+                <button class="action-btn primary" onclick="openBranchDetail('chicago')">View</button>
+                <button class="action-btn" onclick="parent.loadContent('organization/org-unit-form')">Edit</button>
+                <div class="more-menu">
+                  <button class="more-btn" onclick="toggleMenu(this)">&#8942;</button>
+                  <div class="more-dropdown">
+                    <a href="#"><i class="fa-solid fa-eye"></i> View Details</a>
+                    <a href="#" onclick="parent.loadContent('organization/org-unit-form')"><i class="fa-solid fa-pen"></i> Edit</a>
+                    <a href="#" onclick="parent.loadContent('organization/staff-management')"><i class="fa-solid fa-users"></i> View Staff</a>
+                    <a href="#"><i class="fa-solid fa-hand-holding-dollar"></i> View Donations</a>
+                    <a href="#" class="danger"><i class="fa-solid fa-ban"></i> Deactivate</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="branch-name" onclick="openBranchDetail('dubai')">Dubai</span></td>
+            <td><span class="branch-code">BR-DXB</span></td>
+            <td>MEA</td>
+            <td><span class="country-flag">&#127462;&#127466;</span> UAE</td>
+            <td>Dubai</td>
+            <td>Mohammad Al-Rashid</td>
+            <td>12</td>
+            <td>$250,000</td>
+            <td>$156,780</td>
+            <td>
+              <div class="perf-bar-container">
+                <div class="perf-bar"><div class="perf-bar-fill amber" style="width:62.7%"></div></div>
+                <span class="perf-pct amber">62.7%</span>
+              </div>
+            </td>
+            <td><span class="status-badge active">&#x1F7E2; Active</span></td>
+            <td>
+              <div class="actions-cell">
+                <button class="action-btn primary" onclick="openBranchDetail('dubai')">View</button>
+                <button class="action-btn" onclick="parent.loadContent('organization/org-unit-form')">Edit</button>
+                <div class="more-menu">
+                  <button class="more-btn" onclick="toggleMenu(this)">&#8942;</button>
+                  <div class="more-dropdown">
+                    <a href="#" onclick="openBranchDetail('dubai')"><i class="fa-solid fa-eye"></i> View Details</a>
+                    <a href="#" onclick="parent.loadContent('organization/org-unit-form')"><i class="fa-solid fa-pen"></i> Edit</a>
+                    <a href="#" onclick="parent.loadContent('organization/staff-management')"><i class="fa-solid fa-users"></i> View Staff</a>
+                    <a href="#"><i class="fa-solid fa-hand-holding-dollar"></i> View Donations</a>
+                    <a href="#" class="danger"><i class="fa-solid fa-ban"></i> Deactivate</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="branch-name" onclick="openBranchDetail('delhi')">Delhi</span></td>
+            <td><span class="branch-code">BR-DEL</span></td>
+            <td>South Asia</td>
+            <td><span class="country-flag">&#127470;&#127475;</span> India</td>
+            <td>Delhi</td>
+            <td>Rahul Gupta</td>
+            <td>10</td>
+            <td>$200,000</td>
+            <td>$123,400</td>
+            <td>
+              <div class="perf-bar-container">
+                <div class="perf-bar"><div class="perf-bar-fill amber" style="width:61.7%"></div></div>
+                <span class="perf-pct amber">61.7%</span>
+              </div>
+            </td>
+            <td><span class="status-badge active">&#x1F7E2; Active</span></td>
+            <td>
+              <div class="actions-cell">
+                <button class="action-btn primary" onclick="openBranchDetail('delhi')">View</button>
+                <button class="action-btn" onclick="parent.loadContent('organization/org-unit-form')">Edit</button>
+                <div class="more-menu">
+                  <button class="more-btn" onclick="toggleMenu(this)">&#8942;</button>
+                  <div class="more-dropdown">
+                    <a href="#"><i class="fa-solid fa-eye"></i> View Details</a>
+                    <a href="#" onclick="parent.loadContent('organization/org-unit-form')"><i class="fa-solid fa-pen"></i> Edit</a>
+                    <a href="#" onclick="parent.loadContent('organization/staff-management')"><i class="fa-solid fa-users"></i> View Staff</a>
+                    <a href="#"><i class="fa-solid fa-hand-holding-dollar"></i> View Donations</a>
+                    <a href="#" class="danger"><i class="fa-solid fa-ban"></i> Deactivate</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="branch-name" onclick="openBranchDetail('london')">London</span></td>
+            <td><span class="branch-code">BR-LON</span></td>
+            <td>Europe</td>
+            <td><span class="country-flag">&#127468;&#127463;</span> UK</td>
+            <td>London</td>
+            <td>James Thompson</td>
+            <td>14</td>
+            <td>$200,000</td>
+            <td>$112,340</td>
+            <td>
+              <div class="perf-bar-container">
+                <div class="perf-bar"><div class="perf-bar-fill amber" style="width:56.2%"></div></div>
+                <span class="perf-pct amber">56.2%</span>
+              </div>
+            </td>
+            <td><span class="status-badge active">&#x1F7E2; Active</span></td>
+            <td>
+              <div class="actions-cell">
+                <button class="action-btn primary" onclick="openBranchDetail('london')">View</button>
+                <button class="action-btn" onclick="parent.loadContent('organization/org-unit-form')">Edit</button>
+                <div class="more-menu">
+                  <button class="more-btn" onclick="toggleMenu(this)">&#8942;</button>
+                  <div class="more-dropdown">
+                    <a href="#"><i class="fa-solid fa-eye"></i> View Details</a>
+                    <a href="#" onclick="parent.loadContent('organization/org-unit-form')"><i class="fa-solid fa-pen"></i> Edit</a>
+                    <a href="#" onclick="parent.loadContent('organization/staff-management')"><i class="fa-solid fa-users"></i> View Staff</a>
+                    <a href="#"><i class="fa-solid fa-hand-holding-dollar"></i> View Donations</a>
+                    <a href="#" class="danger"><i class="fa-solid fa-ban"></i> Deactivate</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="branch-name" onclick="openBranchDetail('nairobi')">Nairobi</span></td>
+            <td><span class="branch-code">BR-NBO</span></td>
+            <td>MEA</td>
+            <td><span class="country-flag">&#127472;&#127466;</span> Kenya</td>
+            <td>Nairobi</td>
+            <td>Grace Wanjiku</td>
+            <td>8</td>
+            <td>$150,000</td>
+            <td>$78,900</td>
+            <td>
+              <div class="perf-bar-container">
+                <div class="perf-bar"><div class="perf-bar-fill amber" style="width:52.6%"></div></div>
+                <span class="perf-pct amber">52.6%</span>
+              </div>
+            </td>
+            <td><span class="status-badge active">&#x1F7E2; Active</span></td>
+            <td>
+              <div class="actions-cell">
+                <button class="action-btn primary" onclick="openBranchDetail('nairobi')">View</button>
+                <button class="action-btn" onclick="parent.loadContent('organization/org-unit-form')">Edit</button>
+                <div class="more-menu">
+                  <button class="more-btn" onclick="toggleMenu(this)">&#8942;</button>
+                  <div class="more-dropdown">
+                    <a href="#"><i class="fa-solid fa-eye"></i> View Details</a>
+                    <a href="#" onclick="parent.loadContent('organization/org-unit-form')"><i class="fa-solid fa-pen"></i> Edit</a>
+                    <a href="#" onclick="parent.loadContent('organization/staff-management')"><i class="fa-solid fa-users"></i> View Staff</a>
+                    <a href="#"><i class="fa-solid fa-hand-holding-dollar"></i> View Donations</a>
+                    <a href="#" class="danger"><i class="fa-solid fa-ban"></i> Deactivate</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="branch-name" onclick="openBranchDetail('cairo')">Cairo</span></td>
+            <td><span class="branch-code">BR-CAI</span></td>
+            <td>MEA</td>
+            <td><span class="country-flag">&#127466;&#127468;</span> Egypt</td>
+            <td>Cairo</td>
+            <td>Omar Hassan</td>
+            <td>6</td>
+            <td>$100,000</td>
+            <td>$34,200</td>
+            <td>
+              <div class="perf-bar-container">
+                <div class="perf-bar"><div class="perf-bar-fill red" style="width:34.2%"></div></div>
+                <span class="perf-pct red">34.2%</span>
+              </div>
+            </td>
+            <td><span class="status-badge inactive">&#x1F534; Inactive</span></td>
+            <td>
+              <div class="actions-cell">
+                <button class="action-btn primary" onclick="openBranchDetail('cairo')">View</button>
+                <button class="action-btn" onclick="parent.loadContent('organization/org-unit-form')">Edit</button>
+                <div class="more-menu">
+                  <button class="more-btn" onclick="toggleMenu(this)">&#8942;</button>
+                  <div class="more-dropdown">
+                    <a href="#"><i class="fa-solid fa-eye"></i> View Details</a>
+                    <a href="#" onclick="parent.loadContent('organization/org-unit-form')"><i class="fa-solid fa-pen"></i> Edit</a>
+                    <a href="#" onclick="parent.loadContent('organization/staff-management')"><i class="fa-solid fa-users"></i> View Staff</a>
+                    <a href="#"><i class="fa-solid fa-hand-holding-dollar"></i> View Donations</a>
+                    <a href="#" class="danger"><i class="fa-solid fa-check-circle"></i> Activate</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="branch-name" onclick="openBranchDetail('paris')">Paris</span></td>
+            <td><span class="branch-code">BR-PAR</span></td>
+            <td>Europe</td>
+            <td><span class="country-flag">&#127467;&#127479;</span> France</td>
+            <td>Paris</td>
+            <td>Sophie Laurent</td>
+            <td>5</td>
+            <td>$100,000</td>
+            <td>$23,400</td>
+            <td>
+              <div class="perf-bar-container">
+                <div class="perf-bar"><div class="perf-bar-fill red" style="width:23.4%"></div></div>
+                <span class="perf-pct red">23.4%</span>
+              </div>
+            </td>
+            <td><span class="status-badge inactive">&#x1F534; Inactive</span></td>
+            <td>
+              <div class="actions-cell">
+                <button class="action-btn primary" onclick="openBranchDetail('paris')">View</button>
+                <button class="action-btn" onclick="parent.loadContent('organization/org-unit-form')">Edit</button>
+                <div class="more-menu">
+                  <button class="more-btn" onclick="toggleMenu(this)">&#8942;</button>
+                  <div class="more-dropdown">
+                    <a href="#"><i class="fa-solid fa-eye"></i> View Details</a>
+                    <a href="#" onclick="parent.loadContent('organization/org-unit-form')"><i class="fa-solid fa-pen"></i> Edit</a>
+                    <a href="#" onclick="parent.loadContent('organization/staff-management')"><i class="fa-solid fa-users"></i> View Staff</a>
+                    <a href="#"><i class="fa-solid fa-hand-holding-dollar"></i> View Donations</a>
+                    <a href="#" class="danger"><i class="fa-solid fa-check-circle"></i> Activate</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Table Footer -->
+    <div class="table-footer">
+      <span>Showing 1-12 of 12 branches</span>
+      <ul class="pagination">
+        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+        <li class="page-item active"><span class="page-link">1</span></li>
+        <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Map View -->
+  <div class="list-card map-view" id="mapView">
+    <div style="padding:1.25rem">
+      <div class="map-placeholder">
+        <i class="fa-solid fa-earth-americas" style="font-size:3rem;color:var(--accent);opacity:0.3;margin-bottom:0.75rem"></i>
+        <div class="map-label">World Map — Branch Locations</div>
+        <div class="map-sublabel">Interactive map integration (Leaflet / Google Maps)</div>
+
+        <div class="map-pins">
+          <div class="map-pin" onclick="openBranchDetail('newyork')" title="New York — 18 staff, $298,000 YTD">
+            <div class="pin-dot amber"></div>
+            <span class="pin-label">New York</span>
+          </div>
+          <div class="map-pin" onclick="openBranchDetail('losangeles')" title="Los Angeles — 12 staff, $134,000 YTD">
+            <div class="pin-dot amber"></div>
+            <span class="pin-label">Los Angeles</span>
+          </div>
+          <div class="map-pin" onclick="openBranchDetail('chicago')" title="Chicago — 8 staff, $98,500 YTD">
+            <div class="pin-dot amber"></div>
+            <span class="pin-label">Chicago</span>
+          </div>
+          <div class="map-pin" onclick="openBranchDetail('london')" title="London — 14 staff, $112,340 YTD">
+            <div class="pin-dot amber"></div>
+            <span class="pin-label">London</span>
+          </div>
+          <div class="map-pin" onclick="openBranchDetail('paris')" title="Paris — 5 staff, $23,400 YTD">
+            <div class="pin-dot red"></div>
+            <span class="pin-label">Paris</span>
+          </div>
+          <div class="map-pin" onclick="openBranchDetail('dubai')" title="Dubai — 12 staff, $156,780 YTD">
+            <div class="pin-dot amber"></div>
+            <span class="pin-label">Dubai</span>
+          </div>
+          <div class="map-pin" onclick="openBranchDetail('riyadh')" title="Riyadh — 10 staff, $145,000 YTD">
+            <div class="pin-dot amber"></div>
+            <span class="pin-label">Riyadh</span>
+          </div>
+          <div class="map-pin" onclick="openBranchDetail('nairobi')" title="Nairobi — 8 staff, $78,900 YTD">
+            <div class="pin-dot amber"></div>
+            <span class="pin-label">Nairobi</span>
+          </div>
+          <div class="map-pin" onclick="openBranchDetail('cairo')" title="Cairo — 6 staff, $34,200 YTD">
+            <div class="pin-dot red"></div>
+            <span class="pin-label">Cairo</span>
+          </div>
+          <div class="map-pin" onclick="openBranchDetail('mumbai')" title="Mumbai — 15 staff, $234,500 YTD">
+            <div class="pin-dot green"></div>
+            <span class="pin-label">Mumbai</span>
+          </div>
+          <div class="map-pin" onclick="openBranchDetail('delhi')" title="Delhi — 10 staff, $123,400 YTD">
+            <div class="pin-dot amber"></div>
+            <span class="pin-label">Delhi</span>
+          </div>
+          <div class="map-pin" onclick="openBranchDetail('dhaka')" title="Dhaka — 8 staff, $67,800 YTD">
+            <div class="pin-dot amber"></div>
+            <span class="pin-label">Dhaka</span>
+          </div>
+        </div>
+
+        <div class="map-legend">
+          <div class="legend-item"><div class="legend-dot green"></div> Active &gt;75%</div>
+          <div class="legend-item"><div class="legend-dot amber"></div> Active 50-75%</div>
+          <div class="legend-item"><div class="legend-dot red"></div> Inactive / &lt;50%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Branch Detail Side Panel -->
+  <div class="side-panel-overlay" id="panelOverlay" onclick="closeBranchDetail()"></div>
+  <div class="side-panel" id="branchPanel">
+    <div class="panel-header">
+      <div class="panel-header-left">
+        <h2 id="panelBranchName">Dubai Branch</h2>
+        <span class="branch-code" id="panelBranchCode">BR-DXB</span>
+        <span class="status-badge active" id="panelStatus">&#x1F7E2; Active</span>
+      </div>
+      <div class="panel-header-actions">
+        <button class="btn-outline-accent" style="font-size:0.75rem;padding:0.375rem 0.75rem" onclick="parent.loadContent('organization/org-unit-form')">
+          <i class="fa-solid fa-pen" style="margin-right:0.25rem"></i>Edit
+        </button>
+        <button class="panel-close" onclick="closeBranchDetail()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <!-- Quick Stats -->
+      <div class="detail-section">
+        <div class="detail-section-title">Quick Stats</div>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value">12</div>
+            <div class="stat-label">Staff</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">1,234</div>
+            <div class="stat-label">Contacts (assigned)</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">3</div>
+            <div class="stat-label">Active Campaigns</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">2</div>
+            <div class="stat-label">Events (upcoming)</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" style="color:var(--success-color)">$156,780</div>
+            <div class="stat-label">YTD Donations</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">
+              62.7%
+              <div class="perf-bar" style="margin-top:0.375rem">
+                <div class="perf-bar-fill amber" style="width:62.7%"></div>
+              </div>
+            </div>
+            <div class="stat-label">Target Achievement</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Activity Feed -->
+      <div class="detail-section">
+        <div class="detail-section-title">Recent Activity</div>
+        <div class="activity-feed">
+          <div class="activity-item">
+            <span class="activity-date">Apr 12</span>
+            <span class="activity-text">Donation <strong>$500</strong> from Sarah J. (Online)</span>
+          </div>
+          <div class="activity-item">
+            <span class="activity-date">Apr 11</span>
+            <span class="activity-text">New contact: <strong>Ahmad K.</strong> added</span>
+          </div>
+          <div class="activity-item">
+            <span class="activity-date">Apr 10</span>
+            <span class="activity-text">Event "<strong>Iftar Dinner</strong>" &mdash; 200 registered</span>
+          </div>
+          <div class="activity-item">
+            <span class="activity-date">Apr 9</span>
+            <span class="activity-text">Campaign "<strong>Orphan Care</strong>" &mdash; $5,000 donation</span>
+          </div>
+        </div>
+        <a class="view-all-link" href="#">View All Activity <i class="fa-solid fa-arrow-right" style="font-size:0.6875rem"></i></a>
+      </div>
+
+      <!-- Staff List (mini) -->
+      <div class="detail-section">
+        <div class="detail-section-title">Staff (12 total)</div>
+        <div class="staff-mini-list">
+          <div class="staff-mini-item">
+            <div class="staff-avatar-sm">MA</div>
+            <div>
+              <div class="staff-mini-name">Mohammad Al-Rashid</div>
+              <div class="staff-mini-role">Branch Manager</div>
+            </div>
+          </div>
+          <div class="staff-mini-item">
+            <div class="staff-avatar-sm">FH</div>
+            <div>
+              <div class="staff-mini-name">Fatima Hassan</div>
+              <div class="staff-mini-role">Program Coordinator</div>
+            </div>
+          </div>
+          <div class="staff-mini-item">
+            <div class="staff-avatar-sm">AS</div>
+            <div>
+              <div class="staff-mini-name">Ahmed Salim</div>
+              <div class="staff-mini-role">Field Officer</div>
+            </div>
+          </div>
+        </div>
+        <a class="view-all-link" href="#" onclick="parent.loadContent('organization/staff-management')">
+          View All Staff <i class="fa-solid fa-arrow-right" style="font-size:0.6875rem"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // View Toggle
+    function showListView() {
+      document.getElementById('listView').style.display = 'block';
+      document.getElementById('mapView').classList.remove('show');
+      document.getElementById('btnListView').classList.add('active');
+      document.getElementById('btnMapView').classList.remove('active');
+    }
+
+    function showMapView() {
+      document.getElementById('listView').style.display = 'none';
+      document.getElementById('mapView').classList.add('show');
+      document.getElementById('btnListView').classList.remove('active');
+      document.getElementById('btnMapView').classList.add('active');
+    }
+
+    function toggleMapView() {
+      const mapView = document.getElementById('mapView');
+      if (mapView.classList.contains('show')) {
+        showListView();
+      } else {
+        showMapView();
+      }
+    }
+
+    // Branch Detail Side Panel
+    function openBranchDetail(branchId) {
+      document.getElementById('panelOverlay').classList.add('show');
+      document.getElementById('branchPanel').classList.add('show');
+    }
+
+    function closeBranchDetail() {
+      document.getElementById('panelOverlay').classList.remove('show');
+      document.getElementById('branchPanel').classList.remove('show');
+    }
+
+    // More Menu
+    function toggleMenu(btn) {
+      // Close all other menus first
+      document.querySelectorAll('.more-dropdown.show').forEach(d => d.classList.remove('show'));
+      const dropdown = btn.nextElementSibling;
+      dropdown.classList.toggle('show');
+    }
+
+    // Close menus on outside click
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.more-menu')) {
+        document.querySelectorAll('.more-dropdown.show').forEach(d => d.classList.remove('show'));
+      }
+    });
+
+    // Close panel on Escape
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeBranchDetail();
+    });
+  </script>
+
+</body>
+</html>

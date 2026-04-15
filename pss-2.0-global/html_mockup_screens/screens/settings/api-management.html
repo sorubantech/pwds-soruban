@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Management - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+      --settings-accent: #6366f1;
+      --settings-accent-bg: #eef2ff;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    .page-header { margin-bottom: 1.5rem; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem; }
+    .page-header p { font-size: 0.875rem; color: var(--text-secondary); margin: 0; }
+
+    .header-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+
+    .btn-primary-custom {
+      background: var(--settings-accent); color: white; border: none;
+      padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.8125rem;
+      font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 0.375rem;
+    }
+    .btn-primary-custom:hover { background: #4f46e5; }
+
+    .btn-outline-custom {
+      background: white; color: var(--text-primary); border: 1px solid var(--border-color);
+      padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.8125rem;
+      font-weight: 500; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 0.375rem;
+      text-decoration: none;
+    }
+    .btn-outline-custom:hover { border-color: var(--settings-accent); color: var(--settings-accent); }
+
+    /* KPI Cards */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem; margin-bottom: 1.5rem;
+    }
+    .stat-card {
+      background: white; border-radius: var(--card-radius); padding: 1.25rem;
+      box-shadow: var(--card-shadow); border: 1px solid var(--border-color);
+      display: flex; align-items: flex-start; gap: 1rem;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .stat-icon {
+      width: 48px; height: 48px; border-radius: 0.75rem;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.25rem; flex-shrink: 0;
+    }
+    .stat-icon.indigo { background: var(--settings-accent-bg); color: var(--settings-accent); }
+    .stat-icon.teal { background: var(--accent-bg); color: var(--accent); }
+    .stat-icon.blue { background: #eff6ff; color: #3b82f6; }
+    .stat-info { flex: 1; }
+    .stat-value { font-size: 1.625rem; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+    .stat-label { font-size: 0.8125rem; color: var(--text-secondary); font-weight: 500; margin-bottom: 0.125rem; }
+    .stat-subtitle { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; }
+
+    /* Card Base */
+    .dash-card {
+      background: white; border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow); border: 1px solid var(--border-color);
+    }
+    .dash-card-header {
+      padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .dash-card-header h3 { font-size: 0.9375rem; font-weight: 700; margin: 0; color: var(--text-primary); }
+    .dash-card-body { padding: 1.25rem; }
+    .section-gap { margin-bottom: 1.5rem; }
+
+    /* Tables */
+    .data-table { width: 100%; font-size: 0.8125rem; }
+    .data-table th {
+      background: #f8fafc; font-weight: 600; color: var(--text-secondary);
+      font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.05em;
+      padding: 0.625rem 0.75rem; border-bottom: 1px solid var(--border-color);
+    }
+    .data-table td {
+      padding: 0.625rem 0.75rem; border-bottom: 1px solid #f1f5f9;
+      color: var(--text-primary); vertical-align: middle;
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: #f8fafc; }
+
+    .key-masked { font-family: 'Courier New', monospace; font-size: 0.8125rem; color: var(--text-secondary); background: #f8fafc; padding: 0.2rem 0.5rem; border-radius: 0.25rem; }
+
+    .env-badge {
+      font-size: 0.6875rem; padding: 0.2rem 0.5rem; border-radius: 9999px; font-weight: 600;
+    }
+    .env-prod { background: #f0fdf4; color: #15803d; }
+    .env-test { background: #fffbeb; color: #d97706; }
+
+    .status-badge { font-size: 0.6875rem; padding: 0.2rem 0.5rem; border-radius: 9999px; font-weight: 600; }
+    .status-active { background: #f0fdf4; color: #15803d; }
+    .status-revoked { background: #f1f5f9; color: var(--text-secondary); }
+
+    .perm-tag {
+      display: inline-block; font-size: 0.625rem; padding: 0.15rem 0.375rem;
+      border-radius: 0.25rem; background: var(--settings-accent-bg); color: var(--settings-accent);
+      font-weight: 600; margin: 1px 2px;
+    }
+
+    .btn-action {
+      font-size: 0.75rem; padding: 0.25rem 0.75rem; border-radius: 0.375rem;
+      border: 1px solid var(--settings-accent); background: white; color: var(--settings-accent);
+      font-weight: 600; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-action:hover { background: var(--settings-accent); color: white; }
+
+    .btn-dots {
+      background: none; border: 1px solid var(--border-color); border-radius: 0.375rem;
+      padding: 0.25rem 0.5rem; font-size: 0.875rem; color: var(--text-secondary);
+      cursor: pointer; transition: all 0.15s; line-height: 1;
+    }
+    .btn-dots:hover { background: #f8fafc; border-color: var(--settings-accent); color: var(--settings-accent); }
+
+    /* 3-dot dropdown */
+    .dots-dropdown { position: relative; display: inline-block; }
+    .dots-dropdown .dots-menu {
+      display: none; position: absolute; right: 0; top: 100%; margin-top: 4px;
+      background: white; border: 1px solid var(--border-color); border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1); min-width: 160px; z-index: 100; overflow: hidden;
+    }
+    .dots-dropdown.open .dots-menu { display: block; }
+    .dots-menu-item {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 0.75rem; font-size: 0.8125rem; color: var(--text-primary);
+      cursor: pointer; transition: background 0.15s; border: none; background: none; width: 100%; text-align: left;
+    }
+    .dots-menu-item:hover { background: #f8fafc; }
+    .dots-menu-item i { width: 16px; text-align: center; color: var(--text-secondary); font-size: 0.75rem; }
+    .dots-menu-item.danger { color: var(--danger-color); }
+    .dots-menu-item.danger i { color: var(--danger-color); }
+    .dots-separator { height: 1px; background: var(--border-color); margin: 0.25rem 0; }
+
+    /* Webhook delivery status */
+    .delivery-ok { color: var(--success-color); font-weight: 600; font-size: 0.75rem; }
+    .delivery-fail { color: var(--danger-color); font-weight: 600; font-size: 0.75rem; }
+
+    .btn-sm-action {
+      font-size: 0.6875rem; padding: 0.2rem 0.5rem; border-radius: 0.25rem;
+      border: 1px solid var(--border-color); background: white; color: var(--text-primary);
+      cursor: pointer; transition: all 0.15s; font-weight: 500;
+    }
+    .btn-sm-action:hover { border-color: var(--settings-accent); color: var(--settings-accent); }
+
+    /* Usage Chart */
+    .usage-bars { display: flex; align-items: flex-end; gap: 6px; height: 140px; padding: 0 0.5rem; }
+    .usage-bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+    .usage-bar-stack { width: 100%; max-width: 50px; display: flex; flex-direction: column-reverse; border-radius: 4px 4px 0 0; overflow: hidden; }
+    .usage-segment { transition: height 0.3s; }
+    .usage-bar-label { font-size: 0.625rem; color: var(--text-secondary); font-weight: 500; }
+    .usage-bar-value { font-size: 0.625rem; color: var(--text-primary); font-weight: 600; }
+    .rate-limit-line { border-top: 2px dashed var(--danger-color); position: relative; margin-top: 0.5rem; }
+    .rate-limit-label { font-size: 0.625rem; color: var(--danger-color); font-weight: 600; }
+
+    /* Modal */
+    .modal-overlay {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-box {
+      background: white; border-radius: 1rem; width: 640px; max-width: 95vw;
+      max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .modal-header {
+      padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .modal-header h3 { font-size: 1.125rem; font-weight: 700; margin: 0; }
+    .modal-close {
+      background: none; border: none; font-size: 1.25rem; color: var(--text-secondary);
+      cursor: pointer; padding: 0.25rem;
+    }
+    .modal-body { padding: 1.5rem; }
+    .modal-footer {
+      padding: 1rem 1.5rem; border-top: 1px solid var(--border-color);
+      display: flex; justify-content: flex-end; gap: 0.5rem;
+    }
+
+    .form-group { margin-bottom: 1rem; }
+    .form-label {
+      display: block; font-size: 0.8125rem; font-weight: 600; color: var(--text-primary);
+      margin-bottom: 0.375rem;
+    }
+    .form-label .required { color: var(--danger-color); }
+    .form-hint { font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.25rem; }
+    .form-input {
+      width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--border-color);
+      border-radius: 0.5rem; font-size: 0.8125rem; color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+    .form-input:focus { outline: none; border-color: var(--settings-accent); box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+    .form-textarea { min-height: 80px; resize: vertical; font-family: inherit; }
+    .form-select {
+      padding: 0.5rem 0.75rem; border: 1px solid var(--border-color);
+      border-radius: 0.5rem; font-size: 0.8125rem; color: var(--text-primary); background: white;
+    }
+
+    .radio-group { display: flex; gap: 1.5rem; margin-top: 0.25rem; }
+    .radio-label {
+      display: flex; align-items: center; gap: 0.375rem; font-size: 0.8125rem;
+      cursor: pointer; color: var(--text-primary);
+    }
+    .radio-label input[type="radio"] { accent-color: var(--settings-accent); }
+
+    .perm-grid { display: grid; grid-template-columns: 1fr; gap: 0.5rem; margin-top: 0.25rem; }
+    .perm-row {
+      display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem;
+      background: #f8fafc; border-radius: 0.5rem;
+    }
+    .perm-row-label { width: 120px; font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); flex-shrink: 0; }
+    .perm-checks { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .perm-check {
+      display: flex; align-items: center; gap: 0.25rem; font-size: 0.75rem; color: var(--text-secondary); cursor: pointer;
+    }
+    .perm-check input[type="checkbox"] { accent-color: var(--settings-accent); }
+
+    /* Key reveal */
+    .key-reveal-box {
+      background: #fffbeb; border: 1px solid var(--warning-color); border-radius: 0.5rem;
+      padding: 1rem; margin-top: 1rem; display: none;
+    }
+    .key-reveal-box.active { display: block; }
+    .key-reveal-warning { font-size: 0.75rem; color: var(--warning-color); font-weight: 600; margin-bottom: 0.5rem; }
+    .key-reveal-value {
+      font-family: 'Courier New', monospace; font-size: 0.875rem; color: var(--text-primary);
+      background: white; padding: 0.5rem 0.75rem; border-radius: 0.375rem;
+      border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;
+    }
+    .btn-copy {
+      background: var(--settings-accent); color: white; border: none; padding: 0.25rem 0.625rem;
+      border-radius: 0.25rem; font-size: 0.6875rem; font-weight: 600; cursor: pointer;
+    }
+
+    /* Collapsible */
+    .collapsible-header {
+      display: flex; align-items: center; gap: 0.5rem; cursor: pointer;
+      padding: 0.5rem 0; user-select: none;
+    }
+    .collapsible-header i.toggle-icon { transition: transform 0.2s; font-size: 0.75rem; }
+    .collapsible-header.collapsed i.toggle-icon { transform: rotate(-90deg); }
+    .collapsible-body { overflow: hidden; transition: max-height 0.3s; }
+    .collapsible-body.collapsed { max-height: 0 !important; }
+
+    @media (max-width: 992px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 576px) {
+      body { padding: 1rem; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .header-actions { flex-direction: column; align-items: stretch; }
+      .perm-row { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-3">
+    <div>
+      <h1><i class="fas fa-plug me-2" style="color: var(--settings-accent);"></i>API Management</h1>
+      <p>Manage API keys, webhooks, and integration access</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-custom" onclick="openGenerateModal()"><i class="fas fa-plus"></i> Generate API Key</button>
+      <a href="#" class="btn-outline-custom" target="_blank"><i class="fas fa-book"></i> API Documentation</a>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="stats-grid section-gap">
+    <div class="stat-card">
+      <div class="stat-icon indigo"><i class="fas fa-key"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Active API Keys</div>
+        <div class="stat-value">4</div>
+        <div class="stat-subtitle">2 production, 2 test</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon teal"><i class="fas fa-chart-line"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">API Calls Today</div>
+        <div class="stat-value">2,456</div>
+        <div class="stat-subtitle">Rate: ~102/hr</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="fas fa-link"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Webhook Endpoints</div>
+        <div class="stat-value">3 <span style="font-size: 0.875rem; color: #94a3b8;">active</span></div>
+        <div class="stat-subtitle">Last delivery: 5 min ago</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- API Keys Table -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-key me-2" style="color: var(--settings-accent);"></i>API Keys</h3>
+      <span style="font-size: 0.75rem; color: var(--text-secondary);">5 keys total</span>
+    </div>
+    <div class="dash-card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Key Name</th>
+              <th>Key</th>
+              <th>Environment</th>
+              <th>Permissions</th>
+              <th>Last Used</th>
+              <th>Created</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span style="font-weight: 600;">Website Donation Form</span></td>
+              <td><code class="key-masked">sk_prod_••••7890</code></td>
+              <td><span class="env-badge env-prod">Production</span></td>
+              <td>
+                <span class="perm-tag">Donations (create)</span>
+                <span class="perm-tag">Contacts (create, read)</span>
+              </td>
+              <td>Apr 12, 2:30 PM</td>
+              <td>Jan 15, 2026</td>
+              <td><span class="status-badge status-active">Active</span></td>
+              <td>
+                <div style="display: flex; gap: 0.375rem;">
+                  <button class="btn-action">Edit</button>
+                  <div class="dots-dropdown" onclick="toggleDots(this)">
+                    <button class="btn-dots">&hellip;</button>
+                    <div class="dots-menu">
+                      <button class="dots-menu-item"><i class="fas fa-eye"></i> View Key</button>
+                      <button class="dots-menu-item"><i class="fas fa-copy"></i> Copy Key</button>
+                      <button class="dots-menu-item"><i class="fas fa-chart-bar"></i> View Usage</button>
+                      <div class="dots-separator"></div>
+                      <button class="dots-menu-item"><i class="fas fa-rotate"></i> Rotate Key</button>
+                      <button class="dots-menu-item danger"><i class="fas fa-ban"></i> Revoke</button>
+                      <button class="dots-menu-item danger"><i class="fas fa-trash"></i> Delete</button>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><span style="font-weight: 600;">Mobile App</span></td>
+              <td><code class="key-masked">sk_prod_••••4567</code></td>
+              <td><span class="env-badge env-prod">Production</span></td>
+              <td>
+                <span class="perm-tag">Full Read</span>
+                <span class="perm-tag">Collections (create)</span>
+              </td>
+              <td>Apr 12, 1:00 PM</td>
+              <td>Feb 1, 2026</td>
+              <td><span class="status-badge status-active">Active</span></td>
+              <td>
+                <div style="display: flex; gap: 0.375rem;">
+                  <button class="btn-action">Edit</button>
+                  <div class="dots-dropdown" onclick="toggleDots(this)">
+                    <button class="btn-dots">&hellip;</button>
+                    <div class="dots-menu">
+                      <button class="dots-menu-item"><i class="fas fa-eye"></i> View Key</button>
+                      <button class="dots-menu-item"><i class="fas fa-copy"></i> Copy Key</button>
+                      <button class="dots-menu-item"><i class="fas fa-chart-bar"></i> View Usage</button>
+                      <div class="dots-separator"></div>
+                      <button class="dots-menu-item"><i class="fas fa-rotate"></i> Rotate Key</button>
+                      <button class="dots-menu-item danger"><i class="fas fa-ban"></i> Revoke</button>
+                      <button class="dots-menu-item danger"><i class="fas fa-trash"></i> Delete</button>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><span style="font-weight: 600;">Accounting Sync</span></td>
+              <td><code class="key-masked">sk_prod_••••1234</code></td>
+              <td><span class="env-badge env-prod">Production</span></td>
+              <td>
+                <span class="perm-tag">Donations (read)</span>
+                <span class="perm-tag">Reports (read)</span>
+              </td>
+              <td>Apr 11, 11:00 PM</td>
+              <td>Mar 1, 2026</td>
+              <td><span class="status-badge status-active">Active</span></td>
+              <td>
+                <div style="display: flex; gap: 0.375rem;">
+                  <button class="btn-action">Edit</button>
+                  <div class="dots-dropdown" onclick="toggleDots(this)">
+                    <button class="btn-dots">&hellip;</button>
+                    <div class="dots-menu">
+                      <button class="dots-menu-item"><i class="fas fa-eye"></i> View Key</button>
+                      <button class="dots-menu-item"><i class="fas fa-copy"></i> Copy Key</button>
+                      <button class="dots-menu-item"><i class="fas fa-chart-bar"></i> View Usage</button>
+                      <div class="dots-separator"></div>
+                      <button class="dots-menu-item"><i class="fas fa-rotate"></i> Rotate Key</button>
+                      <button class="dots-menu-item danger"><i class="fas fa-ban"></i> Revoke</button>
+                      <button class="dots-menu-item danger"><i class="fas fa-trash"></i> Delete</button>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><span style="font-weight: 600;">Dev Testing</span></td>
+              <td><code class="key-masked">sk_test_••••9999</code></td>
+              <td><span class="env-badge env-test">Test</span></td>
+              <td><span class="perm-tag">Full Access</span></td>
+              <td>Apr 10, 3:00 PM</td>
+              <td>Apr 1, 2026</td>
+              <td><span class="status-badge status-active">Active</span></td>
+              <td>
+                <div style="display: flex; gap: 0.375rem;">
+                  <button class="btn-action">Edit</button>
+                  <div class="dots-dropdown" onclick="toggleDots(this)">
+                    <button class="btn-dots">&hellip;</button>
+                    <div class="dots-menu">
+                      <button class="dots-menu-item"><i class="fas fa-eye"></i> View Key</button>
+                      <button class="dots-menu-item"><i class="fas fa-copy"></i> Copy Key</button>
+                      <button class="dots-menu-item"><i class="fas fa-chart-bar"></i> View Usage</button>
+                      <div class="dots-separator"></div>
+                      <button class="dots-menu-item"><i class="fas fa-rotate"></i> Rotate Key</button>
+                      <button class="dots-menu-item danger"><i class="fas fa-ban"></i> Revoke</button>
+                      <button class="dots-menu-item danger"><i class="fas fa-trash"></i> Delete</button>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr style="opacity: 0.6;">
+              <td><span style="font-weight: 600;">Old Integration</span></td>
+              <td><code class="key-masked">sk_prod_••••0000</code></td>
+              <td><span class="env-badge env-prod">Production</span></td>
+              <td><span class="perm-tag">Contacts (read)</span></td>
+              <td>Jan 5, 2026</td>
+              <td>Jun 1, 2025</td>
+              <td><span class="status-badge status-revoked">&#9208; Revoked</span></td>
+              <td>
+                <div class="dots-dropdown" onclick="toggleDots(this)">
+                  <button class="btn-dots">&hellip;</button>
+                  <div class="dots-menu">
+                    <button class="dots-menu-item"><i class="fas fa-chart-bar"></i> View Usage</button>
+                    <div class="dots-separator"></div>
+                    <button class="dots-menu-item danger"><i class="fas fa-trash"></i> Delete</button>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Webhook Endpoints -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-link me-2" style="color: var(--settings-accent);"></i>Webhook Endpoints</h3>
+      <button class="btn-primary-custom" onclick="openWebhookModal()"><i class="fas fa-plus"></i> Add Webhook</button>
+    </div>
+    <div class="dash-card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Endpoint URL</th>
+              <th>Events</th>
+              <th>Last Delivery</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <i class="fas fa-globe" style="color: var(--text-secondary); font-size: 0.75rem;"></i>
+                  <span style="font-family: 'Courier New', monospace; font-size: 0.75rem;">https://accounting.ghf.org/webhooks</span>
+                </div>
+              </td>
+              <td>
+                <span class="perm-tag">donation.created</span>
+                <span class="perm-tag">donation.updated</span>
+              </td>
+              <td><span class="delivery-ok">Apr 12, 2:30 PM &#10004;</span></td>
+              <td><span class="status-badge status-active">Active</span></td>
+              <td>
+                <div style="display: flex; gap: 0.375rem;">
+                  <button class="btn-sm-action" onclick="openWebhookModal()">Edit</button>
+                  <button class="btn-sm-action">Test</button>
+                  <div class="dots-dropdown" onclick="toggleDots(this)">
+                    <button class="btn-dots" style="font-size: 0.75rem; padding: 0.15rem 0.375rem;">&hellip;</button>
+                    <div class="dots-menu">
+                      <button class="dots-menu-item"><i class="fas fa-clock-rotate-left"></i> View Logs</button>
+                      <button class="dots-menu-item"><i class="fas fa-rotate"></i> Regenerate Secret</button>
+                      <div class="dots-separator"></div>
+                      <button class="dots-menu-item danger"><i class="fas fa-pause"></i> Disable</button>
+                      <button class="dots-menu-item danger"><i class="fas fa-trash"></i> Delete</button>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <i class="fas fa-globe" style="color: var(--text-secondary); font-size: 0.75rem;"></i>
+                  <span style="font-family: 'Courier New', monospace; font-size: 0.75rem;">https://website.ghf.org/api/hooks</span>
+                </div>
+              </td>
+              <td>
+                <span class="perm-tag">contact.created</span>
+                <span class="perm-tag">donation.created</span>
+              </td>
+              <td><span class="delivery-ok">Apr 12, 2:28 PM &#10004;</span></td>
+              <td><span class="status-badge status-active">Active</span></td>
+              <td>
+                <div style="display: flex; gap: 0.375rem;">
+                  <button class="btn-sm-action" onclick="openWebhookModal()">Edit</button>
+                  <button class="btn-sm-action">Test</button>
+                  <div class="dots-dropdown" onclick="toggleDots(this)">
+                    <button class="btn-dots" style="font-size: 0.75rem; padding: 0.15rem 0.375rem;">&hellip;</button>
+                    <div class="dots-menu">
+                      <button class="dots-menu-item"><i class="fas fa-clock-rotate-left"></i> View Logs</button>
+                      <button class="dots-menu-item"><i class="fas fa-rotate"></i> Regenerate Secret</button>
+                      <div class="dots-separator"></div>
+                      <button class="dots-menu-item danger"><i class="fas fa-pause"></i> Disable</button>
+                      <button class="dots-menu-item danger"><i class="fas fa-trash"></i> Delete</button>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <i class="fas fa-globe" style="color: var(--text-secondary); font-size: 0.75rem;"></i>
+                  <span style="font-family: 'Courier New', monospace; font-size: 0.75rem;">https://mobile.ghf.org/push</span>
+                </div>
+              </td>
+              <td>
+                <span class="perm-tag">donation.created</span>
+                <span class="perm-tag">event.registered</span>
+              </td>
+              <td><span class="delivery-ok">Apr 12, 1:00 PM &#10004;</span></td>
+              <td><span class="status-badge status-active">Active</span></td>
+              <td>
+                <div style="display: flex; gap: 0.375rem;">
+                  <button class="btn-sm-action" onclick="openWebhookModal()">Edit</button>
+                  <button class="btn-sm-action">Test</button>
+                  <div class="dots-dropdown" onclick="toggleDots(this)">
+                    <button class="btn-dots" style="font-size: 0.75rem; padding: 0.15rem 0.375rem;">&hellip;</button>
+                    <div class="dots-menu">
+                      <button class="dots-menu-item"><i class="fas fa-clock-rotate-left"></i> View Logs</button>
+                      <button class="dots-menu-item"><i class="fas fa-rotate"></i> Regenerate Secret</button>
+                      <div class="dots-separator"></div>
+                      <button class="dots-menu-item danger"><i class="fas fa-pause"></i> Disable</button>
+                      <button class="dots-menu-item danger"><i class="fas fa-trash"></i> Delete</button>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- API Usage Chart (Collapsible) -->
+  <div class="dash-card">
+    <div class="dash-card-header" style="cursor: pointer;" onclick="toggleUsage()">
+      <h3>
+        <i class="fas fa-chart-bar me-2" style="color: var(--settings-accent);"></i>API Usage (Last 7 Days)
+        <i class="fas fa-chevron-down ms-2 toggle-icon" id="usageToggle" style="font-size: 0.75rem; color: var(--text-secondary); transition: transform 0.2s;"></i>
+      </h3>
+      <span style="font-size: 0.75rem; color: var(--text-secondary);">Total: 14,892 calls</span>
+    </div>
+    <div class="dash-card-body" id="usageBody">
+      <div class="usage-bars">
+        <div class="usage-bar-group">
+          <div class="usage-bar-value">1,834</div>
+          <div class="usage-bar-stack" style="height: 85%;">
+            <div class="usage-segment" style="height: 40%; background: #6366f1;"></div>
+            <div class="usage-segment" style="height: 30%; background: #818cf8;"></div>
+            <div class="usage-segment" style="height: 20%; background: #a5b4fc;"></div>
+            <div class="usage-segment" style="height: 10%; background: #c7d2fe;"></div>
+          </div>
+          <div class="usage-bar-label">Apr 6</div>
+        </div>
+        <div class="usage-bar-group">
+          <div class="usage-bar-value">2,105</div>
+          <div class="usage-bar-stack" style="height: 95%;">
+            <div class="usage-segment" style="height: 40%; background: #6366f1;"></div>
+            <div class="usage-segment" style="height: 30%; background: #818cf8;"></div>
+            <div class="usage-segment" style="height: 20%; background: #a5b4fc;"></div>
+            <div class="usage-segment" style="height: 10%; background: #c7d2fe;"></div>
+          </div>
+          <div class="usage-bar-label">Apr 7</div>
+        </div>
+        <div class="usage-bar-group">
+          <div class="usage-bar-value">1,956</div>
+          <div class="usage-bar-stack" style="height: 88%;">
+            <div class="usage-segment" style="height: 40%; background: #6366f1;"></div>
+            <div class="usage-segment" style="height: 30%; background: #818cf8;"></div>
+            <div class="usage-segment" style="height: 20%; background: #a5b4fc;"></div>
+            <div class="usage-segment" style="height: 10%; background: #c7d2fe;"></div>
+          </div>
+          <div class="usage-bar-label">Apr 8</div>
+        </div>
+        <div class="usage-bar-group">
+          <div class="usage-bar-value">2,234</div>
+          <div class="usage-bar-stack" style="height: 100%;">
+            <div class="usage-segment" style="height: 40%; background: #6366f1;"></div>
+            <div class="usage-segment" style="height: 30%; background: #818cf8;"></div>
+            <div class="usage-segment" style="height: 20%; background: #a5b4fc;"></div>
+            <div class="usage-segment" style="height: 10%; background: #c7d2fe;"></div>
+          </div>
+          <div class="usage-bar-label">Apr 9</div>
+        </div>
+        <div class="usage-bar-group">
+          <div class="usage-bar-value">2,189</div>
+          <div class="usage-bar-stack" style="height: 98%;">
+            <div class="usage-segment" style="height: 40%; background: #6366f1;"></div>
+            <div class="usage-segment" style="height: 30%; background: #818cf8;"></div>
+            <div class="usage-segment" style="height: 20%; background: #a5b4fc;"></div>
+            <div class="usage-segment" style="height: 10%; background: #c7d2fe;"></div>
+          </div>
+          <div class="usage-bar-label">Apr 10</div>
+        </div>
+        <div class="usage-bar-group">
+          <div class="usage-bar-value">2,118</div>
+          <div class="usage-bar-stack" style="height: 95%;">
+            <div class="usage-segment" style="height: 40%; background: #6366f1;"></div>
+            <div class="usage-segment" style="height: 30%; background: #818cf8;"></div>
+            <div class="usage-segment" style="height: 20%; background: #a5b4fc;"></div>
+            <div class="usage-segment" style="height: 10%; background: #c7d2fe;"></div>
+          </div>
+          <div class="usage-bar-label">Apr 11</div>
+        </div>
+        <div class="usage-bar-group">
+          <div class="usage-bar-value">2,456</div>
+          <div class="usage-bar-stack" style="height: 100%;">
+            <div class="usage-segment" style="height: 42%; background: #6366f1;"></div>
+            <div class="usage-segment" style="height: 28%; background: #818cf8;"></div>
+            <div class="usage-segment" style="height: 18%; background: #a5b4fc;"></div>
+            <div class="usage-segment" style="height: 12%; background: #c7d2fe;"></div>
+          </div>
+          <div class="usage-bar-label">Apr 12</div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 1.5rem; margin-top: 1rem; font-size: 0.6875rem; color: var(--text-secondary); justify-content: center; flex-wrap: wrap;">
+        <span><span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: #6366f1; margin-right: 4px; vertical-align: middle;"></span> Website Donation Form</span>
+        <span><span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: #818cf8; margin-right: 4px; vertical-align: middle;"></span> Mobile App</span>
+        <span><span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: #a5b4fc; margin-right: 4px; vertical-align: middle;"></span> Accounting Sync</span>
+        <span><span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: #c7d2fe; margin-right: 4px; vertical-align: middle;"></span> Dev Testing</span>
+        <span><span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: none; border: 2px dashed var(--danger-color); margin-right: 4px; vertical-align: middle;"></span> Rate Limit (24K/day)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Generate API Key Modal -->
+  <div class="modal-overlay" id="generateModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3><i class="fas fa-key me-2" style="color: var(--settings-accent);"></i>Generate API Key</h3>
+        <button class="modal-close" onclick="closeGenerateModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Key Name <span class="required">*</span></label>
+          <input type="text" class="form-input" placeholder="e.g., Website Donation Form" value="Website Donation Form">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-input form-textarea" placeholder="Describe what this key is used for...">Used by public donation page to submit donations</textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Environment <span class="required">*</span></label>
+          <div class="radio-group">
+            <label class="radio-label"><input type="radio" name="env" checked> Production</label>
+            <label class="radio-label"><input type="radio" name="env"> Test (sandbox)</label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Permissions</label>
+          <div class="perm-grid">
+            <div class="perm-row">
+              <div class="perm-row-label">Contacts</div>
+              <div class="perm-checks">
+                <label class="perm-check"><input type="checkbox" checked> Read</label>
+                <label class="perm-check"><input type="checkbox" checked> Create</label>
+                <label class="perm-check"><input type="checkbox"> Update</label>
+                <label class="perm-check"><input type="checkbox"> Delete</label>
+              </div>
+            </div>
+            <div class="perm-row">
+              <div class="perm-row-label">Donations</div>
+              <div class="perm-checks">
+                <label class="perm-check"><input type="checkbox" checked> Read</label>
+                <label class="perm-check"><input type="checkbox" checked> Create</label>
+                <label class="perm-check"><input type="checkbox"> Update</label>
+                <label class="perm-check"><input type="checkbox"> Delete</label>
+              </div>
+            </div>
+            <div class="perm-row">
+              <div class="perm-row-label">Campaigns</div>
+              <div class="perm-checks">
+                <label class="perm-check"><input type="checkbox" checked> Read</label>
+                <label class="perm-check"><input type="checkbox"> Create</label>
+                <label class="perm-check"><input type="checkbox"> Update</label>
+                <label class="perm-check"><input type="checkbox"> Delete</label>
+              </div>
+            </div>
+            <div class="perm-row">
+              <div class="perm-row-label">Events</div>
+              <div class="perm-checks">
+                <label class="perm-check"><input type="checkbox"> Read</label>
+                <label class="perm-check"><input type="checkbox"> Create</label>
+                <label class="perm-check"><input type="checkbox"> Update</label>
+                <label class="perm-check"><input type="checkbox"> Delete</label>
+              </div>
+            </div>
+            <div class="perm-row">
+              <div class="perm-row-label">Reports</div>
+              <div class="perm-checks">
+                <label class="perm-check"><input type="checkbox"> Read</label>
+                <label class="perm-check"><input type="checkbox"> Run</label>
+              </div>
+            </div>
+            <div class="perm-row">
+              <div class="perm-row-label">Communications</div>
+              <div class="perm-checks">
+                <label class="perm-check"><input type="checkbox"> Read</label>
+                <label class="perm-check"><input type="checkbox"> Send</label>
+              </div>
+            </div>
+            <div class="perm-row">
+              <div class="perm-row-label">Settings</div>
+              <div class="perm-checks">
+                <label class="perm-check"><input type="checkbox"> Read</label>
+                <label class="perm-check"><input type="checkbox"> Configure</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">IP Whitelist <span style="font-weight: 400; color: var(--text-secondary);">(optional)</span></label>
+          <textarea class="form-input form-textarea" placeholder="One IP or CIDR per line&#10;e.g., 203.0.113.0/24" style="min-height: 60px; font-family: 'Courier New', monospace; font-size: 0.75rem;"></textarea>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-6">
+            <div class="form-group">
+              <label class="form-label">Rate Limit</label>
+              <select class="form-input form-select">
+                <option>100 requests/hour</option>
+                <option>500 requests/hour</option>
+                <option selected>1,000 requests/hour</option>
+                <option>5,000 requests/hour</option>
+                <option>Unlimited</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="form-group">
+              <label class="form-label">Expiry</label>
+              <select class="form-input form-select">
+                <option>30 days</option>
+                <option>90 days</option>
+                <option>1 year</option>
+                <option selected>No Expiry</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Key Reveal (shown after generate) -->
+        <div class="key-reveal-box" id="keyRevealBox">
+          <div class="key-reveal-warning"><i class="fas fa-exclamation-triangle me-1"></i> Copy this key now — it won't be shown again</div>
+          <div class="key-reveal-value">
+            <span id="generatedKey">sk_prod_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6</span>
+            <button class="btn-copy" onclick="copyKey()"><i class="fas fa-copy me-1"></i> Copy</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline-custom" onclick="closeGenerateModal()">Cancel</button>
+        <button class="btn-primary-custom" onclick="generateKey()"><i class="fas fa-key"></i> Generate Key</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Webhook Modal -->
+  <div class="modal-overlay" id="webhookModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3><i class="fas fa-link me-2" style="color: var(--settings-accent);"></i>Add Webhook Endpoint</h3>
+        <button class="modal-close" onclick="closeWebhookModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Endpoint URL <span class="required">*</span></label>
+          <input type="url" class="form-input" placeholder="https://your-server.com/webhooks">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Secret <span style="font-weight: 400; color: var(--text-secondary);">(for signature verification)</span></label>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <input type="text" class="form-input" value="whsec_a8b7c6d5e4f3g2h1" readonly style="flex: 1; font-family: 'Courier New', monospace; font-size: 0.75rem; background: #f8fafc;">
+            <button class="btn-outline-custom" style="white-space: nowrap;"><i class="fas fa-rotate"></i> Regenerate</button>
+          </div>
+          <div class="form-hint">Auto-generated. Used to verify webhook payloads.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Events</label>
+          <div class="perm-grid">
+            <div class="perm-row">
+              <div class="perm-row-label">Contact</div>
+              <div class="perm-checks">
+                <label class="perm-check"><input type="checkbox" checked> contact.created</label>
+                <label class="perm-check"><input type="checkbox" checked> contact.updated</label>
+                <label class="perm-check"><input type="checkbox"> contact.deleted</label>
+              </div>
+            </div>
+            <div class="perm-row">
+              <div class="perm-row-label">Donation</div>
+              <div class="perm-checks">
+                <label class="perm-check"><input type="checkbox" checked> donation.created</label>
+                <label class="perm-check"><input type="checkbox" checked> donation.updated</label>
+                <label class="perm-check"><input type="checkbox"> donation.deleted</label>
+              </div>
+            </div>
+            <div class="perm-row">
+              <div class="perm-row-label">Campaign</div>
+              <div class="perm-checks">
+                <label class="perm-check"><input type="checkbox"> campaign.created</label>
+                <label class="perm-check"><input type="checkbox"> campaign.updated</label>
+              </div>
+            </div>
+            <div class="perm-row">
+              <div class="perm-row-label">Event</div>
+              <div class="perm-checks">
+                <label class="perm-check"><input type="checkbox"> event.created</label>
+                <label class="perm-check"><input type="checkbox"> event.registered</label>
+              </div>
+            </div>
+            <div class="perm-row">
+              <div class="perm-row-label">Communication</div>
+              <div class="perm-checks">
+                <label class="perm-check"><input type="checkbox"> email.delivered</label>
+                <label class="perm-check"><input type="checkbox"> email.bounced</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-6">
+            <div class="form-group">
+              <label class="form-label">Retry Policy</label>
+              <select class="form-input form-select">
+                <option>1 attempt</option>
+                <option selected>3 attempts (exponential backoff)</option>
+                <option>5 attempts (exponential backoff)</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="form-group">
+              <label class="form-label">Timeout</label>
+              <select class="form-input form-select">
+                <option>10 seconds</option>
+                <option selected>30 seconds</option>
+                <option>60 seconds</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline-custom" onclick="closeWebhookModal()">Cancel</button>
+        <button class="btn-outline-custom"><i class="fas fa-paper-plane"></i> Send Test Event</button>
+        <button class="btn-primary-custom"><i class="fas fa-check"></i> Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Dots dropdown
+    function toggleDots(el) {
+      document.querySelectorAll('.dots-dropdown.open').forEach(d => {
+        if (d !== el) d.classList.remove('open');
+      });
+      el.classList.toggle('open');
+    }
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.dots-dropdown')) {
+        document.querySelectorAll('.dots-dropdown.open').forEach(d => d.classList.remove('open'));
+      }
+    });
+
+    // Generate Key Modal
+    function openGenerateModal() {
+      document.getElementById('generateModal').classList.add('active');
+      document.getElementById('keyRevealBox').classList.remove('active');
+    }
+    function closeGenerateModal() {
+      document.getElementById('generateModal').classList.remove('active');
+    }
+    function generateKey() {
+      document.getElementById('keyRevealBox').classList.add('active');
+    }
+    function copyKey() {
+      const key = document.getElementById('generatedKey').textContent;
+      navigator.clipboard.writeText(key).then(() => {
+        const btn = event.target.closest('.btn-copy');
+        btn.innerHTML = '<i class="fas fa-check me-1"></i> Copied!';
+        setTimeout(() => { btn.innerHTML = '<i class="fas fa-copy me-1"></i> Copy'; }, 2000);
+      });
+    }
+
+    // Webhook Modal
+    function openWebhookModal() {
+      document.getElementById('webhookModal').classList.add('active');
+    }
+    function closeWebhookModal() {
+      document.getElementById('webhookModal').classList.remove('active');
+    }
+
+    // Usage toggle
+    function toggleUsage() {
+      const body = document.getElementById('usageBody');
+      const icon = document.getElementById('usageToggle');
+      if (body.style.display === 'none') {
+        body.style.display = 'block';
+        icon.style.transform = 'rotate(0deg)';
+      } else {
+        body.style.display = 'none';
+        icon.style.transform = 'rotate(-90deg)';
+      }
+    }
+  </script>
+
+</body>
+</html>

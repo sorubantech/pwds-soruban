@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grant Reports - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --grants-accent: #0369a1;
+      --grants-accent-bg: #e0f2fe;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons */
+    .btn-primary-accent {
+      background: var(--grants-accent);
+      border-color: var(--grants-accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--grants-accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #025e8c;
+      border-color: #025e8c;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--grants-accent);
+      color: var(--grants-accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--grants-accent);
+      color: white;
+    }
+
+    .action-btn {
+      background: none;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      padding: 0.25rem 0.625rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .action-btn:hover {
+      border-color: var(--grants-accent);
+      color: var(--grants-accent);
+    }
+
+    .btn-text {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+
+    .btn-text:hover {
+      color: var(--text-primary);
+    }
+
+    /* KPI Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1.25rem;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .stat-icon.blue { background: #e0f2fe; color: #0369a1; }
+    .stat-icon.amber { background: #fef3c7; color: #d97706; }
+    .stat-icon.red { background: #fee2e2; color: #dc2626; }
+    .stat-icon.green { background: #f0fdf4; color: #22c55e; }
+
+    .stat-info { flex: 1; }
+
+    .stat-value {
+      font-size: 1.625rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .stat-label {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .stat-sub {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    /* Cards */
+    .content-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .filter-bar select {
+      font-size: 0.8125rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      padding: 0.4rem 0.75rem;
+      color: var(--text-primary);
+      background: white;
+      cursor: pointer;
+      min-width: 140px;
+    }
+
+    .filter-bar select:focus {
+      outline: none;
+      border-color: var(--grants-accent);
+      box-shadow: 0 0 0 2px rgba(3, 105, 161, 0.1);
+    }
+
+    .filter-chips {
+      display: flex;
+      gap: 0.375rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-chip {
+      padding: 0.35rem 0.75rem;
+      border-radius: 2rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .filter-chip:hover {
+      border-color: var(--grants-accent);
+      color: var(--grants-accent);
+    }
+
+    .filter-chip.active {
+      background: var(--grants-accent);
+      border-color: var(--grants-accent);
+      color: white;
+    }
+
+    .btn-clear-filter {
+      background: none;
+      border: none;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0.35rem 0.5rem;
+      margin-left: auto;
+    }
+
+    .btn-clear-filter:hover {
+      color: var(--danger-color);
+    }
+
+    /* Table */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .data-table thead th {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      padding: 0.75rem 0.75rem;
+      border-bottom: 2px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    .data-table tbody td {
+      padding: 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.8125rem;
+      vertical-align: middle;
+    }
+
+    .data-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    .data-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .grant-link {
+      color: var(--grants-accent);
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .grant-link:hover {
+      text-decoration: underline;
+    }
+
+    .grant-sub {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      display: block;
+    }
+
+    /* Badges */
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.625rem;
+      border-radius: 2rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .badge-status.amber { background: #fef3c7; color: #92400e; }
+    .badge-status.green { background: #f0fdf4; color: #166534; }
+    .badge-status.blue { background: #e0f2fe; color: #0369a1; }
+    .badge-status.red { background: #fee2e2; color: #991b1b; }
+
+    .actions-cell {
+      display: flex;
+      gap: 0.375rem;
+      flex-wrap: wrap;
+    }
+
+    /* Overlay / Modal */
+    .editor-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #f1f5f9;
+      z-index: 1000;
+      overflow-y: auto;
+      padding: 1.5rem;
+    }
+
+    .editor-overlay.active {
+      display: block;
+    }
+
+    .editor-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .editor-header h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .editor-header .editor-meta {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .editor-section {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .editor-section h3 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      margin: 0 0 1rem 0;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .editor-section h3 i {
+      color: var(--grants-accent);
+      font-size: 0.875rem;
+    }
+
+    .form-label-sm {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-bottom: 0.375rem;
+    }
+
+    .form-control-sm-custom {
+      font-size: 0.8125rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      color: var(--text-primary);
+      width: 100%;
+      transition: border-color 0.15s;
+    }
+
+    .form-control-sm-custom:focus {
+      outline: none;
+      border-color: var(--grants-accent);
+      box-shadow: 0 0 0 2px rgba(3, 105, 161, 0.1);
+    }
+
+    .form-control-sm-custom[readonly] {
+      background: #f8fafc;
+      color: var(--text-secondary);
+    }
+
+    .rich-textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .rich-toolbar {
+      display: flex;
+      gap: 0.25rem;
+      padding: 0.5rem;
+      border: 1px solid var(--border-color);
+      border-bottom: none;
+      border-radius: 0.5rem 0.5rem 0 0;
+      background: #f8fafc;
+    }
+
+    .rich-toolbar button {
+      background: none;
+      border: none;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-radius: 0.25rem;
+    }
+
+    .rich-toolbar button:hover {
+      background: var(--border-color);
+      color: var(--text-primary);
+    }
+
+    .rich-textarea-wrap .form-control-sm-custom {
+      border-radius: 0 0 0.5rem 0.5rem;
+    }
+
+    /* Progress bars */
+    .progress-sm {
+      height: 6px;
+      border-radius: 3px;
+      background: #e2e8f0;
+      overflow: hidden;
+      min-width: 60px;
+    }
+
+    .progress-sm .bar {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.3s;
+    }
+
+    .progress-sm .bar.green { background: var(--success-color); }
+    .progress-sm .bar.amber { background: var(--warning-color); }
+    .progress-sm .bar.red { background: var(--danger-color); }
+
+    .progress-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      margin-top: 0.125rem;
+    }
+
+    /* Financial table */
+    .financial-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    .financial-table thead th {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      padding: 0.625rem 0.75rem;
+      border-bottom: 2px solid var(--border-color);
+      text-align: right;
+    }
+
+    .financial-table thead th:first-child {
+      text-align: left;
+    }
+
+    .financial-table tbody td {
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      text-align: right;
+    }
+
+    .financial-table tbody td:first-child {
+      text-align: left;
+      font-weight: 500;
+    }
+
+    .financial-table .total-row td {
+      font-weight: 700;
+      border-top: 2px solid var(--border-color);
+      border-bottom: none;
+    }
+
+    .variance-ok { color: var(--success-color); }
+    .variance-warn { color: var(--warning-color); }
+
+    /* Deliverable table */
+    .deliverable-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .deliverable-table thead th {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      padding: 0.625rem 0.5rem;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .deliverable-table tbody td {
+      padding: 0.625rem 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.8125rem;
+      vertical-align: top;
+    }
+
+    .deliverable-table textarea {
+      width: 100%;
+      font-size: 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      padding: 0.375rem 0.5rem;
+      resize: vertical;
+      min-height: 50px;
+      color: var(--text-primary);
+    }
+
+    .deliverable-table textarea:focus {
+      outline: none;
+      border-color: var(--grants-accent);
+    }
+
+    /* File Upload Area */
+    .file-upload-area {
+      border: 2px dashed var(--border-color);
+      border-radius: 0.75rem;
+      padding: 2rem;
+      text-align: center;
+      color: var(--text-secondary);
+      transition: border-color 0.15s, background 0.15s;
+      cursor: pointer;
+    }
+
+    .file-upload-area:hover {
+      border-color: var(--grants-accent);
+      background: var(--grants-accent-bg);
+    }
+
+    .file-upload-area i {
+      font-size: 2rem;
+      color: var(--grants-accent);
+      margin-bottom: 0.5rem;
+    }
+
+    .file-upload-area p {
+      font-size: 0.8125rem;
+      margin: 0;
+    }
+
+    .attached-file {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.625rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      margin-top: 0.5rem;
+      font-size: 0.8125rem;
+    }
+
+    .attached-file i {
+      color: var(--grants-accent);
+    }
+
+    .attached-file .file-name {
+      flex: 1;
+      font-weight: 500;
+    }
+
+    .attached-file .file-size {
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+    }
+
+    .attached-file .remove-file {
+      color: var(--text-secondary);
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-size: 0.75rem;
+    }
+
+    .attached-file .remove-file:hover {
+      color: var(--danger-color);
+    }
+
+    /* Sticky Footer */
+    .editor-footer {
+      position: sticky;
+      bottom: 0;
+      background: white;
+      border-top: 1px solid var(--border-color);
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      justify-content: flex-end;
+      margin: 0 -1.5rem -1.5rem -1.5rem;
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
+      z-index: 10;
+      flex-wrap: wrap;
+    }
+
+    /* Report View Overlay */
+    .report-view-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #f1f5f9;
+      z-index: 1000;
+      overflow-y: auto;
+      padding: 1.5rem;
+    }
+
+    .report-view-overlay.active {
+      display: block;
+    }
+
+    .report-view-content {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      padding: 2rem;
+    }
+
+    .report-view-content h2 {
+      font-size: 1.375rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .report-view-content h4 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--grants-accent);
+      color: var(--grants-accent);
+    }
+
+    .report-view-content p {
+      font-size: 0.875rem;
+      line-height: 1.7;
+      color: var(--text-primary);
+    }
+
+    .report-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: #f8fafc;
+      border-radius: 0.5rem;
+    }
+
+    .report-meta-item label {
+      display: block;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      margin-bottom: 0.125rem;
+    }
+
+    .report-meta-item span {
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .view-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+
+      .page-header { flex-direction: column; align-items: flex-start; }
+
+      .filter-bar { flex-direction: column; align-items: stretch; }
+
+      .data-table { display: block; overflow-x: auto; }
+
+      .editor-footer { flex-direction: column; }
+
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-file-alt" style="color: var(--grants-accent); margin-right: 0.5rem;"></i>Grant Reports</h1>
+      <p class="subtitle">Prepare and submit funder progress reports</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="showEditor()"><i class="fas fa-plus me-1"></i> New Report</button>
+      <button class="btn-outline-accent"><i class="fas fa-download me-1"></i> Export All</button>
+    </div>
+  </div>
+
+  <!-- KPI Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="fas fa-file-alt"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">12</div>
+        <div class="stat-label">Total Reports</div>
+        <div class="stat-sub">4 pending this quarter</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon amber"><i class="fas fa-clock"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">2</div>
+        <div class="stat-label">Overdue</div>
+        <div class="stat-sub">Requires immediate attention</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">8</div>
+        <div class="stat-label">Accepted</div>
+        <div class="stat-sub">All requirements met</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon red"><i class="fas fa-exclamation-triangle"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">1</div>
+        <div class="stat-label">Revision Requested</div>
+        <div class="stat-sub">DFID Q4 2025 narrative</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Bar + Table Card -->
+  <div class="content-card">
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <select>
+        <option>All Grants</option>
+        <option>GRT-012 — Gates (Water)</option>
+        <option>GRT-011 — UNICEF (Education)</option>
+        <option>GRT-010 — DFID (Healthcare)</option>
+      </select>
+
+      <div class="filter-chips">
+        <span class="filter-chip active" onclick="toggleChip(this)">All</span>
+        <span class="filter-chip" onclick="toggleChip(this)">Quarterly</span>
+        <span class="filter-chip" onclick="toggleChip(this)">Annual</span>
+        <span class="filter-chip" onclick="toggleChip(this)">Final</span>
+        <span class="filter-chip" onclick="toggleChip(this)">Financial</span>
+        <span class="filter-chip" onclick="toggleChip(this)">Audit</span>
+      </div>
+
+      <select>
+        <option>All Statuses</option>
+        <option>Draft</option>
+        <option>Submitted</option>
+        <option>Accepted</option>
+        <option>Revision Requested</option>
+      </select>
+
+      <select>
+        <option>All Dates</option>
+        <option>Overdue</option>
+        <option>Due This Month</option>
+        <option>Due Next 30 Days</option>
+      </select>
+
+      <button class="btn-clear-filter"><i class="fas fa-times me-1"></i>Clear Filters</button>
+    </div>
+
+    <!-- Reports Table -->
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Grant</th>
+            <th>Report</th>
+            <th>Type</th>
+            <th>Due Date</th>
+            <th>Submitted</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <a class="grant-link" onclick="parent.loadContent('grants/grant-detail')">GRT-012</a>
+              <span class="grant-sub">Gates - Water</span>
+            </td>
+            <td>Q1 2026 Progress</td>
+            <td>Quarterly</td>
+            <td>Apr 30, 2026</td>
+            <td style="color: var(--text-secondary);">&mdash;</td>
+            <td><span class="badge-status amber"><i class="fas fa-clock"></i> Due in 18 days</span></td>
+            <td>
+              <div class="actions-cell">
+                <button class="action-btn" onclick="showEditor()"><i class="fas fa-pen me-1"></i>Create</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <a class="grant-link" onclick="parent.loadContent('grants/grant-detail')">GRT-011</a>
+              <span class="grant-sub">UNICEF - Education</span>
+            </td>
+            <td>Q1 2026 Progress</td>
+            <td>Quarterly</td>
+            <td>Apr 30, 2026</td>
+            <td style="color: var(--text-secondary);">&mdash;</td>
+            <td><span class="badge-status amber"><i class="fas fa-clock"></i> Due in 18 days</span></td>
+            <td>
+              <div class="actions-cell">
+                <button class="action-btn" onclick="showEditor()"><i class="fas fa-pen me-1"></i>Create</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <a class="grant-link" onclick="parent.loadContent('grants/grant-detail')">GRT-010</a>
+              <span class="grant-sub">DFID - Healthcare</span>
+            </td>
+            <td>Final Report</td>
+            <td>Final</td>
+            <td>Apr 30, 2026</td>
+            <td style="font-size: 0.8125rem;">Draft</td>
+            <td><span class="badge-status blue"><i class="fas fa-edit"></i> Draft</span></td>
+            <td>
+              <div class="actions-cell">
+                <button class="action-btn" onclick="showEditor()"><i class="fas fa-pen me-1"></i>Edit</button>
+                <button class="action-btn" onclick="showEditor()"><i class="fas fa-paper-plane me-1"></i>Submit</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <a class="grant-link" onclick="parent.loadContent('grants/grant-detail')">GRT-012</a>
+              <span class="grant-sub">Gates - Water</span>
+            </td>
+            <td>Financial Q4 2025</td>
+            <td>Financial</td>
+            <td>Jan 31, 2026</td>
+            <td>Jan 28, 2026</td>
+            <td><span class="badge-status green"><i class="fas fa-check-circle"></i> Accepted</span></td>
+            <td>
+              <div class="actions-cell">
+                <button class="action-btn" onclick="showReportView()"><i class="fas fa-eye me-1"></i>View</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <a class="grant-link" onclick="parent.loadContent('grants/grant-detail')">GRT-012</a>
+              <span class="grant-sub">Gates - Water</span>
+            </td>
+            <td>Annual 2025</td>
+            <td>Annual</td>
+            <td>Feb 28, 2026</td>
+            <td>Feb 25, 2026</td>
+            <td><span class="badge-status green"><i class="fas fa-check-circle"></i> Accepted</span></td>
+            <td>
+              <div class="actions-cell">
+                <button class="action-btn" onclick="showReportView()"><i class="fas fa-eye me-1"></i>View</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <a class="grant-link" onclick="parent.loadContent('grants/grant-detail')">GRT-010</a>
+              <span class="grant-sub">DFID - Healthcare</span>
+            </td>
+            <td>Q4 2025 Narrative</td>
+            <td>Quarterly</td>
+            <td>Jan 31, 2026</td>
+            <td>Jan 15, 2026</td>
+            <td><span class="badge-status red"><i class="fas fa-exclamation-circle"></i> Revision Requested</span></td>
+            <td>
+              <div class="actions-cell">
+                <button class="action-btn" onclick="showEditor()"><i class="fas fa-pen me-1"></i>Edit</button>
+                <button class="action-btn" onclick="showReportView()"><i class="fas fa-comment-dots me-1"></i>View Feedback</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== Report Editor Overlay ===== -->
+  <div class="editor-overlay" id="editorOverlay">
+    <div class="editor-header">
+      <div>
+        <h2><i class="fas fa-file-alt" style="color: var(--grants-accent); margin-right: 0.5rem;"></i>Report: Q1 2026 Progress Report</h2>
+        <span class="editor-meta">GRT-012 (Gates - Clean Water)</span>
+      </div>
+      <button class="btn-outline-accent" onclick="hideEditor()"><i class="fas fa-times me-1"></i>Close</button>
+    </div>
+
+    <!-- Section 1: Report Info -->
+    <div class="editor-section">
+      <h3><i class="fas fa-info-circle"></i> Report Info</h3>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label-sm">Grant</label>
+          <input type="text" class="form-control-sm-custom" value="GRT-012 — Clean Water Initiative" readonly>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label-sm">Report Title</label>
+          <input type="text" class="form-control-sm-custom" value="Q1 2026 Progress Report">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label-sm">Report Type</label>
+          <input type="text" class="form-control-sm-custom" value="Quarterly" readonly>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label-sm">Reporting Period</label>
+          <input type="text" class="form-control-sm-custom" value="Jan 1 – Mar 31, 2026">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label-sm">Due Date</label>
+          <input type="text" class="form-control-sm-custom" value="Apr 30, 2026" readonly>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Executive Summary -->
+    <div class="editor-section">
+      <h3><i class="fas fa-align-left"></i> Executive Summary</h3>
+      <div class="rich-textarea-wrap">
+        <div class="rich-toolbar">
+          <button title="Bold"><i class="fas fa-bold"></i></button>
+          <button title="Italic"><i class="fas fa-italic"></i></button>
+          <button title="Underline"><i class="fas fa-underline"></i></button>
+          <button title="Bullet List"><i class="fas fa-list-ul"></i></button>
+          <button title="Numbered List"><i class="fas fa-list-ol"></i></button>
+          <button title="Link"><i class="fas fa-link"></i></button>
+        </div>
+        <textarea class="form-control-sm-custom rich-textarea" placeholder="Provide a high-level overview of progress during this reporting period."></textarea>
+      </div>
+    </div>
+
+    <!-- Section 3: Deliverable Progress -->
+    <div class="editor-section">
+      <h3><i class="fas fa-tasks"></i> Deliverable Progress</h3>
+      <div style="overflow-x: auto;">
+        <table class="deliverable-table">
+          <thead>
+            <tr>
+              <th style="min-width: 140px;">Deliverable</th>
+              <th style="text-align: center;">Target</th>
+              <th style="text-align: center;">Previous</th>
+              <th style="text-align: center;">Current</th>
+              <th style="min-width: 100px;">Progress</th>
+              <th style="min-width: 200px;">Narrative</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-weight: 500;">Wells constructed</td>
+              <td style="text-align: center;">50</td>
+              <td style="text-align: center;">25</td>
+              <td style="text-align: center;">32</td>
+              <td>
+                <div class="progress-sm"><div class="bar green" style="width: 64%;"></div></div>
+                <div class="progress-label" style="color: var(--success-color);">64%</div>
+              </td>
+              <td><textarea>7 wells completed in Q1...</textarea></td>
+            </tr>
+            <tr>
+              <td style="font-weight: 500;">Communities served</td>
+              <td style="text-align: center;">50</td>
+              <td style="text-align: center;">20</td>
+              <td style="text-align: center;">28</td>
+              <td>
+                <div class="progress-sm"><div class="bar green" style="width: 56%;"></div></div>
+                <div class="progress-label" style="color: var(--warning-color);">56%</div>
+              </td>
+              <td><textarea>8 new communities onboarded...</textarea></td>
+            </tr>
+            <tr>
+              <td style="font-weight: 500;">Water quality tests</td>
+              <td style="text-align: center;">200</td>
+              <td style="text-align: center;">110</td>
+              <td style="text-align: center;">145</td>
+              <td>
+                <div class="progress-sm"><div class="bar green" style="width: 73%;"></div></div>
+                <div class="progress-label" style="color: var(--success-color);">73%</div>
+              </td>
+              <td><textarea>35 tests conducted...</textarea></td>
+            </tr>
+            <tr>
+              <td style="font-weight: 500;">Training sessions</td>
+              <td style="text-align: center;">100</td>
+              <td style="text-align: center;">35</td>
+              <td style="text-align: center;">52</td>
+              <td>
+                <div class="progress-sm"><div class="bar amber" style="width: 52%;"></div></div>
+                <div class="progress-label" style="color: var(--warning-color);">52%</div>
+              </td>
+              <td><textarea>17 sessions in 3 countries...</textarea></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Section 4: Financial Summary -->
+    <div class="editor-section">
+      <h3><i class="fas fa-dollar-sign"></i> Financial Summary</h3>
+      <div style="overflow-x: auto;">
+        <table class="financial-table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Budget</th>
+              <th>Spent (Cumulative)</th>
+              <th>Spent (This Quarter)</th>
+              <th>Remaining</th>
+              <th>Variance</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Construction</td>
+              <td>$250,000</td>
+              <td>$178,000</td>
+              <td>$43,000</td>
+              <td>$72,000</td>
+              <td class="variance-ok"><i class="fas fa-check-circle"></i></td>
+            </tr>
+            <tr>
+              <td>Staff</td>
+              <td>$100,000</td>
+              <td>$68,000</td>
+              <td>$18,000</td>
+              <td>$32,000</td>
+              <td class="variance-ok"><i class="fas fa-check-circle"></i></td>
+            </tr>
+            <tr>
+              <td>Training</td>
+              <td>$50,000</td>
+              <td>$28,000</td>
+              <td>$8,000</td>
+              <td>$22,000</td>
+              <td class="variance-ok"><i class="fas fa-check-circle"></i></td>
+            </tr>
+            <tr>
+              <td>M&amp;E</td>
+              <td>$40,000</td>
+              <td>$22,000</td>
+              <td>$6,000</td>
+              <td>$18,000</td>
+              <td class="variance-ok"><i class="fas fa-check-circle"></i></td>
+            </tr>
+            <tr>
+              <td>Travel</td>
+              <td>$30,000</td>
+              <td>$18,000</td>
+              <td>$5,000</td>
+              <td>$12,000</td>
+              <td class="variance-ok"><i class="fas fa-check-circle"></i></td>
+            </tr>
+            <tr>
+              <td>Admin</td>
+              <td>$30,000</td>
+              <td>$11,000</td>
+              <td>$3,000</td>
+              <td>$19,000</td>
+              <td class="variance-ok"><i class="fas fa-check-circle"></i></td>
+            </tr>
+            <tr class="total-row">
+              <td>Total</td>
+              <td>$500,000</td>
+              <td>$325,000</td>
+              <td>$83,000</td>
+              <td>$175,000</td>
+              <td class="variance-ok"><i class="fas fa-check-circle"></i></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top: 1rem;">
+        <button class="btn-outline-accent"><i class="fas fa-paperclip me-1"></i> Attach Financial Statements</button>
+      </div>
+    </div>
+
+    <!-- Section 5: Challenges & Risks -->
+    <div class="editor-section">
+      <h3><i class="fas fa-exclamation-triangle"></i> Challenges &amp; Risks</h3>
+      <div class="rich-textarea-wrap">
+        <div class="rich-toolbar">
+          <button title="Bold"><i class="fas fa-bold"></i></button>
+          <button title="Italic"><i class="fas fa-italic"></i></button>
+          <button title="Bullet List"><i class="fas fa-list-ul"></i></button>
+        </div>
+        <textarea class="form-control-sm-custom rich-textarea" placeholder="Describe any challenges, risks, or delays encountered."></textarea>
+      </div>
+    </div>
+
+    <!-- Section 6: Impact Stories -->
+    <div class="editor-section">
+      <h3><i class="fas fa-heart"></i> Impact Stories</h3>
+      <div class="rich-textarea-wrap">
+        <div class="rich-toolbar">
+          <button title="Bold"><i class="fas fa-bold"></i></button>
+          <button title="Italic"><i class="fas fa-italic"></i></button>
+          <button title="Bullet List"><i class="fas fa-list-ul"></i></button>
+        </div>
+        <textarea class="form-control-sm-custom rich-textarea" placeholder="Share 1-2 stories of impact from this period."></textarea>
+      </div>
+      <div style="margin-top: 0.75rem;">
+        <button class="btn-outline-accent"><i class="fas fa-camera me-1"></i> Add Story with Photo</button>
+      </div>
+    </div>
+
+    <!-- Section 7: Attachments -->
+    <div class="editor-section">
+      <h3><i class="fas fa-paperclip"></i> Attachments</h3>
+      <div class="file-upload-area">
+        <i class="fas fa-cloud-upload-alt d-block"></i>
+        <p>Drag and drop files here, or click to browse</p>
+        <p style="font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.25rem;">PDF, DOCX, XLSX, JPG, PNG up to 25 MB</p>
+      </div>
+      <div style="margin-top: 0.75rem;">
+        <button class="btn-outline-accent"><i class="fas fa-plus me-1"></i> Upload Attachment</button>
+      </div>
+      <!-- Mock attached files -->
+      <div class="attached-file">
+        <i class="fas fa-file-pdf"></i>
+        <span class="file-name">Q1_2026_Supporting_Documents.pdf</span>
+        <span class="file-size">2.4 MB</span>
+        <button class="remove-file"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="attached-file">
+        <i class="fas fa-file-excel"></i>
+        <span class="file-name">Financial_Breakdown_Q1_2026.xlsx</span>
+        <span class="file-size">845 KB</span>
+        <button class="remove-file"><i class="fas fa-times"></i></button>
+      </div>
+    </div>
+
+    <!-- Editor Sticky Footer -->
+    <div class="editor-footer">
+      <button class="btn-text" onclick="hideEditor()">Cancel</button>
+      <button class="btn-outline-accent"><i class="fas fa-file-pdf me-1"></i> Preview as PDF</button>
+      <button class="btn-outline-accent"><i class="fas fa-save me-1"></i> Save Draft</button>
+      <button class="btn-primary-accent"><i class="fas fa-paper-plane me-1"></i> Submit to Funder</button>
+    </div>
+  </div>
+
+  <!-- ===== Submitted Report View Overlay ===== -->
+  <div class="report-view-overlay" id="reportViewOverlay">
+    <div style="max-width: 900px; margin: 0 auto;">
+      <div class="view-actions">
+        <button class="btn-primary-accent" onclick="hideReportView()"><i class="fas fa-times me-1"></i> Close</button>
+        <button class="btn-outline-accent"><i class="fas fa-file-pdf me-1"></i> Download PDF</button>
+        <button class="btn-outline-accent"><i class="fas fa-edit me-1"></i> Re-open for Editing</button>
+      </div>
+
+      <div class="report-view-content">
+        <h2>Financial Q4 2025 Report</h2>
+        <p style="color: var(--text-secondary); font-size: 0.8125rem; margin-bottom: 1.25rem;">GRT-012 — Gates Foundation, Clean Water Initiative</p>
+
+        <div class="report-meta-grid">
+          <div class="report-meta-item">
+            <label>Report Type</label>
+            <span>Financial</span>
+          </div>
+          <div class="report-meta-item">
+            <label>Reporting Period</label>
+            <span>Oct 1 – Dec 31, 2025</span>
+          </div>
+          <div class="report-meta-item">
+            <label>Due Date</label>
+            <span>Jan 31, 2026</span>
+          </div>
+          <div class="report-meta-item">
+            <label>Submitted</label>
+            <span>Jan 28, 2026</span>
+          </div>
+          <div class="report-meta-item">
+            <label>Status</label>
+            <span style="color: var(--success-color); font-weight: 600;">Accepted</span>
+          </div>
+          <div class="report-meta-item">
+            <label>Accepted On</label>
+            <span>Feb 3, 2026</span>
+          </div>
+        </div>
+
+        <h4>Executive Summary</h4>
+        <p>The Q4 2025 financial report covers expenditures from October through December 2025. During this period, the Clean Water Initiative continued to make strong progress toward its targets. Total expenditures for the quarter were $83,000, bringing cumulative spending to $325,000 (65% of the total $500,000 budget). All spending categories remain within their allocated budgets with no significant variances to report.</p>
+
+        <h4>Financial Summary</h4>
+        <div style="overflow-x: auto;">
+          <table class="financial-table">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Budget</th>
+                <th>Spent (Cumulative)</th>
+                <th>Spent (Q4 2025)</th>
+                <th>Remaining</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Construction</td><td>$250,000</td><td>$178,000</td><td>$43,000</td><td>$72,000</td></tr>
+              <tr><td>Staff</td><td>$100,000</td><td>$68,000</td><td>$18,000</td><td>$32,000</td></tr>
+              <tr><td>Training</td><td>$50,000</td><td>$28,000</td><td>$8,000</td><td>$22,000</td></tr>
+              <tr><td>M&amp;E</td><td>$40,000</td><td>$22,000</td><td>$6,000</td><td>$18,000</td></tr>
+              <tr><td>Travel</td><td>$30,000</td><td>$18,000</td><td>$5,000</td><td>$12,000</td></tr>
+              <tr><td>Admin</td><td>$30,000</td><td>$11,000</td><td>$3,000</td><td>$19,000</td></tr>
+              <tr class="total-row"><td>Total</td><td>$500,000</td><td>$325,000</td><td>$83,000</td><td>$175,000</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h4>Deliverable Progress</h4>
+        <p>32 of 50 wells have been constructed (64%). 28 of 50 target communities are now being served (56%). Water quality testing is on track at 145 of 200 planned tests (73%). 52 of 100 training sessions have been completed (52%).</p>
+
+        <h4>Challenges &amp; Risks</h4>
+        <p>Supply chain delays in the East Africa region caused a two-week setback in Q4 construction timelines. The team has secured alternative suppliers and expects to recover lost time in Q1 2026. Currency fluctuations in local markets created a 3% variance in travel costs, which was absorbed within the existing contingency allocation.</p>
+
+        <h4>Impact Stories</h4>
+        <p>In the Makueni community, the newly constructed well now serves over 1,200 residents who previously walked 4 km to access clean water. Community leader Mary Mwikali shared: "Our children no longer miss school because of waterborne illnesses. This well has transformed our village." The community has formed a water management committee of 12 members who maintain the well and collect modest user fees to ensure long-term sustainability.</p>
+
+        <h4>Attachments</h4>
+        <div class="attached-file" style="margin-top: 0;">
+          <i class="fas fa-file-pdf"></i>
+          <span class="file-name">Q4_2025_Financial_Statements_Audited.pdf</span>
+          <span class="file-size">3.1 MB</span>
+        </div>
+        <div class="attached-file">
+          <i class="fas fa-file-excel"></i>
+          <span class="file-name">Q4_2025_Budget_vs_Actuals.xlsx</span>
+          <span class="file-size">1.2 MB</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Editor overlay
+    function showEditor() {
+      document.getElementById('editorOverlay').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function hideEditor() {
+      document.getElementById('editorOverlay').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    // Report view overlay
+    function showReportView() {
+      document.getElementById('reportViewOverlay').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function hideReportView() {
+      document.getElementById('reportViewOverlay').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    // Filter chip toggle
+    function toggleChip(el) {
+      var chips = el.parentElement.querySelectorAll('.filter-chip');
+      var isAll = el.textContent.trim() === 'All';
+
+      if (isAll) {
+        chips.forEach(function (c) { c.classList.remove('active'); });
+        el.classList.add('active');
+      } else {
+        // Deactivate 'All' chip
+        chips[0].classList.remove('active');
+        el.classList.toggle('active');
+
+        // If none active, reactivate 'All'
+        var anyActive = Array.from(chips).some(function (c, i) {
+          return i > 0 && c.classList.contains('active');
+        });
+        if (!anyActive) {
+          chips[0].classList.add('active');
+        }
+      }
+    }
+
+    // Close overlays with Escape key
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        hideEditor();
+        hideReportView();
+      }
+    });
+  </script>
+
+</body>
+
+</html>

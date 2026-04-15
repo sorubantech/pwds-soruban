@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tasks & Notifications - Mobile App</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --field-accent: #059669;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a1a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .phone-frame {
+      width: 375px;
+      height: 812px;
+      background: #ffffff;
+      border-radius: 44px;
+      overflow: hidden;
+      box-shadow: 0 0 0 12px #2d2d2d, 0 0 0 14px #1a1a1a, 0 20px 60px rgba(0,0,0,0.5);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .phone-notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 28px;
+      background: #000;
+      border-radius: 0 0 18px 18px;
+      z-index: 10;
+    }
+
+    .status-bar {
+      background: #000;
+      color: #fff;
+      padding: 8px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 600;
+      height: 48px;
+    }
+
+    .status-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+    }
+
+    /* Screen Header */
+    .screen-header {
+      background: linear-gradient(135deg, #065f46, #059669);
+      color: white;
+      padding: 12px 20px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .screen-header-title {
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .header-btn {
+      width: 34px;
+      height: 34px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .header-btn-badge {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 16px;
+      height: 16px;
+      background: var(--danger-color);
+      border-radius: 50%;
+      font-size: 9px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #059669;
+    }
+
+    /* Content */
+    .phone-content {
+      flex: 1;
+      overflow-y: auto;
+      background: #f8fafc;
+      padding-bottom: 80px;
+    }
+
+    .phone-content::-webkit-scrollbar { width: 0; }
+
+    /* Tab Switcher */
+    .tab-switcher {
+      display: flex;
+      background: white;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+    }
+
+    .tab-btn.active {
+      color: var(--field-accent);
+      border-bottom-color: var(--field-accent);
+    }
+
+    /* Views */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* Section Header */
+    .section-header {
+      padding: 14px 16px 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    /* Task Card */
+    .task-card {
+      background: white;
+      margin: 0 16px 10px;
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      border: 1px solid #f1f5f9;
+    }
+
+    .task-card-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .task-priority {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+
+    .task-priority.high { background: var(--danger-color); }
+    .task-priority.medium { background: #f97316; }
+    .task-priority.low { background: var(--warning-color); }
+
+    .task-info { flex: 1; }
+
+    .task-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .task-detail {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+      line-height: 1.3;
+    }
+
+    .task-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .task-action-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .task-action-btn:active {
+      border-color: var(--field-accent);
+      background: #ecfdf5;
+    }
+
+    .task-action-btn.complete {
+      background: linear-gradient(135deg, #065f46, #059669);
+      color: white;
+      border-color: transparent;
+    }
+
+    .task-action-btn.complete:active {
+      transform: scale(0.97);
+    }
+
+    /* Completed Tasks */
+    .completed-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+    }
+
+    .completed-check {
+      width: 20px;
+      height: 20px;
+      background: #f0fdf4;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--success-color);
+      font-size: 10px;
+      flex-shrink: 0;
+    }
+
+    .completed-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+      text-decoration: line-through;
+    }
+
+    /* Route Planner */
+    .route-card {
+      margin: 8px 16px 16px;
+      background: white;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      border: 1px solid #f1f5f9;
+    }
+
+    .route-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+    }
+
+    .route-stop {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid #f8fafc;
+    }
+
+    .route-stop:last-of-type { border-bottom: none; }
+
+    .route-number {
+      width: 26px;
+      height: 26px;
+      background: #ecfdf5;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--field-accent);
+      flex-shrink: 0;
+    }
+
+    .route-stop-info { flex: 1; }
+
+    .route-stop-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .route-stop-dist {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .route-maps-btn {
+      width: 100%;
+      padding: 12px;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .route-maps-btn i { color: var(--field-accent); }
+    .route-maps-btn:active { background: #f8fafc; }
+
+    /* Notifications View */
+    .notif-date {
+      padding: 14px 16px 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .notif-item {
+      background: white;
+      margin: 0 16px 6px;
+      border-radius: 12px;
+      padding: 12px 14px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      border: 1px solid #f1f5f9;
+    }
+
+    .notif-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .notif-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .notif-content { flex: 1; }
+
+    .notif-text {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .notif-sub {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .notif-time {
+      font-size: 11px;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+
+    .notif-action-link {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--field-accent);
+      margin-top: 6px;
+      cursor: pointer;
+    }
+
+    /* Profile View */
+    .profile-card {
+      margin: 16px;
+      background: white;
+      border-radius: 16px;
+      padding: 24px 18px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      border: 1px solid #f1f5f9;
+    }
+
+    .profile-avatar {
+      width: 64px;
+      height: 64px;
+      background: #ecfdf5;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--field-accent);
+      font-size: 26px;
+      margin-bottom: 12px;
+    }
+
+    .profile-name {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .profile-role {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .profile-branch {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* Profile Stats */
+    .profile-stats {
+      margin: 0 16px 14px;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      border: 1px solid #f1f5f9;
+    }
+
+    .profile-stats-header {
+      padding: 12px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .profile-stat-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-bottom: 1px solid #f8fafc;
+    }
+
+    .profile-stat-row:last-child { border-bottom: none; }
+
+    .profile-stat-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .profile-stat-value {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .profile-stat-value.accent { color: var(--field-accent); }
+
+    /* Settings */
+    .settings-card {
+      margin: 0 16px 14px;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      border: 1px solid #f1f5f9;
+    }
+
+    .settings-header {
+      padding: 12px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .setting-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border-bottom: 1px solid #f8fafc;
+      cursor: pointer;
+    }
+
+    .setting-item:last-child { border-bottom: none; }
+
+    .setting-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .setting-icon {
+      font-size: 16px;
+    }
+
+    .setting-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .setting-value {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      width: 44px;
+      height: 24px;
+      background: #d1d5db;
+      border-radius: 100px;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .toggle-switch.on { background: var(--field-accent); }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    .toggle-switch.on::after { transform: translateX(20px); }
+
+    /* Logout */
+    .logout-btn {
+      margin: 4px 16px 20px;
+      padding: 14px;
+      background: white;
+      border: 1px solid #fecaca;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--danger-color);
+      cursor: pointer;
+      text-align: center;
+      width: calc(100% - 32px);
+    }
+
+    .logout-btn:active { background: #fef2f2; }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 80px;
+      background: white;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-around;
+      padding-top: 8px;
+      z-index: 5;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      padding: 4px 8px;
+      min-width: 52px;
+    }
+
+    .nav-item i { font-size: 18px; color: var(--text-secondary); }
+    .nav-item span { font-size: 10px; font-weight: 600; color: var(--text-secondary); }
+    .nav-item.active i { color: var(--field-accent); }
+    .nav-item.active span { color: var(--field-accent); }
+
+    .nav-scan-btn {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #065f46, #059669);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 18px;
+      margin-top: -18px;
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+      cursor: pointer;
+    }
+
+    .home-indicator {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 134px;
+      height: 5px;
+      background: #d1d5db;
+      border-radius: 100px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <span>2:30</span>
+      <div class="status-bar-right">
+        <i class="fas fa-signal" style="font-size: 11px;"></i>
+        <i class="fas fa-wifi" style="font-size: 11px;"></i>
+        <i class="fas fa-battery-full" style="font-size: 13px;"></i>
+      </div>
+    </div>
+
+    <!-- Screen Header -->
+    <div class="screen-header">
+      <div class="screen-header-title">Tasks</div>
+      <div class="header-actions">
+        <div class="header-btn" onclick="switchTab('notifications')">
+          <i class="fas fa-bell"></i>
+          <div class="header-btn-badge">3</div>
+        </div>
+        <div class="header-btn" onclick="switchTab('profile')">
+          <i class="fas fa-cog"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Switcher -->
+    <div class="tab-switcher">
+      <div class="tab-btn active" onclick="switchTab('tasks')">Tasks</div>
+      <div class="tab-btn" onclick="switchTab('notifications')">Notifications</div>
+      <div class="tab-btn" onclick="switchTab('profile')">Profile</div>
+    </div>
+
+    <!-- Content -->
+    <div class="phone-content">
+
+      <!-- Tasks View -->
+      <div class="view active" id="tasksView">
+
+        <div class="section-header">Today's Tasks (3 remaining)</div>
+
+        <div class="task-card">
+          <div class="task-card-top">
+            <div class="task-priority high"></div>
+            <div class="task-info">
+              <div class="task-title">Visit Ali Rashid</div>
+              <div class="task-detail">Last collection: 75 days ago<br>Deira — AED 200 expected</div>
+            </div>
+          </div>
+          <div class="task-actions">
+            <div class="task-action-btn"><i class="fas fa-location-arrow"></i> Navigate</div>
+            <div class="task-action-btn complete"><i class="fas fa-check"></i> Complete</div>
+          </div>
+        </div>
+
+        <div class="task-card">
+          <div class="task-card-top">
+            <div class="task-priority medium"></div>
+            <div class="task-info">
+              <div class="task-title">Follow up: Pending cheque</div>
+              <div class="task-detail">Ahmad Nasser — AED 1,000<br>Cheque clearance due today</div>
+            </div>
+          </div>
+          <div class="task-actions">
+            <div class="task-action-btn"><i class="fas fa-phone"></i> Call</div>
+            <div class="task-action-btn complete"><i class="fas fa-check"></i> Complete</div>
+          </div>
+        </div>
+
+        <div class="task-card">
+          <div class="task-card-top">
+            <div class="task-priority low"></div>
+            <div class="task-info">
+              <div class="task-title">Deliver receipt to Fatima</div>
+              <div class="task-detail">Bur Dubai — printed receipt</div>
+            </div>
+          </div>
+          <div class="task-actions">
+            <div class="task-action-btn"><i class="fas fa-location-arrow"></i> Navigate</div>
+            <div class="task-action-btn complete"><i class="fas fa-check"></i> Complete</div>
+          </div>
+        </div>
+
+        <!-- Completed Today -->
+        <div class="section-header">Completed Today (5)</div>
+
+        <div class="completed-item">
+          <div class="completed-check"><i class="fas fa-check"></i></div>
+          <div class="completed-text">Collected AED 500 — Khalid</div>
+        </div>
+        <div class="completed-item">
+          <div class="completed-check"><i class="fas fa-check"></i></div>
+          <div class="completed-text">Collected AED 200 — Fatima</div>
+        </div>
+        <div class="completed-item">
+          <div class="completed-check"><i class="fas fa-check"></i></div>
+          <div class="completed-text">Collected AED 1,000 — Ahmad</div>
+        </div>
+        <div class="completed-item">
+          <div class="completed-check"><i class="fas fa-check"></i></div>
+          <div class="completed-text">Collected AED 300 — Mohamed</div>
+        </div>
+        <div class="completed-item">
+          <div class="completed-check"><i class="fas fa-check"></i></div>
+          <div class="completed-text">Collected AED 300 — Sarah</div>
+        </div>
+
+        <!-- Route Planner -->
+        <div class="section-header">Route Planner</div>
+        <div class="route-card">
+          <div class="route-title">📍 Optimized Route (3 stops)</div>
+
+          <div class="route-stop">
+            <div class="route-number">1</div>
+            <div class="route-stop-info">
+              <div class="route-stop-name">Ali Rashid — Deira</div>
+              <div class="route-stop-dist">2.1 km from current location</div>
+            </div>
+          </div>
+
+          <div class="route-stop">
+            <div class="route-number">2</div>
+            <div class="route-stop-info">
+              <div class="route-stop-name">Fatima Begum — Deira</div>
+              <div class="route-stop-dist">0.5 km from stop 1</div>
+            </div>
+          </div>
+
+          <div class="route-stop">
+            <div class="route-number">3</div>
+            <div class="route-stop-info">
+              <div class="route-stop-name">Hassan Omar — Bur Dubai</div>
+              <div class="route-stop-dist">3 km from stop 2</div>
+            </div>
+          </div>
+
+          <div class="route-maps-btn">
+            <i class="fas fa-map-marked-alt"></i> Open in Google Maps
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Notifications View -->
+      <div class="view" id="notificationsView">
+
+        <div class="notif-date">Today</div>
+
+        <div class="notif-item">
+          <div class="notif-top">
+            <div class="notif-icon">🟢</div>
+            <div class="notif-content">
+              <div class="notif-text">Collection synced: REC-4547</div>
+              <div class="notif-sub">AED 500 — Khalid</div>
+            </div>
+            <div class="notif-time">2:16 PM</div>
+          </div>
+        </div>
+
+        <div class="notif-item">
+          <div class="notif-top">
+            <div class="notif-icon">🟢</div>
+            <div class="notif-content">
+              <div class="notif-text">Cheque cleared: REC-4545</div>
+              <div class="notif-sub">AED 1,000 — Ahmad Nasser</div>
+            </div>
+            <div class="notif-time">11:30 AM</div>
+          </div>
+        </div>
+
+        <div class="notif-item">
+          <div class="notif-top">
+            <div class="notif-icon">⚠️</div>
+            <div class="notif-content">
+              <div class="notif-text">Receipt book RB-045</div>
+              <div class="notif-sub">54 remaining (46% used)</div>
+              <div class="notif-action-link">Request New Book</div>
+            </div>
+            <div class="notif-time">9:00 AM</div>
+          </div>
+        </div>
+
+        <div class="notif-date">Yesterday</div>
+
+        <div class="notif-item">
+          <div class="notif-top">
+            <div class="notif-icon">🟢</div>
+            <div class="notif-content">
+              <div class="notif-text">3 collections approved</div>
+            </div>
+            <div class="notif-time">5:30 PM</div>
+          </div>
+        </div>
+
+        <div class="notif-item">
+          <div class="notif-top">
+            <div class="notif-icon">ℹ️</div>
+            <div class="notif-content">
+              <div class="notif-text">New task assigned by manager</div>
+              <div class="notif-sub">Visit Ali Rashid — overdue collection</div>
+            </div>
+            <div class="notif-time">4:15 PM</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Profile View -->
+      <div class="view" id="profileView">
+
+        <div class="profile-card">
+          <div class="profile-avatar"><i class="fas fa-user"></i></div>
+          <div class="profile-name">Ahmed Salim</div>
+          <div class="profile-role">Field Ambassador</div>
+          <div class="profile-branch">Dubai Branch (HQ)</div>
+        </div>
+
+        <!-- This Month Stats -->
+        <div class="profile-stats">
+          <div class="profile-stats-header">This Month</div>
+          <div class="profile-stat-row">
+            <div class="profile-stat-label">Collections</div>
+            <div class="profile-stat-value">52 | <span class="accent">AED 24,500</span></div>
+          </div>
+          <div class="profile-stat-row">
+            <div class="profile-stat-label">Hours worked</div>
+            <div class="profile-stat-value">156h / 176h target</div>
+          </div>
+          <div class="profile-stat-row">
+            <div class="profile-stat-label">Territory coverage</div>
+            <div class="profile-stat-value">12.8%</div>
+          </div>
+        </div>
+
+        <!-- Settings -->
+        <div class="settings-card">
+          <div class="settings-header">Settings</div>
+
+          <div class="setting-item">
+            <div class="setting-left">
+              <div class="setting-icon">📍</div>
+              <div class="setting-label">GPS Tracking</div>
+            </div>
+            <div class="toggle-switch on" onclick="this.classList.toggle('on')"></div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-left">
+              <div class="setting-icon">🔄</div>
+              <div class="setting-label">Auto-sync</div>
+            </div>
+            <div class="toggle-switch on" onclick="this.classList.toggle('on')"></div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-left">
+              <div class="setting-icon">📴</div>
+              <div class="setting-label">Offline Mode</div>
+            </div>
+            <div class="toggle-switch" onclick="this.classList.toggle('on')"></div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-left">
+              <div class="setting-icon">🔐</div>
+              <div class="setting-label">Change PIN</div>
+            </div>
+            <div class="setting-value"><i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i></div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-left">
+              <div class="setting-icon">🌐</div>
+              <div class="setting-label">Language</div>
+            </div>
+            <div class="setting-value">English <i class="fas fa-chevron-right" style="color: var(--text-secondary); margin-left: 4px;"></i></div>
+          </div>
+        </div>
+
+        <button class="logout-btn">Log Out</button>
+
+      </div>
+
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+      <div class="nav-item">
+        <i class="fas fa-home"></i>
+        <span>Home</span>
+      </div>
+      <div class="nav-item">
+        <div class="nav-scan-btn">
+          <i class="fas fa-camera"></i>
+        </div>
+        <span style="margin-top: 4px;">Collect</span>
+      </div>
+      <div class="nav-item">
+        <i class="fas fa-clipboard-list"></i>
+        <span>History</span>
+      </div>
+      <div class="nav-item">
+        <i class="fas fa-users"></i>
+        <span>Donors</span>
+      </div>
+      <div class="nav-item active">
+        <i class="fas fa-check-circle"></i>
+        <span>Tasks</span>
+      </div>
+      <div class="home-indicator"></div>
+    </div>
+
+  </div>
+
+  <script>
+    function switchTab(tab) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+
+      const tabMap = {
+        tasks: { view: 'tasksView', index: 0 },
+        notifications: { view: 'notificationsView', index: 1 },
+        profile: { view: 'profileView', index: 2 }
+      };
+
+      const config = tabMap[tab];
+      document.getElementById(config.view).classList.add('active');
+      document.querySelectorAll('.tab-btn')[config.index].classList.add('active');
+    }
+  </script>
+
+</body>
+
+</html>

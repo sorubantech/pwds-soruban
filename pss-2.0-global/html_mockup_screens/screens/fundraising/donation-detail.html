@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Donation Detail - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .back-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 1rem;
+    }
+
+    .back-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .donation-title h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .status-badge {
+      font-size: 0.6875rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+
+    .status-badge.completed { background: #f0fdf4; color: #16a34a; }
+    .status-badge.pending { background: #fffbeb; color: #d97706; }
+    .status-badge.failed { background: #fef2f2; color: #dc2626; }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover { background: #0c6577; border-color: #0c6577; color: white; }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover { background: var(--accent); color: white; }
+
+    .btn-secondary {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* More Dropdown */
+    .more-dropdown { position: relative; display: inline-block; }
+
+    .more-dropdown-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 0.25rem;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      min-width: 160px;
+      z-index: 100;
+    }
+
+    .more-dropdown-menu.show { display: block; }
+
+    .more-dropdown-menu a {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      text-decoration: none;
+      transition: background 0.15s;
+      cursor: pointer;
+    }
+
+    .more-dropdown-menu a:hover { background: #f8fafc; }
+    .more-dropdown-menu a.danger { color: var(--danger-color); }
+    .more-dropdown-menu a i { width: 16px; text-align: center; }
+
+    /* Cards */
+    .detail-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      margin-bottom: 1rem;
+    }
+
+    .detail-card-header {
+      padding: 0.875rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .detail-card-header i { color: var(--accent); font-size: 0.875rem; }
+
+    .detail-card-body { padding: 1.25rem; }
+
+    /* Info List */
+    .info-list { list-style: none; padding: 0; margin: 0; }
+
+    .info-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.8125rem;
+    }
+
+    .info-list li:last-child { border-bottom: none; }
+
+    .info-label {
+      color: var(--text-secondary);
+      font-weight: 500;
+      flex-shrink: 0;
+      margin-right: 0.75rem;
+    }
+
+    .info-value {
+      color: var(--text-primary);
+      font-weight: 600;
+      text-align: right;
+    }
+
+    /* Amount Highlight */
+    .amount-highlight {
+      font-size: 1.75rem;
+      font-weight: 800;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, monospace;
+      color: var(--accent);
+      margin-bottom: 0.25rem;
+    }
+
+    .amount-sub {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .amount-mono {
+      font-family: 'SF Mono', SFMono-Regular, Consolas, monospace;
+      font-weight: 600;
+    }
+
+    /* Distribution Table */
+    .dist-table {
+      width: 100%;
+      font-size: 0.8125rem;
+    }
+
+    .dist-table th {
+      background: #f1f5f9;
+      padding: 0.5rem 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .dist-table td {
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+
+    .dist-table tr:last-child td { border-bottom: none; }
+
+    /* Profile Card */
+    .donor-profile-card { text-align: center; }
+
+    .donor-avatar-large {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0 auto 0.75rem;
+    }
+
+    .donor-profile-name {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.125rem;
+    }
+
+    .donor-profile-code {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .donor-score-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.625rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      background: #f0fdf4;
+      color: #16a34a;
+      margin-bottom: 0.75rem;
+    }
+
+    .donor-contact-info {
+      text-align: left;
+      border-top: 1px solid var(--border-color);
+      padding-top: 0.75rem;
+    }
+
+    .donor-contact-info .info-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8125rem;
+      padding: 0.375rem 0;
+      color: var(--text-secondary);
+    }
+
+    .donor-contact-info .info-row i {
+      width: 16px;
+      text-align: center;
+      color: var(--accent);
+      font-size: 0.75rem;
+    }
+
+    .type-badge {
+      font-size: 0.6875rem;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+
+    .type-badge.donor { background: #f0fdf4; color: #16a34a; }
+    .type-badge.volunteer { background: #faf5ff; color: #a855f7; }
+
+    .donor-type-badges {
+      display: flex;
+      gap: 0.375rem;
+      justify-content: center;
+      margin-bottom: 0.75rem;
+    }
+
+    /* History Table */
+    .history-table {
+      width: 100%;
+      font-size: 0.8125rem;
+    }
+
+    .history-table th {
+      background: #f1f5f9;
+      padding: 0.4375rem 0.625rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .history-table td {
+      padding: 0.4375rem 0.625rem;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.8125rem;
+    }
+
+    .history-table tr:last-child td { border-bottom: none; }
+
+    /* Audit Trail */
+    .audit-item {
+      display: flex;
+      gap: 0.625rem;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.8125rem;
+    }
+
+    .audit-item:last-child { border-bottom: none; }
+
+    .audit-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+      margin-top: 0.375rem;
+    }
+
+    .audit-text { flex: 1; }
+    .audit-action { font-weight: 600; color: var(--text-primary); }
+    .audit-meta { font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.125rem; }
+
+    /* Notes Card */
+    .note-block {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 0.625rem;
+      padding: 0.875rem 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .note-block:last-child { margin-bottom: 0; }
+
+    .note-block .note-label {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      margin-bottom: 0.25rem;
+    }
+
+    .note-block .note-text {
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    /* Link style */
+    .link-accent {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.8125rem;
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+
+    .link-accent:hover { color: #0c6577; text-decoration: underline; }
+
+    /* Two Column Layout */
+    .detail-layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1rem;
+      align-items: start;
+    }
+
+    @media (max-width: 992px) {
+      .detail-layout { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .page-header h1 { font-size: 1.25rem; }
+      .amount-highlight { font-size: 1.375rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" onclick="parent.loadContent('fundraising/donation-list')" title="Back to Donations">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <div class="donation-title">
+        <h1>
+          Donation RCP-2026-0892
+          <span class="status-badge completed"><i class="fas fa-check-circle me-1"></i>Completed</span>
+        </h1>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="parent.loadContent('fundraising/donation-form')">
+        <i class="fas fa-pen me-1"></i> Edit
+      </button>
+      <button class="btn-outline-accent" onclick="sendReceipt()">
+        <i class="fas fa-envelope me-1"></i> Send Receipt
+      </button>
+      <button class="btn-secondary" onclick="window.print()">
+        <i class="fas fa-print me-1"></i> Print
+      </button>
+      <div class="more-dropdown">
+        <button class="btn-secondary" onclick="toggleDropdown(this)">
+          <i class="fas fa-ellipsis-v"></i>
+        </button>
+        <div class="more-dropdown-menu">
+          <a onclick="parent.loadContent('fundraising/refund-management')"><i class="fas fa-rotate-left"></i> Refund</a>
+          <a><i class="fas fa-copy"></i> Duplicate</a>
+          <a class="danger"><i class="fas fa-trash-alt"></i> Delete</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Two-Column Layout -->
+  <div class="detail-layout">
+
+    <!-- ============================================================ -->
+    <!-- LEFT COLUMN -->
+    <!-- ============================================================ -->
+    <div class="detail-left">
+
+      <!-- Donation Summary -->
+      <div class="detail-card">
+        <div class="detail-card-header">
+          <i class="fas fa-hand-holding-heart"></i> Donation Summary
+        </div>
+        <div class="detail-card-body">
+          <ul class="info-list">
+            <li>
+              <span class="info-label">Receipt Number</span>
+              <span class="info-value">RCP-2026-0892</span>
+            </li>
+            <li>
+              <span class="info-label">Donation Date</span>
+              <span class="info-value">April 10, 2026</span>
+            </li>
+            <li>
+              <span class="info-label">Received Date</span>
+              <span class="info-value">April 10, 2026</span>
+            </li>
+            <li>
+              <span class="info-label">Posted Date</span>
+              <span class="info-value">April 10, 2026</span>
+            </li>
+            <li>
+              <span class="info-label">Mode</span>
+              <span class="info-value"><i class="fas fa-globe me-1" style="color: var(--accent);"></i> Online (Stripe)</span>
+            </li>
+            <li>
+              <span class="info-label">Type</span>
+              <span class="info-value">One-time</span>
+            </li>
+            <li>
+              <span class="info-label">Payment Status</span>
+              <span class="info-value"><span class="status-badge completed"><i class="fas fa-check-circle me-1"></i>Completed</span></span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Amount Card -->
+      <div class="detail-card">
+        <div class="detail-card-header">
+          <i class="fas fa-coins"></i> Amount
+        </div>
+        <div class="detail-card-body">
+          <div class="amount-highlight">$500.00 <span style="font-size: 0.875rem; font-weight: 500; color: var(--text-secondary);">USD</span></div>
+          <div class="amount-sub" style="margin-bottom: 1rem;">Primary donation amount</div>
+          <ul class="info-list">
+            <li>
+              <span class="info-label">Exchange Rate</span>
+              <span class="info-value amount-mono">1 USD = 83.50 INR</span>
+            </li>
+            <li>
+              <span class="info-label">Base Currency Amount</span>
+              <span class="info-value amount-mono">&#8377;41,750.00 INR</span>
+            </li>
+            <li>
+              <span class="info-label">Gateway Fee</span>
+              <span class="info-value amount-mono" style="color: var(--danger-color);">-$14.80</span>
+            </li>
+            <li>
+              <span class="info-label">Net Amount</span>
+              <span class="info-value amount-mono" style="font-size: 0.9375rem;">$485.20</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Distribution Card -->
+      <div class="detail-card">
+        <div class="detail-card-header">
+          <i class="fas fa-layer-group"></i> Distribution
+        </div>
+        <div class="detail-card-body" style="padding: 0;">
+          <table class="dist-table">
+            <thead>
+              <tr>
+                <th>Purpose</th>
+                <th style="text-align: right;">Amount</th>
+                <th>Role</th>
+                <th>Occasion</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div style="font-weight: 600;">Children's Education Fund</div>
+                  <div style="font-size: 0.6875rem; color: var(--text-secondary);">Education</div>
+                </td>
+                <td style="text-align: right;" class="amount-mono">$300.00</td>
+                <td>Donor</td>
+                <td>General</td>
+              </tr>
+              <tr>
+                <td>
+                  <div style="font-weight: 600;">Clean Water Initiative</div>
+                  <div style="font-size: 0.6875rem; color: var(--text-secondary);">Environment</div>
+                </td>
+                <td style="text-align: right;" class="amount-mono">$200.00</td>
+                <td>Donor</td>
+                <td>General</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Payment Details Card -->
+      <div class="detail-card">
+        <div class="detail-card-header">
+          <i class="fas fa-credit-card"></i> Payment Details
+        </div>
+        <div class="detail-card-body">
+          <ul class="info-list">
+            <li>
+              <span class="info-label">Payment Gateway</span>
+              <span class="info-value">Stripe</span>
+            </li>
+            <li>
+              <span class="info-label">Transaction ID</span>
+              <span class="info-value amount-mono" style="font-size: 0.75rem;">pi_3P2abc123def456</span>
+            </li>
+            <li>
+              <span class="info-label">Payment Method</span>
+              <span class="info-value">Visa ending 4242</span>
+            </li>
+            <li>
+              <span class="info-label">3D Secure</span>
+              <span class="info-value"><i class="fas fa-shield-halved me-1" style="color: var(--success-color);"></i>Authenticated</span>
+            </li>
+            <li>
+              <span class="info-label">IP Address</span>
+              <span class="info-value amount-mono" style="font-size: 0.75rem;">192.168.1.100</span>
+            </li>
+            <li>
+              <span class="info-label">Device</span>
+              <span class="info-value">Desktop / Chrome</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Receipt Card -->
+      <div class="detail-card">
+        <div class="detail-card-header">
+          <i class="fas fa-receipt"></i> Receipt
+        </div>
+        <div class="detail-card-body">
+          <ul class="info-list">
+            <li>
+              <span class="info-label">Receipt Issued</span>
+              <span class="info-value"><i class="fas fa-check-circle me-1" style="color: var(--success-color);"></i>Yes — Apr 10, 2026</span>
+            </li>
+            <li>
+              <span class="info-label">Issued By</span>
+              <span class="info-value">John Smith</span>
+            </li>
+            <li>
+              <span class="info-label">Send Method</span>
+              <span class="info-value">Email</span>
+            </li>
+            <li>
+              <span class="info-label">Sent To</span>
+              <span class="info-value">sarah.j@email.com</span>
+            </li>
+            <li>
+              <span class="info-label">Receipt PDF</span>
+              <span class="info-value"><a class="link-accent"><i class="fas fa-download me-1"></i>Download Receipt</a></span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Prayer Request / Notes -->
+      <div class="detail-card">
+        <div class="detail-card-header">
+          <i class="fas fa-comment-dots"></i> Prayer Request & Notes
+        </div>
+        <div class="detail-card-body">
+          <div class="note-block">
+            <div class="note-label"><i class="fas fa-pray me-1"></i> Prayer Request</div>
+            <div class="note-text">"Please pray for my daughter's education journey."</div>
+          </div>
+          <div class="note-block">
+            <div class="note-label"><i class="fas fa-sticky-note me-1"></i> Internal Note</div>
+            <div class="note-text">"Donor increased giving after gala event conversation."</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- RIGHT COLUMN -->
+    <!-- ============================================================ -->
+    <div class="detail-right">
+
+      <!-- Donor Card -->
+      <div class="detail-card">
+        <div class="detail-card-header">
+          <i class="fas fa-user"></i> Donor
+        </div>
+        <div class="detail-card-body donor-profile-card">
+          <div class="donor-avatar-large">SJ</div>
+          <div class="donor-profile-name">Sarah Johnson</div>
+          <div class="donor-profile-code">CON-0001</div>
+          <div class="donor-type-badges">
+            <span class="type-badge donor">Donor</span>
+            <span class="type-badge volunteer">Volunteer</span>
+          </div>
+          <div class="donor-score-badge">
+            <i class="fas fa-star"></i> Score: 92
+          </div>
+          <div class="donor-contact-info">
+            <div class="info-row"><i class="fas fa-envelope"></i> sarah.j@email.com</div>
+            <div class="info-row"><i class="fas fa-phone"></i> +1 555-0101</div>
+          </div>
+          <div style="margin-top: 0.75rem;">
+            <a class="link-accent" onclick="parent.loadContent('contacts/contact-detail')">
+              <i class="fas fa-external-link-alt me-1"></i> View Full Profile
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Donation History -->
+      <div class="detail-card">
+        <div class="detail-card-header">
+          <i class="fas fa-history"></i> Donation History
+        </div>
+        <div class="detail-card-body" style="padding: 0;">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th style="text-align: right;">Amount</th>
+                <th>Purpose</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background: var(--accent-bg);">
+                <td><strong>Apr 10</strong></td>
+                <td style="text-align: right;" class="amount-mono"><strong>$500</strong></td>
+                <td>Children's Education</td>
+              </tr>
+              <tr>
+                <td>Mar 15</td>
+                <td style="text-align: right;" class="amount-mono">$500</td>
+                <td>Clean Water</td>
+              </tr>
+              <tr>
+                <td>Mar 1</td>
+                <td style="text-align: right;" class="amount-mono">$50</td>
+                <td>Children's Education <span style="font-size: 0.6875rem; color: var(--text-secondary);">(recurring)</span></td>
+              </tr>
+              <tr>
+                <td>Feb 1</td>
+                <td style="text-align: right;" class="amount-mono">$50</td>
+                <td>Children's Education <span style="font-size: 0.6875rem; color: var(--text-secondary);">(recurring)</span></td>
+              </tr>
+              <tr>
+                <td>Jan 1</td>
+                <td style="text-align: right;" class="amount-mono">$50</td>
+                <td>Children's Education <span style="font-size: 0.6875rem; color: var(--text-secondary);">(recurring)</span></td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="padding: 0.75rem 1rem; text-align: center;">
+            <a class="link-accent" onclick="parent.loadContent('contacts/contact-detail')">
+              View All Donations <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Audit Trail -->
+      <div class="detail-card">
+        <div class="detail-card-header">
+          <i class="fas fa-clipboard-list"></i> Audit Trail
+        </div>
+        <div class="detail-card-body">
+          <div class="audit-item">
+            <div class="audit-dot"></div>
+            <div class="audit-text">
+              <div class="audit-action">Created</div>
+              <div class="audit-meta">System (Online) &middot; Apr 10, 2026 10:23 AM</div>
+            </div>
+          </div>
+          <div class="audit-item">
+            <div class="audit-dot" style="background: var(--success-color);"></div>
+            <div class="audit-text">
+              <div class="audit-action">Receipt Generated</div>
+              <div class="audit-meta">System &middot; Apr 10, 2026 10:23 AM</div>
+            </div>
+          </div>
+          <div class="audit-item">
+            <div class="audit-dot" style="background: var(--accent-light);"></div>
+            <div class="audit-text">
+              <div class="audit-action">Receipt Emailed</div>
+              <div class="audit-meta">System &middot; Apr 10, 2026 10:24 AM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Dropdown toggle
+    function toggleDropdown(btn) {
+      const menu = btn.nextElementSibling;
+      menu.classList.toggle('show');
+    }
+
+    // Close dropdown on outside click
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.more-dropdown')) {
+        document.querySelectorAll('.more-dropdown-menu').forEach(m => m.classList.remove('show'));
+      }
+    });
+
+    // Send receipt
+    function sendReceipt() {
+      alert('Receipt resent to sarah.j@email.com');
+    }
+  </script>
+
+</body>
+
+</html>

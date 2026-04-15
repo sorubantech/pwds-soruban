@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Events - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+    .page-header .subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 0; }
+    .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .btn-primary-accent { background: var(--accent); border-color: var(--accent); color: white; font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid var(--accent); cursor: pointer; transition: all 0.15s; }
+    .btn-primary-accent:hover { background: #0c6577; border-color: #0c6577; color: white; }
+    .btn-outline-accent { background: white; border: 1px solid var(--accent); color: var(--accent); font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.15s; }
+    .btn-outline-accent:hover { background: var(--accent); color: white; }
+
+    /* KPI Stats Grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+    .stat-card { background: white; border-radius: var(--card-radius); padding: 1.25rem; box-shadow: var(--card-shadow); border: 1px solid var(--border-color); display: flex; align-items: flex-start; gap: 1rem; transition: transform 0.15s, box-shadow 0.15s; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }
+    .stat-icon { width: 48px; height: 48px; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; }
+    .stat-icon.teal { background: var(--accent-bg); color: var(--accent); }
+    .stat-icon.green { background: #f0fdf4; color: #22c55e; }
+    .stat-icon.blue { background: #eff6ff; color: #3b82f6; }
+    .stat-icon.purple { background: #faf5ff; color: #a855f7; }
+    .stat-info { flex: 1; }
+    .stat-value { font-size: 1.625rem; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+    .stat-label { font-size: 0.8125rem; color: var(--text-secondary); font-weight: 500; margin-bottom: 0.125rem; }
+    .stat-subtitle { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; }
+
+    /* List Card */
+    .list-card { background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); }
+
+    /* View Toggle */
+    .view-toggle { display: flex; gap: 0; padding: 1rem 1.25rem 0; }
+    .view-btn { padding: 0.4375rem 1rem; font-size: 0.8125rem; font-weight: 600; border: 1px solid var(--border-color); background: white; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+    .view-btn:first-child { border-radius: 0.5rem 0 0 0.5rem; }
+    .view-btn:last-child { border-radius: 0 0.5rem 0.5rem 0; border-left: none; }
+    .view-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+    .view-btn:not(.active):hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Filter Bar */
+    .filter-bar { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); }
+    .search-input { position: relative; flex: 1; min-width: 240px; }
+    .search-input i { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 0.875rem; }
+    .search-input input { width: 100%; padding: 0.5rem 0.75rem 0.5rem 2.25rem; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 0.8125rem; color: var(--text-primary); transition: border-color 0.15s; }
+    .search-input input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1); }
+
+    /* Filter Chips */
+    .filter-chips { display: flex; gap: 0.375rem; flex-wrap: wrap; }
+    .filter-chip { padding: 0.3125rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; border: 1px solid var(--border-color); background: white; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+    .filter-chip:hover { border-color: var(--accent); color: var(--accent); }
+    .filter-chip.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+    /* Filter Selects */
+    .filter-select { padding: 0.4375rem 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 0.8125rem; color: var(--text-primary); background: white; cursor: pointer; transition: border-color 0.15s; min-width: 140px; }
+    .filter-select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1); }
+
+    .filter-date { padding: 0.4375rem 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 0.8125rem; color: var(--text-primary); background: white; transition: border-color 0.15s; }
+    .filter-date:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1); }
+
+    .btn-clear-filters { padding: 0.4375rem 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); background: white; cursor: pointer; transition: all 0.15s; }
+    .btn-clear-filters:hover { border-color: var(--danger-color); color: var(--danger-color); }
+
+    /* Table */
+    .table-responsive { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+    thead th { padding: 0.75rem 1rem; text-align: left; font-size: 0.6875rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid var(--border-color); white-space: nowrap; }
+    tbody td { padding: 0.75rem 1rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    tbody tr { cursor: pointer; transition: background 0.1s; }
+    tbody tr:hover { background: #f8fafc; }
+    tbody tr:last-child td { border-bottom: none; }
+
+    /* Event name link */
+    .event-name { font-weight: 600; color: var(--accent); cursor: pointer; text-decoration: none; }
+    .event-name:hover { text-decoration: underline; }
+
+    /* Status Badges */
+    .status-badge { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.25rem 0.625rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; white-space: nowrap; }
+    .status-badge.upcoming { background: #faf5ff; color: #7c3aed; }
+    .status-badge.completed { background: #eff6ff; color: #2563eb; }
+    .status-badge.draft { background: #fefce8; color: #a16207; }
+    .status-badge.cancelled { background: #fef2f2; color: #dc2626; }
+    .status-badge.in-progress { background: #f0fdf4; color: #16a34a; }
+
+    /* Progress bar in table */
+    .progress-cell { min-width: 140px; }
+    .progress-bar-track { height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; margin-bottom: 0.25rem; }
+    .progress-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+    .progress-bar-fill.high { background: var(--success-color); }
+    .progress-bar-fill.medium { background: var(--warning-color); }
+    .progress-bar-fill.low { background: var(--danger-color); }
+    .progress-pct { font-size: 0.75rem; font-weight: 600; }
+
+    /* Action buttons */
+    .action-btn { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.5rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 0.6875rem; font-weight: 500; color: var(--text-secondary); background: white; cursor: pointer; transition: all 0.15s; text-decoration: none; white-space: nowrap; }
+    .action-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+    .action-btn.danger:hover { border-color: var(--danger-color); color: var(--danger-color); background: #fef2f2; }
+
+    /* 3-dot menu */
+    .more-menu-wrapper { position: relative; display: inline-block; }
+    .more-btn { width: 28px; height: 28px; border: 1px solid var(--border-color); border-radius: 0.375rem; background: white; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; font-size: 0.75rem; }
+    .more-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .more-dropdown { display: none; position: absolute; right: 0; top: 100%; margin-top: 0.25rem; background: white; border: 1px solid var(--border-color); border-radius: 0.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 100; min-width: 150px; overflow: hidden; }
+    .more-dropdown.show { display: block; }
+    .more-dropdown a { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.8125rem; color: var(--text-primary); text-decoration: none; transition: background 0.1s; cursor: pointer; }
+    .more-dropdown a:hover { background: #f8fafc; color: var(--accent); }
+    .more-dropdown a.danger-item:hover { background: #fef2f2; color: var(--danger-color); }
+    .more-dropdown a i { width: 16px; text-align: center; font-size: 0.75rem; color: var(--text-secondary); }
+    .more-dropdown a.danger-item i { color: var(--danger-color); }
+
+    /* Table footer / pagination */
+    .table-footer { padding: 0.75rem 1.25rem; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; }
+    .table-info { font-size: 0.8125rem; color: var(--text-secondary); }
+    .pagination-controls { display: flex; gap: 0.25rem; }
+    .page-btn { width: 32px; height: 32px; border: 1px solid var(--border-color); border-radius: 0.375rem; background: white; color: var(--text-secondary); font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; }
+    .page-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .page-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+    /* Calendar View */
+    .calendar-container { padding: 1.25rem; }
+    .calendar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .calendar-header h3 { font-size: 1.125rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+    .calendar-nav { display: flex; gap: 0.5rem; }
+    .calendar-nav button { width: 32px; height: 32px; border: 1px solid var(--border-color); border-radius: 0.375rem; background: white; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; }
+    .calendar-nav button:hover { border-color: var(--accent); color: var(--accent); }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); border: 1px solid var(--border-color); border-radius: 0.5rem; overflow: hidden; }
+    .calendar-day-header { padding: 0.5rem; text-align: center; font-size: 0.6875rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; background: #f8fafc; border-bottom: 1px solid var(--border-color); }
+    .calendar-cell { min-height: 100px; padding: 0.375rem; border-right: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); background: white; position: relative; }
+    .calendar-cell:nth-child(7n) { border-right: none; }
+    .calendar-cell:nth-last-child(-n+7) { border-bottom: none; }
+    .calendar-cell .day-number { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.25rem; }
+    .calendar-cell.today .day-number { background: var(--accent); color: white; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .calendar-cell.other-month { background: #f8fafc; }
+    .calendar-cell.other-month .day-number { color: #cbd5e1; }
+    .calendar-event { padding: 0.125rem 0.375rem; border-radius: 0.25rem; font-size: 0.625rem; font-weight: 600; margin-bottom: 0.125rem; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .calendar-event.upcoming { background: #ede9fe; color: #7c3aed; }
+    .calendar-event.completed { background: #dbeafe; color: #2563eb; }
+    .calendar-event.draft { background: #fef9c3; color: #a16207; }
+
+    /* Empty State */
+    .empty-state { text-align: center; padding: 3rem 1.5rem; }
+    .empty-state i { font-size: 3rem; color: #cbd5e1; margin-bottom: 1rem; }
+    .empty-state h3 { font-size: 1.125rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; }
+    .empty-state p { font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1.25rem; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1>Events</h1>
+      <p class="subtitle">Manage events across your organization</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline-accent" onclick="alert('Exporting events...')">
+        <i class="fas fa-file-export me-1"></i> Export
+      </button>
+      <button class="btn-outline-accent" onclick="switchView('calendar')">
+        <i class="fas fa-calendar-alt me-1"></i> Calendar View
+      </button>
+      <button class="btn-primary-accent" onclick="parent.loadContent('organization/event-form')">
+        <i class="fas fa-plus me-1"></i> New Event
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Summary Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon teal">
+        <i class="fas fa-calendar-check"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Upcoming Events</div>
+        <div class="stat-value">5</div>
+        <div class="stat-subtitle">This month: 2</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green">
+        <i class="fas fa-user-plus"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Total Registrations (Active)</div>
+        <div class="stat-value">1,890</div>
+        <div class="stat-subtitle">Capacity: 2,500 (75.6%)</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon blue">
+        <i class="fas fa-hand-holding-dollar"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Event Revenue (YTD)</div>
+        <div class="stat-value">$345,000</div>
+        <div class="stat-subtitle">Events: 12</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon purple">
+        <i class="fas fa-people-group"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Avg Attendance Rate</div>
+        <div class="stat-value">78.4%</div>
+        <div class="stat-subtitle">Registered &rarr; Attended</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Event List Card -->
+  <div class="list-card">
+
+    <!-- View Toggle -->
+    <div class="view-toggle">
+      <button class="view-btn active" onclick="switchView('list')"><i class="fas fa-list me-1"></i> List View</button>
+      <button class="view-btn" onclick="switchView('calendar')"><i class="fas fa-calendar-alt me-1"></i> Calendar View</button>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+        <div class="search-input">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Search events..." id="searchInput">
+        </div>
+        <select class="filter-select" id="typeFilter">
+          <option value="">All Types</option>
+          <option>In-person</option>
+          <option>Virtual</option>
+          <option>Hybrid</option>
+        </select>
+        <select class="filter-select" id="orgUnitFilter">
+          <option value="">All Org Units</option>
+          <option>HQ (All branches)</option>
+          <option>MEA Region</option>
+          <option>Dubai Branch</option>
+          <option>Mumbai Branch</option>
+          <option>NY Branch</option>
+          <option>London Branch</option>
+        </select>
+        <input type="date" class="filter-date" title="Start date">
+        <span style="color: var(--text-secondary); font-size: 0.75rem;">&mdash;</span>
+        <input type="date" class="filter-date" title="End date">
+        <button class="btn-clear-filters" onclick="clearFilters()">
+          <i class="fas fa-times me-1"></i> Clear Filters
+        </button>
+      </div>
+      <div class="filter-chips">
+        <span class="filter-chip active" onclick="filterStatus(this, 'all')">All (8)</span>
+        <span class="filter-chip" onclick="filterStatus(this, 'upcoming')">Upcoming (4)</span>
+        <span class="filter-chip" onclick="filterStatus(this, 'in-progress')">In Progress (0)</span>
+        <span class="filter-chip" onclick="filterStatus(this, 'completed')">Completed (3)</span>
+        <span class="filter-chip" onclick="filterStatus(this, 'cancelled')">Cancelled (0)</span>
+        <span class="filter-chip" onclick="filterStatus(this, 'draft')">Draft (1)</span>
+      </div>
+    </div>
+
+    <!-- List View -->
+    <div id="listView">
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Event Name</th>
+              <th>Type</th>
+              <th>Org Unit</th>
+              <th>Date &amp; Time</th>
+              <th>Venue / Platform</th>
+              <th>Registered</th>
+              <th>Capacity</th>
+              <th>Revenue</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Row 1: Annual Charity Gala 2026 -->
+            <tr data-status="upcoming" onclick="parent.loadContent('organization/event-dashboard')">
+              <td><a class="event-name" onclick="event.stopPropagation(); parent.loadContent('organization/event-dashboard')">Annual Charity Gala 2026</a></td>
+              <td><span style="font-size: 0.75rem;">&#127963;&#65039; In-person</span></td>
+              <td>HQ</td>
+              <td>Apr 25, 7:00 PM</td>
+              <td>Grand Ballroom, Hilton Dubai</td>
+              <td>345 / 400</td>
+              <td class="progress-cell">
+                <div class="progress-bar-track"><div class="progress-bar-fill high" style="width:86.3%"></div></div>
+                <span class="progress-pct">86.3%</span>
+              </td>
+              <td>$125,000</td>
+              <td><span class="status-badge upcoming"><i class="fas fa-calendar" style="font-size:0.5rem"></i> Upcoming</span></td>
+              <td onclick="event.stopPropagation()">
+                <div class="d-flex gap-1 flex-wrap">
+                  <button class="action-btn" onclick="parent.loadContent('organization/event-dashboard')"><i class="fas fa-gauge-high"></i> Dashboard</button>
+                  <button class="action-btn" onclick="parent.loadContent('organization/event-form')"><i class="fas fa-pen"></i> Edit</button>
+                  <div class="more-menu-wrapper">
+                    <button class="more-btn" onclick="toggleMenu(this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                    <div class="more-dropdown">
+                      <a onclick="alert('Duplicated')"><i class="fas fa-copy"></i> Duplicate</a>
+                      <a onclick="alert('Reminder sent')"><i class="fas fa-bell"></i> Send Reminder</a>
+                      <a class="danger-item" onclick="alert('Cancelled')"><i class="fas fa-ban"></i> Cancel Event</a>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <!-- Row 2: Ramadan Iftar Dinner -->
+            <tr data-status="upcoming" onclick="parent.loadContent('organization/event-dashboard')">
+              <td><a class="event-name" onclick="event.stopPropagation(); parent.loadContent('organization/event-dashboard')">Ramadan Iftar Dinner</a></td>
+              <td><span style="font-size: 0.75rem;">&#127963;&#65039; In-person</span></td>
+              <td>Dubai Branch</td>
+              <td>Apr 18, 6:30 PM</td>
+              <td>Community Hall, Deira</td>
+              <td>200 / 250</td>
+              <td class="progress-cell">
+                <div class="progress-bar-track"><div class="progress-bar-fill high" style="width:80%"></div></div>
+                <span class="progress-pct">80.0%</span>
+              </td>
+              <td>$15,000</td>
+              <td><span class="status-badge upcoming"><i class="fas fa-calendar" style="font-size:0.5rem"></i> Upcoming</span></td>
+              <td onclick="event.stopPropagation()">
+                <div class="d-flex gap-1 flex-wrap">
+                  <button class="action-btn" onclick="parent.loadContent('organization/event-dashboard')"><i class="fas fa-gauge-high"></i> Dashboard</button>
+                  <button class="action-btn" onclick="parent.loadContent('organization/event-form')"><i class="fas fa-pen"></i> Edit</button>
+                  <div class="more-menu-wrapper">
+                    <button class="more-btn" onclick="toggleMenu(this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                    <div class="more-dropdown">
+                      <a onclick="alert('Duplicated')"><i class="fas fa-copy"></i> Duplicate</a>
+                      <a onclick="alert('Reminder sent')"><i class="fas fa-bell"></i> Send Reminder</a>
+                      <a class="danger-item" onclick="alert('Cancelled')"><i class="fas fa-ban"></i> Cancel Event</a>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <!-- Row 3: Donor Appreciation Webinar -->
+            <tr data-status="upcoming" onclick="parent.loadContent('organization/event-dashboard')">
+              <td><a class="event-name" onclick="event.stopPropagation(); parent.loadContent('organization/event-dashboard')">Donor Appreciation Webinar</a></td>
+              <td><span style="font-size: 0.75rem;">&#128187; Virtual</span></td>
+              <td>HQ</td>
+              <td>Apr 20, 2:00 PM</td>
+              <td>Zoom</td>
+              <td>456 / 500</td>
+              <td class="progress-cell">
+                <div class="progress-bar-track"><div class="progress-bar-fill high" style="width:91.2%"></div></div>
+                <span class="progress-pct">91.2%</span>
+              </td>
+              <td>&mdash;</td>
+              <td><span class="status-badge upcoming"><i class="fas fa-calendar" style="font-size:0.5rem"></i> Upcoming</span></td>
+              <td onclick="event.stopPropagation()">
+                <div class="d-flex gap-1 flex-wrap">
+                  <button class="action-btn" onclick="parent.loadContent('organization/event-dashboard')"><i class="fas fa-gauge-high"></i> Dashboard</button>
+                  <button class="action-btn" onclick="parent.loadContent('organization/event-form')"><i class="fas fa-pen"></i> Edit</button>
+                  <div class="more-menu-wrapper">
+                    <button class="more-btn" onclick="toggleMenu(this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                    <div class="more-dropdown">
+                      <a onclick="alert('Duplicated')"><i class="fas fa-copy"></i> Duplicate</a>
+                      <a onclick="alert('Reminder sent')"><i class="fas fa-bell"></i> Send Reminder</a>
+                      <a class="danger-item" onclick="alert('Cancelled')"><i class="fas fa-ban"></i> Cancel Event</a>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <!-- Row 4: Clean Water Walkathon -->
+            <tr data-status="upcoming" onclick="parent.loadContent('organization/event-dashboard')">
+              <td><a class="event-name" onclick="event.stopPropagation(); parent.loadContent('organization/event-dashboard')">Clean Water Walkathon</a></td>
+              <td><span style="font-size: 0.75rem;">&#127963;&#65039; In-person</span></td>
+              <td>Mumbai Branch</td>
+              <td>May 10, 7:00 AM</td>
+              <td>Marine Drive, Mumbai</td>
+              <td>120 / 500</td>
+              <td class="progress-cell">
+                <div class="progress-bar-track"><div class="progress-bar-fill low" style="width:24%"></div></div>
+                <span class="progress-pct" style="color: var(--danger-color);">24.0%</span>
+              </td>
+              <td>$2,400</td>
+              <td><span class="status-badge upcoming"><i class="fas fa-calendar" style="font-size:0.5rem"></i> Upcoming</span></td>
+              <td onclick="event.stopPropagation()">
+                <div class="d-flex gap-1 flex-wrap">
+                  <button class="action-btn" onclick="parent.loadContent('organization/event-dashboard')"><i class="fas fa-gauge-high"></i> Dashboard</button>
+                  <button class="action-btn" onclick="parent.loadContent('organization/event-form')"><i class="fas fa-pen"></i> Edit</button>
+                  <div class="more-menu-wrapper">
+                    <button class="more-btn" onclick="toggleMenu(this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                    <div class="more-dropdown">
+                      <a onclick="alert('Duplicated')"><i class="fas fa-copy"></i> Duplicate</a>
+                      <a onclick="alert('Reminder sent')"><i class="fas fa-bell"></i> Send Reminder</a>
+                      <a class="danger-item" onclick="alert('Cancelled')"><i class="fas fa-ban"></i> Cancel Event</a>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <!-- Row 5: Global Town Hall Q1 (Completed) -->
+            <tr data-status="completed" onclick="parent.loadContent('organization/event-dashboard')">
+              <td><a class="event-name" onclick="event.stopPropagation(); parent.loadContent('organization/event-dashboard')">Global Town Hall Q1</a></td>
+              <td><span style="font-size: 0.75rem;">&#128256; Hybrid</span></td>
+              <td>HQ</td>
+              <td>Mar 15, 10:00 AM</td>
+              <td>HQ Auditorium + Teams</td>
+              <td>890 / 1,000</td>
+              <td class="progress-cell">
+                <div class="progress-bar-track"><div class="progress-bar-fill high" style="width:89%"></div></div>
+                <span class="progress-pct">89.0%</span>
+              </td>
+              <td>&mdash;</td>
+              <td><span class="status-badge completed"><i class="fas fa-check-circle" style="font-size:0.5rem"></i> Completed</span></td>
+              <td onclick="event.stopPropagation()">
+                <div class="d-flex gap-1 flex-wrap">
+                  <button class="action-btn" onclick="parent.loadContent('organization/event-dashboard')"><i class="fas fa-gauge-high"></i> Dashboard</button>
+                  <button class="action-btn" onclick="parent.loadContent('organization/event-form')"><i class="fas fa-eye"></i> View</button>
+                  <div class="more-menu-wrapper">
+                    <button class="more-btn" onclick="toggleMenu(this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                    <div class="more-dropdown">
+                      <a onclick="alert('Duplicated')"><i class="fas fa-copy"></i> Duplicate</a>
+                      <a onclick="alert('Reminder sent')"><i class="fas fa-bell"></i> Send Reminder</a>
+                      <a class="danger-item" onclick="alert('Cancelled')"><i class="fas fa-ban"></i> Cancel Event</a>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <!-- Row 6: Year-End Fundraising Gala 2025 (Completed) -->
+            <tr data-status="completed" onclick="parent.loadContent('organization/event-dashboard')">
+              <td><a class="event-name" onclick="event.stopPropagation(); parent.loadContent('organization/event-dashboard')">Year-End Fundraising Gala 2025</a></td>
+              <td><span style="font-size: 0.75rem;">&#127963;&#65039; In-person</span></td>
+              <td>NY Branch</td>
+              <td>Dec 12, 2025, 7:00 PM</td>
+              <td>The Plaza, NYC</td>
+              <td>380 / 400</td>
+              <td class="progress-cell">
+                <div class="progress-bar-track"><div class="progress-bar-fill high" style="width:95%"></div></div>
+                <span class="progress-pct" style="color: var(--success-color);">95.0%</span>
+              </td>
+              <td>$234,000</td>
+              <td><span class="status-badge completed"><i class="fas fa-check-circle" style="font-size:0.5rem"></i> Completed</span></td>
+              <td onclick="event.stopPropagation()">
+                <div class="d-flex gap-1 flex-wrap">
+                  <button class="action-btn" onclick="parent.loadContent('organization/event-dashboard')"><i class="fas fa-gauge-high"></i> Dashboard</button>
+                  <button class="action-btn" onclick="parent.loadContent('organization/event-form')"><i class="fas fa-eye"></i> View</button>
+                  <div class="more-menu-wrapper">
+                    <button class="more-btn" onclick="toggleMenu(this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                    <div class="more-dropdown">
+                      <a onclick="alert('Duplicated')"><i class="fas fa-copy"></i> Duplicate</a>
+                      <a onclick="alert('Reminder sent')"><i class="fas fa-bell"></i> Send Reminder</a>
+                      <a class="danger-item" onclick="alert('Cancelled')"><i class="fas fa-ban"></i> Cancel Event</a>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <!-- Row 7: Emergency Relief Webinar (Completed) -->
+            <tr data-status="completed" onclick="parent.loadContent('organization/event-dashboard')">
+              <td><a class="event-name" onclick="event.stopPropagation(); parent.loadContent('organization/event-dashboard')">Emergency Relief Webinar</a></td>
+              <td><span style="font-size: 0.75rem;">&#128187; Virtual</span></td>
+              <td>MEA Region</td>
+              <td>Feb 20, 3:00 PM</td>
+              <td>Zoom</td>
+              <td>234 / 300</td>
+              <td class="progress-cell">
+                <div class="progress-bar-track"><div class="progress-bar-fill high" style="width:78%"></div></div>
+                <span class="progress-pct">78.0%</span>
+              </td>
+              <td>$45,600</td>
+              <td><span class="status-badge completed"><i class="fas fa-check-circle" style="font-size:0.5rem"></i> Completed</span></td>
+              <td onclick="event.stopPropagation()">
+                <div class="d-flex gap-1 flex-wrap">
+                  <button class="action-btn" onclick="parent.loadContent('organization/event-dashboard')"><i class="fas fa-gauge-high"></i> Dashboard</button>
+                  <button class="action-btn" onclick="parent.loadContent('organization/event-form')"><i class="fas fa-eye"></i> View</button>
+                  <div class="more-menu-wrapper">
+                    <button class="more-btn" onclick="toggleMenu(this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                    <div class="more-dropdown">
+                      <a onclick="alert('Duplicated')"><i class="fas fa-copy"></i> Duplicate</a>
+                      <a onclick="alert('Reminder sent')"><i class="fas fa-bell"></i> Send Reminder</a>
+                      <a class="danger-item" onclick="alert('Cancelled')"><i class="fas fa-ban"></i> Cancel Event</a>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <!-- Row 8: Volunteer Training Workshop (Draft) -->
+            <tr data-status="draft" onclick="parent.loadContent('organization/event-form')">
+              <td><a class="event-name" onclick="event.stopPropagation(); parent.loadContent('organization/event-form')">Volunteer Training Workshop</a></td>
+              <td><span style="font-size: 0.75rem;">&#127963;&#65039; In-person</span></td>
+              <td>London Branch</td>
+              <td>May 20, 9:00 AM</td>
+              <td>TBD</td>
+              <td>&mdash;</td>
+              <td class="progress-cell">
+                <span class="progress-pct" style="color: var(--text-secondary);">&mdash;</span>
+              </td>
+              <td>&mdash;</td>
+              <td><span class="status-badge draft"><i class="fas fa-pen-to-square" style="font-size:0.5rem"></i> Draft</span></td>
+              <td onclick="event.stopPropagation()">
+                <div class="d-flex gap-1 flex-wrap">
+                  <button class="action-btn" onclick="parent.loadContent('organization/event-form')"><i class="fas fa-pen"></i> Edit</button>
+                  <button class="action-btn danger" onclick="alert('Deleted')"><i class="fas fa-trash"></i> Delete</button>
+                  <div class="more-menu-wrapper">
+                    <button class="more-btn" onclick="toggleMenu(this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                    <div class="more-dropdown">
+                      <a onclick="alert('Duplicated')"><i class="fas fa-copy"></i> Duplicate</a>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Table Footer -->
+      <div class="table-footer">
+        <div class="table-info">Showing 1 to 8 of 8 events</div>
+        <div class="pagination-controls">
+          <button class="page-btn" disabled><i class="fas fa-chevron-left"></i></button>
+          <button class="page-btn active">1</button>
+          <button class="page-btn" disabled><i class="fas fa-chevron-right"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Calendar View (hidden by default) -->
+    <div id="calendarView" style="display:none">
+      <div class="calendar-container">
+        <div class="calendar-header">
+          <div class="calendar-nav">
+            <button onclick="alert('Previous month')"><i class="fas fa-chevron-left"></i></button>
+          </div>
+          <h3>April 2026</h3>
+          <div class="calendar-nav">
+            <button onclick="alert('Next month')"><i class="fas fa-chevron-right"></i></button>
+          </div>
+        </div>
+        <div class="calendar-grid">
+          <!-- Day Headers -->
+          <div class="calendar-day-header">Mon</div>
+          <div class="calendar-day-header">Tue</div>
+          <div class="calendar-day-header">Wed</div>
+          <div class="calendar-day-header">Thu</div>
+          <div class="calendar-day-header">Fri</div>
+          <div class="calendar-day-header">Sat</div>
+          <div class="calendar-day-header">Sun</div>
+
+          <!-- Week 1: Mar 30 - Apr 5 -->
+          <div class="calendar-cell other-month"><div class="day-number">30</div></div>
+          <div class="calendar-cell other-month"><div class="day-number">31</div></div>
+          <div class="calendar-cell"><div class="day-number">1</div></div>
+          <div class="calendar-cell"><div class="day-number">2</div></div>
+          <div class="calendar-cell"><div class="day-number">3</div></div>
+          <div class="calendar-cell"><div class="day-number">4</div></div>
+          <div class="calendar-cell"><div class="day-number">5</div></div>
+
+          <!-- Week 2: Apr 6 - 12 -->
+          <div class="calendar-cell"><div class="day-number">6</div></div>
+          <div class="calendar-cell"><div class="day-number">7</div></div>
+          <div class="calendar-cell"><div class="day-number">8</div></div>
+          <div class="calendar-cell"><div class="day-number">9</div></div>
+          <div class="calendar-cell"><div class="day-number">10</div></div>
+          <div class="calendar-cell"><div class="day-number">11</div></div>
+          <div class="calendar-cell today"><div class="day-number">12</div></div>
+
+          <!-- Week 3: Apr 13 - 19 -->
+          <div class="calendar-cell"><div class="day-number">13</div></div>
+          <div class="calendar-cell"><div class="day-number">14</div></div>
+          <div class="calendar-cell"><div class="day-number">15</div></div>
+          <div class="calendar-cell"><div class="day-number">16</div></div>
+          <div class="calendar-cell"><div class="day-number">17</div></div>
+          <div class="calendar-cell">
+            <div class="day-number">18</div>
+            <div class="calendar-event upcoming" onclick="parent.loadContent('organization/event-dashboard')">Ramadan Iftar Dinner</div>
+          </div>
+          <div class="calendar-cell"><div class="day-number">19</div></div>
+
+          <!-- Week 4: Apr 20 - 26 -->
+          <div class="calendar-cell">
+            <div class="day-number">20</div>
+            <div class="calendar-event upcoming" onclick="parent.loadContent('organization/event-dashboard')">Donor Webinar</div>
+          </div>
+          <div class="calendar-cell"><div class="day-number">21</div></div>
+          <div class="calendar-cell"><div class="day-number">22</div></div>
+          <div class="calendar-cell"><div class="day-number">23</div></div>
+          <div class="calendar-cell"><div class="day-number">24</div></div>
+          <div class="calendar-cell">
+            <div class="day-number">25</div>
+            <div class="calendar-event upcoming" onclick="parent.loadContent('organization/event-dashboard')">Charity Gala 2026</div>
+          </div>
+          <div class="calendar-cell"><div class="day-number">26</div></div>
+
+          <!-- Week 5: Apr 27 - May 3 -->
+          <div class="calendar-cell"><div class="day-number">27</div></div>
+          <div class="calendar-cell"><div class="day-number">28</div></div>
+          <div class="calendar-cell"><div class="day-number">29</div></div>
+          <div class="calendar-cell"><div class="day-number">30</div></div>
+          <div class="calendar-cell other-month"><div class="day-number">1</div></div>
+          <div class="calendar-cell other-month"><div class="day-number">2</div></div>
+          <div class="calendar-cell other-month"><div class="day-number">3</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function switchView(view) {
+      const listView = document.getElementById('listView');
+      const calendarView = document.getElementById('calendarView');
+      const viewBtns = document.querySelectorAll('.view-btn');
+
+      if (view === 'calendar') {
+        listView.style.display = 'none';
+        calendarView.style.display = 'block';
+        viewBtns[0].classList.remove('active');
+        viewBtns[1].classList.add('active');
+      } else {
+        listView.style.display = 'block';
+        calendarView.style.display = 'none';
+        viewBtns[0].classList.add('active');
+        viewBtns[1].classList.remove('active');
+      }
+    }
+
+    function filterStatus(chip, status) {
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      document.querySelectorAll('tbody tr').forEach(row => {
+        if (status === 'all') {
+          row.style.display = '';
+        } else {
+          row.style.display = row.dataset.status === status ? '' : 'none';
+        }
+      });
+    }
+
+    document.getElementById('searchInput').addEventListener('input', function () {
+      const q = this.value.toLowerCase();
+      document.querySelectorAll('tbody tr').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+      });
+    });
+
+    function clearFilters() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('typeFilter').value = '';
+      document.getElementById('orgUnitFilter').value = '';
+      document.querySelectorAll('.filter-date').forEach(d => d.value = '');
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      document.querySelector('.filter-chip').classList.add('active');
+      document.querySelectorAll('tbody tr').forEach(row => row.style.display = '');
+    }
+
+    function toggleMenu(btn) {
+      const dropdown = btn.nextElementSibling;
+      document.querySelectorAll('.more-dropdown.show').forEach(d => {
+        if (d !== dropdown) d.classList.remove('show');
+      });
+      dropdown.classList.toggle('show');
+    }
+
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.more-menu-wrapper')) {
+        document.querySelectorAll('.more-dropdown.show').forEach(d => d.classList.remove('show'));
+      }
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cases - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --cm-accent: #0d9488;
+      --cm-accent-light: #14b8a6;
+      --cm-accent-bg: #f0fdfa;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--cm-accent);
+      border-color: var(--cm-accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--cm-accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #0b7f74;
+      border-color: #0b7f74;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--cm-accent);
+      color: var(--cm-accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--cm-accent);
+      color: white;
+    }
+
+    /* Export Dropdown */
+    .export-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .export-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 0.25rem;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      min-width: 150px;
+      z-index: 100;
+      overflow: hidden;
+    }
+
+    .export-menu.show { display: block; }
+
+    .export-menu a {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.875rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+
+    .export-menu a:hover { background: #f8fafc; }
+    .export-menu a i { width: 16px; text-align: center; color: var(--text-secondary); }
+
+    /* KPI Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .kpi-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.875rem;
+      transition: transform 0.15s;
+      cursor: default;
+    }
+
+    .kpi-card:hover { transform: translateY(-2px); }
+
+    .kpi-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.125rem;
+      flex-shrink: 0;
+    }
+
+    .kpi-icon.teal { background: var(--cm-accent-bg); color: var(--cm-accent); }
+    .kpi-icon.red { background: #fef2f2; color: var(--danger-color); }
+    .kpi-icon.green { background: #f0fdf4; color: var(--success-color); }
+    .kpi-icon.orange { background: #fffbeb; color: var(--warning-color); }
+
+    .kpi-content { flex: 1; min-width: 0; }
+
+    .kpi-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+    }
+
+    .kpi-value {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .kpi-sub {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+      line-height: 1.4;
+    }
+
+    .kpi-sub .danger { color: var(--danger-color); font-weight: 600; }
+    .kpi-sub .success { color: var(--success-color); font-weight: 600; }
+
+    /* List Card */
+    .list-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .search-input {
+      position: relative;
+      flex: 1;
+      min-width: 240px;
+    }
+
+    .search-input i {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .search-input input {
+      width: 100%;
+      padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .search-input input:focus {
+      outline: none;
+      border-color: var(--cm-accent);
+      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    }
+
+    /* Filter Chips */
+    .filter-chips {
+      display: flex;
+      gap: 0.375rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-chip {
+      padding: 0.3125rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .filter-chip:hover {
+      border-color: var(--cm-accent);
+      color: var(--cm-accent);
+    }
+
+    .filter-chip.active {
+      background: var(--cm-accent);
+      border-color: var(--cm-accent);
+      color: white;
+    }
+
+    .filter-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-row + .filter-row { margin-top: 0.625rem; }
+
+    .filter-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      min-width: 52px;
+    }
+
+    .filter-select {
+      padding: 0.3125rem 0.625rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.75rem;
+      color: var(--text-primary);
+      background: white;
+      cursor: pointer;
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: var(--cm-accent);
+    }
+
+    .my-cases-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    .my-cases-toggle input { accent-color: var(--cm-accent); }
+
+    .clear-filters {
+      font-size: 0.75rem;
+      color: var(--cm-accent);
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 600;
+      margin-left: auto;
+    }
+
+    .clear-filters:hover { text-decoration: underline; color: #0b7f74; }
+
+    /* Table */
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    .data-table thead th {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      padding: 0.75rem 0.875rem;
+      border-bottom: 2px solid var(--border-color);
+      background: #f8fafc;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    .data-table tbody td {
+      padding: 0.75rem 0.875rem;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+
+    .data-table tbody tr:hover { background: #f8fafc; }
+    .data-table tbody tr.row-overdue { background: #fef2f2; }
+    .data-table tbody tr.row-overdue:hover { background: #fee2e2; }
+
+    .data-table tbody tr:last-child td { border-bottom: none; }
+
+    /* Beneficiary link */
+    .ben-link {
+      color: var(--cm-accent);
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .ben-link:hover { text-decoration: underline; }
+
+    .ben-id {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+    }
+
+    .case-id {
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+    }
+
+    .case-title {
+      max-width: 240px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Badges */
+    .badge-priority {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.1875rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+    }
+
+    .badge-priority.critical { background: #fef2f2; color: #dc2626; }
+    .badge-priority.high { background: #fff7ed; color: #ea580c; }
+    .badge-priority.medium { background: #fefce8; color: #ca8a04; }
+    .badge-priority.low { background: #f0fdf4; color: #16a34a; }
+
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.1875rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+    }
+
+    .badge-status.open { background: #f0fdf4; color: #16a34a; }
+    .badge-status.in-progress { background: #eff6ff; color: #2563eb; }
+    .badge-status.pending { background: #fffbeb; color: #d97706; }
+    .badge-status.overdue { background: #fef2f2; color: #dc2626; }
+    .badge-status.resolved { background: #ecfdf5; color: #059669; }
+    .badge-status.closed { background: #f1f5f9; color: var(--text-secondary); }
+
+    .overdue-date {
+      color: var(--danger-color);
+      font-weight: 600;
+      font-size: 0.6875rem;
+    }
+
+    /* Action buttons */
+    .btn-view {
+      padding: 0.25rem 0.625rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      background: white;
+      color: var(--text-primary);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-view:hover {
+      border-color: var(--cm-accent);
+      color: var(--cm-accent);
+    }
+
+    /* Three-dot dropdown */
+    .action-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .btn-dots {
+      padding: 0.25rem 0.375rem;
+      border: 1px solid transparent;
+      border-radius: 0.375rem;
+      background: none;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-dots:hover {
+      background: #f1f5f9;
+      border-color: var(--border-color);
+    }
+
+    .action-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 0.25rem;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      min-width: 160px;
+      z-index: 100;
+      overflow: hidden;
+    }
+
+    .action-menu.show { display: block; }
+
+    .action-menu a {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.875rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+
+    .action-menu a:hover { background: #f8fafc; }
+    .action-menu a i { width: 16px; text-align: center; color: var(--text-secondary); font-size: 0.75rem; }
+    .action-menu a.danger-action { color: var(--danger-color); }
+    .action-menu a.danger-action i { color: var(--danger-color); }
+
+    /* Bulk Actions */
+    .bulk-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1.25rem;
+      border-top: 1px solid var(--border-color);
+      background: #f8fafc;
+    }
+
+    .bulk-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .btn-bulk {
+      padding: 0.3125rem 0.625rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      background: white;
+      color: var(--text-primary);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-bulk:hover {
+      border-color: var(--cm-accent);
+      color: var(--cm-accent);
+    }
+
+    .btn-bulk i { margin-right: 0.25rem; }
+
+    /* Pagination */
+    .pagination-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1.25rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .pagination-info {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .pagination-btns {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .page-btn {
+      padding: 0.3125rem 0.625rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      background: white;
+      color: var(--text-primary);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      min-width: 32px;
+      text-align: center;
+    }
+
+    .page-btn:hover { border-color: var(--cm-accent); color: var(--cm-accent); }
+    .page-btn.active { background: var(--cm-accent); border-color: var(--cm-accent); color: white; }
+    .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Modal */
+    .modal-header {
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 1.25rem;
+    }
+
+    .modal-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .modal-body { padding: 1.25rem; }
+
+    .modal-footer {
+      border-top: 1px solid var(--border-color);
+      padding: 0.875rem 1.25rem;
+    }
+
+    .form-label-sm {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .form-label-sm .required { color: var(--danger-color); }
+
+    .form-control-sm, .form-select-sm {
+      font-size: 0.8125rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      padding: 0.4375rem 0.75rem;
+    }
+
+    .form-control-sm:focus, .form-select-sm:focus {
+      border-color: var(--cm-accent);
+      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    }
+
+    .referral-fields {
+      display: none;
+      margin-top: 0.75rem;
+      padding: 0.875rem;
+      background: #f8fafc;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .referral-fields.show { display: block; }
+
+    .form-check-input:checked {
+      background-color: var(--cm-accent);
+      border-color: var(--cm-accent);
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+      .kpi-grid { grid-template-columns: 1fr; }
+      .page-header { flex-direction: column; align-items: flex-start; }
+      body { padding: 1rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1>Cases</h1>
+      <p class="subtitle">Track interventions, referrals, and follow-ups for beneficiaries</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="document.getElementById('newCaseModal').style.display='flex'">
+        <i class="fa-solid fa-plus" style="margin-right: 0.375rem;"></i>New Case
+      </button>
+      <div class="export-dropdown">
+        <button class="btn-outline-accent" onclick="toggleExport(event)">
+          <i class="fa-solid fa-download" style="margin-right: 0.375rem;"></i>Export
+          <i class="fa-solid fa-chevron-down" style="margin-left: 0.375rem; font-size: 0.625rem;"></i>
+        </button>
+        <div class="export-menu" id="exportMenu">
+          <a href="#"><i class="fa-solid fa-file-csv"></i> Export as CSV</a>
+          <a href="#"><i class="fa-solid fa-file-excel"></i> Export as Excel</a>
+          <a href="#"><i class="fa-solid fa-file-pdf"></i> Export as PDF</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Summary Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon teal"><i class="fa-solid fa-folder-open"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-label">Open Cases</div>
+        <div class="kpi-value">156</div>
+        <div class="kpi-sub"><span class="danger">Critical: 12</span>, High: 34, Medium: 67, Low: 43</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon red"><i class="fa-solid fa-clock"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-label">Overdue Follow-ups</div>
+        <div class="kpi-value">18</div>
+        <div class="kpi-sub">Oldest: <span class="danger">14 days overdue</span></div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon green"><i class="fa-solid fa-check-circle"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-label">Closed This Month</div>
+        <div class="kpi-value">45</div>
+        <div class="kpi-sub">Avg resolution: <span class="success">12 days</span></div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon orange"><i class="fa-solid fa-share"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-label">Referrals Pending</div>
+        <div class="kpi-value">8</div>
+        <div class="kpi-sub">Awaiting external response</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Case List Card -->
+  <div class="list-card">
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="filter-row">
+        <div class="search-input">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" placeholder="Search by case ID, beneficiary name, or description...">
+        </div>
+      </div>
+      <div class="filter-row" style="margin-top: 0.625rem;">
+        <span class="filter-label">Status</span>
+        <div class="filter-chips" data-group="status">
+          <span class="filter-chip active" data-value="all">All</span>
+          <span class="filter-chip" data-value="open">Open</span>
+          <span class="filter-chip" data-value="in-progress">In Progress</span>
+          <span class="filter-chip" data-value="pending">Pending Referral</span>
+          <span class="filter-chip" data-value="follow-up">Follow-up Due</span>
+          <span class="filter-chip" data-value="resolved">Resolved</span>
+          <span class="filter-chip" data-value="closed">Closed</span>
+        </div>
+      </div>
+      <div class="filter-row">
+        <span class="filter-label">Priority</span>
+        <div class="filter-chips" data-group="priority">
+          <span class="filter-chip active" data-value="all">All</span>
+          <span class="filter-chip" data-value="critical">Critical</span>
+          <span class="filter-chip" data-value="high">High</span>
+          <span class="filter-chip" data-value="medium">Medium</span>
+          <span class="filter-chip" data-value="low">Low</span>
+        </div>
+      </div>
+      <div class="filter-row">
+        <span class="filter-label">Filters</span>
+        <select class="filter-select">
+          <option>All Programs</option>
+          <option>Education</option>
+          <option>Healthcare</option>
+          <option>Women Emp.</option>
+          <option>Vocational</option>
+        </select>
+        <select class="filter-select">
+          <option>All Staff</option>
+          <option>Ahmed Salim</option>
+          <option>Dr. Sarah</option>
+          <option>Fatima Al-Zahra</option>
+          <option>Ravi Kumar</option>
+        </select>
+        <label class="my-cases-toggle">
+          <input type="checkbox"> My Cases
+        </label>
+        <select class="filter-select">
+          <option>All Branches</option>
+          <option>Main Office</option>
+          <option>Field Office A</option>
+          <option>Field Office B</option>
+        </select>
+        <select class="filter-select">
+          <option>All Dates</option>
+          <option>Overdue</option>
+          <option>Due This Week</option>
+          <option>Due This Month</option>
+        </select>
+        <a href="#" class="clear-filters" onclick="clearFilters(event)">Clear Filters</a>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 36px;"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)"></th>
+            <th>Case ID</th>
+            <th>Beneficiary</th>
+            <th>Title</th>
+            <th>Program</th>
+            <th>Priority</th>
+            <th>Opened</th>
+            <th>Due / Follow-up</th>
+            <th>Assigned</th>
+            <th>Status</th>
+            <th style="width: 100px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Row 1 -->
+          <tr>
+            <td><input type="checkbox" class="row-check"></td>
+            <td><span class="case-id">CASE-301</span></td>
+            <td>
+              <a class="ben-link" onclick="parent.loadContent('case-management/beneficiary-detail')">Yusuf Hassan</a>
+              <div class="ben-id">BEN-001</div>
+            </td>
+            <td><span class="case-title" title="Reading level below grade — needs tutoring">Reading level below grade — needs tutoring</span></td>
+            <td>Education</td>
+            <td><span class="badge-priority medium"><i class="fa-solid fa-circle" style="font-size: 0.375rem;"></i> Medium</span></td>
+            <td>Mar 15</td>
+            <td>Apr 20</td>
+            <td>Ahmed Salim</td>
+            <td><span class="badge-status open"><i class="fa-solid fa-circle" style="font-size: 0.375rem;"></i> Open</span></td>
+            <td>
+              <div style="display: flex; gap: 0.25rem; align-items: center;">
+                <button class="btn-view" onclick="parent.loadContent('case-management/case-detail')">View</button>
+                <div class="action-dropdown">
+                  <button class="btn-dots" onclick="toggleActionMenu(event)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                  <div class="action-menu">
+                    <a href="#" onclick="parent.loadContent('case-management/case-detail')"><i class="fa-solid fa-eye"></i> View</a>
+                    <a href="#"><i class="fa-solid fa-pen"></i> Edit</a>
+                    <a href="#"><i class="fa-solid fa-note-sticky"></i> Add Note</a>
+                    <a href="#"><i class="fa-solid fa-user-pen"></i> Reassign</a>
+                    <a href="#"><i class="fa-solid fa-arrow-up"></i> Escalate</a>
+                    <a href="#" class="danger-action"><i class="fa-solid fa-xmark"></i> Close Case</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <!-- Row 2 — Overdue -->
+          <tr class="row-overdue">
+            <td><input type="checkbox" class="row-check"></td>
+            <td><span class="case-id">CASE-298</span></td>
+            <td>
+              <a class="ben-link" onclick="parent.loadContent('case-management/beneficiary-detail')">Samuel Ochieng</a>
+              <div class="ben-id">BEN-003</div>
+            </td>
+            <td><span class="case-title" title="Recurring illness — clinic referral">Recurring illness — clinic referral</span></td>
+            <td>Healthcare</td>
+            <td><span class="badge-priority critical"><i class="fa-solid fa-circle" style="font-size: 0.375rem;"></i> Critical</span></td>
+            <td>Mar 10</td>
+            <td>
+              <span class="overdue-date">Apr 5</span>
+              <div class="overdue-date"><i class="fa-solid fa-triangle-exclamation" style="font-size: 0.625rem;"></i> Overdue</div>
+            </td>
+            <td>Dr. Sarah</td>
+            <td><span class="badge-status overdue"><i class="fa-solid fa-triangle-exclamation" style="font-size: 0.5rem;"></i> Overdue</span></td>
+            <td>
+              <div style="display: flex; gap: 0.25rem; align-items: center;">
+                <button class="btn-view" onclick="parent.loadContent('case-management/case-detail')">View</button>
+                <div class="action-dropdown">
+                  <button class="btn-dots" onclick="toggleActionMenu(event)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                  <div class="action-menu">
+                    <a href="#" onclick="parent.loadContent('case-management/case-detail')"><i class="fa-solid fa-eye"></i> View</a>
+                    <a href="#"><i class="fa-solid fa-pen"></i> Edit</a>
+                    <a href="#"><i class="fa-solid fa-note-sticky"></i> Add Note</a>
+                    <a href="#"><i class="fa-solid fa-user-pen"></i> Reassign</a>
+                    <a href="#"><i class="fa-solid fa-arrow-up"></i> Escalate</a>
+                    <a href="#" class="danger-action"><i class="fa-solid fa-xmark"></i> Close Case</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <!-- Row 3 -->
+          <tr>
+            <td><input type="checkbox" class="row-check"></td>
+            <td><span class="case-id">CASE-295</span></td>
+            <td>
+              <a class="ben-link" onclick="parent.loadContent('case-management/beneficiary-detail')">Fatima Begum</a>
+              <div class="ben-id">BEN-004</div>
+            </td>
+            <td><span class="case-title" title="Vocational training completion — job placement">Vocational training completion — job placement</span></td>
+            <td>Women Emp.</td>
+            <td><span class="badge-priority high"><i class="fa-solid fa-circle" style="font-size: 0.375rem;"></i> High</span></td>
+            <td>Feb 20</td>
+            <td>Apr 25</td>
+            <td>Fatima Al-Zahra</td>
+            <td><span class="badge-status in-progress"><i class="fa-solid fa-spinner" style="font-size: 0.5rem;"></i> In Progress</span></td>
+            <td>
+              <div style="display: flex; gap: 0.25rem; align-items: center;">
+                <button class="btn-view" onclick="parent.loadContent('case-management/case-detail')">View</button>
+                <div class="action-dropdown">
+                  <button class="btn-dots" onclick="toggleActionMenu(event)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                  <div class="action-menu">
+                    <a href="#" onclick="parent.loadContent('case-management/case-detail')"><i class="fa-solid fa-eye"></i> View</a>
+                    <a href="#"><i class="fa-solid fa-pen"></i> Edit</a>
+                    <a href="#"><i class="fa-solid fa-note-sticky"></i> Add Note</a>
+                    <a href="#"><i class="fa-solid fa-user-pen"></i> Reassign</a>
+                    <a href="#"><i class="fa-solid fa-arrow-up"></i> Escalate</a>
+                    <a href="#" class="danger-action"><i class="fa-solid fa-xmark"></i> Close Case</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <!-- Row 4 -->
+          <tr>
+            <td><input type="checkbox" class="row-check"></td>
+            <td><span class="case-id">CASE-290</span></td>
+            <td>
+              <a class="ben-link" onclick="parent.loadContent('case-management/beneficiary-detail')">Ahmed Noor</a>
+              <div class="ben-id">BEN-005</div>
+            </td>
+            <td><span class="case-title" title="Waitlist → enrollment assessment">Waitlist → enrollment assessment</span></td>
+            <td>Education</td>
+            <td><span class="badge-priority high"><i class="fa-solid fa-circle" style="font-size: 0.375rem;"></i> High</span></td>
+            <td>Feb 1</td>
+            <td>Apr 18</td>
+            <td>Ahmed Salim</td>
+            <td><span class="badge-status pending"><i class="fa-solid fa-clipboard" style="font-size: 0.5rem;"></i> Pending</span></td>
+            <td>
+              <div style="display: flex; gap: 0.25rem; align-items: center;">
+                <button class="btn-view" onclick="parent.loadContent('case-management/case-detail')">View</button>
+                <div class="action-dropdown">
+                  <button class="btn-dots" onclick="toggleActionMenu(event)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                  <div class="action-menu">
+                    <a href="#" onclick="parent.loadContent('case-management/case-detail')"><i class="fa-solid fa-eye"></i> View</a>
+                    <a href="#"><i class="fa-solid fa-pen"></i> Edit</a>
+                    <a href="#"><i class="fa-solid fa-note-sticky"></i> Add Note</a>
+                    <a href="#"><i class="fa-solid fa-user-pen"></i> Reassign</a>
+                    <a href="#"><i class="fa-solid fa-arrow-up"></i> Escalate</a>
+                    <a href="#" class="danger-action"><i class="fa-solid fa-xmark"></i> Close Case</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <!-- Row 5 -->
+          <tr>
+            <td><input type="checkbox" class="row-check"></td>
+            <td><span class="case-id">CASE-285</span></td>
+            <td>
+              <a class="ben-link" onclick="parent.loadContent('case-management/beneficiary-detail')">Priya Devi</a>
+              <div class="ben-id">BEN-006</div>
+            </td>
+            <td><span class="case-title" title="Post-graduation employment follow-up">Post-graduation employment follow-up</span></td>
+            <td>Vocational</td>
+            <td><span class="badge-priority medium"><i class="fa-solid fa-circle" style="font-size: 0.375rem;"></i> Medium</span></td>
+            <td>Jan 15</td>
+            <td>Apr 30</td>
+            <td>Ravi Kumar</td>
+            <td><span class="badge-status open"><i class="fa-solid fa-circle" style="font-size: 0.375rem;"></i> Open</span></td>
+            <td>
+              <div style="display: flex; gap: 0.25rem; align-items: center;">
+                <button class="btn-view" onclick="parent.loadContent('case-management/case-detail')">View</button>
+                <div class="action-dropdown">
+                  <button class="btn-dots" onclick="toggleActionMenu(event)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                  <div class="action-menu">
+                    <a href="#" onclick="parent.loadContent('case-management/case-detail')"><i class="fa-solid fa-eye"></i> View</a>
+                    <a href="#"><i class="fa-solid fa-pen"></i> Edit</a>
+                    <a href="#"><i class="fa-solid fa-note-sticky"></i> Add Note</a>
+                    <a href="#"><i class="fa-solid fa-user-pen"></i> Reassign</a>
+                    <a href="#"><i class="fa-solid fa-arrow-up"></i> Escalate</a>
+                    <a href="#" class="danger-action"><i class="fa-solid fa-xmark"></i> Close Case</a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <!-- Row 6 -->
+          <tr>
+            <td><input type="checkbox" class="row-check"></td>
+            <td><span class="case-id">CASE-280</span></td>
+            <td>
+              <a class="ben-link" onclick="parent.loadContent('case-management/beneficiary-detail')">Amira Mohammed</a>
+              <div class="ben-id">BEN-002</div>
+            </td>
+            <td><span class="case-title" title="School transfer assistance">School transfer assistance</span></td>
+            <td>Education</td>
+            <td><span class="badge-priority low"><i class="fa-solid fa-circle" style="font-size: 0.375rem;"></i> Low</span></td>
+            <td>Jan 5</td>
+            <td>—</td>
+            <td>Ahmed Salim</td>
+            <td><span class="badge-status resolved"><i class="fa-solid fa-check" style="font-size: 0.5rem;"></i> Resolved</span></td>
+            <td>
+              <div style="display: flex; gap: 0.25rem; align-items: center;">
+                <button class="btn-view" onclick="parent.loadContent('case-management/case-detail')">View</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Bulk Actions -->
+    <div class="bulk-actions">
+      <input type="checkbox" id="bulkSelectAll" onchange="toggleSelectAll(this)">
+      <span class="bulk-label">Bulk Actions:</span>
+      <button class="btn-bulk"><i class="fa-solid fa-user-pen"></i> Reassign</button>
+      <button class="btn-bulk"><i class="fa-solid fa-download"></i> Export</button>
+      <button class="btn-bulk"><i class="fa-solid fa-bell"></i> Send Reminders</button>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-bar">
+      <span class="pagination-info">Showing 1-6 of 156 cases</span>
+      <div class="pagination-btns">
+        <button class="page-btn" disabled>&laquo;</button>
+        <button class="page-btn active">1</button>
+        <button class="page-btn">2</button>
+        <button class="page-btn">3</button>
+        <button class="page-btn">...</button>
+        <button class="page-btn">26</button>
+        <button class="page-btn">&raquo;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Case Modal -->
+  <div class="modal fade" id="newCaseModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content" style="border-radius: var(--card-radius); border: 1px solid var(--border-color);">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fa-solid fa-plus" style="color: var(--cm-accent); margin-right: 0.5rem;"></i>New Case</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label-sm">Beneficiary <span class="required">*</span></label>
+              <input type="text" class="form-control form-control-sm" placeholder="Search beneficiary...">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-sm">Title <span class="required">*</span></label>
+              <input type="text" class="form-control form-control-sm" placeholder="Brief case title">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-sm">Program</label>
+              <select class="form-select form-select-sm">
+                <option value="">Select program (auto-suggested)</option>
+                <option>Education</option>
+                <option>Healthcare</option>
+                <option>Women Emp.</option>
+                <option>Vocational</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-sm">Priority <span class="required">*</span></label>
+              <select class="form-select form-select-sm">
+                <option value="">Select priority</option>
+                <option>Critical</option>
+                <option>High</option>
+                <option>Medium</option>
+                <option>Low</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label-sm">Description <span class="required">*</span></label>
+              <textarea class="form-control form-control-sm" rows="3" placeholder="Describe the case details, background, and objectives..."></textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-sm">Category</label>
+              <select class="form-select form-select-sm">
+                <option value="">Select category</option>
+                <option>Educational Support</option>
+                <option>Medical</option>
+                <option>Housing</option>
+                <option>Legal</option>
+                <option>Nutrition</option>
+                <option>Protection</option>
+                <option>Psychosocial</option>
+                <option>Livelihood</option>
+                <option>Referral</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-sm">Assigned To <span class="required">*</span></label>
+              <select class="form-select form-select-sm">
+                <option value="">Select staff member</option>
+                <option>Ahmed Salim</option>
+                <option>Dr. Sarah</option>
+                <option>Fatima Al-Zahra</option>
+                <option>Ravi Kumar</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-sm">Follow-up Date</label>
+              <input type="date" class="form-control form-control-sm">
+            </div>
+            <div class="col-12">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="referralCheck" onchange="toggleReferral()">
+                <label class="form-check-label" for="referralCheck" style="font-size: 0.8125rem; font-weight: 600;">
+                  External referral needed
+                </label>
+              </div>
+              <div class="referral-fields" id="referralFields">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label-sm">Referral To</label>
+                    <input type="text" class="form-control form-control-sm" placeholder="Organization or individual name">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label-sm">Referral Notes</label>
+                    <textarea class="form-control form-control-sm" rows="2" placeholder="Additional referral details..."></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-outline-accent" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn-primary-accent">
+            <i class="fa-solid fa-plus" style="margin-right: 0.375rem;"></i>Create Case
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Export dropdown toggle
+    function toggleExport(e) {
+      e.stopPropagation();
+      const menu = document.getElementById('exportMenu');
+      menu.classList.toggle('show');
+    }
+
+    // Filter chip active state toggle
+    document.querySelectorAll('.filter-chips').forEach(group => {
+      group.querySelectorAll('.filter-chip').forEach(chip => {
+        chip.addEventListener('click', function () {
+          group.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+          this.classList.add('active');
+        });
+      });
+    });
+
+    // New Case modal show/hide (Bootstrap modal)
+    const newCaseModalEl = document.getElementById('newCaseModal');
+    const newCaseModal = new bootstrap.Modal(newCaseModalEl);
+
+    document.querySelector('.btn-primary-accent').addEventListener('click', function () {
+      newCaseModal.show();
+    });
+
+    // Referral checkbox toggle
+    function toggleReferral() {
+      const fields = document.getElementById('referralFields');
+      const check = document.getElementById('referralCheck');
+      if (check.checked) {
+        fields.classList.add('show');
+      } else {
+        fields.classList.remove('show');
+      }
+    }
+
+    // 3-dot dropdown toggle
+    function toggleActionMenu(e) {
+      e.stopPropagation();
+      // Close all others
+      document.querySelectorAll('.action-menu.show').forEach(m => {
+        if (m !== e.currentTarget.nextElementSibling) m.classList.remove('show');
+      });
+      const menu = e.currentTarget.nextElementSibling;
+      menu.classList.toggle('show');
+    }
+
+    // Select all checkboxes
+    function toggleSelectAll(source) {
+      const checkboxes = document.querySelectorAll('.row-check');
+      checkboxes.forEach(cb => cb.checked = source.checked);
+      // Sync both select-all checkboxes
+      document.getElementById('selectAll').checked = source.checked;
+      document.getElementById('bulkSelectAll').checked = source.checked;
+    }
+
+    // Clear filters
+    function clearFilters(e) {
+      e.preventDefault();
+      document.querySelectorAll('.filter-chips').forEach(group => {
+        group.querySelectorAll('.filter-chip').forEach((c, i) => {
+          c.classList.toggle('active', i === 0);
+        });
+      });
+      document.querySelectorAll('.filter-select').forEach(s => s.selectedIndex = 0);
+      document.querySelector('.search-input input').value = '';
+      document.querySelector('.my-cases-toggle input').checked = false;
+    }
+
+    // Close dropdowns on outside click
+    document.addEventListener('click', function (e) {
+      // Close export menu
+      if (!e.target.closest('.export-dropdown')) {
+        document.getElementById('exportMenu').classList.remove('show');
+      }
+      // Close action menus
+      if (!e.target.closest('.action-dropdown')) {
+        document.querySelectorAll('.action-menu.show').forEach(m => m.classList.remove('show'));
+      }
+    });
+  </script>
+</body>
+
+</html>

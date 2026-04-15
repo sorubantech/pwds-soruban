@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bulk Donation Upload - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .back-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 1rem;
+    }
+
+    .back-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    /* Buttons */
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #0c6577;
+      border-color: #0c6577;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent-bg);
+    }
+
+    .card {
+      border: 1px solid var(--border-color);
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      background: white;
+    }
+
+    /* Stepper */
+    .stepper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      margin-bottom: 1.5rem;
+      padding: 1.25rem 1rem;
+      background: white;
+      border-radius: var(--card-radius);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--card-shadow);
+      overflow-x: auto;
+    }
+
+    .step-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .step-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8125rem;
+      font-weight: 700;
+      border: 2px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+      transition: all 0.25s;
+    }
+
+    .step-item.active .step-circle {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .step-item.completed .step-circle {
+      background: var(--success-color);
+      border-color: var(--success-color);
+      color: white;
+    }
+
+    .step-label {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      transition: color 0.25s;
+    }
+
+    .step-item.active .step-label {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .step-item.completed .step-label {
+      color: var(--success-color);
+      font-weight: 600;
+    }
+
+    .step-connector {
+      width: 60px;
+      height: 2px;
+      background: var(--border-color);
+      margin: 0 0.5rem;
+      flex-shrink: 0;
+      transition: background 0.25s;
+    }
+
+    .step-connector.completed {
+      background: var(--success-color);
+    }
+
+    /* Upload Zone */
+    .upload-zone {
+      border: 2px dashed var(--border-color);
+      border-radius: var(--card-radius);
+      height: 200px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #fafbfc;
+    }
+
+    .upload-zone:hover,
+    .upload-zone.drag-over {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .upload-zone i {
+      font-size: 2.5rem;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+
+    .upload-zone p {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      margin: 0;
+    }
+
+    .upload-zone .formats {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-top: 0.375rem;
+    }
+
+    .file-selected {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      background: var(--accent-bg);
+      border: 1px solid #a5f3fc;
+      border-radius: 0.5rem;
+    }
+
+    .file-selected .file-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 0.5rem;
+      background: var(--accent);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+    }
+
+    .file-selected .file-info {
+      flex: 1;
+    }
+
+    .file-selected .file-name {
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+
+    .file-selected .file-meta {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .file-selected .remove-file {
+      background: none;
+      border: none;
+      color: var(--danger-color);
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    /* Mapping Table */
+    .mapping-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.625rem 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .mapping-row:last-child {
+      border-bottom: none;
+    }
+
+    .mapping-source {
+      flex: 1;
+      font-weight: 600;
+      font-size: 0.8125rem;
+      background: #f8fafc;
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .mapping-arrow {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      flex-shrink: 0;
+    }
+
+    .mapping-target {
+      flex: 1;
+    }
+
+    .mapping-target select {
+      width: 100%;
+      font-size: 0.8125rem;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      color: var(--text-primary);
+    }
+
+    .mapping-status {
+      width: 110px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .mapping-status.auto {
+      color: var(--success-color);
+    }
+
+    .mapping-status.suggested {
+      color: var(--warning-color);
+    }
+
+    .mapping-status.unmapped {
+      color: var(--danger-color);
+    }
+
+    /* Validation Summary Cards */
+    .validation-card {
+      border-radius: var(--card-radius);
+      padding: 1.25rem;
+      text-align: center;
+      border: 1px solid var(--border-color);
+    }
+
+    .validation-card .count {
+      font-size: 1.75rem;
+      font-weight: 800;
+    }
+
+    .validation-card .label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .validation-card .pct {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .validation-card.valid {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+    }
+
+    .validation-card.valid .count {
+      color: var(--success-color);
+    }
+
+    .validation-card.warnings {
+      background: #fefce8;
+      border-color: #fde68a;
+    }
+
+    .validation-card.warnings .count {
+      color: var(--warning-color);
+    }
+
+    .validation-card.errors {
+      background: #fef2f2;
+      border-color: #fecaca;
+    }
+
+    .validation-card.errors .count {
+      color: var(--danger-color);
+    }
+
+    /* Progress Bar */
+    .import-progress-bar {
+      height: 20px;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #e2e8f0;
+    }
+
+    .import-progress-bar .progress-bar {
+      background: linear-gradient(90deg, var(--accent), var(--accent-light));
+      transition: width 0.4s ease;
+      font-size: 0.6875rem;
+      font-weight: 700;
+    }
+
+    /* Success state */
+    .import-success {
+      text-align: center;
+      padding: 2.5rem 1rem;
+    }
+
+    .import-success .success-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: #f0fdf4;
+      color: var(--success-color);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      border: 3px solid #bbf7d0;
+    }
+
+    .import-success h2 {
+      font-size: 1.375rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .import-success .summary-text {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Table styling */
+    .table-custom {
+      font-size: 0.8125rem;
+    }
+
+    .table-custom thead th {
+      background: #f8fafc;
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      border-bottom: 2px solid var(--border-color);
+      padding: 0.625rem 0.75rem;
+      white-space: nowrap;
+    }
+
+    .table-custom tbody td {
+      padding: 0.625rem 0.75rem;
+      vertical-align: middle;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.625rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+    }
+
+    .badge-status.complete {
+      background: #f0fdf4;
+      color: var(--success-color);
+    }
+
+    /* Toggle Filter */
+    .toggle-group {
+      display: inline-flex;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+
+    .toggle-group .toggle-btn {
+      padding: 0.375rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: none;
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .toggle-group .toggle-btn.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    .toggle-group .toggle-btn+.toggle-btn {
+      border-left: 1px solid var(--border-color);
+    }
+
+    /* Step panels */
+    .step-panel {
+      display: none;
+    }
+
+    .step-panel.active {
+      display: block;
+    }
+
+    /* Responsive stepper */
+    @media (max-width: 768px) {
+      .stepper {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+
+      .step-connector {
+        width: 2px;
+        height: 24px;
+        margin: 0 0 0 15px;
+      }
+
+      .step-item {
+        width: 100%;
+      }
+
+      .mapping-row {
+        flex-wrap: wrap;
+      }
+
+      .mapping-source,
+      .mapping-target {
+        flex: 1 1 100%;
+      }
+
+      .mapping-status {
+        width: auto;
+      }
+
+      body {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" onclick="parent.loadContent('fundraising/donation-list')" title="Back to Donations">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <div>
+        <h1>Bulk Donation Upload</h1>
+        <p class="subtitle">Import multiple donations from spreadsheet</p>
+      </div>
+    </div>
+    <div>
+      <button class="btn-outline-accent" onclick="parent.loadContent('fundraising/donation-list')">
+        <i class="fas fa-times me-1"></i> Cancel
+      </button>
+    </div>
+  </div>
+
+  <!-- Stepper -->
+  <div class="stepper" id="stepper">
+    <div class="step-item active" data-step="1" onclick="goToStep(1)">
+      <div class="step-circle">1</div>
+      <span class="step-label">Upload</span>
+    </div>
+    <div class="step-connector" data-conn="1"></div>
+    <div class="step-item" data-step="2" onclick="goToStep(2)">
+      <div class="step-circle">2</div>
+      <span class="step-label">Map Fields</span>
+    </div>
+    <div class="step-connector" data-conn="2"></div>
+    <div class="step-item" data-step="3" onclick="goToStep(3)">
+      <div class="step-circle">3</div>
+      <span class="step-label">Validate</span>
+    </div>
+    <div class="step-connector" data-conn="3"></div>
+    <div class="step-item" data-step="4" onclick="goToStep(4)">
+      <div class="step-circle">4</div>
+      <span class="step-label">Preview</span>
+    </div>
+    <div class="step-connector" data-conn="4"></div>
+    <div class="step-item" data-step="5" onclick="goToStep(5)">
+      <div class="step-circle">5</div>
+      <span class="step-label">Import</span>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- STEP 1: Upload                              -->
+  <!-- ════════════════════════════════════════════ -->
+  <div class="step-panel active" id="step1">
+    <div class="card p-4 mb-3">
+      <h6 class="fw-bold mb-3"><i class="fas fa-file-import me-2 text-muted"></i>Import Type</h6>
+      <div class="d-flex align-items-center gap-3 p-3 rounded-3" style="background:var(--accent-bg);border:1px solid #a5f3fc;">
+        <div style="width:40px;height:40px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-size:1rem;">
+          <i class="fas fa-hand-holding-heart"></i>
+        </div>
+        <div>
+          <div style="font-weight:700;font-size:0.875rem;color:var(--accent);">Donations</div>
+          <div style="font-size:0.75rem;color:var(--text-secondary);">Import donation records from spreadsheet</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-4 mb-3">
+      <h6 class="fw-bold mb-3"><i class="fas fa-cloud-upload-alt me-2 text-muted"></i>Upload File</h6>
+
+      <!-- Drag & Drop Zone -->
+      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <p>Drag & drop your Excel file here, or <strong style="color:var(--accent)">click to browse</strong></p>
+        <p class="formats">Accepted formats: .xlsx, .xls, .csv &mdash; Max 10 MB</p>
+      </div>
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFileSelect(this)">
+
+      <!-- File Selected (hidden by default) -->
+      <div class="file-selected d-none" id="fileSelected">
+        <div class="file-icon"><i class="fas fa-file-excel"></i></div>
+        <div class="file-info">
+          <div class="file-name" id="fileName">annual_giving.xlsx</div>
+          <div class="file-meta" id="fileMeta">3.1 MB &bull; ~500 rows detected</div>
+        </div>
+        <button class="remove-file" onclick="removeFile()" title="Remove file"><i class="fas fa-times-circle"></i></button>
+      </div>
+
+      <div class="mt-3 d-flex align-items-center gap-3 flex-wrap">
+        <button class="btn-outline-accent" style="font-size:0.8125rem">
+          <i class="fas fa-download me-1"></i> Download Donation Template
+        </button>
+        <span style="font-size:0.75rem;color:var(--text-secondary)">Template columns: Contact Code, Contact Email, Donor Name, Donation Date, Amount, Currency, Purpose Code, Payment Mode, Receipt Number, Note</span>
+      </div>
+    </div>
+
+    <div class="card p-4 mb-3">
+      <h6 class="fw-bold mb-3"><i class="fas fa-cog me-2 text-muted"></i>Options</h6>
+      <div class="form-check mb-2">
+        <input class="form-check-input" type="checkbox" id="optHeaders" checked>
+        <label class="form-check-label" for="optHeaders" style="font-size:0.8125rem">First row contains column headers</label>
+      </div>
+      <div class="form-check mb-2">
+        <input class="form-check-input" type="checkbox" id="optAutoMatch" checked>
+        <label class="form-check-label" for="optAutoMatch" style="font-size:0.8125rem">Auto-match donors by email</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="optSkipUnresolved">
+        <label class="form-check-label" for="optSkipUnresolved" style="font-size:0.8125rem">Skip unresolved donors</label>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-end">
+      <button class="btn-primary-accent" onclick="goToStep(2)">Next: Map Fields <i class="fas fa-arrow-right ms-1"></i></button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- STEP 2: Map Fields                          -->
+  <!-- ════════════════════════════════════════════ -->
+  <div class="step-panel" id="step2">
+    <div class="card p-4 mb-3">
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h6 class="fw-bold mb-0"><i class="fas fa-arrows-alt-h me-2 text-muted"></i>Field Mapping</h6>
+        <span style="font-size:0.8125rem;color:var(--text-secondary)">
+          <strong style="color:var(--accent)">7</strong> of 9 columns auto-mapped
+          <span class="text-muted">(2 suggested &mdash; review before proceeding)</span>
+        </span>
+      </div>
+
+      <!-- Header Row -->
+      <div class="mapping-row" style="border-bottom:2px solid var(--border-color);padding-bottom:0.5rem">
+        <div class="mapping-source" style="background:none;border:none;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-secondary)">Your File Columns</div>
+        <div class="mapping-arrow" style="visibility:hidden"><i class="fas fa-arrow-right"></i></div>
+        <div class="mapping-target" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-secondary);font-weight:600">PSS 2.0 Fields</div>
+        <div class="mapping-status" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-secondary)">Status</div>
+      </div>
+
+      <!-- Mapping Rows -->
+      <div class="mapping-row">
+        <div class="mapping-source">Donor Name</div>
+        <div class="mapping-arrow"><i class="fas fa-arrow-right"></i></div>
+        <div class="mapping-target">
+          <select><option selected>Contact (Name Match)</option></select>
+        </div>
+        <div class="mapping-status auto"><i class="fas fa-check-circle me-1"></i>Auto-mapped</div>
+      </div>
+      <div class="mapping-row">
+        <div class="mapping-source">Donor Email</div>
+        <div class="mapping-arrow"><i class="fas fa-arrow-right"></i></div>
+        <div class="mapping-target">
+          <select><option selected>Contact (Email Match)</option></select>
+        </div>
+        <div class="mapping-status auto"><i class="fas fa-check-circle me-1"></i>Auto-mapped</div>
+      </div>
+      <div class="mapping-row">
+        <div class="mapping-source">Date</div>
+        <div class="mapping-arrow"><i class="fas fa-arrow-right"></i></div>
+        <div class="mapping-target">
+          <select><option selected>Donation Date</option></select>
+        </div>
+        <div class="mapping-status auto"><i class="fas fa-check-circle me-1"></i>Auto-mapped</div>
+      </div>
+      <div class="mapping-row">
+        <div class="mapping-source">Amount</div>
+        <div class="mapping-arrow"><i class="fas fa-arrow-right"></i></div>
+        <div class="mapping-target">
+          <select><option selected>Donation Amount</option></select>
+        </div>
+        <div class="mapping-status auto"><i class="fas fa-check-circle me-1"></i>Auto-mapped</div>
+      </div>
+      <div class="mapping-row">
+        <div class="mapping-source">Currency</div>
+        <div class="mapping-arrow"><i class="fas fa-arrow-right"></i></div>
+        <div class="mapping-target">
+          <select><option selected>Currency</option></select>
+        </div>
+        <div class="mapping-status suggested"><i class="fas fa-exclamation-circle me-1"></i>Suggested</div>
+      </div>
+      <div class="mapping-row">
+        <div class="mapping-source">Fund</div>
+        <div class="mapping-arrow"><i class="fas fa-arrow-right"></i></div>
+        <div class="mapping-target">
+          <select><option selected>Donation Purpose</option></select>
+        </div>
+        <div class="mapping-status suggested"><i class="fas fa-exclamation-circle me-1"></i>Suggested</div>
+      </div>
+      <div class="mapping-row">
+        <div class="mapping-source">Pay Method</div>
+        <div class="mapping-arrow"><i class="fas fa-arrow-right"></i></div>
+        <div class="mapping-target">
+          <select><option selected>Payment Mode</option></select>
+        </div>
+        <div class="mapping-status auto"><i class="fas fa-check-circle me-1"></i>Auto-mapped</div>
+      </div>
+      <div class="mapping-row">
+        <div class="mapping-source">Ref No</div>
+        <div class="mapping-arrow"><i class="fas fa-arrow-right"></i></div>
+        <div class="mapping-target">
+          <select><option selected>Receipt Number</option></select>
+        </div>
+        <div class="mapping-status auto"><i class="fas fa-check-circle me-1"></i>Auto-mapped</div>
+      </div>
+      <div class="mapping-row">
+        <div class="mapping-source">Comments</div>
+        <div class="mapping-arrow"><i class="fas fa-arrow-right"></i></div>
+        <div class="mapping-target">
+          <select><option selected>Note</option></select>
+        </div>
+        <div class="mapping-status suggested"><i class="fas fa-exclamation-circle me-1"></i>Suggested</div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-between">
+      <button class="btn-outline-accent" onclick="goToStep(1)"><i class="fas fa-arrow-left me-1"></i> Back</button>
+      <button class="btn-primary-accent" onclick="goToStep(3)">Next: Validate <i class="fas fa-arrow-right ms-1"></i></button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- STEP 3: Validate                            -->
+  <!-- ════════════════════════════════════════════ -->
+  <div class="step-panel" id="step3">
+    <!-- Validation Progress -->
+    <div class="card p-4 mb-3">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="fw-bold mb-0"><i class="fas fa-check-double me-2 text-muted"></i>Validation Progress</h6>
+        <span style="font-size:0.8125rem;color:var(--success-color);font-weight:600"><i class="fas fa-check-circle me-1"></i>Completed in 5 seconds</span>
+      </div>
+      <div class="import-progress-bar">
+        <div class="progress-bar" role="progressbar" style="width:100%">100%</div>
+      </div>
+      <div style="font-size:0.75rem;color:var(--text-secondary);margin-top:0.375rem">Validating 500 rows... Done</div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-3">
+      <div class="col-md-4">
+        <div class="validation-card valid">
+          <div class="count">485</div>
+          <div class="label" style="color:var(--success-color)"><i class="fas fa-check-circle me-1"></i>Valid Rows</div>
+          <div class="pct">97.0%</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="validation-card warnings">
+          <div class="count">12</div>
+          <div class="label" style="color:var(--warning-color)"><i class="fas fa-exclamation-triangle me-1"></i>Warnings</div>
+          <div class="pct">2.4%</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="validation-card errors">
+          <div class="count">3</div>
+          <div class="label" style="color:var(--danger-color)"><i class="fas fa-times-circle me-1"></i>Errors</div>
+          <div class="pct">0.6%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error/Warning Details -->
+    <div class="card p-4 mb-3">
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h6 class="fw-bold mb-0"><i class="fas fa-list-ul me-2 text-muted"></i>Error & Warning Details</h6>
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+          <div class="toggle-group">
+            <button class="toggle-btn" onclick="setFilter(this)">Show All</button>
+            <button class="toggle-btn active" onclick="setFilter(this)">Errors + Warnings</button>
+            <button class="toggle-btn" onclick="setFilter(this)">Errors Only</button>
+          </div>
+          <button class="btn-outline-accent" style="font-size:0.75rem;padding:0.375rem 0.75rem">
+            <i class="fas fa-file-excel me-1"></i> Export Errors
+          </button>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-custom mb-0">
+          <thead>
+            <tr>
+              <th>Row #</th>
+              <th>Field</th>
+              <th>Issue</th>
+              <th>Value</th>
+              <th>Suggested Fix</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>45</strong></td>
+              <td>Contact</td>
+              <td><span style="color:var(--danger-color)"><i class="fas fa-times-circle me-1"></i>Contact not found</span></td>
+              <td><code>John Doe</code> <span class="text-muted">(no email match)</span></td>
+              <td style="color:var(--text-secondary)">Add contact first or provide email</td>
+            </tr>
+            <tr>
+              <td><strong>89</strong></td>
+              <td>Currency</td>
+              <td><span style="color:var(--danger-color)"><i class="fas fa-times-circle me-1"></i>Invalid currency code</span></td>
+              <td><code>X</code></td>
+              <td style="color:var(--text-secondary)">Use valid ISO currency (e.g. USD, EUR)</td>
+            </tr>
+            <tr>
+              <td><strong>201</strong></td>
+              <td>Amount</td>
+              <td><span style="color:var(--danger-color)"><i class="fas fa-times-circle me-1"></i>Negative amount</span></td>
+              <td><code>-150.00</code></td>
+              <td style="color:var(--text-secondary)">Amount must be positive</td>
+            </tr>
+            <tr>
+              <td><strong>78</strong></td>
+              <td>Purpose</td>
+              <td><span style="color:var(--warning-color)"><i class="fas fa-exclamation-triangle me-1"></i>Purpose code not found</span></td>
+              <td><code>MISC</code></td>
+              <td style="color:var(--text-secondary)">Will default to General Fund</td>
+            </tr>
+            <tr>
+              <td><strong>156</strong></td>
+              <td>Date</td>
+              <td><span style="color:var(--warning-color)"><i class="fas fa-exclamation-triangle me-1"></i>Future date detected</span></td>
+              <td><code>2026-12-31</code></td>
+              <td style="color:var(--text-secondary)">Verify donation date is correct</td>
+            </tr>
+            <tr>
+              <td><strong>312</strong></td>
+              <td>Receipt No</td>
+              <td><span style="color:var(--warning-color)"><i class="fas fa-exclamation-triangle me-1"></i>Duplicate receipt number</span></td>
+              <td><code>RCT-2026-0450</code> <span class="text-muted">(row 45)</span></td>
+              <td style="color:var(--text-secondary)">Ensure unique receipt numbers</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-between flex-wrap gap-2">
+      <button class="btn-outline-accent" onclick="goToStep(2)"><i class="fas fa-arrow-left me-1"></i> Back</button>
+      <div class="d-flex gap-2 flex-wrap">
+        <button class="btn-outline-accent" onclick="goToStep(5)" style="color:var(--warning-color);border-color:var(--warning-color)">
+          Import Valid Rows Only <i class="fas fa-arrow-right ms-1"></i>
+        </button>
+        <button class="btn-primary-accent" onclick="goToStep(4)">Next: Preview <i class="fas fa-arrow-right ms-1"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- STEP 4: Preview                             -->
+  <!-- ════════════════════════════════════════════ -->
+  <div class="step-panel" id="step4">
+    <div class="card p-4 mb-3">
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <div style="width:40px;height:40px;border-radius:50%;background:var(--accent-bg);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1.125rem">
+          <i class="fas fa-eye"></i>
+        </div>
+        <div>
+          <h6 class="fw-bold mb-0">Import Preview</h6>
+          <span style="font-size:0.8125rem;color:var(--text-secondary)">Ready to import <strong style="color:var(--accent)">485 donations</strong> (3 rows with errors will be skipped)</span>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-custom mb-0">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Donor</th>
+              <th>Date</th>
+              <th>Amount</th>
+              <th>Currency</th>
+              <th>Purpose</th>
+              <th>Mode</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>Sarah Johnson</td>
+              <td>Apr 1, 2026</td>
+              <td>$500.00</td>
+              <td>USD</td>
+              <td>Children's Education Fund</td>
+              <td>Bank Transfer</td>
+              <td><span class="badge-status complete"><i class="fas fa-check-circle"></i> Valid</span></td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>Ahmed Hassan</td>
+              <td>Apr 1, 2026</td>
+              <td>$250.00</td>
+              <td>USD</td>
+              <td>Medical Aid Fund</td>
+              <td>Credit Card</td>
+              <td><span class="badge-status complete"><i class="fas fa-check-circle"></i> Valid</span></td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>Maria Garcia</td>
+              <td>Apr 2, 2026</td>
+              <td>$1,000.00</td>
+              <td>USD</td>
+              <td>Clean Water Initiative</td>
+              <td>Bank Transfer</td>
+              <td><span class="badge-status complete"><i class="fas fa-check-circle"></i> Valid</span></td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>James Wilson</td>
+              <td>Apr 2, 2026</td>
+              <td>$75.00</td>
+              <td>USD</td>
+              <td>General Fund</td>
+              <td>Cash</td>
+              <td><span class="badge-status complete"><i class="fas fa-check-circle"></i> Valid</span></td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>Priya Sharma</td>
+              <td>Apr 3, 2026</td>
+              <td>$200.00</td>
+              <td>USD</td>
+              <td>Scholarship Program</td>
+              <td>Online</td>
+              <td><span class="badge-status complete"><i class="fas fa-check-circle"></i> Valid</span></td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td>Robert Chen</td>
+              <td>Apr 3, 2026</td>
+              <td>$350.00</td>
+              <td>USD</td>
+              <td>Community Development</td>
+              <td>Cheque</td>
+              <td><span class="badge-status complete"><i class="fas fa-check-circle"></i> Valid</span></td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td>Lisa Anderson</td>
+              <td>Apr 4, 2026</td>
+              <td>$150.00</td>
+              <td>USD</td>
+              <td>Emergency Relief</td>
+              <td>Credit Card</td>
+              <td><span class="badge-status complete"><i class="fas fa-check-circle"></i> Valid</span></td>
+            </tr>
+            <tr>
+              <td>8</td>
+              <td>David Kim</td>
+              <td>Apr 4, 2026</td>
+              <td>$800.00</td>
+              <td>USD</td>
+              <td>Children's Education Fund</td>
+              <td>Bank Transfer</td>
+              <td><span class="badge-status complete"><i class="fas fa-check-circle"></i> Valid</span></td>
+            </tr>
+            <tr>
+              <td>9</td>
+              <td>Fatima Al-Rashid</td>
+              <td>Apr 5, 2026</td>
+              <td>$125.00</td>
+              <td>USD</td>
+              <td>Medical Aid Fund</td>
+              <td>Online</td>
+              <td><span class="badge-status complete"><i class="fas fa-check-circle"></i> Valid</span></td>
+            </tr>
+            <tr>
+              <td>10</td>
+              <td>Michael Brown</td>
+              <td>Apr 5, 2026</td>
+              <td>$450.00</td>
+              <td>USD</td>
+              <td>Clean Water Initiative</td>
+              <td>Bank Transfer</td>
+              <td><span class="badge-status complete"><i class="fas fa-check-circle"></i> Valid</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="text-center mt-2" style="font-size:0.75rem;color:var(--text-secondary)">Showing first 10 of 485 validated rows</div>
+    </div>
+
+    <div class="d-flex justify-content-between">
+      <button class="btn-outline-accent" onclick="goToStep(3)"><i class="fas fa-arrow-left me-1"></i> Back</button>
+      <button class="btn-primary-accent" onclick="startImport()"><i class="fas fa-play me-1"></i> Start Import</button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- STEP 5: Import (Progress / Complete)        -->
+  <!-- ════════════════════════════════════════════ -->
+  <div class="step-panel" id="step5">
+
+    <!-- Progress State -->
+    <div class="card p-4 mb-3" id="importProgress">
+      <div class="text-center mb-3">
+        <div class="spinner-border mb-2" role="status" style="width:3rem;height:3rem;color:var(--accent)">
+          <span class="visually-hidden">Importing...</span>
+        </div>
+        <h5 class="fw-bold mb-1">Importing Donations...</h5>
+        <div style="font-size:0.875rem;color:var(--text-secondary)" id="progressLabel">324 of 485 donations</div>
+      </div>
+      <div class="import-progress-bar mb-2">
+        <div class="progress-bar" role="progressbar" style="width:67%" id="importBar">67%</div>
+      </div>
+      <div class="d-flex justify-content-between" style="font-size:0.75rem;color:var(--text-secondary)">
+        <span>Elapsed: 0 min 48 sec</span>
+        <span>Estimated remaining: ~24 sec</span>
+      </div>
+    </div>
+
+    <!-- Success State (hidden initially) -->
+    <div class="card p-4 mb-3 d-none" id="importSuccess">
+      <div class="import-success">
+        <div class="success-icon"><i class="fas fa-check"></i></div>
+        <h2>485 donations imported successfully!</h2>
+        <p class="summary-text">$125,400 total &bull; 3 rows skipped &bull; 12 warnings noted</p>
+        <div class="d-flex justify-content-center gap-2 flex-wrap">
+          <button class="btn-primary-accent" onclick="parent.loadContent('fundraising/donation-list')">
+            <i class="fas fa-hand-holding-heart me-1"></i> View Imported Donations
+          </button>
+          <button class="btn-outline-accent" onclick="resetWizard()">
+            <i class="fas fa-redo me-1"></i> Import More
+          </button>
+          <button class="btn-outline-accent">
+            <i class="fas fa-file-excel me-1"></i> Download Import Report
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- Recent Upload Sessions (always visible)     -->
+  <!-- ════════════════════════════════════════════ -->
+  <div class="card p-4 mt-4">
+    <h6 class="fw-bold mb-3"><i class="fas fa-history me-2 text-muted"></i>Recent Upload Sessions</h6>
+    <div class="table-responsive">
+      <table class="table table-custom mb-0">
+        <thead>
+          <tr>
+            <th>Session</th>
+            <th>File</th>
+            <th>Date</th>
+            <th>Total</th>
+            <th>Imported</th>
+            <th>Amount</th>
+            <th>Errors</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>BDU-012</strong></td>
+            <td><i class="fas fa-file-excel me-1" style="color:var(--success-color)"></i>annual_giving.xlsx</td>
+            <td>Apr 8, 2026</td>
+            <td>500</td>
+            <td>485</td>
+            <td>$125,400</td>
+            <td>3</td>
+            <td><span class="badge-status complete"><i class="fas fa-check-circle"></i> Complete</span></td>
+          </tr>
+          <tr>
+            <td><strong>BDU-011</strong></td>
+            <td><i class="fas fa-file-csv me-1" style="color:var(--accent)"></i>march_collections.csv</td>
+            <td>Mar 30, 2026</td>
+            <td>200</td>
+            <td>198</td>
+            <td>$45,670</td>
+            <td>2</td>
+            <td><span class="badge-status complete"><i class="fas fa-check-circle"></i> Complete</span></td>
+          </tr>
+          <tr>
+            <td><strong>BDU-010</strong></td>
+            <td><i class="fas fa-file-excel me-1" style="color:var(--success-color)"></i>field_batch_q1.xlsx</td>
+            <td>Mar 15, 2026</td>
+            <td>1,200</td>
+            <td>1,180</td>
+            <td>$89,200</td>
+            <td>20</td>
+            <td><span class="badge-status complete"><i class="fas fa-check-circle"></i> Complete</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    let currentStep = 1;
+
+    function goToStep(step) {
+      if (step > currentStep + 1) return;
+
+      currentStep = step;
+
+      // Hide all panels, show target
+      document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('step' + step).classList.add('active');
+
+      // Update stepper indicators
+      document.querySelectorAll('.step-item').forEach(item => {
+        const s = parseInt(item.dataset.step);
+        item.classList.remove('active', 'completed');
+        if (s === step) {
+          item.classList.add('active');
+        } else if (s < step) {
+          item.classList.add('completed');
+          item.querySelector('.step-circle').innerHTML = '<i class="fas fa-check" style="font-size:0.75rem"></i>';
+        } else {
+          item.querySelector('.step-circle').textContent = s;
+        }
+      });
+
+      // Update connectors
+      document.querySelectorAll('.step-connector').forEach(conn => {
+        const c = parseInt(conn.dataset.conn);
+        conn.classList.toggle('completed', c < step);
+      });
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function handleFileSelect(input) {
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+        document.getElementById('fileName').textContent = file.name;
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+        document.getElementById('fileMeta').textContent = sizeMB + ' MB \u2022 ~500 rows detected';
+        document.getElementById('uploadZone').classList.add('d-none');
+        document.getElementById('fileSelected').classList.remove('d-none');
+      }
+    }
+
+    function removeFile() {
+      document.getElementById('fileInput').value = '';
+      document.getElementById('uploadZone').classList.remove('d-none');
+      document.getElementById('fileSelected').classList.add('d-none');
+    }
+
+    function setFilter(btn) {
+      btn.closest('.toggle-group').querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    function startImport() {
+      goToStep(5);
+      const bar = document.getElementById('importBar');
+      const label = document.getElementById('progressLabel');
+      let pct = 0;
+      const total = 485;
+      const interval = setInterval(() => {
+        pct += Math.random() * 8 + 2;
+        if (pct >= 100) {
+          pct = 100;
+          clearInterval(interval);
+          setTimeout(() => {
+            document.getElementById('importProgress').classList.add('d-none');
+            document.getElementById('importSuccess').classList.remove('d-none');
+          }, 600);
+        }
+        const imported = Math.round((pct / 100) * total);
+        bar.style.width = Math.round(pct) + '%';
+        bar.textContent = Math.round(pct) + '%';
+        label.textContent = imported.toLocaleString() + ' of ' + total.toLocaleString() + ' donations';
+      }, 300);
+    }
+
+    function resetWizard() {
+      currentStep = 1;
+      document.querySelectorAll('.step-item').forEach(item => {
+        const s = parseInt(item.dataset.step);
+        item.classList.remove('active', 'completed');
+        item.querySelector('.step-circle').textContent = s;
+        if (s === 1) item.classList.add('active');
+      });
+      document.querySelectorAll('.step-connector').forEach(c => c.classList.remove('completed'));
+      document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('step1').classList.add('active');
+      document.getElementById('importProgress').classList.remove('d-none');
+      document.getElementById('importSuccess').classList.add('d-none');
+      document.getElementById('importBar').style.width = '0%';
+      document.getElementById('importBar').textContent = '0%';
+      removeFile();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Drag & drop support
+    const zone = document.getElementById('uploadZone');
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+      const files = e.dataTransfer.files;
+      if (files.length) {
+        document.getElementById('fileInput').files = files;
+        handleFileSelect(document.getElementById('fileInput'));
+      }
+    });
+  </script>
+
+</body>
+
+</html>

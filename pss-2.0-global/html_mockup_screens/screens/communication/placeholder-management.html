@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Placeholder Definitions - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0.25rem 0 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #0c6577;
+      border-color: #0c6577;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .btn-sm-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 0.8125rem;
+    }
+
+    .btn-sm-icon:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .btn-sm-icon.danger:hover {
+      border-color: var(--danger-color);
+      color: var(--danger-color);
+      background: #fef2f2;
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-bar .search-box {
+      flex: 1;
+      min-width: 200px;
+      max-width: 320px;
+      position: relative;
+    }
+
+    .filter-bar .search-box input {
+      width: 100%;
+      padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      background: white;
+      color: var(--text-primary);
+    }
+
+    .filter-bar .search-box input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .filter-bar .search-box i {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+    }
+
+    .filter-bar select {
+      padding: 0.5rem 2rem 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      background: white;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .filter-bar select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Content Layout */
+    .content-layout {
+      display: flex;
+      gap: 1.25rem;
+      align-items: flex-start;
+    }
+
+    .content-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .content-sidebar {
+      flex: 0 0 280px;
+    }
+
+    /* Table Card */
+    .table-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .data-table thead th {
+      background: #f8fafc;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border-color);
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .data-table tbody td {
+      padding: 0.625rem 1rem;
+      font-size: 0.8125rem;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+
+    .data-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    .data-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Placeholder tag in table */
+    .ph-tag {
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #92400e;
+      background: #fef3c7;
+      padding: 0.125rem 0.5rem;
+      border-radius: 0.25rem;
+      border: 1px solid #fde68a;
+      display: inline-block;
+    }
+
+    /* Entity badge */
+    .entity-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+    }
+
+    .entity-badge.contact {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .entity-badge.donation {
+      background: #dcfce7;
+      color: #16a34a;
+    }
+
+    .entity-badge.organization {
+      background: #f3e8ff;
+      color: #7c3aed;
+    }
+
+    .entity-badge.campaign {
+      background: #fce7f3;
+      color: #db2777;
+    }
+
+    .entity-badge.event {
+      background: #fef3c7;
+      color: #d97706;
+    }
+
+    .entity-badge.system {
+      background: #f1f5f9;
+      color: #475569;
+    }
+
+    .entity-badge.custom {
+      background: #ecfeff;
+      color: #0e7490;
+    }
+
+    .type-badge {
+      display: inline-block;
+      padding: 0.125rem 0.375rem;
+      border-radius: 0.25rem;
+      font-size: 0.6875rem;
+      font-weight: 500;
+      background: #f1f5f9;
+      color: var(--text-secondary);
+    }
+
+    .status-dot {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.8125rem;
+    }
+
+    .status-dot::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .status-dot.active::before {
+      background: var(--success-color);
+    }
+
+    .status-dot.inactive::before {
+      background: #94a3b8;
+    }
+
+    .used-in-link {
+      color: var(--accent);
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .used-in-link:hover {
+      text-decoration: underline;
+    }
+
+    .source-field {
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+    }
+
+    /* Pagination */
+    .table-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      border-top: 1px solid var(--border-color);
+      background: #f8fafc;
+    }
+
+    .table-footer .page-info {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .pagination-btns {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .pagination-btns button {
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--border-color);
+      background: white;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .pagination-btns button:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .pagination-btns button.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    /* Info Panel */
+    .info-panel {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      padding: 1.25rem;
+    }
+
+    .info-panel h4 {
+      font-size: 0.875rem;
+      font-weight: 700;
+      margin: 0 0 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--accent);
+    }
+
+    .info-item {
+      display: flex;
+      gap: 0.625rem;
+      padding: 0.625rem 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .info-item:last-child {
+      border-bottom: none;
+    }
+
+    .info-item .info-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+      background: var(--accent-bg);
+      color: var(--accent);
+    }
+
+    .info-item .info-text {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      color: var(--text-secondary);
+    }
+
+    .info-item .info-text strong {
+      color: var(--text-primary);
+      display: block;
+      margin-bottom: 0.125rem;
+    }
+
+    .syntax-code {
+      display: inline-block;
+      padding: 0.125rem 0.375rem;
+      background: #f1f5f9;
+      border-radius: 0.25rem;
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-size: 0.75rem;
+      color: var(--accent);
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.5);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-box {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+      width: 100%;
+      max-width: 560px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .modal-header h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: none;
+      border-radius: 0.375rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
+
+    .modal-close:hover {
+      background: #f1f5f9;
+      color: var(--text-primary);
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border-color);
+      background: #f8fafc;
+    }
+
+    /* Form fields */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.375rem;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      background: white;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .form-row .form-group {
+      flex: 1;
+    }
+
+    .prefix-input {
+      display: flex;
+      align-items: center;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      overflow: hidden;
+    }
+
+    .prefix-input .prefix {
+      padding: 0.5rem 0.625rem;
+      background: #f8fafc;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-family: monospace;
+      border-right: 1px solid var(--border-color);
+    }
+
+    .prefix-input input {
+      border: none;
+      border-radius: 0;
+      flex: 1;
+    }
+
+    .prefix-input input:focus {
+      box-shadow: none;
+    }
+
+    .prefix-input .suffix {
+      padding: 0.5rem 0.625rem;
+      background: #f8fafc;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-family: monospace;
+      border-left: 1px solid var(--border-color);
+    }
+
+    .toggle-switch {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .toggle-switch input[type="checkbox"] {
+      width: 36px;
+      height: 20px;
+      appearance: none;
+      background: #cbd5e1;
+      border-radius: 9999px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .toggle-switch input[type="checkbox"]::before {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background: white;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    }
+
+    .toggle-switch input[type="checkbox"]:checked {
+      background: var(--accent);
+    }
+
+    .toggle-switch input[type="checkbox"]:checked::before {
+      transform: translateX(16px);
+    }
+
+    .toggle-switch span {
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .content-layout {
+        flex-direction: column;
+      }
+
+      .content-sidebar {
+        flex: none;
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .data-table thead th:nth-child(5),
+      .data-table tbody td:nth-child(5) {
+        display: none;
+      }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1>Placeholder Definitions</h1>
+      <p class="subtitle">Manage merge fields available in templates and communications</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="openModal()">
+        <i class="fas fa-plus me-1"></i> Add Custom Placeholder
+      </button>
+    </div>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input type="text" placeholder="Search placeholders...">
+    </div>
+    <select>
+      <option value="">All Entities</option>
+      <option>Contact</option>
+      <option>Donation</option>
+      <option>Organization</option>
+      <option>Campaign</option>
+      <option>Event</option>
+      <option>System</option>
+      <option>Custom</option>
+    </select>
+    <select>
+      <option value="">All Data Types</option>
+      <option>Text</option>
+      <option>Number</option>
+      <option>Date</option>
+      <option>Currency</option>
+      <option>Boolean</option>
+      <option>URL</option>
+    </select>
+  </div>
+
+  <!-- Content Layout -->
+  <div class="content-layout">
+
+    <!-- Main Table -->
+    <div class="content-main">
+      <div class="table-card">
+        <div style="overflow-x: auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Placeholder</th>
+                <th>Display Name</th>
+                <th>Entity</th>
+                <th>Data Type</th>
+                <th>Source Field</th>
+                <th>Used In</th>
+                <th>Status</th>
+                <th style="text-align:right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="ph-tag">{{FirstName}}</span></td>
+                <td>First Name</td>
+                <td><span class="entity-badge contact">Contact</span></td>
+                <td><span class="type-badge">Text</span></td>
+                <td><span class="source-field">corg.Contacts.FirstName</span></td>
+                <td><a class="used-in-link" onclick="parent.loadContent('communication/email-template-editor')">12 templates</a></td>
+                <td><span class="status-dot active">Active</span></td>
+                <td style="text-align:right">
+                  <button class="btn-sm-icon" title="View Details"><i class="fas fa-eye"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="ph-tag">{{LastName}}</span></td>
+                <td>Last Name</td>
+                <td><span class="entity-badge contact">Contact</span></td>
+                <td><span class="type-badge">Text</span></td>
+                <td><span class="source-field">corg.Contacts.LastName</span></td>
+                <td><a class="used-in-link">10 templates</a></td>
+                <td><span class="status-dot active">Active</span></td>
+                <td style="text-align:right">
+                  <button class="btn-sm-icon" title="View Details"><i class="fas fa-eye"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="ph-tag">{{FullName}}</span></td>
+                <td>Full Name</td>
+                <td><span class="entity-badge contact">Contact</span></td>
+                <td><span class="type-badge">Text</span></td>
+                <td><span class="source-field">Computed: First + Last</span></td>
+                <td><a class="used-in-link">8 templates</a></td>
+                <td><span class="status-dot active">Active</span></td>
+                <td style="text-align:right">
+                  <button class="btn-sm-icon" title="View Details"><i class="fas fa-eye"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="ph-tag">{{Email}}</span></td>
+                <td>Email Address</td>
+                <td><span class="entity-badge contact">Contact</span></td>
+                <td><span class="type-badge">Text</span></td>
+                <td><span class="source-field">corg.Contacts.Email</span></td>
+                <td><a class="used-in-link">15 templates</a></td>
+                <td><span class="status-dot active">Active</span></td>
+                <td style="text-align:right">
+                  <button class="btn-sm-icon" title="View Details"><i class="fas fa-eye"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="ph-tag">{{Phone}}</span></td>
+                <td>Phone Number</td>
+                <td><span class="entity-badge contact">Contact</span></td>
+                <td><span class="type-badge">Text</span></td>
+                <td><span class="source-field">corg.Contacts.Phone</span></td>
+                <td><a class="used-in-link">5 templates</a></td>
+                <td><span class="status-dot active">Active</span></td>
+                <td style="text-align:right">
+                  <button class="btn-sm-icon" title="View Details"><i class="fas fa-eye"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="ph-tag">{{ContactCode}}</span></td>
+                <td>Contact Code</td>
+                <td><span class="entity-badge contact">Contact</span></td>
+                <td><span class="type-badge">Text</span></td>
+                <td><span class="source-field">corg.Contacts.ContactCode</span></td>
+                <td><a class="used-in-link">3 templates</a></td>
+                <td><span class="status-dot active">Active</span></td>
+                <td style="text-align:right">
+                  <button class="btn-sm-icon" title="View Details"><i class="fas fa-eye"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="ph-tag">{{Salutation}}</span></td>
+                <td>Salutation</td>
+                <td><span class="entity-badge contact">Contact</span></td>
+                <td><span class="type-badge">Text</span></td>
+                <td><span class="source-field">corg.Contacts.Salutation</span></td>
+                <td><a class="used-in-link">7 templates</a></td>
+                <td><span class="status-dot active">Active</span></td>
+                <td style="text-align:right">
+                  <button class="btn-sm-icon" title="View Details"><i class="fas fa-eye"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="ph-tag">{{EngagementScore}}</span></td>
+                <td>Engagement Score</td>
+                <td><span class="entity-badge contact">Contact</span></td>
+                <td><span class="type-badge">Number</span></td>
+                <td><span class="source-field">corg.Contacts.EngagementScore</span></td>
+                <td><a class="used-in-link">2 templates</a></td>
+                <td><span class="status-dot active">Active</span></td>
+                <td style="text-align:right">
+                  <button class="btn-sm-icon" title="View Details"><i class="fas fa-eye"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="ph-tag">{{DonationAmount}}</span></td>
+                <td>Donation Amount</td>
+                <td><span class="entity-badge donation">Donation</span></td>
+                <td><span class="type-badge">Currency</span></td>
+                <td><span class="source-field">fund.GlobalDonations.Amount</span></td>
+                <td><a class="used-in-link">6 templates</a></td>
+                <td><span class="status-dot active">Active</span></td>
+                <td style="text-align:right">
+                  <button class="btn-sm-icon" title="View Details"><i class="fas fa-eye"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="ph-tag">{{Currency}}</span></td>
+                <td>Currency Code</td>
+                <td><span class="entity-badge donation">Donation</span></td>
+                <td><span class="type-badge">Text</span></td>
+                <td><span class="source-field">fund.GlobalDonations.CurrencyCode</span></td>
+                <td><a class="used-in-link">6 templates</a></td>
+                <td><span class="status-dot active">Active</span></td>
+                <td style="text-align:right">
+                  <button class="btn-sm-icon" title="View Details"><i class="fas fa-eye"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="ph-tag">{{DonationDate}}</span></td>
+                <td>Donation Date</td>
+                <td><span class="entity-badge donation">Donation</span></td>
+                <td><span class="type-badge">Date</span></td>
+                <td><span class="source-field">fund.GlobalDonations.DonationDate</span></td>
+                <td><a class="used-in-link">5 templates</a></td>
+                <td><span class="status-dot active">Active</span></td>
+                <td style="text-align:right">
+                  <button class="btn-sm-icon" title="View Details"><i class="fas fa-eye"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="ph-tag">{{ReceiptNumber}}</span></td>
+                <td>Receipt Number</td>
+                <td><span class="entity-badge donation">Donation</span></td>
+                <td><span class="type-badge">Text</span></td>
+                <td><span class="source-field">fund.GlobalDonations.ReceiptNumber</span></td>
+                <td><a class="used-in-link">4 templates</a></td>
+                <td><span class="status-dot active">Active</span></td>
+                <td style="text-align:right">
+                  <button class="btn-sm-icon" title="View Details"><i class="fas fa-eye"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="ph-tag">{{Purpose}}</span></td>
+                <td>Donation Purpose</td>
+                <td><span class="entity-badge donation">Donation</span></td>
+                <td><span class="type-badge">Text</span></td>
+                <td><span class="source-field">fund.DonationPurposes.Name</span></td>
+                <td><a class="used-in-link">5 templates</a></td>
+                <td><span class="status-dot active">Active</span></td>
+                <td style="text-align:right">
+                  <button class="btn-sm-icon" title="View Details"><i class="fas fa-eye"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="ph-tag">{{OrgName}}</span></td>
+                <td>Organization Name</td>
+                <td><span class="entity-badge organization">Organization</span></td>
+                <td><span class="type-badge">Text</span></td>
+                <td><span class="source-field">app.Companies.Name</span></td>
+                <td><a class="used-in-link">15 templates</a></td>
+                <td><span class="status-dot active">Active</span></td>
+                <td style="text-align:right">
+                  <button class="btn-sm-icon" title="View Details"><i class="fas fa-eye"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="ph-tag">{{OrgAddress}}</span></td>
+                <td>Organization Address</td>
+                <td><span class="entity-badge organization">Organization</span></td>
+                <td><span class="type-badge">Text</span></td>
+                <td><span class="source-field">app.Companies.Address</span></td>
+                <td><a class="used-in-link">8 templates</a></td>
+                <td><span class="status-dot active">Active</span></td>
+                <td style="text-align:right">
+                  <button class="btn-sm-icon" title="View Details"><i class="fas fa-eye"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="ph-tag">{{CampaignName}}</span></td>
+                <td>Campaign Name</td>
+                <td><span class="entity-badge campaign">Campaign</span></td>
+                <td><span class="type-badge">Text</span></td>
+                <td><span class="source-field">corg.Campaigns.Name</span></td>
+                <td><a class="used-in-link">3 templates</a></td>
+                <td><span class="status-dot active">Active</span></td>
+                <td style="text-align:right">
+                  <button class="btn-sm-icon" title="View Details"><i class="fas fa-eye"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="ph-tag">{{EventName}}</span></td>
+                <td>Event Name</td>
+                <td><span class="entity-badge event">Event</span></td>
+                <td><span class="type-badge">Text</span></td>
+                <td><span class="source-field">corg.Events.Name</span></td>
+                <td><a class="used-in-link">2 templates</a></td>
+                <td><span class="status-dot active">Active</span></td>
+                <td style="text-align:right">
+                  <button class="btn-sm-icon" title="View Details"><i class="fas fa-eye"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="ph-tag">{{EventDate}}</span></td>
+                <td>Event Date</td>
+                <td><span class="entity-badge event">Event</span></td>
+                <td><span class="type-badge">Date</span></td>
+                <td><span class="source-field">corg.Events.StartDate</span></td>
+                <td><a class="used-in-link">2 templates</a></td>
+                <td><span class="status-dot active">Active</span></td>
+                <td style="text-align:right">
+                  <button class="btn-sm-icon" title="View Details"><i class="fas fa-eye"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="ph-tag">{{UnsubscribeLink}}</span></td>
+                <td>Unsubscribe Link</td>
+                <td><span class="entity-badge system">System</span></td>
+                <td><span class="type-badge">URL</span></td>
+                <td><span class="source-field">Auto-generated</span></td>
+                <td><a class="used-in-link">15 templates</a></td>
+                <td><span class="status-dot active">Active</span></td>
+                <td style="text-align:right">
+                  <button class="btn-sm-icon" title="View Details"><i class="fas fa-eye"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="ph-tag">{{CurrentYear}}</span></td>
+                <td>Current Year</td>
+                <td><span class="entity-badge system">System</span></td>
+                <td><span class="type-badge">Text</span></td>
+                <td><span class="source-field">System.DateTime.Year</span></td>
+                <td><a class="used-in-link">8 templates</a></td>
+                <td><span class="status-dot active">Active</span></td>
+                <td style="text-align:right">
+                  <button class="btn-sm-icon" title="View Details"><i class="fas fa-eye"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="ph-tag">{{CustomField_Occupation}}</span></td>
+                <td>Occupation</td>
+                <td><span class="entity-badge custom">Custom</span></td>
+                <td><span class="type-badge">Text</span></td>
+                <td><span class="source-field">Custom Field: Occupation</span></td>
+                <td><a class="used-in-link">1 template</a></td>
+                <td><span class="status-dot active">Active</span></td>
+                <td style="text-align:right">
+                  <button class="btn-sm-icon" title="Edit" onclick="openModal()"><i class="fas fa-pen"></i></button>
+                  <button class="btn-sm-icon danger" title="Delete"><i class="fas fa-trash"></i></button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-footer">
+          <span class="page-info">Showing 1-20 of 45 placeholders</span>
+          <div class="pagination-btns">
+            <button disabled><i class="fas fa-chevron-left"></i></button>
+            <button class="active">1</button>
+            <button>2</button>
+            <button>3</button>
+            <button><i class="fas fa-chevron-right"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Panel Sidebar -->
+    <div class="content-sidebar">
+      <div class="info-panel">
+        <h4><i class="fas fa-circle-info"></i> How Placeholders Work</h4>
+
+        <div class="info-item">
+          <div class="info-icon"><i class="fas fa-arrows-rotate"></i></div>
+          <div class="info-text">
+            <strong>Dynamic Replacement</strong>
+            Placeholders are replaced with actual data when emails are sent to recipients.
+          </div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-icon"><i class="fas fa-lock"></i></div>
+          <div class="info-text">
+            <strong>System Placeholders</strong>
+            Built-in placeholders are managed by the system and cannot be modified or deleted.
+          </div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-icon"><i class="fas fa-puzzle-piece"></i></div>
+          <div class="info-text">
+            <strong>Custom Placeholders</strong>
+            Custom placeholders map to custom fields defined in <a href="#" onclick="parent.loadContent('settings/custom-fields')" style="color: var(--accent)">Settings &rarr; Custom Fields</a>.
+          </div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-icon"><i class="fas fa-code"></i></div>
+          <div class="info-text">
+            <strong>Default Values</strong>
+            Use <span class="syntax-code">{{FieldName|default:"Fallback"}}</span> syntax to define fallback text when no data is available.
+          </div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-icon"><i class="fas fa-envelope"></i></div>
+          <div class="info-text">
+            <strong>Supported Channels</strong>
+            Placeholders work in Email templates, SMS, WhatsApp messages, and receipt templates.
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Add/Edit Custom Placeholder Modal -->
+  <div class="modal-overlay" id="placeholderModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3><i class="fas fa-code me-2" style="color: var(--accent)"></i>Add Custom Placeholder</h3>
+        <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Placeholder Tag</label>
+          <div class="prefix-input">
+            <span class="prefix">{{</span>
+            <input type="text" placeholder="CustomField_YourFieldName" value="CustomField_Occupation">
+            <span class="suffix">}}</span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Display Name</label>
+            <input type="text" placeholder="e.g. Occupation" value="Occupation">
+          </div>
+          <div class="form-group">
+            <label>Entity Type</label>
+            <select id="entitySelect" onchange="updateSourceOptions()">
+              <option selected>Contact</option>
+              <option>Donation</option>
+              <option>Organization</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Source Field</label>
+          <select id="sourceSelect">
+            <option>Custom Field: Occupation</option>
+            <option>Custom Field: Employer</option>
+            <option>Custom Field: Preferred Language</option>
+            <option>Custom Field: Date of Birth</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Data Type</label>
+            <input type="text" value="Text" readonly style="background: #f8fafc;">
+          </div>
+          <div class="form-group">
+            <label>Default Value</label>
+            <input type="text" placeholder="Fallback when no data" value="Valued Donor">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Format</label>
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:0">
+              <select>
+                <option>None</option>
+                <option>UPPER</option>
+                <option>lower</option>
+                <option>Title Case</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <input type="number" placeholder="Max length" value="">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <textarea rows="2" placeholder="Help text for template editors...">Maps to the Occupation custom field on the Contact record.</textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Status</label>
+          <div class="toggle-switch">
+            <input type="checkbox" checked>
+            <span>Active</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline-accent" onclick="closeModal()">Cancel</button>
+        <button class="btn-primary-accent" onclick="closeModal()"><i class="fas fa-save me-1"></i> Save Placeholder</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openModal() {
+      document.getElementById('placeholderModal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('placeholderModal').classList.remove('active');
+    }
+
+    // Close modal on overlay click
+    document.getElementById('placeholderModal').addEventListener('click', function (e) {
+      if (e.target === this) closeModal();
+    });
+
+    // Update source options based on entity type selection
+    function updateSourceOptions() {
+      const entity = document.getElementById('entitySelect').value;
+      const source = document.getElementById('sourceSelect');
+      source.innerHTML = '';
+
+      const options = {
+        'Contact': ['Custom Field: Occupation', 'Custom Field: Employer', 'Custom Field: Preferred Language', 'Custom Field: Date of Birth'],
+        'Donation': ['Custom Field: Fund Source', 'Custom Field: Appeal Code', 'Custom Field: Gift Type'],
+        'Organization': ['Company Setting: Tax ID', 'Company Setting: Registration No.', 'Company Setting: Fiscal Year']
+      };
+
+      (options[entity] || []).forEach(opt => {
+        const o = document.createElement('option');
+        o.textContent = opt;
+        source.appendChild(o);
+      });
+    }
+  </script>
+
+</body>
+
+</html>

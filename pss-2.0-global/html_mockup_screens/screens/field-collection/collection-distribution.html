@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Collection Distribution - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+      --field-accent: #059669;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+    .page-header .subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 0; }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn-primary-accent { background: var(--accent); border-color: var(--accent); color: white; font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid var(--accent); cursor: pointer; transition: all 0.15s; }
+    .btn-primary-accent:hover { background: #0c6577; border-color: #0c6577; color: white; }
+    .btn-outline-accent { background: white; border: 1px solid var(--accent); color: var(--accent); font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.15s; }
+    .btn-outline-accent:hover { background: var(--accent); color: white; }
+
+    /* KPI Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1.25rem;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .stat-icon.emerald { background: #ecfdf5; color: var(--field-accent); }
+    .stat-icon.teal { background: var(--accent-bg); color: var(--accent); }
+    .stat-icon.purple { background: #faf5ff; color: #a855f7; }
+
+    .stat-info { flex: 1; }
+    .stat-value { font-size: 1.625rem; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+    .stat-label { font-size: 0.8125rem; color: var(--text-secondary); font-weight: 500; margin-bottom: 0.125rem; }
+    .stat-subtitle { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; }
+    .stat-subtitle .positive { color: var(--success-color); font-weight: 600; }
+    .stat-subtitle .warning { color: var(--warning-color); font-weight: 600; }
+
+    /* Dash Card */
+    .dash-card { background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); margin-bottom: 1.25rem; }
+    .dash-card-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
+    .dash-card-header h3 { font-size: 0.9375rem; font-weight: 700; margin: 0; }
+    .dash-card-body { padding: 1.25rem; }
+
+    /* Donut chart mock */
+    .donut-mock {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+    }
+
+    .donut-hole {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    .donut-hole .donut-total { font-size: 1.125rem; font-weight: 700; }
+    .donut-hole .donut-label { font-size: 0.625rem; color: var(--text-secondary); }
+
+    /* Purpose table */
+    .purpose-table { width: 100%; font-size: 0.8125rem; }
+
+    .purpose-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    .purpose-table td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+
+    .purpose-table tr:last-child td { border-bottom: none; }
+    .purpose-table tr:hover { background: #f8fafc; }
+
+    .purpose-table tfoot td {
+      font-weight: 700;
+      background: #f8fafc;
+      border-top: 2px solid var(--border-color);
+    }
+
+    .purpose-icon { margin-right: 0.375rem; }
+
+    .pct-bar {
+      width: 60px;
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 9999px;
+      overflow: hidden;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 0.5rem;
+    }
+
+    .pct-bar-fill {
+      height: 100%;
+      border-radius: 9999px;
+      background: var(--field-accent);
+    }
+
+    .trend-up { color: var(--success-color); font-weight: 600; }
+    .trend-down { color: var(--danger-color); font-weight: 600; }
+    .trend-flat { color: var(--text-secondary); font-weight: 600; }
+
+    /* Campaign status badges */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.1875rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+    }
+
+    .status-badge.active { background: #f0fdf4; color: #16a34a; }
+    .status-badge.general { background: #f1f5f9; color: var(--text-secondary); }
+
+    /* Stacked bar chart placeholder */
+    .chart-placeholder {
+      background: #f8fafc;
+      border: 1px dashed var(--border-color);
+      border-radius: 0.5rem;
+      height: 260px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+    }
+
+    .chart-placeholder i { font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5; }
+    .chart-placeholder span { font-size: 0.8125rem; }
+
+    /* Sync status */
+    .sync-metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .sync-metric {
+      text-align: center;
+      padding: 1rem;
+      background: #f8fafc;
+      border-radius: 0.5rem;
+    }
+
+    .sync-metric-value { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); }
+    .sync-metric-label { font-size: 0.6875rem; color: var(--text-secondary); font-weight: 500; margin-top: 0.25rem; }
+
+    .sync-table { width: 100%; font-size: 0.8125rem; }
+
+    .sync-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .sync-table td {
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+
+    .sync-table tr:last-child td { border-bottom: none; }
+
+    .btn-action {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.625rem;
+      border-radius: 0.375rem;
+      border: 1px solid var(--accent);
+      background: white;
+      color: var(--accent);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-action:hover { background: var(--accent); color: white; }
+
+    .btn-action-sm {
+      font-size: 0.6875rem;
+      padding: 0.1875rem 0.5rem;
+      border-radius: 0.25rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-primary);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-action-sm:hover { border-color: var(--accent); color: var(--accent); }
+
+    .reason-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.1875rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+    }
+
+    .reason-badge.pending { background: #fffbeb; color: #d97706; }
+    .reason-badge.flagged { background: #fef2f2; color: var(--danger-color); }
+    .reason-badge.gap { background: #fef2f2; color: var(--danger-color); }
+    .reason-badge.duplicate { background: #fff7ed; color: #ea580c; }
+    .reason-badge.mismatch { background: #fef2f2; color: var(--danger-color); }
+    .reason-badge.error { background: #fef2f2; color: var(--danger-color); }
+
+    /* Branch distribution table */
+    .branch-dist-table { width: 100%; font-size: 0.8125rem; }
+
+    .branch-dist-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .branch-dist-table td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+
+    .branch-dist-table tr:last-child td { border-bottom: none; }
+    .branch-dist-table tr:hover { background: #f8fafc; }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .stats-grid { grid-template-columns: 1fr 1fr 1fr; }
+      .sync-metric-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 576px) {
+      body { padding: 1rem; }
+      .sync-metric-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-chart-pie me-2" style="color: var(--field-accent);"></i>Collection Distribution</h1>
+      <p class="subtitle">How field collections are allocated across purposes and campaigns</p>
+    </div>
+    <div class="header-actions">
+      <select style="padding: 0.5rem 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 0.8125rem; background: white; font-weight: 600;">
+        <option>This Month</option>
+        <option>Last Month</option>
+        <option>This Quarter</option>
+        <option>Custom Range</option>
+      </select>
+      <select style="padding: 0.5rem 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 0.8125rem; background: white;">
+        <option>All Branches</option>
+        <option>Dubai</option>
+        <option>Mumbai</option>
+        <option>Delhi</option>
+        <option>Dhaka</option>
+        <option>Nairobi</option>
+      </select>
+      <button class="btn-outline-accent"><i class="fas fa-file-export me-1"></i> Export</button>
+      <button class="btn-outline-accent"><i class="fas fa-print me-1"></i> Print Report</button>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon emerald"><i class="fas fa-hand-holding-dollar"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Total Field Collections</div>
+        <div class="stat-value">$67,800</div>
+        <div class="stat-subtitle">456 transactions</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon teal"><i class="fas fa-arrows-rotate"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Synced to Donations</div>
+        <div class="stat-value">$65,400 <span style="font-size: 0.875rem; color: var(--success-color);">(96.5%)</span></div>
+        <div class="stat-subtitle"><span class="warning">3 pending sync</span></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon purple"><i class="fas fa-chart-pie"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Unique Purposes</div>
+        <div class="stat-value">8</div>
+        <div class="stat-subtitle">Top: <span class="positive">Orphan Care (28.3%)</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Distribution by Purpose -->
+  <div class="dash-card">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-bullseye me-2" style="color: var(--field-accent);"></i>Distribution by Purpose</h3>
+    </div>
+    <div class="dash-card-body">
+      <div class="row">
+        <!-- Donut Chart -->
+        <div class="col-lg-4 text-center mb-3 mb-lg-0">
+          <div class="donut-mock" style="background: conic-gradient(
+            #059669 0% 28.3%,
+            #3b82f6 28.3% 49.7%,
+            #06b6d4 49.7% 65.6%,
+            #f97316 65.6% 76.8%,
+            #eab308 76.8% 85.9%,
+            #8b5cf6 85.9% 93%,
+            #ec4899 93% 97.3%,
+            #94a3b8 97.3% 100%
+          );">
+            <div class="donut-hole">
+              <div class="donut-total">$67,800</div>
+              <div class="donut-label">Total</div>
+            </div>
+          </div>
+        </div>
+        <!-- Table -->
+        <div class="col-lg-8">
+          <div class="table-responsive">
+            <table class="purpose-table">
+              <thead>
+                <tr>
+                  <th>Purpose</th>
+                  <th>Amount</th>
+                  <th>% of Total</th>
+                  <th>Transactions</th>
+                  <th>Avg</th>
+                  <th>Trend vs Last Month</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="purpose-icon">&#129490;</span><a href="#" onclick="parent.loadContent('fundraising/donation-purposes')" style="color: var(--accent); text-decoration: none; font-weight: 500;">Orphan Care</a></td>
+                  <td><strong>$19,200</strong></td>
+                  <td><div class="pct-bar"><div class="pct-bar-fill" style="width: 28.3%;"></div></div>28.3%</td>
+                  <td>134</td>
+                  <td>$143</td>
+                  <td><span class="trend-up">&#8593; +15%</span></td>
+                </tr>
+                <tr>
+                  <td><span class="purpose-icon">&#128218;</span><a href="#" onclick="parent.loadContent('fundraising/donation-purposes')" style="color: var(--accent); text-decoration: none; font-weight: 500;">Children's Education</a></td>
+                  <td><strong>$14,500</strong></td>
+                  <td><div class="pct-bar"><div class="pct-bar-fill" style="width: 21.4%;"></div></div>21.4%</td>
+                  <td>98</td>
+                  <td>$148</td>
+                  <td><span class="trend-up">&#8593; +8%</span></td>
+                </tr>
+                <tr>
+                  <td><span class="purpose-icon">&#128167;</span><a href="#" onclick="parent.loadContent('fundraising/donation-purposes')" style="color: var(--accent); text-decoration: none; font-weight: 500;">Clean Water</a></td>
+                  <td><strong>$10,800</strong></td>
+                  <td><div class="pct-bar"><div class="pct-bar-fill" style="width: 15.9%;"></div></div>15.9%</td>
+                  <td>67</td>
+                  <td>$161</td>
+                  <td><span class="trend-up">&#8593; +22%</span></td>
+                </tr>
+                <tr>
+                  <td><span class="purpose-icon">&#127973;</span><a href="#" onclick="parent.loadContent('fundraising/donation-purposes')" style="color: var(--accent); text-decoration: none; font-weight: 500;">Healthcare</a></td>
+                  <td><strong>$7,600</strong></td>
+                  <td><div class="pct-bar"><div class="pct-bar-fill" style="width: 11.2%;"></div></div>11.2%</td>
+                  <td>56</td>
+                  <td>$136</td>
+                  <td><span class="trend-flat">&#8594; 0%</span></td>
+                </tr>
+                <tr>
+                  <td><span class="purpose-icon">&#127869;</span><a href="#" onclick="parent.loadContent('fundraising/donation-purposes')" style="color: var(--accent); text-decoration: none; font-weight: 500;">Food Distribution</a></td>
+                  <td><strong>$6,200</strong></td>
+                  <td><div class="pct-bar"><div class="pct-bar-fill" style="width: 9.1%;"></div></div>9.1%</td>
+                  <td>45</td>
+                  <td>$138</td>
+                  <td><span class="trend-up">&#8593; +5%</span></td>
+                </tr>
+                <tr>
+                  <td><span class="purpose-icon">&#128332;</span><a href="#" onclick="parent.loadContent('fundraising/donation-purposes')" style="color: var(--accent); text-decoration: none; font-weight: 500;">Masjid Fund</a></td>
+                  <td><strong>$4,800</strong></td>
+                  <td><div class="pct-bar"><div class="pct-bar-fill" style="width: 7.1%;"></div></div>7.1%</td>
+                  <td>34</td>
+                  <td>$141</td>
+                  <td><span class="trend-down">&#8595; -3%</span></td>
+                </tr>
+                <tr>
+                  <td><span class="purpose-icon">&#128105;</span><a href="#" onclick="parent.loadContent('fundraising/donation-purposes')" style="color: var(--accent); text-decoration: none; font-weight: 500;">Women Empowerment</a></td>
+                  <td><strong>$2,900</strong></td>
+                  <td><div class="pct-bar"><div class="pct-bar-fill" style="width: 4.3%;"></div></div>4.3%</td>
+                  <td>12</td>
+                  <td>$242</td>
+                  <td><span class="trend-up">&#8593; +30%</span></td>
+                </tr>
+                <tr>
+                  <td><span class="purpose-icon">&#128203;</span><a href="#" onclick="parent.loadContent('fundraising/donation-purposes')" style="color: var(--accent); text-decoration: none; font-weight: 500;">General Fund</a></td>
+                  <td><strong>$1,800</strong></td>
+                  <td><div class="pct-bar"><div class="pct-bar-fill" style="width: 2.7%;"></div></div>2.7%</td>
+                  <td>10</td>
+                  <td>$180</td>
+                  <td><span class="trend-down">&#8595; -12%</span></td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td><strong>Total</strong></td>
+                  <td><strong>$67,800</strong></td>
+                  <td><strong>100%</strong></td>
+                  <td><strong>456</strong></td>
+                  <td><strong>$149</strong></td>
+                  <td><span class="trend-up"><strong>&#8593; 16.5%</strong></span></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Distribution by Campaign -->
+  <div class="dash-card">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-flag me-2" style="color: var(--field-accent);"></i>Distribution by Campaign</h3>
+    </div>
+    <div class="table-responsive" style="padding: 0;">
+      <table class="purpose-table">
+        <thead>
+          <tr>
+            <th>Campaign</th>
+            <th>Amount</th>
+            <th>%</th>
+            <th>Transactions</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a href="#" onclick="parent.loadContent('organization/campaign-dashboard')" style="color: var(--accent); text-decoration: none; font-weight: 500;">Ramadan Appeal 2026</a></td>
+            <td><strong>$34,500</strong></td>
+            <td><div class="pct-bar"><div class="pct-bar-fill" style="width: 50.9%;"></div></div>50.9%</td>
+            <td>234</td>
+            <td><span class="status-badge active">&#128994; Active</span></td>
+          </tr>
+          <tr>
+            <td><a href="#" onclick="parent.loadContent('organization/campaign-dashboard')" style="color: var(--accent); text-decoration: none; font-weight: 500;">Clean Water Initiative</a></td>
+            <td><strong>$10,800</strong></td>
+            <td><div class="pct-bar"><div class="pct-bar-fill" style="width: 15.9%;"></div></div>15.9%</td>
+            <td>67</td>
+            <td><span class="status-badge active">&#128994; Active</span></td>
+          </tr>
+          <tr>
+            <td><a href="#" onclick="parent.loadContent('organization/campaign-dashboard')" style="color: var(--accent); text-decoration: none; font-weight: 500;">Orphan Sponsorship Drive</a></td>
+            <td><strong>$8,200</strong></td>
+            <td><div class="pct-bar"><div class="pct-bar-fill" style="width: 12.1%;"></div></div>12.1%</td>
+            <td>56</td>
+            <td><span class="status-badge active">&#128994; Active</span></td>
+          </tr>
+          <tr>
+            <td style="color: var(--text-secondary); font-style: italic;">(No campaign) &mdash; General collections</td>
+            <td><strong>$14,300</strong></td>
+            <td><div class="pct-bar"><div class="pct-bar-fill" style="width: 21.1%; background: #94a3b8;"></div></div>21.1%</td>
+            <td>99</td>
+            <td><span class="status-badge general">— General</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Distribution by Branch -->
+  <div class="dash-card">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-building me-2" style="color: var(--field-accent);"></i>Distribution by Branch</h3>
+    </div>
+    <div class="dash-card-body">
+      <!-- Stacked Bar Chart Placeholder -->
+      <div class="chart-placeholder mb-3">
+        <i class="fas fa-chart-bar"></i>
+        <span>Stacked bar chart: Collections by branch, color-coded by purpose</span>
+        <div style="display: flex; gap: 1rem; margin-top: 0.5rem; font-size: 0.6875rem; flex-wrap: wrap;">
+          <span><span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: #059669; margin-right: 3px;"></span>Orphan Care</span>
+          <span><span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: #3b82f6; margin-right: 3px;"></span>Education</span>
+          <span><span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: #06b6d4; margin-right: 3px;"></span>Water</span>
+          <span><span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: #f97316; margin-right: 3px;"></span>Healthcare</span>
+          <span><span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: #94a3b8; margin-right: 3px;"></span>Other</span>
+        </div>
+      </div>
+
+      <!-- Branch Table -->
+      <div class="table-responsive">
+        <table class="branch-dist-table">
+          <thead>
+            <tr>
+              <th>Branch</th>
+              <th>Total</th>
+              <th>Orphan Care</th>
+              <th>Education</th>
+              <th>Water</th>
+              <th>Healthcare</th>
+              <th>Other</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a href="#" onclick="parent.loadContent('organization/branch-management')" style="color: var(--accent); text-decoration: none; font-weight: 500;">Dubai</a></td>
+              <td><strong>$18,500</strong></td>
+              <td>$5,400</td>
+              <td>$4,200</td>
+              <td>$3,100</td>
+              <td>$2,800</td>
+              <td>$3,000</td>
+            </tr>
+            <tr>
+              <td><a href="#" onclick="parent.loadContent('organization/branch-management')" style="color: var(--accent); text-decoration: none; font-weight: 500;">Mumbai</a></td>
+              <td><strong>$15,200</strong></td>
+              <td>$4,800</td>
+              <td>$3,900</td>
+              <td>$2,500</td>
+              <td>$1,800</td>
+              <td>$2,200</td>
+            </tr>
+            <tr>
+              <td><a href="#" onclick="parent.loadContent('organization/branch-management')" style="color: var(--accent); text-decoration: none; font-weight: 500;">Delhi</a></td>
+              <td><strong>$12,300</strong></td>
+              <td>$3,600</td>
+              <td>$2,800</td>
+              <td>$2,100</td>
+              <td>$1,500</td>
+              <td>$2,300</td>
+            </tr>
+            <tr>
+              <td><a href="#" onclick="parent.loadContent('organization/branch-management')" style="color: var(--accent); text-decoration: none; font-weight: 500;">Dhaka</a></td>
+              <td><strong>$8,900</strong></td>
+              <td>$2,400</td>
+              <td>$1,800</td>
+              <td>$1,600</td>
+              <td>$900</td>
+              <td>$2,200</td>
+            </tr>
+            <tr>
+              <td><a href="#" onclick="parent.loadContent('organization/branch-management')" style="color: var(--accent); text-decoration: none; font-weight: 500;">Nairobi</a></td>
+              <td><strong>$6,400</strong></td>
+              <td>$1,500</td>
+              <td>$1,200</td>
+              <td>$1,000</td>
+              <td>$800</td>
+              <td>$1,900</td>
+            </tr>
+            <tr>
+              <td style="color: var(--text-secondary);">Others</td>
+              <td><strong>$6,500</strong></td>
+              <td>$1,500</td>
+              <td>$600</td>
+              <td>$500</td>
+              <td>$1,800</td>
+              <td>$2,100</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Distribution by Ambassador -->
+  <div class="dash-card">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-person-walking me-2" style="color: var(--field-accent);"></i>Distribution by Ambassador</h3>
+    </div>
+    <div class="table-responsive" style="padding: 0;">
+      <table class="purpose-table">
+        <thead>
+          <tr>
+            <th>Ambassador</th>
+            <th>Branch</th>
+            <th>Total</th>
+            <th>#1 Purpose</th>
+            <th>#2 Purpose</th>
+            <th>#3 Purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a href="#" onclick="parent.loadContent('field-collection/ambassador-list')" style="color: var(--accent); text-decoration: none; font-weight: 500;">Ahmed Salim</a></td>
+            <td>Dubai</td>
+            <td><strong>$4,500</strong></td>
+            <td>Orphan Care ($1,800)</td>
+            <td>Education ($1,200)</td>
+            <td>Water ($900)</td>
+          </tr>
+          <tr>
+            <td><a href="#" onclick="parent.loadContent('field-collection/ambassador-list')" style="color: var(--accent); text-decoration: none; font-weight: 500;">Ravi Kumar</a></td>
+            <td>Mumbai</td>
+            <td><strong>$3,800</strong></td>
+            <td>Education ($1,500)</td>
+            <td>Orphan Care ($1,200)</td>
+            <td>Healthcare ($600)</td>
+          </tr>
+          <tr>
+            <td><a href="#" onclick="parent.loadContent('field-collection/ambassador-list')" style="color: var(--accent); text-decoration: none; font-weight: 500;">Suresh Nair</a></td>
+            <td>Delhi</td>
+            <td><strong>$3,200</strong></td>
+            <td>Orphan Care ($1,100)</td>
+            <td>Water ($900)</td>
+            <td>Education ($700)</td>
+          </tr>
+          <tr>
+            <td><a href="#" onclick="parent.loadContent('field-collection/ambassador-list')" style="color: var(--accent); text-decoration: none; font-weight: 500;">Rahim Hossain</a></td>
+            <td>Dhaka</td>
+            <td><strong>$1,800</strong></td>
+            <td>Orphan Care ($600)</td>
+            <td>Education ($500)</td>
+            <td>Food ($400)</td>
+          </tr>
+          <tr>
+            <td><a href="#" onclick="parent.loadContent('field-collection/ambassador-list')" style="color: var(--accent); text-decoration: none; font-weight: 500;">James Okonkwo</a></td>
+            <td>Nairobi</td>
+            <td><strong>$2,100</strong></td>
+            <td>Healthcare ($800)</td>
+            <td>Education ($600)</td>
+            <td>Water ($400)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Sync Status Section -->
+  <div class="dash-card">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-arrows-rotate me-2" style="color: var(--accent);"></i>Field Collections &#8596; Donation Module Sync</h3>
+    </div>
+    <div class="dash-card-body">
+      <!-- Sync Metrics -->
+      <div class="sync-metric-grid">
+        <div class="sync-metric">
+          <div class="sync-metric-value">456</div>
+          <div class="sync-metric-label">Total field collections</div>
+        </div>
+        <div class="sync-metric">
+          <div class="sync-metric-value" style="color: var(--success-color);">450 <span style="font-size: 0.75rem;">(98.7%)</span></div>
+          <div class="sync-metric-label">Synced to donation module</div>
+        </div>
+        <div class="sync-metric">
+          <div class="sync-metric-value" style="color: var(--warning-color);">3</div>
+          <div class="sync-metric-label">Pending sync (awaiting approval)</div>
+        </div>
+        <div class="sync-metric">
+          <div class="sync-metric-value" style="color: var(--danger-color);">3</div>
+          <div class="sync-metric-label">Sync errors (duplicate detection)</div>
+        </div>
+      </div>
+
+      <!-- Pending Sync Items -->
+      <h6 style="font-size: 0.8125rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--text-primary);">
+        <i class="fas fa-clock me-1" style="color: var(--warning-color);"></i>Pending Sync Items
+      </h6>
+      <div class="table-responsive mb-4">
+        <table class="sync-table">
+          <thead>
+            <tr>
+              <th>Receipt #</th>
+              <th>Ambassador</th>
+              <th>Amount</th>
+              <th>Reason</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>4544</strong></td>
+              <td>Ahmed Salim</td>
+              <td>AED 1,000</td>
+              <td><span class="reason-badge pending">Pending approval (cheque)</span></td>
+              <td><button class="btn-action">Approve & Sync</button></td>
+            </tr>
+            <tr>
+              <td><strong>6789</strong></td>
+              <td>Ravi Kumar</td>
+              <td>INR 25,000</td>
+              <td><span class="reason-badge flagged">Flagged: high value</span></td>
+              <td><button class="btn-action">Review</button></td>
+            </tr>
+            <tr>
+              <td><strong>6756</strong></td>
+              <td>Ravi Kumar</td>
+              <td>—</td>
+              <td><span class="reason-badge gap">Gap: receipt missing</span></td>
+              <td><button class="btn-action" onclick="parent.loadContent('field-collection/collection-list')">Investigate</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Sync Errors -->
+      <h6 style="font-size: 0.8125rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--text-primary);">
+        <i class="fas fa-exclamation-circle me-1" style="color: var(--danger-color);"></i>Sync Errors
+      </h6>
+      <div class="table-responsive">
+        <table class="sync-table">
+          <thead>
+            <tr>
+              <th>Receipt #</th>
+              <th>Ambassador</th>
+              <th>Amount</th>
+              <th>Error</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>4538</strong></td>
+              <td>Ahmed Salim</td>
+              <td>AED 300</td>
+              <td><span class="reason-badge duplicate">Duplicate: matches DON-4523</span></td>
+              <td>
+                <button class="btn-action-sm">Merge</button>
+                <button class="btn-action-sm">Keep Both</button>
+                <button class="btn-action-sm" style="color: var(--danger-color); border-color: var(--danger-color);">Void</button>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>6745</strong></td>
+              <td>Ravi Kumar</td>
+              <td>INR 5,000</td>
+              <td><span class="reason-badge mismatch">Contact mismatch</span></td>
+              <td><button class="btn-action">Fix Contact</button></td>
+            </tr>
+            <tr>
+              <td><strong>2340</strong></td>
+              <td>James Okonkwo</td>
+              <td>KES 15,000</td>
+              <td><span class="reason-badge error">Currency conversion error</span></td>
+              <td><button class="btn-action">Fix Amount</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

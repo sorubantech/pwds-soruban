@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campaign Dashboard - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
+    .page-header-left { display: flex; align-items: flex-start; gap: 1rem; }
+    .back-btn { width: 36px; height: 36px; border-radius: 0.5rem; border: 1px solid var(--border-color); background: white; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; font-size: 1rem; margin-top: 0.25rem; }
+    .back-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+    .breadcrumb-nav { font-size: 0.75rem; color: var(--text-secondary); margin: 0 0 0.25rem 0; }
+    .breadcrumb-nav a { color: var(--accent); text-decoration: none; cursor: pointer; }
+    .breadcrumb-nav a:hover { text-decoration: underline; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+    .header-badges { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-top: 0.25rem; }
+    .badge-category { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1875rem 0.5rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; background: #faf5ff; color: #7c3aed; }
+    .badge-status { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1875rem 0.5rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; background: #f0fdf4; color: #16a34a; }
+    .badge-date { font-size: 0.75rem; color: var(--text-secondary); }
+    .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .btn-primary-accent { background: var(--accent); border-color: var(--accent); color: white; font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid var(--accent); cursor: pointer; transition: all 0.15s; }
+    .btn-primary-accent:hover { background: #0c6577; border-color: #0c6577; color: white; }
+    .btn-outline-accent { background: white; border: 1px solid var(--accent); color: var(--accent); font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.15s; }
+    .btn-outline-accent:hover { background: var(--accent); color: white; }
+
+    /* Goal Progress Hero */
+    .hero-card { background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); padding: 2rem; margin-bottom: 1.25rem; text-align: center; }
+    .hero-raised { font-size: 1rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
+    .hero-raised strong { font-size: 2rem; font-weight: 800; color: var(--text-primary); }
+    .hero-raised .goal-text { font-size: 1rem; color: var(--text-secondary); }
+    .hero-progress-track { height: 20px; background: #e2e8f0; border-radius: 9999px; overflow: hidden; margin: 1rem auto; max-width: 700px; }
+    .hero-progress-fill { height: 100%; border-radius: 9999px; background: linear-gradient(90deg, var(--accent), var(--accent-light)); transition: width 1s ease; position: relative; }
+    .hero-pct { font-size: 1.5rem; font-weight: 800; color: var(--accent); margin-bottom: 0.75rem; }
+    .hero-stats { display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; font-size: 0.875rem; color: var(--text-secondary); }
+    .hero-stats span { display: flex; align-items: center; gap: 0.375rem; }
+    .hero-stats i { color: var(--accent); }
+    .hero-projection { font-size: 0.8125rem; color: var(--success-color); margin-top: 0.75rem; font-weight: 600; }
+
+    /* KPI Stats Grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+    .stat-card { background: white; border-radius: var(--card-radius); padding: 1.125rem; box-shadow: var(--card-shadow); border: 1px solid var(--border-color); text-align: center; transition: transform 0.15s, box-shadow 0.15s; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }
+    .stat-value { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+    .stat-label { font-size: 0.75rem; color: var(--text-secondary); font-weight: 500; margin-bottom: 0.25rem; }
+    .stat-subtitle { font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.25rem; }
+
+    /* Dash Card */
+    .dash-card { background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); }
+    .dash-card-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
+    .dash-card-header h3 { font-size: 0.9375rem; font-weight: 700; margin: 0; color: var(--text-primary); }
+    .dash-card-body { padding: 1.25rem; }
+
+    /* Chart Placeholder */
+    .chart-placeholder { background: #f8fafc; border: 1px dashed var(--border-color); border-radius: 0.5rem; height: 250px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-secondary); }
+    .chart-placeholder i { font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5; }
+    .chart-placeholder span { font-size: 0.8125rem; }
+
+    /* Mini bar chart for daily trend */
+    .mini-bars { display: flex; align-items: flex-end; gap: 3px; height: 180px; padding: 0 0.5rem; }
+    .mini-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .mini-bar { width: 100%; max-width: 24px; border-radius: 3px 3px 0 0; background: linear-gradient(180deg, var(--accent), var(--accent-light)); transition: height 0.3s; cursor: pointer; position: relative; }
+    .mini-bar:hover { opacity: 0.85; }
+    .mini-bar-label { font-size: 0.5rem; color: var(--text-secondary); writing-mode: vertical-lr; transform: rotate(180deg); white-space: nowrap; max-height: 50px; overflow: hidden; }
+    .mini-bar-val { font-size: 0.5rem; color: var(--text-primary); font-weight: 600; }
+    .goal-pace-line { border-top: 2px dashed var(--warning-color); position: absolute; left: 0; right: 0; }
+
+    /* Donut chart mock */
+    .donut-mock { width: 180px; height: 180px; border-radius: 50%; background: conic-gradient(#3b82f6 0% 62.1%, #93c5fd 62.1% 100%); display: flex; align-items: center; justify-content: center; margin: 0 auto; position: relative; }
+    .donut-hole { width: 100px; height: 100px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+    .donut-hole .donut-total { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); }
+    .donut-hole .donut-label { font-size: 0.625rem; color: var(--text-secondary); }
+    .donut-legend { display: flex; justify-content: center; gap: 1.5rem; margin-top: 1rem; }
+    .donut-legend-item { display: flex; align-items: center; gap: 0.375rem; font-size: 0.75rem; color: var(--text-secondary); }
+    .donut-legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+    /* Table */
+    .data-table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+    .data-table th { padding: 0.625rem 0.75rem; font-size: 0.6875rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color); text-align: left; white-space: nowrap; }
+    .data-table td { padding: 0.625rem 0.75rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover { background: #f8fafc; }
+    .trend-up { color: var(--success-color); font-weight: 600; font-size: 0.75rem; }
+    .trend-down { color: var(--danger-color); font-weight: 600; font-size: 0.75rem; }
+    .trend-steady { color: var(--text-secondary); font-weight: 600; font-size: 0.75rem; }
+
+    /* Milestone Tracker */
+    .milestone-tracker { display: flex; align-items: center; padding: 1.5rem 1rem; position: relative; }
+    .milestone-line { position: absolute; top: 50%; left: 60px; right: 60px; height: 3px; background: #e2e8f0; transform: translateY(-50%); z-index: 0; }
+    .milestone-line-fill { height: 100%; background: var(--accent); border-radius: 9999px; transition: width 0.5s; }
+    .milestone-point { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; position: relative; z-index: 1; }
+    .milestone-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; }
+    .milestone-dot.reached { background: var(--success-color); color: white; }
+    .milestone-dot.progress { background: var(--warning-color); color: white; }
+    .milestone-dot.upcoming { background: #e2e8f0; color: var(--text-secondary); }
+    .milestone-name { font-size: 0.75rem; font-weight: 600; color: var(--text-primary); text-align: center; }
+    .milestone-amount { font-size: 0.6875rem; color: var(--text-secondary); text-align: center; }
+    .milestone-detail { font-size: 0.625rem; color: var(--text-secondary); text-align: center; }
+
+    /* Donation Feed */
+    .feed-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 0; border-bottom: 1px solid #f1f5f9; }
+    .feed-item:last-child { border-bottom: none; }
+    .feed-time { font-size: 0.6875rem; color: var(--text-secondary); width: 65px; flex-shrink: 0; }
+    .feed-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--accent-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; }
+    .feed-info { flex: 1; }
+    .feed-donor { font-size: 0.8125rem; font-weight: 600; color: var(--accent); cursor: pointer; }
+    .feed-donor:hover { text-decoration: underline; }
+    .feed-detail { font-size: 0.6875rem; color: var(--text-secondary); }
+    .feed-amount { font-size: 0.875rem; font-weight: 700; color: var(--text-primary); white-space: nowrap; }
+
+    /* Leaderboard */
+    .leaderboard-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 0; border-bottom: 1px solid #f1f5f9; }
+    .leaderboard-row:last-child { border-bottom: none; }
+    .leaderboard-rank { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; }
+    .leaderboard-rank.gold { background: #fef3c7; color: #d97706; }
+    .leaderboard-rank.silver { background: #f1f5f9; color: #64748b; }
+    .leaderboard-rank.bronze { background: #fed7aa; color: #c2410c; }
+    .leaderboard-rank.normal { background: #f8fafc; color: var(--text-secondary); }
+    .leaderboard-info { flex: 1; }
+    .leaderboard-name { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); }
+    .leaderboard-meta { font-size: 0.6875rem; color: var(--text-secondary); }
+    .leaderboard-amount { font-size: 0.875rem; font-weight: 700; color: var(--text-primary); }
+
+    /* Section Gap */
+    .section-gap { margin-bottom: 1.25rem; }
+
+    /* View All Link */
+    .view-all-link { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.8125rem; font-weight: 600; color: var(--accent); text-decoration: none; cursor: pointer; padding: 0.5rem 0; }
+    .view-all-link:hover { text-decoration: underline; }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .stats-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .hero-stats { flex-direction: column; gap: 0.5rem; align-items: center; }
+    }
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .milestone-tracker { flex-direction: column; gap: 1rem; }
+      .milestone-line { display: none; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" onclick="parent.loadContent('organization/campaign-list')">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <div>
+        <p class="breadcrumb-nav"><a onclick="parent.loadContent('organization/campaign-list')">Campaigns</a> &rsaquo; Ramadan Appeal 2026</p>
+        <h1>Ramadan Appeal 2026</h1>
+        <div class="header-badges">
+          <span class="badge-category">🌙 Seasonal</span>
+          <span class="badge-status"><i class="fas fa-circle" style="font-size:0.375rem"></i> Active</span>
+          <span class="badge-date">Mar 1 – Apr 30, 2026 &middot; <strong>Day 43 of 61</strong> (70.5% elapsed)</span>
+        </div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline-accent" onclick="parent.loadContent('organization/campaign-form')">
+        <i class="fas fa-pen me-1"></i> Edit Campaign
+      </button>
+      <button class="btn-outline-accent" onclick="alert('Link copied!')">
+        <i class="fas fa-share-alt me-1"></i> Share Link
+      </button>
+      <button class="btn-outline-accent" onclick="alert('Exporting...')">
+        <i class="fas fa-file-export me-1"></i> Export Report
+      </button>
+    </div>
+  </div>
+
+  <!-- Goal Progress Hero Section -->
+  <div class="hero-card section-gap">
+    <div class="hero-raised">
+      <strong>$471,000</strong> <span class="goal-text">raised of $500,000 goal</span>
+    </div>
+    <div class="hero-progress-track">
+      <div class="hero-progress-fill" style="width: 94.2%;"></div>
+    </div>
+    <div class="hero-pct">94.2%</div>
+    <div class="hero-stats">
+      <span><i class="fas fa-bullseye"></i> $29,000 to go</span>
+      <span><i class="fas fa-users"></i> 2,345 donors</span>
+      <span><i class="fas fa-calendar-day"></i> 18 days left</span>
+    </div>
+    <div class="hero-projection">
+      <i class="fas fa-chart-line me-1"></i> Projected: $523,000 (104.6% of goal) based on current pace
+    </div>
+  </div>
+
+  <!-- KPI Cards Row -->
+  <div class="stats-grid section-gap">
+    <div class="stat-card">
+      <div class="stat-label">Total Raised</div>
+      <div class="stat-value">$471,000</div>
+      <div class="stat-subtitle" style="color: var(--success-color);">+$8,200 today</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Donors</div>
+      <div class="stat-value">2,345</div>
+      <div class="stat-subtitle">890 new (37.9%)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Avg Donation</div>
+      <div class="stat-value">$200.85</div>
+      <div class="stat-subtitle">Median: $100</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Recurring Pledges</div>
+      <div class="stat-value">234</div>
+      <div class="stat-subtitle">$12,340/month</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Largest Gift</div>
+      <div class="stat-value">$25,000</div>
+      <div class="stat-subtitle">Ahmad Al-Hassan</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Conversion Rate</div>
+      <div class="stat-value">12.3%</div>
+      <div class="stat-subtitle">Page views → donations</div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="row g-3 section-gap">
+    <div class="col-lg-8">
+      <div class="dash-card" style="height:100%;">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-chart-bar me-2" style="color:var(--accent);"></i> Daily Collection Trend</h3>
+          <span style="font-size:0.75rem; color:var(--text-secondary);">Mar 1 – Apr 12, 2026</span>
+        </div>
+        <div class="dash-card-body">
+          <div class="mini-bars">
+            <div class="mini-bar-col"><div class="mini-bar-val">$8k</div><div class="mini-bar" style="height:45px;"></div><div class="mini-bar-label">Mar 1</div></div>
+            <div class="mini-bar-col"><div class="mini-bar-val">$6k</div><div class="mini-bar" style="height:34px;"></div><div class="mini-bar-label">2</div></div>
+            <div class="mini-bar-col"><div class="mini-bar-val">$9k</div><div class="mini-bar" style="height:50px;"></div><div class="mini-bar-label">3</div></div>
+            <div class="mini-bar-col"><div class="mini-bar-val">$7k</div><div class="mini-bar" style="height:40px;"></div><div class="mini-bar-label">4</div></div>
+            <div class="mini-bar-col"><div class="mini-bar-val">$11k</div><div class="mini-bar" style="height:62px;"></div><div class="mini-bar-label">5</div></div>
+            <div class="mini-bar-col"><div class="mini-bar-val">$8k</div><div class="mini-bar" style="height:45px;"></div><div class="mini-bar-label">6</div></div>
+            <div class="mini-bar-col"><div class="mini-bar-val">$12k</div><div class="mini-bar" style="height:68px;"></div><div class="mini-bar-label">7</div></div>
+            <div class="mini-bar-col"><div class="mini-bar-val">$10k</div><div class="mini-bar" style="height:56px;"></div><div class="mini-bar-label">8</div></div>
+            <div class="mini-bar-col"><div class="mini-bar-val">$9k</div><div class="mini-bar" style="height:50px;"></div><div class="mini-bar-label">9</div></div>
+            <div class="mini-bar-col"><div class="mini-bar-val">$45k</div><div class="mini-bar" style="height:180px; background: linear-gradient(180deg, var(--success-color), #4ade80);" title="Laylat al-Qadr appeal — $45,000 in one day"></div><div class="mini-bar-label">10</div></div>
+            <div class="mini-bar-col"><div class="mini-bar-val">$14k</div><div class="mini-bar" style="height:78px;"></div><div class="mini-bar-label">11</div></div>
+            <div class="mini-bar-col"><div class="mini-bar-val">$10k</div><div class="mini-bar" style="height:56px;"></div><div class="mini-bar-label">12</div></div>
+            <div class="mini-bar-col"><div class="mini-bar-val">$8k</div><div class="mini-bar" style="height:45px;"></div><div class="mini-bar-label">13</div></div>
+            <div class="mini-bar-col"><div class="mini-bar-val">$11k</div><div class="mini-bar" style="height:62px;"></div><div class="mini-bar-label">14</div></div>
+            <div class="mini-bar-col"><div class="mini-bar-val">$9k</div><div class="mini-bar" style="height:50px;"></div><div class="mini-bar-label">15</div></div>
+            <div class="mini-bar-col"><div class="mini-bar-val">$7k</div><div class="mini-bar" style="height:40px;"></div><div class="mini-bar-label">16</div></div>
+            <div class="mini-bar-col"><div class="mini-bar-val">$13k</div><div class="mini-bar" style="height:73px;"></div><div class="mini-bar-label">17</div></div>
+            <div class="mini-bar-col"><div class="mini-bar-val">$10k</div><div class="mini-bar" style="height:56px;"></div><div class="mini-bar-label">18</div></div>
+            <div class="mini-bar-col"><div class="mini-bar-val">$8k</div><div class="mini-bar" style="height:45px;"></div><div class="mini-bar-label">19</div></div>
+            <div class="mini-bar-col"><div class="mini-bar-val">$12k</div><div class="mini-bar" style="height:68px;"></div><div class="mini-bar-label">20</div></div>
+          </div>
+          <div style="text-align:center; margin-top:0.75rem;">
+            <span style="display:inline-flex; align-items:center; gap:0.375rem; font-size:0.6875rem; color:var(--text-secondary); margin-right:1.5rem;">
+              <span style="width:12px; height:12px; background:linear-gradient(180deg, var(--accent), var(--accent-light)); border-radius:2px;"></span> Daily Collections
+            </span>
+            <span style="display:inline-flex; align-items:center; gap:0.375rem; font-size:0.6875rem; color:var(--success-color);">
+              <span style="width:12px; height:12px; background:linear-gradient(180deg, var(--success-color), #4ade80); border-radius:2px;"></span> Spike: Laylat al-Qadr ($45k)
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="dash-card" style="height:100%;">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-chart-pie me-2" style="color:var(--accent);"></i> Donor Breakdown</h3>
+        </div>
+        <div class="dash-card-body" style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
+          <div class="donut-mock">
+            <div class="donut-hole">
+              <div class="donut-total">2,345</div>
+              <div class="donut-label">total</div>
+            </div>
+          </div>
+          <div class="donut-legend">
+            <div class="donut-legend-item"><div class="donut-legend-dot" style="background:#3b82f6;"></div> Returning: 1,455 (62.1%)</div>
+            <div class="donut-legend-item"><div class="donut-legend-dot" style="background:#93c5fd;"></div> New: 890 (37.9%)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Breakdown Tables Row -->
+  <div class="row g-3 section-gap">
+    <div class="col-lg-6">
+      <div class="dash-card" style="height:100%;">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-sitemap me-2" style="color:var(--accent);"></i> By Org Unit</h3>
+        </div>
+        <div class="dash-card-body" style="padding:0;">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Org Unit</th>
+                  <th>Raised</th>
+                  <th>Donors</th>
+                  <th>% of Goal</th>
+                  <th>Trend</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><a style="color:var(--accent); cursor:pointer; text-decoration:none; font-weight:600;" onclick="parent.loadContent('organization/org-unit-tree')">Dubai Branch</a></td>
+                  <td><strong>$156,780</strong></td>
+                  <td>567</td>
+                  <td>31.4%</td>
+                  <td><span class="trend-up"><i class="fas fa-arrow-up"></i> +12%</span></td>
+                </tr>
+                <tr>
+                  <td><a style="color:var(--accent); cursor:pointer; text-decoration:none; font-weight:600;" onclick="parent.loadContent('organization/org-unit-tree')">Mumbai Branch</a></td>
+                  <td><strong>$98,450</strong></td>
+                  <td>432</td>
+                  <td>19.7%</td>
+                  <td><span class="trend-up"><i class="fas fa-arrow-up"></i> +8%</span></td>
+                </tr>
+                <tr>
+                  <td><a style="color:var(--accent); cursor:pointer; text-decoration:none; font-weight:600;" onclick="parent.loadContent('organization/org-unit-tree')">New York Branch</a></td>
+                  <td><strong>$87,200</strong></td>
+                  <td>345</td>
+                  <td>17.4%</td>
+                  <td><span class="trend-steady"><i class="fas fa-arrows-alt-h"></i> steady</span></td>
+                </tr>
+                <tr>
+                  <td><a style="color:var(--accent); cursor:pointer; text-decoration:none; font-weight:600;" onclick="parent.loadContent('organization/org-unit-tree')">London Branch</a></td>
+                  <td><strong>$65,400</strong></td>
+                  <td>289</td>
+                  <td>13.1%</td>
+                  <td><span class="trend-down"><i class="fas fa-arrow-down"></i> -3%</span></td>
+                </tr>
+                <tr>
+                  <td style="color:var(--text-secondary);">Other branches</td>
+                  <td><strong>$63,170</strong></td>
+                  <td>712</td>
+                  <td>12.6%</td>
+                  <td><span class="trend-up"><i class="fas fa-arrow-up"></i> +5%</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="dash-card" style="height:100%;">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-credit-card me-2" style="color:var(--accent);"></i> By Payment Method</h3>
+        </div>
+        <div class="dash-card-body" style="padding:0;">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Method</th>
+                  <th>Amount</th>
+                  <th>Count</th>
+                  <th>Avg</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>💳 Online/Card</td>
+                  <td><strong>$234,500</strong></td>
+                  <td>1,456</td>
+                  <td>$161</td>
+                </tr>
+                <tr>
+                  <td>🏦 Bank Transfer</td>
+                  <td><strong>$156,000</strong></td>
+                  <td>234</td>
+                  <td>$667</td>
+                </tr>
+                <tr>
+                  <td>💵 Cash</td>
+                  <td><strong>$45,200</strong></td>
+                  <td>432</td>
+                  <td>$105</td>
+                </tr>
+                <tr>
+                  <td>📱 Mobile/Wallet</td>
+                  <td><strong>$23,400</strong></td>
+                  <td>178</td>
+                  <td>$131</td>
+                </tr>
+                <tr>
+                  <td>📄 Cheque</td>
+                  <td><strong>$11,900</strong></td>
+                  <td>45</td>
+                  <td>$264</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Milestone Tracker -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-flag-checkered me-2" style="color:var(--accent);"></i> Milestone Tracker</h3>
+    </div>
+    <div class="dash-card-body">
+      <div class="milestone-tracker">
+        <div class="milestone-line">
+          <div class="milestone-line-fill" style="width: 75%;"></div>
+        </div>
+        <div class="milestone-point">
+          <div class="milestone-dot reached"><i class="fas fa-check"></i></div>
+          <div class="milestone-name">Launch Week</div>
+          <div class="milestone-amount">$50,000</div>
+          <div class="milestone-detail" style="color:var(--success-color);">✅ Mar 7 — $62,300 reached</div>
+        </div>
+        <div class="milestone-point">
+          <div class="milestone-dot progress"><i class="fas fa-spinner"></i></div>
+          <div class="milestone-name">Mid-Campaign</div>
+          <div class="milestone-amount">$250,000</div>
+          <div class="milestone-detail" style="color:var(--warning-color);">🟡 Mar 31 — $471,000 (188%!)</div>
+        </div>
+        <div class="milestone-point">
+          <div class="milestone-dot upcoming">3</div>
+          <div class="milestone-name">Final Push</div>
+          <div class="milestone-amount">$500,000</div>
+          <div class="milestone-detail">⏳ Apr 30 — In progress</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Donations Feed + Top Donors -->
+  <div class="row g-3 section-gap">
+    <div class="col-lg-7">
+      <div class="dash-card" style="height:100%;">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-stream me-2" style="color:var(--accent);"></i> Recent Donations</h3>
+          <span style="font-size:0.6875rem; background:#f0fdf4; color:#16a34a; padding:0.1875rem 0.5rem; border-radius:9999px; font-weight:600;"><i class="fas fa-circle" style="font-size:0.375rem;"></i> Live</span>
+        </div>
+        <div class="dash-card-body" style="padding: 0.75rem 1.25rem;">
+          <div class="feed-item">
+            <div class="feed-time">10:23 AM</div>
+            <div class="feed-avatar">SJ</div>
+            <div class="feed-info">
+              <div class="feed-donor" onclick="parent.loadContent('contacts/contact-detail')">Sarah Johnson</div>
+              <div class="feed-detail">Online &middot; Children's Education</div>
+            </div>
+            <div class="feed-amount">$500</div>
+          </div>
+          <div class="feed-item">
+            <div class="feed-time">10:15 AM</div>
+            <div class="feed-avatar" style="background:#f1f5f9; color:#64748b;">?</div>
+            <div class="feed-info">
+              <div class="feed-donor" onclick="parent.loadContent('contacts/contact-detail')">Anonymous</div>
+              <div class="feed-detail">Bank Transfer &middot; Orphan Care</div>
+            </div>
+            <div class="feed-amount">$1,000</div>
+          </div>
+          <div class="feed-item">
+            <div class="feed-time">9:58 AM</div>
+            <div class="feed-avatar">RK</div>
+            <div class="feed-info">
+              <div class="feed-donor" onclick="parent.loadContent('contacts/contact-detail')">Ravi Krishnan</div>
+              <div class="feed-detail">Online &middot; Children's Education</div>
+            </div>
+            <div class="feed-amount">$250</div>
+          </div>
+          <div class="feed-item">
+            <div class="feed-time">9:45 AM</div>
+            <div class="feed-avatar">AH</div>
+            <div class="feed-info">
+              <div class="feed-donor" onclick="parent.loadContent('contacts/contact-detail')">Ahmad Al-Hassan</div>
+              <div class="feed-detail">Bank Transfer &middot; General</div>
+            </div>
+            <div class="feed-amount">$5,000</div>
+          </div>
+          <div class="feed-item">
+            <div class="feed-time">9:30 AM</div>
+            <div class="feed-avatar">MS</div>
+            <div class="feed-info">
+              <div class="feed-donor" onclick="parent.loadContent('contacts/contact-detail')">Maria Santos</div>
+              <div class="feed-detail">Online &middot; Clean Water</div>
+            </div>
+            <div class="feed-amount">$100</div>
+          </div>
+          <div style="padding: 0.5rem 0;">
+            <a class="view-all-link" onclick="parent.loadContent('fundraising/donation-list')">
+              View All Donations <i class="fas fa-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="dash-card" style="height:100%;">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-trophy me-2" style="color:var(--accent);"></i> Top Donors</h3>
+        </div>
+        <div class="dash-card-body" style="padding: 0.75rem 1.25rem;">
+          <div class="leaderboard-row">
+            <div class="leaderboard-rank gold">🥇</div>
+            <div class="leaderboard-info">
+              <div class="leaderboard-name" style="cursor:pointer; color:var(--accent);" onclick="parent.loadContent('contacts/contact-detail')">Ahmad Al-Hassan</div>
+              <div class="leaderboard-meta">3 donations</div>
+            </div>
+            <div class="leaderboard-amount">$25,000</div>
+          </div>
+          <div class="leaderboard-row">
+            <div class="leaderboard-rank silver">🥈</div>
+            <div class="leaderboard-info">
+              <div class="leaderboard-name" style="cursor:pointer; color:var(--accent);" onclick="parent.loadContent('contacts/contact-detail')">Green Earth Foundation</div>
+              <div class="leaderboard-meta">1 donation</div>
+            </div>
+            <div class="leaderboard-amount">$15,000</div>
+          </div>
+          <div class="leaderboard-row">
+            <div class="leaderboard-rank bronze">🥉</div>
+            <div class="leaderboard-info">
+              <div class="leaderboard-name" style="cursor:pointer; color:var(--accent);" onclick="parent.loadContent('contacts/contact-detail')">Sarah Johnson</div>
+              <div class="leaderboard-meta">5 donations</div>
+            </div>
+            <div class="leaderboard-amount">$12,500</div>
+          </div>
+          <div class="leaderboard-row">
+            <div class="leaderboard-rank normal">4</div>
+            <div class="leaderboard-info">
+              <div class="leaderboard-name" style="cursor:pointer; color:var(--accent);" onclick="parent.loadContent('contacts/contact-detail')">Corporate Match: TechCorp</div>
+              <div class="leaderboard-meta">1 donation</div>
+            </div>
+            <div class="leaderboard-amount">$10,000</div>
+          </div>
+          <div class="leaderboard-row">
+            <div class="leaderboard-rank normal">5</div>
+            <div class="leaderboard-info">
+              <div class="leaderboard-name" style="cursor:pointer; color:var(--accent);" onclick="parent.loadContent('contacts/contact-detail')">Ravi & Priya Krishnan</div>
+              <div class="leaderboard-meta">4 donations</div>
+            </div>
+            <div class="leaderboard-amount">$8,500</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

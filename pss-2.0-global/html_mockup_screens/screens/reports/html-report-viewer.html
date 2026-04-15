@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTML Reports - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --report-accent: #7c3aed;
+      --report-accent-bg: #f5f3ff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      font-size: 14px;
+      color: var(--text-primary);
+      margin: 0;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Top Header */
+    .page-top-header {
+      padding: 1rem 1.5rem;
+      background: white;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .page-top-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .page-top-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    /* Layout: Sidebar + Main */
+    .report-layout {
+      display: flex;
+      height: calc(100vh - 72px);
+    }
+
+    /* Left Sidebar */
+    .report-sidebar {
+      width: 270px;
+      min-width: 270px;
+      background: white;
+      border-right: 1px solid var(--border-color);
+      overflow-y: auto;
+      padding: 0;
+    }
+
+    .report-sidebar::-webkit-scrollbar { width: 4px; }
+    .report-sidebar::-webkit-scrollbar-track { background: transparent; }
+    .report-sidebar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+    .sidebar-group {
+      padding: 0;
+    }
+
+    .sidebar-group-title {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      padding: 1rem 1rem 0.5rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .sidebar-item {
+      padding: 0.5rem 1rem 0.5rem 1.25rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-left: 3px solid transparent;
+    }
+
+    .sidebar-item:hover {
+      background: #f8fafc;
+      color: var(--report-accent);
+    }
+
+    .sidebar-item.active {
+      background: var(--report-accent-bg);
+      color: var(--report-accent);
+      font-weight: 600;
+      border-left-color: var(--report-accent);
+    }
+
+    .sidebar-item .run-badge {
+      font-size: 0.625rem;
+      background: #e2e8f0;
+      color: var(--text-secondary);
+      padding: 0.1rem 0.4rem;
+      border-radius: 9999px;
+      font-weight: 700;
+    }
+
+    .sidebar-item.active .run-badge {
+      background: var(--report-accent);
+      color: white;
+    }
+
+    /* Main Area */
+    .report-main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem;
+      background: #f1f5f9;
+    }
+
+    .report-main::-webkit-scrollbar { width: 6px; }
+    .report-main::-webkit-scrollbar-track { background: transparent; }
+    .report-main::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+    /* Parameter Form */
+    .param-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      margin-bottom: 1.25rem;
+    }
+
+    .param-card-header {
+      padding: 0.875rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+
+    .param-card-header h3 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .param-card-header .collapse-icon {
+      color: var(--text-secondary);
+      transition: transform 0.2s;
+    }
+
+    .param-card-body {
+      padding: 1.25rem;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 0.875rem;
+      flex-wrap: wrap;
+    }
+
+    .form-group {
+      flex: 1;
+      min-width: 180px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.375rem;
+    }
+
+    .form-group label .required {
+      color: var(--danger-color);
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.375rem 0;
+    }
+
+    .toggle-label {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 40px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #cbd5e1;
+      border-radius: 22px;
+      transition: 0.3s;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background-color: var(--accent);
+    }
+
+    .toggle-switch input:checked + .toggle-slider:before {
+      transform: translateX(18px);
+    }
+
+    .param-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .btn-generate {
+      background: var(--report-accent);
+      color: white;
+      border: none;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1.25rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-generate:hover {
+      background: #6d28d9;
+    }
+
+    .btn-reset {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-reset:hover {
+      border-color: var(--text-secondary);
+      color: var(--text-primary);
+    }
+
+    /* Toolbar */
+    .report-toolbar {
+      background: white;
+      border-radius: var(--card-radius) var(--card-radius) 0 0;
+      border: 1px solid var(--border-color);
+      border-bottom: none;
+      padding: 0.625rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .toolbar-left {
+      display: flex;
+      gap: 0.375rem;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .btn-toolbar {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .btn-toolbar:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .zoom-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .zoom-btn {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+
+    .zoom-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Report Preview (Paper) */
+    .report-paper-wrapper {
+      background: #e2e8f0;
+      border: 1px solid var(--border-color);
+      border-top: none;
+      border-radius: 0 0 var(--card-radius) var(--card-radius);
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
+    }
+
+    .report-paper {
+      background: white;
+      width: 100%;
+      max-width: 850px;
+      min-height: 1000px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+      border: 1px solid #d1d5db;
+      padding: 2.5rem;
+      font-size: 0.8125rem;
+      line-height: 1.6;
+    }
+
+    .paper-header {
+      text-align: center;
+      border-bottom: 2px solid var(--text-primary);
+      padding-bottom: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .paper-logo {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      border-radius: 0.75rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .paper-org-name {
+      font-size: 1.125rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .paper-report-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--report-accent);
+      margin-top: 0.25rem;
+    }
+
+    .paper-report-period {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .paper-generated {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .paper-section-title {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin: 1.5rem 0 0.75rem 0;
+      padding-bottom: 0.375rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .summary-item {
+      text-align: center;
+      padding: 0.75rem;
+      background: #f8fafc;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .summary-item-value {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--report-accent);
+    }
+
+    .summary-item-label {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .paper-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .paper-table th {
+      background: #f8fafc;
+      font-weight: 700;
+      color: var(--text-primary);
+      padding: 0.625rem 0.75rem;
+      border: 1px solid var(--border-color);
+      text-align: left;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .paper-table td {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+    }
+
+    .paper-table tfoot td {
+      font-weight: 700;
+      background: #f8fafc;
+    }
+
+    .paper-table td.amount {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .paper-chart-placeholder {
+      background: #f8fafc;
+      border: 2px dashed var(--border-color);
+      border-radius: 0.75rem;
+      padding: 2rem;
+      text-align: center;
+      color: #94a3b8;
+      margin-bottom: 1.5rem;
+    }
+
+    .paper-chart-placeholder i {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .paper-chart-placeholder span {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      display: block;
+    }
+
+    .page-break {
+      border-top: 2px dashed #cbd5e1;
+      margin: 2rem 0;
+      position: relative;
+    }
+
+    .page-break::after {
+      content: 'Page Break';
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: white;
+      padding: 0 0.75rem;
+      font-size: 0.6875rem;
+      color: #cbd5e1;
+      font-weight: 600;
+    }
+
+    .paper-footer {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    /* Pagination */
+    .report-pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      padding: 1rem;
+    }
+
+    .page-nav-btn {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .page-nav-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .page-info {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    /* Email Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 1040;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal-box {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      width: 500px;
+      max-width: 95%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-header h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+    }
+
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+    }
+
+    .form-group textarea {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      resize: vertical;
+      min-height: 60px;
+      font-family: inherit;
+    }
+
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .report-sidebar {
+        width: 220px;
+        min-width: 220px;
+      }
+      .summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .report-layout {
+        flex-direction: column;
+        height: auto;
+      }
+      .report-sidebar {
+        width: 100%;
+        min-width: 100%;
+        max-height: 200px;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+      }
+      .report-main {
+        height: auto;
+        overflow: visible;
+      }
+      body {
+        overflow: auto;
+        height: auto;
+      }
+      .toolbar-left {
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Top Header -->
+  <div class="page-top-header">
+    <h1><i class="fas fa-file-alt me-2" style="color: var(--report-accent);"></i>HTML Reports</h1>
+    <p class="subtitle">Generate and view formatted printable reports</p>
+  </div>
+
+  <!-- Layout -->
+  <div class="report-layout">
+
+    <!-- Left Sidebar -->
+    <div class="report-sidebar">
+
+      <!-- Financial Reports -->
+      <div class="sidebar-group">
+        <div class="sidebar-group-title"><i class="fas fa-file-invoice-dollar"></i> Financial Reports</div>
+        <div class="sidebar-item" onclick="selectReport(this, '80G Certificate Report (India)')">
+          80G Certificate Report (India)
+          <span class="run-badge">5</span>
+        </div>
+        <div class="sidebar-item" onclick="selectReport(this, 'Donation Acknowledgment Letters')">
+          Donation Acknowledgment Letters
+          <span class="run-badge">8</span>
+        </div>
+        <div class="sidebar-item" onclick="selectReport(this, 'Annual Giving Statement')">
+          Annual Giving Statement
+          <span class="run-badge">2</span>
+        </div>
+        <div class="sidebar-item" onclick="selectReport(this, 'Tax Receipt Summary')">
+          Tax Receipt Summary
+          <span class="run-badge">3</span>
+        </div>
+        <div class="sidebar-item active" onclick="selectReport(this, 'Monthly Collection Summary')">
+          Monthly Collection Summary
+          <span class="run-badge">12</span>
+        </div>
+      </div>
+
+      <!-- Operational Reports -->
+      <div class="sidebar-group">
+        <div class="sidebar-group-title"><i class="fas fa-chart-bar"></i> Operational Reports</div>
+        <div class="sidebar-item" onclick="selectReport(this, 'Staff Activity Report')">
+          Staff Activity Report
+          <span class="run-badge">4</span>
+        </div>
+        <div class="sidebar-item" onclick="selectReport(this, 'Branch Collection Report')">
+          Branch Collection Report
+          <span class="run-badge">7</span>
+        </div>
+        <div class="sidebar-item" onclick="selectReport(this, 'Ambassador Performance Report')">
+          Ambassador Performance Report
+          <span class="run-badge">3</span>
+        </div>
+        <div class="sidebar-item" onclick="selectReport(this, 'Receipt Book Audit Report')">
+          Receipt Book Audit Report
+          <span class="run-badge">6</span>
+        </div>
+        <div class="sidebar-item" onclick="selectReport(this, 'Purpose-wise Collection')">
+          Purpose-wise Collection
+          <span class="run-badge">9</span>
+        </div>
+      </div>
+
+      <!-- Compliance Reports -->
+      <div class="sidebar-group">
+        <div class="sidebar-group-title"><i class="fas fa-shield-alt"></i> Compliance Reports</div>
+        <div class="sidebar-item" onclick="selectReport(this, 'FCRA Returns (India)')">
+          FCRA Returns (India)
+          <span class="run-badge">1</span>
+        </div>
+        <div class="sidebar-item" onclick="selectReport(this, 'Donor Disclosure Report')">
+          Donor Disclosure Report
+          <span class="run-badge">2</span>
+        </div>
+        <div class="sidebar-item" onclick="selectReport(this, 'Audit Trail Report')">
+          Audit Trail Report
+          <span class="run-badge">4</span>
+        </div>
+        <div class="sidebar-item" onclick="selectReport(this, 'Annual Return Summary')">
+          Annual Return Summary
+          <span class="run-badge">1</span>
+        </div>
+      </div>
+
+      <!-- Management Reports -->
+      <div class="sidebar-group">
+        <div class="sidebar-group-title"><i class="fas fa-building"></i> Management Reports</div>
+        <div class="sidebar-item" onclick="selectReport(this, 'Board Meeting Package')">
+          Board Meeting Package
+          <span class="run-badge">1</span>
+        </div>
+        <div class="sidebar-item" onclick="selectReport(this, 'Quarterly Review Deck')">
+          Quarterly Review Deck
+          <span class="run-badge">1</span>
+        </div>
+        <div class="sidebar-item" onclick="selectReport(this, 'Year-End Summary')">
+          Year-End Summary
+          <span class="run-badge">0</span>
+        </div>
+        <div class="sidebar-item" onclick="selectReport(this, 'Campaign Impact Report')">
+          Campaign Impact Report
+          <span class="run-badge">2</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Main Area -->
+    <div class="report-main">
+
+      <!-- Step 1: Parameter Form -->
+      <div class="param-card">
+        <div class="param-card-header" onclick="toggleParams()">
+          <h3>
+            <i class="fas fa-sliders-h me-1" style="color: var(--report-accent);"></i>
+            Report: <span id="selectedReportName">Monthly Collection Summary</span>
+          </h3>
+          <i class="fas fa-chevron-up collapse-icon" id="collapseIcon"></i>
+        </div>
+        <div class="param-card-body" id="paramBody">
+          <div class="form-row">
+            <div class="form-group" style="flex: 0.5;">
+              <label>Report Period <span class="required">*</span></label>
+              <select>
+                <option selected>Month</option>
+                <option>Quarter</option>
+                <option>Year</option>
+                <option>Custom Range</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex: 0.5;">
+              <label>&nbsp;</label>
+              <select>
+                <option selected>April</option>
+                <option>March</option>
+                <option>February</option>
+                <option>January</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex: 0.4;">
+              <label>&nbsp;</label>
+              <select>
+                <option selected>2026</option>
+                <option>2025</option>
+                <option>2024</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Branch</label>
+              <select>
+                <option selected>All Branches</option>
+                <option>Dubai</option>
+                <option>Mumbai</option>
+                <option>Delhi</option>
+                <option>Dhaka</option>
+                <option>Nairobi</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Purpose Filter</label>
+              <select>
+                <option selected>All Purposes</option>
+                <option>Orphan Care</option>
+                <option>Education</option>
+                <option>Clean Water</option>
+                <option>Medical Aid</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Grouping</label>
+              <select>
+                <option selected>By Branch</option>
+                <option>By Purpose</option>
+                <option>By Ambassador</option>
+                <option>By Payment Mode</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <div class="toggle-row">
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+                <span class="toggle-label">Include Sub-branches</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="toggle-row">
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+                <span class="toggle-label">Include Charts</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="toggle-row">
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+                <span class="toggle-label">Letterhead</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group" style="flex: 0.4;">
+              <label>Language</label>
+              <select>
+                <option selected>English</option>
+                <option>Hindi</option>
+                <option>Arabic</option>
+                <option>Bengali</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="param-actions">
+            <button class="btn-generate"><i class="fas fa-play me-1"></i> Generate Report</button>
+            <button class="btn-reset"><i class="fas fa-redo me-1"></i> Reset Parameters</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Report Viewer -->
+      <!-- Toolbar -->
+      <div class="report-toolbar">
+        <div class="toolbar-left">
+          <button class="btn-toolbar"><i class="fas fa-print"></i> Print</button>
+          <button class="btn-toolbar"><i class="fas fa-file-pdf"></i> Export PDF</button>
+          <button class="btn-toolbar"><i class="fas fa-file-excel"></i> Export Excel</button>
+          <button class="btn-toolbar" onclick="openEmailModal()"><i class="fas fa-envelope"></i> Email Report</button>
+          <button class="btn-toolbar"><i class="fas fa-link"></i> Share Link</button>
+        </div>
+        <div class="toolbar-right">
+          <div class="zoom-controls">
+            <span>Zoom:</span>
+            <button class="zoom-btn">-</button>
+            <span style="font-weight: 600; min-width: 36px; text-align: center;">100%</span>
+            <button class="zoom-btn">+</button>
+          </div>
+          <button class="btn-toolbar"><i class="fas fa-expand"></i> Full Screen</button>
+        </div>
+      </div>
+
+      <!-- Report Paper -->
+      <div class="report-paper-wrapper">
+        <div class="report-paper">
+
+          <!-- Header -->
+          <div class="paper-header">
+            <div class="paper-logo"><i class="fas fa-hand-holding-heart"></i></div>
+            <div class="paper-org-name">Global Humanitarian Foundation</div>
+            <div class="paper-report-title">Monthly Collection Summary</div>
+            <div class="paper-report-period">Period: April 2026</div>
+            <div class="paper-generated">Generated: April 12, 2026, 2:30 PM</div>
+          </div>
+
+          <!-- Summary -->
+          <div class="paper-section-title">Summary</div>
+          <div class="summary-grid">
+            <div class="summary-item">
+              <div class="summary-item-value">$67,800</div>
+              <div class="summary-item-label">Total Collections</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-item-value">456</div>
+              <div class="summary-item-label">Total Transactions</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-item-value">6</div>
+              <div class="summary-item-label">Active Branches</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-item-value">34</div>
+              <div class="summary-item-label">Active Ambassadors</div>
+            </div>
+          </div>
+
+          <!-- Collections by Branch -->
+          <div class="paper-section-title">Collections by Branch</div>
+          <table class="paper-table">
+            <thead>
+              <tr>
+                <th>Branch</th>
+                <th style="text-align: right;">Amount</th>
+                <th style="text-align: right;">Count</th>
+                <th style="text-align: right;">Avg</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Dubai</td><td class="amount">$18,500</td><td class="amount">89</td><td class="amount">$208</td></tr>
+              <tr><td>Mumbai</td><td class="amount">$15,200</td><td class="amount">78</td><td class="amount">$195</td></tr>
+              <tr><td>Delhi</td><td class="amount">$12,300</td><td class="amount">67</td><td class="amount">$184</td></tr>
+              <tr><td>Dhaka</td><td class="amount">$8,900</td><td class="amount">56</td><td class="amount">$159</td></tr>
+              <tr><td>Nairobi</td><td class="amount">$6,400</td><td class="amount">45</td><td class="amount">$142</td></tr>
+              <tr><td>Others</td><td class="amount">$6,500</td><td class="amount">121</td><td class="amount">$54</td></tr>
+            </tbody>
+            <tfoot>
+              <tr><td><strong>TOTAL</strong></td><td class="amount">$67,800</td><td class="amount">456</td><td class="amount">$149</td></tr>
+            </tfoot>
+          </table>
+
+          <!-- Chart Placeholder -->
+          <div class="paper-chart-placeholder">
+            <i class="fas fa-chart-bar"></i>
+            <span>Bar chart by branch</span>
+          </div>
+
+          <!-- Page Break -->
+          <div class="page-break"></div>
+
+          <!-- Collections by Purpose -->
+          <div class="paper-section-title">Collections by Purpose</div>
+          <table class="paper-table">
+            <thead>
+              <tr>
+                <th>Purpose</th>
+                <th style="text-align: right;">Amount</th>
+                <th style="text-align: right;">%</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Orphan Care</td><td class="amount">$19,200</td><td class="amount">28.3%</td></tr>
+              <tr><td>Education</td><td class="amount">$14,500</td><td class="amount">21.4%</td></tr>
+              <tr><td>Clean Water</td><td class="amount">$10,800</td><td class="amount">15.9%</td></tr>
+              <tr><td>Medical Aid</td><td class="amount">$8,200</td><td class="amount">12.1%</td></tr>
+              <tr><td>Community Development</td><td class="amount">$6,100</td><td class="amount">9.0%</td></tr>
+              <tr><td>General Fund</td><td class="amount">$5,400</td><td class="amount">8.0%</td></tr>
+              <tr><td>Emergency Relief</td><td class="amount">$3,600</td><td class="amount">5.3%</td></tr>
+            </tbody>
+            <tfoot>
+              <tr><td><strong>TOTAL</strong></td><td class="amount">$67,800</td><td class="amount">100%</td></tr>
+            </tfoot>
+          </table>
+
+          <!-- Footer -->
+          <div class="paper-footer">
+            <span>Page 1 of 3</span>
+            <span>Global Humanitarian Foundation &mdash; Confidential</span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div class="report-pagination">
+        <button class="page-nav-btn"><i class="fas fa-chevron-left"></i></button>
+        <span class="page-info">Page 1 of 3</span>
+        <button class="page-nav-btn"><i class="fas fa-chevron-right"></i></button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Email Modal -->
+  <div class="modal-overlay" id="emailModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3><i class="fas fa-envelope me-2" style="color: var(--report-accent);"></i>Email Report</h3>
+        <button class="modal-close" onclick="closeEmailModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label>To <span class="required">*</span></label>
+          <input type="text" placeholder="Enter email addresses (comma-separated)" value="board@ghf.org, cfo@ghf.org">
+        </div>
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label>Subject</label>
+          <input type="text" value="Monthly Collection Summary - April 2026">
+        </div>
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label>Message</label>
+          <textarea rows="3">Please find attached the monthly collection summary report for April 2026.</textarea>
+        </div>
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label>Format</label>
+          <select>
+            <option selected>PDF Attachment</option>
+            <option>Excel Attachment</option>
+            <option>Inline HTML</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-reset" onclick="closeEmailModal()">Cancel</button>
+        <button class="btn-generate"><i class="fas fa-paper-plane me-1"></i> Send Email</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function selectReport(el, name) {
+      document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('selectedReportName').textContent = name;
+    }
+
+    function toggleParams() {
+      const body = document.getElementById('paramBody');
+      const icon = document.getElementById('collapseIcon');
+      if (body.style.display === 'none') {
+        body.style.display = 'block';
+        icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+      } else {
+        body.style.display = 'none';
+        icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+      }
+    }
+
+    function openEmailModal() {
+      document.getElementById('emailModal').classList.add('show');
+    }
+
+    function closeEmailModal() {
+      document.getElementById('emailModal').classList.remove('show');
+    }
+  </script>
+
+</body>
+
+</html>

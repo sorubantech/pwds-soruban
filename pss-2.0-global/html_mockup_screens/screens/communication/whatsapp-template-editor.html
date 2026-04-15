@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsApp Templates - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+      --wa-green: #25D366;
+      --wa-green-dark: #128C7E;
+      --wa-bubble: #dcf8c6;
+      --wa-chat-bg: #e5ddd5;
+      --wa-header-bg: #075E54;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+    .page-header .subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 0; }
+
+    .header-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+
+    .btn-primary-accent {
+      background: var(--accent); border-color: var(--accent); color: white;
+      font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem;
+      border-radius: 0.5rem; border: 1px solid var(--accent); cursor: pointer; transition: all 0.15s;
+    }
+    .btn-primary-accent:hover { background: #0c6577; border-color: #0c6577; color: white; }
+
+    .btn-outline-accent {
+      background: white; border: 1px solid var(--border-color); color: var(--text-primary);
+      font-size: 0.8125rem; font-weight: 500; padding: 0.5rem 1rem;
+      border-radius: 0.5rem; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-outline-accent:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+
+    .btn-sm-icon {
+      width: 32px; height: 32px; border-radius: 0.375rem; border: 1px solid var(--border-color);
+      background: white; color: var(--text-secondary); display: inline-flex; align-items: center;
+      justify-content: center; cursor: pointer; transition: all 0.15s; font-size: 0.8125rem;
+    }
+    .btn-sm-icon:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+    .btn-sm-icon.danger:hover { border-color: var(--danger-color); color: var(--danger-color); background: #fef2f2; }
+
+    /* Status Summary */
+    .status-summary {
+      display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;
+    }
+    .status-summary .status-item {
+      font-size: 0.8125rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.375rem;
+    }
+    .status-summary .status-item strong { color: var(--text-primary); font-size: 1rem; }
+    .status-summary .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .status-dot.approved { background: var(--success-color); }
+    .status-dot.pending { background: var(--warning-color); }
+    .status-dot.rejected { background: var(--danger-color); }
+
+    /* Filter Bar */
+    .filter-bar {
+      display: flex; gap: 0.75rem; margin-bottom: 1.25rem; flex-wrap: wrap; align-items: center;
+    }
+    .filter-bar .search-box { flex: 1; min-width: 200px; max-width: 320px; position: relative; }
+    .filter-bar .search-box input {
+      width: 100%; padding: 0.5rem 0.75rem 0.5rem 2.25rem; border: 1px solid var(--border-color);
+      border-radius: 0.5rem; font-size: 0.8125rem; background: white; color: var(--text-primary);
+    }
+    .filter-bar .search-box input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14,116,144,0.1); }
+    .filter-bar .search-box i { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 0.8125rem; }
+    .filter-bar select {
+      padding: 0.5rem 2rem 0.5rem 0.75rem; border: 1px solid var(--border-color);
+      border-radius: 0.5rem; font-size: 0.8125rem; background: white; color: var(--text-primary); cursor: pointer;
+    }
+    .filter-bar select:focus { outline: none; border-color: var(--accent); }
+
+    /* Template Grid */
+    .template-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+
+    .template-card {
+      background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow);
+      overflow: hidden; transition: all 0.2s; border: 1px solid var(--border-color); cursor: pointer;
+    }
+    .template-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); transform: translateY(-2px); }
+
+    .template-card-preview {
+      height: 160px; background: var(--wa-chat-bg); display: flex; align-items: center;
+      justify-content: center; position: relative; overflow: hidden; border-bottom: 1px solid var(--border-color);
+      padding: 1rem;
+      background-image: url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='p' width='40' height='40' patternUnits='userSpaceOnUse'%3E%3Ccircle cx='20' cy='20' r='1.5' fill='%23d4cdc4' opacity='0.3'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='200' height='200' fill='%23e5ddd5'/%3E%3Crect width='200' height='200' fill='url(%23p)'/%3E%3C/svg%3E");
+    }
+
+    .wa-mini-bubble {
+      background: var(--wa-bubble); border-radius: 0 8px 8px 8px; padding: 0.625rem 0.75rem;
+      max-width: 85%; font-size: 0.6875rem; color: var(--text-primary); line-height: 1.4;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1); position: relative;
+    }
+    .wa-mini-bubble::before {
+      content: ''; position: absolute; top: 0; left: -6px; width: 0; height: 0;
+      border-top: 6px solid var(--wa-bubble); border-left: 6px solid transparent;
+    }
+    .wa-mini-bubble .bubble-text {
+      display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;
+      overflow: hidden; text-overflow: ellipsis;
+    }
+    .wa-mini-bubble .bubble-time {
+      text-align: right; font-size: 0.5625rem; color: #667781; margin-top: 0.25rem;
+    }
+
+    .template-card-body { padding: 1rem; }
+    .template-card-body h5 {
+      font-size: 0.875rem; font-weight: 600; margin: 0 0 0.375rem;
+      font-family: 'Consolas', 'Monaco', monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .template-card-meta { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
+
+    .category-badge {
+      display: inline-block; padding: 0.125rem 0.5rem; border-radius: 9999px;
+      font-size: 0.6875rem; font-weight: 600;
+    }
+    .category-badge.utility { background: var(--accent-bg); color: var(--accent); }
+    .category-badge.marketing { background: #faf5ff; color: #7c3aed; }
+    .category-badge.authentication { background: #fff7ed; color: #c2410c; }
+
+    .lang-badge {
+      display: inline-block; padding: 0.125rem 0.5rem; border-radius: 9999px;
+      font-size: 0.6875rem; font-weight: 600; background: #f1f5f9; color: var(--text-secondary);
+    }
+
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1875rem 0.625rem;
+      border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; white-space: nowrap;
+    }
+    .status-badge.approved { background: #dcfce7; color: #16a34a; }
+    .status-badge.pending { background: #fef9c3; color: #ca8a04; }
+    .status-badge.rejected { background: #fef2f2; color: #991b1b; }
+    .status-badge.draft { background: #f8fafc; color: var(--text-secondary); }
+
+    .template-card-footer {
+      display: flex; align-items: center; justify-content: space-between; margin-top: 0.5rem;
+    }
+    .template-card-date { font-size: 0.75rem; color: var(--text-secondary); }
+    .template-card-actions { display: flex; gap: 0.375rem; }
+
+    /* ======================== */
+    /* EDITOR VIEW              */
+    /* ======================== */
+    .editor-view { display: none; min-height: calc(100vh - 3rem); flex-direction: column; }
+    .editor-view.active { display: flex; }
+    .gallery-view { display: block; }
+    .gallery-view.hidden { display: none; }
+
+    .editor-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-bottom: 1rem; border-bottom: 1px solid var(--border-color); margin-bottom: 1rem;
+      flex-wrap: wrap; gap: 0.75rem;
+    }
+    .editor-header-left { display: flex; align-items: center; gap: 0.75rem; flex: 1; min-width: 0; }
+
+    .back-btn {
+      width: 36px; height: 36px; border-radius: 0.5rem; border: 1px solid var(--border-color);
+      background: white; color: var(--text-secondary); display: flex; align-items: center;
+      justify-content: center; cursor: pointer; transition: all 0.15s; font-size: 1rem; flex-shrink: 0;
+    }
+    .back-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+
+    .editor-header-right { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+
+    /* Editor Split Pane */
+    .editor-split { display: flex; flex: 1; gap: 1.25rem; min-height: 0; }
+
+    .editor-left {
+      flex: 0 0 55%; display: flex; flex-direction: column; background: white;
+      border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color);
+      overflow-y: auto; max-height: calc(100vh - 10rem);
+    }
+    .editor-right {
+      flex: 0 0 calc(45% - 1.25rem); display: flex; flex-direction: column; background: #f1f5f9;
+      border-radius: var(--card-radius); overflow: hidden; align-items: center; justify-content: flex-start;
+      padding: 1.5rem;
+    }
+
+    .editor-section {
+      padding: 1.25rem; border-bottom: 1px solid var(--border-color);
+    }
+    .editor-section:last-child { border-bottom: none; }
+    .editor-section h6 {
+      font-size: 0.8125rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--text-primary);
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .editor-section h6 .optional { font-weight: 400; color: var(--text-secondary); font-size: 0.75rem; }
+
+    .form-label-custom { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.375rem; }
+    .form-label-custom .required { color: var(--danger-color); }
+
+    .form-control-custom {
+      width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--border-color);
+      border-radius: 0.5rem; font-size: 0.8125rem; color: var(--text-primary); transition: border-color 0.15s;
+    }
+    .form-control-custom:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14,116,144,0.1); }
+
+    .form-hint { font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.25rem; }
+
+    /* Radio inline */
+    .radio-inline { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .radio-inline label {
+      display: flex; align-items: center; gap: 0.375rem; font-size: 0.8125rem; cursor: pointer;
+      padding: 0.375rem 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; transition: all 0.15s;
+    }
+    .radio-inline label:hover { border-color: var(--accent); }
+    .radio-inline label.active { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); font-weight: 600; }
+    .radio-inline label input[type="radio"] { display: none; }
+
+    /* Body Textarea Toolbar */
+    .body-toolbar {
+      display: flex; align-items: center; gap: 0.25rem; padding: 0.5rem 0.75rem;
+      background: #f8fafc; border: 1px solid var(--border-color); border-bottom: none;
+      border-radius: 0.5rem 0.5rem 0 0;
+    }
+    .body-toolbar button {
+      padding: 0.25rem 0.5rem; border: 1px solid transparent; background: transparent;
+      border-radius: 0.25rem; font-size: 0.75rem; cursor: pointer; color: var(--text-secondary); transition: all 0.15s;
+    }
+    .body-toolbar button:hover { background: white; border-color: var(--border-color); color: var(--text-primary); }
+    .body-toolbar .separator { width: 1px; height: 16px; background: var(--border-color); margin: 0 0.25rem; }
+
+    .body-textarea {
+      width: 100%; min-height: 160px; padding: 0.75rem; border: 1px solid var(--border-color);
+      border-radius: 0 0 0.5rem 0.5rem; font-size: 0.8125rem; font-family: inherit;
+      color: var(--text-primary); resize: vertical; line-height: 1.6;
+    }
+    .body-textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14,116,144,0.1); }
+
+    .char-count { font-size: 0.6875rem; color: var(--text-secondary); text-align: right; margin-top: 0.25rem; }
+
+    /* Variable Mapping Table */
+    .var-table { width: 100%; border-collapse: collapse; }
+    .var-table th {
+      background: #f8fafc; padding: 0.5rem 0.75rem; font-size: 0.6875rem; font-weight: 600;
+      color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border-color); text-align: left;
+    }
+    .var-table td {
+      padding: 0.5rem 0.75rem; font-size: 0.8125rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle;
+    }
+    .var-table tbody tr:hover { background: #f8fafc; }
+
+    .var-tag {
+      display: inline-block; padding: 0.125rem 0.5rem; border-radius: 0.25rem;
+      font-size: 0.75rem; font-weight: 600; background: #fef3c7; color: #92400e;
+      font-family: 'Consolas', 'Monaco', monospace;
+    }
+    .var-table select {
+      padding: 0.3rem 0.5rem; border: 1px solid var(--border-color); border-radius: 0.375rem;
+      font-size: 0.75rem; background: white; width: 100%;
+    }
+    .var-table input {
+      padding: 0.3rem 0.5rem; border: 1px solid var(--border-color); border-radius: 0.375rem;
+      font-size: 0.75rem; width: 100%;
+    }
+
+    /* Buttons Section */
+    .button-item {
+      display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem;
+      border: 1px solid var(--border-color); border-radius: 0.5rem; margin-bottom: 0.5rem;
+      background: #fafafa;
+    }
+    .button-item .btn-type-badge {
+      font-size: 0.6875rem; font-weight: 600; padding: 0.125rem 0.5rem; border-radius: 0.25rem;
+      white-space: nowrap;
+    }
+    .button-item .btn-type-badge.quick-reply { background: #dbeafe; color: #1d4ed8; }
+    .button-item .btn-type-badge.url { background: #faf5ff; color: #7c3aed; }
+    .button-item .btn-type-badge.phone { background: #f0fdf4; color: #16a34a; }
+    .button-item .btn-label { font-size: 0.8125rem; font-weight: 600; flex: 1; }
+    .button-item .btn-value { font-size: 0.75rem; color: var(--text-secondary); flex: 2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .button-item-actions { display: flex; gap: 0.25rem; }
+
+    /* Editor Footer */
+    .editor-footer {
+      display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem;
+      padding-top: 1rem; border-top: 1px solid var(--border-color); margin-top: 1rem; flex-wrap: wrap;
+    }
+
+    /* Rejected Banner */
+    .rejected-banner {
+      display: flex; align-items: flex-start; gap: 0.75rem; padding: 1rem; background: #fef2f2;
+      border: 1px solid #fecaca; border-radius: 0.5rem; margin-bottom: 1rem;
+    }
+    .rejected-banner i { color: var(--danger-color); font-size: 1.125rem; margin-top: 0.125rem; }
+    .rejected-banner .rejected-title { font-weight: 700; color: #991b1b; font-size: 0.875rem; }
+    .rejected-banner .rejected-reason { font-size: 0.8125rem; color: #7f1d1d; margin-top: 0.25rem; }
+
+    /* ======================== */
+    /* WHATSAPP PHONE PREVIEW   */
+    /* ======================== */
+    .phone-frame {
+      width: 320px; max-width: 100%; background: white; border-radius: 24px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15); overflow: hidden; border: 2px solid #e2e8f0;
+    }
+    .phone-header {
+      background: var(--wa-header-bg); color: white; padding: 0.75rem 1rem;
+      display: flex; align-items: center; gap: 0.75rem;
+    }
+    .phone-header .back-icon { font-size: 1rem; }
+    .phone-header .avatar {
+      width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.2);
+      display: flex; align-items: center; justify-content: center; font-size: 0.875rem;
+    }
+    .phone-header .contact-info { flex: 1; }
+    .phone-header .contact-name { font-size: 0.8125rem; font-weight: 600; }
+    .phone-header .contact-status { font-size: 0.625rem; opacity: 0.85; }
+    .phone-header-actions { display: flex; gap: 0.75rem; font-size: 0.875rem; opacity: 0.85; }
+
+    .phone-chat {
+      min-height: 360px; padding: 1rem;
+      background: var(--wa-chat-bg);
+      background-image: url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='p' width='40' height='40' patternUnits='userSpaceOnUse'%3E%3Ccircle cx='20' cy='20' r='1.5' fill='%23d4cdc4' opacity='0.3'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='200' height='200' fill='%23e5ddd5'/%3E%3Crect width='200' height='200' fill='url(%23p)'/%3E%3C/svg%3E");
+      display: flex; flex-direction: column; justify-content: flex-end;
+    }
+
+    .wa-bubble {
+      background: var(--wa-bubble); border-radius: 0 8px 8px 8px; padding: 0.5rem 0.625rem;
+      max-width: 90%; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+    }
+    .wa-bubble::before {
+      content: ''; position: absolute; top: 0; left: -6px; width: 0; height: 0;
+      border-top: 6px solid var(--wa-bubble); border-left: 6px solid transparent;
+    }
+    .wa-bubble .header-image {
+      width: 100%; border-radius: 4px; margin-bottom: 0.375rem; background: #c8e6c9;
+      height: 120px; display: flex; align-items: center; justify-content: center; color: #4caf50; font-size: 1.5rem;
+    }
+    .wa-bubble .body-text { font-size: 0.8125rem; line-height: 1.5; color: #303030; white-space: pre-line; }
+    .wa-bubble .footer-text { font-size: 0.6875rem; color: #8696a0; margin-top: 0.375rem; }
+    .wa-bubble .bubble-meta { display: flex; justify-content: flex-end; align-items: center; gap: 0.25rem; margin-top: 0.25rem; }
+    .wa-bubble .bubble-meta .time { font-size: 0.625rem; color: #667781; }
+    .wa-bubble .bubble-meta .ticks { font-size: 0.625rem; color: #53bdeb; }
+
+    .wa-buttons { margin-top: 0.25rem; display: flex; flex-direction: column; gap: 1px; }
+    .wa-btn {
+      background: white; text-align: center; padding: 0.5rem; font-size: 0.8125rem;
+      color: #00a5f4; font-weight: 500; border-radius: 8px; cursor: pointer;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+    }
+
+    .phone-input-bar {
+      background: #f0f0f0; padding: 0.5rem 0.75rem; display: flex; align-items: center; gap: 0.5rem;
+    }
+    .phone-input-bar .input-field {
+      flex: 1; background: white; border-radius: 18px; padding: 0.375rem 0.75rem;
+      font-size: 0.75rem; color: #667781;
+    }
+    .phone-input-bar .mic-btn {
+      width: 32px; height: 32px; border-radius: 50%; background: var(--wa-green-dark);
+      display: flex; align-items: center; justify-content: center; color: white; font-size: 0.75rem;
+    }
+
+    /* Confirmation Modal */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-box {
+      background: white; border-radius: var(--card-radius); padding: 1.5rem; max-width: 440px;
+      width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .modal-box h5 { font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem; }
+    .modal-box p { font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 1.25rem; line-height: 1.6; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 0.5rem; }
+
+    /* Responsive */
+    @media (max-width: 1024px) { .template-grid { grid-template-columns: repeat(2, 1fr); } .editor-split { flex-direction: column; } .editor-left, .editor-right { flex: none; width: 100%; max-height: none; } }
+    @media (max-width: 768px) { body { padding: 1rem; } .template-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+
+<body>
+
+  <!-- ==================== GALLERY VIEW ==================== -->
+  <div class="gallery-view" id="galleryView">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <h1><i class="fab fa-whatsapp" style="color: var(--wa-green);"></i> WhatsApp Templates</h1>
+        <p class="subtitle">Create and manage Meta-approved message templates</p>
+        <div class="status-summary" style="margin-top: 0.5rem;">
+          <div class="status-item"><span class="status-dot approved"></span> Approved: <strong>8</strong></div>
+          <div class="status-item"><span class="status-dot pending"></span> Pending: <strong>2</strong></div>
+          <div class="status-item"><span class="status-dot rejected"></span> Rejected: <strong>1</strong></div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn-outline-accent" title="Pull latest template status from Meta API">
+          <i class="fas fa-sync-alt me-1"></i> Sync from Meta
+        </button>
+        <button class="btn-primary-accent" onclick="showEditor('create')">
+          <i class="fas fa-plus me-1"></i> Create Template
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Search templates...">
+      </div>
+      <select>
+        <option>All Categories</option>
+        <option>Utility</option>
+        <option>Marketing</option>
+        <option>Authentication</option>
+      </select>
+      <select>
+        <option>All Languages</option>
+        <option>English</option>
+        <option>Arabic</option>
+        <option>Hindi</option>
+        <option>Portuguese</option>
+        <option>Bengali</option>
+        <option>French</option>
+        <option>Spanish</option>
+      </select>
+      <select>
+        <option>All Statuses</option>
+        <option>Approved</option>
+        <option>Pending Review</option>
+        <option>Rejected</option>
+        <option>Draft</option>
+      </select>
+    </div>
+
+    <!-- Template Cards Grid -->
+    <div class="template-grid">
+
+      <!-- Card 1: donation_receipt -->
+      <div class="template-card" onclick="showEditor('edit')">
+        <div class="template-card-preview">
+          <div class="wa-mini-bubble">
+            <div class="bubble-text">Dear Sarah,<br>Thank you for your generous donation of $500 USD to Children's Education. Your receipt number is RCP-2026-0892...</div>
+            <div class="bubble-time">10:23 AM <i class="fas fa-check-double" style="color: #53bdeb;"></i></div>
+          </div>
+        </div>
+        <div class="template-card-body">
+          <h5>donation_receipt</h5>
+          <div class="template-card-meta">
+            <span class="category-badge utility">Utility</span>
+            <span class="lang-badge">English</span>
+          </div>
+          <div class="template-card-footer">
+            <span class="status-badge approved"><i class="fas fa-check-circle"></i> Approved</span>
+            <span class="template-card-date">Last used: Apr 12</span>
+          </div>
+          <div class="template-card-actions" style="margin-top: 0.5rem;">
+            <button class="btn-sm-icon" title="Edit"><i class="fas fa-edit"></i></button>
+            <button class="btn-sm-icon" title="Preview"><i class="fas fa-eye"></i></button>
+            <button class="btn-sm-icon" title="Duplicate"><i class="fas fa-copy"></i></button>
+            <button class="btn-sm-icon danger" title="Delete"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2: donation_receipt_ar -->
+      <div class="template-card">
+        <div class="template-card-preview">
+          <div class="wa-mini-bubble" style="direction: rtl; border-radius: 8px 0 8px 8px;">
+            <div class="bubble-text" style="text-align: right;">&#1593;&#1586;&#1610;&#1586;&#1578;&#1610; &#1587;&#1575;&#1585;&#1577;&#1548;<br>&#1588;&#1603;&#1585;&#1575;&#1611; &#1604;&#1578;&#1576;&#1585;&#1593;&#1603; &#1575;&#1604;&#1587;&#1582;&#1610; &#1576;&#1605;&#1576;&#1604;&#1594; 500 &#1583;&#1608;&#1604;&#1575;&#1585;...</div>
+            <div class="bubble-time">10:15 AM <i class="fas fa-check-double" style="color: #53bdeb;"></i></div>
+          </div>
+        </div>
+        <div class="template-card-body">
+          <h5>donation_receipt_ar</h5>
+          <div class="template-card-meta">
+            <span class="category-badge utility">Utility</span>
+            <span class="lang-badge">Arabic (RTL)</span>
+          </div>
+          <div class="template-card-footer">
+            <span class="status-badge approved"><i class="fas fa-check-circle"></i> Approved</span>
+            <span class="template-card-date">Last used: Apr 10</span>
+          </div>
+          <div class="template-card-actions" style="margin-top: 0.5rem;">
+            <button class="btn-sm-icon" title="Edit"><i class="fas fa-edit"></i></button>
+            <button class="btn-sm-icon" title="Preview"><i class="fas fa-eye"></i></button>
+            <button class="btn-sm-icon" title="Duplicate"><i class="fas fa-copy"></i></button>
+            <button class="btn-sm-icon danger" title="Delete"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3: donation_thankyou -->
+      <div class="template-card">
+        <div class="template-card-preview">
+          <div class="wa-mini-bubble">
+            <div class="bubble-text">Assalamu Alaikum Ahmad,<br>Your support means the world to us! Thanks to generous donors like you, we have been able to...</div>
+            <div class="bubble-time">9:45 AM <i class="fas fa-check-double" style="color: #53bdeb;"></i></div>
+          </div>
+        </div>
+        <div class="template-card-body">
+          <h5>donation_thankyou</h5>
+          <div class="template-card-meta">
+            <span class="category-badge marketing">Marketing</span>
+            <span class="lang-badge">English</span>
+          </div>
+          <div class="template-card-footer">
+            <span class="status-badge approved"><i class="fas fa-check-circle"></i> Approved</span>
+            <span class="template-card-date">Last used: Apr 11</span>
+          </div>
+          <div class="template-card-actions" style="margin-top: 0.5rem;">
+            <button class="btn-sm-icon" title="Edit"><i class="fas fa-edit"></i></button>
+            <button class="btn-sm-icon" title="Preview"><i class="fas fa-eye"></i></button>
+            <button class="btn-sm-icon" title="Duplicate"><i class="fas fa-copy"></i></button>
+            <button class="btn-sm-icon danger" title="Delete"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4: event_reminder -->
+      <div class="template-card">
+        <div class="template-card-preview">
+          <div class="wa-mini-bubble">
+            <div class="bubble-text">Hi Sarah,<br>Reminder: Annual Charity Gala is tomorrow at 7:00 PM, Grand Ballroom. We look forward to seeing you!</div>
+            <div class="bubble-time">2:30 PM <i class="fas fa-check-double" style="color: #53bdeb;"></i></div>
+          </div>
+        </div>
+        <div class="template-card-body">
+          <h5>event_reminder</h5>
+          <div class="template-card-meta">
+            <span class="category-badge utility">Utility</span>
+            <span class="lang-badge">English</span>
+          </div>
+          <div class="template-card-footer">
+            <span class="status-badge approved"><i class="fas fa-check-circle"></i> Approved</span>
+            <span class="template-card-date">Last used: Apr 8</span>
+          </div>
+          <div class="template-card-actions" style="margin-top: 0.5rem;">
+            <button class="btn-sm-icon" title="Edit"><i class="fas fa-edit"></i></button>
+            <button class="btn-sm-icon" title="Preview"><i class="fas fa-eye"></i></button>
+            <button class="btn-sm-icon" title="Duplicate"><i class="fas fa-copy"></i></button>
+            <button class="btn-sm-icon danger" title="Delete"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 5: campaign_appeal -->
+      <div class="template-card">
+        <div class="template-card-preview">
+          <div class="wa-mini-bubble">
+            <div class="bubble-text">Ramadan Mubarak!<br>This blessed month, help us provide iftar meals to 1,000 families in need. Every $25 feeds a family...</div>
+            <div class="bubble-time">8:00 AM <i class="fas fa-check-double" style="color: #53bdeb;"></i></div>
+          </div>
+        </div>
+        <div class="template-card-body">
+          <h5>campaign_appeal</h5>
+          <div class="template-card-meta">
+            <span class="category-badge marketing">Marketing</span>
+            <span class="lang-badge">English</span>
+          </div>
+          <div class="template-card-footer">
+            <span class="status-badge approved"><i class="fas fa-check-circle"></i> Approved</span>
+            <span class="template-card-date">Last used: Apr 5</span>
+          </div>
+          <div class="template-card-actions" style="margin-top: 0.5rem;">
+            <button class="btn-sm-icon" title="Edit"><i class="fas fa-edit"></i></button>
+            <button class="btn-sm-icon" title="Preview"><i class="fas fa-eye"></i></button>
+            <button class="btn-sm-icon" title="Duplicate"><i class="fas fa-copy"></i></button>
+            <button class="btn-sm-icon danger" title="Delete"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 6: recurring_failed -->
+      <div class="template-card">
+        <div class="template-card-preview">
+          <div class="wa-mini-bubble">
+            <div class="bubble-text">Dear Ahmad,<br>We were unable to process your recurring donation of $50/month. Please update your payment method to continue...</div>
+            <div class="bubble-time">11:00 AM <i class="fas fa-check-double" style="color: #53bdeb;"></i></div>
+          </div>
+        </div>
+        <div class="template-card-body">
+          <h5>recurring_failed</h5>
+          <div class="template-card-meta">
+            <span class="category-badge utility">Utility</span>
+            <span class="lang-badge">English</span>
+          </div>
+          <div class="template-card-footer">
+            <span class="status-badge approved"><i class="fas fa-check-circle"></i> Approved</span>
+            <span class="template-card-date">Last used: Apr 3</span>
+          </div>
+          <div class="template-card-actions" style="margin-top: 0.5rem;">
+            <button class="btn-sm-icon" title="Edit"><i class="fas fa-edit"></i></button>
+            <button class="btn-sm-icon" title="Preview"><i class="fas fa-eye"></i></button>
+            <button class="btn-sm-icon" title="Duplicate"><i class="fas fa-copy"></i></button>
+            <button class="btn-sm-icon danger" title="Delete"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 7: pledge_reminder -->
+      <div class="template-card">
+        <div class="template-card-preview">
+          <div class="wa-mini-bubble">
+            <div class="bubble-text">Hi Sarah,<br>This is a friendly reminder about your pledge of $1,000 to the Building Fund. So far $250 has been received...</div>
+            <div class="bubble-time">3:15 PM <i class="fas fa-check-double" style="color: #53bdeb;"></i></div>
+          </div>
+        </div>
+        <div class="template-card-body">
+          <h5>pledge_reminder</h5>
+          <div class="template-card-meta">
+            <span class="category-badge utility">Utility</span>
+            <span class="lang-badge">English</span>
+          </div>
+          <div class="template-card-footer">
+            <span class="status-badge approved"><i class="fas fa-check-circle"></i> Approved</span>
+            <span class="template-card-date">Last used: Apr 1</span>
+          </div>
+          <div class="template-card-actions" style="margin-top: 0.5rem;">
+            <button class="btn-sm-icon" title="Edit"><i class="fas fa-edit"></i></button>
+            <button class="btn-sm-icon" title="Preview"><i class="fas fa-eye"></i></button>
+            <button class="btn-sm-icon" title="Duplicate"><i class="fas fa-copy"></i></button>
+            <button class="btn-sm-icon danger" title="Delete"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 8: membership_renewal -->
+      <div class="template-card">
+        <div class="template-card-preview">
+          <div class="wa-mini-bubble">
+            <div class="bubble-text">Dear Ravi,<br>Your annual membership expires on May 15, 2026. Renew now to continue receiving member benefits and stay connected...</div>
+            <div class="bubble-time">10:00 AM <i class="fas fa-check-double" style="color: #53bdeb;"></i></div>
+          </div>
+        </div>
+        <div class="template-card-body">
+          <h5>membership_renewal</h5>
+          <div class="template-card-meta">
+            <span class="category-badge utility">Utility</span>
+            <span class="lang-badge">English</span>
+          </div>
+          <div class="template-card-footer">
+            <span class="status-badge approved"><i class="fas fa-check-circle"></i> Approved</span>
+            <span class="template-card-date">Last used: Mar 28</span>
+          </div>
+          <div class="template-card-actions" style="margin-top: 0.5rem;">
+            <button class="btn-sm-icon" title="Edit"><i class="fas fa-edit"></i></button>
+            <button class="btn-sm-icon" title="Preview"><i class="fas fa-eye"></i></button>
+            <button class="btn-sm-icon" title="Duplicate"><i class="fas fa-copy"></i></button>
+            <button class="btn-sm-icon danger" title="Delete"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 9: volunteer_schedule (Pending) -->
+      <div class="template-card">
+        <div class="template-card-preview">
+          <div class="wa-mini-bubble">
+            <div class="bubble-text">Hi {{1}},<br>You are scheduled to volunteer on {{2}} at {{3}}. Please confirm your attendance by replying YES.</div>
+            <div class="bubble-time">—</div>
+          </div>
+        </div>
+        <div class="template-card-body">
+          <h5>volunteer_schedule</h5>
+          <div class="template-card-meta">
+            <span class="category-badge utility">Utility</span>
+            <span class="lang-badge">English</span>
+          </div>
+          <div class="template-card-footer">
+            <span class="status-badge pending"><i class="fas fa-clock"></i> Pending</span>
+            <span class="template-card-date">—</span>
+          </div>
+          <div class="template-card-actions" style="margin-top: 0.5rem;">
+            <button class="btn-sm-icon" title="Preview"><i class="fas fa-eye"></i></button>
+            <button class="btn-sm-icon" title="Edit"><i class="fas fa-edit"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 10: year_end_summary (Pending) -->
+      <div class="template-card">
+        <div class="template-card-preview">
+          <div class="wa-mini-bubble">
+            <div class="bubble-text">Dear {{1}},<br>Here's your 2025 giving summary: Total donations: {{2}}, Tax-deductible: {{3}}. Thank you for your generosity!</div>
+            <div class="bubble-time">—</div>
+          </div>
+        </div>
+        <div class="template-card-body">
+          <h5>year_end_summary</h5>
+          <div class="template-card-meta">
+            <span class="category-badge marketing">Marketing</span>
+            <span class="lang-badge">English</span>
+          </div>
+          <div class="template-card-footer">
+            <span class="status-badge pending"><i class="fas fa-clock"></i> Pending</span>
+            <span class="template-card-date">—</span>
+          </div>
+          <div class="template-card-actions" style="margin-top: 0.5rem;">
+            <button class="btn-sm-icon" title="Preview"><i class="fas fa-eye"></i></button>
+            <button class="btn-sm-icon" title="Edit"><i class="fas fa-edit"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 11: promotional_blast (Rejected) -->
+      <div class="template-card" style="border-color: #fecaca;">
+        <div class="template-card-preview">
+          <div class="wa-mini-bubble">
+            <div class="bubble-text">HUGE SALE! Don't miss out on our exclusive deals! Act now for amazing discounts on all items...</div>
+            <div class="bubble-time">—</div>
+          </div>
+        </div>
+        <div class="template-card-body">
+          <h5>promotional_blast</h5>
+          <div class="template-card-meta">
+            <span class="category-badge marketing">Marketing</span>
+            <span class="lang-badge">English</span>
+          </div>
+          <div class="template-card-footer">
+            <span class="status-badge rejected"><i class="fas fa-times-circle"></i> Rejected</span>
+            <span class="template-card-date">—</span>
+          </div>
+          <div class="template-card-actions" style="margin-top: 0.5rem;">
+            <button class="btn-sm-icon" title="Preview"><i class="fas fa-eye"></i></button>
+            <button class="btn-sm-icon" title="Edit"><i class="fas fa-edit"></i></button>
+            <button class="btn-outline-accent" style="font-size: 0.6875rem; padding: 0.25rem 0.625rem;"><i class="fas fa-redo me-1"></i>Resubmit</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 12: receipt_hindi (Draft) -->
+      <div class="template-card" style="border-style: dashed;">
+        <div class="template-card-preview">
+          <div class="wa-mini-bubble">
+            <div class="bubble-text">&#2346;&#2381;&#2352;&#2367;&#2351; {{1}},<br>{{4}} &#2325;&#2375; &#2354;&#2367;&#2319; {{2}} {{3}} &#2325;&#2375; &#2310;&#2346;&#2325;&#2375; &#2342;&#2366;&#2344; &#2325;&#2375; &#2354;&#2367;&#2319; &#2343;&#2344;&#2381;&#2351;&#2357;&#2366;&#2342;...</div>
+            <div class="bubble-time">—</div>
+          </div>
+        </div>
+        <div class="template-card-body">
+          <h5>receipt_hindi</h5>
+          <div class="template-card-meta">
+            <span class="category-badge utility">Utility</span>
+            <span class="lang-badge">Hindi</span>
+          </div>
+          <div class="template-card-footer">
+            <span class="status-badge draft"><i class="fas fa-file-alt"></i> Draft</span>
+            <span class="template-card-date">—</span>
+          </div>
+          <div class="template-card-actions" style="margin-top: 0.5rem;">
+            <button class="btn-sm-icon" title="Edit"><i class="fas fa-edit"></i></button>
+            <button class="btn-outline-accent" style="font-size: 0.6875rem; padding: 0.25rem 0.625rem;"><i class="fas fa-paper-plane me-1"></i>Submit</button>
+            <button class="btn-sm-icon danger" title="Delete"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== EDITOR VIEW ==================== -->
+  <div class="editor-view" id="editorView">
+
+    <!-- Editor Header -->
+    <div class="editor-header">
+      <div class="editor-header-left">
+        <button class="back-btn" onclick="showGallery()" title="Back to gallery"><i class="fas fa-arrow-left"></i></button>
+        <div style="flex: 1; min-width: 0;">
+          <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+            <input type="text" class="form-control-custom" style="max-width: 260px; font-family: 'Consolas','Monaco',monospace; font-weight: 600;" value="donation_receipt" placeholder="template_name">
+            <select class="form-control-custom" style="max-width: 160px;">
+              <option value="utility" selected>Utility</option>
+              <option value="marketing">Marketing</option>
+              <option value="authentication">Authentication</option>
+            </select>
+            <select class="form-control-custom" style="max-width: 180px;">
+              <option value="en" selected>English (en)</option>
+              <option value="ar">Arabic (ar)</option>
+              <option value="hi">Hindi (hi)</option>
+              <option value="pt_BR">Portuguese (pt_BR)</option>
+              <option value="bn">Bengali (bn)</option>
+              <option value="fr">French (fr)</option>
+              <option value="es">Spanish (es)</option>
+            </select>
+            <span class="status-badge approved"><i class="fas fa-check-circle"></i> Approved</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rejected Banner (shown for rejected templates) -->
+    <div class="rejected-banner" id="rejectedBanner" style="display: none;">
+      <i class="fas fa-exclamation-triangle"></i>
+      <div>
+        <div class="rejected-title">This template was rejected by Meta</div>
+        <div class="rejected-reason">Rejection reason: "Template contains promotional content not matching the selected Utility category"</div>
+        <button class="btn-outline-accent" style="margin-top: 0.5rem; font-size: 0.75rem; padding: 0.25rem 0.75rem;">
+          <i class="fas fa-edit me-1"></i> Edit & Resubmit
+        </button>
+      </div>
+    </div>
+
+    <!-- Split Pane -->
+    <div class="editor-split">
+
+      <!-- Left Panel: Form -->
+      <div class="editor-left">
+
+        <!-- Section 1: Header -->
+        <div class="editor-section">
+          <h6><i class="fas fa-heading" style="color: var(--accent);"></i> Header <span class="optional">(optional)</span></h6>
+          <div class="radio-inline" style="margin-bottom: 0.75rem;">
+            <label class="active"><input type="radio" name="headerType" checked> <i class="fas fa-ban"></i> None</label>
+            <label><input type="radio" name="headerType"> <i class="fas fa-font"></i> Text</label>
+            <label><input type="radio" name="headerType"> <i class="fas fa-image"></i> Image</label>
+            <label><input type="radio" name="headerType"> <i class="fas fa-video"></i> Video</label>
+            <label><input type="radio" name="headerType"> <i class="fas fa-file-pdf"></i> Document</label>
+          </div>
+          <div id="headerTextInput" style="display: none;">
+            <input type="text" class="form-control-custom" placeholder="Header text (max 60 chars)" maxlength="60" value="Thank you for your donation!">
+            <div class="form-hint">Variables allowed: <span class="var-tag">{{1}}</span> maps to dynamic value. Max 60 characters.</div>
+          </div>
+          <div id="headerImageInput" style="display: none;">
+            <div style="border: 2px dashed var(--border-color); border-radius: 0.5rem; padding: 1.5rem; text-align: center; color: var(--text-secondary);">
+              <i class="fas fa-cloud-upload-alt" style="font-size: 1.5rem; margin-bottom: 0.5rem; display: block;"></i>
+              <div style="font-size: 0.8125rem;">Drag & drop or click to upload image</div>
+              <div style="font-size: 0.6875rem; margin-top: 0.25rem;">JPG/PNG, max 5MB</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Body -->
+        <div class="editor-section">
+          <h6><i class="fas fa-align-left" style="color: var(--accent);"></i> Body <span style="color: var(--danger-color);">*</span></h6>
+          <div class="body-toolbar">
+            <button title="Bold *text*"><strong>B</strong></button>
+            <button title="Italic _text_"><em>I</em></button>
+            <button title="Strikethrough ~text~"><s>S</s></button>
+            <button title="Monospace"><code style="font-size: 0.6875rem;">{}</code></button>
+            <div class="separator"></div>
+            <button class="btn-outline-accent" style="border: 1px solid var(--border-color); padding: 0.125rem 0.5rem; font-size: 0.6875rem; background: #fef3c7; color: #92400e;">
+              <i class="fas fa-plus me-1"></i> Add Variable
+            </button>
+          </div>
+          <textarea class="body-textarea">Dear {{1}},
+
+Thank you for your generous donation of {{2}} {{3}} to {{4}}.
+
+Your receipt number is {{5}}.
+This donation is tax-deductible under {{6}}.
+
+God bless you! 🙏</textarea>
+          <div class="char-count">287 / 1024</div>
+        </div>
+
+        <!-- Section 3: Variable Mapping -->
+        <div class="editor-section">
+          <h6><i class="fas fa-code" style="color: var(--accent);"></i> Variable Mapping</h6>
+          <div style="overflow-x: auto;">
+            <table class="var-table">
+              <thead>
+                <tr>
+                  <th style="width: 70px;">Variable</th>
+                  <th>PSS Field Mapping</th>
+                  <th style="width: 130px;">Sample Value</th>
+                  <th style="width: 120px;">Fallback</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="var-tag">{{1}}</span></td>
+                  <td>
+                    <select>
+                      <optgroup label="Contact">
+                        <option selected>Contact: First Name</option>
+                        <option>Contact: Last Name</option>
+                        <option>Contact: Full Name</option>
+                        <option>Contact: Email</option>
+                        <option>Contact: Phone</option>
+                      </optgroup>
+                      <optgroup label="Donation">
+                        <option>Donation: Amount</option>
+                        <option>Donation: Currency</option>
+                        <option>Donation: Purpose</option>
+                        <option>Donation: Receipt Number</option>
+                        <option>Donation: Date</option>
+                      </optgroup>
+                      <optgroup label="Organization">
+                        <option>Organization: Name</option>
+                        <option>Organization: Tax Code</option>
+                      </optgroup>
+                      <optgroup label="Campaign">
+                        <option>Campaign: Name</option>
+                        <option>Campaign: Goal</option>
+                      </optgroup>
+                      <optgroup label="Event">
+                        <option>Event: Name</option>
+                        <option>Event: Date</option>
+                        <option>Event: Location</option>
+                      </optgroup>
+                      <optgroup label="System">
+                        <option>System: Current Date</option>
+                        <option>System: Organization URL</option>
+                      </optgroup>
+                    </select>
+                  </td>
+                  <td><input type="text" value="Sarah" placeholder="Sample"></td>
+                  <td><input type="text" value="Valued Donor" placeholder="Fallback"></td>
+                </tr>
+                <tr>
+                  <td><span class="var-tag">{{2}}</span></td>
+                  <td>
+                    <select>
+                      <optgroup label="Contact"><option>Contact: First Name</option></optgroup>
+                      <optgroup label="Donation"><option selected>Donation: Amount</option><option>Donation: Currency</option><option>Donation: Purpose</option><option>Donation: Receipt Number</option></optgroup>
+                      <optgroup label="Organization"><option>Organization: Name</option></optgroup>
+                    </select>
+                  </td>
+                  <td><input type="text" value="$500" placeholder="Sample"></td>
+                  <td><input type="text" value="" placeholder="Fallback"></td>
+                </tr>
+                <tr>
+                  <td><span class="var-tag">{{3}}</span></td>
+                  <td>
+                    <select>
+                      <optgroup label="Donation"><option>Donation: Amount</option><option selected>Donation: Currency</option><option>Donation: Purpose</option></optgroup>
+                    </select>
+                  </td>
+                  <td><input type="text" value="USD" placeholder="Sample"></td>
+                  <td><input type="text" value="" placeholder="Fallback"></td>
+                </tr>
+                <tr>
+                  <td><span class="var-tag">{{4}}</span></td>
+                  <td>
+                    <select>
+                      <optgroup label="Donation"><option>Donation: Amount</option><option>Donation: Currency</option><option selected>Donation: Purpose</option></optgroup>
+                    </select>
+                  </td>
+                  <td><input type="text" value="Children's Education" placeholder="Sample"></td>
+                  <td><input type="text" value="General Fund" placeholder="Fallback"></td>
+                </tr>
+                <tr>
+                  <td><span class="var-tag">{{5}}</span></td>
+                  <td>
+                    <select>
+                      <optgroup label="Donation"><option selected>Donation: Receipt Number</option><option>Donation: Amount</option></optgroup>
+                    </select>
+                  </td>
+                  <td><input type="text" value="RCP-2026-0892" placeholder="Sample"></td>
+                  <td><input type="text" value="" placeholder="Fallback"></td>
+                </tr>
+                <tr>
+                  <td><span class="var-tag">{{6}}</span></td>
+                  <td>
+                    <select>
+                      <optgroup label="Organization"><option selected>Organization: Tax Code</option><option>Organization: Name</option></optgroup>
+                    </select>
+                  </td>
+                  <td><input type="text" value="501(c)(3)" placeholder="Sample"></td>
+                  <td><input type="text" value="" placeholder="Fallback"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <button class="btn-outline-accent" style="margin-top: 0.75rem; font-size: 0.75rem; padding: 0.375rem 0.75rem;">
+            <i class="fas fa-plus me-1"></i> Add Variable
+          </button>
+        </div>
+
+        <!-- Section 4: Footer -->
+        <div class="editor-section">
+          <h6><i class="fas fa-shoe-prints" style="color: var(--accent);"></i> Footer <span class="optional">(optional)</span></h6>
+          <input type="text" class="form-control-custom" placeholder="Footer text (max 60 chars)" maxlength="60" value="Hope Foundation | Reply STOP to unsubscribe">
+          <div class="form-hint">Max 60 characters. Commonly used for org name and opt-out instruction.</div>
+        </div>
+
+        <!-- Section 5: Buttons -->
+        <div class="editor-section">
+          <h6><i class="fas fa-hand-pointer" style="color: var(--accent);"></i> Buttons <span class="optional">(optional, max 3)</span></h6>
+
+          <div class="button-item">
+            <span class="btn-type-badge quick-reply">Quick Reply</span>
+            <span class="btn-label">Thank You</span>
+            <span class="btn-value">—</span>
+            <div class="button-item-actions">
+              <button class="btn-sm-icon" title="Edit"><i class="fas fa-edit"></i></button>
+              <button class="btn-sm-icon danger" title="Remove"><i class="fas fa-times"></i></button>
+            </div>
+          </div>
+
+          <div class="button-item">
+            <span class="btn-type-badge url">URL</span>
+            <span class="btn-label">View Receipt</span>
+            <span class="btn-value">https://pss2.com/receipt/{{1}}</span>
+            <div class="button-item-actions">
+              <button class="btn-sm-icon" title="Edit"><i class="fas fa-edit"></i></button>
+              <button class="btn-sm-icon" title="Move Up"><i class="fas fa-arrow-up"></i></button>
+              <button class="btn-sm-icon danger" title="Remove"><i class="fas fa-times"></i></button>
+            </div>
+          </div>
+
+          <div class="button-item">
+            <span class="btn-type-badge phone">Phone</span>
+            <span class="btn-label">Call Us</span>
+            <span class="btn-value">+1-555-0100</span>
+            <div class="button-item-actions">
+              <button class="btn-sm-icon" title="Edit"><i class="fas fa-edit"></i></button>
+              <button class="btn-sm-icon" title="Move Up"><i class="fas fa-arrow-up"></i></button>
+              <button class="btn-sm-icon danger" title="Remove"><i class="fas fa-times"></i></button>
+            </div>
+          </div>
+
+          <button class="btn-outline-accent" style="margin-top: 0.5rem; font-size: 0.75rem; padding: 0.375rem 0.75rem;" disabled title="Maximum 3 buttons reached">
+            <i class="fas fa-plus me-1"></i> Add Button (3/3)
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Right Panel: WhatsApp Preview -->
+      <div class="editor-right">
+        <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">
+          <i class="fab fa-whatsapp" style="color: var(--wa-green);"></i> Live Preview
+        </div>
+        <div class="phone-frame">
+          <!-- Phone Header -->
+          <div class="phone-header">
+            <span class="back-icon"><i class="fas fa-arrow-left"></i></span>
+            <div class="avatar"><i class="fas fa-building"></i></div>
+            <div class="contact-info">
+              <div class="contact-name">Hope Foundation</div>
+              <div class="contact-status">Online</div>
+            </div>
+            <div class="phone-header-actions">
+              <i class="fas fa-phone"></i>
+              <i class="fas fa-ellipsis-v"></i>
+            </div>
+          </div>
+
+          <!-- Chat Area -->
+          <div class="phone-chat">
+            <div class="wa-bubble">
+              <div class="body-text">Dear Sarah,
+
+Thank you for your generous donation of $500 USD to Children's Education.
+
+Your receipt number is RCP-2026-0892.
+This donation is tax-deductible under 501(c)(3).
+
+God bless you! 🙏</div>
+              <div class="footer-text">Hope Foundation | Reply STOP to unsubscribe</div>
+              <div class="bubble-meta">
+                <span class="time">10:23 AM</span>
+                <span class="ticks"><i class="fas fa-check-double"></i></span>
+              </div>
+            </div>
+            <div class="wa-buttons">
+              <div class="wa-btn">Thank You</div>
+              <div class="wa-btn"><i class="fas fa-external-link-alt me-1" style="font-size: 0.6875rem;"></i> View Receipt</div>
+              <div class="wa-btn"><i class="fas fa-phone me-1" style="font-size: 0.6875rem;"></i> Call Us</div>
+            </div>
+          </div>
+
+          <!-- Input Bar -->
+          <div class="phone-input-bar">
+            <span style="font-size: 1rem;">😊</span>
+            <div class="input-field">Type a message...</div>
+            <i class="fas fa-paperclip" style="color: #54656f;"></i>
+            <div class="mic-btn"><i class="fas fa-microphone"></i></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Editor Footer -->
+    <div class="editor-footer">
+      <button class="btn-outline-accent" onclick="showGallery()">Cancel</button>
+      <button class="btn-outline-accent"><i class="fas fa-save me-1"></i> Save as Draft</button>
+      <button class="btn-primary-accent" onclick="document.getElementById('submitModal').classList.add('show')">
+        <i class="fas fa-paper-plane me-1"></i> Submit for Review
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Submit Confirmation Modal -->
+  <div class="modal-overlay" id="submitModal">
+    <div class="modal-box">
+      <h5><i class="fab fa-whatsapp" style="color: var(--wa-green); margin-right: 0.5rem;"></i> Submit Template for Review</h5>
+      <p>Template <strong>donation_receipt</strong> will be submitted to Meta for review. This usually takes <strong>24-48 hours</strong>. You cannot edit the template while it's under review.</p>
+      <div class="modal-actions">
+        <button class="btn-outline-accent" onclick="document.getElementById('submitModal').classList.remove('show')">Cancel</button>
+        <button class="btn-primary-accent" onclick="document.getElementById('submitModal').classList.remove('show')">
+          <i class="fas fa-paper-plane me-1"></i> Confirm & Submit
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showEditor(mode) {
+      document.getElementById('galleryView').classList.add('hidden');
+      document.getElementById('editorView').classList.add('active');
+      if (mode === 'create') {
+        document.getElementById('rejectedBanner').style.display = 'none';
+      }
+    }
+
+    function showGallery() {
+      document.getElementById('galleryView').classList.remove('hidden');
+      document.getElementById('editorView').classList.remove('active');
+    }
+
+    // Radio inline toggle
+    document.querySelectorAll('.radio-inline').forEach(group => {
+      group.querySelectorAll('label').forEach(label => {
+        label.addEventListener('click', () => {
+          group.querySelectorAll('label').forEach(l => l.classList.remove('active'));
+          label.classList.add('active');
+        });
+      });
+    });
+  </script>
+
+</body>
+</html>

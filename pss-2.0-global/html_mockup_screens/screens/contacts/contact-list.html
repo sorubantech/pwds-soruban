@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>All Contacts - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #0c6577;
+      border-color: #0c6577;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Card */
+    .list-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .search-input {
+      position: relative;
+      flex: 1;
+      min-width: 240px;
+    }
+
+    .search-input i {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .search-input input {
+      width: 100%;
+      padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .search-input input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    /* Filter Chips */
+    .filter-chips {
+      display: flex;
+      gap: 0.375rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-chip {
+      padding: 0.3125rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .filter-chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .filter-chip.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    /* Advanced Filters Panel */
+    .advanced-filters {
+      display: none;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      background: #f8fafc;
+    }
+
+    .advanced-filters.show {
+      display: block;
+    }
+
+    .filter-group label {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.25rem;
+      display: block;
+    }
+
+    .filter-group select,
+    .filter-group input {
+      width: 100%;
+      padding: 0.375rem 0.625rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+    }
+
+    .filter-group select:focus,
+    .filter-group input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Bulk Actions Bar */
+    .bulk-actions {
+      display: none;
+      padding: 0.75rem 1.25rem;
+      background: var(--accent-bg);
+      border-bottom: 1px solid #cffafe;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .bulk-actions.show {
+      display: flex;
+    }
+
+    .bulk-actions .selected-count {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .bulk-btn {
+      padding: 0.3125rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid var(--accent);
+      background: white;
+      color: var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .bulk-btn:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    .bulk-btn.danger {
+      border-color: var(--danger-color);
+      color: var(--danger-color);
+    }
+
+    .bulk-btn.danger:hover {
+      background: var(--danger-color);
+      color: white;
+    }
+
+    /* Table */
+    .table-container {
+      overflow-x: auto;
+    }
+
+    .contact-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1100px;
+    }
+
+    .contact-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+      position: relative;
+    }
+
+    .contact-table th:hover {
+      color: var(--accent);
+    }
+
+    .contact-table th .sort-icon {
+      margin-left: 0.25rem;
+      font-size: 0.5625rem;
+      opacity: 0.4;
+    }
+
+    .contact-table th.sorted .sort-icon {
+      opacity: 1;
+      color: var(--accent);
+    }
+
+    .contact-table td {
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      vertical-align: middle;
+    }
+
+    .contact-table tr:hover td {
+      background: #f8fafc;
+    }
+
+    .contact-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Avatar */
+    .contact-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.75rem;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .contact-name-cell {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+
+    .contact-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+
+    .contact-org {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+    }
+
+    /* Contact Code Link */
+    .contact-code {
+      color: var(--accent);
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .contact-code:hover {
+      text-decoration: underline;
+    }
+
+    /* Type Badges */
+    .type-badge {
+      font-size: 0.6875rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .type-badge.donor { background: #f0fdf4; color: #166534; }
+    .type-badge.volunteer { background: #faf5ff; color: #7c3aed; }
+    .type-badge.member { background: #eff6ff; color: #1e40af; }
+    .type-badge.organization { background: #fff7ed; color: #c2410c; }
+
+    /* Engagement Score */
+    .score-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .score-badge.high { background: #f0fdf4; color: #166534; border: 2px solid #86efac; }
+    .score-badge.medium { background: #fefce8; color: #854d0e; border: 2px solid #fde047; }
+    .score-badge.low { background: #fef2f2; color: #991b1b; border: 2px solid #fca5a5; }
+
+    /* Tags */
+    .tag-badge {
+      display: inline-block;
+      font-size: 0.625rem;
+      padding: 0.15rem 0.4375rem;
+      border-radius: 0.25rem;
+      background: #f1f5f9;
+      color: var(--text-secondary);
+      font-weight: 600;
+      margin-right: 0.25rem;
+      margin-bottom: 0.125rem;
+      white-space: nowrap;
+    }
+
+    .tag-more {
+      font-size: 0.625rem;
+      color: var(--accent);
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Actions Menu */
+    .actions-menu {
+      position: relative;
+    }
+
+    .actions-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      transition: all 0.15s;
+    }
+
+    .actions-btn:hover {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .actions-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 0.25rem;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      z-index: 100;
+      min-width: 140px;
+      overflow: hidden;
+    }
+
+    .actions-dropdown.show {
+      display: block;
+    }
+
+    .actions-dropdown a {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      text-decoration: none;
+      transition: background 0.1s;
+    }
+
+    .actions-dropdown a:hover {
+      background: #f8fafc;
+      color: var(--accent);
+    }
+
+    .actions-dropdown a i {
+      width: 16px;
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .actions-dropdown a:hover i {
+      color: var(--accent);
+    }
+
+    .actions-dropdown a.danger {
+      color: var(--danger-color);
+    }
+
+    .actions-dropdown a.danger i {
+      color: var(--danger-color);
+    }
+
+    /* Pagination */
+    .table-footer {
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--border-color);
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .table-footer .showing-text {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .page-size-select {
+      padding: 0.25rem 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .pagination {
+      display: flex;
+      gap: 0.25rem;
+      align-items: center;
+      margin: 0;
+      list-style: none;
+      padding: 0;
+    }
+
+    .pagination .page-btn {
+      min-width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: white;
+      cursor: pointer;
+      transition: all 0.15s;
+      padding: 0 0.375rem;
+    }
+
+    .pagination .page-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .pagination .page-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .pagination .page-btn.disabled {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .pagination .page-ellipsis {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      padding: 0 0.25rem;
+    }
+
+    /* Column Customization */
+    .column-config-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      transition: all 0.15s;
+    }
+
+    .column-config-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .column-config-panel {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 0.25rem;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      z-index: 200;
+      min-width: 220px;
+      padding: 0.75rem;
+    }
+
+    .column-config-panel.show {
+      display: block;
+    }
+
+    .column-config-panel h4 {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .column-config-panel label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      padding: 0.25rem 0;
+      cursor: pointer;
+    }
+
+    .column-config-panel label input[type="checkbox"] {
+      accent-color: var(--accent);
+    }
+
+    /* Donation cell */
+    .donation-cell {
+      white-space: nowrap;
+    }
+
+    .donation-cell .donation-date {
+      font-size: 0.8125rem;
+    }
+
+    .donation-cell .donation-amount {
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    /* Phone cell */
+    .phone-cell {
+      white-space: nowrap;
+      font-size: 0.8125rem;
+    }
+
+    /* Checkbox */
+    .form-check-input {
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .table-footer {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    @media (max-width: 576px) {
+      body { padding: 1rem; }
+    }
+
+    /* Advanced filter toggle button */
+    .adv-filter-toggle {
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .adv-filter-toggle:hover,
+    .adv-filter-toggle.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1>All Contacts</h1>
+      <p class="subtitle">12,458 contacts</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="parent.loadContent('contacts/contact-form')">
+        <i class="fas fa-plus me-1"></i> New Contact
+      </button>
+      <button class="btn-outline-accent" onclick="parent.loadContent('contacts/contact-import')">
+        <i class="fas fa-file-import me-1"></i> Import
+      </button>
+      <button class="btn-outline-accent" onclick="exportContacts()">
+        <i class="fas fa-file-export me-1"></i> Export
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Card -->
+  <div class="list-card">
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+        <div class="search-input">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Search by name, email, phone, code..." id="searchInput">
+        </div>
+        <button class="adv-filter-toggle" onclick="toggleAdvancedFilters(this)">
+          <i class="fas fa-sliders me-1"></i> Advanced Filters
+        </button>
+        <div style="position: relative; margin-left: auto;">
+          <button class="column-config-btn" onclick="toggleColumnConfig(event)" title="Customize Columns">
+            <i class="fas fa-gear"></i>
+          </button>
+          <div class="column-config-panel" id="columnConfigPanel">
+            <h4>Show Columns</h4>
+            <label><input type="checkbox" checked> Contact Code</label>
+            <label><input type="checkbox" checked> Name</label>
+            <label><input type="checkbox" checked> Contact Type</label>
+            <label><input type="checkbox" checked> Email</label>
+            <label><input type="checkbox" checked> Phone</label>
+            <label><input type="checkbox" checked> Engagement Score</label>
+            <label><input type="checkbox" checked> Last Donation</label>
+            <label><input type="checkbox" checked> Tags</label>
+          </div>
+        </div>
+      </div>
+      <div class="filter-chips">
+        <span class="filter-chip active" onclick="setFilter(this)">All</span>
+        <span class="filter-chip" onclick="setFilter(this)">Donors</span>
+        <span class="filter-chip" onclick="setFilter(this)">Volunteers</span>
+        <span class="filter-chip" onclick="setFilter(this)">Members</span>
+        <span class="filter-chip" onclick="setFilter(this)">Organizations</span>
+        <span class="filter-chip" onclick="setFilter(this)">Inactive</span>
+      </div>
+    </div>
+
+    <!-- Advanced Filters Panel -->
+    <div class="advanced-filters" id="advancedFilters">
+      <div class="row g-3">
+        <div class="col-md-3 col-sm-6 filter-group">
+          <label>Contact Type</label>
+          <select multiple size="3">
+            <option>Donor</option>
+            <option>Volunteer</option>
+            <option>Member</option>
+            <option>Organization</option>
+          </select>
+        </div>
+        <div class="col-md-3 col-sm-6 filter-group">
+          <label>Engagement Score</label>
+          <div class="d-flex gap-2">
+            <input type="number" placeholder="Min" min="0" max="100">
+            <input type="number" placeholder="Max" min="0" max="100">
+          </div>
+        </div>
+        <div class="col-md-3 col-sm-6 filter-group">
+          <label>Tags</label>
+          <select multiple size="3">
+            <option>Major Donor</option>
+            <option>Monthly Donor</option>
+            <option>Recurring</option>
+            <option>Lapsed</option>
+            <option>At Risk</option>
+            <option>Active Volunteer</option>
+            <option>Education Sponsor</option>
+          </select>
+        </div>
+        <div class="col-md-3 col-sm-6 filter-group">
+          <label>Country</label>
+          <select>
+            <option value="">All Countries</option>
+            <option>United States</option>
+            <option>United Arab Emirates</option>
+            <option>Brazil</option>
+            <option>United Kingdom</option>
+            <option>India</option>
+            <option>Nigeria</option>
+            <option>Morocco</option>
+            <option>Japan</option>
+          </select>
+        </div>
+        <div class="col-md-3 col-sm-6 filter-group">
+          <label>Date Added</label>
+          <div class="d-flex gap-2">
+            <input type="date">
+            <input type="date">
+          </div>
+        </div>
+        <div class="col-md-3 col-sm-6 filter-group">
+          <label>Last Donation Date</label>
+          <div class="d-flex gap-2">
+            <input type="date">
+            <input type="date">
+          </div>
+        </div>
+        <div class="col-md-6 d-flex align-items-end gap-2">
+          <button class="btn-primary-accent" style="padding: 0.375rem 1rem; font-size: 0.75rem;">
+            <i class="fas fa-check me-1"></i> Apply Filters
+          </button>
+          <button class="btn-outline-accent" style="padding: 0.375rem 1rem; font-size: 0.75rem;" onclick="clearFilters()">
+            <i class="fas fa-times me-1"></i> Clear
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bulk Actions Bar -->
+    <div class="bulk-actions" id="bulkActions">
+      <span class="selected-count" id="selectedCount">0 contacts selected</span>
+      <button class="bulk-btn"><i class="fas fa-envelope me-1"></i> Send Email</button>
+      <button class="bulk-btn"><i class="fas fa-tags me-1"></i> Add Tags</button>
+      <button class="bulk-btn"><i class="fas fa-file-export me-1"></i> Export Selected</button>
+      <button class="bulk-btn danger"><i class="fas fa-trash me-1"></i> Delete</button>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-container">
+      <table class="contact-table">
+        <thead>
+          <tr>
+            <th style="width: 36px;">
+              <input type="checkbox" class="form-check-input" id="selectAll" onchange="toggleSelectAll(this)">
+            </th>
+            <th class="sorted">Contact Code <i class="fas fa-sort-up sort-icon"></i></th>
+            <th>Name <i class="fas fa-sort sort-icon"></i></th>
+            <th>Type <i class="fas fa-sort sort-icon"></i></th>
+            <th>Email <i class="fas fa-sort sort-icon"></i></th>
+            <th>Phone <i class="fas fa-sort sort-icon"></i></th>
+            <th>Score <i class="fas fa-sort sort-icon"></i></th>
+            <th>Last Donation <i class="fas fa-sort sort-icon"></i></th>
+            <th>Tags</th>
+            <th style="width: 44px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Row 1 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td><a class="contact-code" onclick="parent.loadContent('contacts/contact-detail')">CON-0001</a></td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background: #3b82f6;">SJ</div>
+                <div>
+                  <div class="contact-name">Sarah Johnson</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="type-badge donor">Donor</span></td>
+            <td>sarah.j@email.com</td>
+            <td class="phone-cell">+1 555-0101</td>
+            <td><span class="score-badge high">92</span></td>
+            <td class="donation-cell"><span class="donation-date">Mar 15</span> - <span class="donation-amount">$500</span></td>
+            <td>
+              <span class="tag-badge">Major Donor</span>
+              <span class="tag-badge">Annual Gala</span>
+            </td>
+            <td>
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a onclick="parent.loadContent('contacts/contact-detail')"><i class="fas fa-eye"></i> View</a>
+                  <a onclick="parent.loadContent('contacts/contact-form')"><i class="fas fa-pen"></i> Edit</a>
+                  <a href="#"><i class="fas fa-code-merge"></i> Merge</a>
+                  <a href="#"><i class="fas fa-envelope"></i> Send Email</a>
+                  <a class="danger" href="#"><i class="fas fa-trash"></i> Delete</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 2 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td><a class="contact-code" onclick="parent.loadContent('contacts/contact-detail')">CON-0002</a></td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background: #8b5cf6;">AA</div>
+                <div>
+                  <div class="contact-name">Ahmad Al-Hassan Family</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="type-badge donor">Donor</span></td>
+            <td>ahmad.h@email.com</td>
+            <td class="phone-cell">+971 50-123-4567</td>
+            <td><span class="score-badge high">85</span></td>
+            <td class="donation-cell"><span class="donation-date">Mar 10</span> - <span class="donation-amount">$1,200</span></td>
+            <td>
+              <span class="tag-badge">Recurring</span>
+              <span class="tag-badge">Education</span>
+            </td>
+            <td>
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a onclick="parent.loadContent('contacts/contact-detail')"><i class="fas fa-eye"></i> View</a>
+                  <a onclick="parent.loadContent('contacts/contact-form')"><i class="fas fa-pen"></i> Edit</a>
+                  <a href="#"><i class="fas fa-code-merge"></i> Merge</a>
+                  <a href="#"><i class="fas fa-envelope"></i> Send Email</a>
+                  <a class="danger" href="#"><i class="fas fa-trash"></i> Delete</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 3 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td><a class="contact-code" onclick="parent.loadContent('contacts/contact-detail')">CON-0003</a></td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background: #ec4899;">MS</div>
+                <div>
+                  <div class="contact-name">Maria Santos</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="type-badge volunteer">Volunteer</span></td>
+            <td>maria.s@email.com</td>
+            <td class="phone-cell">+55 11-9876-5432</td>
+            <td><span class="score-badge medium">78</span></td>
+            <td class="donation-cell"><span class="donation-date">Feb 28</span> - <span class="donation-amount">$50</span></td>
+            <td>
+              <span class="tag-badge">Event Helper</span>
+            </td>
+            <td>
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a onclick="parent.loadContent('contacts/contact-detail')"><i class="fas fa-eye"></i> View</a>
+                  <a onclick="parent.loadContent('contacts/contact-form')"><i class="fas fa-pen"></i> Edit</a>
+                  <a href="#"><i class="fas fa-code-merge"></i> Merge</a>
+                  <a href="#"><i class="fas fa-envelope"></i> Send Email</a>
+                  <a class="danger" href="#"><i class="fas fa-trash"></i> Delete</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 4 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td><a class="contact-code" onclick="parent.loadContent('contacts/contact-detail')">CON-0004</a></td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background: #22c55e;">GE</div>
+                <div>
+                  <div class="contact-name">Green Earth Foundation</div>
+                  <div class="contact-org">Organization</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="type-badge organization">Organization</span></td>
+            <td>info@greenearth.org</td>
+            <td class="phone-cell">+44 20-7946-0958</td>
+            <td><span class="score-badge medium">71</span></td>
+            <td class="donation-cell"><span class="donation-date">Jan 15</span> - <span class="donation-amount">$5,000</span></td>
+            <td>
+              <span class="tag-badge">Corporate</span>
+              <span class="tag-badge">CSR</span>
+            </td>
+            <td>
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a onclick="parent.loadContent('contacts/contact-detail')"><i class="fas fa-eye"></i> View</a>
+                  <a onclick="parent.loadContent('contacts/contact-form')"><i class="fas fa-pen"></i> Edit</a>
+                  <a href="#"><i class="fas fa-code-merge"></i> Merge</a>
+                  <a href="#"><i class="fas fa-envelope"></i> Send Email</a>
+                  <a class="danger" href="#"><i class="fas fa-trash"></i> Delete</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 5 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td><a class="contact-code" onclick="parent.loadContent('contacts/contact-detail')">CON-0005</a></td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background: #f97316;">RK</div>
+                <div>
+                  <div class="contact-name">Ravi Krishnan</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="type-badge donor">Donor</span></td>
+            <td>ravi.k@email.com</td>
+            <td class="phone-cell">+91 98765-43210</td>
+            <td><span class="score-badge medium">65</span></td>
+            <td class="donation-cell"><span class="donation-date">Mar 1</span> - <span class="donation-amount">$100</span></td>
+            <td>
+              <span class="tag-badge">Monthly Donor</span>
+            </td>
+            <td>
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a onclick="parent.loadContent('contacts/contact-detail')"><i class="fas fa-eye"></i> View</a>
+                  <a onclick="parent.loadContent('contacts/contact-form')"><i class="fas fa-pen"></i> Edit</a>
+                  <a href="#"><i class="fas fa-code-merge"></i> Merge</a>
+                  <a href="#"><i class="fas fa-envelope"></i> Send Email</a>
+                  <a class="danger" href="#"><i class="fas fa-trash"></i> Delete</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 6 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td><a class="contact-code" onclick="parent.loadContent('contacts/contact-detail')">CON-0006</a></td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background: #06b6d4;">EC</div>
+                <div>
+                  <div class="contact-name">Emily Chen</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="type-badge member">Member</span></td>
+            <td>emily.c@email.com</td>
+            <td class="phone-cell">+1 555-0202</td>
+            <td><span class="score-badge medium">58</span></td>
+            <td class="donation-cell"><span class="donation-date">Dec 20</span> - <span class="donation-amount">$25</span></td>
+            <td>
+              <span class="tag-badge">Lapsed</span>
+            </td>
+            <td>
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a onclick="parent.loadContent('contacts/contact-detail')"><i class="fas fa-eye"></i> View</a>
+                  <a onclick="parent.loadContent('contacts/contact-form')"><i class="fas fa-pen"></i> Edit</a>
+                  <a href="#"><i class="fas fa-code-merge"></i> Merge</a>
+                  <a href="#"><i class="fas fa-envelope"></i> Send Email</a>
+                  <a class="danger" href="#"><i class="fas fa-trash"></i> Delete</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 7 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td><a class="contact-code" onclick="parent.loadContent('contacts/contact-detail')">CON-0007</a></td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background: #ef4444;">JO</div>
+                <div>
+                  <div class="contact-name">James Okonkwo</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="type-badge donor">Donor</span></td>
+            <td>james.o@email.com</td>
+            <td class="phone-cell">+234 801-234-5678</td>
+            <td><span class="score-badge low">45</span></td>
+            <td class="donation-cell"><span class="donation-date">Nov 5</span> - <span class="donation-amount">$75</span></td>
+            <td>
+              <span class="tag-badge">At Risk</span>
+            </td>
+            <td>
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a onclick="parent.loadContent('contacts/contact-detail')"><i class="fas fa-eye"></i> View</a>
+                  <a onclick="parent.loadContent('contacts/contact-form')"><i class="fas fa-pen"></i> Edit</a>
+                  <a href="#"><i class="fas fa-code-merge"></i> Merge</a>
+                  <a href="#"><i class="fas fa-envelope"></i> Send Email</a>
+                  <a class="danger" href="#"><i class="fas fa-trash"></i> Delete</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 8 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td><a class="contact-code" onclick="parent.loadContent('contacts/contact-detail')">CON-0008</a></td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background: #a855f7;">FZ</div>
+                <div>
+                  <div class="contact-name">Fatima Zahra</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="type-badge volunteer">Volunteer</span></td>
+            <td>fatima.z@email.com</td>
+            <td class="phone-cell">+212 6-1234-5678</td>
+            <td><span class="score-badge high">88</span></td>
+            <td class="donation-cell"><span class="donation-date">Mar 12</span> - <span class="donation-amount">$150</span></td>
+            <td>
+              <span class="tag-badge">Active Volunteer</span>
+              <span class="tag-badge">Donor</span>
+            </td>
+            <td>
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a onclick="parent.loadContent('contacts/contact-detail')"><i class="fas fa-eye"></i> View</a>
+                  <a onclick="parent.loadContent('contacts/contact-form')"><i class="fas fa-pen"></i> Edit</a>
+                  <a href="#"><i class="fas fa-code-merge"></i> Merge</a>
+                  <a href="#"><i class="fas fa-envelope"></i> Send Email</a>
+                  <a class="danger" href="#"><i class="fas fa-trash"></i> Delete</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 9 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td><a class="contact-code" onclick="parent.loadContent('contacts/contact-detail')">CON-0009</a></td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background: #64748b;">DM</div>
+                <div>
+                  <div class="contact-name">David Miller</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="type-badge donor">Donor</span></td>
+            <td>david.m@email.com</td>
+            <td class="phone-cell">+1 555-0303</td>
+            <td><span class="score-badge low">34</span></td>
+            <td class="donation-cell"><span class="donation-date">Jun 10, 2025</span> - <span class="donation-amount">$200</span></td>
+            <td>
+              <span class="tag-badge">Lapsed</span>
+              <span class="tag-badge">Major Donor</span>
+            </td>
+            <td>
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a onclick="parent.loadContent('contacts/contact-detail')"><i class="fas fa-eye"></i> View</a>
+                  <a onclick="parent.loadContent('contacts/contact-form')"><i class="fas fa-pen"></i> Edit</a>
+                  <a href="#"><i class="fas fa-code-merge"></i> Merge</a>
+                  <a href="#"><i class="fas fa-envelope"></i> Send Email</a>
+                  <a class="danger" href="#"><i class="fas fa-trash"></i> Delete</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 10 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input row-check" onchange="updateBulkBar()"></td>
+            <td><a class="contact-code" onclick="parent.loadContent('contacts/contact-detail')">CON-0010</a></td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background: #e11d48;">ST</div>
+                <div>
+                  <div class="contact-name">Sakura Tanaka</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="type-badge member">Member</span></td>
+            <td>sakura.t@email.com</td>
+            <td class="phone-cell">+81 90-1234-5678</td>
+            <td><span class="score-badge medium">72</span></td>
+            <td class="donation-cell"><span class="donation-date">Feb 1</span> - <span class="donation-amount">$300</span></td>
+            <td>
+              <span class="tag-badge">Education Sponsor</span>
+            </td>
+            <td>
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(event, this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a onclick="parent.loadContent('contacts/contact-detail')"><i class="fas fa-eye"></i> View</a>
+                  <a onclick="parent.loadContent('contacts/contact-form')"><i class="fas fa-pen"></i> Edit</a>
+                  <a href="#"><i class="fas fa-code-merge"></i> Merge</a>
+                  <a href="#"><i class="fas fa-envelope"></i> Send Email</a>
+                  <a class="danger" href="#"><i class="fas fa-trash"></i> Delete</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Table Footer / Pagination -->
+    <div class="table-footer">
+      <div class="d-flex align-items-center gap-3">
+        <span class="showing-text">Showing 1-10 of 12,458 contacts</span>
+        <div class="d-flex align-items-center gap-1">
+          <span style="font-size: 0.75rem; color: var(--text-secondary);">Show</span>
+          <select class="page-size-select">
+            <option selected>10</option>
+            <option>25</option>
+            <option>50</option>
+            <option>100</option>
+          </select>
+        </div>
+      </div>
+      <div class="pagination">
+        <button class="page-btn disabled"><i class="fas fa-chevron-left"></i></button>
+        <button class="page-btn active">1</button>
+        <button class="page-btn">2</button>
+        <button class="page-btn">3</button>
+        <span class="page-ellipsis">...</span>
+        <button class="page-btn">1246</button>
+        <button class="page-btn"><i class="fas fa-chevron-right"></i></button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Toggle advanced filters
+    function toggleAdvancedFilters(btn) {
+      const panel = document.getElementById('advancedFilters');
+      panel.classList.toggle('show');
+      btn.classList.toggle('active');
+    }
+
+    // Filter chip selection
+    function setFilter(chip) {
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+    }
+
+    // Clear advanced filters
+    function clearFilters() {
+      document.querySelectorAll('#advancedFilters select').forEach(s => {
+        for (let opt of s.options) opt.selected = false;
+      });
+      document.querySelectorAll('#advancedFilters input').forEach(i => i.value = '');
+    }
+
+    // Select all checkboxes
+    function toggleSelectAll(checkbox) {
+      document.querySelectorAll('.row-check').forEach(cb => {
+        cb.checked = checkbox.checked;
+      });
+      updateBulkBar();
+    }
+
+    // Update bulk actions bar
+    function updateBulkBar() {
+      const checked = document.querySelectorAll('.row-check:checked');
+      const bar = document.getElementById('bulkActions');
+      const count = document.getElementById('selectedCount');
+
+      if (checked.length > 0) {
+        bar.classList.add('show');
+        count.textContent = checked.length + ' contact' + (checked.length > 1 ? 's' : '') + ' selected';
+      } else {
+        bar.classList.remove('show');
+      }
+
+      // Update select-all checkbox state
+      const allChecks = document.querySelectorAll('.row-check');
+      const selectAll = document.getElementById('selectAll');
+      selectAll.checked = checked.length === allChecks.length && allChecks.length > 0;
+      selectAll.indeterminate = checked.length > 0 && checked.length < allChecks.length;
+    }
+
+    // Toggle action dropdown
+    function toggleActions(event, btn) {
+      event.stopPropagation();
+      // Close all other dropdowns
+      document.querySelectorAll('.actions-dropdown.show').forEach(d => d.classList.remove('show'));
+      const dropdown = btn.nextElementSibling;
+      dropdown.classList.toggle('show');
+    }
+
+    // Toggle column config
+    function toggleColumnConfig(event) {
+      event.stopPropagation();
+      document.getElementById('columnConfigPanel').classList.toggle('show');
+    }
+
+    // Export placeholder
+    function exportContacts() {
+      alert('Export will generate a CSV file with the current filtered contact list.');
+    }
+
+    // Close dropdowns on outside click
+    document.addEventListener('click', function () {
+      document.querySelectorAll('.actions-dropdown.show').forEach(d => d.classList.remove('show'));
+      document.getElementById('columnConfigPanel').classList.remove('show');
+    });
+  </script>
+
+</body>
+
+</html>

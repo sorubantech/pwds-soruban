@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Collection History - Mobile App</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --field-accent: #059669;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a1a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .phone-frame {
+      width: 375px;
+      height: 812px;
+      background: #ffffff;
+      border-radius: 44px;
+      overflow: hidden;
+      box-shadow: 0 0 0 12px #2d2d2d, 0 0 0 14px #1a1a1a, 0 20px 60px rgba(0,0,0,0.5);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .phone-notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 28px;
+      background: #000;
+      border-radius: 0 0 18px 18px;
+      z-index: 10;
+    }
+
+    .status-bar {
+      background: #000;
+      color: #fff;
+      padding: 8px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 600;
+      height: 48px;
+    }
+
+    .status-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+    }
+
+    /* Screen Header */
+    .screen-header {
+      background: linear-gradient(135deg, #065f46, #059669);
+      color: white;
+      padding: 12px 20px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .screen-header-title {
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .screen-header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .header-action-btn {
+      width: 34px;
+      height: 34px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    /* Content */
+    .phone-content {
+      flex: 1;
+      overflow-y: auto;
+      background: #f8fafc;
+      padding-bottom: 80px;
+    }
+
+    .phone-content::-webkit-scrollbar { width: 0; }
+
+    /* Views */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* Filter Tabs */
+    .filter-tabs {
+      display: flex;
+      gap: 6px;
+      padding: 14px 16px 0;
+      flex-wrap: wrap;
+    }
+
+    .filter-tab {
+      padding: 7px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      background: white;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+    }
+
+    .filter-tab.active {
+      background: var(--field-accent);
+      color: white;
+      border-color: var(--field-accent);
+    }
+
+    /* Summary Stats */
+    .summary-stats {
+      margin: 14px 16px;
+      background: white;
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      border: 1px solid #f1f5f9;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+    }
+
+    .stat-row:not(:last-child) {
+      border-bottom: 1px solid #f8fafc;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .stat-value {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .stat-value.highlight {
+      color: var(--field-accent);
+    }
+
+    /* Date Group */
+    .date-group-header {
+      padding: 14px 16px 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .collection-item {
+      background: white;
+      margin: 0 16px 8px;
+      border-radius: 12px;
+      padding: 12px 14px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      border: 1px solid #f1f5f9;
+      cursor: pointer;
+    }
+
+    .collection-item:active {
+      border-color: var(--field-accent);
+    }
+
+    .collection-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .collection-donor {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .collection-amount {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--field-accent);
+    }
+
+    .collection-meta {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .collection-sync {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      font-weight: 600;
+      margin-top: 3px;
+    }
+
+    .sync-ok { color: var(--success-color); }
+    .sync-pending { color: var(--warning-color); }
+    .sync-failed { color: var(--danger-color); }
+
+    /* Collapsible Date Group */
+    .date-collapse {
+      background: white;
+      margin: 0 16px 8px;
+      border-radius: 12px;
+      padding: 12px 14px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      border: 1px solid #f1f5f9;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .date-collapse-text {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .date-collapse-icon {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* Sync Bar */
+    .sync-bar {
+      margin: 12px 16px 8px;
+      background: white;
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      border: 1px solid #f1f5f9;
+    }
+
+    .sync-bar-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .sync-progress-track {
+      height: 8px;
+      background: #f1f5f9;
+      border-radius: 100px;
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+
+    .sync-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--field-accent), #34d399);
+      border-radius: 100px;
+    }
+
+    .sync-details {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .sync-now-btn {
+      margin: 0 16px 16px;
+      padding: 14px;
+      background: linear-gradient(135deg, #065f46, #059669);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: calc(100% - 32px);
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+    }
+
+    .sync-now-btn:active { transform: scale(0.98); }
+
+    /* Collection Detail View */
+    .detail-back {
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+      background: white;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .detail-back i { color: var(--field-accent); }
+
+    .detail-section {
+      padding: 16px;
+    }
+
+    .detail-receipt-badge {
+      display: inline-block;
+      padding: 6px 14px;
+      background: #ecfdf5;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--field-accent);
+      margin-bottom: 16px;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid #f8fafc;
+    }
+
+    .detail-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .detail-value {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+      text-align: right;
+    }
+
+    .detail-value.large {
+      font-size: 18px;
+      color: var(--field-accent);
+    }
+
+    .detail-contact-btns {
+      display: flex;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .detail-contact-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #ecfdf5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      color: var(--field-accent);
+      cursor: pointer;
+    }
+
+    .detail-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #f0fdf4;
+      color: var(--success-color);
+    }
+
+    .detail-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 8px 16px 20px;
+    }
+
+    .detail-action-btn {
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-primary);
+    }
+
+    .detail-action-btn i { color: var(--field-accent); }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 80px;
+      background: white;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-around;
+      padding-top: 8px;
+      z-index: 5;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      padding: 4px 8px;
+      min-width: 52px;
+    }
+
+    .nav-item i { font-size: 18px; color: var(--text-secondary); }
+    .nav-item span { font-size: 10px; font-weight: 600; color: var(--text-secondary); }
+    .nav-item.active i { color: var(--field-accent); }
+    .nav-item.active span { color: var(--field-accent); }
+
+    .nav-scan-btn {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #065f46, #059669);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 18px;
+      margin-top: -18px;
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+      cursor: pointer;
+    }
+
+    .home-indicator {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 134px;
+      height: 5px;
+      background: #d1d5db;
+      border-radius: 100px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <span>2:30</span>
+      <div class="status-bar-right">
+        <i class="fas fa-signal" style="font-size: 11px;"></i>
+        <i class="fas fa-wifi" style="font-size: 11px;"></i>
+        <i class="fas fa-battery-full" style="font-size: 13px;"></i>
+      </div>
+    </div>
+
+    <!-- Screen Header -->
+    <div class="screen-header">
+      <div class="screen-header-title">Collection History</div>
+      <div class="screen-header-actions">
+        <div class="header-action-btn"><i class="fas fa-chart-bar"></i></div>
+        <div class="header-action-btn" onclick="syncNow()"><i class="fas fa-sync-alt"></i></div>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="phone-content">
+
+      <!-- List View -->
+      <div class="view active" id="listView">
+
+        <!-- Filter Tabs -->
+        <div class="filter-tabs">
+          <div class="filter-tab active" onclick="selectFilter(this)">Today</div>
+          <div class="filter-tab" onclick="selectFilter(this)">This Week</div>
+          <div class="filter-tab" onclick="selectFilter(this)">This Month</div>
+          <div class="filter-tab" onclick="selectFilter(this)">All Time</div>
+        </div>
+
+        <!-- Summary -->
+        <div class="summary-stats">
+          <div class="stat-row">
+            <div class="stat-label">Today</div>
+            <div class="stat-value">5 collections | <span class="highlight">AED 2,300</span></div>
+          </div>
+          <div class="stat-row">
+            <div class="stat-label">This Week</div>
+            <div class="stat-value">18 collections | <span class="highlight">AED 8,900</span></div>
+          </div>
+          <div class="stat-row">
+            <div class="stat-label">This Month</div>
+            <div class="stat-value">52 collections | <span class="highlight">AED 24,500</span></div>
+          </div>
+        </div>
+
+        <!-- Today Group -->
+        <div class="date-group-header">April 12 (Today)</div>
+
+        <div class="collection-item" onclick="showView('detail')">
+          <div class="collection-top">
+            <div class="collection-donor">Khalid Al-Mansouri</div>
+            <div class="collection-amount">AED 500</div>
+          </div>
+          <div class="collection-meta">Orphan Care | Cash | REC-4547 | 2:15 PM</div>
+          <div class="collection-sync sync-ok"><i class="fas fa-check-circle"></i> Synced ✅</div>
+        </div>
+
+        <div class="collection-item">
+          <div class="collection-top">
+            <div class="collection-donor">Fatima Zahra</div>
+            <div class="collection-amount">AED 200</div>
+          </div>
+          <div class="collection-meta">Education | Cash | REC-4546 | 1:30 PM</div>
+          <div class="collection-sync sync-ok"><i class="fas fa-check-circle"></i> Synced ✅</div>
+        </div>
+
+        <div class="collection-item">
+          <div class="collection-top">
+            <div class="collection-donor">Ahmad Nasser</div>
+            <div class="collection-amount">AED 1,000</div>
+          </div>
+          <div class="collection-meta">Water | Cheque | REC-4545 | 11:00 AM</div>
+          <div class="collection-sync sync-ok"><i class="fas fa-check-circle"></i> Synced ✅</div>
+        </div>
+
+        <div class="collection-item" style="border-left: 3px solid var(--warning-color);">
+          <div class="collection-top">
+            <div class="collection-donor">Mohamed Ali</div>
+            <div class="collection-amount">AED 300</div>
+          </div>
+          <div class="collection-meta">General | Cash | REC-4544 | 10:30 AM</div>
+          <div class="collection-sync sync-pending"><i class="fas fa-clock"></i> Pending sync ⏳</div>
+        </div>
+
+        <div class="collection-item">
+          <div class="collection-top">
+            <div class="collection-donor">Sarah Ahmed</div>
+            <div class="collection-amount">AED 300</div>
+          </div>
+          <div class="collection-meta">Orphan Care | Cash | REC-4543 | 10:00 AM</div>
+          <div class="collection-sync sync-ok"><i class="fas fa-check-circle"></i> Synced ✅</div>
+        </div>
+
+        <!-- April 11 Group (collapsed) -->
+        <div class="date-group-header">April 11</div>
+        <div class="date-collapse">
+          <div class="date-collapse-text">3 collections — AED 1,500</div>
+          <div class="date-collapse-icon"><i class="fas fa-chevron-down"></i></div>
+        </div>
+
+        <!-- Sync Status -->
+        <div class="sync-bar">
+          <div class="sync-bar-label">
+            <span>Sync Status</span>
+            <span>51/52 synced (98%)</span>
+          </div>
+          <div class="sync-progress-track">
+            <div class="sync-progress-fill" style="width: 98%;"></div>
+          </div>
+          <div class="sync-details">
+            <span>1 pending</span>
+            <span>0 failed</span>
+          </div>
+        </div>
+
+        <button class="sync-now-btn">
+          <i class="fas fa-sync-alt"></i> Sync Now
+        </button>
+
+      </div>
+
+      <!-- Detail View -->
+      <div class="view" id="detailView">
+        <div class="detail-back" onclick="showView('list')">
+          <i class="fas fa-arrow-left"></i> Collection Detail
+        </div>
+
+        <div class="detail-section">
+          <div class="detail-receipt-badge">Receipt: REC-4547</div>
+
+          <div class="detail-row">
+            <div class="detail-label">Donor</div>
+            <div>
+              <div class="detail-value">Khalid Al-Mansouri</div>
+              <div class="detail-contact-btns">
+                <div class="detail-contact-btn"><i class="fas fa-phone"></i></div>
+                <div class="detail-contact-btn"><i class="fab fa-whatsapp"></i></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-row">
+            <div class="detail-label">Phone</div>
+            <div class="detail-value">+971 50 123 4567</div>
+          </div>
+
+          <div class="detail-row">
+            <div class="detail-label">Amount</div>
+            <div class="detail-value large">AED 500</div>
+          </div>
+
+          <div class="detail-row">
+            <div class="detail-label">Purpose</div>
+            <div class="detail-value">Orphan Care</div>
+          </div>
+
+          <div class="detail-row">
+            <div class="detail-label">Payment</div>
+            <div class="detail-value">Cash</div>
+          </div>
+
+          <div class="detail-row">
+            <div class="detail-label">Date</div>
+            <div class="detail-value">Apr 12, 2026, 2:15 PM</div>
+          </div>
+
+          <div class="detail-row">
+            <div class="detail-label">Location</div>
+            <div class="detail-value">📍 Al Quoz, Dubai</div>
+          </div>
+
+          <div class="detail-row">
+            <div class="detail-label">Book</div>
+            <div class="detail-value">RB-045</div>
+          </div>
+
+          <div class="detail-row">
+            <div class="detail-label">Status</div>
+            <div class="detail-status-badge"><i class="fas fa-check-circle"></i> Synced to server</div>
+          </div>
+
+          <div class="detail-row">
+            <div class="detail-label">Approval</div>
+            <div class="detail-status-badge"><i class="fas fa-check-circle"></i> Auto-approved</div>
+          </div>
+        </div>
+
+        <div class="detail-actions">
+          <div class="detail-action-btn">
+            <i class="fas fa-file-alt"></i> View Receipt
+          </div>
+          <div class="detail-action-btn">
+            <i class="fab fa-whatsapp"></i> Share Receipt via WhatsApp
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+      <div class="nav-item">
+        <i class="fas fa-home"></i>
+        <span>Home</span>
+      </div>
+      <div class="nav-item">
+        <div class="nav-scan-btn">
+          <i class="fas fa-camera"></i>
+        </div>
+        <span style="margin-top: 4px;">Collect</span>
+      </div>
+      <div class="nav-item active">
+        <i class="fas fa-clipboard-list"></i>
+        <span>History</span>
+      </div>
+      <div class="nav-item">
+        <i class="fas fa-users"></i>
+        <span>Donors</span>
+      </div>
+      <div class="nav-item">
+        <i class="fas fa-check-circle"></i>
+        <span>Tasks</span>
+      </div>
+      <div class="home-indicator"></div>
+    </div>
+
+  </div>
+
+  <script>
+    function showView(view) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      const viewMap = { list: 'listView', detail: 'detailView' };
+      document.getElementById(viewMap[view]).classList.add('active');
+    }
+
+    function selectFilter(el) {
+      document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function syncNow() {
+      // Placeholder sync animation
+    }
+  </script>
+
+</body>
+
+</html>

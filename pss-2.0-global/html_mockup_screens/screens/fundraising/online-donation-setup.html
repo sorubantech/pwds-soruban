@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Online Donation Page Setup - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+    .page-header .subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 0; }
+    .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .btn-primary-accent { background: var(--accent); border-color: var(--accent); color: white; font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid var(--accent); cursor: pointer; transition: all 0.15s; }
+    .btn-primary-accent:hover { background: #0c6577; border-color: #0c6577; color: white; }
+    .btn-outline-accent { background: white; border: 1px solid var(--accent); color: var(--accent); font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.15s; }
+    .btn-outline-accent:hover { background: var(--accent); color: white; }
+    .btn-sm-icon { background: white; border: 1px solid var(--border-color); color: var(--text-secondary); font-size: 0.75rem; padding: 0.35rem 0.625rem; border-radius: 0.375rem; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 0.35rem; }
+    .btn-sm-icon:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+
+    /* Status bar */
+    .status-bar { background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .status-item { display: flex; align-items: center; gap: 0.5rem; }
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .status-dot.active { background: var(--success-color); box-shadow: 0 0 0 3px rgba(34,197,94,0.2); }
+    .status-label { font-size: 0.8125rem; color: var(--text-secondary); }
+    .status-value { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); }
+    .status-divider { width: 1px; height: 24px; background: var(--border-color); }
+
+    /* Implementation type switcher */
+    .impl-switcher { display: flex; gap: 1rem; margin-bottom: 1.25rem; }
+    .impl-card { flex: 1; background: white; border: 2px solid var(--border-color); border-radius: var(--card-radius); padding: 1.25rem; cursor: pointer; transition: all 0.2s; position: relative; }
+    .impl-card:hover { border-color: var(--accent-light); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .impl-card.selected { border-color: var(--accent); background: var(--accent-bg); }
+    .impl-card .impl-icon { width: 44px; height: 44px; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; margin-bottom: 0.75rem; }
+    .impl-card.selected .impl-icon { background: var(--accent); color: white; }
+    .impl-card:not(.selected) .impl-icon { background: #f1f5f9; color: var(--text-secondary); }
+    .impl-card .impl-title { font-size: 0.9375rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .impl-card .impl-desc { font-size: 0.75rem; color: var(--text-secondary); line-height: 1.5; }
+    .impl-card .check-circle { position: absolute; top: 1rem; right: 1rem; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; }
+    .impl-card.selected .check-circle { background: var(--accent); color: white; }
+    .impl-card:not(.selected) .check-circle { border: 2px solid var(--border-color); color: transparent; }
+    @media (max-width: 768px) { .impl-switcher { flex-direction: column; } }
+
+    /* Config area */
+    .config-area { display: flex; gap: 1.25rem; }
+    .config-left { flex: 1; min-width: 0; }
+    .config-right { width: 520px; flex-shrink: 0; }
+    @media (max-width: 1400px) { .config-right { width: 440px; } }
+    @media (max-width: 1200px) { .config-area { flex-direction: column; } .config-right { width: 100%; } }
+
+    /* Settings card */
+    .settings-card { background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); margin-bottom: 1.25rem; overflow: hidden; }
+    .settings-card-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
+    .settings-card-header h3 { font-size: 0.9375rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 0.5rem; }
+    .settings-card-header h3 i { color: var(--accent); font-size: 1rem; }
+    .settings-card-body { padding: 1.25rem; }
+
+    /* Form controls */
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.375rem; display: block; }
+    .form-group label .required { color: var(--danger-color); }
+    .form-group .help-text { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; }
+    .form-control, .form-select { font-size: 0.8125rem; border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 0.5rem 0.75rem; }
+    .form-control:focus, .form-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14,116,144,0.1); }
+    .form-switch-row { display: flex; align-items: center; justify-content: space-between; padding: 0.625rem 0; border-bottom: 1px solid #f1f5f9; }
+    .form-switch-row:last-child { border-bottom: none; }
+    .form-switch-row label { margin-bottom: 0; font-weight: 500; font-size: 0.8125rem; }
+    .form-check-input:checked { background-color: var(--accent); border-color: var(--accent); }
+    .url-display { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 0.8125rem; }
+    .url-display .url-text { flex: 1; color: var(--accent); font-weight: 600; word-break: break-all; }
+    .url-display .url-base { color: var(--text-secondary); font-weight: 400; }
+    .url-copy-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 4px 6px; border-radius: 4px; font-size: 0.8125rem; transition: all 0.15s; }
+    .url-copy-btn:hover { color: var(--accent); background: var(--accent-bg); }
+
+    /* Multi-select purposes */
+    .purpose-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.5rem; min-height: 42px; background: white; cursor: text; }
+    .purpose-tag { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.25rem 0.625rem; background: var(--accent-bg); color: var(--accent); border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+    .purpose-tag .remove-tag { cursor: pointer; font-size: 0.625rem; opacity: 0.7; }
+    .purpose-tag .remove-tag:hover { opacity: 1; }
+    .purpose-dropdown { position: relative; }
+    .purpose-dropdown-menu { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--border-color); border-radius: 0.5rem; box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 100; max-height: 200px; overflow-y: auto; display: none; }
+    .purpose-dropdown-menu.show { display: block; }
+    .purpose-option { padding: 0.5rem 0.75rem; font-size: 0.8125rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: background 0.1s; }
+    .purpose-option:hover { background: #f8fafc; }
+    .purpose-option.checked { background: var(--accent-bg); color: var(--accent); font-weight: 600; }
+
+    /* Amount chips */
+    .amount-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .amount-chip { padding: 0.5rem 1rem; border: 2px solid var(--border-color); border-radius: 9999px; font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); cursor: pointer; transition: all 0.15s; background: white; display: flex; align-items: center; gap: 0.375rem; }
+    .amount-chip:hover { border-color: var(--accent); color: var(--accent); }
+    .amount-chip .remove-chip { font-size: 0.625rem; opacity: 0.7; cursor: pointer; }
+    .add-amount-btn { padding: 0.5rem 1rem; border: 2px dashed var(--border-color); border-radius: 9999px; font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; background: white; }
+    .add-amount-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Recurring config */
+    .recurring-frequencies { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+    .freq-chip { padding: 0.375rem 0.875rem; border: 1px solid var(--border-color); border-radius: 9999px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.15s; background: white; color: var(--text-secondary); }
+    .freq-chip.active { background: var(--accent); border-color: var(--accent); color: white; }
+    .freq-chip:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+
+    /* Payment method list */
+    .payment-method-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; background: white; margin-bottom: 0.5rem; transition: all 0.15s; }
+    .payment-method-item:hover { background: #fafafa; }
+    .payment-method-item .method-icon { width: 36px; height: 36px; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+    .payment-method-item .method-info { flex: 1; }
+    .payment-method-item .method-name { font-size: 0.8125rem; font-weight: 600; }
+    .payment-method-item .method-desc { font-size: 0.75rem; color: var(--text-secondary); }
+
+    /* Upload */
+    .uploaded-preview { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 0.5rem; }
+    .uploaded-preview .thumb { width: 60px; height: 40px; border-radius: 0.375rem; background: linear-gradient(135deg, var(--accent), var(--accent-light)); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.875rem; }
+    .uploaded-preview .file-info { flex: 1; }
+    .uploaded-preview .file-name { font-size: 0.8125rem; font-weight: 600; }
+    .uploaded-preview .file-size { font-size: 0.75rem; color: var(--text-secondary); }
+    .color-picker-row { display: flex; align-items: center; gap: 0.75rem; }
+    .color-picker-row input[type="color"] { width: 40px; height: 36px; border: 1px solid var(--border-color); border-radius: 0.375rem; padding: 2px; cursor: pointer; }
+
+    /* Donor fields table */
+    .fields-config-table { width: 100%; font-size: 0.8125rem; }
+    .fields-config-table th { font-weight: 600; color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.5rem 0.75rem; border-bottom: 2px solid var(--border-color); }
+    .fields-config-table td { padding: 0.625rem 0.75rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .fields-config-table .field-name { font-weight: 500; }
+
+    /* Code block */
+    .code-block { background: #1e293b; color: #e2e8f0; font-family: 'Consolas','Monaco',monospace; font-size: 0.75rem; padding: 1rem; border-radius: 0.5rem; white-space: pre-wrap; word-break: break-all; position: relative; }
+    .code-block .code-copy { position: absolute; top: 0.5rem; right: 0.5rem; background: rgba(255,255,255,0.1); border: none; color: #94a3b8; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.6875rem; cursor: pointer; transition: all 0.15s; }
+    .code-block .code-copy:hover { background: rgba(255,255,255,0.2); color: white; }
+
+    /* Carousel config */
+    .carousel-config { border: 1px solid var(--border-color); border-radius: 0.5rem; overflow: hidden; }
+    .carousel-item-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border-bottom: 1px solid #f1f5f9; }
+    .carousel-item-row:last-child { border-bottom: none; }
+    .carousel-item-row .slide-thumb { width: 80px; height: 45px; border-radius: 0.375rem; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; flex-shrink: 0; }
+    .carousel-item-row .slide-info { flex: 1; min-width: 0; }
+    .carousel-item-row .slide-title { font-size: 0.8125rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .carousel-item-row .slide-type { font-size: 0.6875rem; color: var(--text-secondary); }
+    .carousel-item-row .slide-actions { display: flex; gap: 0.25rem; }
+
+    .section-sep { height: 1px; background: var(--border-color); margin: 1rem 0; }
+    .impl-badge { font-size: 0.625rem; font-weight: 700; padding: 0.125rem 0.5rem; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .impl-badge.nav { background: #dbeafe; color: #1e40af; }
+    .impl-badge.iframe { background: #fce7f3; color: #9d174d; }
+
+    /* ============================================ */
+    /*  PREVIEW PANEL                               */
+    /* ============================================ */
+    .preview-panel { position: sticky; top: 0; }
+
+    /* Preview toolbar */
+    .preview-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; gap: 0.5rem; flex-wrap: wrap; }
+    .preview-type-label { font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.375rem; }
+    .device-switcher { display: flex; background: white; border-radius: 0.5rem; padding: 2px; border: 1px solid var(--border-color); }
+    .device-btn { padding: 0.375rem 0.75rem; border: none; background: none; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); border-radius: 0.375rem; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 0.375rem; }
+    .device-btn.active { background: var(--accent); color: white; }
+    .device-btn:hover:not(.active) { background: #f1f5f9; }
+
+    /* Browser chrome */
+    .browser-chrome { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 0.75rem; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    .browser-topbar { background: #e2e8f0; padding: 0.5rem 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+    .browser-dots { display: flex; gap: 5px; }
+    .browser-dots span { width: 10px; height: 10px; border-radius: 50%; }
+    .browser-dots .red { background: #ef4444; }
+    .browser-dots .yellow { background: #f59e0b; }
+    .browser-dots .green { background: #22c55e; }
+    .browser-url-bar { flex: 1; background: white; border-radius: 4px; padding: 0.25rem 0.625rem; font-size: 0.625rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.375rem; }
+    .browser-url-bar i { color: var(--success-color); font-size: 0.5rem; }
+    .browser-body { overflow-y: auto; }
+
+    /* PHONE FRAME */
+    .phone-frame { width: 375px; max-width: 100%; background: #1e293b; border-radius: 2.5rem; padding: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); margin: 0 auto; }
+    .phone-inner { background: white; border-radius: 1.75rem; overflow: hidden; }
+    .phone-notch { width: 100px; height: 22px; background: #1e293b; border-radius: 0 0 14px 14px; margin: 0 auto; position: relative; z-index: 1; margin-top: -1px; }
+    .phone-screen { overflow-y: auto; max-height: 650px; }
+    .phone-screen::-webkit-scrollbar { width: 3px; }
+    .phone-screen::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+    /* ============================================ */
+    /*  NAVIGATION-BASED — DESKTOP PREVIEW          */
+    /* ============================================ */
+    .nav-desktop-preview .browser-body { max-height: 600px; }
+
+    /* Full-page website layout */
+    .web-header { background: linear-gradient(135deg, var(--accent), var(--accent-light)); color: white; padding: 0; }
+    .web-header-top { display: flex; align-items: center; justify-content: space-between; padding: 0.625rem 1.25rem; }
+    .web-header-top .org-brand { display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.8125rem; }
+    .web-header-top .org-brand i { font-size: 1rem; }
+    .web-nav { display: flex; gap: 1rem; }
+    .web-nav a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.6875rem; font-weight: 500; }
+    .web-nav a.active { color: white; font-weight: 700; border-bottom: 2px solid white; padding-bottom: 2px; }
+
+    /* Carousel hero */
+    .web-hero { height: 160px; background: linear-gradient(135deg, rgba(14,116,144,0.9), rgba(6,182,212,0.9)), url('') center/cover; display: flex; align-items: center; justify-content: center; text-align: center; position: relative; }
+    .web-hero h2 { font-size: 1.125rem; font-weight: 800; margin-bottom: 0.25rem; color: white; }
+    .web-hero p { font-size: 0.6875rem; opacity: 0.9; margin: 0; color: white; }
+    .web-hero .hero-carousel-nav { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; }
+    .web-hero .hero-carousel-nav span { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.4); }
+    .web-hero .hero-carousel-nav span.active { background: white; width: 20px; border-radius: 4px; }
+
+    /* Two-column body */
+    .web-body { display: flex; background: #f8fafc; }
+    .web-info-col { width: 45%; padding: 1.25rem; border-right: 1px solid var(--border-color); background: white; }
+    .web-form-col { width: 55%; padding: 1.25rem; }
+
+    .web-info-col .org-mission { font-size: 0.6875rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1rem; }
+    .web-info-col .org-mission strong { color: var(--text-primary); }
+
+    /* Impact stats */
+    .impact-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1rem; }
+    .impact-stat { background: var(--accent-bg); border-radius: 0.5rem; padding: 0.625rem; text-align: center; }
+    .impact-stat .val { font-size: 1rem; font-weight: 800; color: var(--accent); }
+    .impact-stat .lbl { font-size: 0.5625rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+
+    /* Video placeholder */
+    .video-placeholder { background: #1e293b; border-radius: 0.5rem; height: 90px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.6); font-size: 0.6875rem; gap: 0.375rem; margin-bottom: 1rem; cursor: pointer; }
+    .video-placeholder i { font-size: 1.25rem; }
+
+    /* Testimonial */
+    .testimonial-card { background: #f8fafc; border-radius: 0.5rem; padding: 0.75rem; border-left: 3px solid var(--accent); }
+    .testimonial-card .quote { font-size: 0.6875rem; font-style: italic; color: var(--text-secondary); line-height: 1.5; margin-bottom: 0.375rem; }
+    .testimonial-card .author { font-size: 0.625rem; font-weight: 600; color: var(--text-primary); }
+
+    .web-footer { background: var(--accent); color: rgba(255,255,255,0.8); text-align: center; padding: 0.625rem; font-size: 0.5625rem; }
+
+    /* ============================================ */
+    /*  IFRAME-BASED — DESKTOP PREVIEW              */
+    /* ============================================ */
+    .iframe-desktop-preview .browser-body { max-height: 600px; }
+
+    /* Third-party host site mockup */
+    .host-site-header { background: #374151; color: white; padding: 0.625rem 1.25rem; display: flex; align-items: center; justify-content: space-between; }
+    .host-site-logo { font-size: 0.8125rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
+    .host-site-logo .logo-box { width: 28px; height: 28px; background: #6b7280; border-radius: 0.375rem; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; }
+    .host-site-nav { display: flex; gap: 1rem; }
+    .host-site-nav span { font-size: 0.6875rem; color: #9ca3af; }
+    .host-site-nav span.active { color: white; }
+
+    .host-site-body { background: #f9fafb; padding: 1.25rem; display: flex; gap: 1.25rem; }
+    .host-site-content { flex: 1; }
+    .host-site-content .content-block { background: #e5e7eb; border-radius: 0.5rem; height: 16px; margin-bottom: 0.5rem; }
+    .host-site-content .content-block.w75 { width: 75%; }
+    .host-site-content .content-block.w90 { width: 90%; }
+    .host-site-content .content-block.w60 { width: 60%; }
+    .host-site-content .content-block.h40 { height: 40px; background: #d1d5db; }
+    .host-site-content h4 { font-size: 0.8125rem; font-weight: 700; color: #374151; margin-bottom: 0.5rem; }
+    .host-site-content p { font-size: 0.6875rem; color: #6b7280; margin-bottom: 0.75rem; line-height: 1.5; }
+
+    .host-site-sidebar { width: 240px; flex-shrink: 0; }
+    .host-site-footer { background: #374151; color: #9ca3af; text-align: center; padding: 0.5rem; font-size: 0.5625rem; }
+
+    /* iFrame widget inside host site */
+    .iframe-widget { background: white; border: 2px solid var(--accent); border-radius: 0.75rem; overflow: hidden; box-shadow: 0 2px 8px rgba(14,116,144,0.15); }
+    .iframe-widget-header { background: linear-gradient(135deg, var(--accent), var(--accent-light)); padding: 0.75rem; text-align: center; color: white; }
+    .iframe-widget-header .widget-title { font-size: 0.8125rem; font-weight: 700; }
+    .iframe-widget-header .widget-sub { font-size: 0.625rem; opacity: 0.85; }
+    .iframe-widget-body { padding: 0.875rem; }
+
+    /* Shared preview form elements (small scale) */
+    .pv-label { font-size: 0.5625rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.375rem; }
+    .pv-select { width: 100%; padding: 0.375rem 0.5rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 0.625rem; margin-bottom: 0.625rem; }
+    .pv-amounts { display: flex; flex-wrap: wrap; gap: 0.375rem; margin-bottom: 0.625rem; }
+    .pv-amt { padding: 0.3rem 0.625rem; border: 1.5px solid var(--border-color); border-radius: 9999px; font-size: 0.625rem; font-weight: 600; background: white; color: var(--text-primary); cursor: pointer; }
+    .pv-amt.sel { background: var(--accent); border-color: var(--accent); color: white; }
+    .pv-recurring { display: flex; align-items: center; justify-content: space-between; background: var(--accent-bg); border-radius: 0.375rem; padding: 0.375rem 0.5rem; margin-bottom: 0.5rem; font-size: 0.625rem; font-weight: 600; }
+    .pv-freq { display: flex; gap: 0.25rem; margin-bottom: 0.625rem; }
+    .pv-freq span { padding: 0.2rem 0.5rem; border: 1px solid var(--border-color); border-radius: 9999px; font-size: 0.5625rem; font-weight: 600; color: var(--text-secondary); }
+    .pv-freq span.act { background: var(--accent); border-color: var(--accent); color: white; }
+    .pv-field { margin-bottom: 0.375rem; }
+    .pv-field label { font-size: 0.5625rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.125rem; display: block; }
+    .pv-field input { width: 100%; padding: 0.3rem 0.5rem; border: 1px solid var(--border-color); border-radius: 0.25rem; font-size: 0.5625rem; }
+    .pv-check { font-size: 0.5625rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.25rem; margin-bottom: 0.25rem; }
+    .pv-check input { width: 12px; height: 12px; }
+    .pv-pay { display: flex; gap: 0.375rem; margin-bottom: 0.625rem; }
+    .pv-pay-opt { flex: 1; padding: 0.3rem; border: 1px solid var(--border-color); border-radius: 0.375rem; text-align: center; font-size: 0.5rem; font-weight: 600; color: var(--text-secondary); }
+    .pv-pay-opt.sel { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+    .pv-pay-opt i { font-size: 0.75rem; display: block; margin-bottom: 0.125rem; }
+    .pv-donate-btn { width: 100%; padding: 0.5rem; background: var(--accent); color: white; border: none; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 700; cursor: pointer; margin-bottom: 0.5rem; }
+    .pv-tax { font-size: 0.5rem; color: var(--text-secondary); text-align: center; line-height: 1.4; margin-bottom: 0.5rem; }
+    .pv-social { display: flex; justify-content: center; gap: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--border-color); }
+    .pv-social a { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.5625rem; color: white; text-decoration: none; }
+    .pv-social .fb { background: #1877F2; } .pv-social .tw { background: #1DA1F2; } .pv-social .wa { background: #25D366; }
+    .pv-footer { text-align: center; padding: 0.5rem; font-size: 0.5rem; color: var(--text-secondary); border-top: 1px solid var(--border-color); }
+
+    /* Progress bar mini */
+    .pv-progress { margin-bottom: 0.625rem; }
+    .pv-progress .pv-prog-info { display: flex; justify-content: space-between; font-size: 0.5625rem; margin-bottom: 0.25rem; }
+    .pv-progress .pv-prog-info .raised { font-weight: 700; color: var(--accent); }
+    .pv-progress .pv-prog-track { height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; }
+    .pv-progress .pv-prog-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-light)); border-radius: 3px; }
+    .pv-progress .pv-donors { font-size: 0.5rem; color: var(--text-secondary); margin-top: 0.125rem; }
+
+    /* ===== Mobile preview - larger elements for phone frame ===== */
+    .phone-screen .pv-label { font-size: 0.6875rem; }
+    .phone-screen .pv-select { font-size: 0.75rem; padding: 0.5rem 0.625rem; }
+    .phone-screen .pv-amt { font-size: 0.75rem; padding: 0.4rem 0.75rem; }
+    .phone-screen .pv-recurring { font-size: 0.75rem; padding: 0.5rem 0.625rem; }
+    .phone-screen .pv-freq span { font-size: 0.625rem; padding: 0.25rem 0.625rem; }
+    .phone-screen .pv-field label { font-size: 0.6875rem; }
+    .phone-screen .pv-field input { font-size: 0.6875rem; padding: 0.4rem 0.625rem; }
+    .phone-screen .pv-check { font-size: 0.6875rem; }
+    .phone-screen .pv-pay-opt { font-size: 0.5625rem; padding: 0.4rem; }
+    .phone-screen .pv-pay-opt i { font-size: 0.875rem; }
+    .phone-screen .pv-donate-btn { font-size: 0.875rem; padding: 0.625rem; }
+    .phone-screen .pv-tax { font-size: 0.625rem; }
+    .phone-screen .pv-social a { width: 28px; height: 28px; font-size: 0.6875rem; }
+    .phone-screen .pv-progress .pv-prog-info { font-size: 0.625rem; }
+    .phone-screen .pv-progress .pv-donors { font-size: 0.5625rem; }
+    .phone-screen .pv-footer { font-size: 0.5625rem; }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-globe me-2" style="color:var(--accent)"></i>Online Donation Page</h1>
+      <p class="subtitle">Configure your organization's public donation page</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline-accent" onclick="if(parent.loadContent)parent.loadContent('fundraising/donation-list')">
+        <i class="fas fa-arrow-left me-1"></i> Back
+      </button>
+      <button class="btn-outline-accent" onclick="window.open('#','_blank')">
+        <i class="fas fa-external-link-alt me-1"></i> Preview Full Page
+      </button>
+      <button class="btn-primary-accent">
+        <i class="fas fa-rocket me-1"></i> Save & Publish
+      </button>
+    </div>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <div class="status-item"><div class="status-dot active"></div><span class="status-label">Status:</span><span class="status-value" style="color:var(--success-color)">Active</span></div>
+    <div class="status-divider"></div>
+    <div class="status-item"><span class="status-label">Total Raised:</span><span class="status-value">$41,450</span></div>
+    <div class="status-divider"></div>
+    <div class="status-item"><span class="status-label">Total Donors:</span><span class="status-value">221</span></div>
+    <div class="status-divider"></div>
+    <div class="status-item"><span class="status-label">Conversion Rate:</span><span class="status-value">4.8%</span></div>
+    <div class="status-divider"></div>
+    <div class="status-item"><span class="status-label">Last Donation:</span><span class="status-value">2 hours ago</span></div>
+  </div>
+
+  <!-- Implementation Type Switcher -->
+  <div class="impl-switcher">
+    <div class="impl-card selected" onclick="switchImpl('nav')" id="implNav">
+      <div class="check-circle"><i class="fas fa-check"></i></div>
+      <div class="impl-icon"><i class="fas fa-window-maximize"></i></div>
+      <div class="impl-title">Navigation-Based Page</div>
+      <div class="impl-desc">Fully hosted standalone page with dedicated URL. Full branding — logo, carousel, videos, impact sections, and custom layout.</div>
+    </div>
+    <div class="impl-card" onclick="switchImpl('iframe')" id="implIframe">
+      <div class="check-circle"><i class="fas fa-check"></i></div>
+      <div class="impl-icon"><i class="fas fa-code"></i></div>
+      <div class="impl-title">iFrame-Based Form</div>
+      <div class="impl-desc">Compact donation form widget. Embed into any website via iframe or JS snippet. Host site controls surrounding branding.</div>
+    </div>
+  </div>
+
+  <!-- Main Config Area -->
+  <div class="config-area">
+
+    <!-- ==================== LEFT: SETTINGS ==================== -->
+    <div class="config-left">
+
+      <!-- PAGE URL & IDENTITY -->
+      <div class="settings-card">
+        <div class="settings-card-header"><h3><i class="fas fa-link"></i> Page URL & Identity</h3></div>
+        <div class="settings-card-body">
+          <div class="form-group">
+            <label>Page Title <span class="required">*</span></label>
+            <input type="text" class="form-control" value="Support Hope Foundation">
+          </div>
+          <div class="form-group">
+            <label>Page URL Slug <span class="required">*</span></label>
+            <input type="text" class="form-control" value="give">
+            <div class="help-text">Your donation page URL:</div>
+            <div class="url-display mt-1">
+              <span class="url-text"><span class="url-base">https://donate.hopefoundation.org/</span>give</span>
+              <button class="url-copy-btn" onclick="copyUrl()"><i class="fas fa-copy"></i></button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea class="form-control" rows="3">Your generosity empowers communities. Choose a cause below and make a difference today.</textarea>
+          </div>
+          <div class="form-switch-row">
+            <label>Page Status (Active / Inactive)</label>
+            <div class="form-check form-switch"><input class="form-check-input" type="checkbox" checked></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DONATION PURPOSES -->
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <h3><i class="fas fa-layer-group"></i> Donation Purposes</h3>
+          <span style="font-size:0.75rem;color:var(--text-secondary)">Donors select from these on the page</span>
+        </div>
+        <div class="settings-card-body">
+          <div class="form-group">
+            <label>Available Purposes <span class="required">*</span></label>
+            <div class="purpose-dropdown">
+              <div class="purpose-tags" onclick="togglePurposeDropdown()">
+                <span class="purpose-tag">General Fund <i class="fas fa-times remove-tag" onclick="event.stopPropagation()"></i></span>
+                <span class="purpose-tag">Education <i class="fas fa-times remove-tag" onclick="event.stopPropagation()"></i></span>
+                <span class="purpose-tag">Clean Water <i class="fas fa-times remove-tag" onclick="event.stopPropagation()"></i></span>
+                <span class="purpose-tag">Health & Welfare <i class="fas fa-times remove-tag" onclick="event.stopPropagation()"></i></span>
+                <span class="purpose-tag">Emergency Relief <i class="fas fa-times remove-tag" onclick="event.stopPropagation()"></i></span>
+              </div>
+              <div class="purpose-dropdown-menu" id="purposeDropdown">
+                <div class="purpose-option checked"><i class="fas fa-check-square"></i> General Fund</div>
+                <div class="purpose-option checked"><i class="fas fa-check-square"></i> Education</div>
+                <div class="purpose-option checked"><i class="fas fa-check-square"></i> Clean Water</div>
+                <div class="purpose-option checked"><i class="fas fa-check-square"></i> Health & Welfare</div>
+                <div class="purpose-option checked"><i class="fas fa-check-square"></i> Emergency Relief</div>
+                <div class="purpose-option"><i class="far fa-square"></i> Shelter & Housing</div>
+                <div class="purpose-option"><i class="far fa-square"></i> Food Security</div>
+                <div class="purpose-option"><i class="far fa-square"></i> Annual Gala 2026</div>
+              </div>
+            </div>
+            <div class="help-text">Sourced from <strong>fund.DonationPurposes</strong>.</div>
+          </div>
+          <div class="form-switch-row">
+            <label>Default purpose</label>
+            <select class="form-select" style="width:auto;max-width:200px;font-size:0.8125rem">
+              <option>General Fund</option><option>Education</option><option>Clean Water</option><option>Health & Welfare</option><option>Emergency Relief</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- AMOUNTS & CURRENCY -->
+      <div class="settings-card">
+        <div class="settings-card-header"><h3><i class="fas fa-dollar-sign"></i> Amounts & Currency</h3></div>
+        <div class="settings-card-body">
+          <div class="form-group">
+            <label>Suggested Amounts</label>
+            <div class="amount-chips">
+              <div class="amount-chip"><span>$25</span><i class="fas fa-times remove-chip"></i></div>
+              <div class="amount-chip"><span>$50</span><i class="fas fa-times remove-chip"></i></div>
+              <div class="amount-chip"><span>$100</span><i class="fas fa-times remove-chip"></i></div>
+              <div class="amount-chip"><span>$250</span><i class="fas fa-times remove-chip"></i></div>
+              <div class="amount-chip"><span>$500</span><i class="fas fa-times remove-chip"></i></div>
+              <div class="amount-chip" style="background:#f1f5f9;border-color:#e2e8f0;color:var(--text-secondary)"><span>Other</span></div>
+              <button class="add-amount-btn"><i class="fas fa-plus me-1"></i> Add</button>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6"><div class="form-group"><label>Minimum Amount</label><div class="input-group" style="max-width:180px"><span class="input-group-text" style="font-size:0.8125rem">$</span><input type="number" class="form-control" value="5"></div></div></div>
+            <div class="col-md-6"><div class="form-group"><label>Primary Currency</label><select class="form-select" style="max-width:220px"><option selected>USD - US Dollar</option><option>EUR - Euro</option><option>GBP - British Pound</option><option>INR - Indian Rupee</option></select></div></div>
+          </div>
+          <div class="form-switch-row"><label>Enable Multi-Currency</label><div class="form-check form-switch"><input class="form-check-input" type="checkbox"></div></div>
+        </div>
+      </div>
+
+      <!-- RECURRING -->
+      <div class="settings-card">
+        <div class="settings-card-header"><h3><i class="fas fa-repeat"></i> Recurring Donations</h3></div>
+        <div class="settings-card-body">
+          <div class="form-switch-row"><label>Allow Recurring Donations</label><div class="form-check form-switch"><input class="form-check-input" type="checkbox" checked></div></div>
+          <div style="margin-top:0.75rem;">
+            <div class="form-group">
+              <label>Available Frequencies</label>
+              <div class="recurring-frequencies">
+                <span class="freq-chip active">Weekly</span><span class="freq-chip active">Monthly</span><span class="freq-chip active">Quarterly</span><span class="freq-chip">Semi-Annual</span><span class="freq-chip active">Annual</span>
+              </div>
+            </div>
+            <div class="form-switch-row"><label>Default to recurring</label><div class="form-check form-switch"><input class="form-check-input" type="checkbox"></div></div>
+            <div class="form-group"><label>Default Frequency</label><select class="form-select" style="max-width:200px"><option selected>Monthly</option><option>Weekly</option><option>Quarterly</option><option>Annual</option></select></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAYMENT METHODS -->
+      <div class="settings-card">
+        <div class="settings-card-header"><h3><i class="fas fa-credit-card"></i> Payment Methods</h3></div>
+        <div class="settings-card-body">
+          <div class="form-group">
+            <label>Payment Gateway</label>
+            <select class="form-select" style="max-width:300px"><option selected>Stripe (Primary)</option><option>PayPal</option><option>Razorpay</option></select>
+          </div>
+          <div class="form-group"><label>Enabled Methods</label>
+            <div class="payment-method-item"><div class="form-check"><input class="form-check-input" type="checkbox" checked></div><div class="method-icon" style="background:#ecfeff;color:var(--accent)"><i class="fas fa-credit-card"></i></div><div class="method-info"><div class="method-name">Credit/Debit Card</div><div class="method-desc">Visa, Mastercard, Amex via Stripe</div></div></div>
+            <div class="payment-method-item"><div class="form-check"><input class="form-check-input" type="checkbox" checked></div><div class="method-icon" style="background:#e0f2fe;color:#0284c7"><i class="fab fa-paypal"></i></div><div class="method-info"><div class="method-name">PayPal</div><div class="method-desc">PayPal checkout & balance</div></div></div>
+            <div class="payment-method-item"><div class="form-check"><input class="form-check-input" type="checkbox"></div><div class="method-icon" style="background:#fef3c7;color:#d97706"><i class="fas fa-mobile-screen-button"></i></div><div class="method-info"><div class="method-name">UPI (Razorpay)</div><div class="method-desc">Only for INR transactions</div></div></div>
+            <div class="payment-method-item"><div class="form-check"><input class="form-check-input" type="checkbox"></div><div class="method-icon" style="background:#f1f5f9;color:#64748b"><i class="fas fa-building-columns"></i></div><div class="method-info"><div class="method-name">Bank Transfer</div><div class="method-desc">Direct ACH / wire transfer</div></div></div>
+            <div class="payment-method-item"><div class="form-check"><input class="form-check-input" type="checkbox" checked></div><div class="method-icon" style="background:#f0fdf4;color:#16a34a"><i class="fab fa-apple"></i></div><div class="method-info"><div class="method-name">Apple Pay / Google Pay</div><div class="method-desc">Digital wallets via Stripe</div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DONOR FORM FIELDS -->
+      <div class="settings-card">
+        <div class="settings-card-header"><h3><i class="fas fa-user-pen"></i> Donor Form Fields</h3><span style="font-size:0.75rem;color:var(--text-secondary)">Both page types</span></div>
+        <div class="settings-card-body">
+          <table class="fields-config-table"><thead><tr><th>Field</th><th style="text-align:center">Required</th><th style="text-align:center">Visible</th></tr></thead><tbody>
+            <tr><td class="field-name">First Name</td><td style="text-align:center"><input class="form-check-input" type="checkbox" checked disabled></td><td style="text-align:center"><input class="form-check-input" type="checkbox" checked disabled></td></tr>
+            <tr><td class="field-name">Last Name</td><td style="text-align:center"><input class="form-check-input" type="checkbox" checked disabled></td><td style="text-align:center"><input class="form-check-input" type="checkbox" checked disabled></td></tr>
+            <tr><td class="field-name">Email</td><td style="text-align:center"><input class="form-check-input" type="checkbox" checked disabled></td><td style="text-align:center"><input class="form-check-input" type="checkbox" checked disabled></td></tr>
+            <tr><td class="field-name">Phone</td><td style="text-align:center"><input class="form-check-input" type="checkbox"></td><td style="text-align:center"><input class="form-check-input" type="checkbox" checked></td></tr>
+            <tr><td class="field-name">Address</td><td style="text-align:center"><input class="form-check-input" type="checkbox"></td><td style="text-align:center"><input class="form-check-input" type="checkbox"></td></tr>
+            <tr><td class="field-name">Organization</td><td style="text-align:center"><input class="form-check-input" type="checkbox"></td><td style="text-align:center"><input class="form-check-input" type="checkbox"></td></tr>
+            <tr><td class="field-name">Message / Prayer Request</td><td style="text-align:center"><input class="form-check-input" type="checkbox"></td><td style="text-align:center"><input class="form-check-input" type="checkbox" checked></td></tr>
+            <tr><td class="field-name">Anonymous Donation</td><td style="text-align:center"><input class="form-check-input" type="checkbox"></td><td style="text-align:center"><input class="form-check-input" type="checkbox" checked></td></tr>
+            <tr><td class="field-name">Dedicate This Gift</td><td style="text-align:center"><input class="form-check-input" type="checkbox"></td><td style="text-align:center"><input class="form-check-input" type="checkbox" checked></td></tr>
+          </tbody></table>
+        </div>
+      </div>
+
+      <!-- BRANDING — NAV PAGE -->
+      <div class="settings-card" id="brandingNavCard">
+        <div class="settings-card-header"><h3><i class="fas fa-palette"></i> Page Branding <span class="impl-badge nav ms-2">Navigation Page</span></h3></div>
+        <div class="settings-card-body">
+          <div class="form-group"><label>Organization Logo</label>
+            <div class="uploaded-preview"><div class="thumb"><i class="fas fa-hand-holding-heart"></i></div><div class="file-info"><div class="file-name">hope-foundation-logo.png</div><div class="file-size">42 KB &bull; 200x200px</div></div><button class="btn-sm-icon"><i class="fas fa-pen"></i></button><button class="btn-sm-icon" style="color:var(--danger-color)"><i class="fas fa-trash"></i></button></div>
+          </div>
+          <div class="form-group"><label>Banner / Carousel Slides</label><div class="help-text mb-2">Images or videos rotating in the hero banner. 1200x400px recommended.</div>
+            <div class="carousel-config">
+              <div class="carousel-item-row"><div class="slide-thumb" style="background:linear-gradient(135deg,#0e7490,#06b6d4);color:white"><i class="fas fa-image"></i></div><div class="slide-info"><div class="slide-title">Main Banner — "Together We Change Lives"</div><div class="slide-type"><i class="fas fa-image me-1"></i> Image &bull; 1200x400</div></div><div class="slide-actions"><button class="btn-sm-icon"><i class="fas fa-pen"></i></button><button class="btn-sm-icon"><i class="fas fa-trash" style="color:var(--danger-color)"></i></button></div></div>
+              <div class="carousel-item-row"><div class="slide-thumb" style="background:linear-gradient(135deg,#059669,#34d399);color:white"><i class="fas fa-image"></i></div><div class="slide-info"><div class="slide-title">Education Campaign — "Invest in Futures"</div><div class="slide-type"><i class="fas fa-image me-1"></i> Image &bull; 1200x400</div></div><div class="slide-actions"><button class="btn-sm-icon"><i class="fas fa-pen"></i></button><button class="btn-sm-icon"><i class="fas fa-trash" style="color:var(--danger-color)"></i></button></div></div>
+              <div class="carousel-item-row"><div class="slide-thumb" style="background:linear-gradient(135deg,#7c3aed,#a78bfa);color:white"><i class="fas fa-video"></i></div><div class="slide-info"><div class="slide-title">Impact Video — 2025 Annual Report</div><div class="slide-type"><i class="fas fa-video me-1"></i> Video &bull; YouTube embed</div></div><div class="slide-actions"><button class="btn-sm-icon"><i class="fas fa-pen"></i></button><button class="btn-sm-icon"><i class="fas fa-trash" style="color:var(--danger-color)"></i></button></div></div>
+              <div class="carousel-item-row" style="justify-content:center;cursor:pointer;color:var(--accent);"><i class="fas fa-plus me-1"></i><span style="font-size:0.8125rem;font-weight:600;">Add Slide (Image or Video)</span></div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6"><div class="form-group"><label>Primary Color</label><div class="color-picker-row"><input type="color" value="#0e7490"><input type="text" class="form-control" value="#0e7490" style="max-width:100px"></div></div></div>
+            <div class="col-md-6"><div class="form-group"><label>Button Text</label><input type="text" class="form-control" value="Donate Now"></div></div>
+          </div>
+          <div class="form-group"><label>Page Layout</label><select class="form-select"><option selected>Centered — Banner top, form below</option><option>Side-by-side — Info left, form right</option><option>Full-width — Banner full bleed, form overlay</option></select></div>
+          <div class="form-group"><label>Custom CSS Override</label><textarea class="form-control" rows="2" placeholder="/* Add custom styles */" style="font-family:Consolas,monospace;font-size:0.75rem"></textarea></div>
+        </div>
+      </div>
+
+      <!-- BRANDING — IFRAME -->
+      <div class="settings-card" id="brandingIframeCard" style="display:none">
+        <div class="settings-card-header"><h3><i class="fas fa-code"></i> iFrame Configuration <span class="impl-badge iframe ms-2">iFrame Form</span></h3></div>
+        <div class="settings-card-body">
+          <div class="form-group"><label>Form Accent Color</label><div class="color-picker-row"><input type="color" value="#0e7490"><input type="text" class="form-control" value="#0e7490" style="max-width:100px"></div></div>
+          <div class="form-group"><label>Button Text</label><input type="text" class="form-control" value="Donate Now" style="max-width:250px"></div>
+          <div class="form-switch-row"><label>Show form header (title + description)</label><div class="form-check form-switch"><input class="form-check-input" type="checkbox" checked></div></div>
+          <div class="form-switch-row"><label>Show powered-by footer</label><div class="form-check form-switch"><input class="form-check-input" type="checkbox" checked></div></div>
+          <div class="section-sep"></div>
+          <div class="form-group"><label>Embed Code</label>
+            <div class="code-block" id="embedCode"><button class="code-copy" onclick="copyEmbed()"><i class="fas fa-copy me-1"></i> Copy</button>&lt;iframe
+  src="https://donate.hopefoundation.org/embed/give"
+  width="100%" height="800" frameborder="0"
+  style="border:none; max-width:480px;"
+  allow="payment"&gt;&lt;/iframe&gt;</div>
+          </div>
+          <div class="form-group"><label>JavaScript Widget</label>
+            <div class="code-block"><button class="code-copy" onclick="copyWidget()"><i class="fas fa-copy me-1"></i> Copy</button>&lt;div id="hf-donate-widget"&gt;&lt;/div&gt;
+&lt;script src="https://donate.hopefoundation.org/widget.js"
+  data-org="hope-foundation"
+  data-color="#0e7490"&gt;&lt;/script&gt;</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- THANK YOU & ADVANCED -->
+      <div class="settings-card">
+        <div class="settings-card-header"><h3><i class="fas fa-cog"></i> Thank You & Advanced</h3></div>
+        <div class="settings-card-body">
+          <div class="form-group"><label>Thank You Message</label><textarea class="form-control" rows="2">Thank you for your generous contribution! A receipt will be emailed shortly.</textarea></div>
+          <div class="form-group"><label>Thank You Redirect URL</label><input type="url" class="form-control" placeholder="https://yoursite.org/thank-you"></div>
+          <div class="section-sep"></div>
+          <div class="form-group"><label>Goal Amount</label><div class="input-group" style="max-width:250px"><span class="input-group-text" style="font-size:0.8125rem">$</span><input type="number" class="form-control" value="50000"></div><div class="help-text">Shows progress bar on the page.</div></div>
+          <div class="form-group"><label>End Date</label><input type="date" class="form-control" style="max-width:250px"></div>
+          <div class="form-switch-row"><label>Donor Count Display</label><div class="form-check form-switch"><input class="form-check-input" type="checkbox" checked></div></div>
+          <div class="form-switch-row"><label>Social Sharing Buttons</label><div class="form-check form-switch"><input class="form-check-input" type="checkbox" checked></div></div>
+          <div class="form-group" style="margin-top:0.75rem"><label>Tax Receipt Note</label><textarea class="form-control" rows="2">Your donation is tax-deductible under Section 501(c)(3).</textarea></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== RIGHT: LIVE PREVIEW ==================== -->
+    <div class="config-right">
+      <div class="preview-panel">
+
+        <!-- Toolbar -->
+        <div class="preview-toolbar">
+          <div class="preview-type-label" id="previewTypeLabel">
+            <i class="fas fa-window-maximize"></i> Navigation Page Preview
+          </div>
+          <div class="device-switcher">
+            <button class="device-btn active" onclick="switchDevice('desktop')"><i class="fas fa-desktop"></i> Desktop</button>
+            <button class="device-btn" onclick="switchDevice('mobile')"><i class="fas fa-mobile-alt"></i> Mobile</button>
+          </div>
+        </div>
+
+        <!-- ===================================================== -->
+        <!--  NAVIGATION-BASED — DESKTOP                            -->
+        <!-- ===================================================== -->
+        <div id="navDesktop" class="nav-desktop-preview">
+          <div class="browser-chrome">
+            <div class="browser-topbar">
+              <div class="browser-dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+              <div class="browser-url-bar"><i class="fas fa-lock"></i> https://donate.hopefoundation.org/give</div>
+            </div>
+            <div class="browser-body" style="max-height:600px;overflow-y:auto">
+              <!-- Website header + nav -->
+              <div class="web-header">
+                <div class="web-header-top">
+                  <div class="org-brand"><i class="fas fa-hand-holding-heart"></i> Hope Foundation</div>
+                  <div class="web-nav">
+                    <a href="#">Home</a>
+                    <a href="#">About Us</a>
+                    <a href="#">Programs</a>
+                    <a href="#" class="active">Donate</a>
+                    <a href="#">Contact</a>
+                  </div>
+                </div>
+              </div>
+              <!-- Hero carousel -->
+              <div class="web-hero">
+                <div>
+                  <h2>Together We Change Lives</h2>
+                  <p>Your generosity empowers communities worldwide</p>
+                </div>
+                <div class="hero-carousel-nav"><span class="active"></span><span></span><span></span></div>
+              </div>
+              <!-- Two-column: Info + Form -->
+              <div class="web-body">
+                <div class="web-info-col">
+                  <div class="org-mission"><strong>Our Mission</strong><br>We believe every person deserves access to education, clean water, and healthcare. Since 2005, Hope Foundation has served 2M+ lives across 40 countries.</div>
+                  <div class="impact-stats">
+                    <div class="impact-stat"><div class="val">2M+</div><div class="lbl">Lives Impacted</div></div>
+                    <div class="impact-stat"><div class="val">40</div><div class="lbl">Countries</div></div>
+                    <div class="impact-stat"><div class="val">$12M</div><div class="lbl">Raised in 2025</div></div>
+                    <div class="impact-stat"><div class="val">98%</div><div class="lbl">Goes to Programs</div></div>
+                  </div>
+                  <div class="video-placeholder"><i class="fas fa-play-circle"></i> Watch Our Impact Video</div>
+                  <div class="testimonial-card">
+                    <div class="quote">"Thanks to Hope Foundation, my daughter can now attend school. This changed our entire family's future."</div>
+                    <div class="author">— Maria S., Guatemala</div>
+                  </div>
+                </div>
+                <div class="web-form-col">
+                  <div class="pv-label">Choose a Cause</div>
+                  <select class="pv-select"><option>General Fund</option><option selected>Education</option><option>Clean Water</option><option>Health & Welfare</option><option>Emergency Relief</option></select>
+                  <div class="pv-progress"><div class="pv-prog-info"><span class="raised">$41,450 of $50,000</span><span style="color:var(--text-secondary)">83%</span></div><div class="pv-prog-track"><div class="pv-prog-fill" style="width:83%"></div></div><div class="pv-donors">221 donors have contributed</div></div>
+                  <div class="pv-label">Select Amount</div>
+                  <div class="pv-amounts"><span class="pv-amt">$25</span><span class="pv-amt sel">$50</span><span class="pv-amt">$100</span><span class="pv-amt">$250</span><span class="pv-amt">$500</span><span class="pv-amt">Other</span></div>
+                  <div class="pv-recurring"><span><i class="fas fa-repeat me-1"></i> Make this recurring</span><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" style="margin-top:0" checked></div></div>
+                  <div class="pv-freq"><span>Weekly</span><span class="act">Monthly</span><span>Quarterly</span><span>Annual</span></div>
+                  <div class="pv-label">Your Information</div>
+                  <div class="pv-field"><label>First Name *</label><input placeholder="John"></div>
+                  <div class="pv-field"><label>Last Name *</label><input placeholder="Doe"></div>
+                  <div class="pv-field"><label>Email *</label><input placeholder="john@example.com"></div>
+                  <div class="pv-field"><label>Phone</label><input placeholder="+1 (555) 000-0000"></div>
+                  <div class="pv-check"><input type="checkbox"> Anonymous donation</div>
+                  <div class="pv-check" style="margin-bottom:0.5rem"><input type="checkbox"> Dedicate this gift</div>
+                  <div class="pv-label">Payment Method</div>
+                  <div class="pv-pay"><div class="pv-pay-opt sel"><i class="fas fa-credit-card"></i>Card</div><div class="pv-pay-opt"><i class="fab fa-paypal"></i>PayPal</div><div class="pv-pay-opt"><i class="fab fa-apple"></i>Wallet</div></div>
+                  <button class="pv-donate-btn">Donate Now</button>
+                  <div class="pv-tax">Your donation is tax-deductible under Section 501(c)(3).</div>
+                  <div class="pv-social"><a class="fb" href="#"><i class="fab fa-facebook-f"></i></a><a class="tw" href="#"><i class="fab fa-twitter"></i></a><a class="wa" href="#"><i class="fab fa-whatsapp"></i></a></div>
+                </div>
+              </div>
+              <div class="web-footer">Hope Foundation &copy; 2026 &bull; Powered by PeopleServe 2.0 &bull; Privacy Policy &bull; Terms</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================================================== -->
+        <!--  NAVIGATION-BASED — MOBILE                             -->
+        <!-- ===================================================== -->
+        <div id="navMobile" style="display:none">
+          <div class="phone-frame">
+            <div class="phone-inner">
+              <div class="phone-notch"></div>
+              <div class="phone-screen">
+                <!-- Mobile nav bar -->
+                <div style="background:linear-gradient(135deg,var(--accent),var(--accent-light));padding:0.625rem 1rem;display:flex;align-items:center;justify-content:space-between;color:white">
+                  <span style="font-weight:700;font-size:0.75rem"><i class="fas fa-hand-holding-heart me-1"></i> Hope Foundation</span>
+                  <i class="fas fa-bars" style="font-size:0.875rem"></i>
+                </div>
+                <!-- Mobile hero -->
+                <div style="height:120px;background:linear-gradient(135deg,rgba(14,116,144,0.9),rgba(6,182,212,0.9));display:flex;align-items:center;justify-content:center;text-align:center;color:white;position:relative">
+                  <div><div style="font-size:0.9375rem;font-weight:800">Together We Change Lives</div><div style="font-size:0.625rem;opacity:0.85">Your generosity empowers communities</div></div>
+                  <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:5px"><span style="width:16px;height:5px;border-radius:3px;background:white"></span><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.4)"></span><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.4)"></span></div>
+                </div>
+                <div style="padding:1rem;">
+                  <div class="pv-label">Choose a Cause</div>
+                  <select class="pv-select"><option>General Fund</option><option selected>Education</option><option>Clean Water</option><option>Health & Welfare</option><option>Emergency Relief</option></select>
+                  <div class="pv-progress"><div class="pv-prog-info"><span class="raised">$41,450 of $50,000</span><span style="color:var(--text-secondary)">83%</span></div><div class="pv-prog-track"><div class="pv-prog-fill" style="width:83%"></div></div><div class="pv-donors">221 donors have contributed</div></div>
+                  <div class="pv-label">Select Amount</div>
+                  <div class="pv-amounts" style="justify-content:center"><span class="pv-amt">$25</span><span class="pv-amt sel">$50</span><span class="pv-amt">$100</span><span class="pv-amt">$250</span><span class="pv-amt">$500</span><span class="pv-amt">Other</span></div>
+                  <div class="pv-recurring"><span><i class="fas fa-repeat me-1"></i> Make this recurring</span><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" style="margin-top:0" checked></div></div>
+                  <div class="pv-freq" style="justify-content:center"><span>Weekly</span><span class="act">Monthly</span><span>Quarterly</span><span>Annual</span></div>
+                  <div class="pv-label">Your Information</div>
+                  <div class="pv-field"><label>First Name *</label><input placeholder="John"></div>
+                  <div class="pv-field"><label>Last Name *</label><input placeholder="Doe"></div>
+                  <div class="pv-field"><label>Email *</label><input placeholder="john@example.com"></div>
+                  <div class="pv-field"><label>Phone</label><input placeholder="+1 (555) 000-0000"></div>
+                  <div class="pv-field"><label>Message</label><input placeholder="Optional..."></div>
+                  <div class="pv-check"><input type="checkbox"> Anonymous donation</div>
+                  <div class="pv-check" style="margin-bottom:0.625rem"><input type="checkbox"> Dedicate this gift</div>
+                  <div class="pv-label">Payment Method</div>
+                  <div class="pv-pay"><div class="pv-pay-opt sel"><i class="fas fa-credit-card"></i>Card</div><div class="pv-pay-opt"><i class="fab fa-paypal"></i>PayPal</div><div class="pv-pay-opt"><i class="fab fa-apple"></i>Wallet</div></div>
+                  <button class="pv-donate-btn">Donate Now</button>
+                  <div class="pv-tax">Tax-deductible under Section 501(c)(3).</div>
+                  <div class="pv-social"><a class="fb" href="#"><i class="fab fa-facebook-f"></i></a><a class="tw" href="#"><i class="fab fa-twitter"></i></a><a class="wa" href="#"><i class="fab fa-whatsapp"></i></a></div>
+                </div>
+                <div class="pv-footer">Hope Foundation &copy; 2026 &bull; Powered by PeopleServe 2.0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================================================== -->
+        <!--  IFRAME-BASED — DESKTOP (form widget inside host site) -->
+        <!-- ===================================================== -->
+        <div id="iframeDesktop" style="display:none" class="iframe-desktop-preview">
+          <div class="browser-chrome">
+            <div class="browser-topbar">
+              <div class="browser-dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+              <div class="browser-url-bar"><i class="fas fa-lock"></i> https://www.acme-nonprofit.org/support-us</div>
+            </div>
+            <div class="browser-body" style="max-height:600px;overflow-y:auto">
+              <!-- Third-party host site header -->
+              <div class="host-site-header">
+                <div class="host-site-logo"><div class="logo-box"><i class="fas fa-leaf"></i></div> ACME Nonprofit</div>
+                <div class="host-site-nav"><span>Home</span><span>About</span><span class="active" style="color:white;font-weight:600">Support Us</span><span>Blog</span></div>
+              </div>
+              <!-- Host site body -->
+              <div class="host-site-body">
+                <div class="host-site-content">
+                  <h4>Support Our Mission</h4>
+                  <p>Your donation makes a real difference. Use the form to contribute securely.</p>
+                  <div class="content-block w90"></div>
+                  <div class="content-block w75"></div>
+                  <div class="content-block w60" style="margin-bottom:1rem"></div>
+                  <div class="content-block h40" style="margin-bottom:0.75rem;width:100%"></div>
+                  <div class="content-block w90"></div>
+                  <div class="content-block w75"></div>
+                </div>
+                <div class="host-site-sidebar">
+                  <!-- This IS the iframe widget -->
+                  <div class="iframe-widget">
+                    <div class="iframe-widget-header">
+                      <div class="widget-title">Support Hope Foundation</div>
+                      <div class="widget-sub">Choose a cause and donate securely</div>
+                    </div>
+                    <div class="iframe-widget-body">
+                      <div class="pv-label">Donation Purpose</div>
+                      <select class="pv-select"><option>General Fund</option><option selected>Education</option><option>Clean Water</option><option>Health & Welfare</option><option>Emergency Relief</option></select>
+                      <div class="pv-label">Amount</div>
+                      <div class="pv-amounts"><span class="pv-amt">$25</span><span class="pv-amt sel">$50</span><span class="pv-amt">$100</span><span class="pv-amt">$250</span></div>
+                      <div class="pv-recurring"><span><i class="fas fa-repeat me-1"></i> Recurring</span><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" style="margin-top:0"></div></div>
+                      <div class="pv-field"><label>First Name *</label><input placeholder="John"></div>
+                      <div class="pv-field"><label>Last Name *</label><input placeholder="Doe"></div>
+                      <div class="pv-field"><label>Email *</label><input placeholder="john@example.com"></div>
+                      <div class="pv-label" style="margin-top:0.375rem">Payment</div>
+                      <div class="pv-pay"><div class="pv-pay-opt sel"><i class="fas fa-credit-card"></i>Card</div><div class="pv-pay-opt"><i class="fab fa-paypal"></i>PayPal</div></div>
+                      <button class="pv-donate-btn">Donate Now</button>
+                      <div class="pv-footer" style="border:none;padding-top:0.25rem">Powered by PeopleServe 2.0</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="host-site-footer">&copy; 2026 ACME Nonprofit. All rights reserved.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================================================== -->
+        <!--  IFRAME-BASED — MOBILE (just the form in phone)        -->
+        <!-- ===================================================== -->
+        <div id="iframeMobile" style="display:none">
+          <div class="phone-frame">
+            <div class="phone-inner">
+              <div class="phone-notch"></div>
+              <div class="phone-screen">
+                <!-- Host site mobile header -->
+                <div style="background:#374151;color:white;padding:0.625rem 1rem;display:flex;align-items:center;justify-content:space-between">
+                  <span style="font-weight:700;font-size:0.75rem"><i class="fas fa-leaf me-1"></i> ACME Nonprofit</span>
+                  <i class="fas fa-bars" style="font-size:0.875rem"></i>
+                </div>
+                <!-- Some host page content -->
+                <div style="padding:1rem;background:#f9fafb">
+                  <div style="font-size:0.8125rem;font-weight:700;color:#374151;margin-bottom:0.375rem">Support Our Mission</div>
+                  <div style="height:12px;background:#e5e7eb;border-radius:4px;width:90%;margin-bottom:0.375rem"></div>
+                  <div style="height:12px;background:#e5e7eb;border-radius:4px;width:70%;margin-bottom:0.75rem"></div>
+                </div>
+                <!-- iFrame widget embedded -->
+                <div style="padding:0 0.75rem 0.75rem;background:#f9fafb">
+                  <div class="iframe-widget">
+                    <div class="iframe-widget-header">
+                      <div class="widget-title">Support Hope Foundation</div>
+                      <div class="widget-sub">Choose a cause and donate securely</div>
+                    </div>
+                    <div class="iframe-widget-body">
+                      <div class="pv-label">Donation Purpose</div>
+                      <select class="pv-select"><option>General Fund</option><option selected>Education</option><option>Clean Water</option><option>Health & Welfare</option></select>
+                      <div class="pv-label">Amount</div>
+                      <div class="pv-amounts" style="justify-content:center"><span class="pv-amt">$25</span><span class="pv-amt sel">$50</span><span class="pv-amt">$100</span><span class="pv-amt">$250</span><span class="pv-amt">Other</span></div>
+                      <div class="pv-recurring"><span><i class="fas fa-repeat me-1"></i> Recurring</span><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" style="margin-top:0"></div></div>
+                      <div class="pv-freq" style="justify-content:center"><span>Weekly</span><span class="act">Monthly</span><span>Quarterly</span><span>Annual</span></div>
+                      <div class="pv-label">Your Information</div>
+                      <div class="pv-field"><label>First Name *</label><input placeholder="John"></div>
+                      <div class="pv-field"><label>Last Name *</label><input placeholder="Doe"></div>
+                      <div class="pv-field"><label>Email *</label><input placeholder="john@example.com"></div>
+                      <div class="pv-field"><label>Phone</label><input placeholder="+1 (555) 000-0000"></div>
+                      <div class="pv-check"><input type="checkbox"> Anonymous donation</div>
+                      <div class="pv-label" style="margin-top:0.375rem">Payment</div>
+                      <div class="pv-pay"><div class="pv-pay-opt sel"><i class="fas fa-credit-card"></i>Card</div><div class="pv-pay-opt"><i class="fab fa-paypal"></i>PayPal</div><div class="pv-pay-opt"><i class="fab fa-apple"></i>Wallet</div></div>
+                      <button class="pv-donate-btn">Donate Now</button>
+                      <div class="pv-tax">Tax-deductible under 501(c)(3).</div>
+                      <div class="pv-footer" style="border:none;padding-top:0.25rem">Powered by PeopleServe 2.0</div>
+                    </div>
+                  </div>
+                </div>
+                <!-- More host content -->
+                <div style="padding:0.75rem 1rem;background:#f9fafb">
+                  <div style="height:12px;background:#e5e7eb;border-radius:4px;width:85%;margin-bottom:0.375rem"></div>
+                  <div style="height:12px;background:#e5e7eb;border-radius:4px;width:65%"></div>
+                </div>
+                <div style="background:#374151;color:#9ca3af;text-align:center;padding:0.625rem;font-size:0.5625rem">&copy; 2026 ACME Nonprofit</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let currentImpl = 'nav';
+    let currentDevice = 'desktop';
+
+    function switchImpl(type) {
+      currentImpl = type;
+      document.getElementById('implNav').classList.toggle('selected', type === 'nav');
+      document.getElementById('implIframe').classList.toggle('selected', type === 'iframe');
+      document.getElementById('brandingNavCard').style.display = type === 'nav' ? '' : 'none';
+      document.getElementById('brandingIframeCard').style.display = type === 'iframe' ? '' : 'none';
+
+      // Update preview label
+      const label = document.getElementById('previewTypeLabel');
+      if (type === 'nav') {
+        label.innerHTML = '<i class="fas fa-window-maximize"></i> Navigation Page Preview';
+      } else {
+        label.innerHTML = '<i class="fas fa-code"></i> iFrame Embed Preview';
+      }
+      updatePreview();
+    }
+
+    function switchDevice(device) {
+      currentDevice = device;
+      document.querySelectorAll('.device-btn').forEach(b => b.classList.remove('active'));
+      event.target.closest('.device-btn').classList.add('active');
+      updatePreview();
+    }
+
+    function updatePreview() {
+      // Hide all
+      document.getElementById('navDesktop').style.display = 'none';
+      document.getElementById('navMobile').style.display = 'none';
+      document.getElementById('iframeDesktop').style.display = 'none';
+      document.getElementById('iframeMobile').style.display = 'none';
+
+      // Show the right one
+      const id = currentImpl === 'nav'
+        ? (currentDevice === 'desktop' ? 'navDesktop' : 'navMobile')
+        : (currentDevice === 'desktop' ? 'iframeDesktop' : 'iframeMobile');
+      document.getElementById(id).style.display = '';
+    }
+
+    // Purpose dropdown
+    function togglePurposeDropdown() {
+      document.getElementById('purposeDropdown').classList.toggle('show');
+    }
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.purpose-dropdown')) {
+        document.getElementById('purposeDropdown').classList.remove('show');
+      }
+    });
+    document.querySelectorAll('.purpose-option').forEach(opt => {
+      opt.addEventListener('click', function () {
+        this.classList.toggle('checked');
+        const icon = this.querySelector('i');
+        icon.className = this.classList.contains('checked') ? 'fas fa-check-square' : 'far fa-square';
+      });
+    });
+
+    // Frequency chip toggle
+    document.querySelectorAll('.freq-chip').forEach(chip => {
+      chip.addEventListener('click', function () { this.classList.toggle('active'); });
+    });
+
+    // Copy helpers
+    function copyUrl() {
+      navigator.clipboard.writeText('https://donate.hopefoundation.org/give');
+      const btn = event.target.closest('.url-copy-btn');
+      if (btn) { btn.innerHTML = '<i class="fas fa-check"></i>'; setTimeout(() => { btn.innerHTML = '<i class="fas fa-copy"></i>'; }, 1500); }
+    }
+    function copyEmbed() {
+      const code = document.getElementById('embedCode').textContent.replace(' Copy', '').trim();
+      navigator.clipboard.writeText(code);
+    }
+    function copyWidget() {
+      const btn = event.target.closest('.code-copy');
+      btn.innerHTML = '<i class="fas fa-check me-1"></i> Copied';
+      setTimeout(() => { btn.innerHTML = '<i class="fas fa-copy me-1"></i> Copy'; }, 1500);
+    }
+  </script>
+
+</body>
+
+</html>

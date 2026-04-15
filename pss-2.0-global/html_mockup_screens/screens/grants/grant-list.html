@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grants - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --grants-accent: #0369a1;
+      --grants-accent-bg: #e0f2fe;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--grants-accent);
+      border-color: var(--grants-accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--grants-accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #025e8c;
+      border-color: #025e8c;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--grants-accent);
+      color: var(--grants-accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--grants-accent);
+      color: white;
+    }
+
+    /* Export dropdown */
+    .export-wrapper { position: relative; }
+
+    .export-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 0.25rem;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      z-index: 100;
+      min-width: 180px;
+      overflow: hidden;
+    }
+
+    .export-dropdown.show { display: block; }
+
+    .export-dropdown a {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      text-decoration: none;
+      transition: background 0.1s;
+    }
+
+    .export-dropdown a:hover {
+      background: #f8fafc;
+      color: var(--grants-accent);
+    }
+
+    .export-dropdown a i {
+      width: 16px;
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    /* KPI Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1.25rem;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .stat-icon.blue { background: #e0f2fe; color: #0369a1; }
+    .stat-icon.amber { background: #fef3c7; color: #d97706; }
+    .stat-icon.red { background: #fee2e2; color: #dc2626; }
+    .stat-icon.green { background: #f0fdf4; color: #22c55e; }
+
+    .stat-info { flex: 1; }
+
+    .stat-value {
+      font-size: 1.625rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .stat-label {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .stat-sub {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.125rem;
+    }
+
+    /* View Toggle */
+    .view-toggle-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .view-toggle {
+      display: flex;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      overflow: hidden;
+    }
+
+    .view-toggle button {
+      background: none;
+      border: none;
+      padding: 0.5rem 1rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      transition: all 0.15s;
+    }
+
+    .view-toggle button.active {
+      background: var(--grants-accent);
+      color: white;
+    }
+
+    .view-toggle button:not(.active):hover {
+      background: #f8fafc;
+      color: var(--text-primary);
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-bar select,
+    .filter-bar input {
+      font-size: 0.8125rem;
+      padding: 0.4375rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      background: white;
+      color: var(--text-primary);
+      min-width: 140px;
+    }
+
+    .filter-bar select:focus,
+    .filter-bar input:focus {
+      outline: none;
+      border-color: var(--grants-accent);
+      box-shadow: 0 0 0 3px rgba(3, 105, 161, 0.1);
+    }
+
+    /* Kanban Pipeline */
+    .kanban-container {
+      display: flex;
+      gap: 0.75rem;
+      overflow-x: auto;
+      padding-bottom: 1rem;
+    }
+
+    .kanban-column {
+      min-width: 200px;
+      flex: 1;
+      background: #f8fafc;
+      border-radius: var(--card-radius);
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .kanban-header {
+      padding: 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .kanban-header .count {
+      background: var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+
+    .kanban-header.prospect { color: #6366f1; border-top: 3px solid #6366f1; }
+    .kanban-header.application { color: #8b5cf6; border-top: 3px solid #8b5cf6; }
+    .kanban-header.review { color: #f59e0b; border-top: 3px solid #f59e0b; }
+    .kanban-header.approved { color: #22c55e; border-top: 3px solid #22c55e; }
+    .kanban-header.active { color: #0369a1; border-top: 3px solid #0369a1; }
+    .kanban-header.reporting { color: #e11d48; border-top: 3px solid #e11d48; }
+    .kanban-header.closed { color: #64748b; border-top: 3px solid #64748b; }
+
+    .kanban-body {
+      padding: 0.5rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .kanban-card {
+      background: white;
+      border-radius: 0.5rem;
+      padding: 0.75rem;
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .kanban-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      border-color: var(--grants-accent);
+    }
+
+    .kanban-card .funder {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .kanban-card .amount {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--grants-accent);
+      margin-bottom: 0.375rem;
+    }
+
+    .kanban-card .deadline {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .kanban-card .progress-mini {
+      height: 4px;
+      background: #e2e8f0;
+      border-radius: 2px;
+      margin-top: 0.5rem;
+      overflow: hidden;
+    }
+
+    .kanban-card .progress-mini .bar {
+      height: 100%;
+      border-radius: 2px;
+      background: var(--grants-accent);
+    }
+
+    /* Table View */
+    .table-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    .data-table thead th {
+      background: #f8fafc;
+      padding: 0.75rem;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 2px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    .data-table tbody td {
+      padding: 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+
+    .data-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    .data-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .grant-id {
+      font-weight: 600;
+      color: var(--grants-accent);
+      cursor: pointer;
+    }
+
+    .grant-id:hover {
+      text-decoration: underline;
+    }
+
+    .funder-name {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .stage-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.625rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .stage-badge.prospect { background: #eef2ff; color: #6366f1; }
+    .stage-badge.application { background: #f3e8ff; color: #8b5cf6; }
+    .stage-badge.review { background: #fef3c7; color: #d97706; }
+    .stage-badge.approved { background: #f0fdf4; color: #22c55e; }
+    .stage-badge.active { background: #e0f2fe; color: #0369a1; }
+    .stage-badge.reporting { background: #ffe4e6; color: #e11d48; }
+    .stage-badge.closed { background: #f1f5f9; color: #64748b; }
+
+    .progress-bar-mini {
+      width: 80px;
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 3px;
+      overflow: hidden;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 0.375rem;
+    }
+
+    .progress-bar-mini .fill {
+      height: 100%;
+      border-radius: 3px;
+      background: var(--grants-accent);
+    }
+
+    .action-btn {
+      background: none;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      padding: 0.25rem 0.625rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .action-btn:hover {
+      border-color: var(--grants-accent);
+      color: var(--grants-accent);
+    }
+
+    .more-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 0.125rem 0.25rem;
+      border-radius: 0.25rem;
+    }
+
+    .more-btn:hover {
+      background: #f1f5f9;
+      color: var(--text-primary);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .kanban-container { flex-direction: column; }
+      .kanban-column { min-width: 100%; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 576px) {
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-file-contract" style="color: var(--grants-accent); margin-right: 0.5rem;"></i>Grants</h1>
+      <p class="subtitle">Track grant applications, funding, and compliance</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="parent.loadContent('grants/grant-form')">
+        <i class="fas fa-plus"></i> New Grant Application
+      </button>
+      <div class="export-wrapper">
+        <button class="btn-outline-accent" onclick="toggleExport()">
+          <i class="fas fa-download"></i> Export
+        </button>
+        <div class="export-dropdown" id="exportDropdown">
+          <a href="#"><i class="fas fa-file-csv"></i> Export CSV</a>
+          <a href="#"><i class="fas fa-file-excel"></i> Export Excel</a>
+          <a href="#"><i class="fas fa-file-pdf"></i> Export PDF</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="fas fa-file-contract"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">8</div>
+        <div class="stat-label">Active Grants</div>
+        <div class="stat-sub">Total funded: $1.2M</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon amber"><i class="fas fa-hourglass-half"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">$450K</div>
+        <div class="stat-label">Pipeline Value</div>
+        <div class="stat-sub">5 applications pending</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon red"><i class="fas fa-calendar-exclamation"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">3</div>
+        <div class="stat-label">Upcoming Deadlines</div>
+        <div class="stat-sub">Next: USAID report Apr 20</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">95%</div>
+        <div class="stat-label">Compliance Rate</div>
+        <div class="stat-sub">1 overdue report</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Toggle + Filters -->
+  <div class="view-toggle-bar">
+    <div class="view-toggle">
+      <button class="active" onclick="switchView('kanban', this)"><i class="fas fa-columns"></i> Pipeline</button>
+      <button onclick="switchView('table', this)"><i class="fas fa-table"></i> List</button>
+    </div>
+    <div class="filter-bar">
+      <select>
+        <option value="">All Stages</option>
+        <option>Prospect</option>
+        <option>Application</option>
+        <option>Under Review</option>
+        <option>Approved</option>
+        <option>Active</option>
+        <option>Reporting</option>
+        <option>Closed</option>
+      </select>
+      <select>
+        <option value="">All Funders</option>
+        <option>Bill & Melinda Gates Foundation</option>
+        <option>UNICEF</option>
+        <option>DFID</option>
+        <option>Dubai Cares</option>
+        <option>USAID</option>
+        <option>Ford Foundation</option>
+        <option>Rockefeller Foundation</option>
+      </select>
+      <select>
+        <option value="">Amount Range</option>
+        <option>Under $50K</option>
+        <option>$50K - $100K</option>
+        <option>$100K - $250K</option>
+        <option>$250K - $500K</option>
+        <option>Over $500K</option>
+      </select>
+      <select>
+        <option value="">All Branches</option>
+        <option>Dubai</option>
+        <option>Mumbai</option>
+        <option>Nairobi</option>
+        <option>Delhi</option>
+        <option>Dhaka</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Kanban Pipeline View -->
+  <div id="kanbanView">
+    <div class="kanban-container">
+      <!-- Prospect -->
+      <div class="kanban-column">
+        <div class="kanban-header prospect">
+          <span>Prospect</span>
+          <span class="count">2</span>
+        </div>
+        <div class="kanban-body">
+          <div class="kanban-card" onclick="parent.loadContent('grants/grant-detail')">
+            <div class="funder">Ford Foundation</div>
+            <div class="amount">$200,000</div>
+            <div class="deadline"><i class="fas fa-clock"></i> LOI due May 1, 2026</div>
+          </div>
+          <div class="kanban-card" onclick="parent.loadContent('grants/grant-detail')">
+            <div class="funder">Local Corp</div>
+            <div class="amount">$50,000</div>
+            <div class="deadline"><i class="fas fa-clock"></i> Researching</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Application -->
+      <div class="kanban-column">
+        <div class="kanban-header application">
+          <span>Application</span>
+          <span class="count">1</span>
+        </div>
+        <div class="kanban-body">
+          <div class="kanban-card" onclick="parent.loadContent('grants/grant-detail')">
+            <div class="funder">USAID</div>
+            <div class="amount">$150,000</div>
+            <div class="deadline"><i class="fas fa-clock"></i> Submitted Apr 15</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Under Review -->
+      <div class="kanban-column">
+        <div class="kanban-header review">
+          <span>Under Review</span>
+          <span class="count">1</span>
+        </div>
+        <div class="kanban-body">
+          <div class="kanban-card" onclick="parent.loadContent('grants/grant-detail')">
+            <div class="funder">Dubai Cares</div>
+            <div class="amount">$100,000</div>
+            <div class="deadline"><i class="fas fa-clock"></i> Decision pending</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Approved -->
+      <div class="kanban-column">
+        <div class="kanban-header approved">
+          <span>Approved</span>
+          <span class="count">0</span>
+        </div>
+        <div class="kanban-body">
+          <div style="text-align:center; color: var(--text-secondary); font-size: 0.75rem; padding: 1rem 0.5rem;">No grants awaiting activation</div>
+        </div>
+      </div>
+
+      <!-- Active -->
+      <div class="kanban-column">
+        <div class="kanban-header active">
+          <span>Active</span>
+          <span class="count">3</span>
+        </div>
+        <div class="kanban-body">
+          <div class="kanban-card" onclick="parent.loadContent('grants/grant-detail')">
+            <div class="funder">Bill & Melinda Gates</div>
+            <div class="amount">$500,000</div>
+            <div class="deadline"><i class="fas fa-clock"></i> Ongoing — Dec 2026</div>
+            <div class="progress-mini"><div class="bar" style="width:65%"></div></div>
+          </div>
+          <div class="kanban-card" onclick="parent.loadContent('grants/grant-detail')">
+            <div class="funder">UNICEF</div>
+            <div class="amount">$300,000</div>
+            <div class="deadline"><i class="fas fa-clock"></i> Ongoing</div>
+            <div class="progress-mini"><div class="bar" style="width:45%"></div></div>
+          </div>
+          <div class="kanban-card" onclick="parent.loadContent('grants/grant-detail')">
+            <div class="funder">Dubai Cares (prev)</div>
+            <div class="amount">$100,000</div>
+            <div class="deadline"><i class="fas fa-clock"></i> Ongoing</div>
+            <div class="progress-mini"><div class="bar" style="width:80%"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reporting -->
+      <div class="kanban-column">
+        <div class="kanban-header reporting">
+          <span>Reporting</span>
+          <span class="count">1</span>
+        </div>
+        <div class="kanban-body">
+          <div class="kanban-card" onclick="parent.loadContent('grants/grant-detail')">
+            <div class="funder">DFID</div>
+            <div class="amount">$200,000</div>
+            <div class="deadline"><i class="fas fa-exclamation-triangle" style="color:#e11d48"></i> Report due Apr 30</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Closed -->
+      <div class="kanban-column">
+        <div class="kanban-header closed">
+          <span>Closed</span>
+          <span class="count">2</span>
+        </div>
+        <div class="kanban-body">
+          <div class="kanban-card" onclick="parent.loadContent('grants/grant-detail')">
+            <div class="funder">Rockefeller Foundation</div>
+            <div class="amount">$80,000</div>
+            <div class="deadline"><i class="fas fa-check-circle" style="color:#22c55e"></i> Completed</div>
+            <div class="progress-mini"><div class="bar" style="width:100%; background:#22c55e;"></div></div>
+          </div>
+          <div class="kanban-card" onclick="parent.loadContent('grants/grant-detail')">
+            <div class="funder">USAID (2024)</div>
+            <div class="amount">$100,000</div>
+            <div class="deadline"><i class="fas fa-check-circle" style="color:#22c55e"></i> Completed</div>
+            <div class="progress-mini"><div class="bar" style="width:100%; background:#22c55e;"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table View -->
+  <div id="tableView" style="display:none;">
+    <div class="table-card">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Grant ID</th>
+              <th>Funder</th>
+              <th>Title</th>
+              <th>Amount</th>
+              <th>Deadline</th>
+              <th>Stage</th>
+              <th>Progress</th>
+              <th>Branch</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="grant-id" onclick="parent.loadContent('grants/grant-detail')">GRT-012</span></td>
+              <td><span class="funder-name">Bill & Melinda Gates Foundation</span></td>
+              <td>Clean Water Initiative</td>
+              <td><strong>$500,000</strong></td>
+              <td>Ongoing</td>
+              <td><span class="stage-badge active">&#x1F7E2; Active</span></td>
+              <td>
+                <div class="progress-bar-mini"><div class="fill" style="width:65%"></div></div>
+                <span style="font-size:0.75rem">65% spent</span>
+              </td>
+              <td>Dubai</td>
+              <td>
+                <button class="action-btn" onclick="parent.loadContent('grants/grant-detail')">View</button>
+                <button class="more-btn" title="More actions">&#x22EE;</button>
+              </td>
+            </tr>
+            <tr>
+              <td><span class="grant-id" onclick="parent.loadContent('grants/grant-detail')">GRT-011</span></td>
+              <td><span class="funder-name">UNICEF</span></td>
+              <td>Children's Education Program</td>
+              <td><strong>$300,000</strong></td>
+              <td>Ongoing</td>
+              <td><span class="stage-badge active">&#x1F7E2; Active</span></td>
+              <td>
+                <div class="progress-bar-mini"><div class="fill" style="width:45%"></div></div>
+                <span style="font-size:0.75rem">45% spent</span>
+              </td>
+              <td>Mumbai</td>
+              <td>
+                <button class="action-btn" onclick="parent.loadContent('grants/grant-detail')">View</button>
+                <button class="more-btn" title="More actions">&#x22EE;</button>
+              </td>
+            </tr>
+            <tr>
+              <td><span class="grant-id" onclick="parent.loadContent('grants/grant-detail')">GRT-010</span></td>
+              <td><span class="funder-name">DFID</span></td>
+              <td>Healthcare Outreach</td>
+              <td><strong>$200,000</strong></td>
+              <td>Apr 30, 2026</td>
+              <td><span class="stage-badge reporting">&#x1F4CA; Reporting</span></td>
+              <td><span style="font-size:0.75rem; color: var(--danger-color);">Report due</span></td>
+              <td>Nairobi</td>
+              <td>
+                <button class="action-btn" onclick="parent.loadContent('grants/grant-detail')">View</button>
+                <button class="more-btn" title="More actions">&#x22EE;</button>
+              </td>
+            </tr>
+            <tr>
+              <td><span class="grant-id" onclick="parent.loadContent('grants/grant-detail')">GRT-009</span></td>
+              <td><span class="funder-name">Dubai Cares</span></td>
+              <td>Orphan Support</td>
+              <td><strong>$100,000</strong></td>
+              <td>Pending</td>
+              <td><span class="stage-badge review">&#x1F50D; Under Review</span></td>
+              <td><span style="font-size:0.75rem; color: var(--text-secondary);">&mdash;</span></td>
+              <td>Dubai</td>
+              <td>
+                <button class="action-btn" onclick="parent.loadContent('grants/grant-detail')">View</button>
+                <button class="more-btn" title="More actions">&#x22EE;</button>
+              </td>
+            </tr>
+            <tr>
+              <td><span class="grant-id" onclick="parent.loadContent('grants/grant-detail')">GRT-008</span></td>
+              <td><span class="funder-name">USAID</span></td>
+              <td>Community Development</td>
+              <td><strong>$150,000</strong></td>
+              <td>Apr 15, 2026</td>
+              <td><span class="stage-badge application">&#x1F4DD; Application</span></td>
+              <td><span style="font-size:0.75rem; color: var(--text-secondary);">Submitted</span></td>
+              <td>Delhi</td>
+              <td>
+                <button class="action-btn" onclick="parent.loadContent('grants/grant-detail')">View</button>
+                <button class="more-btn" title="More actions">&#x22EE;</button>
+              </td>
+            </tr>
+            <tr>
+              <td><span class="grant-id" onclick="parent.loadContent('grants/grant-detail')">GRT-007</span></td>
+              <td><span class="funder-name">Ford Foundation</span></td>
+              <td>Women Empowerment</td>
+              <td><strong>$200,000</strong></td>
+              <td>May 1, 2026</td>
+              <td><span class="stage-badge prospect">&#x1F50E; Prospect</span></td>
+              <td><span style="font-size:0.75rem; color: var(--text-secondary);">LOI due</span></td>
+              <td>Dhaka</td>
+              <td>
+                <button class="action-btn" onclick="parent.loadContent('grants/grant-detail')">View</button>
+                <button class="more-btn" title="More actions">&#x22EE;</button>
+              </td>
+            </tr>
+            <tr>
+              <td><span class="grant-id" onclick="parent.loadContent('grants/grant-detail')">GRT-006</span></td>
+              <td><span class="funder-name">Rockefeller Foundation</span></td>
+              <td>Food Security</td>
+              <td><strong>$80,000</strong></td>
+              <td>Closed</td>
+              <td><span class="stage-badge closed">&#x2705; Closed</span></td>
+              <td>
+                <div class="progress-bar-mini"><div class="fill" style="width:100%; background:#22c55e;"></div></div>
+                <span style="font-size:0.75rem">100%</span>
+              </td>
+              <td>Dubai</td>
+              <td>
+                <button class="action-btn" onclick="parent.loadContent('grants/grant-detail')">View</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function switchView(view, btn) {
+      document.getElementById('kanbanView').style.display = view === 'kanban' ? 'block' : 'none';
+      document.getElementById('tableView').style.display = view === 'table' ? 'block' : 'none';
+      document.querySelectorAll('.view-toggle button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    function toggleExport() {
+      document.getElementById('exportDropdown').classList.toggle('show');
+    }
+
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.export-wrapper')) {
+        document.getElementById('exportDropdown').classList.remove('show');
+      }
+    });
+  </script>
+
+</body>
+
+</html>

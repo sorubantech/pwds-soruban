@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Record Collection - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+      --field-accent: #059669;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .back-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 1rem;
+    }
+
+    .back-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .breadcrumb-text {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.125rem;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover { background: #0c6577; border-color: #0c6577; color: white; }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover { background: var(--accent); color: white; }
+
+    .btn-text {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-text:hover { color: var(--danger-color); }
+
+    /* Accordion Sections */
+    .form-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      margin-bottom: 0.75rem;
+      overflow: hidden;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.875rem 1.25rem;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+    }
+
+    .section-header:hover { background: #f8fafc; }
+
+    .section-header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+
+    .section-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 0.5rem;
+      background: var(--accent-bg);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+    }
+
+    .section-title {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .section-toggle {
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      transition: transform 0.25s;
+    }
+
+    .section-header.collapsed .section-toggle {
+      transform: rotate(-90deg);
+    }
+
+    .section-body {
+      padding: 0 1.25rem 1.25rem;
+      transition: max-height 0.3s ease;
+      overflow: hidden;
+    }
+
+    .section-body.collapsed {
+      max-height: 0 !important;
+      padding: 0 1.25rem;
+    }
+
+    /* Form Controls */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .form-grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .form-grid .full-width,
+    .form-grid-3 .full-width { grid-column: 1 / -1; }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .form-group label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .form-group label .required {
+      color: var(--danger-color);
+      margin-left: 2px;
+    }
+
+    .form-control, .form-select {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .form-control:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    textarea.form-control {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .form-check-input:checked {
+      background-color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .form-check-input:focus {
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.15);
+    }
+
+    /* Donor Mini Card */
+    .donor-mini-card {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 0.625rem;
+      padding: 0.875rem 1rem;
+      margin-top: 0.5rem;
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .donor-mini-card .donor-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--field-accent);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.875rem;
+      flex-shrink: 0;
+    }
+
+    .donor-mini-card .donor-info {
+      flex: 1;
+    }
+
+    .donor-mini-card .donor-name {
+      font-weight: 700;
+      font-size: 0.875rem;
+    }
+
+    .donor-mini-card .donor-meta {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      display: flex;
+      gap: 1rem;
+      margin-top: 0.125rem;
+      flex-wrap: wrap;
+    }
+
+    .donor-mini-card .donor-meta i {
+      margin-right: 0.25rem;
+      font-size: 0.6875rem;
+    }
+
+    .donor-mini-card .donor-last-donation {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .donor-badge {
+      display: inline-block;
+      background: #ecfdf5;
+      color: var(--field-accent);
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      margin-top: 0.25rem;
+    }
+
+    .donor-since {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.125rem;
+    }
+
+    /* Payment Mode Cards */
+    .mode-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+    }
+
+    .mode-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.875rem 0.5rem;
+      border: 2px solid var(--border-color);
+      border-radius: 0.625rem;
+      background: white;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+    }
+
+    .mode-card:hover {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .mode-card.selected {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .mode-card input[type="radio"] { display: none; }
+
+    .mode-card .mode-icon {
+      font-size: 1.25rem;
+      width: 40px;
+      height: 40px;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f1f5f9;
+      transition: all 0.15s;
+    }
+
+    .mode-card.selected .mode-icon {
+      background: var(--accent);
+      color: white;
+    }
+
+    .mode-card .mode-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Amount Display */
+    .amount-input-large {
+      font-size: 1.5rem;
+      font-weight: 700;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, monospace;
+      padding: 0.625rem 0.75rem;
+    }
+
+    /* Delivery Cards */
+    .delivery-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.625rem;
+    }
+
+    .delivery-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.875rem 0.5rem;
+      border: 2px solid var(--border-color);
+      border-radius: 0.625rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: white;
+      text-align: center;
+    }
+
+    .delivery-card:hover {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .delivery-card.selected {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+      box-shadow: 0 0 0 1px var(--accent);
+    }
+
+    .delivery-card input[type="radio"] { display: none; }
+
+    .delivery-card .delivery-icon {
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+
+    .delivery-card .delivery-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .delivery-hint {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      font-style: italic;
+      margin-top: 0.375rem;
+    }
+
+    /* Quick Add Button */
+    .btn-quick-add {
+      background: none;
+      border: 1px dashed var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-top: 0.375rem;
+    }
+
+    .btn-quick-add:hover { background: var(--accent-bg); }
+    .btn-quick-add i { margin-right: 0.375rem; }
+
+    /* Conditional Box */
+    .conditional-box {
+      border: 1px dashed var(--border-color);
+      border-radius: 0.625rem;
+      padding: 1rem;
+      background: #fafbfc;
+      margin-top: 0.5rem;
+      display: none;
+    }
+
+    .conditional-box.show { display: block; }
+
+    .conditional-box .info-text {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.5rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.375rem;
+    }
+
+    .conditional-box .info-text i {
+      color: var(--accent);
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    /* Info hint */
+    .info-hint {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: flex-start;
+      gap: 0.375rem;
+      margin-top: 0.25rem;
+    }
+
+    .info-hint i {
+      color: var(--accent);
+      margin-top: 2px;
+      flex-shrink: 0;
+      font-size: 0.6875rem;
+    }
+
+    .helper-text {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.125rem;
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+
+    .toggle-switch .form-check-input {
+      width: 2.5rem;
+      height: 1.25rem;
+      cursor: pointer;
+    }
+
+    .toggle-switch label {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    /* File Upload */
+    .file-upload-area {
+      border: 2px dashed var(--border-color);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #f8fafc;
+    }
+
+    .file-upload-area:hover {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .file-upload-area i {
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.25rem;
+    }
+
+    .file-upload-area p {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .file-upload-area .browse-link {
+      color: var(--accent);
+      font-weight: 600;
+      text-decoration: underline;
+    }
+
+    /* Validation Alert */
+    .validation-alert {
+      display: none;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .validation-alert.amber {
+      background: #fffbeb;
+      color: #d97706;
+      border: 1px solid #fde68a;
+    }
+
+    .validation-alert.show { display: flex; }
+
+    .validation-alert i { font-size: 0.875rem; }
+
+    /* Radio Inline */
+    .radio-inline {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .radio-inline .form-check {
+      margin-bottom: 0;
+    }
+
+    .radio-inline .form-check-label {
+      font-size: 0.8125rem;
+      font-weight: 500;
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 9999;
+    }
+
+    .toast-success {
+      background: white;
+      border: 1px solid var(--success-color);
+      border-left: 4px solid var(--success-color);
+      border-radius: 0.5rem;
+      padding: 0.875rem 1.25rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      animation: slideIn 0.3s ease;
+    }
+
+    .toast-success i { color: var(--success-color); font-size: 1rem; }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Sticky Footer */
+    .sticky-footer {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid var(--border-color);
+      padding: 0.75rem 1.25rem;
+      z-index: 100;
+      gap: 0.5rem;
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .sticky-footer .btn-primary-accent,
+    .sticky-footer .btn-outline-accent,
+    .sticky-footer .btn-text {
+      flex: 1;
+    }
+
+    @media (max-width: 992px) {
+      .form-grid, .form-grid-3 { grid-template-columns: 1fr; }
+      .mode-cards { grid-template-columns: repeat(2, 1fr); }
+      .delivery-cards { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 1rem; padding-bottom: 5rem; }
+      .form-grid, .form-grid-3 { grid-template-columns: 1fr; }
+      .mode-cards { grid-template-columns: repeat(2, 1fr); }
+      .delivery-cards { grid-template-columns: repeat(2, 1fr); }
+      .header-actions { display: none; }
+      .sticky-footer { display: flex; }
+      .page-header h1 { font-size: 1.25rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Validation Warning -->
+  <div class="validation-alert amber" id="backdateWarning">
+    <i class="fas fa-exclamation-triangle"></i>
+    Back-dated collection — requires manager approval
+  </div>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" onclick="parent.loadContent('field-collection/collection-list')" title="Back to Collections">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <div>
+        <h1>Record Collection</h1>
+        <div class="breadcrumb-text">Field Collection &gt; Record Collection</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="saveCollection()">
+        <i class="fas fa-check me-1"></i> Save
+      </button>
+      <button class="btn-outline-accent" onclick="saveAndNew()">
+        <i class="fas fa-plus me-1"></i> Save & New
+      </button>
+      <button class="btn-text" onclick="parent.loadContent('field-collection/collection-list')">Cancel</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 1: Collection Details -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-clipboard-list"></i></div>
+        <span class="section-title">Collection Details</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body" id="sectionCollection">
+      <div class="form-grid">
+        <!-- Ambassador -->
+        <div class="form-group">
+          <label>Ambassador <span class="required">*</span></label>
+          <select class="form-select">
+            <option value="">Select ambassador...</option>
+            <option value="FA-001" selected>Ahmed Salim (FA-001, Dubai Branch)</option>
+            <option value="FA-002">Fatima Al-Hashimi (FA-002, Abu Dhabi Branch)</option>
+            <option value="FA-003">Yousuf Khan (FA-003, Sharjah Branch)</option>
+          </select>
+        </div>
+
+        <!-- Collection Date -->
+        <div class="form-group">
+          <label>Collection Date <span class="required">*</span></label>
+          <input type="date" class="form-control" value="2026-04-12">
+        </div>
+
+        <!-- Collection Time -->
+        <div class="form-group">
+          <label>Collection Time</label>
+          <input type="time" class="form-control" value="10:30">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 2: Donor Information -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-user"></i></div>
+        <span class="section-title">Donor Information</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body" id="sectionDonor">
+      <div class="form-grid">
+        <!-- Donor / Contact -->
+        <div class="form-group full-width">
+          <label>Donor / Contact <span class="required">*</span></label>
+          <select class="form-select" id="donorSelect">
+            <option value="">Search donor by name, phone or code...</option>
+            <option value="D-001" selected>Khalid Al-Mansouri — +971 50-888-9999 — Deira, Dubai</option>
+            <option value="D-002">Sara Ahmed — +971 55-111-2222 — Jumeirah, Dubai</option>
+            <option value="D-003">Mohammed Al-Ali — +971 50-333-4444 — Al Ain</option>
+          </select>
+          <button class="btn-quick-add" onclick="return false;">
+            <i class="fas fa-plus"></i> Quick Add Contact
+          </button>
+          <div class="info-hint">
+            <i class="fas fa-info-circle"></i>
+            <span>If donor is not in the system, use Quick Add to create a new contact</span>
+          </div>
+        </div>
+
+        <!-- Donor auto-fill card -->
+        <div class="full-width">
+          <div class="donor-mini-card">
+            <div class="donor-avatar">KA</div>
+            <div class="donor-info">
+              <div class="donor-name">Khalid Al-Mansouri</div>
+              <div class="donor-meta">
+                <span><i class="fas fa-phone"></i> +971 50-888-9999</span>
+                <span><i class="fas fa-map-marker-alt"></i> Apt 304, Deira Tower, Dubai</span>
+              </div>
+              <div class="donor-last-donation">
+                <i class="fas fa-hand-holding-dollar"></i> Last donation: $200 on Mar 15, 2026
+              </div>
+              <div class="donor-since">
+                <i class="fas fa-calendar-check"></i> Donor since: 2023
+              </div>
+              <div><span class="donor-badge"><i class="fas fa-heart"></i> Orphan Care</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 3: Payment Details -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-money-bill-wave"></i></div>
+        <span class="section-title">Payment Details</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body" id="sectionPayment">
+      <div class="form-grid">
+        <!-- Amount -->
+        <div class="form-group">
+          <label>Amount <span class="required">*</span></label>
+          <input type="number" class="form-control amount-input-large" value="500" placeholder="0.00">
+        </div>
+
+        <!-- Currency -->
+        <div class="form-group">
+          <label>Currency</label>
+          <select class="form-select">
+            <option value="AED" selected>AED (د.إ)</option>
+            <option value="USD">USD ($)</option>
+            <option value="EUR">EUR (€)</option>
+            <option value="GBP">GBP (£)</option>
+            <option value="INR">INR (₹)</option>
+          </select>
+        </div>
+
+        <!-- Payment Mode -->
+        <div class="form-group full-width">
+          <label>Payment Mode <span class="required">*</span></label>
+          <div class="mode-cards" id="paymentModeCards">
+            <div class="mode-card selected" onclick="selectMode(this, 'paymentModeCards', 'cash')">
+              <input type="radio" name="paymentMode" value="cash" checked>
+              <div class="mode-icon">💵</div>
+              <div class="mode-label">Cash</div>
+            </div>
+            <div class="mode-card" onclick="selectMode(this, 'paymentModeCards', 'cheque')">
+              <input type="radio" name="paymentMode" value="cheque">
+              <div class="mode-icon">📄</div>
+              <div class="mode-label">Cheque</div>
+            </div>
+            <div class="mode-card" onclick="selectMode(this, 'paymentModeCards', 'mobile')">
+              <input type="radio" name="paymentMode" value="mobile">
+              <div class="mode-icon">📱</div>
+              <div class="mode-label">Mobile Transfer</div>
+            </div>
+            <div class="mode-card" onclick="selectMode(this, 'paymentModeCards', 'bank')">
+              <input type="radio" name="paymentMode" value="bank">
+              <div class="mode-icon">🏦</div>
+              <div class="mode-label">Bank Receipt</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cheque fields (conditional) -->
+        <div class="full-width">
+          <div class="conditional-box" id="chequeFields">
+            <div class="form-grid-3">
+              <div class="form-group">
+                <label>Cheque Number</label>
+                <input type="text" class="form-control" placeholder="Enter cheque number">
+              </div>
+              <div class="form-group">
+                <label>Bank Name</label>
+                <input type="text" class="form-control" placeholder="Enter bank name">
+              </div>
+              <div class="form-group">
+                <label>Cheque Date</label>
+                <input type="date" class="form-control">
+              </div>
+            </div>
+            <div class="info-text" style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.5rem; display: flex; align-items: flex-start; gap: 0.375rem;">
+              <i class="fas fa-info-circle" style="color: var(--accent); margin-top: 2px; flex-shrink: 0;"></i>
+              <span>Cheque will be tracked in Cheque Donations screen for deposit and clearance</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 4: Donation Purpose & Receipt -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-receipt"></i></div>
+        <span class="section-title">Donation Purpose & Receipt</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body" id="sectionPurpose">
+      <div class="form-grid">
+        <!-- Donation Purpose -->
+        <div class="form-group">
+          <label>Donation Purpose <span class="required">*</span></label>
+          <select class="form-select">
+            <option value="">Select purpose...</option>
+            <option value="orphan" selected>Orphan Care</option>
+            <option value="education">Education Sponsorship</option>
+            <option value="health">Healthcare Support</option>
+            <option value="food">Food Distribution</option>
+            <option value="general">General Fund</option>
+            <option value="zakat">Zakat</option>
+            <option value="sadaqah">Sadaqah</option>
+          </select>
+        </div>
+
+        <!-- Campaign -->
+        <div class="form-group">
+          <label>Campaign</label>
+          <select class="form-select">
+            <option value="">Select campaign (optional)...</option>
+            <option value="ramadan" selected>Ramadan Appeal 2026</option>
+            <option value="winter">Winter Aid Campaign</option>
+            <option value="education">Education Drive Q2</option>
+          </select>
+        </div>
+
+        <!-- Receipt Book -->
+        <div class="form-group">
+          <label>Receipt Book</label>
+          <select class="form-select">
+            <option value="">Select receipt book...</option>
+            <option value="RB-045" selected>RB-045 (Serial 4501-4600)</option>
+            <option value="RB-046">RB-046 (Serial 4601-4700)</option>
+            <option value="RB-044">RB-044 (Serial 4401-4500)</option>
+          </select>
+        </div>
+
+        <!-- Receipt Number -->
+        <div class="form-group">
+          <label>Receipt Number <span class="required">*</span></label>
+          <input type="text" class="form-control" value="4546" placeholder="Enter receipt number">
+          <div class="info-hint">
+            <i class="fas fa-info-circle"></i>
+            <span>Must match the physical receipt given to the donor</span>
+          </div>
+          <div class="helper-text">Auto-suggested: next available receipt number</div>
+        </div>
+
+        <!-- Receipt Type -->
+        <div class="form-group full-width">
+          <label>Receipt Type</label>
+          <div class="radio-inline">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="receiptType" id="receiptManual" value="manual" checked>
+              <label class="form-check-label" for="receiptManual">Manual (physical book)</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="receiptType" id="receiptDigital" value="digital">
+              <label class="form-check-label" for="receiptDigital">Digital (SMS/WhatsApp receipt)</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 5: Additional Information -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-circle-info"></i></div>
+        <span class="section-title">Additional Information</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body" id="sectionAdditional">
+      <div class="form-grid">
+        <!-- Visit Notes -->
+        <div class="form-group full-width">
+          <label>Visit Notes</label>
+          <textarea class="form-control" rows="3" placeholder="Enter notes about the visit...">Donor wants to increase monthly contribution. Interested in Education sponsorship too.</textarea>
+        </div>
+
+        <!-- Location -->
+        <div class="form-group">
+          <label>Location</label>
+          <input type="text" class="form-control" value="Deira, Dubai" placeholder="Enter collection location">
+        </div>
+
+        <!-- Photo of Receipt -->
+        <div class="form-group">
+          <label>Photo of Receipt</label>
+          <div class="file-upload-area">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p>Click to upload or drag & drop</p>
+            <p><span class="browse-link">Browse</span> | JPG, PNG up to 5MB</p>
+          </div>
+        </div>
+
+        <!-- Recurring Commitment -->
+        <div class="form-group full-width">
+          <label style="margin-bottom: 0.375rem;">Recurring Commitment</label>
+          <div class="toggle-switch">
+            <input class="form-check-input" type="checkbox" role="switch" id="recurringToggle" onchange="toggleRecurring()">
+            <label for="recurringToggle">Donor committed to recurring donations</label>
+          </div>
+          <div class="conditional-box" id="recurringFields">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Frequency</label>
+                <select class="form-select">
+                  <option value="">Select frequency...</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="quarterly">Quarterly</option>
+                  <option value="yearly">Yearly</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Expected Amount</label>
+                <input type="number" class="form-control" placeholder="0.00">
+              </div>
+            </div>
+            <div class="info-hint" style="margin-top: 0.5rem;">
+              <i class="fas fa-info-circle"></i>
+              <span>Record if the donor verbally committed to recurring donations</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 6: Receipt Delivery -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-paper-plane"></i></div>
+        <span class="section-title">Receipt Delivery</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body" id="sectionDelivery">
+      <div class="form-group">
+        <label>Send Digital Receipt</label>
+        <div class="delivery-cards" id="deliveryCards">
+          <div class="delivery-card" onclick="selectDelivery(this)">
+            <input type="radio" name="deliveryMethod" value="email">
+            <div class="delivery-icon">📧</div>
+            <div class="delivery-label">Email</div>
+          </div>
+          <div class="delivery-card selected" onclick="selectDelivery(this)">
+            <input type="radio" name="deliveryMethod" value="whatsapp" checked>
+            <div class="delivery-icon">📱</div>
+            <div class="delivery-label">WhatsApp</div>
+          </div>
+          <div class="delivery-card" onclick="selectDelivery(this)">
+            <input type="radio" name="deliveryMethod" value="sms">
+            <div class="delivery-icon">📲</div>
+            <div class="delivery-label">SMS</div>
+          </div>
+          <div class="delivery-card" onclick="selectDelivery(this)">
+            <input type="radio" name="deliveryMethod" value="physical">
+            <div class="delivery-icon">🖨️</div>
+            <div class="delivery-label">Physical Only</div>
+          </div>
+        </div>
+        <div class="delivery-hint">
+          <i class="fas fa-info-circle" style="margin-right: 0.25rem;"></i>
+          Auto-selected: WhatsApp (donor's preference)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Footer (sticky bottom bar for mobile) -->
+  <div class="sticky-footer">
+    <button class="btn-primary-accent" onclick="saveCollection()">
+      <i class="fas fa-check me-1"></i> Save
+    </button>
+    <button class="btn-outline-accent" onclick="saveAndNew()">
+      <i class="fas fa-plus me-1"></i> Save & New
+    </button>
+    <button class="btn-text" onclick="parent.loadContent('field-collection/collection-list')">Cancel</button>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    // Toggle accordion sections
+    function toggleSection(el) {
+      const body = el.nextElementSibling;
+      const isCollapsed = el.classList.contains('collapsed');
+
+      if (isCollapsed) {
+        el.classList.remove('collapsed');
+        body.classList.remove('collapsed');
+        body.style.maxHeight = body.scrollHeight + 'px';
+      } else {
+        body.style.maxHeight = body.scrollHeight + 'px';
+        requestAnimationFrame(function () {
+          el.classList.add('collapsed');
+          body.classList.add('collapsed');
+        });
+      }
+    }
+
+    // Payment mode card selection
+    function selectMode(card, containerId, mode) {
+      var container = document.getElementById(containerId);
+      var cards = container.querySelectorAll('.mode-card');
+      cards.forEach(function (c) {
+        c.classList.remove('selected');
+        c.querySelector('input[type="radio"]').checked = false;
+      });
+      card.classList.add('selected');
+      card.querySelector('input[type="radio"]').checked = true;
+
+      // Toggle cheque fields
+      var chequeFields = document.getElementById('chequeFields');
+      if (mode === 'cheque') {
+        chequeFields.classList.add('show');
+      } else {
+        chequeFields.classList.remove('show');
+      }
+    }
+
+    // Delivery card selection
+    function selectDelivery(card) {
+      var cards = document.getElementById('deliveryCards').querySelectorAll('.delivery-card');
+      cards.forEach(function (c) {
+        c.classList.remove('selected');
+        c.querySelector('input[type="radio"]').checked = false;
+      });
+      card.classList.add('selected');
+      card.querySelector('input[type="radio"]').checked = true;
+    }
+
+    // Toggle recurring commitment fields
+    function toggleRecurring() {
+      var toggle = document.getElementById('recurringToggle');
+      var fields = document.getElementById('recurringFields');
+      if (toggle.checked) {
+        fields.classList.add('show');
+      } else {
+        fields.classList.remove('show');
+      }
+    }
+
+    // Save collection
+    function saveCollection() {
+      showToast('Collection saved successfully');
+      setTimeout(function () {
+        parent.loadContent('field-collection/collection-list');
+      }, 1200);
+    }
+
+    // Save & New
+    function saveAndNew() {
+      showToast('Collection saved — opening new form');
+      setTimeout(function () {
+        location.reload();
+      }, 1000);
+    }
+
+    // Show toast notification
+    function showToast(message) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast-success';
+      toast.innerHTML = '<i class="fas fa-check-circle"></i> ' + message;
+      container.appendChild(toast);
+      setTimeout(function () {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s';
+        setTimeout(function () { toast.remove(); }, 300);
+      }, 2500);
+    }
+
+    // Initialize section heights
+    document.addEventListener('DOMContentLoaded', function () {
+      document.querySelectorAll('.section-body').forEach(function (body) {
+        if (!body.classList.contains('collapsed')) {
+          body.style.maxHeight = body.scrollHeight + 'px';
+        }
+      });
+    });
+  </script>
+
+</body>
+
+</html>

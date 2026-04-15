@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register Fundraiser - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --p2p-accent: #7c3aed;
+      --p2p-light: #ede9fe;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header { margin-bottom: 1.25rem; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+    .page-header .subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 0.25rem 0 0; }
+    .breadcrumb-nav { font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.375rem; }
+    .breadcrumb-nav a { color: var(--accent); text-decoration: none; font-weight: 600; cursor: pointer; }
+    .breadcrumb-nav a:hover { text-decoration: underline; }
+    .breadcrumb-nav i { font-size: 0.5rem; }
+
+    /* Step Wizard */
+    .step-wizard { display: flex; align-items: center; justify-content: center; gap: 0; margin-bottom: 1.5rem; background: white; border-radius: var(--card-radius); padding: 1.25rem 1.5rem; box-shadow: var(--card-shadow); border: 1px solid var(--border-color); flex-wrap: wrap; }
+    .step-item { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.375rem 0; }
+    .step-number { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8125rem; font-weight: 700; border: 2px solid var(--border-color); color: var(--text-secondary); background: white; transition: all 0.2s; flex-shrink: 0; }
+    .step-label { font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap; transition: color 0.2s; }
+    .step-connector { width: 40px; height: 2px; background: var(--border-color); margin: 0 0.75rem; flex-shrink: 0; transition: background 0.2s; }
+    .step-item.active .step-number { background: var(--p2p-accent); border-color: var(--p2p-accent); color: white; }
+    .step-item.active .step-label { color: var(--p2p-accent); }
+    .step-item.completed .step-number { background: var(--success-color); border-color: var(--success-color); color: white; }
+    .step-item.completed .step-label { color: var(--success-color); }
+    .step-connector.completed { background: var(--success-color); }
+
+    /* Form Card */
+    .form-card { background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); margin-bottom: 1.25rem; overflow: hidden; }
+    .form-card-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 0.5rem; }
+    .form-card-header h3 { font-size: 0.9375rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 0.5rem; }
+    .form-card-header h3 i { color: var(--p2p-accent); font-size: 1rem; }
+    .form-card-body { padding: 1.25rem; }
+
+    /* Section Title */
+    .section-title { font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 0.5rem; }
+    .section-title i { color: var(--p2p-accent); }
+
+    /* Form Controls */
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.375rem; display: block; }
+    .form-group label .required { color: var(--danger-color); }
+    .form-group .help-text { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; }
+    .form-control, .form-select { font-size: 0.8125rem; border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 0.5rem 0.75rem; }
+    .form-control:focus, .form-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14,116,144,0.1); }
+
+    /* Buttons */
+    .btn-primary-accent { background: var(--p2p-accent); border-color: var(--p2p-accent); color: white; font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1.25rem; border-radius: 0.5rem; border: 1px solid var(--p2p-accent); cursor: pointer; transition: all 0.15s; }
+    .btn-primary-accent:hover { background: #6d28d9; border-color: #6d28d9; color: white; }
+    .btn-outline-accent { background: white; border: 1px solid var(--p2p-accent); color: var(--p2p-accent); font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1.25rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.15s; }
+    .btn-outline-accent:hover { background: var(--p2p-light); }
+    .btn-outline-secondary { background: white; border: 1px solid var(--border-color); color: var(--text-secondary); font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1.25rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.15s; }
+    .btn-outline-secondary:hover { border-color: var(--text-secondary); color: var(--text-primary); }
+    .btn-sm { font-size: 0.75rem; padding: 0.375rem 0.75rem; }
+
+    /* Campaign Info Bar */
+    .campaign-info-bar { display: flex; align-items: center; gap: 1.25rem; padding: 0.75rem 1rem; background: var(--p2p-light); border: 1px solid #c4b5fd; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8125rem; flex-wrap: wrap; }
+    .campaign-info-bar .info-item { display: flex; align-items: center; gap: 0.375rem; color: var(--text-secondary); }
+    .campaign-info-bar .info-item strong { color: var(--text-primary); }
+
+    /* Contact Card */
+    .contact-search-wrapper { position: relative; }
+    .contact-result { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.5rem; margin-top: 0.5rem; }
+    .contact-avatar { width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-light)); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.875rem; font-weight: 700; flex-shrink: 0; }
+    .contact-info { flex: 1; }
+    .contact-name { font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); }
+    .contact-meta { font-size: 0.75rem; color: var(--text-secondary); }
+    .contact-badge { font-size: 0.6875rem; background: #fef3c7; color: #92400e; padding: 0.125rem 0.5rem; border-radius: 9999px; font-weight: 600; }
+
+    /* Radio Cards */
+    .radio-cards { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .radio-card { flex: 1; min-width: 200px; padding: 1rem; border: 2px solid var(--border-color); border-radius: 0.75rem; cursor: pointer; transition: all 0.15s; position: relative; }
+    .radio-card:hover { border-color: #c4b5fd; }
+    .radio-card.selected { border-color: var(--p2p-accent); background: var(--p2p-light); }
+    .radio-card .radio-icon { font-size: 1.25rem; margin-bottom: 0.5rem; }
+    .radio-card .radio-title { font-size: 0.8125rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .radio-card .radio-desc { font-size: 0.75rem; color: var(--text-secondary); line-height: 1.4; }
+    .radio-card .check-mark { position: absolute; top: 0.75rem; right: 0.75rem; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.625rem; }
+    .radio-card.selected .check-mark { background: var(--p2p-accent); color: white; }
+    .radio-card:not(.selected) .check-mark { border: 2px solid var(--border-color); color: transparent; }
+
+    /* Team Fields */
+    .team-fields { background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 0.5rem; padding: 1rem; margin-top: 0.75rem; display: none; }
+    .team-fields.visible { display: block; }
+
+    /* Upload Area */
+    .upload-area { border: 2px dashed var(--border-color); border-radius: 0.5rem; padding: 1.25rem; text-align: center; cursor: pointer; transition: all 0.15s; }
+    .upload-area:hover { border-color: var(--p2p-accent); background: var(--p2p-light); }
+    .upload-area i { font-size: 1.5rem; color: var(--text-secondary); margin-bottom: 0.5rem; display: block; }
+    .upload-area .upload-text { font-size: 0.8125rem; color: var(--text-secondary); }
+    .upload-area .upload-hint { font-size: 0.75rem; color: var(--text-secondary); opacity: 0.7; margin-top: 0.25rem; }
+    .upload-preview { margin-top: 0.5rem; display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.5rem; }
+    .upload-preview img { width: 48px; height: 48px; border-radius: 0.375rem; object-fit: cover; background: #e2e8f0; }
+    .upload-preview .file-name { font-size: 0.8125rem; font-weight: 600; flex: 1; }
+    .upload-preview .remove-btn { color: var(--danger-color); cursor: pointer; font-size: 0.75rem; }
+
+    /* URL Slug */
+    .url-display { display: flex; align-items: center; gap: 0; padding: 0; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 0.8125rem; overflow: hidden; }
+    .url-base { color: var(--text-secondary); font-weight: 400; padding: 0.5rem 0.125rem 0.5rem 0.75rem; white-space: nowrap; }
+    .url-slug-input { flex: 1; border: none; background: transparent; color: var(--p2p-accent); font-weight: 600; font-size: 0.8125rem; padding: 0.5rem 0.75rem 0.5rem 0; outline: none; }
+    .url-check { padding: 0.5rem 0.75rem; font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
+    .url-check.available { color: var(--success-color); }
+
+    /* Rich Text Editor */
+    .rich-text-mock { border: 1px solid var(--border-color); border-radius: 0.5rem; overflow: hidden; }
+    .rich-text-toolbar { display: flex; align-items: center; gap: 0.25rem; padding: 0.5rem 0.75rem; background: #f8fafc; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; }
+    .rich-text-toolbar button { width: 28px; height: 28px; border: none; background: none; color: var(--text-secondary); border-radius: 0.25rem; cursor: pointer; font-size: 0.75rem; transition: all 0.1s; display: flex; align-items: center; justify-content: center; }
+    .rich-text-toolbar button:hover { background: var(--p2p-light); color: var(--p2p-accent); }
+    .rich-text-toolbar .sep { width: 1px; height: 20px; background: var(--border-color); margin: 0 0.25rem; }
+    .rich-text-body { padding: 0.75rem; min-height: 140px; font-size: 0.8125rem; line-height: 1.6; color: var(--text-primary); }
+
+    /* Milestone Table */
+    .milestone-table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+    .milestone-table th { padding: 0.5rem 0.75rem; text-align: left; font-size: 0.6875rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid var(--border-color); }
+    .milestone-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .milestone-table .amount-input { width: 100px; }
+    .milestone-table .remove-row { color: var(--danger-color); cursor: pointer; font-size: 0.75rem; border: none; background: none; padding: 0.25rem; }
+    .milestone-table .remove-row:hover { opacity: 0.7; }
+
+    /* Amount Chips */
+    .amount-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .amount-chip { padding: 0.5rem 1rem; border: 2px solid var(--border-color); border-radius: 9999px; font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); cursor: pointer; transition: all 0.15s; background: white; display: flex; align-items: center; gap: 0.375rem; }
+    .amount-chip.active { border-color: var(--p2p-accent); background: var(--p2p-light); color: var(--p2p-accent); }
+    .amount-chip .remove-chip { font-size: 0.625rem; opacity: 0.7; cursor: pointer; }
+
+    /* Social Sharing */
+    .social-textarea-group { margin-bottom: 0.75rem; }
+    .social-textarea-group label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; font-weight: 600; margin-bottom: 0.375rem; }
+    .social-textarea-group label i { font-size: 0.875rem; }
+    .social-textarea-group label .fa-facebook { color: #1877F2; }
+    .social-textarea-group label .fa-linkedin { color: #0A66C2; }
+    .social-textarea-group label .fa-twitter, .social-textarea-group label .fa-x-twitter { color: #1DA1F2; }
+    .social-textarea-group label .fa-whatsapp { color: #25D366; }
+    .social-textarea-group textarea { width: 100%; border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.8125rem; resize: vertical; min-height: 60px; }
+    .social-textarea-group textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14,116,144,0.1); outline: none; }
+
+    /* Switch Row */
+    .form-switch-row { display: flex; align-items: center; justify-content: space-between; padding: 0.625rem 0; border-bottom: 1px solid #f1f5f9; }
+    .form-switch-row:last-child { border-bottom: none; }
+    .form-switch-row label { margin-bottom: 0; font-weight: 500; font-size: 0.8125rem; }
+    .form-switch-row .switch-desc { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.125rem; }
+    .form-check-input:checked { background-color: var(--p2p-accent); border-color: var(--p2p-accent); }
+
+    /* Summary Table */
+    .summary-table { width: 100%; font-size: 0.8125rem; }
+    .summary-table td { padding: 0.5rem 0; vertical-align: top; }
+    .summary-table td:first-child { font-weight: 600; color: var(--text-secondary); width: 140px; white-space: nowrap; padding-right: 1rem; }
+    .summary-table td:last-child { color: var(--text-primary); }
+    .summary-check { color: var(--success-color); margin-right: 0.25rem; }
+
+    /* Mini Preview */
+    .mini-preview { border: 1px solid var(--border-color); border-radius: 0.75rem; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.08); max-width: 440px; margin: 1rem auto; }
+    .mini-preview-cover { height: 120px; background: linear-gradient(135deg, rgba(124,58,237,0.85), rgba(14,116,144,0.85)); display: flex; align-items: center; justify-content: center; color: white; flex-direction: column; text-align: center; padding: 1rem; }
+    .mini-preview-cover i { font-size: 2rem; opacity: 0.4; margin-bottom: 0.25rem; }
+    .mini-preview-body { padding: 1rem 1.25rem; }
+    .mini-preview-title { font-size: 1rem; font-weight: 800; margin-bottom: 0.125rem; }
+    .mini-preview-by { font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.75rem; }
+    .mini-preview-progress { margin-bottom: 0.75rem; }
+    .mini-preview-progress .prog-info { display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 0.25rem; }
+    .mini-preview-progress .prog-info .raised { font-weight: 700; color: var(--p2p-accent); }
+    .mini-preview-progress .prog-info .goal { color: var(--text-secondary); }
+    .mini-preview-progress .prog-bar { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+    .mini-preview-progress .prog-fill { height: 100%; width: 24%; background: linear-gradient(90deg, var(--p2p-accent), var(--accent)); border-radius: 4px; }
+    .mini-preview-donate { width: 100%; padding: 0.625rem; background: var(--p2p-accent); color: white; border: none; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 700; cursor: default; margin-bottom: 0.75rem; text-align: center; }
+    .mini-preview-story { font-size: 0.75rem; color: var(--text-secondary); line-height: 1.5; font-style: italic; }
+    .mini-preview-donors { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px solid #f1f5f9; }
+
+    /* Notification Checkboxes */
+    .notification-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .notification-item { display: flex; align-items: flex-start; gap: 0.5rem; font-size: 0.8125rem; }
+    .notification-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--p2p-accent); margin-top: 2px; flex-shrink: 0; }
+
+    /* Success Screen */
+    .success-screen { display: none; text-align: center; padding: 2rem 1.5rem; }
+    .success-screen.visible { display: block; }
+    .success-icon { width: 72px; height: 72px; border-radius: 50%; background: #f0fdf4; color: var(--success-color); font-size: 2rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; }
+    .success-screen h2 { font-size: 1.375rem; font-weight: 800; margin-bottom: 0.25rem; }
+    .success-screen .success-subtitle { font-size: 0.9375rem; color: var(--text-secondary); margin-bottom: 1.25rem; }
+    .success-url-box { display: inline-flex; align-items: center; gap: 0.5rem; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 0.625rem 1rem; margin-bottom: 1rem; font-size: 0.8125rem; }
+    .success-url-box .url-text { color: var(--p2p-accent); font-weight: 600; }
+    .success-url-box button { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 2px 6px; border-radius: 4px; }
+    .success-url-box button:hover { color: var(--p2p-accent); background: var(--p2p-light); }
+    .success-actions { display: flex; gap: 0.5rem; justify-content: center; margin-top: 1rem; flex-wrap: wrap; }
+    .success-share { display: flex; gap: 0.5rem; justify-content: center; margin: 1rem 0; flex-wrap: wrap; }
+    .share-btn { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.5rem 0.875rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 600; color: white; border: none; cursor: pointer; transition: opacity 0.15s; }
+    .share-btn:hover { opacity: 0.9; }
+    .share-btn.facebook { background: #1877F2; }
+    .share-btn.twitter { background: #1DA1F2; }
+    .share-btn.whatsapp { background: #25D366; }
+    .share-btn.email-share { background: #6b7280; }
+
+    /* Form Footer */
+    .form-footer { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-top: 1px solid var(--border-color); background: #fafafa; flex-wrap: wrap; gap: 0.5rem; }
+    .form-footer-left { display: flex; gap: 0.5rem; }
+    .form-footer-right { display: flex; gap: 0.5rem; }
+
+    /* Step content */
+    .step-content { display: none; }
+    .step-content.active { display: block; }
+
+    /* Matching fields */
+    .matching-fields { background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 0.5rem; padding: 1rem; margin-top: 0.5rem; display: none; }
+    .matching-fields.visible { display: block; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .step-wizard { padding: 1rem; gap: 0.25rem; }
+      .step-connector { width: 20px; margin: 0 0.25rem; }
+      .step-label { display: none; }
+      .radio-cards { flex-direction: column; }
+      .mini-preview { max-width: 100%; }
+      .campaign-info-bar { flex-direction: column; gap: 0.5rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb-nav">
+    <a onclick="parent.loadContent('fundraising/p2p-campaign-list')">P2P Campaigns</a>
+    <i class="fas fa-chevron-right"></i>
+    <a onclick="parent.loadContent('fundraising/p2p-campaign-setup')">Ramadan Marathon 2026</a>
+    <i class="fas fa-chevron-right"></i>
+    <span>Register Fundraiser</span>
+  </div>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1><i class="fas fa-user-plus" style="color:var(--p2p-accent);margin-right:0.5rem;font-size:1.25rem"></i>Register Fundraiser</h1>
+    <p class="subtitle">Set up a fundraising page for a supporter</p>
+  </div>
+
+  <!-- Step Wizard -->
+  <div class="step-wizard">
+    <div class="step-item active" onclick="goToStep(1)">
+      <div class="step-number">1</div>
+      <div class="step-label">Campaign & Identity</div>
+    </div>
+    <div class="step-connector"></div>
+    <div class="step-item" onclick="goToStep(2)">
+      <div class="step-number">2</div>
+      <div class="step-label">Page Setup</div>
+    </div>
+    <div class="step-connector"></div>
+    <div class="step-item" onclick="goToStep(3)">
+      <div class="step-number">3</div>
+      <div class="step-label">Donation Settings</div>
+    </div>
+    <div class="step-connector"></div>
+    <div class="step-item" onclick="goToStep(4)">
+      <div class="step-number">4</div>
+      <div class="step-label">Review & Activate</div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- STEP 1: Campaign & Fundraiser Identity       -->
+  <!-- ============================================ -->
+  <div class="step-content active" id="step1">
+    <div class="form-card">
+      <div class="form-card-header">
+        <h3><i class="fas fa-bullhorn"></i> Select Campaign</h3>
+      </div>
+      <div class="form-card-body">
+        <div class="form-group">
+          <label>Campaign <span class="required">*</span></label>
+          <select class="form-select" onchange="toggleCampaignInfo(this)">
+            <option value="">Select a P2P campaign...</option>
+            <option value="ramadan" selected>Ramadan Marathon 2026</option>
+            <option value="run-edu">Run for Education 2026</option>
+            <option value="walk-hope">Walk of Hope — Spring 2026</option>
+          </select>
+        </div>
+        <div class="campaign-info-bar" id="campaignInfoBar">
+          <div class="info-item">
+            <i class="fas fa-bullseye" style="color:var(--p2p-accent)"></i>
+            Campaign goal: <strong>$100,000</strong>
+          </div>
+          <div class="info-item">
+            <i class="fas fa-users" style="color:var(--accent)"></i>
+            Active fundraisers: <strong>34</strong>
+          </div>
+          <div class="info-item">
+            <i class="fas fa-calendar-alt" style="color:var(--warning-color)"></i>
+            Ends: <strong>Apr 30, 2026</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-header">
+        <h3><i class="fas fa-address-book"></i> Link to Contact</h3>
+      </div>
+      <div class="form-card-body">
+        <div class="form-group contact-search-wrapper">
+          <label>Search existing contacts</label>
+          <div style="position:relative">
+            <i class="fas fa-search" style="position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);color:var(--text-secondary);font-size:0.875rem"></i>
+            <input type="text" class="form-control" style="padding-left:2.25rem" placeholder="Search by name, email, phone..." value="Khalid Al-Mansouri" id="contactSearch">
+          </div>
+          <div class="contact-result" id="contactResult">
+            <div class="contact-avatar">KA</div>
+            <div class="contact-info">
+              <div class="contact-name">
+                Khalid Al-Mansouri <span style="font-weight:400;color:var(--text-secondary);font-size:0.75rem">(CON-1245)</span>
+              </div>
+              <div class="contact-meta">
+                <span class="contact-badge"><i class="fas fa-gem" style="font-size:0.5rem;margin-right:2px"></i> Platinum Member</span>
+                &nbsp; $42,500 lifetime donor
+              </div>
+            </div>
+            <button class="btn-sm" style="border:1px solid var(--border-color);background:white;border-radius:0.375rem;padding:0.25rem 0.5rem;cursor:pointer;font-size:0.6875rem;color:var(--text-secondary)" onclick="parent.loadContent('contacts/contact-detail')" title="View Contact">
+              <i class="fas fa-external-link-alt"></i>
+            </button>
+          </div>
+        </div>
+        <div style="margin-top:0.5rem">
+          <button class="btn-outline-secondary btn-sm"><i class="fas fa-plus me-1"></i> New Contact</button>
+          <span class="help-text" style="margin-left:0.5rem">If supporter is not in the system</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-header">
+        <h3><i class="fas fa-id-card"></i> Fundraiser Details</h3>
+      </div>
+      <div class="form-card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>First Name <span class="required">*</span></label>
+              <input type="text" class="form-control" value="Khalid" placeholder="First name">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Last Name <span class="required">*</span></label>
+              <input type="text" class="form-control" value="Al-Mansouri" placeholder="Last name">
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Email <span class="required">*</span></label>
+              <input type="email" class="form-control" value="khalid@example.com" placeholder="Email address">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="tel" class="form-control" value="+971 50 123 4567" placeholder="Phone number">
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Profile Photo</label>
+          <div class="help-text" style="margin-bottom:0.5rem">Shown on their fundraising page. Pulled from contact record if available.</div>
+          <div class="upload-preview">
+            <img src="" alt="" style="background:linear-gradient(135deg,var(--accent),var(--accent-light));display:flex;align-items:center;justify-content:center">
+            <span class="file-name">khalid-profile.jpg <span style="color:var(--text-secondary);font-weight:400">(from contact)</span></span>
+            <span class="remove-btn"><i class="fas fa-times"></i></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-header">
+        <h3><i class="fas fa-users-cog"></i> Fundraiser Type</h3>
+      </div>
+      <div class="form-card-body">
+        <div class="radio-cards">
+          <div class="radio-card selected" onclick="selectFundraiserType('individual', this)">
+            <div class="check-mark"><i class="fas fa-check"></i></div>
+            <div class="radio-icon"><i class="fas fa-user" style="color:var(--p2p-accent)"></i></div>
+            <div class="radio-title">Individual</div>
+            <div class="radio-desc">One person fundraising on their own personal page</div>
+          </div>
+          <div class="radio-card" onclick="selectFundraiserType('team', this)">
+            <div class="check-mark"><i class="fas fa-check"></i></div>
+            <div class="radio-icon"><i class="fas fa-people-group" style="color:var(--p2p-accent)"></i></div>
+            <div class="radio-title">Team</div>
+            <div class="radio-desc">Group fundraising — company team, family, or community group</div>
+          </div>
+        </div>
+        <div class="team-fields" id="teamFields">
+          <div class="section-title"><i class="fas fa-users"></i> Team Information</div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Team Name <span class="required">*</span></label>
+                <input type="text" class="form-control" placeholder="e.g., Dubai Runners Club">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>Team Size</label>
+                <input type="number" class="form-control" placeholder="8" min="2">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>Team Captain</label>
+                <input type="text" class="form-control" value="Khalid Al-Mansouri" disabled>
+                <div class="help-text">Auto-assigned to current fundraiser</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step Footer -->
+    <div class="form-card" style="overflow:hidden">
+      <div class="form-footer">
+        <div class="form-footer-left"></div>
+        <div class="form-footer-right">
+          <button class="btn-primary-accent" onclick="goToStep(2)">Next <i class="fas fa-arrow-right ms-1"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- STEP 2: Fundraising Page Setup               -->
+  <!-- ============================================ -->
+  <div class="step-content" id="step2">
+    <div class="form-card">
+      <div class="form-card-header">
+        <h3><i class="fas fa-heading"></i> Page Title & Goal</h3>
+      </div>
+      <div class="form-card-body">
+        <div class="form-group">
+          <label>Page Title <span class="required">*</span></label>
+          <input type="text" class="form-control" value="Khalid's Marathon for Orphan Care" placeholder="e.g., Sarah's Run for Clean Water">
+          <div class="help-text">This appears as the headline on your fundraising page</div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Personal Goal <span class="required">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text" style="font-size:0.8125rem;background:#f8fafc">$</span>
+                <input type="number" class="form-control" value="5000" placeholder="Amount">
+                <select class="form-select" style="max-width:90px">
+                  <option>USD</option>
+                  <option>AED</option>
+                  <option>GBP</option>
+                  <option>EUR</option>
+                </select>
+              </div>
+              <div class="help-text">Campaign minimum: $500 | Campaign suggested: $2,000</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group" style="padding-top:1.75rem">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="goalVisible" checked>
+                <label class="form-check-label" for="goalVisible" style="font-size:0.8125rem">Make goal visible on page</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-header">
+        <h3><i class="fas fa-link"></i> Custom URL Slug</h3>
+      </div>
+      <div class="form-card-body">
+        <div class="form-group">
+          <div class="url-display">
+            <span class="url-base">ghf.org/fundraise/ramadan-2026/</span>
+            <input type="text" class="url-slug-input" value="khalid-marathon" placeholder="your-custom-slug">
+            <span class="url-check available"><i class="fas fa-check-circle me-1"></i> Available</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-header">
+        <h3><i class="fas fa-pen-fancy"></i> Personal Story</h3>
+      </div>
+      <div class="form-card-body">
+        <div class="form-group">
+          <label>Tell donors why you're fundraising <span class="required">*</span></label>
+          <div class="rich-text-mock">
+            <div class="rich-text-toolbar">
+              <button title="Bold"><i class="fas fa-bold"></i></button>
+              <button title="Italic"><i class="fas fa-italic"></i></button>
+              <button title="Underline"><i class="fas fa-underline"></i></button>
+              <div class="sep"></div>
+              <button title="Bullet List"><i class="fas fa-list-ul"></i></button>
+              <button title="Numbered List"><i class="fas fa-list-ol"></i></button>
+              <div class="sep"></div>
+              <button title="Link"><i class="fas fa-link"></i></button>
+            </div>
+            <div class="rich-text-body">
+              <p>I'm running the Dubai Marathon on April 25th to raise money for orphan care — a cause that has been close to my heart ever since I volunteered at a children's home in 2019.</p>
+              <p>Every dollar you donate goes directly toward providing <strong>education, healthcare, and safe housing</strong> for orphaned children in the region. Here's what your donation can do:</p>
+              <ul>
+                <li>$25 provides school supplies for one child for a month</li>
+                <li>$100 covers healthcare for one child for a quarter</li>
+                <li>$500 sponsors a child's full education for a semester</li>
+              </ul>
+              <p>I've set a goal of $5,000, and I truly believe we can reach it together. Every donation, no matter how small, makes a real difference.</p>
+            </div>
+          </div>
+          <div class="help-text" style="display:flex;justify-content:space-between;margin-top:0.375rem">
+            <span>200-500 words recommended</span>
+            <span style="color:var(--success-color);font-weight:600">345 words</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-header">
+        <h3><i class="fas fa-image"></i> Cover Photo / Video</h3>
+      </div>
+      <div class="form-card-body">
+        <div class="row">
+          <div class="col-md-7">
+            <div class="form-group">
+              <label>Upload Cover Image</label>
+              <div class="upload-preview">
+                <img src="" alt="" style="width:64px;height:40px;background:linear-gradient(135deg,#7c3aed,#0e7490);border-radius:0.25rem">
+                <span class="file-name">marathon-cover-2026.jpg <span style="color:var(--text-secondary);font-weight:400">(1200x630)</span></span>
+                <span class="remove-btn"><i class="fas fa-times"></i></span>
+              </div>
+              <div class="help-text">Recommended: 1200 x 630px</div>
+            </div>
+          </div>
+          <div class="col-md-5">
+            <div class="form-group">
+              <label>Or Video URL</label>
+              <input type="url" class="form-control" placeholder="YouTube or Vimeo URL">
+              <div class="help-text">Default: Campaign banner if not uploaded</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-header">
+        <h3><i class="fas fa-trophy"></i> Milestones <span style="font-weight:400;color:var(--text-secondary);font-size:0.75rem;margin-left:0.5rem">(optional — gamification)</span></h3>
+      </div>
+      <div class="form-card-body">
+        <div class="form-group" style="margin-bottom:0.75rem">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="campaignMilestones">
+            <label class="form-check-label" for="campaignMilestones" style="font-size:0.8125rem">Use campaign default milestones</label>
+          </div>
+        </div>
+        <table class="milestone-table" id="milestoneTable">
+          <thead>
+            <tr>
+              <th style="width:120px">Amount</th>
+              <th>Milestone Message</th>
+              <th style="width:40px"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input type="text" class="form-control amount-input" value="$500"></td>
+              <td><input type="text" class="form-control" value="First milestone! 10% of my goal!"></td>
+              <td><button class="remove-row"><i class="fas fa-trash-alt"></i></button></td>
+            </tr>
+            <tr>
+              <td><input type="text" class="form-control amount-input" value="$2,500"></td>
+              <td><input type="text" class="form-control" value="Halfway there! Every donation counts!"></td>
+              <td><button class="remove-row"><i class="fas fa-trash-alt"></i></button></td>
+            </tr>
+            <tr>
+              <td><input type="text" class="form-control amount-input" value="$5,000"></td>
+              <td><input type="text" class="form-control" value="Goal reached! You made this possible!"></td>
+              <td><button class="remove-row"><i class="fas fa-trash-alt"></i></button></td>
+            </tr>
+          </tbody>
+        </table>
+        <button class="btn-outline-secondary btn-sm" style="margin-top:0.75rem" onclick="addMilestone()"><i class="fas fa-plus me-1"></i> Add Milestone</button>
+      </div>
+    </div>
+
+    <!-- Step Footer -->
+    <div class="form-card" style="overflow:hidden">
+      <div class="form-footer">
+        <div class="form-footer-left">
+          <button class="btn-outline-secondary" onclick="goToStep(1)"><i class="fas fa-arrow-left me-1"></i> Back</button>
+        </div>
+        <div class="form-footer-right">
+          <button class="btn-primary-accent" onclick="goToStep(3)">Next <i class="fas fa-arrow-right ms-1"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- STEP 3: Donation Settings                    -->
+  <!-- ============================================ -->
+  <div class="step-content" id="step3">
+    <div class="form-card">
+      <div class="form-card-header">
+        <h3><i class="fas fa-hand-holding-usd"></i> Suggested Donation Amounts</h3>
+      </div>
+      <div class="form-card-body">
+        <div class="form-group" style="margin-bottom:0.75rem">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="donationAmounts" id="campaignDefaults" checked>
+            <label class="form-check-label" for="campaignDefaults" style="font-size:0.8125rem">Use campaign defaults</label>
+          </div>
+          <div class="amount-chips" style="margin-top:0.5rem;margin-left:1.5rem">
+            <span class="amount-chip active">$25</span>
+            <span class="amount-chip active">$50</span>
+            <span class="amount-chip active">$100</span>
+            <span class="amount-chip active">$250</span>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:0.75rem">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="donationAmounts" id="customAmounts">
+            <label class="form-check-label" for="customAmounts" style="font-size:0.8125rem">Custom amounts</label>
+          </div>
+          <div class="amount-chips" style="margin-top:0.5rem;margin-left:1.5rem;opacity:0.5">
+            <span class="amount-chip">$50</span>
+            <span class="amount-chip">$100</span>
+            <span class="amount-chip">$250</span>
+            <span class="amount-chip">$500</span>
+          </div>
+        </div>
+        <div class="form-check" style="margin-top:0.75rem">
+          <input class="form-check-input" type="checkbox" id="allowCustom" checked>
+          <label class="form-check-label" for="allowCustom" style="font-size:0.8125rem">Allow custom/other amount</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-header">
+        <h3><i class="fas fa-handshake"></i> Matching</h3>
+      </div>
+      <div class="form-card-body">
+        <div class="form-switch-row">
+          <div>
+            <label>Employer matching enabled</label>
+            <div class="switch-desc">Enable employer donation matching for this fundraiser</div>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="matchingToggle" onchange="toggleMatching()">
+          </div>
+        </div>
+        <div class="matching-fields" id="matchingFields">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Company Name</label>
+                <input type="text" class="form-control" placeholder="e.g., Acme Corporation">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Match Ratio</label>
+                <select class="form-select">
+                  <option selected>1:1</option>
+                  <option>2:1</option>
+                  <option>3:1</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-header">
+        <h3><i class="fas fa-money-bill-wave"></i> Offline Donations</h3>
+      </div>
+      <div class="form-card-body">
+        <div class="form-switch-row">
+          <div>
+            <label>Allow fundraiser to log offline/cash donations</label>
+            <div class="switch-desc">Fundraiser can manually add donations collected in person (requires admin approval)</div>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="offlineToggle" checked>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-header">
+        <h3><i class="fas fa-heart"></i> Thank You Message</h3>
+      </div>
+      <div class="form-card-body">
+        <div class="form-group" style="margin-bottom:0.75rem">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="defaultThankYou">
+            <label class="form-check-label" for="defaultThankYou" style="font-size:0.8125rem">Use campaign default thank-you message</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Custom Message</label>
+          <textarea class="form-control" rows="3" style="resize:vertical">Thank you for supporting my fundraiser! Your generosity brings us closer to our goal. Every donation directly helps provide education, healthcare, and safe housing for orphaned children.</textarea>
+          <div class="help-text">Auto-sent to each donor after they give through this page</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-header">
+        <h3><i class="fas fa-share-alt"></i> Social Sharing</h3>
+      </div>
+      <div class="form-card-body">
+        <div class="help-text" style="margin-bottom:1rem">Pre-filled social messages the fundraiser can edit before sharing</div>
+
+        <div class="social-textarea-group">
+          <label><i class="fab fa-facebook"></i><i class="fab fa-linkedin" style="margin-left:-0.25rem"></i> Facebook / LinkedIn</label>
+          <textarea>I'm fundraising for Ramadan Marathon 2026 — help me reach my $5,000 goal! Every dollar provides education, healthcare, and safe housing for orphaned children. Donate here: ghf.org/fundraise/ramadan-2026/khalid-marathon</textarea>
+        </div>
+
+        <div class="social-textarea-group">
+          <label><i class="fab fa-x-twitter"></i> Twitter / X</label>
+          <textarea>Running the Dubai Marathon for @GHF_org orphan care! Help me reach $5,000 → ghf.org/fundraise/ramadan-2026/khalid-marathon #RamadanGiving</textarea>
+        </div>
+
+        <div class="social-textarea-group">
+          <label><i class="fab fa-whatsapp"></i> WhatsApp / SMS</label>
+          <textarea>Hi! I'm raising $5,000 for orphan care through the Ramadan Marathon. Any amount helps! Donate here: ghf.org/fundraise/ramadan-2026/khalid-marathon</textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step Footer -->
+    <div class="form-card" style="overflow:hidden">
+      <div class="form-footer">
+        <div class="form-footer-left">
+          <button class="btn-outline-secondary" onclick="goToStep(2)"><i class="fas fa-arrow-left me-1"></i> Back</button>
+        </div>
+        <div class="form-footer-right">
+          <button class="btn-primary-accent" onclick="goToStep(4)">Next <i class="fas fa-arrow-right ms-1"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- STEP 4: Review & Activate                    -->
+  <!-- ============================================ -->
+  <div class="step-content" id="step4">
+
+    <!-- Summary -->
+    <div class="form-card">
+      <div class="form-card-header">
+        <h3><i class="fas fa-clipboard-check"></i> Summary</h3>
+      </div>
+      <div class="form-card-body">
+        <table class="summary-table">
+          <tr>
+            <td>Campaign</td>
+            <td>Ramadan Marathon 2026</td>
+          </tr>
+          <tr>
+            <td>Fundraiser</td>
+            <td>Khalid Al-Mansouri <span style="color:var(--text-secondary);font-size:0.75rem">(CON-1245)</span></td>
+          </tr>
+          <tr>
+            <td>Type</td>
+            <td>Individual</td>
+          </tr>
+          <tr>
+            <td>Goal</td>
+            <td>$5,000 (USD)</td>
+          </tr>
+          <tr>
+            <td>Page URL</td>
+            <td><span style="color:var(--p2p-accent);font-weight:600">ghf.org/fundraise/ramadan-2026/khalid-marathon</span></td>
+          </tr>
+          <tr>
+            <td>Story</td>
+            <td><span class="summary-check"><i class="fas fa-check-circle"></i></span> Written (345 words)</td>
+          </tr>
+          <tr>
+            <td>Cover Photo</td>
+            <td><span class="summary-check"><i class="fas fa-check-circle"></i></span> Uploaded</td>
+          </tr>
+          <tr>
+            <td>Milestones</td>
+            <td>3 custom milestones</td>
+          </tr>
+          <tr>
+            <td>Thank-you</td>
+            <td>Custom message</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Page Preview -->
+    <div class="form-card">
+      <div class="form-card-header">
+        <h3><i class="fas fa-eye"></i> Page Preview</h3>
+      </div>
+      <div class="form-card-body" style="background:#f8fafc;padding:1.5rem">
+        <div class="mini-preview">
+          <div class="mini-preview-cover">
+            <i class="fas fa-image"></i>
+            <div style="font-size:0.6875rem;opacity:0.7">marathon-cover-2026.jpg</div>
+          </div>
+          <div class="mini-preview-body">
+            <div class="mini-preview-title">Khalid's Marathon for Orphan Care</div>
+            <div class="mini-preview-by">by Khalid Al-Mansouri</div>
+            <div class="mini-preview-progress">
+              <div class="prog-info">
+                <span class="raised">$1,200 raised</span>
+                <span class="goal">of $5,000 goal</span>
+              </div>
+              <div class="prog-bar">
+                <div class="prog-fill"></div>
+              </div>
+              <div style="text-align:right;font-size:0.6875rem;color:var(--text-secondary);margin-top:0.125rem">24%</div>
+            </div>
+            <div class="mini-preview-donate">Donate Now</div>
+            <div class="mini-preview-story">"I'm running the Dubai Marathon on April 25th to raise money for orphan care..." <span style="color:var(--p2p-accent);cursor:pointer">Read more</span></div>
+            <div class="mini-preview-donors">
+              <div style="font-weight:600;color:var(--text-primary);margin-bottom:0.25rem">Recent Donors</div>
+              <span style="font-style:italic">(will appear here after launch)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activation Options -->
+    <div class="form-card">
+      <div class="form-card-header">
+        <h3><i class="fas fa-rocket"></i> Activation Options</h3>
+      </div>
+      <div class="form-card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Status</label>
+              <select class="form-select" id="activationStatus" onchange="toggleSchedule()">
+                <option value="activate" selected>Activate Now</option>
+                <option value="draft">Save as Draft</option>
+                <option value="schedule">Schedule Activation</option>
+              </select>
+            </div>
+            <div class="form-group" id="scheduleDate" style="display:none">
+              <label>Go Live Date</label>
+              <input type="date" class="form-control" value="2026-04-20">
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title" style="margin-top:1rem"><i class="fas fa-bell"></i> Notifications</div>
+        <div class="notification-list">
+          <label class="notification-item">
+            <input type="checkbox" checked>
+            <span>Send welcome email to fundraiser with page link and tips</span>
+          </label>
+          <label class="notification-item">
+            <input type="checkbox" checked>
+            <span>Send fundraiser toolkit (images, sample messages, social graphics)</span>
+          </label>
+          <label class="notification-item">
+            <input type="checkbox">
+            <span>Notify campaign manager</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step Footer -->
+    <div class="form-card" style="overflow:hidden">
+      <div class="form-footer">
+        <div class="form-footer-left">
+          <button class="btn-outline-secondary" onclick="goToStep(3)"><i class="fas fa-arrow-left me-1"></i> Back</button>
+        </div>
+        <div class="form-footer-right">
+          <button class="btn-outline-accent" onclick="saveDraft()"><i class="fas fa-save me-1"></i> Save as Draft</button>
+          <button class="btn-primary-accent" onclick="activateFundraiser()"><i class="fas fa-rocket me-1"></i> Activate Fundraiser Page</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- SUCCESS SCREEN                               -->
+  <!-- ============================================ -->
+  <div class="success-screen" id="successScreen">
+    <div class="form-card" style="max-width:560px;margin:0 auto">
+      <div class="form-card-body" style="padding:2.5rem 2rem;text-align:center">
+        <div class="success-icon">
+          <i class="fas fa-check"></i>
+        </div>
+        <h2>Fundraiser Page Created!</h2>
+        <p class="success-subtitle">Khalid's Marathon for Orphan Care is now live!</p>
+
+        <div style="margin-bottom:1.25rem">
+          <div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:0.375rem">Page URL</div>
+          <div class="success-url-box">
+            <span class="url-text">ghf.org/fundraise/ramadan-2026/khalid-marathon</span>
+            <button title="Copy Link" onclick="copyUrl()"><i class="fas fa-copy"></i></button>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:0.5rem;justify-content:center;margin-bottom:1.5rem">
+          <button class="btn-primary-accent" onclick="parent.loadContent('fundraising/p2p-fundraiser-page')"><i class="fas fa-external-link-alt me-1"></i> Open Page</button>
+          <button class="btn-outline-accent" onclick="copyUrl()"><i class="fas fa-link me-1"></i> Copy Link</button>
+        </div>
+
+        <div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:0.5rem;font-weight:600">Share</div>
+        <div class="success-share">
+          <button class="share-btn facebook"><i class="fab fa-facebook-f"></i> Facebook</button>
+          <button class="share-btn twitter"><i class="fab fa-x-twitter"></i> Twitter</button>
+          <button class="share-btn whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+          <button class="share-btn email-share"><i class="fas fa-envelope"></i> Email</button>
+        </div>
+
+        <div style="border-top:1px solid var(--border-color);padding-top:1.25rem;margin-top:1rem;display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap">
+          <button class="btn-outline-secondary" onclick="parent.loadContent('fundraising/p2p-fundraiser-list')"><i class="fas fa-list me-1"></i> View in Fundraiser List</button>
+          <button class="btn-outline-accent" onclick="resetForm()"><i class="fas fa-plus me-1"></i> Register Another Fundraiser</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentStep = 1;
+
+    function goToStep(step) {
+      if (step < 1 || step > 4) return;
+
+      // Hide all step contents
+      document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+
+      // Show target step
+      document.getElementById('step' + step).classList.add('active');
+
+      // Update wizard indicators
+      const items = document.querySelectorAll('.step-item');
+      const connectors = document.querySelectorAll('.step-connector');
+
+      items.forEach((item, i) => {
+        item.classList.remove('active', 'completed');
+        if (i + 1 === step) {
+          item.classList.add('active');
+        } else if (i + 1 < step) {
+          item.classList.add('completed');
+          item.querySelector('.step-number').innerHTML = '<i class="fas fa-check"></i>';
+        } else {
+          item.querySelector('.step-number').textContent = i + 1;
+        }
+      });
+
+      connectors.forEach((conn, i) => {
+        conn.classList.toggle('completed', i + 1 < step);
+      });
+
+      currentStep = step;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function selectFundraiserType(type, el) {
+      document.querySelectorAll('.radio-card').forEach(card => card.classList.remove('selected'));
+      el.classList.add('selected');
+      const teamFields = document.getElementById('teamFields');
+      if (type === 'team') {
+        teamFields.classList.add('visible');
+      } else {
+        teamFields.classList.remove('visible');
+      }
+    }
+
+    function toggleCampaignInfo(select) {
+      const bar = document.getElementById('campaignInfoBar');
+      bar.style.display = select.value ? 'flex' : 'none';
+    }
+
+    function toggleMatching() {
+      const fields = document.getElementById('matchingFields');
+      const toggle = document.getElementById('matchingToggle');
+      fields.classList.toggle('visible', toggle.checked);
+    }
+
+    function toggleSchedule() {
+      const status = document.getElementById('activationStatus').value;
+      const dateField = document.getElementById('scheduleDate');
+      dateField.style.display = status === 'schedule' ? 'block' : 'none';
+    }
+
+    function addMilestone() {
+      const tbody = document.querySelector('#milestoneTable tbody');
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><input type="text" class="form-control amount-input" placeholder="$0"></td>
+        <td><input type="text" class="form-control" placeholder="Milestone message..."></td>
+        <td><button class="remove-row" onclick="this.closest('tr').remove()"><i class="fas fa-trash-alt"></i></button></td>
+      `;
+      tbody.appendChild(row);
+    }
+
+    function activateFundraiser() {
+      // Hide wizard and all steps
+      document.querySelector('.step-wizard').style.display = 'none';
+      document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+
+      // Show success screen
+      document.getElementById('successScreen').classList.add('visible');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function saveDraft() {
+      alert('Fundraiser saved as draft. You can continue editing later from the Fundraiser List.');
+      parent.loadContent('fundraising/p2p-fundraiser-list');
+    }
+
+    function copyUrl() {
+      const url = 'ghf.org/fundraise/ramadan-2026/khalid-marathon';
+      navigator.clipboard.writeText(url).catch(() => {});
+      const btn = event.currentTarget;
+      const originalHtml = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-check" style="color:var(--success-color)"></i>';
+      setTimeout(() => { btn.innerHTML = originalHtml; }, 1500);
+    }
+
+    function resetForm() {
+      document.getElementById('successScreen').classList.remove('visible');
+      document.querySelector('.step-wizard').style.display = 'flex';
+
+      // Reset wizard
+      const items = document.querySelectorAll('.step-item');
+      const connectors = document.querySelectorAll('.step-connector');
+      items.forEach((item, i) => {
+        item.classList.remove('active', 'completed');
+        item.querySelector('.step-number').textContent = i + 1;
+      });
+      items[0].classList.add('active');
+      connectors.forEach(c => c.classList.remove('completed'));
+
+      document.getElementById('step1').classList.add('active');
+      currentStep = 1;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  </script>
+
+</body>
+</html>

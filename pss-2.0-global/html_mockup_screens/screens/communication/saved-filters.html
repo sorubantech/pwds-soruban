@@ -1,0 +1,1657 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saved Filters - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    /* Buttons */
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #0c6577;
+      border-color: #0c6577;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-secondary:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+      color: var(--text-primary);
+    }
+
+    /* List Card */
+    .list-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      flex-wrap: wrap;
+      background: #f8fafc;
+    }
+
+    .filter-bar .search-input {
+      position: relative;
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .filter-bar .search-input i {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .filter-bar .search-input input {
+      width: 100%;
+      padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .filter-bar .search-input input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .filter-bar select {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      background: white;
+      cursor: pointer;
+    }
+
+    .filter-bar select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Data Table */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .data-table thead th {
+      padding: 0.75rem 1rem;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border-color);
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .data-table tbody td {
+      padding: 0.75rem 1rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+
+    .data-table tbody tr:hover { background: #f8fafc; }
+    .data-table tbody tr:last-child td { border-bottom: none; }
+
+    .conditions-summary {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      max-width: 240px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .matching-count {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .matching-count .refresh-icon {
+      font-size: 0.625rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+
+    .matching-count .refresh-icon:hover { color: var(--accent); }
+
+    .used-in-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+    }
+
+    .used-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-decoration: none;
+    }
+
+    .used-badge:hover { transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+
+    .used-badge.campaign { background: #dbeafe; color: #1e40af; }
+    .used-badge.workflow { background: #fef3c7; color: #92400e; }
+    .used-badge.report { background: #f3e8ff; color: #6b21a8; }
+    .used-badge.export { background: #dcfce7; color: #166534; }
+    .used-badge.none { background: #f1f5f9; color: #94a3b8; cursor: default; }
+    .used-badge.none:hover { transform: none; box-shadow: none; }
+
+    .category-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.1875rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+    }
+
+    .cat-campaign { background: #dbeafe; color: #1e40af; }
+    .cat-automation { background: #fef3c7; color: #92400e; }
+    .cat-report { background: #f3e8ff; color: #6b21a8; }
+    .cat-export { background: #dcfce7; color: #166534; }
+    .cat-general { background: #f1f5f9; color: #64748b; }
+
+    .entity-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .action-link {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent);
+      cursor: pointer;
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .action-link:hover { color: #0c6577; text-decoration: underline; }
+    .action-link.danger { color: var(--danger-color); }
+    .action-link.danger:hover { color: #b91c1c; }
+
+    .action-sep { color: var(--border-color); margin: 0 0.2rem; }
+
+    .table-responsive { overflow-x: auto; }
+
+    /* ===== Filter Builder (full-page view) ===== */
+    .builder-view { display: none; }
+    .builder-view.show { display: block; }
+    .list-view.hide { display: none; }
+
+    .builder-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      text-decoration: none;
+      margin-bottom: 1rem;
+      transition: color 0.15s;
+    }
+
+    .builder-back:hover { color: var(--accent); }
+
+    .builder-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+    }
+
+    .builder-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .builder-header h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .builder-body {
+      display: flex;
+      gap: 0;
+    }
+
+    .builder-left {
+      flex: 3;
+      padding: 1.5rem;
+      border-right: 1px solid var(--border-color);
+      min-width: 0;
+    }
+
+    .builder-right {
+      flex: 2;
+      padding: 1.5rem;
+      background: #f8fafc;
+      min-width: 300px;
+    }
+
+    .builder-section-label {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .builder-input {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .builder-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .builder-select {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--text-primary);
+      background: white;
+      cursor: pointer;
+    }
+
+    .builder-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    textarea.builder-input {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    /* Entity Selection Radio Cards */
+    .entity-cards {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .entity-card {
+      flex: 1;
+      min-width: 140px;
+      padding: 0.75rem 1rem;
+      border: 2px solid var(--border-color);
+      border-radius: 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+      background: white;
+    }
+
+    .entity-card:hover { border-color: var(--accent); background: var(--accent-bg); }
+    .entity-card.selected { border-color: var(--accent); background: var(--accent-bg); box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.15); }
+
+    .entity-card .entity-icon { font-size: 1.25rem; margin-bottom: 0.25rem; }
+    .entity-card .entity-name { font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); }
+    .entity-card .entity-desc { font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.125rem; }
+
+    /* Visibility Radio */
+    .visibility-options { display: flex; gap: 1rem; }
+
+    .visibility-option {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.8125rem;
+      cursor: pointer;
+      color: var(--text-primary);
+    }
+
+    .visibility-option input[type="radio"] { accent-color: var(--accent); }
+
+    /* Match Type Toggle */
+    .match-type-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+    }
+
+    .match-type-toggle .toggle-btn {
+      padding: 0.25rem 0.625rem;
+      border-radius: 0.375rem;
+      font-weight: 700;
+      font-size: 0.75rem;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+    }
+
+    .match-type-toggle .toggle-btn.active-and { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
+    .match-type-toggle .toggle-btn.active-or { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+
+    /* Rule Builder */
+    .rule-group {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .rule-group.or-group {
+      border-style: dashed;
+      margin-left: 1.5rem;
+      background: #fffbeb;
+    }
+
+    .or-group-label {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: #92400e;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .rule-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 0.5rem;
+    }
+
+    .rule-row:last-child { margin-bottom: 0; }
+
+    .rule-row select,
+    .rule-row input {
+      padding: 0.4375rem 0.625rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      background: white;
+    }
+
+    .rule-row select:focus,
+    .rule-row input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .rule-field { flex: 2; min-width: 160px; }
+    .rule-operator { flex: 1.5; min-width: 130px; }
+    .rule-value { flex: 2; min-width: 130px; }
+
+    .rule-remove {
+      background: none;
+      border: none;
+      color: var(--danger-color);
+      cursor: pointer;
+      padding: 0.375rem;
+      font-size: 0.875rem;
+      border-radius: 0.375rem;
+      transition: background 0.15s;
+    }
+
+    .rule-remove:hover { background: #fee2e2; }
+
+    .logic-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+      margin: 0.25rem 0;
+    }
+
+    .logic-badge.active-and { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
+    .logic-badge.active-or { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+
+    .add-rule-btn {
+      background: none;
+      border: 1px dashed var(--border-color);
+      color: var(--text-secondary);
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .add-rule-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    /* Preview Panel */
+    .preview-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .preview-count-big {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .preview-label {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      margin-top: 0.125rem;
+    }
+
+    .preview-refresh {
+      background: none;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 0.375rem 0.625rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .preview-refresh:hover { border-color: var(--accent); color: var(--accent); }
+
+    .preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 0.5rem;
+      overflow: hidden;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    }
+
+    .preview-table th {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.625rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border-color);
+      text-align: left;
+    }
+
+    .preview-table td {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.75rem;
+      color: var(--text-primary);
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .preview-table tr:last-child td { border-bottom: none; }
+
+    .preview-table .contact-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .preview-table .contact-link:hover { text-decoration: underline; }
+
+    .preview-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .preview-action-btn {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .preview-action-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Builder Footer */
+    .builder-footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border-color);
+      flex-wrap: wrap;
+    }
+
+    /* Spinner */
+    .spinner-sm {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid var(--border-color);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 992px) {
+      .builder-body { flex-direction: column; }
+      .builder-left { border-right: none; border-bottom: 1px solid var(--border-color); }
+      .builder-right { min-width: 0; }
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .rule-row { flex-direction: column; align-items: stretch; }
+      .rule-field, .rule-operator, .rule-value { min-width: 100%; }
+      .entity-cards { flex-direction: column; }
+      .filter-bar { flex-direction: column; align-items: stretch; }
+      .filter-bar .search-input { min-width: 100%; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ===== LIST VIEW ===== -->
+  <div class="list-view" id="listView">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <h1><i class="fas fa-filter" style="color: var(--accent); margin-right: 0.5rem; font-size: 1.25rem;"></i>Saved Filters</h1>
+        <p class="subtitle">Reusable recipient and contact filters for campaigns, automations, and reports</p>
+      </div>
+      <div>
+        <button class="btn-primary-accent" onclick="openBuilder()">
+          <i class="fas fa-plus me-1"></i> Create Filter
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter List Card -->
+    <div class="list-card">
+
+      <!-- Meta Filter Bar -->
+      <div class="filter-bar">
+        <div class="search-input">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Search filters by name..." oninput="filterList(this.value)">
+        </div>
+        <select onchange="filterByCategory(this.value)">
+          <option value="">All Categories</option>
+          <option value="campaign">Campaign Audience</option>
+          <option value="automation">Automation Trigger</option>
+          <option value="report">Report</option>
+          <option value="export">Export</option>
+          <option value="general">General</option>
+        </select>
+        <select onchange="filterByEntity(this.value)">
+          <option value="">All Entities</option>
+          <option value="contacts">Contacts</option>
+          <option value="donations">Donations</option>
+          <option value="events">Events</option>
+        </select>
+        <select onchange="filterByCreator(this.value)">
+          <option value="">All Filters</option>
+          <option value="mine">My Filters</option>
+          <option value="shared">Shared Filters</option>
+        </select>
+      </div>
+
+      <!-- Saved Filters Table -->
+      <div class="table-responsive">
+        <table class="data-table" id="filtersTable">
+          <thead>
+            <tr>
+              <th>Filter Name</th>
+              <th>Category</th>
+              <th>Entity</th>
+              <th>Conditions Summary</th>
+              <th>Matching</th>
+              <th>Used In</th>
+              <th>Created By</th>
+              <th>Last Modified</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Major Donors ($1000+)</strong></td>
+              <td><span class="category-badge cat-campaign">Campaign</span></td>
+              <td><span class="entity-badge"><i class="fas fa-user"></i> Contacts</span></td>
+              <td><span class="conditions-summary">Total giving > $1,000 AND Status = Active</span></td>
+              <td><span class="matching-count">234 <i class="fas fa-sync-alt refresh-icon" onclick="refreshCount(this)" title="Refresh count"></i></span></td>
+              <td>
+                <div class="used-in-badges">
+                  <a class="used-badge campaign" onclick="parent.loadContent('communication/email-campaign-list')"><i class="fas fa-envelope"></i> 3 campaigns</a>
+                  <a class="used-badge workflow" onclick="parent.loadContent('communication/automation-workflows')"><i class="fas fa-cogs"></i> 1 workflow</a>
+                </div>
+              </td>
+              <td>John Smith</td>
+              <td>Apr 10, 2026</td>
+              <td>
+                <a class="action-link" onclick="openBuilder('Major Donors ($1000+)')">Edit</a>
+                <span class="action-sep">|</span>
+                <a class="action-link" onclick="duplicateFilter('Major Donors ($1000+)')">Duplicate</a>
+                <span class="action-sep">|</span>
+                <a class="action-link" onclick="testFilter('Major Donors ($1000+)')">Test</a>
+                <span class="action-sep">|</span>
+                <a class="action-link danger" onclick="deleteFilter('Major Donors ($1000+)')">Delete</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Active Donors (90 days)</strong></td>
+              <td><span class="category-badge cat-campaign">Campaign</span></td>
+              <td><span class="entity-badge"><i class="fas fa-user"></i> Contacts</span></td>
+              <td><span class="conditions-summary">Last donation &lt; 90 days ago AND Has email</span></td>
+              <td><span class="matching-count">1,456 <i class="fas fa-sync-alt refresh-icon" onclick="refreshCount(this)" title="Refresh count"></i></span></td>
+              <td>
+                <div class="used-in-badges">
+                  <a class="used-badge campaign" onclick="parent.loadContent('communication/email-campaign-list')"><i class="fas fa-envelope"></i> 2 campaigns</a>
+                </div>
+              </td>
+              <td>Maria Garcia</td>
+              <td>Apr 8, 2026</td>
+              <td>
+                <a class="action-link" onclick="openBuilder('Active Donors (90 days)')">Edit</a>
+                <span class="action-sep">|</span>
+                <a class="action-link" onclick="duplicateFilter('Active Donors (90 days)')">Duplicate</a>
+                <span class="action-sep">|</span>
+                <a class="action-link" onclick="testFilter('Active Donors (90 days)')">Test</a>
+                <span class="action-sep">|</span>
+                <a class="action-link danger" onclick="deleteFilter('Active Donors (90 days)')">Delete</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Lapsed Donors (90+ days)</strong></td>
+              <td><span class="category-badge cat-automation">Automation</span></td>
+              <td><span class="entity-badge"><i class="fas fa-user"></i> Contacts</span></td>
+              <td><span class="conditions-summary">Last donation > 90 days ago AND Previous donor = Yes</span></td>
+              <td><span class="matching-count">567 <i class="fas fa-sync-alt refresh-icon" onclick="refreshCount(this)" title="Refresh count"></i></span></td>
+              <td>
+                <div class="used-in-badges">
+                  <a class="used-badge workflow" onclick="parent.loadContent('communication/automation-workflows')"><i class="fas fa-cogs"></i> 1 workflow</a>
+                </div>
+              </td>
+              <td>John Smith</td>
+              <td>Apr 5, 2026</td>
+              <td>
+                <a class="action-link" onclick="openBuilder('Lapsed Donors (90+ days)')">Edit</a>
+                <span class="action-sep">|</span>
+                <a class="action-link" onclick="duplicateFilter('Lapsed Donors (90+ days)')">Duplicate</a>
+                <span class="action-sep">|</span>
+                <a class="action-link" onclick="testFilter('Lapsed Donors (90+ days)')">Test</a>
+                <span class="action-sep">|</span>
+                <a class="action-link danger" onclick="deleteFilter('Lapsed Donors (90+ days)')">Delete</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Event Attendees 2026</strong></td>
+              <td><span class="category-badge cat-report">Report</span></td>
+              <td><span class="entity-badge"><i class="fas fa-user"></i> Contacts</span></td>
+              <td><span class="conditions-summary">Attended event in 2026 AND Status = Active</span></td>
+              <td><span class="matching-count">345 <i class="fas fa-sync-alt refresh-icon" onclick="refreshCount(this)" title="Refresh count"></i></span></td>
+              <td>
+                <div class="used-in-badges">
+                  <a class="used-badge report"><i class="fas fa-chart-bar"></i> 1 report</a>
+                </div>
+              </td>
+              <td>Sarah Admin</td>
+              <td>Apr 3, 2026</td>
+              <td>
+                <a class="action-link" onclick="openBuilder('Event Attendees 2026')">Edit</a>
+                <span class="action-sep">|</span>
+                <a class="action-link" onclick="duplicateFilter('Event Attendees 2026')">Duplicate</a>
+                <span class="action-sep">|</span>
+                <a class="action-link" onclick="testFilter('Event Attendees 2026')">Test</a>
+                <span class="action-sep">|</span>
+                <a class="action-link danger" onclick="deleteFilter('Event Attendees 2026')">Delete</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>High Engagement (Score 80+)</strong></td>
+              <td><span class="category-badge cat-campaign">Campaign</span></td>
+              <td><span class="entity-badge"><i class="fas fa-user"></i> Contacts</span></td>
+              <td><span class="conditions-summary">Engagement score &ge; 80</span></td>
+              <td><span class="matching-count">189 <i class="fas fa-sync-alt refresh-icon" onclick="refreshCount(this)" title="Refresh count"></i></span></td>
+              <td>
+                <div class="used-in-badges">
+                  <a class="used-badge campaign" onclick="parent.loadContent('communication/email-campaign-list')"><i class="fas fa-envelope"></i> 1 campaign</a>
+                </div>
+              </td>
+              <td>John Smith</td>
+              <td>Apr 1, 2026</td>
+              <td>
+                <a class="action-link" onclick="openBuilder('High Engagement (Score 80+)')">Edit</a>
+                <span class="action-sep">|</span>
+                <a class="action-link" onclick="duplicateFilter('High Engagement (Score 80+)')">Duplicate</a>
+                <span class="action-sep">|</span>
+                <a class="action-link" onclick="testFilter('High Engagement (Score 80+)')">Test</a>
+                <span class="action-sep">|</span>
+                <a class="action-link danger" onclick="deleteFilter('High Engagement (Score 80+)')">Delete</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>New Donors (This Quarter)</strong></td>
+              <td><span class="category-badge cat-report">Report</span></td>
+              <td><span class="entity-badge"><i class="fas fa-user"></i> Contacts</span></td>
+              <td><span class="conditions-summary">First donation date in Q2 2026</span></td>
+              <td><span class="matching-count">78 <i class="fas fa-sync-alt refresh-icon" onclick="refreshCount(this)" title="Refresh count"></i></span></td>
+              <td>
+                <div class="used-in-badges">
+                  <a class="used-badge report"><i class="fas fa-chart-bar"></i> 1 report</a>
+                </div>
+              </td>
+              <td>Maria Garcia</td>
+              <td>Mar 28, 2026</td>
+              <td>
+                <a class="action-link" onclick="openBuilder('New Donors (This Quarter)')">Edit</a>
+                <span class="action-sep">|</span>
+                <a class="action-link" onclick="duplicateFilter('New Donors (This Quarter)')">Duplicate</a>
+                <span class="action-sep">|</span>
+                <a class="action-link" onclick="testFilter('New Donors (This Quarter)')">Test</a>
+                <span class="action-sep">|</span>
+                <a class="action-link danger" onclick="deleteFilter('New Donors (This Quarter)')">Delete</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Recurring Donors</strong></td>
+              <td><span class="category-badge cat-campaign">Campaign</span></td>
+              <td><span class="entity-badge"><i class="fas fa-user"></i> Contacts</span></td>
+              <td><span class="conditions-summary">Has active recurring schedule = Yes</span></td>
+              <td><span class="matching-count">890 <i class="fas fa-sync-alt refresh-icon" onclick="refreshCount(this)" title="Refresh count"></i></span></td>
+              <td>
+                <div class="used-in-badges">
+                  <a class="used-badge campaign" onclick="parent.loadContent('communication/email-campaign-list')"><i class="fas fa-envelope"></i> 2 campaigns</a>
+                  <a class="used-badge workflow" onclick="parent.loadContent('communication/automation-workflows')"><i class="fas fa-cogs"></i> 1 workflow</a>
+                </div>
+              </td>
+              <td>John Smith</td>
+              <td>Mar 25, 2026</td>
+              <td>
+                <a class="action-link" onclick="openBuilder('Recurring Donors')">Edit</a>
+                <span class="action-sep">|</span>
+                <a class="action-link" onclick="duplicateFilter('Recurring Donors')">Duplicate</a>
+                <span class="action-sep">|</span>
+                <a class="action-link" onclick="testFilter('Recurring Donors')">Test</a>
+                <span class="action-sep">|</span>
+                <a class="action-link danger" onclick="deleteFilter('Recurring Donors')">Delete</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Birthday This Month</strong></td>
+              <td><span class="category-badge cat-automation">Automation</span></td>
+              <td><span class="entity-badge"><i class="fas fa-user"></i> Contacts</span></td>
+              <td><span class="conditions-summary">Birth month = Current month</span></td>
+              <td><span class="matching-count">42 <i class="fas fa-sync-alt refresh-icon" onclick="refreshCount(this)" title="Refresh count"></i></span></td>
+              <td>
+                <div class="used-in-badges">
+                  <a class="used-badge workflow" onclick="parent.loadContent('communication/automation-workflows')"><i class="fas fa-cogs"></i> 1 workflow</a>
+                </div>
+              </td>
+              <td>Sarah Admin</td>
+              <td>Mar 20, 2026</td>
+              <td>
+                <a class="action-link" onclick="openBuilder('Birthday This Month')">Edit</a>
+                <span class="action-sep">|</span>
+                <a class="action-link" onclick="duplicateFilter('Birthday This Month')">Duplicate</a>
+                <span class="action-sep">|</span>
+                <a class="action-link" onclick="testFilter('Birthday This Month')">Test</a>
+                <span class="action-sep">|</span>
+                <a class="action-link danger" onclick="deleteFilter('Birthday This Month')">Delete</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Volunteers (Active)</strong></td>
+              <td><span class="category-badge cat-general">General</span></td>
+              <td><span class="entity-badge"><i class="fas fa-user"></i> Contacts</span></td>
+              <td><span class="conditions-summary">Contact type includes Volunteer AND Status = Active</span></td>
+              <td><span class="matching-count">156 <i class="fas fa-sync-alt refresh-icon" onclick="refreshCount(this)" title="Refresh count"></i></span></td>
+              <td>
+                <div class="used-in-badges">
+                  <span class="used-badge none">Not used</span>
+                </div>
+              </td>
+              <td>Maria Garcia</td>
+              <td>Mar 15, 2026</td>
+              <td>
+                <a class="action-link" onclick="openBuilder('Volunteers (Active)')">Edit</a>
+                <span class="action-sep">|</span>
+                <a class="action-link" onclick="duplicateFilter('Volunteers (Active)')">Duplicate</a>
+                <span class="action-sep">|</span>
+                <a class="action-link" onclick="testFilter('Volunteers (Active)')">Test</a>
+                <span class="action-sep">|</span>
+                <a class="action-link danger" onclick="deleteFilter('Volunteers (Active)')">Delete</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Large Donations (Month)</strong></td>
+              <td><span class="category-badge cat-export">Export</span></td>
+              <td><span class="entity-badge"><i class="fas fa-hand-holding-usd"></i> Donations</span></td>
+              <td><span class="conditions-summary">Amount > $500 AND Date in current month</span></td>
+              <td><span class="matching-count">45 <i class="fas fa-sync-alt refresh-icon" onclick="refreshCount(this)" title="Refresh count"></i></span></td>
+              <td>
+                <div class="used-in-badges">
+                  <a class="used-badge export"><i class="fas fa-file-export"></i> 1 export</a>
+                </div>
+              </td>
+              <td>John Smith</td>
+              <td>Mar 10, 2026</td>
+              <td>
+                <a class="action-link" onclick="openBuilder('Large Donations (Month)')">Edit</a>
+                <span class="action-sep">|</span>
+                <a class="action-link" onclick="duplicateFilter('Large Donations (Month)')">Duplicate</a>
+                <span class="action-sep">|</span>
+                <a class="action-link" onclick="testFilter('Large Donations (Month)')">Test</a>
+                <span class="action-sep">|</span>
+                <a class="action-link danger" onclick="deleteFilter('Large Donations (Month)')">Delete</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== BUILDER VIEW ===== -->
+  <div class="builder-view" id="builderView">
+
+    <a class="builder-back" onclick="closeBuilder()">
+      <i class="fas fa-arrow-left"></i> Back to Saved Filters
+    </a>
+
+    <div class="builder-card">
+      <div class="builder-header">
+        <h2><i class="fas fa-filter" style="color: var(--accent); margin-right: 0.5rem;"></i><span id="builderTitle">Create New Filter</span></h2>
+      </div>
+
+      <div class="builder-body">
+        <!-- LEFT: Form + Rules -->
+        <div class="builder-left">
+
+          <!-- Filter Name -->
+          <div class="mb-3">
+            <div class="builder-section-label">Filter Name <span style="color: var(--danger-color);">*</span></div>
+            <input type="text" class="builder-input" placeholder="e.g., Major Donors ($1000+)" id="filterNameInput" value="Major Donors ($1000+)">
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <div class="builder-section-label">Category</div>
+              <select class="builder-select" id="filterCategory">
+                <option value="campaign" selected>Campaign Audience</option>
+                <option value="automation">Automation Trigger</option>
+                <option value="report">Report</option>
+                <option value="export">Export</option>
+                <option value="general">General</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <div class="builder-section-label">Visibility</div>
+              <div class="visibility-options" style="margin-top: 0.375rem;">
+                <label class="visibility-option">
+                  <input type="radio" name="visibility" value="private"> <span>&#128274; Private (only me)</span>
+                </label>
+                <label class="visibility-option">
+                  <input type="radio" name="visibility" value="shared" checked> <span>&#128101; Shared (all staff)</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <div class="builder-section-label">Description (optional)</div>
+            <textarea class="builder-input" placeholder="Describe what this filter selects..." rows="2">Contacts who have donated $1,000+ total and are currently active</textarea>
+          </div>
+
+          <!-- Entity Selection -->
+          <div class="mb-4">
+            <div class="builder-section-label">Filter Entity</div>
+            <div class="entity-cards">
+              <div class="entity-card selected" onclick="selectEntity(this, 'contacts')">
+                <div class="entity-icon">&#128100;</div>
+                <div class="entity-name">Contacts</div>
+                <div class="entity-desc">Filter contacts based on attributes and behavior</div>
+              </div>
+              <div class="entity-card" onclick="selectEntity(this, 'donations')">
+                <div class="entity-icon">&#128176;</div>
+                <div class="entity-name">Donations</div>
+                <div class="entity-desc">Filter donation records</div>
+              </div>
+              <div class="entity-card" onclick="selectEntity(this, 'events')">
+                <div class="entity-icon">&#128197;</div>
+                <div class="entity-name">Events</div>
+                <div class="entity-desc">Filter events and registrations</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rule Builder -->
+          <div class="mb-3">
+            <div class="builder-section-label">Filter Rules</div>
+
+            <div class="match-type-toggle">
+              <span>Match</span>
+              <span class="toggle-btn active-and" id="matchAll" onclick="setMatchType('all')">ALL</span>
+              <span>/</span>
+              <span class="toggle-btn" id="matchAny" onclick="setMatchType('any')">ANY</span>
+              <span>of the following rules</span>
+            </div>
+
+            <div class="rule-group" id="mainRuleGroup">
+              <!-- Rule 1 -->
+              <div class="rule-row">
+                <select class="rule-field">
+                  <optgroup label="Contact Fields">
+                    <option value="first_name">First Name</option>
+                    <option value="last_name">Last Name</option>
+                    <option value="full_name">Full Name</option>
+                    <option value="email">Email</option>
+                    <option value="phone">Phone</option>
+                    <option value="contact_code">Contact Code</option>
+                    <option value="contact_type">Contact Type</option>
+                    <option value="contact_status">Contact Status</option>
+                    <option value="engagement_score">Engagement Score</option>
+                    <option value="created_date">Created Date</option>
+                    <option value="modified_date">Modified Date</option>
+                    <option value="org_unit">Organizational Unit</option>
+                    <option value="branch">Branch</option>
+                    <option value="country">Country</option>
+                    <option value="state">State</option>
+                    <option value="city">City</option>
+                    <option value="tags">Tags</option>
+                  </optgroup>
+                  <optgroup label="Donation Behavior">
+                    <option value="total_giving" selected>Total Giving Amount</option>
+                    <option value="total_giving_count">Total Giving Count</option>
+                    <option value="last_donation_date">Last Donation Date</option>
+                    <option value="last_donation_amount">Last Donation Amount</option>
+                    <option value="first_donation_date">First Donation Date</option>
+                    <option value="avg_donation">Average Donation Amount</option>
+                    <option value="largest_donation">Largest Donation Amount</option>
+                    <option value="donation_frequency">Donation Frequency</option>
+                    <option value="has_recurring">Has Active Recurring</option>
+                    <option value="preferred_payment">Preferred Payment Mode</option>
+                    <option value="preferred_currency">Preferred Currency</option>
+                    <option value="donor_since">Donor Since</option>
+                  </optgroup>
+                  <optgroup label="Communication">
+                    <option value="email_optin">Email Opt-in</option>
+                    <option value="whatsapp_optin">WhatsApp Opt-in</option>
+                    <option value="last_email_opened">Last Email Opened</option>
+                    <option value="email_open_rate">Email Open Rate</option>
+                    <option value="last_comm_date">Last Communication Date</option>
+                  </optgroup>
+                  <optgroup label="Event">
+                    <option value="attended_event">Attended Event</option>
+                    <option value="event_reg_date">Event Registration Date</option>
+                    <option value="event_attendance_status">Event Attendance Status</option>
+                  </optgroup>
+                </select>
+                <select class="rule-operator">
+                  <option value="equals">Equals</option>
+                  <option value="greater_than" selected>Greater than</option>
+                  <option value="less_than">Less than</option>
+                  <option value="between">Between</option>
+                  <option value="is_empty">Is empty</option>
+                </select>
+                <input type="text" class="rule-value" value="$1,000" placeholder="Value...">
+                <button class="rule-remove" onclick="removeRule(this)" title="Remove rule"><i class="fas fa-trash-alt"></i></button>
+              </div>
+
+              <div class="d-flex justify-content-center my-1">
+                <span class="logic-badge active-and" onclick="toggleLogic(this)">AND</span>
+              </div>
+
+              <!-- Rule 2 -->
+              <div class="rule-row">
+                <select class="rule-field">
+                  <optgroup label="Contact Fields">
+                    <option value="first_name">First Name</option>
+                    <option value="last_name">Last Name</option>
+                    <option value="full_name">Full Name</option>
+                    <option value="email">Email</option>
+                    <option value="phone">Phone</option>
+                    <option value="contact_code">Contact Code</option>
+                    <option value="contact_type">Contact Type</option>
+                    <option value="contact_status" selected>Contact Status</option>
+                    <option value="engagement_score">Engagement Score</option>
+                    <option value="created_date">Created Date</option>
+                    <option value="modified_date">Modified Date</option>
+                    <option value="org_unit">Organizational Unit</option>
+                    <option value="branch">Branch</option>
+                    <option value="country">Country</option>
+                    <option value="state">State</option>
+                    <option value="city">City</option>
+                    <option value="tags">Tags</option>
+                  </optgroup>
+                  <optgroup label="Donation Behavior">
+                    <option value="total_giving">Total Giving Amount</option>
+                    <option value="total_giving_count">Total Giving Count</option>
+                    <option value="last_donation_date">Last Donation Date</option>
+                    <option value="last_donation_amount">Last Donation Amount</option>
+                    <option value="first_donation_date">First Donation Date</option>
+                    <option value="avg_donation">Average Donation Amount</option>
+                    <option value="largest_donation">Largest Donation Amount</option>
+                    <option value="donation_frequency">Donation Frequency</option>
+                    <option value="has_recurring">Has Active Recurring</option>
+                    <option value="preferred_payment">Preferred Payment Mode</option>
+                    <option value="preferred_currency">Preferred Currency</option>
+                    <option value="donor_since">Donor Since</option>
+                  </optgroup>
+                  <optgroup label="Communication">
+                    <option value="email_optin">Email Opt-in</option>
+                    <option value="whatsapp_optin">WhatsApp Opt-in</option>
+                    <option value="last_email_opened">Last Email Opened</option>
+                    <option value="email_open_rate">Email Open Rate</option>
+                    <option value="last_comm_date">Last Communication Date</option>
+                  </optgroup>
+                  <optgroup label="Event">
+                    <option value="attended_event">Attended Event</option>
+                    <option value="event_reg_date">Event Registration Date</option>
+                    <option value="event_attendance_status">Event Attendance Status</option>
+                  </optgroup>
+                </select>
+                <select class="rule-operator">
+                  <option value="equals" selected>Equals</option>
+                  <option value="not_equals">Not equals</option>
+                  <option value="in_list">In list</option>
+                  <option value="not_in_list">Not in list</option>
+                </select>
+                <select class="rule-value">
+                  <option value="active" selected>Active</option>
+                  <option value="inactive">Inactive</option>
+                  <option value="deceased">Deceased</option>
+                </select>
+                <button class="rule-remove" onclick="removeRule(this)" title="Remove rule"><i class="fas fa-trash-alt"></i></button>
+              </div>
+
+              <div class="d-flex justify-content-center my-1">
+                <span class="logic-badge active-and" onclick="toggleLogic(this)">AND</span>
+              </div>
+
+              <!-- Rule 3 -->
+              <div class="rule-row">
+                <select class="rule-field">
+                  <optgroup label="Contact Fields">
+                    <option value="first_name">First Name</option>
+                    <option value="last_name">Last Name</option>
+                    <option value="full_name">Full Name</option>
+                    <option value="email">Email</option>
+                    <option value="phone">Phone</option>
+                    <option value="contact_code">Contact Code</option>
+                    <option value="contact_type">Contact Type</option>
+                    <option value="contact_status">Contact Status</option>
+                    <option value="engagement_score">Engagement Score</option>
+                    <option value="created_date">Created Date</option>
+                    <option value="modified_date">Modified Date</option>
+                    <option value="org_unit">Organizational Unit</option>
+                    <option value="branch">Branch</option>
+                    <option value="country">Country</option>
+                    <option value="state">State</option>
+                    <option value="city">City</option>
+                    <option value="tags">Tags</option>
+                  </optgroup>
+                  <optgroup label="Donation Behavior">
+                    <option value="total_giving">Total Giving Amount</option>
+                    <option value="total_giving_count">Total Giving Count</option>
+                    <option value="last_donation_date">Last Donation Date</option>
+                    <option value="last_donation_amount">Last Donation Amount</option>
+                    <option value="first_donation_date">First Donation Date</option>
+                    <option value="avg_donation">Average Donation Amount</option>
+                    <option value="largest_donation">Largest Donation Amount</option>
+                    <option value="donation_frequency">Donation Frequency</option>
+                    <option value="has_recurring">Has Active Recurring</option>
+                    <option value="preferred_payment">Preferred Payment Mode</option>
+                    <option value="preferred_currency">Preferred Currency</option>
+                    <option value="donor_since">Donor Since</option>
+                  </optgroup>
+                  <optgroup label="Communication">
+                    <option value="email_optin" selected>Email Opt-in</option>
+                    <option value="whatsapp_optin">WhatsApp Opt-in</option>
+                    <option value="last_email_opened">Last Email Opened</option>
+                    <option value="email_open_rate">Email Open Rate</option>
+                    <option value="last_comm_date">Last Communication Date</option>
+                  </optgroup>
+                  <optgroup label="Event">
+                    <option value="attended_event">Attended Event</option>
+                    <option value="event_reg_date">Event Registration Date</option>
+                    <option value="event_attendance_status">Event Attendance Status</option>
+                  </optgroup>
+                </select>
+                <select class="rule-operator">
+                  <option value="is_true" selected>Is True</option>
+                  <option value="is_false">Is False</option>
+                </select>
+                <select class="rule-value">
+                  <option value="true" selected>True</option>
+                  <option value="false">False</option>
+                </select>
+                <button class="rule-remove" onclick="removeRule(this)" title="Remove rule"><i class="fas fa-trash-alt"></i></button>
+              </div>
+            </div>
+
+            <!-- OR Rule Group (nested, hidden by default) -->
+            <div class="rule-group or-group" id="orRuleGroup" style="display: none;">
+              <div class="or-group-label"><i class="fas fa-code-branch"></i> OR Group</div>
+              <div class="rule-row">
+                <select class="rule-field">
+                  <optgroup label="Contact Fields">
+                    <option value="">Select field...</option>
+                    <option value="first_name">First Name</option>
+                    <option value="last_name">Last Name</option>
+                    <option value="email">Email</option>
+                    <option value="contact_type">Contact Type</option>
+                    <option value="contact_status">Contact Status</option>
+                    <option value="engagement_score">Engagement Score</option>
+                    <option value="country">Country</option>
+                    <option value="tags">Tags</option>
+                  </optgroup>
+                  <optgroup label="Donation Behavior">
+                    <option value="total_giving">Total Giving Amount</option>
+                    <option value="last_donation_date">Last Donation Date</option>
+                    <option value="has_recurring">Has Active Recurring</option>
+                  </optgroup>
+                </select>
+                <select class="rule-operator">
+                  <option value="">Select operator...</option>
+                  <option value="equals">Equals</option>
+                  <option value="not_equals">Not equals</option>
+                  <option value="contains">Contains</option>
+                  <option value="greater_than">Greater than</option>
+                  <option value="less_than">Less than</option>
+                </select>
+                <input type="text" class="rule-value" placeholder="Value...">
+                <button class="rule-remove" onclick="removeRule(this)" title="Remove rule"><i class="fas fa-trash-alt"></i></button>
+              </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-2">
+              <button class="add-rule-btn" onclick="addRule()"><i class="fas fa-plus me-1"></i> Add Rule</button>
+              <button class="add-rule-btn" onclick="addOrGroup()"><i class="fas fa-plus me-1"></i> Add Rule Group (OR)</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Live Preview Panel -->
+        <div class="builder-right">
+          <div class="builder-section-label">Live Preview</div>
+
+          <div class="preview-header">
+            <div>
+              <div class="preview-count-big">234</div>
+              <div class="preview-label">Matching Contacts</div>
+            </div>
+            <button class="preview-refresh" onclick="refreshPreview()">
+              <i class="fas fa-sync-alt me-1"></i> Refresh
+            </button>
+          </div>
+
+          <div class="builder-section-label" style="margin-top: 1rem;">First 10 Matches</div>
+          <table class="preview-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Score</th>
+                <th>Last Donation</th>
+                <th>Total Given</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><a class="contact-link" onclick="parent.loadContent('contacts/contact-detail')">Sarah Johnson</a></td>
+                <td>sarah.j@email.com</td>
+                <td>92</td>
+                <td>Apr 10</td>
+                <td>$4,250</td>
+              </tr>
+              <tr>
+                <td><a class="contact-link" onclick="parent.loadContent('contacts/contact-detail')">Ahmad Al-Hassan</a></td>
+                <td>ahmad@email.ae</td>
+                <td>88</td>
+                <td>Apr 10</td>
+                <td>$18,000</td>
+              </tr>
+              <tr>
+                <td><a class="contact-link" onclick="parent.loadContent('contacts/contact-detail')">Green Earth Foundation</a></td>
+                <td>info@greenearth.org</td>
+                <td>85</td>
+                <td>Apr 9</td>
+                <td>$25,000</td>
+              </tr>
+              <tr>
+                <td><a class="contact-link" onclick="parent.loadContent('contacts/contact-detail')">Emily Chen</a></td>
+                <td>emily.c@email.com</td>
+                <td>81</td>
+                <td>Apr 5</td>
+                <td>$3,600</td>
+              </tr>
+              <tr>
+                <td><a class="contact-link" onclick="parent.loadContent('contacts/contact-detail')">Sakura Tanaka</a></td>
+                <td>sakura@email.jp</td>
+                <td>79</td>
+                <td>Apr 6</td>
+                <td>$2,800</td>
+              </tr>
+              <tr>
+                <td><a class="contact-link" onclick="parent.loadContent('contacts/contact-detail')">David Brown</a></td>
+                <td>david.b@email.com</td>
+                <td>77</td>
+                <td>Apr 3</td>
+                <td>$2,100</td>
+              </tr>
+              <tr>
+                <td><a class="contact-link" onclick="parent.loadContent('contacts/contact-detail')">Priya Sharma</a></td>
+                <td>priya.s@email.in</td>
+                <td>75</td>
+                <td>Apr 2</td>
+                <td>$1,950</td>
+              </tr>
+              <tr>
+                <td><a class="contact-link" onclick="parent.loadContent('contacts/contact-detail')">Michael Torres</a></td>
+                <td>m.torres@email.com</td>
+                <td>73</td>
+                <td>Mar 30</td>
+                <td>$1,800</td>
+              </tr>
+              <tr>
+                <td><a class="contact-link" onclick="parent.loadContent('contacts/contact-detail')">Fatima Al-Rashid</a></td>
+                <td>fatima@email.sa</td>
+                <td>71</td>
+                <td>Mar 28</td>
+                <td>$1,500</td>
+              </tr>
+              <tr>
+                <td><a class="contact-link" onclick="parent.loadContent('contacts/contact-detail')">Lisa Nguyen</a></td>
+                <td>lisa.n@email.com</td>
+                <td>70</td>
+                <td>Mar 25</td>
+                <td>$1,200</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="preview-actions">
+            <button class="preview-action-btn" onclick="viewAllMatches()"><i class="fas fa-list me-1"></i> View All Matches</button>
+            <button class="preview-action-btn" onclick="exportMatches()"><i class="fas fa-file-csv me-1"></i> Export Matches</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Builder Footer -->
+      <div class="builder-footer">
+        <button class="btn-secondary" onclick="closeBuilder()">Cancel</button>
+        <button class="btn-outline-accent" onclick="saveAndUse()"><i class="fas fa-paper-plane me-1"></i> Save & Use in Campaign</button>
+        <button class="btn-primary-accent" onclick="saveFilter()"><i class="fas fa-check me-1"></i> Save Filter</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // View toggling
+    function openBuilder(filterName) {
+      document.getElementById('listView').classList.add('hide');
+      document.getElementById('builderView').classList.add('show');
+      if (filterName) {
+        document.getElementById('builderTitle').textContent = 'Edit Filter: ' + filterName;
+        document.getElementById('filterNameInput').value = filterName;
+      } else {
+        document.getElementById('builderTitle').textContent = 'Create New Filter';
+        document.getElementById('filterNameInput').value = '';
+      }
+      window.scrollTo(0, 0);
+    }
+
+    function closeBuilder() {
+      document.getElementById('listView').classList.remove('hide');
+      document.getElementById('builderView').classList.remove('show');
+      window.scrollTo(0, 0);
+    }
+
+    // Entity selection
+    function selectEntity(el, entity) {
+      document.querySelectorAll('.entity-card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+
+    // Match type
+    function setMatchType(type) {
+      const all = document.getElementById('matchAll');
+      const any = document.getElementById('matchAny');
+      if (type === 'all') {
+        all.className = 'toggle-btn active-and';
+        any.className = 'toggle-btn';
+      } else {
+        any.className = 'toggle-btn active-or';
+        all.className = 'toggle-btn';
+      }
+    }
+
+    // Logic badge toggle
+    function toggleLogic(el) {
+      if (el.classList.contains('active-and')) {
+        el.classList.remove('active-and');
+        el.classList.add('active-or');
+        el.textContent = 'OR';
+      } else {
+        el.classList.remove('active-or');
+        el.classList.add('active-and');
+        el.textContent = 'AND';
+      }
+    }
+
+    // Rule management
+    function addRule() {
+      const group = document.getElementById('mainRuleGroup');
+      const logicDiv = document.createElement('div');
+      logicDiv.className = 'd-flex justify-content-center my-1';
+      logicDiv.innerHTML = '<span class="logic-badge active-and" onclick="toggleLogic(this)">AND</span>';
+      group.appendChild(logicDiv);
+
+      const row = document.createElement('div');
+      row.className = 'rule-row';
+      row.innerHTML = `
+        <select class="rule-field">
+          <optgroup label="Contact Fields">
+            <option value="">Select field...</option>
+            <option value="first_name">First Name</option>
+            <option value="last_name">Last Name</option>
+            <option value="email">Email</option>
+            <option value="contact_type">Contact Type</option>
+            <option value="contact_status">Contact Status</option>
+            <option value="engagement_score">Engagement Score</option>
+            <option value="country">Country</option>
+            <option value="tags">Tags</option>
+          </optgroup>
+          <optgroup label="Donation Behavior">
+            <option value="total_giving">Total Giving Amount</option>
+            <option value="last_donation_date">Last Donation Date</option>
+            <option value="has_recurring">Has Active Recurring</option>
+          </optgroup>
+          <optgroup label="Communication">
+            <option value="email_optin">Email Opt-in</option>
+            <option value="whatsapp_optin">WhatsApp Opt-in</option>
+          </optgroup>
+        </select>
+        <select class="rule-operator">
+          <option value="">Select operator...</option>
+          <option value="equals">Equals</option>
+          <option value="not_equals">Not equals</option>
+          <option value="contains">Contains</option>
+          <option value="greater_than">Greater than</option>
+          <option value="less_than">Less than</option>
+          <option value="between">Between</option>
+          <option value="is_empty">Is empty</option>
+        </select>
+        <input type="text" class="rule-value" placeholder="Value...">
+        <button class="rule-remove" onclick="removeRule(this)" title="Remove rule"><i class="fas fa-trash-alt"></i></button>
+      `;
+      group.appendChild(row);
+    }
+
+    function addOrGroup() {
+      document.getElementById('orRuleGroup').style.display = 'block';
+    }
+
+    function removeRule(btn) {
+      const row = btn.closest('.rule-row');
+      const prev = row.previousElementSibling;
+      if (prev && prev.querySelector('.logic-badge')) {
+        prev.remove();
+      }
+      row.remove();
+    }
+
+    // Refresh count (mock spinner)
+    function refreshCount(icon) {
+      icon.classList.add('fa-spin');
+      setTimeout(() => { icon.classList.remove('fa-spin'); }, 800);
+    }
+
+    function refreshPreview() {
+      const btn = document.querySelector('.preview-refresh');
+      btn.innerHTML = '<span class="spinner-sm"></span> Refreshing...';
+      setTimeout(() => {
+        btn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Refresh';
+      }, 1200);
+    }
+
+    // Filter list search/filtering
+    function filterList(term) {
+      const rows = document.querySelectorAll('#filtersTable tbody tr');
+      term = term.toLowerCase();
+      rows.forEach(row => {
+        const name = row.querySelector('td:first-child').textContent.toLowerCase();
+        row.style.display = name.includes(term) ? '' : 'none';
+      });
+    }
+
+    function filterByCategory(cat) {
+      const rows = document.querySelectorAll('#filtersTable tbody tr');
+      rows.forEach(row => {
+        if (!cat) { row.style.display = ''; return; }
+        const badge = row.querySelector('.category-badge');
+        const text = badge ? badge.textContent.toLowerCase() : '';
+        row.style.display = text.includes(cat) ? '' : 'none';
+      });
+    }
+
+    function filterByEntity(entity) {
+      const rows = document.querySelectorAll('#filtersTable tbody tr');
+      rows.forEach(row => {
+        if (!entity) { row.style.display = ''; return; }
+        const badge = row.querySelector('.entity-badge');
+        const text = badge ? badge.textContent.toLowerCase() : '';
+        row.style.display = text.includes(entity) ? '' : 'none';
+      });
+    }
+
+    function filterByCreator(type) {
+      const rows = document.querySelectorAll('#filtersTable tbody tr');
+      rows.forEach(row => {
+        if (!type) { row.style.display = ''; return; }
+        const creator = row.cells[6].textContent;
+        if (type === 'mine') {
+          row.style.display = creator === 'John Smith' ? '' : 'none';
+        } else {
+          row.style.display = '';
+        }
+      });
+    }
+
+    function duplicateFilter(name) {
+      alert('Filter "' + name + '" duplicated as "' + name + ' (Copy)"');
+    }
+
+    function testFilter(name) {
+      alert('Running test for "' + name + '"...\nMatching contacts refreshed.');
+    }
+
+    function deleteFilter(name) {
+      if (confirm('Delete filter "' + name + '"? This will also remove it from any campaigns or workflows that reference it.')) {
+        alert('Filter deleted.');
+      }
+    }
+
+    function saveFilter() {
+      const name = document.getElementById('filterNameInput').value;
+      if (!name) { alert('Please enter a filter name.'); return; }
+      alert('Filter "' + name + '" saved successfully!');
+      closeBuilder();
+    }
+
+    function saveAndUse() {
+      const name = document.getElementById('filterNameInput').value;
+      if (!name) { alert('Please enter a filter name.'); return; }
+      alert('Filter "' + name + '" saved! Redirecting to Campaign Builder...');
+      if (window.parent && window.parent.loadContent) {
+        window.parent.loadContent('communication/email-campaign-builder');
+      }
+    }
+
+    function viewAllMatches() {
+      alert('Opening full match list view...');
+    }
+
+    function exportMatches() {
+      alert('Exporting 234 matching contacts to CSV...');
+    }
+  </script>
+
+</body>
+</html>

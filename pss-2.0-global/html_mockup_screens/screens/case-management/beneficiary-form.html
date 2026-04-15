@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register Beneficiary - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --cm-accent: #0d9488;
+      --cm-accent-light: #14b8a6;
+      --cm-accent-bg: #f0fdfa;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .back-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 1rem;
+    }
+
+    .back-btn:hover { border-color: var(--cm-accent); color: var(--cm-accent); background: var(--cm-accent-bg); }
+
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+    .page-header .subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 0; }
+
+    .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+    .btn-primary-accent {
+      background: var(--cm-accent);
+      border-color: var(--cm-accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--cm-accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover { background: #0b7f74; border-color: #0b7f74; color: white; }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--cm-accent);
+      color: var(--cm-accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover { background: var(--cm-accent); color: white; }
+
+    .btn-text {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-text:hover { color: var(--danger-color); }
+
+    /* Accordion Sections */
+    .form-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      margin-bottom: 0.75rem;
+      overflow: hidden;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.875rem 1.25rem;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+    }
+
+    .section-header:hover { background: #f8fafc; }
+
+    .section-header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+
+    .section-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 0.5rem;
+      background: var(--cm-accent-bg);
+      color: var(--cm-accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+    }
+
+    .section-title {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .section-toggle {
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      transition: transform 0.25s;
+    }
+
+    .section-header.collapsed .section-toggle { transform: rotate(-90deg); }
+
+    .section-body {
+      padding: 0 1.25rem 1.25rem;
+      transition: max-height 0.3s ease;
+      overflow: hidden;
+    }
+
+    .section-body.collapsed {
+      max-height: 0 !important;
+      padding: 0 1.25rem;
+    }
+
+    /* Form Controls */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .form-grid .full-width { grid-column: 1 / -1; }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .form-group label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .form-group label .required {
+      color: var(--danger-color);
+      margin-left: 2px;
+    }
+
+    .form-control, .form-select {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .form-control:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--cm-accent);
+      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    }
+
+    textarea.form-control { min-height: 80px; resize: vertical; }
+
+    .form-check-input:checked { background-color: var(--cm-accent); border-color: var(--cm-accent); }
+    .form-check-input:focus { box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15); }
+
+    /* Image Upload */
+    .image-upload-area {
+      border: 2px dashed var(--border-color);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #f8fafc;
+    }
+
+    .image-upload-area:hover { border-color: var(--cm-accent); background: var(--cm-accent-bg); }
+    .image-upload-area i { font-size: 1.5rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
+    .image-upload-area p { font-size: 0.75rem; color: var(--text-secondary); margin: 0; }
+    .image-upload-area .browse-link { color: var(--cm-accent); font-weight: 600; text-decoration: underline; }
+
+    /* Household Mini Table */
+    .mini-table {
+      width: 100%;
+      font-size: 0.8125rem;
+    }
+
+    .mini-table th {
+      background: #f1f5f9;
+      padding: 0.5rem 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .mini-table td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+
+    .mini-table .form-control,
+    .mini-table .form-select {
+      font-size: 0.8125rem;
+      padding: 0.375rem 0.5rem;
+    }
+
+    .btn-add-row {
+      background: none;
+      border: 1px dashed var(--cm-accent);
+      color: var(--cm-accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-top: 0.375rem;
+    }
+
+    .btn-add-row:hover { background: var(--cm-accent-bg); }
+    .btn-add-row i { margin-right: 0.375rem; }
+
+    .btn-remove-row {
+      background: none;
+      border: none;
+      color: var(--danger-color);
+      font-size: 0.8125rem;
+      cursor: pointer;
+      padding: 0.375rem;
+      border-radius: 0.375rem;
+      transition: all 0.15s;
+    }
+
+    .btn-remove-row:hover { background: rgba(220, 38, 38, 0.08); }
+
+    /* Sub-section Label */
+    .sub-section-label {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+      margin-top: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .sub-section-label:first-child { margin-top: 0; }
+    .sub-section-label i { color: var(--cm-accent); font-size: 0.75rem; }
+
+    /* Eligibility Cards */
+    .eligibility-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .eligibility-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      background: white;
+      transition: all 0.15s;
+    }
+
+    .eligibility-item.eligible {
+      border-color: rgba(13, 148, 136, 0.3);
+      background: var(--cm-accent-bg);
+    }
+
+    .eligibility-item .form-check-input { margin: 0; flex-shrink: 0; }
+
+    .eligibility-info { flex: 1; }
+
+    .eligibility-name {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .eligibility-reason {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+    }
+
+    .eligibility-reason.match { color: var(--cm-accent); }
+
+    .eligibility-action { flex-shrink: 0; }
+
+    /* File Upload */
+    .file-upload-zone {
+      border: 2px dashed var(--border-color);
+      border-radius: 0.625rem;
+      padding: 1.25rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #f8fafc;
+    }
+
+    .file-upload-zone:hover { border-color: var(--cm-accent); background: var(--cm-accent-bg); }
+    .file-upload-zone i { font-size: 1.25rem; color: var(--text-secondary); }
+    .file-upload-zone p { font-size: 0.75rem; color: var(--text-secondary); margin: 0.375rem 0 0; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .form-grid { grid-template-columns: 1fr; }
+      body { padding: 1rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" onclick="parent.loadContent('case-management/beneficiary-list')" title="Back to Beneficiaries">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <div>
+        <h1>Register Beneficiary</h1>
+        <p class="subtitle">New beneficiary intake and needs assessment</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="registerBeneficiary()">
+        <i class="fas fa-check me-1"></i> Register Beneficiary
+      </button>
+      <button class="btn-outline-accent" onclick="registerAndAddAnother()">
+        <i class="fas fa-plus me-1"></i> Register & Add Another
+      </button>
+      <button class="btn-outline-accent" onclick="saveAsDraft()">
+        <i class="fas fa-save me-1"></i> Save as Draft
+      </button>
+      <button class="btn-text" onclick="parent.loadContent('case-management/beneficiary-list')">Cancel</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 1: Personal Information -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header" onclick="toggleAccordion(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-user"></i></div>
+        <span class="section-title">Personal Information</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body" id="sectionPersonal">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>First Name <span class="required">*</span></label>
+          <input type="text" class="form-control" placeholder="First name" maxlength="100">
+        </div>
+        <div class="form-group">
+          <label>Last Name <span class="required">*</span></label>
+          <input type="text" class="form-control" placeholder="Last name" maxlength="100">
+        </div>
+        <div class="form-group">
+          <label>Date of Birth <span class="required">*</span></label>
+          <input type="date" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Approximate Age (if DOB unknown)</label>
+          <input type="number" class="form-control" placeholder="Age in years" min="0" max="120">
+        </div>
+        <div class="form-group">
+          <label>Gender <span class="required">*</span></label>
+          <select class="form-select">
+            <option value="">Select gender...</option>
+            <option>Male</option>
+            <option>Female</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Nationality</label>
+          <select class="form-select">
+            <option value="">Select nationality...</option>
+            <option>Somali</option>
+            <option>Indian</option>
+            <option>Kenyan</option>
+            <option>Bangladeshi</option>
+            <option>Pakistani</option>
+            <option>Afghan</option>
+            <option>Yemeni</option>
+            <option>Syrian</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>National ID / Document #</label>
+          <input type="text" class="form-control" placeholder="ID number (if available)">
+        </div>
+        <div class="form-group">
+          <label>Languages</label>
+          <input type="text" class="form-control" placeholder="e.g. Arabic, Somali, English">
+        </div>
+        <div class="form-group full-width">
+          <label>Photo</label>
+          <div class="image-upload-area" onclick="document.getElementById('photoInput').click()">
+            <i class="fas fa-camera d-block"></i>
+            <p>Drag & drop or <span class="browse-link">browse</span> to upload photo</p>
+            <p style="font-size: 0.6875rem; margin-top: 0.25rem;">JPEG, PNG up to 5MB</p>
+          </div>
+          <input type="file" id="photoInput" accept="image/*" style="display: none;">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 2: Location & Contact -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header" onclick="toggleAccordion(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-location-dot"></i></div>
+        <span class="section-title">Location & Contact</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body" id="sectionLocation">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Country <span class="required">*</span></label>
+          <select class="form-select">
+            <option value="">Select country...</option>
+            <option>United Arab Emirates</option>
+            <option>India</option>
+            <option>Kenya</option>
+            <option>Bangladesh</option>
+            <option>Pakistan</option>
+            <option>Somalia</option>
+            <option>Yemen</option>
+            <option>Syria</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>State / Province</label>
+          <select class="form-select">
+            <option value="">Select state...</option>
+            <option>Dubai</option>
+            <option>Abu Dhabi</option>
+            <option>Sharjah</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>City / Town <span class="required">*</span></label>
+          <input type="text" class="form-control" placeholder="City or town name">
+        </div>
+        <div class="form-group">
+          <label>Area / Locality</label>
+          <input type="text" class="form-control" placeholder="Area or neighbourhood">
+        </div>
+        <div class="form-group full-width">
+          <label>Address Details</label>
+          <textarea class="form-control" placeholder="Full address details" rows="2"></textarea>
+        </div>
+        <div class="form-group">
+          <label>GPS Coordinates</label>
+          <input type="text" class="form-control" placeholder="Lat, Long (auto-capture or manual)">
+        </div>
+        <div class="form-group">
+          <label>Phone (beneficiary or guardian)</label>
+          <input type="tel" class="form-control" placeholder="+971 50 XXX XXXX">
+        </div>
+        <div class="form-group">
+          <label>Alternative Contact</label>
+          <input type="text" class="form-control" placeholder="Name">
+        </div>
+        <div class="form-group">
+          <label>Alternative Phone</label>
+          <input type="tel" class="form-control" placeholder="+971 50 XXX XXXX">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 3: Family / Household -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header" onclick="toggleAccordion(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-people-roof"></i></div>
+        <span class="section-title">Family / Household</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body" id="sectionFamily">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Household Head</label>
+          <input type="text" class="form-control" placeholder="e.g. Halima Hassan (mother)" value="Halima Hassan (mother)">
+        </div>
+        <div class="form-group">
+          <label>Relationship to Head</label>
+          <select class="form-select">
+            <option value="">Select...</option>
+            <option>Self</option>
+            <option selected>Son/Daughter</option>
+            <option>Spouse</option>
+            <option>Sibling</option>
+            <option>Grandchild</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Household Size <span class="required">*</span></label>
+          <input type="number" class="form-control" placeholder="Number of members" value="4" min="1">
+        </div>
+        <div class="form-group">
+          <label>Orphan Status</label>
+          <select class="form-select">
+            <option value="">Select...</option>
+            <option>Not Orphan</option>
+            <option selected>Single Orphan (one parent)</option>
+            <option>Double Orphan</option>
+            <option>Unknown</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="sub-section-label" style="margin-top: 1.25rem;"><i class="fas fa-users"></i> Household Members</div>
+      <div style="overflow-x: auto;">
+        <table class="mini-table" id="householdTable">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Age</th>
+              <th>Gender</th>
+              <th>Relationship</th>
+              <th>Also a Beneficiary?</th>
+              <th style="width: 40px;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input type="text" class="form-control" value="Halima Hassan"></td>
+              <td><input type="number" class="form-control" value="35" style="width: 65px;"></td>
+              <td>
+                <select class="form-select" style="width: 80px;">
+                  <option>M</option>
+                  <option selected>F</option>
+                </select>
+              </td>
+              <td><input type="text" class="form-control" value="Mother"></td>
+              <td><input type="checkbox" class="form-check-input"></td>
+              <td><button class="btn-remove-row"><i class="fas fa-times"></i></button></td>
+            </tr>
+            <tr>
+              <td><input type="text" class="form-control" value="Amira Hassan"></td>
+              <td><input type="number" class="form-control" value="10" style="width: 65px;"></td>
+              <td>
+                <select class="form-select" style="width: 80px;">
+                  <option>M</option>
+                  <option selected>F</option>
+                </select>
+              </td>
+              <td><input type="text" class="form-control" value="Sister"></td>
+              <td><input type="checkbox" class="form-check-input" checked> <span style="font-size: 0.6875rem; color: var(--cm-accent); font-weight: 600;">BEN-007</span></td>
+              <td><button class="btn-remove-row"><i class="fas fa-times"></i></button></td>
+            </tr>
+            <tr>
+              <td><input type="text" class="form-control" value="Omar Hassan"></td>
+              <td><input type="number" class="form-control" value="4" style="width: 65px;"></td>
+              <td>
+                <select class="form-select" style="width: 80px;">
+                  <option selected>M</option>
+                  <option>F</option>
+                </select>
+              </td>
+              <td><input type="text" class="form-control" value="Brother"></td>
+              <td><input type="checkbox" class="form-check-input" checked> <span style="font-size: 0.6875rem; color: var(--cm-accent); font-weight: 600;">BEN-008</span></td>
+              <td><button class="btn-remove-row"><i class="fas fa-times"></i></button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <button class="btn-add-row" onclick="addHouseholdMember()"><i class="fas fa-plus"></i> Add Household Member</button>
+
+      <div class="form-grid" style="margin-top: 1.25rem;">
+        <div class="form-group">
+          <label>Guardian Name</label>
+          <input type="text" class="form-control" placeholder="If orphan or minor" value="Halima Hassan">
+        </div>
+        <div class="form-group">
+          <label>Guardian Relationship</label>
+          <select class="form-select">
+            <option value="">Select...</option>
+            <option selected>Mother</option>
+            <option>Father</option>
+            <option>Uncle/Aunt</option>
+            <option>Grandparent</option>
+            <option>Sibling</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Guardian Phone</label>
+          <input type="tel" class="form-control" placeholder="+971 50 XXX XXXX" value="+971 50 234 5678">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 4: Needs Assessment -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header" onclick="toggleAccordion(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-clipboard-list"></i></div>
+        <span class="section-title">Needs Assessment</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body" id="sectionNeeds">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Primary Need Category <span class="required">*</span></label>
+          <select class="form-select">
+            <option value="">Select...</option>
+            <option selected>Education</option>
+            <option>Healthcare</option>
+            <option>Nutrition/Food</option>
+            <option>Shelter/Housing</option>
+            <option>Livelihood</option>
+            <option>Protection</option>
+            <option>Clean Water</option>
+            <option>Psychosocial</option>
+            <option>Multiple</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Vulnerability Level <span class="required">*</span></label>
+          <select class="form-select">
+            <option value="">Select...</option>
+            <option>Critical</option>
+            <option selected>High</option>
+            <option>Medium</option>
+            <option>Low</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Income Level</label>
+          <select class="form-select">
+            <option value="">Select...</option>
+            <option>No Income</option>
+            <option selected>Below Poverty Line</option>
+            <option>Low Income</option>
+            <option>Moderate</option>
+            <option>Adequate</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="sub-section-label"><i class="fas fa-graduation-cap"></i> Education Status</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Current Status</label>
+          <select class="form-select">
+            <option value="">Select...</option>
+            <option>Not Enrolled</option>
+            <option selected>Enrolled</option>
+            <option>Dropped Out</option>
+            <option>Completed</option>
+            <option>Not Applicable</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Grade / Level</label>
+          <select class="form-select">
+            <option value="">Select...</option>
+            <option>Pre-school</option>
+            <option>Grade 1</option>
+            <option selected>Grade 2</option>
+            <option>Grade 3</option>
+            <option>Grade 4</option>
+            <option>Grade 5</option>
+            <option>Grade 6</option>
+            <option>Grade 7</option>
+            <option>Grade 8</option>
+            <option>Grade 9</option>
+            <option>Grade 10</option>
+            <option>Grade 11</option>
+            <option>Grade 12</option>
+            <option>University</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>School Name</label>
+          <input type="text" class="form-control" placeholder="School name">
+        </div>
+      </div>
+
+      <div class="sub-section-label"><i class="fas fa-heart-pulse"></i> Health Status</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>General Health</label>
+          <select class="form-select">
+            <option value="">Select...</option>
+            <option selected>Good</option>
+            <option>Fair</option>
+            <option>Poor</option>
+            <option>Critical</option>
+            <option>Unknown</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Disabilities</label>
+          <select class="form-select" multiple size="3">
+            <option selected>None</option>
+            <option>Physical</option>
+            <option>Visual</option>
+            <option>Hearing</option>
+            <option>Cognitive</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Chronic Conditions</label>
+          <input type="text" class="form-control" placeholder="List any chronic conditions">
+        </div>
+        <div class="form-group">
+          <label>Last Check-up</label>
+          <input type="date" class="form-control">
+        </div>
+      </div>
+
+      <div class="sub-section-label"><i class="fas fa-house"></i> Housing</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Housing Type</label>
+          <select class="form-select">
+            <option value="">Select...</option>
+            <option>Owned</option>
+            <option selected>Rented</option>
+            <option>Shelter</option>
+            <option>Homeless</option>
+            <option>Temporary</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Condition</label>
+          <select class="form-select">
+            <option value="">Select...</option>
+            <option>Good</option>
+            <option selected>Fair</option>
+            <option>Poor</option>
+            <option>Unsafe</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-grid" style="margin-top: 0.75rem;">
+        <div class="form-group full-width">
+          <label>Special Needs / Notes</label>
+          <textarea class="form-control" placeholder="Any additional information not captured above..." rows="3"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 5: Program Enrollment -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header" onclick="toggleAccordion(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-hand-holding-heart"></i></div>
+        <span class="section-title">Program Enrollment</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body" id="sectionPrograms">
+      <div class="sub-section-label"><i class="fas fa-check-double"></i> Eligible Programs (auto-suggested based on assessment)</div>
+      <div class="eligibility-grid">
+        <div class="eligibility-item eligible">
+          <input type="checkbox" class="form-check-input" checked>
+          <div class="eligibility-info">
+            <div class="eligibility-name">Orphan Sponsorship</div>
+            <div class="eligibility-reason match">Eligible: orphan, minor</div>
+          </div>
+          <div class="eligibility-action">
+            <select class="form-select" style="font-size: 0.75rem; padding: 0.25rem 0.5rem; width: auto;">
+              <option selected>Enroll Now</option>
+              <option>Add to Waitlist</option>
+            </select>
+          </div>
+        </div>
+        <div class="eligibility-item eligible">
+          <input type="checkbox" class="form-check-input" checked>
+          <div class="eligibility-info">
+            <div class="eligibility-name">Children's Education</div>
+            <div class="eligibility-reason match">Eligible: school-age, enrolled</div>
+          </div>
+          <div class="eligibility-action">
+            <select class="form-select" style="font-size: 0.75rem; padding: 0.25rem 0.5rem; width: auto;">
+              <option selected>Enroll Now</option>
+              <option>Add to Waitlist</option>
+            </select>
+          </div>
+        </div>
+        <div class="eligibility-item">
+          <input type="checkbox" class="form-check-input">
+          <div class="eligibility-info">
+            <div class="eligibility-name">Healthcare Outreach</div>
+            <div class="eligibility-reason">No current health need</div>
+          </div>
+          <div class="eligibility-action">
+            <select class="form-select" style="font-size: 0.75rem; padding: 0.25rem 0.5rem; width: auto;" disabled>
+              <option>Enroll Now</option>
+              <option>Add to Waitlist</option>
+            </select>
+          </div>
+        </div>
+        <div class="eligibility-item">
+          <input type="checkbox" class="form-check-input">
+          <div class="eligibility-info">
+            <div class="eligibility-name">Food Distribution</div>
+            <div class="eligibility-reason">Not food insecure</div>
+          </div>
+          <div class="eligibility-action">
+            <select class="form-select" style="font-size: 0.75rem; padding: 0.25rem 0.5rem; width: auto;" disabled>
+              <option>Enroll Now</option>
+              <option>Add to Waitlist</option>
+            </select>
+          </div>
+        </div>
+        <div class="eligibility-item">
+          <input type="checkbox" class="form-check-input">
+          <div class="eligibility-info">
+            <div class="eligibility-name">Women Empowerment</div>
+            <div class="eligibility-reason">Not applicable (minor, male)</div>
+          </div>
+          <div class="eligibility-action">
+            <select class="form-select" style="font-size: 0.75rem; padding: 0.25rem 0.5rem; width: auto;" disabled>
+              <option>Enroll Now</option>
+              <option>Add to Waitlist</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-grid" style="margin-top: 1.25rem;">
+        <div class="form-group">
+          <label>Assign Staff</label>
+          <select class="form-select">
+            <option value="">Select staff...</option>
+            <option selected>Fatima Al-Zahra</option>
+            <option>Ahmed Salim</option>
+            <option>Ravi Kumar</option>
+            <option>Dr. Sarah</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Sponsorship Type</label>
+          <select class="form-select" id="sponsorshipType" onchange="toggleSponsorSelect()">
+            <option value="">Select...</option>
+            <option>Individual Sponsor</option>
+            <option selected>Pool Funded</option>
+            <option>Self-funded</option>
+          </select>
+        </div>
+        <div class="form-group" id="sponsorSelectGroup" style="display: none;">
+          <label>Select Sponsor</label>
+          <select class="form-select">
+            <option value="">Search sponsor...</option>
+            <option>Khalid Al-Mansouri (CON-1245)</option>
+            <option>Fatima Al-Zahra (CON-1300)</option>
+            <option>Ravi Sharma (CON-1412)</option>
+            <option>James Okonkwo (CON-1500)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 6: Consent & Documents -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header" onclick="toggleAccordion(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-file-signature"></i></div>
+        <span class="section-title">Consent & Documents</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body" id="sectionConsent">
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" id="photoConsent" checked>
+            <label class="form-check-label" for="photoConsent" style="font-size: 0.8125rem; font-weight: 500;">
+              Guardian consents to photos for reporting/fundraising
+            </label>
+          </div>
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="dataConsent" checked>
+            <label class="form-check-label" for="dataConsent" style="font-size: 0.8125rem; font-weight: 500;">
+              Guardian consents to data collection and storage
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Consent Form</label>
+          <div class="file-upload-zone">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p>Upload signed consent form</p>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Supporting Documents</label>
+          <div class="file-upload-zone">
+            <i class="fas fa-paperclip"></i>
+            <p>Upload ID copies, school reports, medical records, referral letters</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 7: Internal -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header" onclick="toggleAccordion(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-lock"></i></div>
+        <span class="section-title">Internal</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body" id="sectionInternal">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Referred By</label>
+          <select class="form-select">
+            <option value="">Select...</option>
+            <option selected>Community Leader</option>
+            <option>Self-referral</option>
+            <option>Government Agency</option>
+            <option>Other NGO</option>
+            <option>Field Staff</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Referral Source Name</label>
+          <input type="text" class="form-control" placeholder="Name of referrer">
+        </div>
+        <div class="form-group">
+          <label>Branch <span class="required">*</span></label>
+          <select class="form-select">
+            <option value="">Select branch...</option>
+            <option selected>Dubai</option>
+            <option>Mumbai</option>
+            <option>Nairobi</option>
+            <option>Dhaka</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Priority</label>
+          <select class="form-select">
+            <option value="">Select...</option>
+            <option>Critical</option>
+            <option selected>High</option>
+            <option>Medium</option>
+            <option>Low</option>
+          </select>
+          <span style="font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.25rem;">Auto-suggested from assessment</span>
+        </div>
+        <div class="form-group full-width">
+          <label>Internal Notes</label>
+          <textarea class="form-control" placeholder="Internal notes (not visible to sponsors)" rows="3"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleAccordion(header) {
+      const body = header.nextElementSibling;
+      header.classList.toggle('collapsed');
+      body.classList.toggle('collapsed');
+    }
+
+    function addHouseholdMember() {
+      const tbody = document.querySelector('#householdTable tbody');
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><input type="text" class="form-control" placeholder="Name"></td>
+        <td><input type="number" class="form-control" placeholder="Age" style="width: 65px;"></td>
+        <td><select class="form-select" style="width: 80px;"><option>M</option><option>F</option></select></td>
+        <td><input type="text" class="form-control" placeholder="Relationship"></td>
+        <td><input type="checkbox" class="form-check-input"></td>
+        <td><button class="btn-remove-row" onclick="this.closest('tr').remove()"><i class="fas fa-times"></i></button></td>
+      `;
+      tbody.appendChild(row);
+    }
+
+    function toggleSponsorSelect() {
+      const type = document.getElementById('sponsorshipType').value;
+      const group = document.getElementById('sponsorSelectGroup');
+      group.style.display = type === 'Individual Sponsor' ? 'flex' : 'none';
+    }
+
+    function registerBeneficiary() {
+      alert('Beneficiary registered successfully.');
+      parent.loadContent('case-management/beneficiary-list');
+    }
+
+    function registerAndAddAnother() {
+      alert('Beneficiary registered. Form cleared for next entry.');
+    }
+
+    function saveAsDraft() {
+      alert('Draft saved successfully.');
+    }
+  </script>
+
+</body>
+
+</html>

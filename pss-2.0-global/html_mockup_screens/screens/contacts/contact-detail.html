@@ -1,0 +1,1831 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Detail - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .back-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 1rem;
+    }
+
+    .back-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .contact-title h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .contact-code {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+
+    .contact-type-badges {
+      display: flex;
+      gap: 0.375rem;
+      margin-top: 0.25rem;
+    }
+
+    .type-badge {
+      font-size: 0.6875rem;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+
+    .type-badge.donor { background: #f0fdf4; color: #16a34a; }
+    .type-badge.volunteer { background: #faf5ff; color: #a855f7; }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover { background: #0c6577; border-color: #0c6577; color: white; }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover { background: var(--accent); color: white; }
+
+    .btn-secondary {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Dropdown */
+    .more-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .more-dropdown-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 0.25rem;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      min-width: 160px;
+      z-index: 100;
+    }
+
+    .more-dropdown-menu.show { display: block; }
+
+    .more-dropdown-menu a {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+
+    .more-dropdown-menu a:hover { background: #f8fafc; }
+    .more-dropdown-menu a.danger { color: var(--danger-color); }
+    .more-dropdown-menu a i { width: 16px; text-align: center; }
+
+    /* Cards */
+    .detail-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      margin-bottom: 1rem;
+    }
+
+    .detail-card-header {
+      padding: 0.875rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .detail-card-header i { color: var(--accent); font-size: 0.875rem; }
+
+    .detail-card-body { padding: 1.25rem; }
+
+    /* Profile Card */
+    .profile-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin: 0 auto 1rem;
+    }
+
+    .profile-name {
+      text-align: center;
+      font-size: 1.125rem;
+      font-weight: 700;
+      margin-bottom: 0.125rem;
+    }
+
+    .profile-org {
+      text-align: center;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.125rem;
+    }
+
+    .profile-title {
+      text-align: center;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      margin-bottom: 1.25rem;
+    }
+
+    /* Engagement Score Circle */
+    .score-section {
+      text-align: center;
+      margin-bottom: 1.25rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .score-circle {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 0.5rem;
+    }
+
+    .score-circle svg {
+      width: 100px;
+      height: 100px;
+      transform: rotate(-90deg);
+    }
+
+    .score-circle-bg {
+      fill: none;
+      stroke: #e2e8f0;
+      stroke-width: 8;
+    }
+
+    .score-circle-fill {
+      fill: none;
+      stroke: var(--success-color);
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 264;
+      stroke-dashoffset: 21;
+      transition: stroke-dashoffset 0.5s ease;
+    }
+
+    .score-value {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--success-color);
+    }
+
+    .score-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--success-color);
+    }
+
+    /* Score Breakdown */
+    .score-breakdown { margin-top: 1rem; }
+
+    .score-bar-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .score-bar-item:last-child { margin-bottom: 0; }
+
+    .score-bar-label {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      width: 90px;
+      flex-shrink: 0;
+    }
+
+    .score-bar-track {
+      flex: 1;
+      height: 6px;
+      background: #f1f5f9;
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+
+    .score-bar-fill {
+      height: 100%;
+      border-radius: 9999px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-light));
+    }
+
+    .score-bar-value {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      width: 28px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    /* Info List */
+    .info-list { list-style: none; padding: 0; margin: 0; }
+
+    .info-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.8125rem;
+    }
+
+    .info-list li:last-child { border-bottom: none; }
+
+    .info-label {
+      color: var(--text-secondary);
+      font-weight: 500;
+      flex-shrink: 0;
+      margin-right: 0.75rem;
+    }
+
+    .info-value {
+      color: var(--text-primary);
+      font-weight: 600;
+      text-align: right;
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 0.375rem;
+      vertical-align: middle;
+    }
+
+    .status-dot.active { background: var(--success-color); }
+
+    /* Tags */
+    .tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.375rem;
+    }
+
+    .tag-badge {
+      padding: 0.25rem 0.625rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      background: var(--accent-bg);
+      color: var(--accent);
+      border: 1px solid rgba(14, 116, 144, 0.15);
+    }
+
+    .tag-add-btn {
+      padding: 0.25rem 0.625rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      background: white;
+      color: var(--text-secondary);
+      border: 1px dashed var(--border-color);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .tag-add-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Comm Preferences */
+    .pref-check { color: var(--danger-color); font-weight: 600; font-size: 0.8125rem; }
+    .pref-cross { color: var(--success-color); font-weight: 600; font-size: 0.8125rem; }
+
+    /* Tabs */
+    .detail-tabs {
+      display: flex;
+      border-bottom: 2px solid var(--border-color);
+      margin-bottom: 1.25rem;
+      overflow-x: auto;
+      gap: 0;
+    }
+
+    .detail-tabs::-webkit-scrollbar { height: 0; }
+
+    .detail-tab {
+      padding: 0.75rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      border: none;
+      background: none;
+      cursor: pointer;
+      white-space: nowrap;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.15s;
+    }
+
+    .detail-tab:hover { color: var(--accent); }
+
+    .detail-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Timeline */
+    .timeline-filters {
+      display: flex;
+      gap: 0.375rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+
+    .timeline-chip {
+      padding: 0.3125rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .timeline-chip:hover { border-color: var(--accent); color: var(--accent); }
+    .timeline-chip.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+    .timeline-list { position: relative; padding-left: 2rem; }
+
+    .timeline-list::before {
+      content: '';
+      position: absolute;
+      left: 11px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #e2e8f0;
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 1rem;
+      padding: 0.875rem 1rem;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.625rem;
+      transition: box-shadow 0.15s;
+    }
+
+    .timeline-item:hover { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); }
+
+    .timeline-dot {
+      position: absolute;
+      left: -2rem;
+      top: 1rem;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.625rem;
+      border: 2px solid white;
+      z-index: 1;
+    }
+
+    .timeline-dot.green { background: #f0fdf4; color: #22c55e; }
+    .timeline-dot.blue { background: #eff6ff; color: #3b82f6; }
+    .timeline-dot.orange { background: #fff7ed; color: #f97316; }
+    .timeline-dot.purple { background: #faf5ff; color: #a855f7; }
+    .timeline-dot.gray { background: #f8fafc; color: #94a3b8; }
+    .timeline-dot.teal { background: var(--accent-bg); color: var(--accent); }
+
+    .timeline-date {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+    }
+
+    .timeline-text {
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    .timeline-text strong { font-weight: 700; }
+
+    .load-more-btn {
+      display: block;
+      width: 100%;
+      padding: 0.625rem;
+      border: 1px dashed var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+      margin-top: 0.5rem;
+    }
+
+    .load-more-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Donation Summary Cards */
+    .donation-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .donation-stat {
+      background: #f8fafc;
+      border-radius: 0.625rem;
+      padding: 0.875rem;
+      text-align: center;
+      border: 1px solid var(--border-color);
+    }
+
+    .donation-stat-value {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .donation-stat-value.accent { color: var(--accent); }
+
+    .donation-stat-label {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-top: 0.125rem;
+    }
+
+    /* Tables */
+    .data-table {
+      width: 100%;
+      font-size: 0.8125rem;
+    }
+
+    .data-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    .data-table td {
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+      color: var(--text-primary);
+      vertical-align: middle;
+    }
+
+    .data-table tr:last-child td { border-bottom: none; }
+
+    .data-table tr:hover td { background: #fafbfc; }
+
+    .status-badge {
+      font-size: 0.6875rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+
+    .status-badge.completed { background: #f0fdf4; color: #16a34a; }
+    .status-badge.active { background: #eff6ff; color: #3b82f6; }
+    .status-badge.attended { background: #faf5ff; color: #a855f7; }
+    .status-badge.no-show { background: #fef2f2; color: #dc2626; }
+    .status-badge.opened { background: #f0fdf4; color: #16a34a; }
+    .status-badge.clicked { background: var(--accent-bg); color: var(--accent); }
+
+    .contact-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .contact-link:hover { text-decoration: underline; }
+
+    .btn-add-small {
+      font-size: 0.75rem;
+      padding: 0.375rem 0.875rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      background: white;
+      color: var(--accent);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-add-small:hover { background: var(--accent); color: white; }
+
+    /* Org Units Section */
+    .org-unit-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      margin-top: 1.5rem;
+    }
+
+    /* Sidebar sticky */
+    @media (min-width: 992px) {
+      .left-sidebar {
+        position: sticky;
+        top: 1.5rem;
+        align-self: flex-start;
+      }
+    }
+
+    /* Engagement Score Formula Section */
+    .engagement-score-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      margin-bottom: 1rem;
+    }
+
+    .es-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .es-score-display {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    .es-gauge {
+      position: relative;
+      width: 90px;
+      height: 90px;
+      flex-shrink: 0;
+    }
+
+    .es-gauge svg { width: 90px; height: 90px; transform: rotate(-90deg); }
+    .es-gauge-bg { fill: none; stroke: #e2e8f0; stroke-width: 7; }
+    .es-gauge-fill { fill: none; stroke-width: 7; stroke-linecap: round; stroke-dasharray: 251; transition: stroke-dashoffset 0.6s ease; }
+    .es-gauge-fill.green { stroke: #059669; }
+
+    .es-gauge-value {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .es-gauge-number { font-size: 1.625rem; font-weight: 800; color: #059669; line-height: 1; }
+    .es-gauge-max { font-size: 0.625rem; color: var(--text-secondary); font-weight: 600; }
+
+    .es-meta { display: flex; flex-direction: column; gap: 0.25rem; }
+    .es-level { font-size: 0.875rem; font-weight: 700; padding: 0.2rem 0.75rem; border-radius: 9999px; display: inline-block; width: fit-content; }
+    .es-level.green { background: #ecfdf5; color: #059669; }
+    .es-level.blue { background: #ecfeff; color: #0e7490; }
+    .es-level.amber { background: #fffbeb; color: #d97706; }
+    .es-level.red { background: #fef2f2; color: #dc2626; }
+
+    .es-percentile { font-size: 0.75rem; color: var(--text-secondary); font-weight: 500; }
+    .es-trend { font-size: 0.75rem; font-weight: 600; color: #059669; }
+    .es-trend i { margin-right: 0.125rem; }
+
+    .es-toggle-btn {
+      background: none;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      padding: 0.4rem 0.875rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .es-toggle-btn:hover { background: var(--accent-bg); border-color: var(--accent); }
+    .es-toggle-btn i { margin-right: 0.375rem; }
+
+    .es-formula-panel {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease;
+    }
+
+    .es-formula-panel.open { max-height: 2000px; }
+
+    .es-formula-inner {
+      padding: 0 1.25rem 1.25rem;
+    }
+
+    .es-section-title {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .es-section-title i { color: var(--accent); font-size: 0.75rem; }
+
+    /* Factor Breakdown Table */
+    .es-factor-table {
+      width: 100%;
+      font-size: 0.75rem;
+      border-collapse: collapse;
+      margin-bottom: 1.5rem;
+    }
+
+    .es-factor-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.625rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.5rem 0.625rem;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+      text-align: left;
+    }
+
+    .es-factor-table th:nth-child(2),
+    .es-factor-table th:nth-child(3),
+    .es-factor-table th:nth-child(4) { text-align: center; }
+
+    .es-factor-table td {
+      padding: 0.625rem;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+
+    .es-factor-table td:nth-child(2),
+    .es-factor-table td:nth-child(3),
+    .es-factor-table td:nth-child(4) { text-align: center; }
+
+    .es-factor-table tr:last-child td { border-bottom: none; }
+    .es-factor-table tr:hover td { background: #fafbfc; }
+
+    .es-factor-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .es-factor-bar {
+      width: 100%;
+      height: 5px;
+      background: #f1f5f9;
+      border-radius: 9999px;
+      overflow: hidden;
+      margin-top: 0.25rem;
+    }
+
+    .es-factor-bar-fill {
+      height: 100%;
+      border-radius: 9999px;
+      transition: width 0.4s ease;
+    }
+
+    .es-factor-bar-fill.green { background: #059669; }
+    .es-factor-bar-fill.blue { background: #0e7490; }
+    .es-factor-bar-fill.amber { background: #d97706; }
+    .es-factor-bar-fill.red { background: #dc2626; }
+
+    .es-factor-formula {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 0.625rem;
+      color: #64748b;
+      background: #f8fafc;
+      padding: 0.2rem 0.5rem;
+      border-radius: 0.25rem;
+      display: inline-block;
+      margin-top: 0.25rem;
+      line-height: 1.4;
+    }
+
+    .es-factor-explain {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.125rem;
+    }
+
+    .es-raw-score { font-weight: 700; font-size: 0.8125rem; }
+    .es-weight { font-weight: 600; color: var(--text-secondary); }
+    .es-contribution { font-weight: 700; color: var(--accent); }
+
+    /* Composite Calculation */
+    .es-calc-block {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 0.625rem;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .es-calc-step {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 0.625rem;
+      font-size: 0.75rem;
+      line-height: 1.6;
+    }
+
+    .es-calc-step:last-child { margin-bottom: 0; }
+
+    .es-calc-label {
+      font-weight: 700;
+      color: var(--text-primary);
+      white-space: nowrap;
+      min-width: 110px;
+      flex-shrink: 0;
+    }
+
+    .es-calc-value {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      line-height: 1.8;
+    }
+
+    .es-calc-result {
+      font-weight: 800;
+      color: #059669;
+      font-size: 0.875rem;
+      font-family: inherit;
+    }
+
+    .es-calc-divider {
+      border: none;
+      border-top: 1px dashed var(--border-color);
+      margin: 0.625rem 0;
+    }
+
+    /* Quick Reference */
+    .es-ref-table {
+      width: 100%;
+      font-size: 0.6875rem;
+      border-collapse: collapse;
+      margin-bottom: 1rem;
+    }
+
+    .es-ref-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.625rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.4rem 0.625rem;
+      border-bottom: 1px solid var(--border-color);
+      text-align: left;
+    }
+
+    .es-ref-table td {
+      padding: 0.375rem 0.625rem;
+      border-bottom: 1px solid #f1f5f9;
+      color: var(--text-secondary);
+    }
+
+    .es-ref-table td:first-child { font-weight: 600; color: var(--text-primary); }
+    .es-ref-table tr:last-child td { border-bottom: none; }
+
+    .es-note {
+      background: #f0fdfa;
+      border: 1px solid #ccfbf1;
+      border-radius: 0.5rem;
+      padding: 0.875rem 1rem;
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .es-note strong { color: var(--text-primary); }
+    .es-note p { margin: 0 0 0.375rem; }
+    .es-note p:last-child { margin-bottom: 0; }
+
+    /* Responsive */
+    @media (max-width: 991px) {
+      .layout-row { flex-direction: column; }
+      .left-sidebar { width: 100% !important; }
+      .right-content { width: 100% !important; }
+    }
+
+    @media (max-width: 576px) {
+      body { padding: 1rem; }
+      .page-header { flex-direction: column; align-items: flex-start; }
+      .donation-summary-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" onclick="parent.loadContent('contacts/contact-list')" title="Back to Contacts">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <div class="contact-title">
+        <h1>Sarah Johnson <span class="contact-code">CON-0001</span></h1>
+        <div class="contact-type-badges">
+          <span class="type-badge donor">Donor</span>
+          <span class="type-badge volunteer">Volunteer</span>
+        </div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline-accent" onclick="parent.loadContent('contacts/contact-form')">
+        <i class="fas fa-pen me-1"></i> Edit
+      </button>
+      <button class="btn-primary-accent">
+        <i class="fas fa-envelope me-1"></i> Send Email
+      </button>
+      <div class="more-dropdown">
+        <button class="btn-secondary" onclick="toggleDropdown()">
+          More <i class="fas fa-chevron-down ms-1" style="font-size: 0.625rem;"></i>
+        </button>
+        <div class="more-dropdown-menu" id="moreMenu">
+          <a href="#"><i class="fas fa-code-merge"></i> Merge</a>
+          <a href="#" class="danger"><i class="fas fa-trash"></i> Delete</a>
+          <a href="#"><i class="fas fa-file-export"></i> Export</a>
+          <a href="#"><i class="fas fa-print"></i> Print</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Layout -->
+  <div class="d-flex gap-3 layout-row" style="align-items: flex-start;">
+
+    <!-- Left Column (1/3) -->
+    <div class="left-sidebar" style="width: 340px; flex-shrink: 0;">
+
+      <!-- Profile Card -->
+      <div class="detail-card">
+        <div class="detail-card-body">
+          <div class="profile-avatar">SJ</div>
+          <div class="profile-name">Sarah Johnson</div>
+          <div class="profile-org">—</div>
+          <div class="profile-title">Marketing Manager</div>
+
+          <!-- Engagement Score -->
+          <div class="score-section">
+            <div class="score-circle">
+              <svg viewBox="0 0 100 100">
+                <circle class="score-circle-bg" cx="50" cy="50" r="42" />
+                <circle class="score-circle-fill" cx="50" cy="50" r="42" />
+              </svg>
+              <div class="score-value">92</div>
+            </div>
+            <div class="score-label">Highly Engaged</div>
+
+            <div class="score-breakdown">
+              <div class="score-bar-item">
+                <span class="score-bar-label">Recency</span>
+                <div class="score-bar-track"><div class="score-bar-fill" style="width: 95%;"></div></div>
+                <span class="score-bar-value">95</span>
+              </div>
+              <div class="score-bar-item">
+                <span class="score-bar-label">Frequency</span>
+                <div class="score-bar-track"><div class="score-bar-fill" style="width: 88%;"></div></div>
+                <span class="score-bar-value">88</span>
+              </div>
+              <div class="score-bar-item">
+                <span class="score-bar-label">Monetary</span>
+                <div class="score-bar-track"><div class="score-bar-fill" style="width: 90%;"></div></div>
+                <span class="score-bar-value">90</span>
+              </div>
+              <div class="score-bar-item">
+                <span class="score-bar-label">Communication</span>
+                <div class="score-bar-track"><div class="score-bar-fill" style="width: 85%;"></div></div>
+                <span class="score-bar-value">85</span>
+              </div>
+              <div class="score-bar-item">
+                <span class="score-bar-label">Events</span>
+                <div class="score-bar-track"><div class="score-bar-fill" style="width: 75%;"></div></div>
+                <span class="score-bar-value">75</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Personal Information -->
+      <div class="detail-card">
+        <div class="detail-card-header">
+          <i class="fas fa-user"></i> Personal Information
+        </div>
+        <div class="detail-card-body">
+          <ul class="info-list">
+            <li><span class="info-label">Prefix</span><span class="info-value">Ms.</span></li>
+            <li><span class="info-label">Date of Birth</span><span class="info-value">1985-06-15 (Age: 40)</span></li>
+            <li><span class="info-label">Gender</span><span class="info-value">Female</span></li>
+            <li><span class="info-label">Language</span><span class="info-value">English</span></li>
+            <li><span class="info-label">Occupation</span><span class="info-value">Marketing</span></li>
+            <li><span class="info-label">Status</span><span class="info-value"><span class="status-dot active"></span>Active</span></li>
+            <li><span class="info-label">Deceased</span><span class="info-value">No</span></li>
+            <li><span class="info-label">Contact Source</span><span class="info-value">Website</span></li>
+            <li><span class="info-label">Staff Assigned</span><span class="info-value">John Smith</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Tags -->
+      <div class="detail-card">
+        <div class="detail-card-header">
+          <i class="fas fa-tags"></i> Tags
+        </div>
+        <div class="detail-card-body">
+          <div class="tag-list">
+            <span class="tag-badge">Major Donor</span>
+            <span class="tag-badge">Annual Gala</span>
+            <span class="tag-badge">Education Sponsor</span>
+            <span class="tag-badge">Monthly Recurring</span>
+            <button class="tag-add-btn"><i class="fas fa-plus me-1"></i>Add Tag</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Communication Preferences -->
+      <div class="detail-card">
+        <div class="detail-card-header">
+          <i class="fas fa-sliders"></i> Communication Preferences
+        </div>
+        <div class="detail-card-body">
+          <ul class="info-list">
+            <li><span class="info-label">Preferred Channel</span><span class="info-value"><i class="fas fa-envelope me-1" style="color: var(--accent);"></i>Email</span></li>
+            <li><span class="info-label">Do Not Email</span><span class="pref-cross"><i class="fas fa-xmark"></i></span></li>
+            <li><span class="info-label">Do Not Phone</span><span class="pref-cross"><i class="fas fa-xmark"></i></span></li>
+            <li><span class="info-label">Do Not SMS</span><span class="pref-cross"><i class="fas fa-xmark"></i></span></li>
+            <li><span class="info-label">Do Not Postal</span><span class="pref-check"><i class="fas fa-check"></i></span></li>
+            <li><span class="info-label">Email Opt-In</span><span class="info-value">2024-01-15</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Custom Fields -->
+      <div class="detail-card">
+        <div class="detail-card-header">
+          <i class="fas fa-puzzle-piece"></i> Custom Fields
+        </div>
+        <div class="detail-card-body">
+          <ul class="info-list">
+            <li><span class="info-label">Anniversary Date</span><span class="info-value">2024-03-20</span></li>
+            <li><span class="info-label">Referred By</span><span class="info-value">James Wilson</span></li>
+            <li>
+              <span class="info-label">Notes</span>
+              <span class="info-value" style="text-align: right; max-width: 180px; font-weight: 400; font-size: 0.75rem; line-height: 1.5;">Interested in children's education programs. Prefers quarterly updates.</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Column (2/3) -->
+    <div class="right-content" style="flex: 1; min-width: 0;">
+
+      <!-- Engagement Score Formula Section -->
+      <div class="engagement-score-card">
+        <div class="es-header">
+          <div class="es-score-display">
+            <div class="es-gauge">
+              <svg viewBox="0 0 90 90">
+                <circle class="es-gauge-bg" cx="45" cy="45" r="40" />
+                <circle class="es-gauge-fill green" cx="45" cy="45" r="40" style="stroke-dashoffset: 10;" />
+              </svg>
+              <div class="es-gauge-value">
+                <div class="es-gauge-number">96</div>
+                <div class="es-gauge-max">/ 100</div>
+              </div>
+            </div>
+            <div class="es-meta">
+              <span class="es-level green">Highly Engaged</span>
+              <span class="es-percentile">Top 2% of all contacts</span>
+              <span class="es-trend"><i class="fas fa-arrow-up"></i> +3 vs last month</span>
+            </div>
+          </div>
+          <button class="es-toggle-btn" onclick="toggleFormulaPanel()">
+            <i class="fas fa-info-circle"></i> How is this calculated?
+          </button>
+        </div>
+
+        <div class="es-formula-panel" id="formulaPanel">
+          <div class="es-formula-inner">
+
+            <!-- Factor Breakdown -->
+            <div class="es-section-title"><i class="fas fa-chart-bar"></i> Factor Breakdown</div>
+            <div class="table-responsive">
+              <table class="es-factor-table">
+                <thead>
+                  <tr>
+                    <th>Factor</th>
+                    <th>Raw Score</th>
+                    <th>Weight</th>
+                    <th>Contribution</th>
+                    <th>How It Works</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <div class="es-factor-name">Donation Recency</div>
+                      <div class="es-factor-bar"><div class="es-factor-bar-fill green" style="width: 98%;"></div></div>
+                    </td>
+                    <td><span class="es-raw-score">98/100</span></td>
+                    <td><span class="es-weight">25%</span></td>
+                    <td><span class="es-contribution">24.5 pts</span></td>
+                    <td>
+                      <div class="es-factor-formula">Score = max(0, 100 - (days_since_last / 3.65))</div>
+                      <div class="es-factor-explain">Donated 2 days ago</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="es-factor-name">Donation Frequency</div>
+                      <div class="es-factor-bar"><div class="es-factor-bar-fill green" style="width: 95%;"></div></div>
+                    </td>
+                    <td><span class="es-raw-score">95/100</span></td>
+                    <td><span class="es-weight">20%</span></td>
+                    <td><span class="es-contribution">19.0 pts</span></td>
+                    <td>
+                      <div class="es-factor-formula">Score = min(100, (donations_per_year / 12) × 100)</div>
+                      <div class="es-factor-explain">12 donations/year</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="es-factor-name">Donation Monetary</div>
+                      <div class="es-factor-bar"><div class="es-factor-bar-fill green" style="width: 92%;"></div></div>
+                    </td>
+                    <td><span class="es-raw-score">92/100</span></td>
+                    <td><span class="es-weight">20%</span></td>
+                    <td><span class="es-contribution">18.4 pts</span></td>
+                    <td>
+                      <div class="es-factor-formula">Score = percentile_rank × 100</div>
+                      <div class="es-factor-explain">$42,500 lifetime (top 2%)</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="es-factor-name">Email Engagement</div>
+                      <div class="es-factor-bar"><div class="es-factor-bar-fill green" style="width: 95%;"></div></div>
+                    </td>
+                    <td><span class="es-raw-score">95/100</span></td>
+                    <td><span class="es-weight">15%</span></td>
+                    <td><span class="es-contribution">14.3 pts</span></td>
+                    <td>
+                      <div class="es-factor-formula">Score = (open_rate × 0.6 + click_rate × 0.4) × 100</div>
+                      <div class="es-factor-explain">95% open, 45% click rate</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="es-factor-name">Event Participation</div>
+                      <div class="es-factor-bar"><div class="es-factor-bar-fill green" style="width: 88%;"></div></div>
+                    </td>
+                    <td><span class="es-raw-score">88/100</span></td>
+                    <td><span class="es-weight">10%</span></td>
+                    <td><span class="es-contribution">8.8 pts</span></td>
+                    <td>
+                      <div class="es-factor-formula">Score = (attended / invited) × 100</div>
+                      <div class="es-factor-explain">8 of 10 events attended</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="es-factor-name">Communication Response</div>
+                      <div class="es-factor-bar"><div class="es-factor-bar-fill green" style="width: 90%;"></div></div>
+                    </td>
+                    <td><span class="es-raw-score">90/100</span></td>
+                    <td><span class="es-weight">5%</span></td>
+                    <td><span class="es-contribution">4.5 pts</span></td>
+                    <td>
+                      <div class="es-factor-formula">Score = (replied / received) × 100</div>
+                      <div class="es-factor-explain">60% WhatsApp/SMS reply rate</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="es-factor-name">Volunteer Activity</div>
+                      <div class="es-factor-bar"><div class="es-factor-bar-fill green" style="width: 85%;"></div></div>
+                    </td>
+                    <td><span class="es-raw-score">85/100</span></td>
+                    <td><span class="es-weight">5%</span></td>
+                    <td><span class="es-contribution">4.3 pts</span></td>
+                    <td>
+                      <div class="es-factor-formula">Score = min(100, (hours / 48) × 100)</div>
+                      <div class="es-factor-explain">24 hours logged this year</div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Composite Calculation -->
+            <div class="es-section-title"><i class="fas fa-calculator"></i> Composite Calculation</div>
+            <div class="es-calc-block">
+              <div class="es-calc-step">
+                <span class="es-calc-label">Weighted Sum</span>
+                <span class="es-calc-value">
+                  = (98 × 0.25) + (95 × 0.20) + (92 × 0.20) + (95 × 0.15) + (88 × 0.10) + (90 × 0.05) + (85 × 0.05)
+                </span>
+              </div>
+              <div class="es-calc-step">
+                <span class="es-calc-label"></span>
+                <span class="es-calc-value">
+                  = 24.50 + 19.00 + 18.40 + 14.25 + 8.80 + 4.50 + 4.25
+                </span>
+              </div>
+              <div class="es-calc-step">
+                <span class="es-calc-label"></span>
+                <span class="es-calc-value" style="font-weight: 700; color: var(--text-primary);">
+                  = 93.70
+                </span>
+              </div>
+              <hr class="es-calc-divider">
+              <div class="es-calc-step">
+                <span class="es-calc-label">Loyalty Bonus</span>
+                <span class="es-calc-value">
+                  = min(5, years_as_donor × 1) = min(5, 3) = <strong style="color: #059669;">+3.00</strong>
+                </span>
+              </div>
+              <hr class="es-calc-divider">
+              <div class="es-calc-step">
+                <span class="es-calc-label">Final Score</span>
+                <span class="es-calc-value">
+                  = min(100, round(93.70 + 3.00)) = <span class="es-calc-result">96</span>
+                </span>
+              </div>
+            </div>
+
+            <!-- Quick Reference -->
+            <div class="es-section-title"><i class="fas fa-book-open"></i> Quick Reference</div>
+            <div class="table-responsive" style="margin-bottom: 1rem;">
+              <table class="es-ref-table">
+                <thead>
+                  <tr>
+                    <th>Factor</th>
+                    <th>Perfect Score (100) Means</th>
+                    <th>Zero Score (0) Means</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Recency</td>
+                    <td>Donated today</td>
+                    <td>No donation in 365+ days</td>
+                  </tr>
+                  <tr>
+                    <td>Frequency</td>
+                    <td>12+ donations/year (monthly)</td>
+                    <td>No donations this year</td>
+                  </tr>
+                  <tr>
+                    <td>Monetary</td>
+                    <td>Top 1% lifetime giving in org</td>
+                    <td>Lowest giving in org</td>
+                  </tr>
+                  <tr>
+                    <td>Email</td>
+                    <td>100% open + 100% click rate</td>
+                    <td>Never opens emails</td>
+                  </tr>
+                  <tr>
+                    <td>Events</td>
+                    <td>Attended every invited event</td>
+                    <td>Never attended</td>
+                  </tr>
+                  <tr>
+                    <td>Communication</td>
+                    <td>Replies to every message</td>
+                    <td>Never replies</td>
+                  </tr>
+                  <tr>
+                    <td>Volunteer</td>
+                    <td>48+ hours/year volunteered</td>
+                    <td>Not a volunteer</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="es-note">
+              <p><strong>Loyalty Bonus:</strong> +1 point per year as an active contact (max +5). Rewards long-term supporters.</p>
+              <p><strong>Neutral handling:</strong> If a contact hasn't been invited to events or sent messages, those factors score 50 (neutral) instead of 0 — so contacts aren't penalized for things outside their control.</p>
+              <p><strong>Weights are configurable</strong> by your organization admin in Settings → Engagement Scoring.</p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="detail-card">
+        <div class="detail-tabs">
+          <button class="detail-tab active" onclick="switchTab('timeline')">Timeline</button>
+          <button class="detail-tab" onclick="switchTab('donations')">Donations</button>
+          <button class="detail-tab" onclick="switchTab('relationships')">Relationships</button>
+          <button class="detail-tab" onclick="switchTab('communication')">Communication</button>
+          <button class="detail-tab" onclick="switchTab('events')">Events</button>
+          <button class="detail-tab" onclick="switchTab('documents')">Documents</button>
+        </div>
+
+        <div class="detail-card-body">
+
+          <!-- Tab: Timeline -->
+          <div class="tab-content active" id="tab-timeline">
+            <div class="timeline-filters">
+              <button class="timeline-chip active">All</button>
+              <button class="timeline-chip">Donations</button>
+              <button class="timeline-chip">Emails</button>
+              <button class="timeline-chip">Calls</button>
+              <button class="timeline-chip">Events</button>
+              <button class="timeline-chip">Notes</button>
+              <button class="timeline-chip">Volunteer</button>
+            </div>
+
+            <div class="timeline-list">
+              <!-- Apr 10 -->
+              <div class="timeline-item">
+                <div class="timeline-dot green"><i class="fas fa-hand-holding-dollar"></i></div>
+                <div class="timeline-date">Apr 10, 2026</div>
+                <div class="timeline-text"><strong>Donated $500</strong> to Children's Education Fund via Online (Stripe) — Receipt <a class="contact-link" onclick="parent.loadContent('fundraising/donation-detail')">#RCP-2026-0892</a></div>
+              </div>
+              <!-- Apr 8 -->
+              <div class="timeline-item">
+                <div class="timeline-dot blue"><i class="fas fa-envelope"></i></div>
+                <div class="timeline-date">Apr 8, 2026</div>
+                <div class="timeline-text"><strong>Email opened</strong> "Spring Campaign Update" — clicked "Donate Now" link</div>
+              </div>
+              <!-- Apr 5 -->
+              <div class="timeline-item">
+                <div class="timeline-dot blue"><i class="fas fa-envelope"></i></div>
+                <div class="timeline-date">Apr 5, 2026</div>
+                <div class="timeline-text"><strong>Email sent</strong> "Spring Campaign Update" — Delivered</div>
+              </div>
+              <!-- Mar 25 -->
+              <div class="timeline-item">
+                <div class="timeline-dot orange"><i class="fas fa-phone"></i></div>
+                <div class="timeline-date">Mar 25, 2026</div>
+                <div class="timeline-text"><strong>Phone call</strong> by John Smith — "Discussed increasing monthly recurring to $100. Will decide next month."</div>
+              </div>
+              <!-- Mar 15 -->
+              <div class="timeline-item">
+                <div class="timeline-dot green"><i class="fas fa-hand-holding-dollar"></i></div>
+                <div class="timeline-date">Mar 15, 2026</div>
+                <div class="timeline-text"><strong>Donated $500</strong> to Clean Water Initiative via Online (Stripe) — Receipt <a class="contact-link" onclick="parent.loadContent('fundraising/donation-detail')">#RCP-2026-0756</a></div>
+              </div>
+              <!-- Mar 10 -->
+              <div class="timeline-item">
+                <div class="timeline-dot purple"><i class="fas fa-calendar-check"></i></div>
+                <div class="timeline-date">Mar 10, 2026</div>
+                <div class="timeline-text"><strong>Attended event</strong> "<a class="contact-link" onclick="parent.loadContent('organization/event-dashboard')">Annual Fundraising Gala 2026</a>" — Checked in at 6:30 PM</div>
+              </div>
+              <!-- Mar 1 -->
+              <div class="timeline-item">
+                <div class="timeline-dot green"><i class="fas fa-hand-holding-dollar"></i></div>
+                <div class="timeline-date">Mar 1, 2026</div>
+                <div class="timeline-text"><strong>Recurring donation $50</strong> processed — Children's Education Fund — Receipt #RCP-2026-0701</div>
+              </div>
+              <!-- Feb 20 -->
+              <div class="timeline-item">
+                <div class="timeline-dot gray"><i class="fas fa-note-sticky"></i></div>
+                <div class="timeline-date">Feb 20, 2026</div>
+                <div class="timeline-text"><strong>Note added</strong> by John Smith — "Met at community event. Very passionate about education."</div>
+              </div>
+              <!-- Feb 15 -->
+              <div class="timeline-item">
+                <div class="timeline-dot teal"><i class="fas fa-tag"></i></div>
+                <div class="timeline-date">Feb 15, 2026</div>
+                <div class="timeline-text"><strong>Tag added</strong> "Education Sponsor" by System</div>
+              </div>
+              <!-- Feb 1 -->
+              <div class="timeline-item">
+                <div class="timeline-dot green"><i class="fas fa-hand-holding-dollar"></i></div>
+                <div class="timeline-date">Feb 1, 2026</div>
+                <div class="timeline-text"><strong>Recurring donation $50</strong> processed — Children's Education Fund</div>
+              </div>
+              <!-- Jan 15 -->
+              <div class="timeline-item">
+                <div class="timeline-dot blue"><i class="fas fa-envelope"></i></div>
+                <div class="timeline-date">Jan 15, 2026</div>
+                <div class="timeline-text"><strong>Email sent</strong> "Thank You for Your 2025 Giving" — Opened, Clicked</div>
+              </div>
+              <!-- Jan 5 -->
+              <div class="timeline-item">
+                <div class="timeline-dot purple"><i class="fas fa-hands-helping"></i></div>
+                <div class="timeline-date">Jan 5, 2026</div>
+                <div class="timeline-text"><strong>Volunteered 4 hours</strong> — Event Setup for New Year Charity Run</div>
+              </div>
+            </div>
+
+            <button class="load-more-btn"><i class="fas fa-arrow-down me-1"></i> Load More</button>
+          </div>
+
+          <!-- Tab: Donations -->
+          <div class="tab-content" id="tab-donations">
+            <div class="donation-summary-grid">
+              <div class="donation-stat">
+                <div class="donation-stat-value accent">$6,200</div>
+                <div class="donation-stat-label">Total Given</div>
+              </div>
+              <div class="donation-stat">
+                <div class="donation-stat-value">$1,600</div>
+                <div class="donation-stat-label">This Year (4)</div>
+              </div>
+              <div class="donation-stat">
+                <div class="donation-stat-value">$155</div>
+                <div class="donation-stat-label">Avg Donation</div>
+              </div>
+              <div class="donation-stat">
+                <div class="donation-stat-value" style="font-size: 1rem;">Jan 12, 2024</div>
+                <div class="donation-stat-label">First Gift</div>
+              </div>
+              <div class="donation-stat">
+                <div class="donation-stat-value">$500</div>
+                <div class="donation-stat-label">Largest Gift</div>
+              </div>
+              <div class="donation-stat">
+                <div class="donation-stat-value" style="font-size: 1rem;">$50/month</div>
+                <div class="donation-stat-label">Recurring <span class="status-badge active" style="margin-left: 0.25rem;">Active</span></div>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Purpose</th>
+                    <th>Mode</th>
+                    <th>Receipt #</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Apr 10, 2026</td>
+                    <td style="font-weight: 700;">$500</td>
+                    <td>Children's Education</td>
+                    <td>Online (Stripe)</td>
+                    <td><a class="contact-link" onclick="parent.loadContent('fundraising/donation-detail')">RCP-2026-0892</a></td>
+                    <td><span class="status-badge completed">Completed</span></td>
+                  </tr>
+                  <tr>
+                    <td>Mar 15, 2026</td>
+                    <td style="font-weight: 700;">$500</td>
+                    <td>Clean Water Initiative</td>
+                    <td>Online (Stripe)</td>
+                    <td><a class="contact-link" onclick="parent.loadContent('fundraising/donation-detail')">RCP-2026-0756</a></td>
+                    <td><span class="status-badge completed">Completed</span></td>
+                  </tr>
+                  <tr>
+                    <td>Mar 1, 2026</td>
+                    <td style="font-weight: 700;">$50</td>
+                    <td>Children's Education</td>
+                    <td>Recurring</td>
+                    <td><a class="contact-link" onclick="parent.loadContent('fundraising/donation-detail')">RCP-2026-0701</a></td>
+                    <td><span class="status-badge completed">Completed</span></td>
+                  </tr>
+                  <tr>
+                    <td>Feb 1, 2026</td>
+                    <td style="font-weight: 700;">$50</td>
+                    <td>Children's Education</td>
+                    <td>Recurring</td>
+                    <td><a class="contact-link" onclick="parent.loadContent('fundraising/donation-detail')">RCP-2026-0650</a></td>
+                    <td><span class="status-badge completed">Completed</span></td>
+                  </tr>
+                  <tr>
+                    <td>Jan 1, 2026</td>
+                    <td style="font-weight: 700;">$50</td>
+                    <td>Children's Education</td>
+                    <td>Recurring</td>
+                    <td><a class="contact-link" onclick="parent.loadContent('fundraising/donation-detail')">RCP-2026-0601</a></td>
+                    <td><span class="status-badge completed">Completed</span></td>
+                  </tr>
+                  <tr>
+                    <td>Dec 15, 2025</td>
+                    <td style="font-weight: 700;">$200</td>
+                    <td>General Fund</td>
+                    <td>Online (PayPal)</td>
+                    <td><a class="contact-link" onclick="parent.loadContent('fundraising/donation-detail')">RCP-2025-3421</a></td>
+                    <td><span class="status-badge completed">Completed</span></td>
+                  </tr>
+                  <tr>
+                    <td>Nov 10, 2025</td>
+                    <td style="font-weight: 700;">$100</td>
+                    <td>Medical Aid</td>
+                    <td>Cheque</td>
+                    <td><a class="contact-link" onclick="parent.loadContent('fundraising/donation-detail')">RCP-2025-3100</a></td>
+                    <td><span class="status-badge completed">Completed</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Tab: Relationships -->
+          <div class="tab-content" id="tab-relationships">
+            <div class="d-flex justify-content-end mb-3">
+              <button class="btn-add-small"><i class="fas fa-plus me-1"></i> Add Relationship</button>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Contact</th>
+                    <th>Relationship</th>
+                    <th>Since</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><a class="contact-link" onclick="parent.loadContent('contacts/contact-detail')">Michael Johnson</a> <span style="color: var(--text-secondary); font-size: 0.75rem;">(CON-0045)</span></td>
+                    <td>Spouse</td>
+                    <td>2024-01-15</td>
+                    <td><span class="status-badge active">Active</span></td>
+                  </tr>
+                  <tr>
+                    <td><a class="contact-link" onclick="parent.loadContent('contacts/contact-detail')">Emma Johnson</a> <span style="color: var(--text-secondary); font-size: 0.75rem;">(CON-0046)</span></td>
+                    <td>Daughter</td>
+                    <td>2024-01-15</td>
+                    <td><span class="status-badge active">Active</span></td>
+                  </tr>
+                  <tr>
+                    <td><a class="contact-link" onclick="parent.loadContent('contacts/contact-detail')">James Wilson</a> <span style="color: var(--text-secondary); font-size: 0.75rem;">(CON-0102)</span></td>
+                    <td>Referrer</td>
+                    <td>2024-06-20</td>
+                    <td><span class="status-badge active">Active</span></td>
+                  </tr>
+                  <tr>
+                    <td><a class="contact-link" onclick="parent.loadContent('contacts/contact-detail')">Green Earth Foundation</a> <span style="color: var(--text-secondary); font-size: 0.75rem;">(CON-0004)</span></td>
+                    <td>Employer</td>
+                    <td>2025-03-01</td>
+                    <td><span class="status-badge active">Active</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Tab: Communication -->
+          <div class="tab-content" id="tab-communication">
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Subject / Message</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Apr 8, 2026</td>
+                    <td><i class="fas fa-envelope me-1" style="color: #3b82f6;"></i> Email</td>
+                    <td>Spring Campaign Update</td>
+                    <td><span class="status-badge opened">Opened</span> <span class="status-badge clicked">Clicked</span></td>
+                  </tr>
+                  <tr>
+                    <td>Mar 20, 2026</td>
+                    <td><i class="fas fa-envelope me-1" style="color: #3b82f6;"></i> Email</td>
+                    <td>Event Invitation: Annual Gala</td>
+                    <td><span class="status-badge opened">Opened</span> <span class="status-badge clicked">Clicked</span></td>
+                  </tr>
+                  <tr>
+                    <td>Feb 15, 2026</td>
+                    <td><i class="fas fa-envelope me-1" style="color: #3b82f6;"></i> Email</td>
+                    <td>Thank You for Your 2025 Giving</td>
+                    <td><span class="status-badge opened">Opened</span> <span class="status-badge clicked">Clicked</span></td>
+                  </tr>
+                  <tr>
+                    <td>Jan 10, 2026</td>
+                    <td><i class="fas fa-envelope me-1" style="color: #3b82f6;"></i> Email</td>
+                    <td>New Year Newsletter</td>
+                    <td><span class="status-badge opened">Opened</span></td>
+                  </tr>
+                  <tr>
+                    <td>Dec 25, 2025</td>
+                    <td><i class="fas fa-envelope me-1" style="color: #3b82f6;"></i> Email</td>
+                    <td>Holiday Greetings</td>
+                    <td><span class="status-badge opened">Opened</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Tab: Events -->
+          <div class="tab-content" id="tab-events">
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Event</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Donation Linked</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><a class="contact-link" onclick="parent.loadContent('organization/event-dashboard')">Annual Fundraising Gala 2026</a></td>
+                    <td>Mar 10, 2026</td>
+                    <td><span class="status-badge attended">Attended</span></td>
+                    <td style="font-weight: 700;">$500</td>
+                  </tr>
+                  <tr>
+                    <td><a class="contact-link" onclick="parent.loadContent('organization/event-dashboard')">New Year Charity Run</a></td>
+                    <td>Jan 5, 2026</td>
+                    <td><span class="status-badge" style="background: #faf5ff; color: #a855f7;">Volunteered (4hrs)</span></td>
+                    <td>—</td>
+                  </tr>
+                  <tr>
+                    <td><a class="contact-link" onclick="parent.loadContent('organization/event-dashboard')">Community Health Fair 2025</a></td>
+                    <td>Sep 15, 2025</td>
+                    <td><span class="status-badge no-show">Registered, No-show</span></td>
+                    <td>—</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Tab: Documents -->
+          <div class="tab-content" id="tab-documents">
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Document</th>
+                    <th>Type</th>
+                    <th>Date</th>
+                    <th>Size</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><i class="fas fa-file-pdf me-1" style="color: #dc2626;"></i> Donation Receipt 2025-2026</td>
+                    <td>PDF</td>
+                    <td>Apr 10, 2026</td>
+                    <td>245 KB</td>
+                  </tr>
+                  <tr>
+                    <td><i class="fas fa-file-pdf me-1" style="color: #dc2626;"></i> Tax Certificate 2025</td>
+                    <td>PDF</td>
+                    <td>Jan 15, 2026</td>
+                    <td>180 KB</td>
+                  </tr>
+                  <tr>
+                    <td><i class="fas fa-file-image me-1" style="color: #3b82f6;"></i> Profile Photo</td>
+                    <td>JPG</td>
+                    <td>Jun 20, 2024</td>
+                    <td>92 KB</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Contact Organizational Units -->
+      <div class="org-unit-card">
+        <div class="detail-card-header">
+          <i class="fas fa-sitemap"></i> Contact Organizational Units
+        </div>
+        <div style="padding: 0;">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Org Unit</th>
+                  <th>Configured Amount</th>
+                  <th>Total Donated</th>
+                  <th>Pledge</th>
+                  <th>Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="font-weight: 600;">Children's Education Program</td>
+                  <td>$100/month</td>
+                  <td style="font-weight: 700;">$1,800</td>
+                  <td>$2,400</td>
+                  <td>18</td>
+                </tr>
+                <tr>
+                  <td style="font-weight: 600;">Clean Water Initiative</td>
+                  <td>—</td>
+                  <td style="font-weight: 700;">$500</td>
+                  <td>—</td>
+                  <td>1</td>
+                </tr>
+                <tr>
+                  <td style="font-weight: 600;">General Fund</td>
+                  <td>—</td>
+                  <td style="font-weight: 700;">$200</td>
+                  <td>—</td>
+                  <td>1</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Tab switching
+    function switchTab(tabName) {
+      document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.getElementById('tab-' + tabName).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    // More dropdown
+    function toggleDropdown() {
+      document.getElementById('moreMenu').classList.toggle('show');
+    }
+
+    // Close dropdown on outside click
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.more-dropdown')) {
+        document.getElementById('moreMenu').classList.remove('show');
+      }
+    });
+
+    // Engagement Score formula panel toggle
+    function toggleFormulaPanel() {
+      const panel = document.getElementById('formulaPanel');
+      const btn = document.querySelector('.es-toggle-btn');
+      panel.classList.toggle('open');
+      if (panel.classList.contains('open')) {
+        btn.innerHTML = '<i class="fas fa-chevron-up"></i> Hide calculation';
+      } else {
+        btn.innerHTML = '<i class="fas fa-info-circle"></i> How is this calculated?';
+      }
+    }
+
+    // Timeline filter chips
+    document.querySelectorAll('.timeline-chip').forEach(chip => {
+      chip.addEventListener('click', function () {
+        document.querySelectorAll('.timeline-chip').forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+  </script>
+
+</body>
+
+</html>

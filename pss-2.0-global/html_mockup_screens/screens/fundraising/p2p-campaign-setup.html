@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>P2P Campaign Setup - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+    .page-header .subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 0; }
+    .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .btn-primary-accent { background: var(--accent); border-color: var(--accent); color: white; font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid var(--accent); cursor: pointer; transition: all 0.15s; }
+    .btn-primary-accent:hover { background: #0c6577; border-color: #0c6577; color: white; }
+    .btn-outline-accent { background: white; border: 1px solid var(--accent); color: var(--accent); font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.15s; }
+    .btn-outline-accent:hover { background: var(--accent); color: white; }
+    .btn-outline-secondary { background: white; border: 1px solid var(--border-color); color: var(--text-secondary); font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.15s; }
+    .btn-outline-secondary:hover { border-color: var(--text-secondary); color: var(--text-primary); }
+
+    /* Tab Navigation */
+    .tab-nav { display: flex; gap: 0; background: white; border-radius: var(--card-radius) var(--card-radius) 0 0; border: 1px solid var(--border-color); border-bottom: none; overflow-x: auto; }
+    .tab-btn { padding: 0.875rem 1.25rem; font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); background: none; border: none; cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent; transition: all 0.15s; display: flex; align-items: center; gap: 0.5rem; }
+    .tab-btn:hover { color: var(--accent); background: var(--accent-bg); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); background: white; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Settings Card */
+    .settings-card { background: white; border-radius: 0 0 var(--card-radius) var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); margin-bottom: 1.25rem; overflow: hidden; }
+    .settings-card.standalone { border-radius: var(--card-radius); }
+    .settings-card-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
+    .settings-card-header h3 { font-size: 0.9375rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 0.5rem; }
+    .settings-card-header h3 i { color: var(--accent); font-size: 1rem; }
+    .settings-card-body { padding: 1.25rem; }
+
+    /* Section inside card */
+    .section-title { font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 0.5rem; }
+    .section-title i { color: var(--accent); }
+
+    /* Form controls */
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.375rem; display: block; }
+    .form-group label .required { color: var(--danger-color); }
+    .form-group .help-text { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; }
+    .form-control, .form-select { font-size: 0.8125rem; border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 0.5rem 0.75rem; }
+    .form-control:focus, .form-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14,116,144,0.1); }
+
+    /* Switch rows */
+    .form-switch-row { display: flex; align-items: center; justify-content: space-between; padding: 0.625rem 0; border-bottom: 1px solid #f1f5f9; }
+    .form-switch-row:last-child { border-bottom: none; }
+    .form-switch-row label { margin-bottom: 0; font-weight: 500; font-size: 0.8125rem; }
+    .form-switch-row .switch-desc { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.125rem; }
+    .form-check-input:checked { background-color: var(--accent); border-color: var(--accent); }
+
+    /* Radio cards */
+    .radio-cards { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .radio-card { flex: 1; min-width: 160px; padding: 1rem; border: 2px solid var(--border-color); border-radius: 0.75rem; cursor: pointer; transition: all 0.15s; position: relative; }
+    .radio-card:hover { border-color: var(--accent-light); }
+    .radio-card.selected { border-color: var(--accent); background: var(--accent-bg); }
+    .radio-card .radio-icon { font-size: 1.25rem; margin-bottom: 0.5rem; }
+    .radio-card .radio-title { font-size: 0.8125rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .radio-card .radio-desc { font-size: 0.75rem; color: var(--text-secondary); line-height: 1.4; }
+    .radio-card .check-mark { position: absolute; top: 0.75rem; right: 0.75rem; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.625rem; }
+    .radio-card.selected .check-mark { background: var(--accent); color: white; }
+    .radio-card:not(.selected) .check-mark { border: 2px solid var(--border-color); color: transparent; }
+
+    /* URL slug display */
+    .url-display { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 0.8125rem; }
+    .url-display .url-base { color: var(--text-secondary); font-weight: 400; }
+    .url-display .url-slug { flex: 1; color: var(--accent); font-weight: 600; }
+
+    /* Rich text mock */
+    .rich-text-mock { border: 1px solid var(--border-color); border-radius: 0.5rem; overflow: hidden; }
+    .rich-text-toolbar { display: flex; align-items: center; gap: 0.25rem; padding: 0.5rem 0.75rem; background: #f8fafc; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; }
+    .rich-text-toolbar button { width: 28px; height: 28px; border: none; background: none; color: var(--text-secondary); border-radius: 0.25rem; cursor: pointer; font-size: 0.75rem; transition: all 0.1s; display: flex; align-items: center; justify-content: center; }
+    .rich-text-toolbar button:hover { background: var(--accent-bg); color: var(--accent); }
+    .rich-text-toolbar .sep { width: 1px; height: 20px; background: var(--border-color); margin: 0 0.25rem; }
+    .rich-text-body { padding: 0.75rem; min-height: 100px; font-size: 0.8125rem; line-height: 1.6; color: var(--text-primary); }
+
+    /* Upload area */
+    .upload-area { border: 2px dashed var(--border-color); border-radius: 0.5rem; padding: 1.25rem; text-align: center; cursor: pointer; transition: all 0.15s; }
+    .upload-area:hover { border-color: var(--accent); background: var(--accent-bg); }
+    .upload-area i { font-size: 1.5rem; color: var(--text-secondary); margin-bottom: 0.5rem; display: block; }
+    .upload-area .upload-text { font-size: 0.8125rem; color: var(--text-secondary); }
+    .upload-area .upload-hint { font-size: 0.75rem; color: var(--text-secondary); opacity: 0.7; margin-top: 0.25rem; }
+
+    /* Amount chips */
+    .amount-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .amount-chip { padding: 0.5rem 1rem; border: 2px solid var(--border-color); border-radius: 9999px; font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); cursor: pointer; transition: all 0.15s; background: white; display: flex; align-items: center; gap: 0.375rem; }
+    .amount-chip:hover { border-color: var(--accent); color: var(--accent); }
+    .amount-chip .remove-chip { font-size: 0.625rem; opacity: 0.7; cursor: pointer; }
+    .add-amount-btn { padding: 0.5rem 1rem; border: 2px dashed var(--border-color); border-radius: 9999px; font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; background: white; }
+    .add-amount-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Payment method item */
+    .payment-method-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; background: white; margin-bottom: 0.5rem; transition: all 0.15s; }
+    .payment-method-item:hover { background: #fafafa; }
+    .payment-method-item .method-icon { width: 36px; height: 36px; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+    .payment-method-item .method-info { flex: 1; }
+    .payment-method-item .method-name { font-size: 0.8125rem; font-weight: 600; }
+    .payment-method-item .method-desc { font-size: 0.75rem; color: var(--text-secondary); }
+
+    /* Checkbox list */
+    .checkbox-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .checkbox-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; }
+    .checkbox-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); }
+
+    /* Badge list */
+    .badge-list { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+    .badge-item { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.375rem 0.75rem; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 9999px; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); }
+    .badge-item i { color: var(--warning-color); }
+
+    /* Color picker row */
+    .color-picker-row { display: flex; align-items: center; gap: 0.75rem; }
+    .color-picker-row input[type="color"] { width: 40px; height: 36px; border: 1px solid var(--border-color); border-radius: 0.375rem; padding: 2px; cursor: pointer; }
+
+    /* Communication template row */
+    .template-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid #f1f5f9; }
+    .template-row:last-child { border-bottom: none; }
+    .template-label { flex: 1; font-size: 0.8125rem; font-weight: 500; }
+    .template-select { width: 220px; }
+    .template-toggle { flex-shrink: 0; }
+
+    /* Social share buttons */
+    .social-share-btns { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .social-btn { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.5rem 0.875rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 600; color: white; border: none; cursor: pointer; }
+    .social-btn.facebook { background: #1877F2; }
+    .social-btn.twitter { background: #1DA1F2; }
+    .social-btn.linkedin { background: #0A66C2; }
+    .social-btn.whatsapp { background: #25D366; }
+    .social-btn.copy-link { background: var(--text-secondary); }
+
+    /* Split pane for branding tab */
+    .split-pane { display: flex; gap: 1.25rem; }
+    .split-left { flex: 1; min-width: 0; }
+    .split-right { width: 480px; flex-shrink: 0; }
+    @media (max-width: 1200px) { .split-pane { flex-direction: column; } .split-right { width: 100%; } }
+
+    /* Preview panel */
+    .preview-panel { position: sticky; top: 0; }
+    .preview-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; gap: 0.5rem; flex-wrap: wrap; }
+    .preview-type-label { font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.375rem; }
+    .device-switcher { display: flex; background: white; border-radius: 0.5rem; padding: 2px; border: 1px solid var(--border-color); }
+    .device-btn { padding: 0.375rem 0.75rem; border: none; background: none; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); border-radius: 0.375rem; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 0.375rem; }
+    .device-btn.active { background: var(--accent); color: white; }
+    .device-btn:hover:not(.active) { background: #f1f5f9; }
+
+    /* Browser chrome */
+    .browser-chrome { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 0.75rem; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    .browser-topbar { background: #e2e8f0; padding: 0.5rem 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+    .browser-dots { display: flex; gap: 5px; }
+    .browser-dots span { width: 10px; height: 10px; border-radius: 50%; }
+    .browser-dots .red { background: #ef4444; }
+    .browser-dots .yellow { background: #f59e0b; }
+    .browser-dots .green { background: #22c55e; }
+    .browser-url-bar { flex: 1; background: white; border-radius: 4px; padding: 0.25rem 0.625rem; font-size: 0.625rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.375rem; }
+    .browser-url-bar i { color: var(--success-color); font-size: 0.5rem; }
+    .browser-body { overflow-y: auto; max-height: 600px; }
+
+    /* Phone frame */
+    .phone-frame { width: 375px; max-width: 100%; background: #1e293b; border-radius: 2.5rem; padding: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); margin: 0 auto; display: none; }
+    .phone-inner { background: white; border-radius: 1.75rem; overflow: hidden; }
+    .phone-notch { width: 100px; height: 22px; background: #1e293b; border-radius: 0 0 14px 14px; margin: 0 auto; position: relative; z-index: 1; margin-top: -1px; }
+    .phone-screen { overflow-y: auto; max-height: 650px; }
+    .phone-screen::-webkit-scrollbar { width: 3px; }
+    .phone-screen::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+    /* Preview content styles */
+    .pv-hero { height: 160px; background: linear-gradient(135deg, rgba(14,116,144,0.9), rgba(6,182,212,0.7)), linear-gradient(135deg, #0e7490, #06b6d4); display: flex; align-items: center; justify-content: center; text-align: center; color: white; flex-direction: column; padding: 1rem; }
+    .pv-hero h2 { font-size: 1.125rem; font-weight: 800; margin-bottom: 0.25rem; }
+    .pv-hero .pv-org { font-size: 0.6875rem; opacity: 0.85; }
+    .pv-campaign-body { padding: 1.25rem; }
+    .pv-progress { margin-bottom: 1rem; }
+    .pv-progress .pv-prog-info { display: flex; justify-content: space-between; font-size: 0.6875rem; margin-bottom: 0.25rem; }
+    .pv-progress .pv-prog-info .raised { font-weight: 700; color: var(--accent); }
+    .pv-progress .pv-prog-track { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+    .pv-progress .pv-prog-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-light)); border-radius: 4px; width: 69.1%; }
+    .pv-progress .pv-donors { font-size: 0.625rem; color: var(--text-secondary); margin-top: 0.25rem; }
+    .pv-actions { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; }
+    .pv-btn { flex: 1; padding: 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 700; text-align: center; cursor: pointer; border: none; }
+    .pv-btn.primary { background: var(--accent); color: white; }
+    .pv-btn.outline { background: white; border: 1.5px solid var(--accent); color: var(--accent); }
+    .pv-section-title { font-size: 0.75rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.75rem; padding-bottom: 0.375rem; border-bottom: 1px solid #f1f5f9; }
+    .pv-story { font-size: 0.6875rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1.25rem; }
+    .pv-leaderboard { margin-bottom: 1.25rem; }
+    .pv-leader { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0; border-bottom: 1px solid #f8fafc; font-size: 0.6875rem; }
+    .pv-leader:last-child { border-bottom: none; }
+    .pv-leader .medal { font-size: 1rem; }
+    .pv-leader .leader-info { flex: 1; }
+    .pv-leader .leader-name { font-weight: 600; }
+    .pv-leader .leader-amount { color: var(--accent); font-weight: 700; }
+    .pv-leader .leader-pct { font-size: 0.625rem; color: var(--text-secondary); }
+    .pv-see-all { font-size: 0.625rem; color: var(--accent); font-weight: 600; cursor: pointer; text-align: center; padding: 0.375rem; }
+    .pv-donor-wall { margin-bottom: 1.25rem; }
+    .pv-donor { display: flex; align-items: center; gap: 0.5rem; padding: 0.375rem 0; font-size: 0.6875rem; border-bottom: 1px solid #f8fafc; }
+    .pv-donor:last-child { border-bottom: none; }
+    .pv-donor .donor-avatar { width: 24px; height: 24px; border-radius: 50%; background: var(--accent-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 0.5rem; font-weight: 700; flex-shrink: 0; }
+    .pv-donor .donor-info { flex: 1; }
+    .pv-donor .donor-name { font-weight: 600; }
+    .pv-donor .donor-meta { font-size: 0.625rem; color: var(--text-secondary); }
+    .pv-impact { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1.25rem; }
+    .pv-impact-item { background: var(--accent-bg); border-radius: 0.5rem; padding: 0.625rem; text-align: center; }
+    .pv-impact-item .val { font-size: 1rem; font-weight: 800; color: var(--accent); }
+    .pv-impact-item .lbl { font-size: 0.5625rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+    .pv-footer { background: var(--accent); color: rgba(255,255,255,0.8); text-align: center; padding: 0.625rem; font-size: 0.5625rem; }
+
+    /* Code block */
+    .code-block { background: #1e293b; color: #e2e8f0; font-family: 'Consolas','Monaco',monospace; font-size: 0.75rem; padding: 1rem; border-radius: 0.5rem; white-space: pre-wrap; word-break: break-all; }
+
+    /* Form footer */
+    .form-footer { display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem; padding: 1.25rem; background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); margin-top: 1.25rem; flex-wrap: wrap; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .tab-nav { overflow-x: auto; }
+      .template-row { flex-direction: column; align-items: flex-start; gap: 0.375rem; }
+      .template-select { width: 100%; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1>Create P2P Campaign</h1>
+      <p class="subtitle">Set up a new peer-to-peer fundraising campaign</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline-secondary" onclick="parent.loadContent('fundraising/p2p-campaign-list')">Cancel</button>
+      <button class="btn-outline-accent"><i class="fas fa-save me-1"></i> Save Draft</button>
+      <button class="btn-primary-accent"><i class="fas fa-rocket me-1"></i> Publish</button>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab(this, 'basic-info')"><i class="fas fa-info-circle"></i> Basic Info</button>
+    <button class="tab-btn" onclick="switchTab(this, 'fundraiser-settings')"><i class="fas fa-users"></i> Fundraiser Settings</button>
+    <button class="tab-btn" onclick="switchTab(this, 'donation-settings')"><i class="fas fa-hand-holding-dollar"></i> Donation Settings</button>
+    <button class="tab-btn" onclick="switchTab(this, 'branding-page')"><i class="fas fa-palette"></i> Branding & Page</button>
+    <button class="tab-btn" onclick="switchTab(this, 'communication')"><i class="fas fa-envelope"></i> Communication</button>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- TAB 1: Basic Info                          -->
+  <!-- ========================================== -->
+  <div class="tab-content active" id="tab-basic-info">
+    <div class="settings-card">
+      <div class="settings-card-body">
+
+        <div class="form-group">
+          <label>Campaign Name <span class="required">*</span></label>
+          <input type="text" class="form-control" value="Run for Education 2026" placeholder="Enter campaign name">
+        </div>
+
+        <div class="form-group">
+          <label>Campaign Slug</label>
+          <div class="url-display">
+            <span class="url-base">donate.hopefoundation.org/p2p/</span>
+            <span class="url-slug">run-for-education-2026</span>
+          </div>
+          <div class="help-text">Auto-generated from campaign name. You can customize it.</div>
+        </div>
+
+        <div class="form-group">
+          <label>Campaign Type</label>
+          <div class="radio-cards">
+            <div class="radio-card selected" onclick="selectRadioCard(this)">
+              <div class="check-mark"><i class="fas fa-check"></i></div>
+              <div class="radio-icon">&#127939;</div>
+              <div class="radio-title">Timed Campaign</div>
+              <div class="radio-desc">Has start/end date (marathon, challenge, giving day)</div>
+            </div>
+            <div class="radio-card" onclick="selectRadioCard(this)">
+              <div class="check-mark"><i class="fas fa-check"></i></div>
+              <div class="radio-icon">&#127874;</div>
+              <div class="radio-title">Occasion-based</div>
+              <div class="radio-desc">Ongoing (birthdays, memorials, personal milestones)</div>
+            </div>
+            <div class="radio-card" onclick="selectRadioCard(this)">
+              <div class="check-mark"><i class="fas fa-check"></i></div>
+              <div class="radio-icon">&#128260;</div>
+              <div class="radio-title">Always Active</div>
+              <div class="radio-desc">Evergreen P2P fundraising page</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Start Date</label>
+              <input type="date" class="form-control" value="2026-03-01">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>End Date</label>
+              <input type="date" class="form-control" value="2026-06-30">
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Campaign Goal <span class="required">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text" style="font-size:0.8125rem">USD $</span>
+                <input type="text" class="form-control" value="50,000">
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Linked Donation Purpose</label>
+              <select class="form-select">
+                <option selected>Children's Education</option>
+                <option>Healthcare</option>
+                <option>Clean Water</option>
+                <option>Emergency Relief</option>
+                <option>General Fund</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Campaign Description <span class="required">*</span></label>
+          <div class="rich-text-mock">
+            <div class="rich-text-toolbar">
+              <button title="Bold"><i class="fas fa-bold"></i></button>
+              <button title="Italic"><i class="fas fa-italic"></i></button>
+              <button title="Underline"><i class="fas fa-underline"></i></button>
+              <span class="sep"></span>
+              <button title="Bullet List"><i class="fas fa-list-ul"></i></button>
+              <button title="Numbered List"><i class="fas fa-list-ol"></i></button>
+              <span class="sep"></span>
+              <button title="Link"><i class="fas fa-link"></i></button>
+              <button title="Image"><i class="fas fa-image"></i></button>
+            </div>
+            <div class="rich-text-body">
+              Join us for Run for Education 2026! Whether you run, walk, or cheer from the sidelines, you can help send children to school. Create your fundraising page, share with friends, and watch the impact grow.
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Campaign Story</label>
+          <div class="rich-text-mock">
+            <div class="rich-text-toolbar">
+              <button title="Bold"><i class="fas fa-bold"></i></button>
+              <button title="Italic"><i class="fas fa-italic"></i></button>
+              <button title="Heading"><i class="fas fa-heading"></i></button>
+              <span class="sep"></span>
+              <button title="Bullet List"><i class="fas fa-list-ul"></i></button>
+              <button title="Quote"><i class="fas fa-quote-right"></i></button>
+              <span class="sep"></span>
+              <button title="Link"><i class="fas fa-link"></i></button>
+              <button title="Image"><i class="fas fa-image"></i></button>
+              <button title="Video"><i class="fas fa-video"></i></button>
+            </div>
+            <div class="rich-text-body" style="min-height:140px">
+              <p><strong>Run for Education 2026</strong> is our flagship peer-to-peer fundraising campaign. Last year, 150 fundraisers helped raise over $120,000 to support children's education across 12 countries.</p>
+              <p>This year, we're aiming even higher. Every dollar raised goes directly to providing school supplies, uniforms, and tuition for children who need it most.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Hero Image</label>
+              <div class="upload-area">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <div class="upload-text">Click or drag to upload hero image</div>
+                <div class="upload-hint">Recommended: 1200x600px, JPG/PNG, max 5MB</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Campaign Video</label>
+              <input type="url" class="form-control" placeholder="https://youtube.com/watch?v=..." value="">
+              <div class="help-text">YouTube or Vimeo embed URL</div>
+            </div>
+            <div class="form-group">
+              <label>Organizational Unit</label>
+              <select class="form-select">
+                <option selected>Hope Foundation — Global</option>
+                <option>Hope Foundation — North America</option>
+                <option>Hope Foundation — EMEA</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- TAB 2: Fundraiser Settings                 -->
+  <!-- ========================================== -->
+  <div class="tab-content" id="tab-fundraiser-settings">
+    <div class="settings-card">
+      <div class="settings-card-body">
+
+        <div class="section-title"><i class="fas fa-user-plus"></i> Registration</div>
+
+        <div class="form-switch-row">
+          <div>
+            <label>Allow public registration</label>
+            <div class="switch-desc">Anyone can create a fundraiser page</div>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" checked>
+          </div>
+        </div>
+        <div class="form-switch-row">
+          <div>
+            <label>Fundraiser Approval</label>
+            <div class="switch-desc">Fundraiser pages need admin approval before going live</div>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox">
+          </div>
+        </div>
+
+        <div class="section-title mt-4"><i class="fas fa-bullseye"></i> Goal Settings</div>
+
+        <div class="row">
+          <div class="col-md-4">
+            <div class="form-group">
+              <label>Default Individual Goal</label>
+              <div class="input-group">
+                <span class="input-group-text" style="font-size:0.8125rem">$</span>
+                <input type="text" class="form-control" value="500">
+              </div>
+              <div class="help-text">Fundraiser can customize</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="form-group">
+              <label>Minimum Goal</label>
+              <div class="input-group">
+                <span class="input-group-text" style="font-size:0.8125rem">$</span>
+                <input type="text" class="form-control" value="100">
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="form-group">
+              <label>Maximum Goal</label>
+              <div class="input-group">
+                <span class="input-group-text" style="font-size:0.8125rem">$</span>
+                <input type="text" class="form-control" value="10,000">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title mt-4"><i class="fas fa-people-group"></i> Team Fundraising</div>
+
+        <div class="form-switch-row">
+          <div>
+            <label>Allow Team Fundraising</label>
+            <div class="switch-desc">Fundraisers can form teams with a shared goal</div>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" checked>
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Default Team Goal</label>
+              <div class="input-group">
+                <span class="input-group-text" style="font-size:0.8125rem">$</span>
+                <input type="text" class="form-control" value="5,000">
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Max Team Size</label>
+              <input type="number" class="form-control" value="20">
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title mt-4"><i class="fas fa-sliders"></i> Fundraiser Page Options</div>
+        <p style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:0.75rem;">What fundraisers can customize on their page:</p>
+
+        <div class="checkbox-list">
+          <label class="checkbox-item"><input type="checkbox" checked> Profile photo</label>
+          <label class="checkbox-item"><input type="checkbox" checked> Personal story / why I'm fundraising</label>
+          <label class="checkbox-item"><input type="checkbox" checked> Personal goal amount</label>
+          <label class="checkbox-item"><input type="checkbox" checked> Cover image</label>
+          <label class="checkbox-item"><input type="checkbox"> Custom video</label>
+          <label class="checkbox-item"><input type="checkbox"> Milestones</label>
+        </div>
+
+        <div class="section-title mt-4"><i class="fas fa-trophy"></i> Gamification</div>
+
+        <div class="form-switch-row">
+          <div>
+            <label>Show leaderboard</label>
+            <div class="switch-desc">Rank fundraisers by amount raised</div>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" checked>
+          </div>
+        </div>
+        <div class="form-switch-row">
+          <div>
+            <label>Show fundraiser count</label>
+            <div class="switch-desc">Display total number of fundraisers publicly</div>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" checked>
+          </div>
+        </div>
+        <div class="form-switch-row">
+          <div>
+            <label>Achievement badges</label>
+            <div class="switch-desc">Award badges for milestones</div>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox">
+          </div>
+        </div>
+        <div class="badge-list">
+          <span class="badge-item"><i class="fas fa-star"></i> First Donation</span>
+          <span class="badge-item"><i class="fas fa-fire"></i> 50% Goal</span>
+          <span class="badge-item"><i class="fas fa-trophy"></i> Goal Reached</span>
+          <span class="badge-item"><i class="fas fa-crown"></i> Top Fundraiser</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- TAB 3: Donation Settings                   -->
+  <!-- ========================================== -->
+  <div class="tab-content" id="tab-donation-settings">
+    <div class="settings-card">
+      <div class="settings-card-body">
+
+        <div class="section-title"><i class="fas fa-dollar-sign"></i> Donation Amounts</div>
+
+        <div class="form-group">
+          <label>Suggested Amounts</label>
+          <div class="amount-chips">
+            <span class="amount-chip">$25 <i class="fas fa-times remove-chip"></i></span>
+            <span class="amount-chip">$50 <i class="fas fa-times remove-chip"></i></span>
+            <span class="amount-chip">$100 <i class="fas fa-times remove-chip"></i></span>
+            <span class="amount-chip">$250 <i class="fas fa-times remove-chip"></i></span>
+            <span class="add-amount-btn"><i class="fas fa-plus me-1"></i> Add Amount</span>
+          </div>
+        </div>
+
+        <div class="form-switch-row">
+          <label>Allow Custom Amount</label>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" checked>
+          </div>
+        </div>
+
+        <div class="form-group mt-3">
+          <label>Minimum Donation</label>
+          <div class="input-group" style="max-width:200px">
+            <span class="input-group-text" style="font-size:0.8125rem">$</span>
+            <input type="text" class="form-control" value="5">
+          </div>
+        </div>
+
+        <div class="section-title mt-4"><i class="fas fa-repeat"></i> Recurring & Anonymous</div>
+
+        <div class="form-switch-row">
+          <label>Allow Recurring Donations</label>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" checked>
+          </div>
+        </div>
+        <div class="form-switch-row">
+          <label>Allow Anonymous Donations</label>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" checked>
+          </div>
+        </div>
+
+        <div class="section-title mt-4"><i class="fas fa-credit-card"></i> Payment Methods</div>
+
+        <div class="payment-method-item">
+          <div class="method-icon" style="background:#eff6ff;color:#3b82f6"><i class="fas fa-credit-card"></i></div>
+          <div class="method-info">
+            <div class="method-name">Credit/Debit Card (Stripe)</div>
+            <div class="method-desc">Visa, Mastercard, Amex via Stripe</div>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" checked>
+          </div>
+        </div>
+        <div class="payment-method-item">
+          <div class="method-icon" style="background:#eff6ff;color:#003087"><i class="fab fa-paypal"></i></div>
+          <div class="method-info">
+            <div class="method-name">PayPal</div>
+            <div class="method-desc">PayPal checkout integration</div>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" checked>
+          </div>
+        </div>
+        <div class="payment-method-item">
+          <div class="method-icon" style="background:#f0fdf4;color:#16a34a"><i class="fab fa-apple-pay"></i></div>
+          <div class="method-info">
+            <div class="method-name">Apple Pay / Google Pay</div>
+            <div class="method-desc">Mobile wallet payments</div>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox">
+          </div>
+        </div>
+        <div class="payment-method-item">
+          <div class="method-icon" style="background:#faf5ff;color:#7c3aed"><i class="fas fa-building-columns"></i></div>
+          <div class="method-info">
+            <div class="method-name">Bank Transfer</div>
+            <div class="method-desc">Direct bank transfer / ACH</div>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox">
+          </div>
+        </div>
+
+        <div class="section-title mt-4"><i class="fas fa-gear"></i> Additional Options</div>
+
+        <div class="form-switch-row">
+          <div>
+            <label>Allow donor to cover processing fees</label>
+            <div class="switch-desc">Donors can optionally add processing fee to their donation</div>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" checked>
+          </div>
+        </div>
+        <div class="form-switch-row">
+          <div>
+            <label>Matching Gift Integration</label>
+            <div class="switch-desc">Link to matching-gifts configuration for corporate matching</div>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox">
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- TAB 4: Branding & Page                     -->
+  <!-- ========================================== -->
+  <div class="tab-content" id="tab-branding-page">
+    <div class="split-pane">
+      <!-- Left: Settings -->
+      <div class="split-left">
+        <div class="settings-card standalone">
+          <div class="settings-card-header">
+            <h3><i class="fas fa-palette"></i> Campaign Page Builder</h3>
+          </div>
+          <div class="settings-card-body">
+
+            <div class="form-group">
+              <label>Page Theme</label>
+              <select class="form-select">
+                <option selected>Default</option>
+                <option>Dark</option>
+                <option>Colorful</option>
+                <option>Minimal</option>
+              </select>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label>Primary Color</label>
+                  <div class="color-picker-row">
+                    <input type="color" value="#0e7490">
+                    <input type="text" class="form-control" value="#0e7490" style="max-width:120px">
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label>Secondary Color</label>
+                  <div class="color-picker-row">
+                    <input type="color" value="#06b6d4">
+                    <input type="text" class="form-control" value="#06b6d4" style="max-width:120px">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Logo</label>
+              <div class="upload-area" style="padding:0.75rem">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="fas fa-image" style="font-size:1rem;margin:0"></i>
+                  <span class="upload-text" style="font-size:0.75rem">Upload logo or use organization logo</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Header Style</label>
+              <div class="radio-cards" style="gap:0.5rem">
+                <div class="radio-card selected" onclick="selectRadioCard(this)" style="padding:0.75rem;min-width:120px">
+                  <div class="check-mark"><i class="fas fa-check"></i></div>
+                  <div class="radio-title" style="font-size:0.75rem">Full-width Hero</div>
+                </div>
+                <div class="radio-card" onclick="selectRadioCard(this)" style="padding:0.75rem;min-width:120px">
+                  <div class="check-mark"><i class="fas fa-check"></i></div>
+                  <div class="radio-title" style="font-size:0.75rem">Split (Image + Text)</div>
+                </div>
+                <div class="radio-card" onclick="selectRadioCard(this)" style="padding:0.75rem;min-width:120px">
+                  <div class="check-mark"><i class="fas fa-check"></i></div>
+                  <div class="radio-title" style="font-size:0.75rem">Minimal</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="section-title mt-3"><i class="fas fa-eye"></i> Page Sections</div>
+
+            <div class="form-switch-row">
+              <label>Show Organization Info</label>
+              <div class="form-check form-switch"><input class="form-check-input" type="checkbox" checked></div>
+            </div>
+            <div class="form-switch-row">
+              <label>Show Impact Stats</label>
+              <div class="form-check form-switch"><input class="form-check-input" type="checkbox" checked></div>
+            </div>
+            <div class="form-switch-row">
+              <label>Show Donor Wall</label>
+              <div class="form-check form-switch"><input class="form-check-input" type="checkbox" checked></div>
+            </div>
+            <div class="form-switch-row">
+              <label>Show Fundraiser Leaderboard</label>
+              <div class="form-check form-switch"><input class="form-check-input" type="checkbox" checked></div>
+            </div>
+
+            <div class="form-group mt-3">
+              <label>Custom CSS <span style="font-size:0.6875rem;color:var(--text-secondary);font-weight:400">(optional)</span></label>
+              <div class="code-block">/* Custom styles for campaign page */
+.campaign-hero {
+  background-blend-mode: overlay;
+}</div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Live Preview -->
+      <div class="split-right">
+        <div class="preview-panel">
+          <div class="preview-toolbar">
+            <span class="preview-type-label"><i class="fas fa-eye"></i> Live Preview</span>
+            <div class="device-switcher">
+              <button class="device-btn active" onclick="switchDevice('desktop', this)"><i class="fas fa-desktop"></i> Desktop</button>
+              <button class="device-btn" onclick="switchDevice('mobile', this)"><i class="fas fa-mobile-alt"></i> Mobile</button>
+            </div>
+          </div>
+
+          <!-- Desktop Preview -->
+          <div class="browser-chrome" id="desktopPreview">
+            <div class="browser-topbar">
+              <div class="browser-dots">
+                <span class="red"></span><span class="yellow"></span><span class="green"></span>
+              </div>
+              <div class="browser-url-bar">
+                <i class="fas fa-lock"></i> donate.hopefoundation.org/p2p/run-for-education-2026
+              </div>
+            </div>
+            <div class="browser-body">
+              <!-- Hero -->
+              <div class="pv-hero">
+                <div style="font-size:1.5rem;margin-bottom:0.25rem">&#127939;</div>
+                <h2>RUN FOR EDUCATION 2026</h2>
+                <div class="pv-org">Hope Foundation</div>
+              </div>
+
+              <div class="pv-campaign-body">
+                <!-- Progress -->
+                <div class="pv-progress">
+                  <div class="pv-prog-info">
+                    <span class="raised">$34,560 raised</span>
+                    <span>of $50,000 goal</span>
+                  </div>
+                  <div class="pv-prog-track"><div class="pv-prog-fill"></div></div>
+                  <div class="pv-donors">456 donors &middot; 89 fundraisers</div>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="pv-actions">
+                  <button class="pv-btn primary">Become a Fundraiser</button>
+                  <button class="pv-btn outline">Donate Now</button>
+                </div>
+
+                <!-- Campaign Story -->
+                <div class="pv-section-title">Campaign Story</div>
+                <div class="pv-story">
+                  Join us for Run for Education 2026! Whether you run, walk, or cheer from the sidelines, you can help send children to school. Create your fundraising page, share with friends, and watch the impact grow.
+                </div>
+
+                <!-- Top Fundraisers / Leaderboard -->
+                <div class="pv-section-title">Top Fundraisers</div>
+                <div class="pv-leaderboard">
+                  <div class="pv-leader">
+                    <span class="medal">&#129351;</span>
+                    <div class="leader-info">
+                      <span class="leader-name">Maria Santos</span>
+                    </div>
+                    <span class="leader-amount">$3,200</span>
+                    <span class="leader-pct">(640%)</span>
+                  </div>
+                  <div class="pv-leader">
+                    <span class="medal">&#129352;</span>
+                    <div class="leader-info">
+                      <span class="leader-name">James Okonkwo</span>
+                    </div>
+                    <span class="leader-amount">$2,800</span>
+                    <span class="leader-pct">(560%)</span>
+                  </div>
+                  <div class="pv-leader">
+                    <span class="medal">&#129353;</span>
+                    <div class="leader-info">
+                      <span class="leader-name">Sarah Johnson</span>
+                    </div>
+                    <span class="leader-amount">$2,100</span>
+                    <span class="leader-pct">(420%)</span>
+                  </div>
+                  <div class="pv-see-all">... see all 89 fundraisers</div>
+                </div>
+
+                <!-- Recent Donors -->
+                <div class="pv-section-title">Recent Donors</div>
+                <div class="pv-donor-wall">
+                  <div class="pv-donor">
+                    <div class="donor-avatar">AA</div>
+                    <div class="donor-info">
+                      <span class="donor-name">Ahmad A.</span>
+                      <span class="donor-meta">&mdash; $500 &middot; 2 hours ago</span>
+                    </div>
+                  </div>
+                  <div class="pv-donor">
+                    <div class="donor-avatar"><i class="fas fa-user-secret" style="font-size:0.5rem"></i></div>
+                    <div class="donor-info">
+                      <span class="donor-name">Anonymous</span>
+                      <span class="donor-meta">&mdash; $100 &middot; 3 hours ago</span>
+                    </div>
+                  </div>
+                  <div class="pv-donor">
+                    <div class="donor-avatar">EC</div>
+                    <div class="donor-info">
+                      <span class="donor-name">Emily C.</span>
+                      <span class="donor-meta">&mdash; $250 &middot; 5 hours ago</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Impact Stats -->
+                <div class="pv-section-title">Impact Stats</div>
+                <div class="pv-impact">
+                  <div class="pv-impact-item">
+                    <div class="val">&#127891; 690</div>
+                    <div class="lbl">Children Funded</div>
+                  </div>
+                  <div class="pv-impact-item">
+                    <div class="val">&#128218; 2,300</div>
+                    <div class="lbl">Textbooks Provided</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Footer -->
+              <div class="pv-footer">Hope Foundation &copy; 2026 &middot; Powered by PeopleServe</div>
+            </div>
+          </div>
+
+          <!-- Mobile Preview -->
+          <div class="phone-frame" id="mobilePreview">
+            <div class="phone-inner">
+              <div class="phone-notch"></div>
+              <div class="phone-screen">
+                <!-- Hero -->
+                <div class="pv-hero" style="height:130px">
+                  <div style="font-size:1.25rem;margin-bottom:0.25rem">&#127939;</div>
+                  <h2 style="font-size:0.9375rem">RUN FOR EDUCATION 2026</h2>
+                  <div class="pv-org" style="font-size:0.625rem">Hope Foundation</div>
+                </div>
+                <div class="pv-campaign-body" style="padding:1rem">
+                  <div class="pv-progress">
+                    <div class="pv-prog-info">
+                      <span class="raised">$34,560 raised</span>
+                      <span>of $50,000</span>
+                    </div>
+                    <div class="pv-prog-track"><div class="pv-prog-fill"></div></div>
+                    <div class="pv-donors">456 donors &middot; 89 fundraisers</div>
+                  </div>
+                  <div class="pv-actions" style="flex-direction:column">
+                    <button class="pv-btn primary">Become a Fundraiser</button>
+                    <button class="pv-btn outline">Donate Now</button>
+                  </div>
+                  <div class="pv-section-title">Top Fundraisers</div>
+                  <div class="pv-leaderboard">
+                    <div class="pv-leader">
+                      <span class="medal">&#129351;</span>
+                      <div class="leader-info"><span class="leader-name">Maria Santos</span></div>
+                      <span class="leader-amount">$3,200</span>
+                    </div>
+                    <div class="pv-leader">
+                      <span class="medal">&#129352;</span>
+                      <div class="leader-info"><span class="leader-name">James Okonkwo</span></div>
+                      <span class="leader-amount">$2,800</span>
+                    </div>
+                    <div class="pv-leader">
+                      <span class="medal">&#129353;</span>
+                      <div class="leader-info"><span class="leader-name">Sarah Johnson</span></div>
+                      <span class="leader-amount">$2,100</span>
+                    </div>
+                  </div>
+                  <div class="pv-section-title">Recent Donors</div>
+                  <div class="pv-donor-wall">
+                    <div class="pv-donor">
+                      <div class="donor-avatar">AA</div>
+                      <div class="donor-info">
+                        <span class="donor-name">Ahmad A.</span>
+                        <span class="donor-meta">&mdash; $500</span>
+                      </div>
+                    </div>
+                    <div class="pv-donor">
+                      <div class="donor-avatar"><i class="fas fa-user-secret" style="font-size:0.5rem"></i></div>
+                      <div class="donor-info">
+                        <span class="donor-name">Anonymous</span>
+                        <span class="donor-meta">&mdash; $100</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="pv-footer">Hope Foundation &copy; 2026</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- TAB 5: Communication                       -->
+  <!-- ========================================== -->
+  <div class="tab-content" id="tab-communication">
+    <div class="settings-card">
+      <div class="settings-card-body">
+
+        <div class="section-title"><i class="fas fa-envelope"></i> Auto-emails for Campaign</div>
+
+        <div class="template-row">
+          <div class="template-label">Fundraiser Registration Confirmation</div>
+          <select class="form-select template-select">
+            <option selected>P2P Welcome - Default</option>
+            <option>P2P Welcome - Custom</option>
+            <option>Create New Template...</option>
+          </select>
+        </div>
+        <div class="template-row">
+          <div class="template-label">Donation Received (to fundraiser)</div>
+          <select class="form-select template-select">
+            <option selected>P2P Donation Alert - Default</option>
+            <option>Create New Template...</option>
+          </select>
+        </div>
+        <div class="template-row">
+          <div class="template-label">Donation Received (to donor)</div>
+          <select class="form-select template-select">
+            <option selected>P2P Donor Thank You - Default</option>
+            <option>Create New Template...</option>
+          </select>
+        </div>
+        <div class="template-row">
+          <div class="template-label">Goal Reached Celebration</div>
+          <select class="form-select template-select">
+            <option selected>P2P Goal Reached - Default</option>
+            <option>Create New Template...</option>
+          </select>
+        </div>
+        <div class="template-row">
+          <div class="template-label">Weekly Progress Update (to fundraisers)</div>
+          <select class="form-select template-select">
+            <option selected>P2P Weekly Summary - Default</option>
+            <option>Create New Template...</option>
+          </select>
+        </div>
+        <div class="template-row">
+          <div class="template-label">Campaign End Summary</div>
+          <select class="form-select template-select">
+            <option selected>P2P Campaign Wrap-up - Default</option>
+            <option>Create New Template...</option>
+          </select>
+        </div>
+
+        <div class="section-title mt-4"><i class="fab fa-whatsapp" style="color:#25D366"></i> WhatsApp Notifications</div>
+
+        <div class="template-row">
+          <div class="template-label">New donation alert to fundraiser</div>
+          <select class="form-select template-select">
+            <option selected>WA P2P Donation Alert</option>
+            <option>Create New Template...</option>
+          </select>
+          <div class="template-toggle">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" checked>
+            </div>
+          </div>
+        </div>
+        <div class="template-row">
+          <div class="template-label">
+            Goal milestone alerts
+            <div style="font-size:0.6875rem;color:var(--text-secondary);margin-top:0.125rem">At 25%, 50%, 75%, 100%</div>
+          </div>
+          <div class="template-toggle" style="margin-left:auto">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" checked>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title mt-4"><i class="fas fa-share-nodes"></i> Social Sharing</div>
+
+        <div class="form-group">
+          <label>Default Share Message</label>
+          <textarea class="form-control" rows="2" style="resize:vertical">I'm fundraising for Hope Foundation! Help me reach my goal.</textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Open Graph Image</label>
+          <div class="upload-area" style="padding:0.75rem">
+            <div class="d-flex align-items-center gap-2">
+              <i class="fas fa-image" style="font-size:1rem;margin:0"></i>
+              <span class="upload-text" style="font-size:0.75rem">Upload OG image (1200x630, for social media previews)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Share Buttons</label>
+          <div class="social-share-btns">
+            <button class="social-btn facebook"><i class="fab fa-facebook-f"></i> Facebook</button>
+            <button class="social-btn twitter"><i class="fab fa-x-twitter"></i> Twitter/X</button>
+            <button class="social-btn linkedin"><i class="fab fa-linkedin-in"></i> LinkedIn</button>
+            <button class="social-btn whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+            <button class="social-btn copy-link"><i class="fas fa-link"></i> Copy Link</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Footer -->
+  <div class="form-footer">
+    <button class="btn-outline-secondary"><i class="fas fa-save me-1"></i> Save Draft</button>
+    <button class="btn-outline-accent"><i class="fas fa-eye me-1"></i> Preview Campaign Page</button>
+    <button class="btn-primary-accent"><i class="fas fa-rocket me-1"></i> Publish Campaign</button>
+  </div>
+
+  <script>
+    function switchTab(btn, tabId) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + tabId).classList.add('active');
+    }
+
+    function selectRadioCard(card) {
+      const parent = card.parentElement;
+      parent.querySelectorAll('.radio-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+    }
+
+    function switchDevice(device, btn) {
+      document.querySelectorAll('.device-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const desktop = document.getElementById('desktopPreview');
+      const mobile = document.getElementById('mobilePreview');
+
+      if (device === 'mobile') {
+        desktop.style.display = 'none';
+        mobile.style.display = 'block';
+      } else {
+        desktop.style.display = 'block';
+        mobile.style.display = 'none';
+      }
+    }
+  </script>
+
+</body>
+</html>

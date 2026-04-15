@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Engagement Scoring - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+      --ai-accent: #8b5cf6;
+      --ai-accent-bg: #f5f3ff;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    .page-header { margin-bottom: 1.5rem; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem; }
+    .page-header p { font-size: 0.875rem; color: var(--text-secondary); margin: 0; }
+
+    .header-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+
+    .btn-primary-custom {
+      background: var(--ai-accent);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-primary-custom:hover { background: #7c3aed; }
+
+    .btn-outline-custom {
+      background: white;
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-outline-custom:hover { border-color: var(--ai-accent); color: var(--ai-accent); }
+
+    .filter-select {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      background: white;
+      cursor: pointer;
+    }
+
+    /* KPI Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1.25rem;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+
+    .stat-icon {
+      width: 48px; height: 48px; border-radius: 0.75rem;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.25rem; flex-shrink: 0;
+    }
+    .stat-icon.purple { background: var(--ai-accent-bg); color: var(--ai-accent); }
+    .stat-icon.green { background: #f0fdf4; color: #22c55e; }
+    .stat-icon.amber { background: #fffbeb; color: #f59e0b; }
+    .stat-icon.red { background: #fef2f2; color: #ef4444; }
+
+    .stat-info { flex: 1; }
+    .stat-value { font-size: 1.625rem; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+    .stat-label { font-size: 0.8125rem; color: var(--text-secondary); font-weight: 500; margin-bottom: 0.125rem; }
+    .stat-subtitle { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; }
+    .stat-subtitle .positive { color: var(--success-color); font-weight: 600; }
+    .stat-subtitle .warning { color: var(--warning-color); font-weight: 600; }
+    .stat-subtitle .neutral { color: var(--text-secondary); }
+
+    /* Card Base */
+    .dash-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+    }
+    .dash-card-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .dash-card-header h3 { font-size: 0.9375rem; font-weight: 700; margin: 0; color: var(--text-primary); }
+    .dash-card-body { padding: 1.25rem; }
+
+    .section-gap { margin-bottom: 1.5rem; }
+
+    /* Histogram */
+    .histogram { display: flex; align-items: flex-end; gap: 4px; height: 200px; padding: 0 0.5rem; }
+    .histogram-bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+    .histogram-bar {
+      width: 100%; border-radius: 4px 4px 0 0; min-height: 4px;
+      transition: height 0.3s; position: relative; cursor: pointer;
+    }
+    .histogram-bar:hover { opacity: 0.85; }
+    .histogram-bar .tooltip-val {
+      display: none; position: absolute; top: -24px; left: 50%; transform: translateX(-50%);
+      background: var(--text-primary); color: white; font-size: 0.625rem; padding: 2px 6px;
+      border-radius: 4px; white-space: nowrap;
+    }
+    .histogram-bar:hover .tooltip-val { display: block; }
+    .histogram-label { font-size: 0.625rem; color: var(--text-secondary); font-weight: 500; }
+    .histogram-value { font-size: 0.625rem; color: var(--text-primary); font-weight: 600; }
+    .bar-red { background: linear-gradient(180deg, #ef4444, #fca5a5); }
+    .bar-amber { background: linear-gradient(180deg, #f59e0b, #fcd34d); }
+    .bar-light-green { background: linear-gradient(180deg, #22c55e, #86efac); }
+    .bar-dark-green { background: linear-gradient(180deg, #15803d, #22c55e); }
+
+    .histogram-annotation {
+      display: flex; justify-content: center; gap: 2rem; margin-top: 0.75rem;
+      font-size: 0.75rem; color: var(--text-secondary);
+    }
+    .histogram-annotation span { font-weight: 600; color: var(--text-primary); }
+
+    .histogram-legend {
+      display: flex; gap: 1rem; flex-wrap: wrap;
+      font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.5rem;
+    }
+    .histogram-legend .dot {
+      width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 4px; vertical-align: middle;
+    }
+
+    /* Trend Chart (CSS-based) */
+    .trend-chart-container { position: relative; height: 220px; }
+    .trend-y-axis {
+      position: absolute; left: 0; top: 0; bottom: 30px; width: 40px;
+      display: flex; flex-direction: column; justify-content: space-between;
+      font-size: 0.625rem; color: var(--text-secondary); text-align: right; padding-right: 8px;
+    }
+    .trend-area {
+      position: absolute; left: 48px; right: 0; top: 0; bottom: 30px;
+      border-left: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);
+    }
+    .trend-grid-line {
+      position: absolute; left: 0; right: 0; border-top: 1px dashed #f1f5f9;
+    }
+    .trend-x-axis {
+      position: absolute; left: 48px; right: 0; bottom: 0; height: 30px;
+      display: flex; justify-content: space-between;
+      font-size: 0.625rem; color: var(--text-secondary); align-items: flex-start; padding-top: 8px;
+    }
+    .trend-line {
+      position: absolute; left: 0; right: 0; top: 0; bottom: 0;
+    }
+    .trend-dot {
+      position: absolute; width: 8px; height: 8px; border-radius: 50%;
+      transform: translate(-50%, -50%); z-index: 2;
+    }
+    .trend-legend {
+      display: flex; gap: 1.5rem; margin-top: 0.5rem; flex-wrap: wrap;
+      font-size: 0.6875rem; color: var(--text-secondary);
+    }
+    .trend-legend .line-sample {
+      width: 20px; height: 3px; border-radius: 2px; display: inline-block; margin-right: 4px; vertical-align: middle;
+    }
+
+    /* SVG trend */
+    .trend-svg { width: 100%; height: 200px; }
+    .trend-svg text { font-family: inherit; }
+
+    /* Tables */
+    .data-table { width: 100%; font-size: 0.8125rem; }
+    .data-table th {
+      background: #f8fafc; font-weight: 600; color: var(--text-secondary);
+      font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.05em;
+      padding: 0.625rem 0.75rem; border-bottom: 1px solid var(--border-color);
+    }
+    .data-table td {
+      padding: 0.625rem 0.75rem; border-bottom: 1px solid #f1f5f9;
+      color: var(--text-primary); vertical-align: middle;
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: #f8fafc; }
+
+    .score-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 40px; height: 40px; border-radius: 50%; font-weight: 700; font-size: 0.8125rem; color: white;
+    }
+    .score-high { background: linear-gradient(135deg, #15803d, #22c55e); }
+    .score-good { background: linear-gradient(135deg, #16a34a, #4ade80); }
+    .score-medium { background: linear-gradient(135deg, #d97706, #fbbf24); }
+    .score-low { background: linear-gradient(135deg, #dc2626, #f87171); }
+
+    .trend-up { color: var(--success-color); font-weight: 600; }
+    .trend-down { color: var(--danger-color); font-weight: 600; }
+    .trend-flat { color: var(--text-secondary); font-weight: 600; }
+
+    .contact-name { font-weight: 600; color: var(--text-primary); }
+
+    .btn-action {
+      font-size: 0.75rem; padding: 0.25rem 0.75rem; border-radius: 0.375rem;
+      border: 1px solid var(--ai-accent); background: white; color: var(--ai-accent);
+      font-weight: 600; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-action:hover { background: var(--ai-accent); color: white; }
+
+    .risk-high { color: var(--danger-color); font-weight: 700; }
+    .risk-medium { color: var(--warning-color); font-weight: 700; }
+
+    /* Dropdown */
+    .action-dropdown { position: relative; display: inline-block; }
+    .action-dropdown .dropdown-btn {
+      font-size: 0.75rem; padding: 0.25rem 0.75rem; border-radius: 0.375rem;
+      border: 1px solid var(--danger-color); background: white; color: var(--danger-color);
+      font-weight: 600; cursor: pointer; transition: all 0.15s;
+    }
+    .action-dropdown .dropdown-btn:hover { background: var(--danger-color); color: white; }
+    .action-dropdown .dropdown-menu-custom {
+      display: none; position: absolute; right: 0; top: 100%; margin-top: 4px;
+      background: white; border: 1px solid var(--border-color); border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1); min-width: 180px; z-index: 100; overflow: hidden;
+    }
+    .action-dropdown.open .dropdown-menu-custom { display: block; }
+    .action-dropdown .dropdown-item-custom {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 0.75rem; font-size: 0.8125rem; color: var(--text-primary);
+      cursor: pointer; transition: background 0.15s; border: none; background: none; width: 100%; text-align: left;
+    }
+    .action-dropdown .dropdown-item-custom:hover { background: #f8fafc; }
+    .action-dropdown .dropdown-item-custom i { width: 16px; text-align: center; color: var(--text-secondary); }
+
+    /* Horizontal Bar Chart */
+    .h-bar-chart { display: flex; flex-direction: column; gap: 0.75rem; }
+    .h-bar-item { display: flex; align-items: center; gap: 0.75rem; }
+    .h-bar-label { width: 140px; font-size: 0.8125rem; font-weight: 500; color: var(--text-primary); flex-shrink: 0; text-align: right; }
+    .h-bar-track { flex: 1; height: 28px; background: #f1f5f9; border-radius: 6px; overflow: hidden; position: relative; }
+    .h-bar-fill { height: 100%; border-radius: 6px; transition: width 0.5s; display: flex; align-items: center; padding-left: 8px; }
+    .h-bar-fill span { font-size: 0.6875rem; font-weight: 700; color: white; }
+    .h-bar-score { width: 40px; font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); flex-shrink: 0; }
+
+    /* Modal */
+    .modal-overlay {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-box {
+      background: white; border-radius: 1rem; width: 600px; max-width: 95vw;
+      max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .modal-header {
+      padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .modal-header h3 { font-size: 1.125rem; font-weight: 700; margin: 0; }
+    .modal-close {
+      background: none; border: none; font-size: 1.25rem; color: var(--text-secondary);
+      cursor: pointer; padding: 0.25rem;
+    }
+    .modal-body { padding: 1.5rem; }
+    .modal-footer {
+      padding: 1rem 1.5rem; border-top: 1px solid var(--border-color);
+      display: flex; justify-content: flex-end; gap: 0.5rem;
+    }
+
+    .weight-row {
+      display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .weight-row:last-child { border-bottom: none; }
+    .weight-label { flex: 1; font-size: 0.8125rem; font-weight: 500; }
+    .weight-desc { font-size: 0.6875rem; color: var(--text-secondary); }
+    .weight-slider { width: 120px; accent-color: var(--ai-accent); }
+    .weight-value {
+      width: 50px; text-align: center; font-size: 0.875rem; font-weight: 700;
+      color: var(--ai-accent); background: var(--ai-accent-bg); padding: 0.25rem 0.5rem;
+      border-radius: 0.375rem;
+    }
+    .weight-total {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.75rem 0; font-weight: 700; font-size: 0.875rem;
+      border-top: 2px solid var(--border-color); margin-top: 0.5rem;
+    }
+    .weight-total.valid { color: var(--success-color); }
+    .weight-total.invalid { color: var(--danger-color); }
+
+    @media (max-width: 992px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .h-bar-label { width: 100px; font-size: 0.75rem; }
+    }
+    @media (max-width: 576px) {
+      body { padding: 1rem; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .header-actions { flex-direction: column; align-items: stretch; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-3">
+    <div>
+      <h1><i class="fas fa-brain me-2" style="color: var(--ai-accent);"></i>Engagement Scoring</h1>
+      <p>AI-powered donor engagement analysis and scoring</p>
+    </div>
+    <div class="header-actions">
+      <select class="filter-select">
+        <option>Last 12 Months</option>
+        <option>Last 6 Months</option>
+        <option>Last Quarter</option>
+        <option>This Year</option>
+      </select>
+      <select class="filter-select">
+        <option>All Branches</option>
+        <option>Main Branch</option>
+        <option>North Region</option>
+        <option>South Region</option>
+      </select>
+      <button class="btn-outline-custom"><i class="fas fa-sync-alt me-1"></i> Recalculate Scores</button>
+      <button class="btn-outline-custom" onclick="openConfigModal()"><i class="fas fa-sliders-h me-1"></i> Configure Scoring Model</button>
+      <button class="btn-outline-custom"><i class="fas fa-download me-1"></i> Export</button>
+    </div>
+  </div>
+
+  <!-- KPI Hero Cards -->
+  <div class="stats-grid section-gap">
+    <div class="stat-card">
+      <div class="stat-icon purple"><i class="fas fa-chart-line"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Average Score</div>
+        <div class="stat-value">54.2 <span style="font-size: 1rem; color: #94a3b8;">/ 100</span></div>
+        <div class="stat-subtitle"><span class="positive">↑ 3.1 vs last quarter</span></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green"><i class="fas fa-star"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Highly Engaged (75-100)</div>
+        <div class="stat-value">456 <span style="font-size: 0.8125rem; color: #94a3b8;">contacts (16%)</span></div>
+        <div class="stat-subtitle"><span class="positive">↑ 23 new this quarter</span></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon amber"><i class="fas fa-exclamation-triangle"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">At Risk (25-50)</div>
+        <div class="stat-value">789 <span style="font-size: 0.8125rem; color: #94a3b8;">contacts (28%)</span></div>
+        <div class="stat-subtitle"><span class="warning">&#9888; 45 declining this month</span></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon red"><i class="fas fa-user-slash"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Disengaged (0-25)</div>
+        <div class="stat-value">623 <span style="font-size: 0.8125rem; color: #94a3b8;">contacts (22%)</span></div>
+        <div class="stat-subtitle"><span class="neutral">Potential re-engagement targets</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Score Distribution Chart -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-chart-bar me-2" style="color: var(--ai-accent);"></i>Score Distribution</h3>
+      <div class="histogram-legend">
+        <span><span class="dot" style="background: #ef4444;"></span> Disengaged (0-25)</span>
+        <span><span class="dot" style="background: #f59e0b;"></span> At Risk (25-50)</span>
+        <span><span class="dot" style="background: #22c55e;"></span> Moderate (50-75)</span>
+        <span><span class="dot" style="background: #15803d;"></span> Highly Engaged (75-100)</span>
+      </div>
+    </div>
+    <div class="dash-card-body">
+      <div class="histogram">
+        <div class="histogram-bar-group">
+          <div class="histogram-value">85</div>
+          <div class="histogram-bar bar-red" style="height: 17%;"><span class="tooltip-val">0-10: 85 contacts</span></div>
+          <div class="histogram-label">0-10</div>
+        </div>
+        <div class="histogram-bar-group">
+          <div class="histogram-value">142</div>
+          <div class="histogram-bar bar-red" style="height: 28%;"><span class="tooltip-val">10-20: 142 contacts</span></div>
+          <div class="histogram-label">10-20</div>
+        </div>
+        <div class="histogram-bar-group">
+          <div class="histogram-value">396</div>
+          <div class="histogram-bar bar-red" style="height: 52%;"><span class="tooltip-val">20-30: 396 contacts</span></div>
+          <div class="histogram-label">20-30</div>
+        </div>
+        <div class="histogram-bar-group">
+          <div class="histogram-value">320</div>
+          <div class="histogram-bar bar-amber" style="height: 45%;"><span class="tooltip-val">30-40: 320 contacts</span></div>
+          <div class="histogram-label">30-40</div>
+        </div>
+        <div class="histogram-bar-group">
+          <div class="histogram-value">469</div>
+          <div class="histogram-bar bar-amber" style="height: 62%;"><span class="tooltip-val">40-50: 469 contacts</span></div>
+          <div class="histogram-label">40-50</div>
+        </div>
+        <div class="histogram-bar-group">
+          <div class="histogram-value">502</div>
+          <div class="histogram-bar bar-light-green" style="height: 70%;"><span class="tooltip-val">50-60: 502 contacts</span></div>
+          <div class="histogram-label">50-60</div>
+        </div>
+        <div class="histogram-bar-group">
+          <div class="histogram-value">380</div>
+          <div class="histogram-bar bar-light-green" style="height: 52%;"><span class="tooltip-val">60-70: 380 contacts</span></div>
+          <div class="histogram-label">60-70</div>
+        </div>
+        <div class="histogram-bar-group">
+          <div class="histogram-value">245</div>
+          <div class="histogram-bar bar-dark-green" style="height: 35%;"><span class="tooltip-val">70-80: 245 contacts</span></div>
+          <div class="histogram-label">70-80</div>
+        </div>
+        <div class="histogram-bar-group">
+          <div class="histogram-value">138</div>
+          <div class="histogram-bar bar-dark-green" style="height: 22%;"><span class="tooltip-val">80-90: 138 contacts</span></div>
+          <div class="histogram-label">80-90</div>
+        </div>
+        <div class="histogram-bar-group">
+          <div class="histogram-value">73</div>
+          <div class="histogram-bar bar-dark-green" style="height: 14%;"><span class="tooltip-val">90-100: 73 contacts</span></div>
+          <div class="histogram-label">90-100</div>
+        </div>
+      </div>
+      <div class="histogram-annotation">
+        Median: <span>52</span> &nbsp;&bull;&nbsp; Mean: <span>54.2</span> &nbsp;&bull;&nbsp; Total Contacts: <span>2,750</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Score Trend Chart -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-chart-area me-2" style="color: var(--ai-accent);"></i>Score Trend (Last 12 Months)</h3>
+    </div>
+    <div class="dash-card-body">
+      <svg class="trend-svg" viewBox="0 0 800 200" preserveAspectRatio="xMidYMid meet">
+        <!-- Grid lines -->
+        <line x1="50" y1="20" x2="780" y2="20" stroke="#f1f5f9" stroke-width="1"/>
+        <line x1="50" y1="65" x2="780" y2="65" stroke="#f1f5f9" stroke-width="1"/>
+        <line x1="50" y1="110" x2="780" y2="110" stroke="#f1f5f9" stroke-width="1"/>
+        <line x1="50" y1="155" x2="780" y2="155" stroke="#f1f5f9" stroke-width="1"/>
+        <!-- Axes -->
+        <line x1="50" y1="170" x2="780" y2="170" stroke="#e2e8f0" stroke-width="1"/>
+        <line x1="50" y1="20" x2="50" y2="170" stroke="#e2e8f0" stroke-width="1"/>
+        <!-- Y-axis labels -->
+        <text x="45" y="24" text-anchor="end" font-size="9" fill="#94a3b8">80</text>
+        <text x="45" y="69" text-anchor="end" font-size="9" fill="#94a3b8">60</text>
+        <text x="45" y="114" text-anchor="end" font-size="9" fill="#94a3b8">40</text>
+        <text x="45" y="159" text-anchor="end" font-size="9" fill="#94a3b8">20</text>
+        <!-- X-axis labels -->
+        <text x="110" y="188" text-anchor="middle" font-size="9" fill="#94a3b8">May</text>
+        <text x="176" y="188" text-anchor="middle" font-size="9" fill="#94a3b8">Jun</text>
+        <text x="242" y="188" text-anchor="middle" font-size="9" fill="#94a3b8">Jul</text>
+        <text x="308" y="188" text-anchor="middle" font-size="9" fill="#94a3b8">Aug</text>
+        <text x="374" y="188" text-anchor="middle" font-size="9" fill="#94a3b8">Sep</text>
+        <text x="440" y="188" text-anchor="middle" font-size="9" fill="#94a3b8">Oct</text>
+        <text x="506" y="188" text-anchor="middle" font-size="9" fill="#94a3b8">Nov</text>
+        <text x="572" y="188" text-anchor="middle" font-size="9" fill="#94a3b8">Dec</text>
+        <text x="638" y="188" text-anchor="middle" font-size="9" fill="#94a3b8">Jan</text>
+        <text x="704" y="188" text-anchor="middle" font-size="9" fill="#94a3b8">Feb</text>
+        <text x="770" y="188" text-anchor="middle" font-size="9" fill="#94a3b8">Mar</text>
+        <!-- Ramadan annotation -->
+        <rect x="540" y="10" width="80" height="160" fill="#f5f3ff" opacity="0.4" rx="4"/>
+        <text x="580" y="8" text-anchor="middle" font-size="8" fill="#8b5cf6" font-weight="600">Ramadan</text>
+        <!-- Year-end annotation -->
+        <rect x="430" y="10" width="60" height="160" fill="#ecfeff" opacity="0.4" rx="4"/>
+        <text x="460" y="8" text-anchor="middle" font-size="8" fill="#0e7490" font-weight="600">Year-End</text>
+        <!-- Overall Average line -->
+        <polyline points="110,100 176,96 242,102 308,98 374,90 440,78 506,82 572,68 638,76 704,72 770,65" fill="none" stroke="#8b5cf6" stroke-width="2.5"/>
+        <!-- New donors line -->
+        <polyline points="110,130 176,128 242,135 308,126 374,120 440,110 506,115 572,100 638,108 704,105 770,98" fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="6,3"/>
+        <!-- Recurring donors line -->
+        <polyline points="110,80 176,76 242,82 308,78 374,68 440,58 506,62 572,48 638,55 704,52 770,45" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="6,3"/>
+        <!-- Major donors line -->
+        <polyline points="110,55 176,50 242,56 308,52 374,42 440,32 506,35 572,25 638,30 704,28 770,22" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="6,3"/>
+        <!-- Dots for overall -->
+        <circle cx="110" cy="100" r="3" fill="#8b5cf6"/>
+        <circle cx="176" cy="96" r="3" fill="#8b5cf6"/>
+        <circle cx="242" cy="102" r="3" fill="#8b5cf6"/>
+        <circle cx="308" cy="98" r="3" fill="#8b5cf6"/>
+        <circle cx="374" cy="90" r="3" fill="#8b5cf6"/>
+        <circle cx="440" cy="78" r="3" fill="#8b5cf6"/>
+        <circle cx="506" cy="82" r="3" fill="#8b5cf6"/>
+        <circle cx="572" cy="68" r="3" fill="#8b5cf6"/>
+        <circle cx="638" cy="76" r="3" fill="#8b5cf6"/>
+        <circle cx="704" cy="72" r="3" fill="#8b5cf6"/>
+        <circle cx="770" cy="65" r="3" fill="#8b5cf6"/>
+      </svg>
+      <div class="trend-legend" style="justify-content: center;">
+        <span><span class="line-sample" style="background: #8b5cf6;"></span> Overall Average</span>
+        <span><span class="line-sample" style="background: #3b82f6;"></span> New Donors</span>
+        <span><span class="line-sample" style="background: #22c55e;"></span> Recurring Donors</span>
+        <span><span class="line-sample" style="background: #f59e0b;"></span> Major Donors</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Engaged Contacts -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-trophy me-2" style="color: var(--ai-accent);"></i>Top Engaged Contacts</h3>
+      <span style="font-size: 0.75rem; color: var(--text-secondary);">Top 5 by engagement score</span>
+    </div>
+    <div class="dash-card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Contact</th>
+              <th>Score</th>
+              <th>Trend</th>
+              <th>Last Donation</th>
+              <th>Lifetime</th>
+              <th>Email Engagement</th>
+              <th>Events</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span style="font-weight: 700; color: var(--ai-accent);">1</span></td>
+              <td><span class="contact-name">Khalid Al-Mansouri</span></td>
+              <td><span class="score-badge score-high">96</span></td>
+              <td><span class="trend-up">↑ +3</span></td>
+              <td>Apr 10 ($1,500)</td>
+              <td>$42,500</td>
+              <td>95% open rate</td>
+              <td>8 attended</td>
+              <td><button class="btn-action" onclick="parent.loadContent('contacts/contact-detail')">View</button></td>
+            </tr>
+            <tr>
+              <td><span style="font-weight: 700; color: var(--ai-accent);">2</span></td>
+              <td><span class="contact-name">Fatima Al-Zahra</span></td>
+              <td><span class="score-badge score-high">92</span></td>
+              <td><span class="trend-flat">&rarr; 0</span></td>
+              <td>Apr 8 ($800)</td>
+              <td>$18,200</td>
+              <td>88% open rate</td>
+              <td>6 attended</td>
+              <td><button class="btn-action" onclick="parent.loadContent('contacts/contact-detail')">View</button></td>
+            </tr>
+            <tr>
+              <td><span style="font-weight: 700; color: var(--ai-accent);">3</span></td>
+              <td><span class="contact-name">Ravi Sharma</span></td>
+              <td><span class="score-badge score-good">89</span></td>
+              <td><span class="trend-up">↑ +5</span></td>
+              <td>Apr 5 ($2,000)</td>
+              <td>$35,100</td>
+              <td>82% open rate</td>
+              <td>5 attended</td>
+              <td><button class="btn-action" onclick="parent.loadContent('contacts/contact-detail')">View</button></td>
+            </tr>
+            <tr>
+              <td><span style="font-weight: 700; color: var(--ai-accent);">4</span></td>
+              <td><span class="contact-name">Sarah Ahmed</span></td>
+              <td><span class="score-badge score-good">87</span></td>
+              <td><span class="trend-down">↓ -2</span></td>
+              <td>Mar 28 ($500)</td>
+              <td>$12,400</td>
+              <td>78% open rate</td>
+              <td>4 attended</td>
+              <td><button class="btn-action" onclick="parent.loadContent('contacts/contact-detail')">View</button></td>
+            </tr>
+            <tr>
+              <td><span style="font-weight: 700; color: var(--ai-accent);">5</span></td>
+              <td><span class="contact-name">James Okonkwo</span></td>
+              <td><span class="score-badge score-good">85</span></td>
+              <td><span class="trend-up">↑ +8</span></td>
+              <td>Apr 1 ($1,200)</td>
+              <td>$22,800</td>
+              <td>90% open rate</td>
+              <td>7 attended</td>
+              <td><button class="btn-action" onclick="parent.loadContent('contacts/contact-detail')">View</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Declining Engagement Alerts -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-arrow-trend-down me-2" style="color: var(--danger-color);"></i>Declining Engagement Alerts</h3>
+      <span style="font-size: 0.75rem; color: var(--text-secondary);">Contacts with significant score drops</span>
+    </div>
+    <div class="dash-card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Contact</th>
+              <th>Current Score</th>
+              <th>Previous Score</th>
+              <th>Drop</th>
+              <th>Last Activity</th>
+              <th>Risk Level</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="contact-name">Mohamed Ali</span></td>
+              <td><span class="score-badge score-medium" style="width: 36px; height: 36px; font-size: 0.75rem;">42</span></td>
+              <td style="color: var(--text-secondary);">78</td>
+              <td><span class="trend-down">-36</span></td>
+              <td>90 days ago</td>
+              <td><span class="risk-high">&#128308; High</span></td>
+              <td>
+                <div class="action-dropdown" onclick="toggleDropdown(this)">
+                  <button class="dropdown-btn">Re-engage &#9662;</button>
+                  <div class="dropdown-menu-custom">
+                    <button class="dropdown-item-custom"><i class="fas fa-envelope"></i> Send Email</button>
+                    <button class="dropdown-item-custom"><i class="fas fa-sms"></i> Send SMS</button>
+                    <button class="dropdown-item-custom"><i class="fab fa-whatsapp"></i> Send WhatsApp</button>
+                    <button class="dropdown-item-custom"><i class="fas fa-bullseye"></i> Add to Campaign</button>
+                    <button class="dropdown-item-custom"><i class="fas fa-user-tag"></i> Assign to Staff</button>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><span class="contact-name">Amina Hassan</span></td>
+              <td><span class="score-badge score-medium" style="width: 36px; height: 36px; font-size: 0.75rem;">38</span></td>
+              <td style="color: var(--text-secondary);">65</td>
+              <td><span class="trend-down">-27</span></td>
+              <td>75 days ago</td>
+              <td><span class="risk-high">&#128308; High</span></td>
+              <td>
+                <div class="action-dropdown" onclick="toggleDropdown(this)">
+                  <button class="dropdown-btn">Re-engage &#9662;</button>
+                  <div class="dropdown-menu-custom">
+                    <button class="dropdown-item-custom"><i class="fas fa-envelope"></i> Send Email</button>
+                    <button class="dropdown-item-custom"><i class="fas fa-sms"></i> Send SMS</button>
+                    <button class="dropdown-item-custom"><i class="fab fa-whatsapp"></i> Send WhatsApp</button>
+                    <button class="dropdown-item-custom"><i class="fas fa-bullseye"></i> Add to Campaign</button>
+                    <button class="dropdown-item-custom"><i class="fas fa-user-tag"></i> Assign to Staff</button>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><span class="contact-name">Omar Farouk</span></td>
+              <td><span class="score-badge score-medium" style="width: 36px; height: 36px; font-size: 0.75rem;">51</span></td>
+              <td style="color: var(--text-secondary);">72</td>
+              <td><span class="trend-down">-21</span></td>
+              <td>45 days ago</td>
+              <td><span class="risk-medium">&#128993; Medium</span></td>
+              <td>
+                <div class="action-dropdown" onclick="toggleDropdown(this)">
+                  <button class="dropdown-btn">Re-engage &#9662;</button>
+                  <div class="dropdown-menu-custom">
+                    <button class="dropdown-item-custom"><i class="fas fa-envelope"></i> Send Email</button>
+                    <button class="dropdown-item-custom"><i class="fas fa-sms"></i> Send SMS</button>
+                    <button class="dropdown-item-custom"><i class="fab fa-whatsapp"></i> Send WhatsApp</button>
+                    <button class="dropdown-item-custom"><i class="fas fa-bullseye"></i> Add to Campaign</button>
+                    <button class="dropdown-item-custom"><i class="fas fa-user-tag"></i> Assign to Staff</button>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><span class="contact-name">Yusuf Mahmoud</span></td>
+              <td><span class="score-badge score-medium" style="width: 36px; height: 36px; font-size: 0.75rem;">55</span></td>
+              <td style="color: var(--text-secondary);">70</td>
+              <td><span class="trend-down">-15</span></td>
+              <td>30 days ago</td>
+              <td><span class="risk-medium">&#128993; Medium</span></td>
+              <td>
+                <div class="action-dropdown" onclick="toggleDropdown(this)">
+                  <button class="dropdown-btn">Re-engage &#9662;</button>
+                  <div class="dropdown-menu-custom">
+                    <button class="dropdown-item-custom"><i class="fas fa-envelope"></i> Send Email</button>
+                    <button class="dropdown-item-custom"><i class="fas fa-sms"></i> Send SMS</button>
+                    <button class="dropdown-item-custom"><i class="fab fa-whatsapp"></i> Send WhatsApp</button>
+                    <button class="dropdown-item-custom"><i class="fas fa-bullseye"></i> Add to Campaign</button>
+                    <button class="dropdown-item-custom"><i class="fas fa-user-tag"></i> Assign to Staff</button>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Score by Segment -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-layer-group me-2" style="color: var(--ai-accent);"></i>Score by Segment</h3>
+    </div>
+    <div class="dash-card-body">
+      <div class="h-bar-chart">
+        <div class="h-bar-item">
+          <div class="h-bar-label">Major Donors ($5K+)</div>
+          <div class="h-bar-track"><div class="h-bar-fill" style="width: 82%; background: linear-gradient(90deg, #15803d, #22c55e);"><span>82</span></div></div>
+          <div class="h-bar-score">82</div>
+        </div>
+        <div class="h-bar-item">
+          <div class="h-bar-label">Recurring Donors</div>
+          <div class="h-bar-track"><div class="h-bar-fill" style="width: 76%; background: linear-gradient(90deg, #16a34a, #4ade80);"><span>76</span></div></div>
+          <div class="h-bar-score">76</div>
+        </div>
+        <div class="h-bar-item">
+          <div class="h-bar-label">Event Attendees</div>
+          <div class="h-bar-track"><div class="h-bar-fill" style="width: 68%; background: linear-gradient(90deg, #0e7490, #06b6d4);"><span>68</span></div></div>
+          <div class="h-bar-score">68</div>
+        </div>
+        <div class="h-bar-item">
+          <div class="h-bar-label">Mid-Level ($1K-$5K)</div>
+          <div class="h-bar-track"><div class="h-bar-fill" style="width: 62%; background: linear-gradient(90deg, #2563eb, #3b82f6);"><span>62</span></div></div>
+          <div class="h-bar-score">62</div>
+        </div>
+        <div class="h-bar-item">
+          <div class="h-bar-label">Volunteers</div>
+          <div class="h-bar-track"><div class="h-bar-fill" style="width: 58%; background: linear-gradient(90deg, #7c3aed, #a78bfa);"><span>58</span></div></div>
+          <div class="h-bar-score">58</div>
+        </div>
+        <div class="h-bar-item">
+          <div class="h-bar-label">Small Donors (&lt;$100)</div>
+          <div class="h-bar-track"><div class="h-bar-fill" style="width: 34%; background: linear-gradient(90deg, #d97706, #fbbf24);"><span>34</span></div></div>
+          <div class="h-bar-score">34</div>
+        </div>
+        <div class="h-bar-item">
+          <div class="h-bar-label">One-Time Only</div>
+          <div class="h-bar-track"><div class="h-bar-fill" style="width: 28%; background: linear-gradient(90deg, #dc2626, #f87171);"><span>28</span></div></div>
+          <div class="h-bar-score">28</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scoring Model Configuration Modal -->
+  <div class="modal-overlay" id="configModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3><i class="fas fa-sliders-h me-2" style="color: var(--ai-accent);"></i>Configure Scoring Model</h3>
+        <button class="modal-close" onclick="closeConfigModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 1rem;">Adjust the weights for each engagement factor. Weights must total 100%.</p>
+
+        <div class="weight-row">
+          <div class="weight-label">
+            Donation Recency
+            <div class="weight-desc">How recently the contact donated</div>
+          </div>
+          <input type="range" class="weight-slider" min="0" max="50" value="25" oninput="updateWeight(this)">
+          <div class="weight-value">25%</div>
+        </div>
+        <div class="weight-row">
+          <div class="weight-label">
+            Donation Frequency
+            <div class="weight-desc">How often they donate (per year)</div>
+          </div>
+          <input type="range" class="weight-slider" min="0" max="50" value="20" oninput="updateWeight(this)">
+          <div class="weight-value">20%</div>
+        </div>
+        <div class="weight-row">
+          <div class="weight-label">
+            Donation Monetary
+            <div class="weight-desc">Cumulative giving amount</div>
+          </div>
+          <input type="range" class="weight-slider" min="0" max="50" value="20" oninput="updateWeight(this)">
+          <div class="weight-value">20%</div>
+        </div>
+        <div class="weight-row">
+          <div class="weight-label">
+            Email Engagement
+            <div class="weight-desc">Open + click rates</div>
+          </div>
+          <input type="range" class="weight-slider" min="0" max="50" value="15" oninput="updateWeight(this)">
+          <div class="weight-value">15%</div>
+        </div>
+        <div class="weight-row">
+          <div class="weight-label">
+            Event Participation
+            <div class="weight-desc">Events attended</div>
+          </div>
+          <input type="range" class="weight-slider" min="0" max="50" value="10" oninput="updateWeight(this)">
+          <div class="weight-value">10%</div>
+        </div>
+        <div class="weight-row">
+          <div class="weight-label">
+            Communication Response
+            <div class="weight-desc">SMS/WhatsApp response</div>
+          </div>
+          <input type="range" class="weight-slider" min="0" max="50" value="5" oninput="updateWeight(this)">
+          <div class="weight-value">5%</div>
+        </div>
+        <div class="weight-row">
+          <div class="weight-label">
+            Volunteer Activity
+            <div class="weight-desc">Volunteer hours logged</div>
+          </div>
+          <input type="range" class="weight-slider" min="0" max="50" value="5" oninput="updateWeight(this)">
+          <div class="weight-value">5%</div>
+        </div>
+
+        <div class="weight-total valid" id="weightTotal">
+          <span>Total</span>
+          <span id="totalValue">100%</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline-custom" onclick="closeConfigModal()">Cancel</button>
+        <button class="btn-outline-custom" onclick="resetWeights()">Reset to Default</button>
+        <button class="btn-primary-custom" id="saveWeightsBtn">Save &amp; Recalculate</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Dropdown toggle
+    function toggleDropdown(el) {
+      document.querySelectorAll('.action-dropdown.open').forEach(d => {
+        if (d !== el) d.classList.remove('open');
+      });
+      el.classList.toggle('open');
+    }
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.action-dropdown')) {
+        document.querySelectorAll('.action-dropdown.open').forEach(d => d.classList.remove('open'));
+      }
+    });
+
+    // Modal
+    function openConfigModal() {
+      document.getElementById('configModal').classList.add('active');
+    }
+    function closeConfigModal() {
+      document.getElementById('configModal').classList.remove('active');
+    }
+
+    // Weight sliders
+    function updateWeight(slider) {
+      slider.nextElementSibling.textContent = slider.value + '%';
+      recalcTotal();
+    }
+
+    function recalcTotal() {
+      const sliders = document.querySelectorAll('.weight-slider');
+      let total = 0;
+      sliders.forEach(s => total += parseInt(s.value));
+      const el = document.getElementById('weightTotal');
+      document.getElementById('totalValue').textContent = total + '%';
+      const saveBtn = document.getElementById('saveWeightsBtn');
+      if (total === 100) {
+        el.className = 'weight-total valid';
+        saveBtn.disabled = false;
+        saveBtn.style.opacity = '1';
+      } else {
+        el.className = 'weight-total invalid';
+        saveBtn.disabled = true;
+        saveBtn.style.opacity = '0.5';
+      }
+    }
+
+    function resetWeights() {
+      const defaults = [25, 20, 20, 15, 10, 5, 5];
+      const sliders = document.querySelectorAll('.weight-slider');
+      sliders.forEach((s, i) => {
+        s.value = defaults[i];
+        s.nextElementSibling.textContent = defaults[i] + '%';
+      });
+      recalcTotal();
+    }
+  </script>
+
+</body>
+</html>

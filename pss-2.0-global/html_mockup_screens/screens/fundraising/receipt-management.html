@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Receipts & Tax Certificates - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .back-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 1rem;
+    }
+
+    .back-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    /* Buttons */
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #0c6577;
+      border-color: #0c6577;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Tabs */
+    .nav-tabs-custom {
+      border-bottom: 2px solid var(--border-color);
+      margin-bottom: 1.25rem;
+      gap: 0;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+    }
+
+    .nav-tabs-custom .nav-link {
+      border: none;
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 0.8125rem;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.15s;
+      white-space: nowrap;
+      cursor: pointer;
+      background: none;
+    }
+
+    .nav-tabs-custom .nav-link:hover {
+      color: var(--accent);
+      border-bottom-color: rgba(14, 116, 144, 0.3);
+    }
+
+    .nav-tabs-custom .nav-link.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+      background: none;
+    }
+
+    /* Cards */
+    .content-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+    }
+
+    .content-card .card-body {
+      padding: 1.25rem;
+    }
+
+    /* Summary Metrics */
+    .metric-bar {
+      display: flex;
+      gap: 1.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .metric-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .metric-item .metric-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .metric-item .metric-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+    }
+
+    .metric-icon.pending { background: #fef3c7; color: #d97706; }
+    .metric-icon.send { background: #dbeafe; color: #2563eb; }
+    .metric-icon.sent { background: #dcfce7; color: #16a34a; }
+
+    /* Table */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    .data-table thead th {
+      background: #f8fafc;
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    .data-table tbody td {
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+
+    .data-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    /* Status badges */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.25rem 0.5rem;
+      border-radius: 9999px;
+      white-space: nowrap;
+    }
+
+    .status-generated { background: #dcfce7; color: #16a34a; }
+    .status-pending { background: #fef3c7; color: #d97706; }
+    .status-not-generated { background: #f1f5f9; color: #64748b; }
+    .status-emailed { background: #dbeafe; color: #2563eb; }
+    .status-printed { background: #e0e7ff; color: #4f46e5; }
+    .status-bounced { background: #fee2e2; color: #dc2626; }
+    .status-whatsapp { background: #dcfce7; color: #16a34a; }
+
+    /* Action buttons in table */
+    .action-btn {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .action-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .action-btn.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .action-btn.primary:hover {
+      background: #0c6577;
+    }
+
+    .actions-cell {
+      display: flex;
+      gap: 0.375rem;
+      flex-wrap: wrap;
+    }
+
+    /* Link style */
+    .link-accent {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .link-accent:hover {
+      text-decoration: underline;
+      color: #0c6577;
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-bar .form-select,
+    .filter-bar .form-control {
+      font-size: 0.8125rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+      padding: 0.4rem 0.75rem;
+      max-width: 180px;
+    }
+
+    .filter-bar .form-select:focus,
+    .filter-bar .form-control:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(14, 116, 144, 0.15);
+    }
+
+    /* Template Cards */
+    .template-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+
+    .template-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      transition: box-shadow 0.2s;
+    }
+
+    .template-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .template-preview {
+      height: 140px;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .template-preview-content {
+      width: 85%;
+      height: 85%;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      padding: 0.5rem;
+      font-size: 0.45rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      overflow: hidden;
+    }
+
+    .template-preview-content .preview-header {
+      text-align: center;
+      font-weight: 700;
+      font-size: 0.55rem;
+      color: var(--accent);
+      margin-bottom: 0.25rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.25rem;
+    }
+
+    .template-card-body {
+      padding: 1rem;
+    }
+
+    .template-card-body h6 {
+      font-size: 0.875rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .template-type-badge {
+      font-size: 0.6875rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 9999px;
+      background: var(--accent-bg);
+      color: var(--accent);
+      font-weight: 600;
+      display: inline-block;
+      margin-bottom: 0.5rem;
+    }
+
+    .template-fields {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+      line-height: 1.5;
+    }
+
+    .template-meta {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+    }
+
+    .template-actions {
+      display: flex;
+      gap: 0.375rem;
+      flex-wrap: wrap;
+    }
+
+    .default-badge {
+      font-size: 0.625rem;
+      font-weight: 700;
+      padding: 0.15rem 0.4rem;
+      border-radius: 9999px;
+      background: #dcfce7;
+      color: #16a34a;
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+    }
+
+    /* Template Editor */
+    .template-editor-wrapper {
+      display: none;
+    }
+
+    .template-editor-wrapper.active {
+      display: block;
+    }
+
+    .editor-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      min-height: 400px;
+    }
+
+    .code-editor {
+      width: 100%;
+      height: 300px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.8125rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      padding: 0.75rem;
+      resize: vertical;
+      background: #1e293b;
+      color: #e2e8f0;
+    }
+
+    .code-editor:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .preview-panel {
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      background: white;
+      min-height: 300px;
+      overflow: auto;
+    }
+
+    .preview-receipt {
+      max-width: 500px;
+      margin: 0 auto;
+      border: 1px solid #e2e8f0;
+      padding: 2rem;
+      font-size: 0.8125rem;
+    }
+
+    .preview-receipt .receipt-header {
+      text-align: center;
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .preview-receipt .receipt-header h3 {
+      font-size: 1rem;
+      color: var(--accent);
+      margin: 0;
+    }
+
+    .preview-receipt .receipt-header p {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin: 0.25rem 0 0;
+    }
+
+    .preview-receipt .receipt-body dt {
+      font-weight: 600;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .preview-receipt .receipt-body dd {
+      margin-bottom: 0.5rem;
+      font-size: 0.8125rem;
+    }
+
+    .preview-receipt .receipt-footer {
+      border-top: 1px solid var(--border-color);
+      padding-top: 0.75rem;
+      margin-top: 1rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-align: center;
+      font-style: italic;
+    }
+
+    /* Tax Settings */
+    .settings-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .settings-section h5 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      color: var(--text-primary);
+    }
+
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .setting-row:last-child {
+      border-bottom: none;
+    }
+
+    .setting-label {
+      font-size: 0.8125rem;
+      font-weight: 500;
+    }
+
+    .setting-desc {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .form-switch .form-check-input {
+      width: 2.5rem;
+      height: 1.25rem;
+      cursor: pointer;
+    }
+
+    .form-switch .form-check-input:checked {
+      background-color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .country-flag {
+      font-size: 1.125rem;
+      margin-right: 0.375rem;
+    }
+
+    /* Toggle active */
+    .toggle-active { color: var(--success-color); }
+    .toggle-inactive { color: var(--text-secondary); }
+
+    /* Modal overrides */
+    .modal-header {
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 1.25rem;
+    }
+
+    .modal-title {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .modal-body {
+      padding: 1.25rem;
+    }
+
+    .modal-footer {
+      border-top: 1px solid var(--border-color);
+      padding: 0.75rem 1.25rem;
+    }
+
+    .modal-body .form-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .modal-body .form-control,
+    .modal-body .form-select {
+      font-size: 0.8125rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .modal-body .form-control:focus,
+    .modal-body .form-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(14, 116, 144, 0.15);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .editor-split {
+        grid-template-columns: 1fr;
+      }
+
+      .metric-bar {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .filter-bar .form-select,
+      .filter-bar .form-control {
+        max-width: 100%;
+      }
+
+      .template-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Table responsive wrapper */
+    .table-responsive {
+      overflow-x: auto;
+    }
+
+    /* Placeholder tags in code */
+    .placeholder-tag {
+      background: rgba(14, 116, 144, 0.15);
+      color: var(--accent);
+      padding: 0.1rem 0.3rem;
+      border-radius: 3px;
+      font-family: monospace;
+      font-size: 0.75rem;
+    }
+
+    /* Checkbox in table */
+    .form-check-input {
+      cursor: pointer;
+    }
+
+    .form-check-input:checked {
+      background-color: var(--accent);
+      border-color: var(--accent);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" onclick="parent.loadContent('fundraising/donation-list')" title="Back to Donations">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <div>
+        <h1>Receipts & Tax Certificates</h1>
+        <p class="subtitle">Generate, manage, and send donation receipts and tax certificates</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs nav-tabs-custom" id="receiptTabs">
+    <li class="nav-item">
+      <button class="nav-link active" data-tab="queue"><i class="fas fa-list-check me-1"></i>Receipt Queue</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-tab="generated"><i class="fas fa-file-pdf me-1"></i>Generated Receipts</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-tab="templates"><i class="fas fa-file-code me-1"></i>Templates</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-tab="settings"><i class="fas fa-gear me-1"></i>Tax Settings</button>
+    </li>
+  </ul>
+
+  <!-- TAB 1: Receipt Queue -->
+  <div class="tab-content" id="tab-queue">
+
+    <!-- Summary Bar -->
+    <div class="metric-bar">
+      <div class="metric-item">
+        <div class="metric-icon pending"><i class="fas fa-clock"></i></div>
+        <div>
+          <div class="metric-value">45</div>
+          <div>Pending Generation</div>
+        </div>
+      </div>
+      <div class="metric-item">
+        <div class="metric-icon send"><i class="fas fa-paper-plane"></i></div>
+        <div>
+          <div class="metric-value">12</div>
+          <div>Pending Send</div>
+        </div>
+      </div>
+      <div class="metric-item">
+        <div class="metric-icon sent"><i class="fas fa-check-circle"></i></div>
+        <div>
+          <div class="metric-value">89</div>
+          <div>Sent Today</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="d-flex gap-2 mb-3 flex-wrap">
+      <button class="btn-primary-accent"><i class="fas fa-wand-magic-sparkles me-1"></i>Generate All Pending</button>
+      <button class="btn-outline-accent"><i class="fas fa-paper-plane me-1"></i>Send All Unsent</button>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-bar">
+      <input type="date" class="form-control" value="2026-04-01" title="From Date">
+      <input type="date" class="form-control" value="2026-04-12" title="To Date">
+      <select class="form-select">
+        <option value="">Receipt Status</option>
+        <option>Generated</option>
+        <option>Pending</option>
+        <option>Not Generated</option>
+      </select>
+      <select class="form-select">
+        <option value="">Send Status</option>
+        <option>Emailed</option>
+        <option>Pending Send</option>
+        <option>Printed</option>
+        <option>WhatsApp</option>
+        <option>Bounced</option>
+      </select>
+      <select class="form-select">
+        <option value="">Donation Mode</option>
+        <option>Online</option>
+        <option>Cheque</option>
+        <option>Cash</option>
+        <option>Bank Transfer</option>
+      </select>
+    </div>
+
+    <!-- Queue Table -->
+    <div class="content-card">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th><input type="checkbox" class="form-check-input" title="Select all"></th>
+              <th>Donation</th>
+              <th>Donor</th>
+              <th>Amount</th>
+              <th>Date</th>
+              <th>Receipt Status</th>
+              <th>Send Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input type="checkbox" class="form-check-input"></td>
+              <td><a class="link-accent" onclick="parent.loadContent('fundraising/donation-detail')">RCP-2026-0892</a></td>
+              <td><a class="link-accent" onclick="parent.loadContent('contacts/contact-detail')">Sarah Johnson</a></td>
+              <td><strong>$500</strong></td>
+              <td>Apr 10</td>
+              <td><span class="status-badge status-generated"><i class="fas fa-check-circle"></i> Generated</span></td>
+              <td><span class="status-badge status-emailed"><i class="fas fa-envelope"></i> Emailed</span></td>
+              <td>
+                <div class="actions-cell">
+                  <button class="action-btn"><i class="fas fa-eye"></i> View</button>
+                  <button class="action-btn"><i class="fas fa-redo"></i> Resend</button>
+                  <button class="action-btn"><i class="fas fa-download"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="form-check-input"></td>
+              <td><a class="link-accent" onclick="parent.loadContent('fundraising/donation-detail')">RCP-2026-0891</a></td>
+              <td><a class="link-accent" onclick="parent.loadContent('contacts/contact-detail')">Ahmad Al-Hassan</a></td>
+              <td><strong>AED 4,500</strong></td>
+              <td>Apr 10</td>
+              <td><span class="status-badge status-generated"><i class="fas fa-check-circle"></i> Generated</span></td>
+              <td><span class="status-badge status-pending"><i class="fas fa-clock"></i> Pending Send</span></td>
+              <td>
+                <div class="actions-cell">
+                  <button class="action-btn"><i class="fas fa-eye"></i> View</button>
+                  <button class="action-btn primary"><i class="fas fa-paper-plane"></i> Send</button>
+                  <button class="action-btn"><i class="fas fa-download"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="form-check-input"></td>
+              <td><a class="link-accent" onclick="parent.loadContent('fundraising/donation-detail')">RCP-2026-0890</a></td>
+              <td><a class="link-accent" onclick="parent.loadContent('contacts/contact-detail')">Ravi Krishnan</a></td>
+              <td><strong>&#8377;8,000</strong></td>
+              <td>Apr 9</td>
+              <td><span class="status-badge status-generated"><i class="fas fa-check-circle"></i> Generated</span></td>
+              <td><span class="status-badge status-printed"><i class="fas fa-print"></i> Printed</span></td>
+              <td>
+                <div class="actions-cell">
+                  <button class="action-btn"><i class="fas fa-eye"></i> View</button>
+                  <button class="action-btn"><i class="fas fa-download"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="form-check-input"></td>
+              <td><a class="link-accent" onclick="parent.loadContent('fundraising/donation-detail')">RCP-2026-0889</a></td>
+              <td><a class="link-accent" onclick="parent.loadContent('contacts/contact-detail')">Green Earth Foundation</a></td>
+              <td><strong>$5,000</strong></td>
+              <td>Apr 9</td>
+              <td><span class="status-badge status-pending"><i class="fas fa-clock"></i> Pending (cheque not cleared)</span></td>
+              <td><span style="color: var(--text-secondary);">&mdash;</span></td>
+              <td>
+                <div class="actions-cell">
+                  <button class="action-btn" disabled><i class="fas fa-hourglass-half"></i> Generate When Cleared</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="form-check-input"></td>
+              <td><a class="link-accent" onclick="parent.loadContent('fundraising/donation-detail')">RCP-2026-0888</a></td>
+              <td><a class="link-accent" onclick="parent.loadContent('contacts/contact-detail')">Maria Santos</a></td>
+              <td><strong>R$250</strong></td>
+              <td>Apr 8</td>
+              <td><span class="status-badge status-generated"><i class="fas fa-check-circle"></i> Generated</span></td>
+              <td><span class="status-badge status-bounced"><i class="fas fa-exclamation-triangle"></i> Bounced Email</span></td>
+              <td>
+                <div class="actions-cell">
+                  <button class="action-btn"><i class="fas fa-eye"></i> View</button>
+                  <button class="action-btn primary"><i class="fas fa-redo"></i> Resend</button>
+                  <button class="action-btn"><i class="fas fa-print"></i> Print</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="form-check-input"></td>
+              <td><a class="link-accent" onclick="parent.loadContent('fundraising/donation-detail')">RCP-2026-0887</a></td>
+              <td><a class="link-accent" onclick="parent.loadContent('contacts/contact-detail')">James Okonkwo</a></td>
+              <td><strong>&#8358;50,000</strong></td>
+              <td>Apr 8</td>
+              <td><span class="status-badge status-not-generated"><i class="far fa-square"></i> Not Generated</span></td>
+              <td><span style="color: var(--text-secondary);">&mdash;</span></td>
+              <td>
+                <div class="actions-cell">
+                  <button class="action-btn primary"><i class="fas fa-wand-magic-sparkles"></i> Generate</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="form-check-input"></td>
+              <td><a class="link-accent" onclick="parent.loadContent('fundraising/donation-detail')">RCP-2026-0885</a></td>
+              <td><a class="link-accent" onclick="parent.loadContent('contacts/contact-detail')">Fatima Zahra</a></td>
+              <td><strong>MAD 1,500</strong></td>
+              <td>Apr 7</td>
+              <td><span class="status-badge status-generated"><i class="fas fa-check-circle"></i> Generated</span></td>
+              <td><span class="status-badge status-whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</span></td>
+              <td>
+                <div class="actions-cell">
+                  <button class="action-btn"><i class="fas fa-eye"></i> View</button>
+                  <button class="action-btn"><i class="fas fa-download"></i></button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: Generated Receipts -->
+  <div class="tab-content" id="tab-generated" style="display:none;">
+
+    <!-- Search & Actions -->
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <div class="d-flex gap-2 flex-wrap">
+        <div class="position-relative">
+          <input type="text" class="form-control" placeholder="Search receipts..." style="font-size:0.8125rem; border-radius:0.5rem; padding-left:2rem; min-width:240px;">
+          <i class="fas fa-search" style="position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:var(--text-secondary); font-size:0.75rem;"></i>
+        </div>
+        <select class="form-select" style="font-size:0.8125rem; border-radius:0.5rem; max-width:150px;">
+          <option value="">Tax Type</option>
+          <option>501(c)(3)</option>
+          <option>80G</option>
+          <option>Gift Aid</option>
+          <option>UAE Charity</option>
+          <option>Morocco NGO</option>
+        </select>
+        <select class="form-select" style="font-size:0.8125rem; border-radius:0.5rem; max-width:150px;">
+          <option value="">Currency</option>
+          <option>USD</option>
+          <option>INR</option>
+          <option>AED</option>
+          <option>GBP</option>
+          <option>MAD</option>
+        </select>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn-outline-accent"><i class="fas fa-file-zipper me-1"></i>Bulk Download</button>
+        <button class="btn-primary-accent"><i class="fas fa-file-lines me-1"></i>Generate Annual Statements</button>
+      </div>
+    </div>
+
+    <!-- Generated Receipts Table -->
+    <div class="content-card">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th><input type="checkbox" class="form-check-input" title="Select all"></th>
+              <th>Receipt #</th>
+              <th>Donor</th>
+              <th>Amount</th>
+              <th>Currency</th>
+              <th>Tax Type</th>
+              <th>Generated Date</th>
+              <th>Template</th>
+              <th>Format</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input type="checkbox" class="form-check-input"></td>
+              <td><span class="link-accent">TAX-2026-0892</span></td>
+              <td><a class="link-accent" onclick="parent.loadContent('contacts/contact-detail')">Sarah Johnson</a></td>
+              <td><strong>$500</strong></td>
+              <td>USD</td>
+              <td><span class="status-badge" style="background:#dbeafe; color:#2563eb;">501(c)(3)</span></td>
+              <td>Apr 10, 2026</td>
+              <td>US Tax Receipt</td>
+              <td><i class="fas fa-file-pdf text-danger me-1"></i>PDF</td>
+              <td>
+                <div class="actions-cell">
+                  <button class="action-btn"><i class="fas fa-download"></i></button>
+                  <button class="action-btn"><i class="fas fa-envelope"></i> Email</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="form-check-input"></td>
+              <td><span class="link-accent">TAX-2026-0891</span></td>
+              <td><a class="link-accent" onclick="parent.loadContent('contacts/contact-detail')">Ahmad Al-Hassan</a></td>
+              <td><strong>AED 4,500</strong></td>
+              <td>AED</td>
+              <td><span class="status-badge" style="background:#dcfce7; color:#16a34a;">UAE Charity</span></td>
+              <td>Apr 10, 2026</td>
+              <td>UAE Receipt</td>
+              <td><i class="fas fa-file-pdf text-danger me-1"></i>PDF</td>
+              <td>
+                <div class="actions-cell">
+                  <button class="action-btn"><i class="fas fa-download"></i></button>
+                  <button class="action-btn"><i class="fas fa-envelope"></i> Email</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="form-check-input"></td>
+              <td><span class="link-accent">TAX-2026-0890</span></td>
+              <td><a class="link-accent" onclick="parent.loadContent('contacts/contact-detail')">Ravi Krishnan</a></td>
+              <td><strong>&#8377;8,000</strong></td>
+              <td>INR</td>
+              <td><span class="status-badge" style="background:#fef3c7; color:#d97706;">80G</span></td>
+              <td>Apr 9, 2026</td>
+              <td>India 80G Certificate</td>
+              <td><i class="fas fa-file-pdf text-danger me-1"></i>PDF</td>
+              <td>
+                <div class="actions-cell">
+                  <button class="action-btn"><i class="fas fa-download"></i></button>
+                  <button class="action-btn"><i class="fas fa-envelope"></i> Email</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="form-check-input"></td>
+              <td><span class="link-accent">TAX-2026-0885</span></td>
+              <td><a class="link-accent" onclick="parent.loadContent('contacts/contact-detail')">Fatima Zahra</a></td>
+              <td><strong>MAD 1,500</strong></td>
+              <td>MAD</td>
+              <td><span class="status-badge" style="background:#e0e7ff; color:#4f46e5;">Morocco NGO</span></td>
+              <td>Apr 7, 2026</td>
+              <td>Morocco Receipt</td>
+              <td><i class="fas fa-file-pdf text-danger me-1"></i>PDF</td>
+              <td>
+                <div class="actions-cell">
+                  <button class="action-btn"><i class="fas fa-download"></i></button>
+                  <button class="action-btn"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: Templates -->
+  <div class="tab-content" id="tab-templates" style="display:none;">
+
+    <!-- Template Cards View -->
+    <div id="templateCardsView">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <p class="mb-0" style="font-size:0.8125rem; color:var(--text-secondary);">5 templates configured</p>
+        <button class="btn-primary-accent" onclick="showTemplateEditor()"><i class="fas fa-plus me-1"></i>Create New Template</button>
+      </div>
+
+      <div class="template-grid">
+
+        <!-- 1. US Tax Receipt -->
+        <div class="template-card">
+          <div class="template-preview">
+            <span class="default-badge"><i class="fas fa-check me-1"></i>Default</span>
+            <div class="template-preview-content">
+              <div class="preview-header">TAX RECEIPT - 501(c)(3)</div>
+              <div>Hope Foundation International</div>
+              <div>EIN: 12-3456789</div>
+              <div style="margin-top:4px;">Donor: {{DonorName}}</div>
+              <div>Amount: {{DonationAmount}}</div>
+              <div>Date: {{DonationDate}}</div>
+              <div style="margin-top:4px; font-style:italic;">No goods or services were provided in exchange for this contribution.</div>
+            </div>
+          </div>
+          <div class="template-card-body">
+            <h6>US Tax Receipt (501(c)(3))</h6>
+            <span class="template-type-badge">Tax-Deductible Receipt</span>
+            <div class="template-fields">
+              <strong>Fields:</strong> Org EIN, Donor name/address, Amount, Date, "No goods or services provided" statement
+            </div>
+            <div class="template-meta"><i class="fas fa-clock me-1"></i>Last modified: Mar 1, 2026</div>
+            <div class="template-actions">
+              <button class="action-btn" onclick="showTemplateEditor('us')"><i class="fas fa-edit"></i> Edit Template</button>
+              <button class="action-btn"><i class="fas fa-eye"></i> Preview</button>
+              <button class="action-btn" disabled><i class="fas fa-star"></i> Default</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. India 80G Certificate -->
+        <div class="template-card">
+          <div class="template-preview">
+            <div class="template-preview-content">
+              <div class="preview-header">80G TAX EXEMPTION CERTIFICATE</div>
+              <div>Hope Foundation India</div>
+              <div>80G Reg: AABTX1234F</div>
+              <div style="margin-top:4px;">Donor: {{DonorName}}</div>
+              <div>PAN: {{PAN}}</div>
+              <div>Amount: {{DonationAmount}}</div>
+              <div style="margin-top:4px; font-style:italic;">Certified that this donation is eligible for deduction u/s 80G.</div>
+            </div>
+          </div>
+          <div class="template-card-body">
+            <h6>India 80G Certificate</h6>
+            <span class="template-type-badge">80G Tax Exemption Certificate</span>
+            <div class="template-fields">
+              <strong>Fields:</strong> 80G Registration No., PAN, Donor details, Amount in words, "Certified that donation is eligible for deduction"
+            </div>
+            <div class="template-meta"><i class="fas fa-clock me-1"></i>Last modified: Feb 15, 2026</div>
+            <div class="template-actions">
+              <button class="action-btn" onclick="showTemplateEditor('india')"><i class="fas fa-edit"></i> Edit Template</button>
+              <button class="action-btn"><i class="fas fa-eye"></i> Preview</button>
+              <button class="action-btn"><i class="fas fa-star"></i> Set as Default</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. UK Gift Aid Receipt -->
+        <div class="template-card">
+          <div class="template-preview">
+            <div class="template-preview-content">
+              <div class="preview-header">GIFT AID DECLARATION</div>
+              <div>Hope Foundation UK</div>
+              <div>Charity Ref: XR12345</div>
+              <div style="margin-top:4px;">Donor: {{DonorName}}</div>
+              <div>Address: {{DonorAddress}}</div>
+              <div style="margin-top:4px; font-style:italic;">I confirm I have paid enough UK Income Tax / Capital Gains Tax...</div>
+            </div>
+          </div>
+          <div class="template-card-body">
+            <h6>UK Gift Aid Receipt</h6>
+            <span class="template-type-badge">Gift Aid Declaration</span>
+            <div class="template-fields">
+              <strong>Fields:</strong> Charity reference, Donor's full name/address, Declaration text, Gift Aid multiplier display
+            </div>
+            <div class="template-meta"><i class="fas fa-clock me-1"></i>Last modified: Jan 20, 2026</div>
+            <div class="template-actions">
+              <button class="action-btn" onclick="showTemplateEditor('uk')"><i class="fas fa-edit"></i> Edit Template</button>
+              <button class="action-btn"><i class="fas fa-eye"></i> Preview</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. UAE Charity Receipt -->
+        <div class="template-card">
+          <div class="template-preview">
+            <div class="template-preview-content">
+              <div class="preview-header">DONATION RECEIPT / &#1573;&#1610;&#1589;&#1575;&#1604; &#1578;&#1576;&#1585;&#1593;</div>
+              <div>Hope Foundation UAE</div>
+              <div>License: CL-2024-1234</div>
+              <div style="margin-top:4px;">Donor: {{DonorName}}</div>
+              <div>Amount: {{DonationAmount}}</div>
+              <div style="margin-top:4px; font-style:italic;">Thank you for your generous donation.</div>
+            </div>
+          </div>
+          <div class="template-card-body">
+            <h6>UAE Charity Receipt</h6>
+            <span class="template-type-badge">General Donation Receipt</span>
+            <div class="template-fields">
+              <strong>Fields:</strong> Charity license number, Donor details, Arabic + English bilingual
+            </div>
+            <div class="template-meta"><i class="fas fa-clock me-1"></i>Last modified: Feb 28, 2026</div>
+            <div class="template-actions">
+              <button class="action-btn" onclick="showTemplateEditor('uae')"><i class="fas fa-edit"></i> Edit Template</button>
+              <button class="action-btn"><i class="fas fa-eye"></i> Preview</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. General Receipt (No Tax) -->
+        <div class="template-card">
+          <div class="template-preview">
+            <div class="template-preview-content">
+              <div class="preview-header">DONATION ACKNOWLEDGMENT</div>
+              <div>Hope Foundation International</div>
+              <div style="margin-top:4px;">Dear {{DonorName}},</div>
+              <div>Thank you for your generous donation of {{DonationAmount}}.</div>
+              <div>Date: {{DonationDate}}</div>
+              <div>Receipt #: {{ReceiptNumber}}</div>
+            </div>
+          </div>
+          <div class="template-card-body">
+            <h6>General Receipt (No Tax)</h6>
+            <span class="template-type-badge">Standard Acknowledgment</span>
+            <div class="template-fields">
+              <strong>Fields:</strong> Thank you message, Donation details, Organization info
+            </div>
+            <div class="template-meta"><i class="fas fa-clock me-1"></i>Last modified: Mar 5, 2026</div>
+            <div class="template-actions">
+              <button class="action-btn" onclick="showTemplateEditor('general')"><i class="fas fa-edit"></i> Edit Template</button>
+              <button class="action-btn"><i class="fas fa-eye"></i> Preview</button>
+              <button class="action-btn"><i class="fas fa-star"></i> Set as Default</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Template Editor (hidden by default) -->
+    <div class="template-editor-wrapper" id="templateEditor">
+      <div class="content-card">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0" style="font-weight:700;"><i class="fas fa-edit me-2"></i>Edit Template</h5>
+            <button class="action-btn" onclick="hideTemplateEditor()"><i class="fas fa-times me-1"></i>Close</button>
+          </div>
+
+          <!-- Template Settings -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-4">
+              <label class="form-label" style="font-size:0.8125rem; font-weight:600;">Template Name</label>
+              <input type="text" class="form-control" value="US Tax Receipt (501(c)(3))" style="font-size:0.8125rem;">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" style="font-size:0.8125rem; font-weight:600;">Template Type</label>
+              <select class="form-select" style="font-size:0.8125rem;">
+                <option selected>Tax Receipt</option>
+                <option>Certificate</option>
+                <option>Acknowledgment</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" style="font-size:0.8125rem; font-weight:600;">Country / Tax Code</label>
+              <select class="form-select" style="font-size:0.8125rem;">
+                <option selected>US 501(c)(3)</option>
+                <option>India 80G</option>
+                <option>UK Gift Aid</option>
+                <option>UAE</option>
+                <option>General</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" style="font-size:0.8125rem; font-weight:600;">Donation Purpose</label>
+              <select class="form-select" style="font-size:0.8125rem;">
+                <option selected>All Purposes</option>
+                <option>Education</option>
+                <option>Healthcare</option>
+                <option>Emergency Relief</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" style="font-size:0.8125rem; font-weight:600;">Page Size</label>
+              <select class="form-select" style="font-size:0.8125rem;">
+                <option>A4</option>
+                <option selected>Letter</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" style="font-size:0.8125rem; font-weight:600;">Orientation</label>
+              <div class="d-flex gap-3 mt-1">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="orientation" id="portrait" checked>
+                  <label class="form-check-label" for="portrait" style="font-size:0.8125rem;">Portrait</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="orientation" id="landscape">
+                  <label class="form-check-label" for="landscape" style="font-size:0.8125rem;">Landscape</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Placeholder tags -->
+          <div class="mb-3">
+            <label class="form-label" style="font-size:0.75rem; font-weight:600; color:var(--text-secondary);">Available Placeholders:</label>
+            <div class="d-flex gap-1 flex-wrap">
+              <span class="placeholder-tag">{{DonorName}}</span>
+              <span class="placeholder-tag">{{DonorAddress}}</span>
+              <span class="placeholder-tag">{{DonationAmount}}</span>
+              <span class="placeholder-tag">{{DonationDate}}</span>
+              <span class="placeholder-tag">{{ReceiptNumber}}</span>
+              <span class="placeholder-tag">{{OrgName}}</span>
+              <span class="placeholder-tag">{{OrgAddress}}</span>
+              <span class="placeholder-tag">{{TaxRegNumber}}</span>
+              <span class="placeholder-tag">{{AmountInWords}}</span>
+              <span class="placeholder-tag">{{Purpose}}</span>
+              <span class="placeholder-tag">{{PaymentMode}}</span>
+            </div>
+          </div>
+
+          <!-- Split Editor -->
+          <div class="editor-split">
+            <div>
+              <label class="form-label" style="font-size:0.8125rem; font-weight:600;">HTML Template</label>
+              <textarea class="code-editor" spellcheck="false"><div style="max-width:600px; margin:0 auto; font-family:Arial,sans-serif;">
+  <div style="text-align:center; border-bottom:2px solid #0e7490; padding-bottom:12px; margin-bottom:16px;">
+    <h2 style="color:#0e7490; margin:0;">TAX RECEIPT</h2>
+    <p style="margin:4px 0 0; color:#64748b;">{{OrgName}}</p>
+    <p style="margin:2px 0 0; color:#64748b; font-size:12px;">{{OrgAddress}}</p>
+    <p style="margin:2px 0 0; color:#64748b; font-size:12px;">EIN: {{TaxRegNumber}}</p>
+  </div>
+
+  <p><strong>Receipt #:</strong> {{ReceiptNumber}}</p>
+  <p><strong>Date:</strong> {{DonationDate}}</p>
+
+  <hr style="border-color:#e2e8f0;">
+
+  <p><strong>Donor:</strong> {{DonorName}}</p>
+  <p><strong>Address:</strong> {{DonorAddress}}</p>
+  <p><strong>Amount:</strong> {{DonationAmount}}</p>
+  <p><strong>Amount in Words:</strong> {{AmountInWords}}</p>
+  <p><strong>Purpose:</strong> {{Purpose}}</p>
+  <p><strong>Payment Mode:</strong> {{PaymentMode}}</p>
+
+  <hr style="border-color:#e2e8f0;">
+
+  <p style="font-style:italic; color:#64748b; font-size:12px;">
+    No goods or services were provided in exchange for this contribution.
+    This receipt is for your tax records.
+  </p>
+</div></textarea>
+            </div>
+            <div>
+              <label class="form-label" style="font-size:0.8125rem; font-weight:600;">Preview (Sample Data)</label>
+              <div class="preview-panel">
+                <div class="preview-receipt">
+                  <div class="receipt-header">
+                    <h3>TAX RECEIPT</h3>
+                    <p>Hope Foundation International</p>
+                    <p>123 Charity Lane, New York, NY 10001</p>
+                    <p>EIN: 12-3456789</p>
+                  </div>
+                  <div class="receipt-body">
+                    <dl class="row mb-0">
+                      <dt class="col-sm-4">Receipt #</dt>
+                      <dd class="col-sm-8">TAX-2026-0892</dd>
+                      <dt class="col-sm-4">Date</dt>
+                      <dd class="col-sm-8">April 10, 2026</dd>
+                      <dt class="col-sm-4">Donor</dt>
+                      <dd class="col-sm-8">Sarah Johnson</dd>
+                      <dt class="col-sm-4">Address</dt>
+                      <dd class="col-sm-8">456 Main St, Boston, MA 02101</dd>
+                      <dt class="col-sm-4">Amount</dt>
+                      <dd class="col-sm-8"><strong>$500.00</strong></dd>
+                      <dt class="col-sm-4">In Words</dt>
+                      <dd class="col-sm-8">Five Hundred Dollars Only</dd>
+                      <dt class="col-sm-4">Purpose</dt>
+                      <dd class="col-sm-8">Education Fund</dd>
+                      <dt class="col-sm-4">Payment Mode</dt>
+                      <dd class="col-sm-8">Online (Credit Card)</dd>
+                    </dl>
+                  </div>
+                  <div class="receipt-footer">
+                    No goods or services were provided in exchange for this contribution.<br>
+                    This receipt is for your tax records.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Save / Cancel -->
+          <div class="d-flex justify-content-end gap-2 mt-3">
+            <button class="btn-outline-accent" onclick="hideTemplateEditor()">Cancel</button>
+            <button class="btn-primary-accent" onclick="hideTemplateEditor()"><i class="fas fa-save me-1"></i>Save Template</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: Tax Settings -->
+  <div class="tab-content" id="tab-settings" style="display:none;">
+
+    <!-- Country-wise Tax Config -->
+    <div class="settings-section">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5>Country-wise Tax Configuration</h5>
+        <button class="btn-primary-accent" data-bs-toggle="modal" data-bs-target="#taxConfigModal"><i class="fas fa-plus me-1"></i>Add Country Tax Config</button>
+      </div>
+
+      <div class="content-card">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Country</th>
+                <th>Tax Code</th>
+                <th>Registration #</th>
+                <th>Active</th>
+                <th>Default Template</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="country-flag">&#127482;&#127480;</span> United States</td>
+                <td>501(c)(3)</td>
+                <td><code>12-3456789</code> (EIN)</td>
+                <td><i class="fas fa-check-circle toggle-active"></i></td>
+                <td>US Tax Receipt</td>
+                <td><button class="action-btn" data-bs-toggle="modal" data-bs-target="#taxConfigModal"><i class="fas fa-edit"></i> Edit</button></td>
+              </tr>
+              <tr>
+                <td><span class="country-flag">&#127470;&#127475;</span> India</td>
+                <td>80G</td>
+                <td><code>AABTX1234F</code></td>
+                <td><i class="fas fa-check-circle toggle-active"></i></td>
+                <td>India 80G Certificate</td>
+                <td><button class="action-btn" data-bs-toggle="modal" data-bs-target="#taxConfigModal"><i class="fas fa-edit"></i> Edit</button></td>
+              </tr>
+              <tr>
+                <td><span class="country-flag">&#127468;&#127463;</span> United Kingdom</td>
+                <td>Gift Aid</td>
+                <td><code>XR12345</code></td>
+                <td><i class="fas fa-check-circle toggle-active"></i></td>
+                <td>UK Gift Aid Receipt</td>
+                <td><button class="action-btn" data-bs-toggle="modal" data-bs-target="#taxConfigModal"><i class="fas fa-edit"></i> Edit</button></td>
+              </tr>
+              <tr>
+                <td><span class="country-flag">&#127462;&#127466;</span> UAE</td>
+                <td>Charity License</td>
+                <td><code>CL-2024-1234</code></td>
+                <td><i class="fas fa-check-circle toggle-active"></i></td>
+                <td>UAE Charity Receipt</td>
+                <td><button class="action-btn" data-bs-toggle="modal" data-bs-target="#taxConfigModal"><i class="fas fa-edit"></i> Edit</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Global Receipt Settings -->
+    <div class="settings-section">
+      <h5>Global Receipt Settings</h5>
+      <div class="content-card">
+        <div class="card-body">
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Auto-generate receipt on donation</div>
+              <div class="setting-desc">Automatically generate a receipt when a donation is recorded</div>
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" checked>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Auto-send receipt via email</div>
+              <div class="setting-desc">Automatically email the receipt to the donor after generation</div>
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" checked>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Receipt numbering format</div>
+              <div class="setting-desc">Pattern for generating receipt numbers</div>
+            </div>
+            <div>
+              <input type="text" class="form-control" value="TAX-{YEAR}-{SEQ}" style="font-size:0.8125rem; width:200px; border-radius:0.5rem; font-family:monospace;">
+            </div>
+          </div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Include organization logo</div>
+              <div class="setting-desc">Display the organization logo on receipts and certificates</div>
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" checked>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Annual statement generation month</div>
+              <div class="setting-desc">Month to auto-generate year-end giving statements</div>
+            </div>
+            <div>
+              <select class="form-select" style="font-size:0.8125rem; width:160px; border-radius:0.5rem;">
+                <option selected>January</option>
+                <option>February</option>
+                <option>March</option>
+                <option>April</option>
+                <option>May</option>
+                <option>June</option>
+                <option>July</option>
+                <option>August</option>
+                <option>September</option>
+                <option>October</option>
+                <option>November</option>
+                <option>December</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tax Config Modal -->
+  <div class="modal fade" id="taxConfigModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content" style="border-radius:var(--card-radius); border:1px solid var(--border-color);">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-globe me-2" style="color:var(--accent);"></i>Tax Configuration</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Country</label>
+            <select class="form-select">
+              <option value="">Select Country</option>
+              <option>United States</option>
+              <option>India</option>
+              <option>United Kingdom</option>
+              <option>UAE</option>
+              <option>Morocco</option>
+              <option>Nigeria</option>
+              <option>Brazil</option>
+              <option>Canada</option>
+              <option>Australia</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Tax Code Type</label>
+            <input type="text" class="form-control" placeholder="e.g., 501(c)(3), 80G, Gift Aid">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Registration Number</label>
+            <input type="text" class="form-control" placeholder="e.g., 12-3456789">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Organization Legal Name</label>
+            <input type="text" class="form-control" placeholder="Full legal entity name">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Tax-Exempt Statement Text</label>
+            <textarea class="form-control" rows="3" placeholder="e.g., No goods or services were provided in exchange for this contribution..."></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Default Template</label>
+            <select class="form-select">
+              <option>US Tax Receipt (501(c)(3))</option>
+              <option>India 80G Certificate</option>
+              <option>UK Gift Aid Receipt</option>
+              <option>UAE Charity Receipt</option>
+              <option>General Receipt (No Tax)</option>
+            </select>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="taxConfigActive" checked>
+            <label class="form-check-label" for="taxConfigActive" style="font-size:0.8125rem; font-weight:600;">Active</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-outline-accent" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn-primary-accent" data-bs-dismiss="modal"><i class="fas fa-save me-1"></i>Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Tab switching
+    document.querySelectorAll('#receiptTabs .nav-link').forEach(tab => {
+      tab.addEventListener('click', function () {
+        // Remove active from all tabs
+        document.querySelectorAll('#receiptTabs .nav-link').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+
+        // Hide all tab content
+        document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+
+        // Show selected tab
+        const tabId = 'tab-' + this.getAttribute('data-tab');
+        document.getElementById(tabId).style.display = 'block';
+      });
+    });
+
+    // Template editor show/hide
+    function showTemplateEditor(type) {
+      document.getElementById('templateCardsView').style.display = 'none';
+      document.getElementById('templateEditor').classList.add('active');
+    }
+
+    function hideTemplateEditor() {
+      document.getElementById('templateEditor').classList.remove('active');
+      document.getElementById('templateCardsView').style.display = 'block';
+    }
+
+    // Select all checkbox
+    document.querySelectorAll('thead .form-check-input').forEach(selectAll => {
+      selectAll.addEventListener('change', function () {
+        const table = this.closest('table');
+        table.querySelectorAll('tbody .form-check-input').forEach(cb => {
+          cb.checked = selectAll.checked;
+        });
+      });
+    });
+  </script>
+
+</body>
+
+</html>

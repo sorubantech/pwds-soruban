@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Collection - Mobile App</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --field-accent: #059669;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a1a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .phone-frame {
+      width: 375px;
+      height: 812px;
+      background: #ffffff;
+      border-radius: 44px;
+      overflow: hidden;
+      box-shadow: 0 0 0 12px #2d2d2d, 0 0 0 14px #1a1a1a, 0 20px 60px rgba(0,0,0,0.5);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .phone-notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 28px;
+      background: #000;
+      border-radius: 0 0 18px 18px;
+      z-index: 10;
+    }
+
+    .status-bar {
+      background: #000;
+      color: #fff;
+      padding: 8px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 600;
+      height: 48px;
+    }
+
+    .status-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+    }
+
+    /* Agent Header */
+    .agent-header {
+      background: linear-gradient(135deg, #065f46, #059669);
+      color: white;
+      padding: 12px 20px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .agent-header-left {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .agent-org {
+      font-size: 11px;
+      font-weight: 600;
+      opacity: 0.85;
+    }
+
+    .agent-name {
+      font-size: 15px;
+      font-weight: 700;
+      margin-top: 1px;
+    }
+
+    .agent-branch {
+      font-size: 11px;
+      opacity: 0.8;
+    }
+
+    .online-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(255,255,255,0.2);
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    .online-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4ade80;
+    }
+
+    /* Content */
+    .phone-content {
+      flex: 1;
+      overflow-y: auto;
+      background: #f8fafc;
+      padding-bottom: 80px;
+    }
+
+    .phone-content::-webkit-scrollbar { width: 0; }
+
+    /* Views */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* Home View */
+    .home-greeting {
+      padding: 18px 20px 6px;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .home-summary {
+      padding: 0 20px 16px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .home-summary strong {
+      color: var(--field-accent);
+    }
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 0 20px 20px;
+    }
+
+    .quick-card {
+      background: white;
+      border-radius: 14px;
+      padding: 20px 16px;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      border: 1px solid #f1f5f9;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .quick-card:active {
+      transform: scale(0.97);
+      border-color: var(--field-accent);
+    }
+
+    .quick-card-icon {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .quick-card-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .quick-card-sub {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    /* QR Scanner View */
+    .scanner-view {
+      padding: 20px;
+    }
+
+    .scanner-instruction {
+      text-align: center;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+    }
+
+    .scanner-frame {
+      width: 100%;
+      aspect-ratio: 1;
+      background: #111;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .scanner-overlay {
+      width: 180px;
+      height: 180px;
+      border: 3px solid rgba(255,255,255,0.6);
+      border-radius: 16px;
+      position: relative;
+    }
+
+    .scanner-overlay::before,
+    .scanner-overlay::after {
+      content: '';
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      border-color: #4ade80;
+      border-style: solid;
+    }
+
+    .scanner-overlay::before {
+      top: -2px;
+      left: -2px;
+      border-width: 3px 0 0 3px;
+      border-radius: 8px 0 0 0;
+    }
+
+    .scanner-overlay::after {
+      bottom: -2px;
+      right: -2px;
+      border-width: 0 3px 3px 0;
+      border-radius: 0 0 8px 0;
+    }
+
+    .scanner-line {
+      position: absolute;
+      left: 10%;
+      right: 10%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #4ade80, transparent);
+      top: 40%;
+      animation: scanLine 2s ease-in-out infinite;
+    }
+
+    @keyframes scanLine {
+      0%, 100% { top: 30%; }
+      50% { top: 70%; }
+    }
+
+    .scanner-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .scanner-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .scanner-btn i {
+      color: var(--field-accent);
+    }
+
+    /* Collection Form View */
+    .form-section {
+      padding: 16px 20px 0;
+    }
+
+    .donor-confirmed {
+      background: white;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      border: 1px solid #d1fae5;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .donor-confirmed-icon {
+      width: 40px;
+      height: 40px;
+      background: #d1fae5;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--field-accent);
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .donor-confirmed-info {
+      flex: 1;
+    }
+
+    .donor-confirmed-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .donor-confirmed-detail {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .form-label-mobile {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .form-input-mobile {
+      width: 100%;
+      padding: 14px 16px;
+      background: white;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 14px;
+      outline: none;
+    }
+
+    .form-input-mobile:focus {
+      border-color: var(--field-accent);
+    }
+
+    .form-input-mobile.regular {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .form-select-mobile {
+      width: 100%;
+      padding: 14px 16px;
+      background: white;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 14px;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 16px center;
+      outline: none;
+    }
+
+    .form-select-mobile:focus {
+      border-color: var(--field-accent);
+    }
+
+    /* Payment Mode Pills */
+    .payment-mode-pills {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .payment-mode-pill {
+      flex: 1;
+      padding: 10px 8px;
+      background: white;
+      border: 2px solid var(--border-color);
+      border-radius: 10px;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .payment-mode-pill.selected {
+      border-color: var(--field-accent);
+      background: #ecfdf5;
+      color: var(--field-accent);
+    }
+
+    .receipt-auto {
+      background: #f8fafc;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .receipt-auto-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .receipt-auto-value {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .photo-attach {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px;
+      background: white;
+      border: 2px dashed var(--border-color);
+      border-radius: 12px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    .photo-attach:active {
+      border-color: var(--field-accent);
+      color: var(--field-accent);
+    }
+
+    .save-collection-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #065f46, #059669);
+      border: none;
+      border-radius: 14px;
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+    }
+
+    .save-collection-btn:active {
+      transform: scale(0.98);
+    }
+
+    /* Collections List View */
+    .list-header {
+      padding: 18px 20px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .list-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .list-badge {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--field-accent);
+      background: #ecfdf5;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    .collection-item {
+      background: white;
+      margin: 0 16px 8px;
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      border: 1px solid #f1f5f9;
+    }
+
+    .collection-item-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .collection-donor {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .collection-amount {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--field-accent);
+    }
+
+    .collection-meta {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .collection-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--success-color);
+      margin-top: 4px;
+    }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 80px;
+      background: white;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-around;
+      padding-top: 8px;
+      z-index: 5;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      padding: 4px 8px;
+      min-width: 52px;
+    }
+
+    .nav-item i {
+      font-size: 18px;
+      color: var(--text-secondary);
+    }
+
+    .nav-item span {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .nav-item.active i { color: var(--field-accent); }
+    .nav-item.active span { color: var(--field-accent); }
+
+    .nav-scan-btn {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #065f46, #059669);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 18px;
+      margin-top: -18px;
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+      cursor: pointer;
+    }
+
+    .home-indicator {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 134px;
+      height: 5px;
+      background: #d1d5db;
+      border-radius: 100px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <span>2:30</span>
+      <div class="status-bar-right">
+        <i class="fas fa-signal" style="font-size: 11px;"></i>
+        <i class="fas fa-wifi" style="font-size: 11px;"></i>
+        <i class="fas fa-battery-full" style="font-size: 13px;"></i>
+      </div>
+    </div>
+
+    <!-- Agent Header -->
+    <div class="agent-header">
+      <div class="agent-header-left">
+        <div class="agent-org"><i class="fas fa-heart me-1"></i> GHF</div>
+        <div class="agent-name">Ahmed Salim</div>
+        <div class="agent-branch">Dubai Branch</div>
+      </div>
+      <div class="online-badge">
+        <div class="online-dot"></div>
+        Online
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="phone-content">
+
+      <!-- Home View -->
+      <div class="view active" id="homeView">
+        <div class="home-greeting">Good morning, Ahmed! 👋</div>
+        <div class="home-summary">Today: <strong>5 collections</strong>, <strong>AED 2,300</strong></div>
+
+        <div class="quick-grid">
+          <div class="quick-card" onclick="showView('scanner')">
+            <div class="quick-card-icon">📷</div>
+            <div class="quick-card-label">Scan QR</div>
+            <div class="quick-card-sub">Quick Entry</div>
+          </div>
+          <div class="quick-card" onclick="showView('form')">
+            <div class="quick-card-icon">➕</div>
+            <div class="quick-card-label">New</div>
+            <div class="quick-card-sub">Collection</div>
+          </div>
+          <div class="quick-card" onclick="showView('list')">
+            <div class="quick-card-icon">📋</div>
+            <div class="quick-card-label">Today's</div>
+            <div class="quick-card-sub">Collections</div>
+          </div>
+          <div class="quick-card">
+            <div class="quick-card-icon">📖</div>
+            <div class="quick-card-label">Receipt</div>
+            <div class="quick-card-sub">Book: RB-045</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- QR Scanner View -->
+      <div class="view" id="scannerView">
+        <div class="scanner-view">
+          <div class="scanner-instruction">Point camera at donor's QR code</div>
+          <div class="scanner-frame">
+            <div class="scanner-overlay"></div>
+            <div class="scanner-line"></div>
+          </div>
+          <div class="scanner-actions">
+            <div class="scanner-btn">
+              <i class="fas fa-lightbulb"></i> Turn on flashlight
+            </div>
+            <div class="scanner-btn" onclick="showView('form')">
+              <i class="fas fa-keyboard"></i> Enter donor ID manually
+            </div>
+            <div class="scanner-btn" onclick="showView('home')">
+              <i class="fas fa-arrow-left"></i> Back to Home
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Collection Form View -->
+      <div class="view" id="formView">
+        <div class="form-section">
+
+          <!-- Donor Info -->
+          <div class="donor-confirmed">
+            <div class="donor-confirmed-icon">
+              <i class="fas fa-user-check"></i>
+            </div>
+            <div class="donor-confirmed-info">
+              <div class="donor-confirmed-name">Khalid Al-Mansouri <span style="color: var(--field-accent);">✅</span></div>
+              <div class="donor-confirmed-detail">CON-1245 | Dubai | +971 50 123 4567</div>
+            </div>
+          </div>
+
+          <!-- Amount -->
+          <div class="form-label-mobile">Amount *</div>
+          <input type="text" class="form-input-mobile" value="500" placeholder="Enter amount">
+
+          <!-- Purpose -->
+          <div class="form-label-mobile">Purpose *</div>
+          <select class="form-select-mobile">
+            <option>🧒 Orphan Care</option>
+            <option>📚 Education</option>
+            <option>💧 Clean Water</option>
+            <option>🏥 Healthcare</option>
+            <option>📋 General</option>
+          </select>
+
+          <!-- Payment Mode -->
+          <div class="form-label-mobile">Payment Mode</div>
+          <div class="payment-mode-pills">
+            <div class="payment-mode-pill selected" onclick="selectMode(this)">💵 Cash</div>
+            <div class="payment-mode-pill" onclick="selectMode(this)">📄 Cheque</div>
+            <div class="payment-mode-pill" onclick="selectMode(this)">📱 Mobile</div>
+          </div>
+
+          <!-- Receipt -->
+          <div class="receipt-auto">
+            <div>
+              <div class="receipt-auto-label">Receipt # (auto)</div>
+              <div class="receipt-auto-value">REC-4547</div>
+            </div>
+            <div>
+              <div class="receipt-auto-label">Book</div>
+              <div class="receipt-auto-value">RB-045</div>
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div class="form-label-mobile">Notes</div>
+          <input type="text" class="form-input-mobile regular" placeholder="Optional notes...">
+
+          <!-- Photo -->
+          <div class="photo-attach">
+            <i class="fas fa-camera"></i> Attach Photo (cheque image, etc.)
+          </div>
+
+          <!-- Save -->
+          <button class="save-collection-btn" onclick="showView('list')">
+            <i class="fas fa-check-circle"></i> Save Collection
+          </button>
+
+        </div>
+      </div>
+
+      <!-- Today's Collections View -->
+      <div class="view" id="listView">
+        <div class="list-header">
+          <div class="list-title">Today's Collections</div>
+          <div class="list-badge">5 total: AED 2,300</div>
+        </div>
+
+        <div class="collection-item">
+          <div class="collection-item-top">
+            <div class="collection-donor">Khalid Al-Mansouri</div>
+            <div class="collection-amount">AED 500</div>
+          </div>
+          <div class="collection-meta">Orphan Care | Cash | REC-4547 | 2:15 PM</div>
+          <div class="collection-status"><i class="fas fa-check-circle"></i> Synced</div>
+        </div>
+
+        <div class="collection-item">
+          <div class="collection-item-top">
+            <div class="collection-donor">Fatima Zahra</div>
+            <div class="collection-amount">AED 200</div>
+          </div>
+          <div class="collection-meta">Education | Cash | REC-4546 | 1:30 PM</div>
+          <div class="collection-status"><i class="fas fa-check-circle"></i> Synced</div>
+        </div>
+
+        <div class="collection-item">
+          <div class="collection-item-top">
+            <div class="collection-donor">Ahmad Nasser</div>
+            <div class="collection-amount">AED 1,000</div>
+          </div>
+          <div class="collection-meta">Clean Water | Cheque | REC-4545 | 11:00 AM</div>
+          <div class="collection-status"><i class="fas fa-check-circle"></i> Synced</div>
+        </div>
+
+        <div class="collection-item">
+          <div class="collection-item-top">
+            <div class="collection-donor">Mohamed Ali</div>
+            <div class="collection-amount">AED 300</div>
+          </div>
+          <div class="collection-meta">General | Cash | REC-4544 | 10:30 AM</div>
+          <div class="collection-status"><i class="fas fa-check-circle"></i> Synced</div>
+        </div>
+
+        <div class="collection-item">
+          <div class="collection-item-top">
+            <div class="collection-donor">Sarah Ahmed</div>
+            <div class="collection-amount">AED 300</div>
+          </div>
+          <div class="collection-meta">Orphan Care | Cash | REC-4543 | 10:00 AM</div>
+          <div class="collection-status"><i class="fas fa-check-circle"></i> Synced</div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+      <div class="nav-item active" onclick="showView('home')">
+        <i class="fas fa-home"></i>
+        <span>Home</span>
+      </div>
+      <div class="nav-item" onclick="showView('scanner')">
+        <div class="nav-scan-btn">
+          <i class="fas fa-camera"></i>
+        </div>
+        <span style="margin-top: 4px;">Scan</span>
+      </div>
+      <div class="nav-item" onclick="showView('form')">
+        <i class="fas fa-plus-circle"></i>
+        <span>Collect</span>
+      </div>
+      <div class="nav-item" onclick="showView('list')">
+        <i class="fas fa-clipboard-list"></i>
+        <span>History</span>
+      </div>
+      <div class="nav-item">
+        <i class="fas fa-user"></i>
+        <span>Profile</span>
+      </div>
+      <div class="home-indicator"></div>
+    </div>
+
+  </div>
+
+  <script>
+    function showView(view) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      const viewMap = { home: 'homeView', scanner: 'scannerView', form: 'formView', list: 'listView' };
+      document.getElementById(viewMap[view]).classList.add('active');
+    }
+
+    function selectMode(el) {
+      document.querySelectorAll('.payment-mode-pill').forEach(p => p.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+  </script>
+
+</body>
+
+</html>

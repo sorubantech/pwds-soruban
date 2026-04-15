@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Types - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #0c6577;
+      border-color: #0c6577;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Breadcrumb */
+    .breadcrumb-nav {
+      margin-bottom: 1rem;
+    }
+
+    .breadcrumb-nav a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.8125rem;
+      font-weight: 500;
+    }
+
+    .breadcrumb-nav a:hover {
+      text-decoration: underline;
+    }
+
+    .breadcrumb-nav span {
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+    }
+
+    /* Card */
+    .list-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+    }
+
+    /* Table */
+    .table-responsive {
+      overflow-x: auto;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    .data-table thead th {
+      background: #f8fafc;
+      padding: 0.75rem 1rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      font-size: 0.6875rem;
+      letter-spacing: 0.05em;
+      border-bottom: 2px solid var(--border-color);
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .data-table tbody tr {
+      border-bottom: 1px solid var(--border-color);
+      transition: background 0.15s;
+      cursor: pointer;
+    }
+
+    .data-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    .data-table tbody tr.selected {
+      background: var(--accent-bg);
+      border-left: 3px solid var(--accent);
+    }
+
+    .data-table tbody td {
+      padding: 0.75rem 1rem;
+      vertical-align: middle;
+      color: var(--text-primary);
+    }
+
+    .data-table tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    /* Drag Handle */
+    .drag-handle {
+      color: #cbd5e1;
+      cursor: grab;
+      font-size: 0.875rem;
+    }
+
+    .drag-handle:hover {
+      color: var(--text-secondary);
+    }
+
+    /* Type Code Badge */
+    .type-code {
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: #f1f5f9;
+      color: var(--text-primary);
+      padding: 0.2rem 0.5rem;
+      border-radius: 0.25rem;
+      border: 1px solid var(--border-color);
+    }
+
+    /* System Badge */
+    .system-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.15rem 0.5rem;
+      border-radius: 9999px;
+    }
+
+    .system-badge.yes {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .system-badge.no {
+      background: #f1f5f9;
+      color: var(--text-secondary);
+    }
+
+    /* Status Badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+    }
+
+    .status-badge.active {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .status-badge.inactive {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .status-dot.active {
+      background: #22c55e;
+    }
+
+    .status-dot.inactive {
+      background: #f59e0b;
+    }
+
+    /* Contact Count Link */
+    .contact-count {
+      color: var(--accent);
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .contact-count:hover {
+      text-decoration: underline;
+      color: #0c6577;
+    }
+
+    /* Action Buttons */
+    .action-btn {
+      background: none;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 0.3rem 0.5rem;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      font-size: 0.75rem;
+      transition: all 0.15s;
+    }
+
+    .action-btn:hover {
+      background: #f8fafc;
+      color: var(--text-primary);
+      border-color: #cbd5e1;
+    }
+
+    .action-btn.delete:hover {
+      background: #fef2f2;
+      color: var(--danger-color);
+      border-color: #fca5a5;
+    }
+
+    /* Order Number */
+    .order-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #f1f5f9;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    /* Info Panel */
+    .info-panel {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      padding: 1.25rem;
+    }
+
+    .info-panel-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .info-panel-header h3 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .info-panel-header i {
+      color: var(--accent);
+    }
+
+    .info-stat {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      background: var(--accent-bg);
+      border-radius: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .info-stat-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+    }
+
+    .info-stat-text {
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+    }
+
+    .info-stat-text strong {
+      color: var(--accent);
+    }
+
+    .system-notice {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.625rem 0.75rem;
+      background: #eff6ff;
+      border-radius: 0.5rem;
+      font-size: 0.75rem;
+      color: #1d4ed8;
+      margin-bottom: 0.75rem;
+    }
+
+    .recent-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .recent-list li {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.8125rem;
+    }
+
+    .recent-list li:last-child {
+      border-bottom: none;
+    }
+
+    .recent-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.625rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+
+    .recent-name {
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .recent-date {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-left: auto;
+    }
+
+    /* Modal */
+    .modal-header-accent {
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      color: white;
+      border-radius: var(--card-radius) var(--card-radius) 0 0;
+    }
+
+    .modal-header-accent .btn-close {
+      filter: brightness(0) invert(1);
+    }
+
+    .modal-content {
+      border-radius: var(--card-radius);
+      border: none;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    }
+
+    .form-label {
+      font-weight: 600;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      margin-bottom: 0.35rem;
+    }
+
+    .form-control,
+    .form-select {
+      font-size: 0.8125rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+      padding: 0.5rem 0.75rem;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .form-switch .form-check-input:checked {
+      background-color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .required-star {
+      color: var(--danger-color);
+    }
+
+    /* Summary Stats */
+    .summary-bar {
+      display: flex;
+      gap: 1.5rem;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      flex-wrap: wrap;
+    }
+
+    .summary-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .summary-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+    }
+
+    .summary-label {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 600;
+    }
+
+    .summary-value {
+      font-size: 1.0625rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body {
+        padding: 1rem;
+      }
+
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb-nav">
+    <a href="#" onclick="parent.loadContent('contacts/contact-list'); return false;">
+      <i class="fas fa-arrow-left me-1"></i> All Contacts
+    </a>
+    <span class="mx-2">/</span>
+    <span>Contact Types</span>
+  </div>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-shapes me-2" style="color: var(--accent);"></i>Contact Types</h1>
+      <p class="subtitle">Manage constituent classification types</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline-accent" onclick="alert('Export types list')">
+        <i class="fas fa-download me-1"></i> Export
+      </button>
+      <button class="btn-primary-accent" data-bs-toggle="modal" data-bs-target="#typeModal" onclick="openNewType()">
+        <i class="fas fa-plus me-1"></i> New Type
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="row g-3">
+    <!-- Table Column -->
+    <div class="col-lg-8">
+      <div class="list-card">
+        <!-- Summary Bar -->
+        <div class="summary-bar">
+          <div class="summary-item">
+            <div class="summary-icon" style="background: var(--accent-bg); color: var(--accent);">
+              <i class="fas fa-shapes"></i>
+            </div>
+            <div>
+              <div class="summary-label">Total Types</div>
+              <div class="summary-value">9</div>
+            </div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-icon" style="background: #dcfce7; color: #15803d;">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <div>
+              <div class="summary-label">Active</div>
+              <div class="summary-value">8</div>
+            </div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-icon" style="background: #dbeafe; color: #1d4ed8;">
+              <i class="fas fa-lock"></i>
+            </div>
+            <div>
+              <div class="summary-label">System</div>
+              <div class="summary-value">5</div>
+            </div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-icon" style="background: #fef3c7; color: #92400e;">
+              <i class="fas fa-user-tag"></i>
+            </div>
+            <div>
+              <div class="summary-label">Custom</div>
+              <div class="summary-value">4</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+          <table class="data-table" id="typesTable">
+            <thead>
+              <tr>
+                <th style="width: 36px;"></th>
+                <th>#</th>
+                <th>Type Code</th>
+                <th>Type Name</th>
+                <th>Description</th>
+                <th>Contacts</th>
+                <th>System</th>
+                <th>Order</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr onclick="selectType(0)" id="row-0">
+                <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+                <td>1</td>
+                <td><span class="type-code">DONOR</span></td>
+                <td><strong>Donor</strong></td>
+                <td>Financial contributors and supporters</td>
+                <td><a class="contact-count" onclick="event.stopPropagation(); parent.loadContent('contacts/contact-list')">8,456</a></td>
+                <td><span class="system-badge yes"><i class="fas fa-lock" style="font-size:0.6rem;"></i> System</span></td>
+                <td><span class="order-num">1</span></td>
+                <td><span class="status-badge active"><span class="status-dot active"></span> Active</span></td>
+                <td>
+                  <button class="action-btn" title="Edit" onclick="event.stopPropagation(); openEditType(0)"><i class="fas fa-pen"></i></button>
+                </td>
+              </tr>
+              <tr onclick="selectType(1)" id="row-1">
+                <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+                <td>2</td>
+                <td><span class="type-code">VOLUNTEER</span></td>
+                <td><strong>Volunteer</strong></td>
+                <td>People who donate their time</td>
+                <td><a class="contact-count" onclick="event.stopPropagation(); parent.loadContent('contacts/contact-list')">1,234</a></td>
+                <td><span class="system-badge yes"><i class="fas fa-lock" style="font-size:0.6rem;"></i> System</span></td>
+                <td><span class="order-num">2</span></td>
+                <td><span class="status-badge active"><span class="status-dot active"></span> Active</span></td>
+                <td>
+                  <button class="action-btn" title="Edit" onclick="event.stopPropagation(); openEditType(1)"><i class="fas fa-pen"></i></button>
+                </td>
+              </tr>
+              <tr onclick="selectType(2)" id="row-2">
+                <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+                <td>3</td>
+                <td><span class="type-code">MEMBER</span></td>
+                <td><strong>Member</strong></td>
+                <td>Registered membership holders</td>
+                <td><a class="contact-count" onclick="event.stopPropagation(); parent.loadContent('contacts/contact-list')">890</a></td>
+                <td><span class="system-badge yes"><i class="fas fa-lock" style="font-size:0.6rem;"></i> System</span></td>
+                <td><span class="order-num">3</span></td>
+                <td><span class="status-badge active"><span class="status-dot active"></span> Active</span></td>
+                <td>
+                  <button class="action-btn" title="Edit" onclick="event.stopPropagation(); openEditType(2)"><i class="fas fa-pen"></i></button>
+                </td>
+              </tr>
+              <tr onclick="selectType(3)" id="row-3">
+                <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+                <td>4</td>
+                <td><span class="type-code">PROSPECT</span></td>
+                <td><strong>Prospect</strong></td>
+                <td>Potential donors not yet converted</td>
+                <td><a class="contact-count" onclick="event.stopPropagation(); parent.loadContent('contacts/contact-list')">567</a></td>
+                <td><span class="system-badge yes"><i class="fas fa-lock" style="font-size:0.6rem;"></i> System</span></td>
+                <td><span class="order-num">4</span></td>
+                <td><span class="status-badge active"><span class="status-dot active"></span> Active</span></td>
+                <td>
+                  <button class="action-btn" title="Edit" onclick="event.stopPropagation(); openEditType(3)"><i class="fas fa-pen"></i></button>
+                </td>
+              </tr>
+              <tr onclick="selectType(4)" id="row-4">
+                <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+                <td>5</td>
+                <td><span class="type-code">BOARD</span></td>
+                <td><strong>Board Member</strong></td>
+                <td>Board of directors / trustees</td>
+                <td><a class="contact-count" onclick="event.stopPropagation(); parent.loadContent('contacts/contact-list')">12</a></td>
+                <td><span class="system-badge no">Custom</span></td>
+                <td><span class="order-num">5</span></td>
+                <td><span class="status-badge active"><span class="status-dot active"></span> Active</span></td>
+                <td>
+                  <button class="action-btn" title="Edit" onclick="event.stopPropagation(); openEditType(4)"><i class="fas fa-pen"></i></button>
+                  <button class="action-btn delete" title="Delete" onclick="event.stopPropagation(); confirmDelete('BOARD')"><i class="fas fa-trash-alt"></i></button>
+                </td>
+              </tr>
+              <tr onclick="selectType(5)" id="row-5">
+                <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+                <td>6</td>
+                <td><span class="type-code">AMBASSADOR</span></td>
+                <td><strong>Field Ambassador</strong></td>
+                <td>Field collection agents</td>
+                <td><a class="contact-count" onclick="event.stopPropagation(); parent.loadContent('contacts/contact-list')">45</a></td>
+                <td><span class="system-badge yes"><i class="fas fa-lock" style="font-size:0.6rem;"></i> System</span></td>
+                <td><span class="order-num">6</span></td>
+                <td><span class="status-badge active"><span class="status-dot active"></span> Active</span></td>
+                <td>
+                  <button class="action-btn" title="Edit" onclick="event.stopPropagation(); openEditType(5)"><i class="fas fa-pen"></i></button>
+                </td>
+              </tr>
+              <tr onclick="selectType(6)" id="row-6">
+                <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+                <td>7</td>
+                <td><span class="type-code">PARTNER</span></td>
+                <td><strong>Corporate Partner</strong></td>
+                <td>Corporate/organizational partners</td>
+                <td><a class="contact-count" onclick="event.stopPropagation(); parent.loadContent('contacts/contact-list')">34</a></td>
+                <td><span class="system-badge no">Custom</span></td>
+                <td><span class="order-num">7</span></td>
+                <td><span class="status-badge active"><span class="status-dot active"></span> Active</span></td>
+                <td>
+                  <button class="action-btn" title="Edit" onclick="event.stopPropagation(); openEditType(6)"><i class="fas fa-pen"></i></button>
+                  <button class="action-btn delete" title="Delete" onclick="event.stopPropagation(); confirmDelete('PARTNER')"><i class="fas fa-trash-alt"></i></button>
+                </td>
+              </tr>
+              <tr onclick="selectType(7)" id="row-7">
+                <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+                <td>8</td>
+                <td><span class="type-code">BENEFICIARY</span></td>
+                <td><strong>Beneficiary</strong></td>
+                <td>Program beneficiaries receiving aid</td>
+                <td><a class="contact-count" onclick="event.stopPropagation(); parent.loadContent('contacts/contact-list')">2,100</a></td>
+                <td><span class="system-badge no">Custom</span></td>
+                <td><span class="order-num">8</span></td>
+                <td><span class="status-badge active"><span class="status-dot active"></span> Active</span></td>
+                <td>
+                  <button class="action-btn" title="Edit" onclick="event.stopPropagation(); openEditType(7)"><i class="fas fa-pen"></i></button>
+                  <button class="action-btn delete" title="Delete" onclick="event.stopPropagation(); confirmDelete('BENEFICIARY')"><i class="fas fa-trash-alt"></i></button>
+                </td>
+              </tr>
+              <tr onclick="selectType(8)" id="row-8">
+                <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+                <td>9</td>
+                <td><span class="type-code">SPONSOR</span></td>
+                <td><strong>Sponsor</strong></td>
+                <td>Event or program sponsors</td>
+                <td><a class="contact-count" onclick="event.stopPropagation(); parent.loadContent('contacts/contact-list')">78</a></td>
+                <td><span class="system-badge no">Custom</span></td>
+                <td><span class="order-num">9</span></td>
+                <td><span class="status-badge inactive"><span class="status-dot inactive"></span> Inactive</span></td>
+                <td>
+                  <button class="action-btn" title="Edit" onclick="event.stopPropagation(); openEditType(8)"><i class="fas fa-pen"></i></button>
+                  <button class="action-btn delete" title="Delete" onclick="event.stopPropagation(); confirmDelete('SPONSOR')"><i class="fas fa-trash-alt"></i></button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Panel Column -->
+    <div class="col-lg-4">
+      <div class="info-panel" id="infoPanel">
+        <div class="info-panel-header">
+          <i class="fas fa-circle-info"></i>
+          <h3>Type Details</h3>
+        </div>
+
+        <!-- Default state -->
+        <div id="infoDefault">
+          <div style="text-align: center; padding: 2rem 1rem; color: var(--text-secondary);">
+            <i class="fas fa-hand-pointer" style="font-size: 2rem; color: #cbd5e1; margin-bottom: 0.75rem; display: block;"></i>
+            <p style="font-size: 0.8125rem; margin: 0;">Select a contact type from the table to view details</p>
+          </div>
+        </div>
+
+        <!-- Selected state -->
+        <div id="infoSelected" style="display: none;">
+          <div class="info-stat">
+            <div class="info-stat-icon">
+              <i class="fas fa-users"></i>
+            </div>
+            <div class="info-stat-text">
+              <strong id="infoTypeName">Donor</strong> type is assigned to <strong id="infoCount">8,456</strong> contacts
+            </div>
+          </div>
+
+          <div class="system-notice" id="systemNotice">
+            <i class="fas fa-lock"></i>
+            This is a system type and cannot be deleted
+          </div>
+
+          <div style="margin-bottom: 0.5rem;">
+            <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em;">
+              Recent Assignments
+            </span>
+          </div>
+          <ul class="recent-list" id="recentList">
+            <!-- Populated by JS -->
+          </ul>
+        </div>
+      </div>
+
+      <!-- Quick Tips -->
+      <div class="info-panel mt-3">
+        <div class="info-panel-header">
+          <i class="fas fa-lightbulb"></i>
+          <h3>Quick Tips</h3>
+        </div>
+        <ul style="font-size: 0.8125rem; color: var(--text-secondary); padding-left: 1.25rem; margin: 0; line-height: 1.8;">
+          <li>A contact can have <strong>multiple types</strong> simultaneously</li>
+          <li>Drag rows to <strong>reorder</strong> display priority</li>
+          <li>System types can be edited but <strong>not deleted</strong></li>
+          <li>Click contact count to <strong>filter</strong> the contact list</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- New/Edit Type Modal -->
+  <div class="modal fade" id="typeModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header modal-header-accent">
+          <h5 class="modal-title" id="modalTitle">
+            <i class="fas fa-plus-circle me-2"></i>New Contact Type
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form id="typeForm">
+            <div class="mb-3">
+              <label class="form-label">Type Code <span class="required-star">*</span></label>
+              <input type="text" class="form-control" id="typeCode" maxlength="100"
+                placeholder="e.g., VOLUNTEER" style="text-transform: uppercase;"
+                oninput="this.value = this.value.toUpperCase().replace(/\s/g, '')">
+              <div class="form-text">Uppercase, no spaces. Max 100 characters.</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Type Name <span class="required-star">*</span></label>
+              <input type="text" class="form-control" id="typeName" maxlength="100"
+                placeholder="e.g., Volunteer">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Description</label>
+              <textarea class="form-control" id="typeDesc" rows="3" maxlength="1000"
+                placeholder="Brief description of this contact type..."></textarea>
+            </div>
+            <div class="row mb-3">
+              <div class="col-6">
+                <label class="form-label">Display Order</label>
+                <input type="number" class="form-control" id="typeOrder" min="1" value="10"
+                  placeholder="e.g., 10">
+              </div>
+              <div class="col-6">
+                <label class="form-label">Status</label>
+                <div class="form-check form-switch mt-2">
+                  <input class="form-check-input" type="checkbox" id="typeActive" checked
+                    style="width: 2.5rem; height: 1.25rem;">
+                  <label class="form-check-label" for="typeActive" id="typeActiveLabel"
+                    style="font-size: 0.8125rem; padding-top: 0.1rem;">Active</label>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="font-size: 0.8125rem;">Cancel</button>
+          <button type="button" class="btn-primary-accent" onclick="saveType()">
+            <i class="fas fa-check me-1"></i> Save
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content">
+        <div class="modal-header" style="background: #fef2f2; border-bottom: 1px solid #fecaca;">
+          <h5 class="modal-title" style="font-size: 0.9375rem; color: var(--danger-color);">
+            <i class="fas fa-exclamation-triangle me-2"></i>Delete Type
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4" style="font-size: 0.8125rem;">
+          <p>Are you sure you want to delete the <strong id="deleteTypeName"></strong> contact type?</p>
+          <p class="text-muted mb-0">This action cannot be undone. Contacts with this type will retain their existing data.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="font-size: 0.8125rem;">Cancel</button>
+          <button type="button" class="btn btn-danger" data-bs-dismiss="modal" onclick="alert('Type deleted successfully')" style="font-size: 0.8125rem;">
+            <i class="fas fa-trash-alt me-1"></i> Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Mock data
+    const contactTypes = [
+      { code: 'DONOR', name: 'Donor', desc: 'Financial contributors and supporters', contacts: '8,456', isSystem: true, order: 1, active: true },
+      { code: 'VOLUNTEER', name: 'Volunteer', desc: 'People who donate their time', contacts: '1,234', isSystem: true, order: 2, active: true },
+      { code: 'MEMBER', name: 'Member', desc: 'Registered membership holders', contacts: '890', isSystem: true, order: 3, active: true },
+      { code: 'PROSPECT', name: 'Prospect', desc: 'Potential donors not yet converted', contacts: '567', isSystem: true, order: 4, active: true },
+      { code: 'BOARD', name: 'Board Member', desc: 'Board of directors / trustees', contacts: '12', isSystem: false, order: 5, active: true },
+      { code: 'AMBASSADOR', name: 'Field Ambassador', desc: 'Field collection agents', contacts: '45', isSystem: true, order: 6, active: true },
+      { code: 'PARTNER', name: 'Corporate Partner', desc: 'Corporate/organizational partners', contacts: '34', isSystem: false, order: 7, active: true },
+      { code: 'BENEFICIARY', name: 'Beneficiary', desc: 'Program beneficiaries receiving aid', contacts: '2,100', isSystem: false, order: 8, active: true },
+      { code: 'SPONSOR', name: 'Sponsor', desc: 'Event or program sponsors', contacts: '78', isSystem: false, order: 9, active: false }
+    ];
+
+    const recentAssignments = {
+      DONOR: [
+        { name: 'Sarah Johnson', initials: 'SJ', date: 'Apr 10, 2026' },
+        { name: 'Michael Chen', initials: 'MC', date: 'Apr 9, 2026' },
+        { name: 'Emily Williams', initials: 'EW', date: 'Apr 8, 2026' },
+        { name: 'David Brown', initials: 'DB', date: 'Apr 7, 2026' },
+        { name: 'Lisa Anderson', initials: 'LA', date: 'Apr 6, 2026' }
+      ],
+      VOLUNTEER: [
+        { name: 'James Wilson', initials: 'JW', date: 'Apr 11, 2026' },
+        { name: 'Anna Martinez', initials: 'AM', date: 'Apr 10, 2026' },
+        { name: 'Robert Taylor', initials: 'RT', date: 'Apr 8, 2026' },
+        { name: 'Karen Lee', initials: 'KL', date: 'Apr 5, 2026' },
+        { name: 'Chris Davis', initials: 'CD', date: 'Apr 3, 2026' }
+      ],
+      MEMBER: [
+        { name: 'Patricia Moore', initials: 'PM', date: 'Apr 9, 2026' },
+        { name: 'Thomas White', initials: 'TW', date: 'Apr 7, 2026' },
+        { name: 'Jennifer Hall', initials: 'JH', date: 'Apr 5, 2026' },
+        { name: 'Daniel Clark', initials: 'DC', date: 'Apr 2, 2026' },
+        { name: 'Susan Lewis', initials: 'SL', date: 'Mar 30, 2026' }
+      ],
+      PROSPECT: [
+        { name: 'Mark Robinson', initials: 'MR', date: 'Apr 11, 2026' },
+        { name: 'Nancy Walker', initials: 'NW', date: 'Apr 10, 2026' },
+        { name: 'Steven Young', initials: 'SY', date: 'Apr 9, 2026' },
+        { name: 'Betty King', initials: 'BK', date: 'Apr 8, 2026' },
+        { name: 'Paul Wright', initials: 'PW', date: 'Apr 6, 2026' }
+      ],
+      BOARD: [
+        { name: 'Richard Harris', initials: 'RH', date: 'Mar 15, 2026' },
+        { name: 'Dorothy Scott', initials: 'DS', date: 'Feb 28, 2026' },
+        { name: 'George Adams', initials: 'GA', date: 'Feb 10, 2026' }
+      ],
+      AMBASSADOR: [
+        { name: 'Kevin Thompson', initials: 'KT', date: 'Apr 10, 2026' },
+        { name: 'Sandra Garcia', initials: 'SG', date: 'Apr 5, 2026' },
+        { name: 'Brian Martinez', initials: 'BM', date: 'Mar 28, 2026' }
+      ],
+      PARTNER: [
+        { name: 'TechCorp Inc.', initials: 'TC', date: 'Apr 8, 2026' },
+        { name: 'Global Solutions', initials: 'GS', date: 'Mar 20, 2026' },
+        { name: 'Bright Foundation', initials: 'BF', date: 'Mar 12, 2026' }
+      ],
+      BENEFICIARY: [
+        { name: 'Maria Rodriguez', initials: 'MR', date: 'Apr 11, 2026' },
+        { name: 'Ahmed Hassan', initials: 'AH', date: 'Apr 10, 2026' },
+        { name: 'Priya Sharma', initials: 'PS', date: 'Apr 9, 2026' },
+        { name: 'Juan Perez', initials: 'JP', date: 'Apr 8, 2026' },
+        { name: 'Fatima Ali', initials: 'FA', date: 'Apr 7, 2026' }
+      ],
+      SPONSOR: [
+        { name: 'Elite Events Co.', initials: 'EE', date: 'Mar 5, 2026' },
+        { name: 'Premier Group', initials: 'PG', date: 'Feb 18, 2026' }
+      ]
+    };
+
+    let selectedIndex = null;
+    let editIndex = null;
+
+    function selectType(index) {
+      // Remove previous selection
+      document.querySelectorAll('.data-table tbody tr').forEach(tr => tr.classList.remove('selected'));
+
+      // Highlight selected row
+      document.getElementById('row-' + index).classList.add('selected');
+      selectedIndex = index;
+
+      const type = contactTypes[index];
+
+      // Update info panel
+      document.getElementById('infoDefault').style.display = 'none';
+      document.getElementById('infoSelected').style.display = 'block';
+      document.getElementById('infoTypeName').textContent = type.name;
+      document.getElementById('infoCount').textContent = type.contacts;
+
+      // System notice
+      const notice = document.getElementById('systemNotice');
+      if (type.isSystem) {
+        notice.style.display = 'flex';
+      } else {
+        notice.style.display = 'none';
+      }
+
+      // Recent assignments
+      const list = document.getElementById('recentList');
+      const assignments = recentAssignments[type.code] || [];
+      list.innerHTML = assignments.map(a =>
+        `<li>
+          <div class="recent-avatar">${a.initials}</div>
+          <span class="recent-name">${a.name}</span>
+          <span class="recent-date">${a.date}</span>
+        </li>`
+      ).join('');
+    }
+
+    function openNewType() {
+      editIndex = null;
+      document.getElementById('modalTitle').innerHTML = '<i class="fas fa-plus-circle me-2"></i>New Contact Type';
+      document.getElementById('typeCode').value = '';
+      document.getElementById('typeCode').readOnly = false;
+      document.getElementById('typeName').value = '';
+      document.getElementById('typeDesc').value = '';
+      document.getElementById('typeOrder').value = contactTypes.length + 1;
+      document.getElementById('typeActive').checked = true;
+      document.getElementById('typeActiveLabel').textContent = 'Active';
+    }
+
+    function openEditType(index) {
+      editIndex = index;
+      const type = contactTypes[index];
+      document.getElementById('modalTitle').innerHTML = '<i class="fas fa-pen me-2"></i>Edit Contact Type';
+      document.getElementById('typeCode').value = type.code;
+      document.getElementById('typeCode').readOnly = type.isSystem;
+      document.getElementById('typeName').value = type.name;
+      document.getElementById('typeDesc').value = type.desc;
+      document.getElementById('typeOrder').value = type.order;
+      document.getElementById('typeActive').checked = type.active;
+      document.getElementById('typeActiveLabel').textContent = type.active ? 'Active' : 'Inactive';
+
+      const modal = new bootstrap.Modal(document.getElementById('typeModal'));
+      modal.show();
+    }
+
+    function saveType() {
+      const code = document.getElementById('typeCode').value.trim();
+      const name = document.getElementById('typeName').value.trim();
+
+      if (!code || !name) {
+        alert('Please fill in required fields (Type Code and Type Name)');
+        return;
+      }
+
+      const modal = bootstrap.Modal.getInstance(document.getElementById('typeModal'));
+      modal.hide();
+
+      if (editIndex !== null) {
+        alert('Contact type "' + name + '" updated successfully');
+      } else {
+        alert('Contact type "' + name + '" created successfully');
+      }
+    }
+
+    function confirmDelete(code) {
+      document.getElementById('deleteTypeName').textContent = code;
+      const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+      modal.show();
+    }
+
+    // Toggle active label
+    document.getElementById('typeActive').addEventListener('change', function () {
+      document.getElementById('typeActiveLabel').textContent = this.checked ? 'Active' : 'Inactive';
+    });
+
+    // Auto-select first row on load
+    selectType(0);
+  </script>
+
+</body>
+
+</html>

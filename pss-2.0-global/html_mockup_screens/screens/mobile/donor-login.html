@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Donor Login - Mobile App</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a1a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .phone-frame {
+      width: 375px;
+      height: 812px;
+      background: #ffffff;
+      border-radius: 44px;
+      overflow: hidden;
+      box-shadow: 0 0 0 12px #2d2d2d, 0 0 0 14px #1a1a1a, 0 20px 60px rgba(0,0,0,0.5);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .phone-notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 28px;
+      background: #000;
+      border-radius: 0 0 18px 18px;
+      z-index: 10;
+    }
+
+    .status-bar {
+      background: #000;
+      color: #fff;
+      padding: 8px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 600;
+      height: 48px;
+    }
+
+    .status-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+    }
+
+    .phone-content {
+      flex: 1;
+      overflow-y: auto;
+      background: #ffffff;
+    }
+
+    .phone-content::-webkit-scrollbar { width: 0; }
+
+    .view { display: none; }
+    .view.active { display: flex; flex-direction: column; min-height: 100%; }
+
+    /* Login Screen */
+    .login-view {
+      padding: 0 24px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .logo-section {
+      text-align: center;
+      margin-bottom: 32px;
+      padding-top: 20px;
+    }
+
+    .logo-icon {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 12px;
+      font-size: 28px;
+      color: white;
+    }
+
+    .logo-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .logo-tagline {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .welcome-text {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text-primary);
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+      width: 100%;
+    }
+
+    .form-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .form-input {
+      width: 100%;
+      height: 48px;
+      border: 1.5px solid var(--border-color);
+      border-radius: 12px;
+      padding: 0 16px;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: #f8fafc;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus {
+      border-color: var(--accent);
+      background: white;
+    }
+
+    .form-input::placeholder {
+      color: #94a3b8;
+    }
+
+    .password-wrap {
+      position: relative;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 4px;
+    }
+
+    .form-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      width: 100%;
+    }
+
+    .remember-me {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    .remember-checkbox {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border-color);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: white;
+    }
+
+    .remember-checkbox.checked {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .forgot-link {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      cursor: pointer;
+    }
+
+    .btn-primary-full {
+      width: 100%;
+      height: 48px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(14, 116, 144, 0.3);
+    }
+
+    .btn-primary-full:active { transform: scale(0.98); }
+
+    .divider-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      width: 100%;
+    }
+
+    .divider-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border-color);
+    }
+
+    .divider-text {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .social-row {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 24px;
+      width: 100%;
+    }
+
+    .social-btn {
+      width: 56px;
+      height: 48px;
+      border: 1.5px solid var(--border-color);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      cursor: pointer;
+      background: white;
+    }
+
+    .social-btn:active { background: #f8fafc; }
+    .social-btn.google { color: #ea4335; }
+    .social-btn.apple { color: #000; }
+    .social-btn.facebook { color: #1877f2; }
+
+    .switch-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+
+    .switch-link {
+      font-weight: 700;
+      color: var(--accent);
+      cursor: pointer;
+    }
+
+    /* Register Screen */
+    .register-header {
+      display: flex;
+      align-items: center;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border-color);
+      background: white;
+    }
+
+    .back-btn {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: var(--accent);
+      cursor: pointer;
+      border-radius: 50%;
+    }
+
+    .back-btn:active { background: var(--accent-bg); }
+
+    .register-header-title {
+      flex: 1;
+      text-align: center;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-right: 36px;
+    }
+
+    .register-view .phone-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    .register-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .register-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+
+    .phone-input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .country-code {
+      width: 72px;
+      height: 48px;
+      border: 1.5px solid var(--border-color);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      background: #f8fafc;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .phone-input-row .form-input { flex: 1; }
+
+    .password-hint {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .terms-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .terms-checkbox {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border-color);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: white;
+      flex-shrink: 0;
+      cursor: pointer;
+      margin-top: 1px;
+    }
+
+    .terms-checkbox.checked {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .terms-text {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .terms-link {
+      color: var(--accent);
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Onboarding */
+    .onboarding-view {
+      background: white;
+      justify-content: center;
+      align-items: center;
+      padding: 40px 24px;
+    }
+
+    .onboarding-illustration {
+      width: 160px;
+      height: 160px;
+      background: var(--accent-bg);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 64px;
+      margin-bottom: 32px;
+    }
+
+    .onboarding-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text-primary);
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .onboarding-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      text-align: center;
+      line-height: 1.6;
+      margin-bottom: 40px;
+    }
+
+    .onboarding-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      margin-top: auto;
+    }
+
+    .dots {
+      display: flex;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border-color);
+    }
+
+    .dot.active {
+      background: var(--accent);
+      width: 24px;
+      border-radius: 4px;
+    }
+
+    .onboarding-btn {
+      padding: 12px 24px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .onboarding-btn:active { transform: scale(0.97); }
+
+    .onboarding-btn.full {
+      width: 100%;
+      justify-content: center;
+      height: 48px;
+      border-radius: 12px;
+      font-size: 15px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      box-shadow: 0 4px 12px rgba(14, 116, 144, 0.3);
+    }
+
+    .skip-btn {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 8px;
+    }
+
+    /* Forgot Password */
+    .forgot-view .phone-scroll {
+      flex: 1;
+      padding: 24px;
+    }
+
+    .forgot-icon {
+      width: 72px;
+      height: 72px;
+      background: var(--accent-bg);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      color: var(--accent);
+      margin: 20px auto 20px;
+    }
+
+    .forgot-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-primary);
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .forgot-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      text-align: center;
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+
+    .home-indicator {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 134px;
+      height: 5px;
+      background: #d1d5db;
+      border-radius: 100px;
+      z-index: 5;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+
+    <div class="status-bar">
+      <span>2:30</span>
+      <div class="status-bar-right">
+        <i class="fas fa-signal" style="font-size: 11px;"></i>
+        <i class="fas fa-wifi" style="font-size: 11px;"></i>
+        <i class="fas fa-battery-full" style="font-size: 13px;"></i>
+      </div>
+    </div>
+
+    <div class="phone-content">
+
+      <!-- LOGIN VIEW -->
+      <div class="view active login-view" id="loginView">
+        <div class="logo-section">
+          <div class="logo-icon"><i class="fas fa-heart"></i></div>
+          <div class="logo-name">Global Humanitarian Foundation</div>
+          <div class="logo-tagline">Making a difference together</div>
+        </div>
+
+        <div class="welcome-text">Welcome Back</div>
+
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" value="khalid@email.com" placeholder="Enter your email">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <div class="password-wrap">
+            <input type="password" class="form-input" id="loginPassword" value="password123" placeholder="Enter your password">
+            <div class="password-toggle" onclick="togglePassword('loginPassword')"><i class="fas fa-eye"></i></div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="remember-me" onclick="toggleRemember(this)">
+            <div class="remember-checkbox checked"><i class="fas fa-check"></i></div>
+            Remember me
+          </div>
+          <div class="forgot-link" onclick="showScreen('forgot')">Forgot Password?</div>
+        </div>
+
+        <button class="btn-primary-full" onclick="showScreen('onboarding1')">Log In</button>
+
+        <div class="divider-row">
+          <div class="divider-line"></div>
+          <div class="divider-text">or continue with</div>
+          <div class="divider-line"></div>
+        </div>
+
+        <div class="social-row">
+          <div class="social-btn google"><i class="fab fa-google"></i></div>
+          <div class="social-btn apple"><i class="fab fa-apple"></i></div>
+          <div class="social-btn facebook"><i class="fab fa-facebook-f"></i></div>
+        </div>
+
+        <div class="switch-text">
+          Don't have an account? <span class="switch-link" onclick="showScreen('register')">Register</span>
+        </div>
+      </div>
+
+      <!-- REGISTER VIEW -->
+      <div class="view register-view" id="registerView">
+        <div class="register-header">
+          <div class="back-btn" onclick="showScreen('login')"><i class="fas fa-arrow-left"></i></div>
+          <div class="register-header-title">Register</div>
+        </div>
+        <div class="phone-scroll">
+          <div class="register-title">Create Your Account</div>
+          <div class="register-subtitle">Join our community of supporters</div>
+
+          <div class="form-group">
+            <label class="form-label">First Name *</label>
+            <input type="text" class="form-input" placeholder="Enter first name">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Last Name *</label>
+            <input type="text" class="form-input" placeholder="Enter last name">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Email *</label>
+            <input type="email" class="form-input" placeholder="Enter your email">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Phone</label>
+            <div class="phone-input-row">
+              <div class="country-code">+971</div>
+              <input type="tel" class="form-input" placeholder="Phone number">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Password *</label>
+            <div class="password-wrap">
+              <input type="password" class="form-input" id="regPassword" placeholder="Create a password">
+              <div class="password-toggle" onclick="togglePassword('regPassword')"><i class="fas fa-eye"></i></div>
+            </div>
+            <div class="password-hint">Min 8 chars, 1 uppercase, 1 number</div>
+          </div>
+
+          <div class="terms-row">
+            <div class="terms-checkbox checked" onclick="this.classList.toggle('checked')"><i class="fas fa-check"></i></div>
+            <div class="terms-text">
+              I agree to the <span class="terms-link">Terms of Service</span> and <span class="terms-link">Privacy Policy</span>
+            </div>
+          </div>
+
+          <button class="btn-primary-full" onclick="showScreen('onboarding1')">Create Account</button>
+
+          <div class="switch-text" style="margin-bottom: 24px;">
+            Already have an account? <span class="switch-link" onclick="showScreen('login')">Log In</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- FORGOT PASSWORD VIEW -->
+      <div class="view forgot-view" id="forgotView">
+        <div class="register-header">
+          <div class="back-btn" onclick="showScreen('login')"><i class="fas fa-arrow-left"></i></div>
+          <div class="register-header-title">Forgot Password</div>
+        </div>
+        <div class="phone-scroll">
+          <div class="forgot-icon"><i class="fas fa-lock"></i></div>
+          <div class="forgot-title">Reset Password</div>
+          <div class="forgot-desc">Enter your email address and we'll send you a link to reset your password.</div>
+
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-input" placeholder="Enter your email">
+          </div>
+
+          <button class="btn-primary-full" style="margin-top: 8px;">Send Reset Link</button>
+
+          <div class="switch-text">
+            Remember your password? <span class="switch-link" onclick="showScreen('login')">Log In</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ONBOARDING SLIDE 1 -->
+      <div class="view onboarding-view" id="onboarding1View">
+        <div class="onboarding-illustration">❤️🤝</div>
+        <div class="onboarding-title">Track Your Impact</div>
+        <div class="onboarding-desc">See exactly how your donations make a difference in real lives.</div>
+        <div class="onboarding-footer">
+          <div class="dots">
+            <div class="dot active"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+          <button class="onboarding-btn" onclick="showScreen('onboarding2')">Next <i class="fas fa-arrow-right" style="font-size: 12px;"></i></button>
+        </div>
+      </div>
+
+      <!-- ONBOARDING SLIDE 2 -->
+      <div class="view onboarding-view" id="onboarding2View">
+        <div class="onboarding-illustration">📱💰</div>
+        <div class="onboarding-title">Give in Seconds</div>
+        <div class="onboarding-desc">Quick donate with saved cards, Apple Pay, or Google Pay.</div>
+        <div class="onboarding-footer">
+          <div class="dots">
+            <div class="dot"></div>
+            <div class="dot active"></div>
+            <div class="dot"></div>
+          </div>
+          <button class="onboarding-btn" onclick="showScreen('onboarding3')">Next <i class="fas fa-arrow-right" style="font-size: 12px;"></i></button>
+        </div>
+      </div>
+
+      <!-- ONBOARDING SLIDE 3 -->
+      <div class="view onboarding-view" id="onboarding3View">
+        <div class="onboarding-illustration">📅🔔</div>
+        <div class="onboarding-title">Stay Connected</div>
+        <div class="onboarding-desc">RSVP to events, manage pledges, and get impact updates.</div>
+        <div class="onboarding-footer" style="justify-content: center;">
+          <div style="text-align: center; width: 100%;">
+            <div class="dots" style="justify-content: center; margin-bottom: 24px;">
+              <div class="dot"></div>
+              <div class="dot"></div>
+              <div class="dot active"></div>
+            </div>
+            <button class="onboarding-btn full">Get Started <i class="fas fa-arrow-right" style="font-size: 12px;"></i></button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="home-indicator"></div>
+  </div>
+
+  <script>
+    function showScreen(screen) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById(screen + 'View').classList.add('active');
+    }
+
+    function togglePassword(id) {
+      const input = document.getElementById(id);
+      const icon = input.nextElementSibling.querySelector('i');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+      } else {
+        input.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+      }
+    }
+
+    function toggleRemember(el) {
+      el.querySelector('.remember-checkbox').classList.toggle('checked');
+    }
+  </script>
+
+</body>
+
+</html>

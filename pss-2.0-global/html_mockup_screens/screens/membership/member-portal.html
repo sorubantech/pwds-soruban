@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Member Portal Preview - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+      --membership-accent: #d97706;
+      --portal-bg: #fafbfc;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--portal-bg);
+      margin: 0;
+      padding: 0;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Preview Banner */
+    .preview-banner {
+      background: linear-gradient(135deg, #7c3aed, #a78bfa);
+      color: white;
+      text-align: center;
+      padding: 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    .preview-banner i { margin-right: 0.375rem; }
+
+    /* Portal Header */
+    .portal-header {
+      background: white;
+      border-bottom: 1px solid var(--border-color);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+
+    .portal-header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .portal-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 0.5rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.875rem;
+    }
+
+    .portal-brand { font-size: 1rem; font-weight: 700; color: var(--text-primary); }
+    .portal-brand span { color: var(--accent); }
+
+    .portal-nav {
+      display: flex;
+      gap: 0.25rem;
+      align-items: center;
+    }
+
+    .portal-nav-item {
+      padding: 0.5rem 0.875rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-decoration: none;
+    }
+
+    .portal-nav-item:hover { color: var(--accent); background: var(--accent-bg); }
+    .portal-nav-item.active { color: var(--accent); background: var(--accent-bg); }
+
+    .portal-header-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .portal-welcome {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .portal-welcome strong { color: var(--text-primary); }
+
+    .portal-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--membership-accent), #b45309);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.8125rem;
+    }
+
+    .logout-btn {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .logout-btn:hover { color: var(--danger-color); }
+
+    /* Portal Content */
+    .portal-content {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* Membership Card Hero */
+    .membership-card {
+      background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);
+      border-radius: 1rem;
+      padding: 2rem 2.5rem;
+      color: white;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+
+    .membership-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(217,119,6,0.2) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    .membership-card::after {
+      content: '';
+      position: absolute;
+      bottom: -30%;
+      left: -10%;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(6,182,212,0.15) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    .card-content { position: relative; z-index: 1; }
+
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+
+    .card-org-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 0.5rem;
+      background: rgba(255,255,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.875rem;
+      backdrop-filter: blur(10px);
+    }
+
+    .card-tier-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 0.375rem 0.875rem;
+      border-radius: 2rem;
+      background: linear-gradient(135deg, var(--membership-accent), #b45309);
+    }
+
+    .card-member-photo {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      border: 2px solid rgba(255,255,255,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      backdrop-filter: blur(10px);
+    }
+
+    .card-name { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.25rem; }
+    .card-id { font-size: 0.8125rem; opacity: 0.7; margin-bottom: 1rem; }
+    .card-since { font-size: 0.75rem; opacity: 0.6; }
+
+    .card-bottom {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .card-valid-label { font-size: 0.6875rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.05em; }
+    .card-valid-date { font-size: 1rem; font-weight: 700; }
+    .card-autorenew { font-size: 0.75rem; opacity: 0.8; }
+    .card-autorenew i { color: var(--success-color); }
+
+    .card-download-btn {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      backdrop-filter: blur(10px);
+    }
+
+    .card-download-btn:hover { background: rgba(255,255,255,0.25); }
+
+    /* Quick Actions */
+    .quick-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .quick-action-btn {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      padding: 0.625rem 1rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .quick-action-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-bg);
+      box-shadow: 0 2px 8px rgba(14,116,144,0.1);
+    }
+
+    .quick-action-btn i { color: var(--accent); }
+
+    /* Section Cards */
+    .portal-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      margin-bottom: 1.25rem;
+      overflow: hidden;
+    }
+
+    .portal-card-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .portal-card-header h6 {
+      margin: 0;
+      font-size: 0.9375rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .portal-card-header h6 i { color: var(--accent); }
+    .portal-card-body { padding: 1.25rem; }
+
+    /* Benefits Table */
+    .benefits-table { width: 100%; font-size: 0.8125rem; }
+    .benefits-table td { padding: 0.625rem 0; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .benefits-table tr:last-child td { border-bottom: none; }
+    .benefit-name { font-weight: 600; }
+    .benefit-status { font-weight: 600; }
+    .benefit-status.available { color: var(--success-color); }
+    .benefit-action {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent);
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .benefit-action:hover { text-decoration: underline; }
+
+    /* Payment Summary */
+    .payment-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .payment-item { }
+    .payment-label { font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-secondary); margin-bottom: 0.25rem; }
+    .payment-value { font-size: 0.875rem; font-weight: 600; }
+    .payment-actions { margin-top: 1rem; display: flex; gap: 0.5rem; }
+    .payment-actions a {
+      font-size: 0.75rem; font-weight: 600; color: var(--accent); cursor: pointer; text-decoration: none;
+    }
+    .payment-actions a:hover { text-decoration: underline; }
+
+    /* Activity Timeline */
+    .activity-list { list-style: none; padding: 0; margin: 0; }
+    .activity-item {
+      display: flex;
+      gap: 1rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.8125rem;
+    }
+    .activity-item:last-child { border-bottom: none; }
+
+    .activity-date {
+      flex-shrink: 0;
+      width: 60px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      padding-top: 2px;
+    }
+
+    .activity-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+      margin-top: 5px;
+    }
+
+    .activity-text { color: var(--text-primary); line-height: 1.4; }
+    .activity-text a { color: var(--accent); font-weight: 600; text-decoration: none; cursor: pointer; }
+    .activity-text a:hover { text-decoration: underline; }
+
+    /* Events Table */
+    .events-table { width: 100%; font-size: 0.8125rem; }
+    .events-table th {
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: var(--text-secondary);
+      font-weight: 700;
+      padding: 0.5rem 0;
+      border-bottom: 2px solid var(--border-color);
+    }
+    .events-table td { padding: 0.75rem 0; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .events-table tr:last-child td { border-bottom: none; }
+    .event-name { font-weight: 600; }
+    .rsvp-btn {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.25rem 0.625rem;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: 1px solid;
+    }
+    .rsvp-btn.confirmed { background: #f0fdf4; color: var(--success-color); border-color: #bbf7d0; }
+    .rsvp-btn.pending { background: white; color: var(--accent); border-color: var(--accent); }
+    .rsvp-btn.pending:hover { background: var(--accent); color: white; }
+
+    /* Two Column Layout */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+
+    @media (max-width: 768px) {
+      .portal-header { padding: 0 1rem; }
+      .portal-nav { display: none; }
+      .portal-content { padding: 1rem; }
+      .membership-card { padding: 1.5rem; }
+      .card-name { font-size: 1.25rem; }
+      .quick-actions { gap: 0.375rem; }
+      .quick-action-btn { font-size: 0.75rem; padding: 0.5rem 0.75rem; }
+      .two-col { grid-template-columns: 1fr; }
+      .payment-summary { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Preview Banner -->
+  <div class="preview-banner">
+    <i class="fa-solid fa-eye"></i> MEMBER PORTAL PREVIEW — This is how members see their dashboard
+  </div>
+
+  <!-- Portal Header -->
+  <div class="portal-header">
+    <div class="portal-header-left">
+      <div class="portal-logo">GHF</div>
+      <div class="portal-brand"><span>Member</span> Portal</div>
+    </div>
+    <div class="portal-nav">
+      <a class="portal-nav-item active">Dashboard</a>
+      <a class="portal-nav-item">My Profile</a>
+      <a class="portal-nav-item">Benefits</a>
+      <a class="portal-nav-item">Payments</a>
+      <a class="portal-nav-item">Events</a>
+    </div>
+    <div class="portal-header-right">
+      <div class="portal-welcome">Welcome, <strong>Khalid Al-Mansouri</strong></div>
+      <div class="portal-avatar">KA</div>
+      <a class="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+    </div>
+  </div>
+
+  <!-- Portal Content -->
+  <div class="portal-content">
+
+    <!-- Membership Card Hero -->
+    <div class="membership-card">
+      <div class="card-content">
+        <div class="card-top">
+          <div class="card-org-logo">GHF</div>
+          <div class="card-tier-label">&#128142; PLATINUM MEMBER</div>
+        </div>
+        <div class="card-member-photo">KA</div>
+        <div class="card-name">Khalid Al-Mansouri</div>
+        <div class="card-id">Member ID: MEM-001</div>
+        <div class="card-since">Member Since: January 2024</div>
+        <div class="card-bottom">
+          <div>
+            <div class="card-valid-label">Valid Until</div>
+            <div class="card-valid-date">January 15, 2027</div>
+            <div class="card-autorenew" style="margin-top: 0.375rem;">
+              <i class="fa-solid fa-check-circle"></i> Auto-Renewal: Active
+            </div>
+          </div>
+          <button class="card-download-btn">
+            <i class="fa-solid fa-download me-1"></i> Download Card PDF
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <button class="quick-action-btn"><i class="fa-solid fa-arrows-rotate"></i> Renew Membership</button>
+      <button class="quick-action-btn"><i class="fa-solid fa-user-pen"></i> Update Profile</button>
+      <button class="quick-action-btn"><i class="fa-solid fa-gift"></i> View Benefits</button>
+      <button class="quick-action-btn"><i class="fa-solid fa-hand-holding-heart"></i> Make a Donation</button>
+      <button class="quick-action-btn"><i class="fa-solid fa-envelope"></i> Contact Us</button>
+    </div>
+
+    <!-- Two Column: Benefits + Payment -->
+    <div class="two-col">
+
+      <!-- My Benefits -->
+      <div class="portal-card">
+        <div class="portal-card-header">
+          <h6><i class="fa-solid fa-gift"></i> My Benefits</h6>
+        </div>
+        <div class="portal-card-body" style="padding: 0;">
+          <table class="benefits-table" style="padding: 0 1.25rem;">
+            <tr>
+              <td class="benefit-name">Quarterly Newsletter</td>
+              <td class="benefit-status available"><i class="fa-solid fa-check-circle"></i> Subscribed</td>
+              <td style="text-align: right;"><a class="benefit-action">Manage Preferences</a></td>
+            </tr>
+            <tr>
+              <td class="benefit-name">Annual Impact Report</td>
+              <td class="benefit-status available"><i class="fa-solid fa-check-circle"></i> Available</td>
+              <td style="text-align: right;"><a class="benefit-action">Download 2025 Report</a></td>
+            </tr>
+            <tr>
+              <td class="benefit-name">Member-Only Events</td>
+              <td class="benefit-status" style="color: var(--accent); font-weight: 600;">3 upcoming</td>
+              <td style="text-align: right;"><a class="benefit-action">View Events</a></td>
+            </tr>
+            <tr>
+              <td class="benefit-name">Voting Rights</td>
+              <td class="benefit-status available"><i class="fa-solid fa-check-circle"></i> Eligible</td>
+              <td style="text-align: right;"><span style="font-size: 0.6875rem; color: var(--text-secondary);">Next AGM: Sep 2026</span></td>
+            </tr>
+            <tr>
+              <td class="benefit-name">Director Meeting</td>
+              <td class="benefit-status available"><i class="fa-solid fa-check-circle"></i> Available</td>
+              <td style="text-align: right;"><a class="benefit-action">Schedule Meeting</a></td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Payment Summary -->
+      <div class="portal-card">
+        <div class="portal-card-header">
+          <h6><i class="fa-solid fa-credit-card"></i> Payment Summary</h6>
+        </div>
+        <div class="portal-card-body">
+          <div class="payment-summary">
+            <div class="payment-item">
+              <div class="payment-label">Current Plan</div>
+              <div class="payment-value">Platinum — $1,000/year</div>
+            </div>
+            <div class="payment-item">
+              <div class="payment-label">Next Payment</div>
+              <div class="payment-value">Jan 15, 2027</div>
+            </div>
+            <div class="payment-item">
+              <div class="payment-label">Payment Method</div>
+              <div class="payment-value"><i class="fa-solid fa-credit-card me-1" style="color: var(--text-secondary);"></i>Credit Card ••••4567</div>
+            </div>
+            <div class="payment-item">
+              <div class="payment-label">Status</div>
+              <div class="payment-value" style="color: var(--success-color);"><i class="fa-solid fa-check-circle me-1"></i>Active</div>
+            </div>
+          </div>
+          <div class="payment-actions">
+            <a><i class="fa-solid fa-pen me-1"></i>Update Payment Method</a>
+            <a><i class="fa-solid fa-list me-1"></i>View All Payments</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="portal-card">
+      <div class="portal-card-header">
+        <h6><i class="fa-solid fa-clock-rotate-left"></i> Recent Activity</h6>
+      </div>
+      <div class="portal-card-body" style="padding: 0.75rem 1.25rem;">
+        <ul class="activity-list">
+          <li class="activity-item">
+            <div class="activity-date">Apr 10</div>
+            <div class="activity-dot" style="background: var(--success-color);"></div>
+            <div class="activity-text">Donated <strong>$1,500</strong> to Orphan Care — Thank you!</div>
+          </li>
+          <li class="activity-item">
+            <div class="activity-date">Mar 28</div>
+            <div class="activity-dot" style="background: var(--membership-accent);"></div>
+            <div class="activity-text">Attended <strong>Fundraising Dinner</strong> (VIP table)</div>
+          </li>
+          <li class="activity-item">
+            <div class="activity-date">Feb 15</div>
+            <div class="activity-dot"></div>
+            <div class="activity-text">Annual Impact Report 2025 available — <a>Download</a></div>
+          </li>
+          <li class="activity-item">
+            <div class="activity-date">Jan 15</div>
+            <div class="activity-dot" style="background: var(--success-color);"></div>
+            <div class="activity-text">Membership renewed automatically — <strong>$1,000</strong></div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Upcoming Member Events -->
+    <div class="portal-card">
+      <div class="portal-card-header">
+        <h6><i class="fa-solid fa-calendar-check"></i> Upcoming Member Events</h6>
+      </div>
+      <div class="portal-card-body" style="padding: 0;">
+        <div style="overflow-x: auto;">
+          <table class="events-table" style="padding: 0 1.25rem;">
+            <thead>
+              <tr>
+                <th>Event</th>
+                <th>Date</th>
+                <th>Location</th>
+                <th style="text-align: right;">RSVP</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="event-name">Fundraising Gala 2026</td>
+                <td>Apr 20, 2026</td>
+                <td><i class="fa-solid fa-location-dot me-1" style="color: var(--text-secondary);"></i>Grand Hyatt Dubai</td>
+                <td style="text-align: right;"><button class="rsvp-btn confirmed"><i class="fa-solid fa-check me-1"></i>RSVP'd</button></td>
+              </tr>
+              <tr>
+                <td class="event-name">Annual General Meeting</td>
+                <td>Sep 15, 2026</td>
+                <td><i class="fa-solid fa-video me-1" style="color: var(--text-secondary);"></i>Virtual</td>
+                <td style="text-align: right;"><button class="rsvp-btn pending">RSVP</button></td>
+              </tr>
+              <tr>
+                <td class="event-name">Member Appreciation Dinner</td>
+                <td>Nov 20, 2026</td>
+                <td><i class="fa-solid fa-location-dot me-1" style="color: var(--text-secondary);"></i>JW Marriott</td>
+                <td style="text-align: right;"><button class="rsvp-btn pending">RSVP</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+
+</html>

@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      margin-bottom: 1.5rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .page-header p {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    /* Card Base */
+    .dash-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+    }
+
+    .dash-card-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .dash-card-header h3 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      margin: 0;
+      color: var(--text-primary);
+    }
+
+    .dash-card-body {
+      padding: 1.25rem;
+    }
+
+    /* KPI Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1.25rem;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .stat-icon.blue { background: #eff6ff; color: #3b82f6; }
+    .stat-icon.green { background: #f0fdf4; color: #22c55e; }
+    .stat-icon.orange { background: #fff7ed; color: #f97316; }
+    .stat-icon.teal { background: var(--accent-bg); color: var(--accent); }
+
+    .stat-info { flex: 1; }
+
+    .stat-value {
+      font-size: 1.625rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .stat-label {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 0.125rem;
+    }
+
+    .stat-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .stat-subtitle .positive { color: var(--success-color); font-weight: 600; }
+    .stat-subtitle .neutral { color: var(--text-secondary); }
+
+    /* Retention Widget */
+    .retention-big {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--warning-color);
+      line-height: 1;
+    }
+
+    .retention-benchmark {
+      font-size: 0.8125rem;
+      color: var(--success-color);
+      font-weight: 500;
+      margin-top: 0.25rem;
+    }
+
+    .retention-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      height: 100px;
+      margin: 1rem 0;
+      padding-top: 0.5rem;
+    }
+
+    .retention-bar-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .retention-bar {
+      width: 100%;
+      max-width: 40px;
+      border-radius: 4px 4px 0 0;
+      background: linear-gradient(180deg, var(--accent), var(--accent-light));
+      transition: height 0.3s;
+    }
+
+    .retention-bar-label {
+      font-size: 0.625rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .retention-bar-value {
+      font-size: 0.625rem;
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .lybunt-sybunt {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 1rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .lybunt-sybunt .metric {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .lybunt-sybunt .metric-label {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .lybunt-sybunt .metric-value {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    /* Activity Feed */
+    .activity-feed {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .activity-feed::-webkit-scrollbar { width: 4px; }
+    .activity-feed::-webkit-scrollbar-track { background: transparent; }
+    .activity-feed::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+    .activity-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .activity-item:last-child { border-bottom: none; }
+
+    .activity-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+    }
+
+    .activity-icon.green { background: #f0fdf4; color: #22c55e; }
+    .activity-icon.blue { background: #eff6ff; color: #3b82f6; }
+    .activity-icon.teal { background: var(--accent-bg); color: var(--accent); }
+    .activity-icon.orange { background: #fff7ed; color: #f97316; }
+    .activity-icon.red { background: #fef2f2; color: #ef4444; }
+    .activity-icon.purple { background: #faf5ff; color: #a855f7; }
+
+    .activity-text {
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      line-height: 1.4;
+      flex: 1;
+    }
+
+    .activity-time {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* Quick Actions */
+    .quick-actions-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+    }
+
+    .quick-action-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.625rem;
+      background: white;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+
+    .quick-action-btn:hover {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+      color: var(--accent);
+    }
+
+    .quick-action-btn i {
+      font-size: 1rem;
+      color: var(--accent);
+      width: 20px;
+      text-align: center;
+    }
+
+    /* Approvals Table */
+    .approvals-table {
+      width: 100%;
+      font-size: 0.8125rem;
+    }
+
+    .approvals-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .approvals-table td {
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+      color: var(--text-primary);
+      vertical-align: middle;
+    }
+
+    .approvals-table tr:last-child td { border-bottom: none; }
+
+    .badge-type {
+      font-size: 0.6875rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+
+    .badge-type.crm { background: #eff6ff; color: #3b82f6; }
+    .badge-type.collection { background: #fff7ed; color: #f97316; }
+    .badge-type.fundraising { background: #f0fdf4; color: #22c55e; }
+    .badge-type.volunteer { background: #faf5ff; color: #a855f7; }
+    .badge-type.grants { background: var(--accent-bg); color: var(--accent); }
+
+    .priority-high { color: var(--danger-color); font-weight: 600; }
+    .priority-medium { color: var(--warning-color); font-weight: 600; }
+    .priority-low { color: var(--text-secondary); font-weight: 600; }
+
+    .btn-action {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 0.375rem;
+      border: 1px solid var(--accent);
+      background: white;
+      color: var(--accent);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-action:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    .badge-count {
+      background: var(--danger-color);
+      color: white;
+      font-size: 0.6875rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 9999px;
+      font-weight: 700;
+      margin-left: 0.5rem;
+    }
+
+    /* Fundraising Progress Bars */
+    .fund-item {
+      margin-bottom: 1rem;
+    }
+
+    .fund-item:last-child { margin-bottom: 0; }
+
+    .fund-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 0.375rem;
+    }
+
+    .fund-name {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .fund-amount {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .fund-bar-track {
+      height: 10px;
+      background: #f1f5f9;
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+
+    .fund-bar-fill {
+      height: 100%;
+      border-radius: 9999px;
+      transition: width 0.5s ease;
+    }
+
+    .fund-bar-fill.teal { background: linear-gradient(90deg, #0e7490, #06b6d4); }
+    .fund-bar-fill.blue { background: linear-gradient(90deg, #2563eb, #3b82f6); }
+    .fund-bar-fill.green { background: linear-gradient(90deg, #16a34a, #22c55e); }
+    .fund-bar-fill.orange { background: linear-gradient(90deg, #ea580c, #f97316); }
+    .fund-bar-fill.gray { background: linear-gradient(90deg, #475569, #64748b); }
+
+    .fund-percent {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+      text-align: right;
+    }
+
+    /* Section spacing */
+    .section-gap {
+      margin-bottom: 1.5rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .two-col-section {
+        flex-direction: column;
+      }
+      .quick-actions-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 576px) {
+      body { padding: 1rem; }
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      .quick-actions-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1>Dashboard</h1>
+    <p>Welcome back! Here's an overview of your platform.</p>
+  </div>
+
+  <!-- KPI Summary Cards -->
+  <div class="stats-grid section-gap">
+    <div class="stat-card">
+      <div class="stat-icon blue">
+        <i class="fas fa-address-book"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Total Contacts</div>
+        <div class="stat-value">12,458</div>
+        <div class="stat-subtitle"><span class="positive">+234 this month</span></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green">
+        <i class="fas fa-hand-holding-dollar"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Donations This Month</div>
+        <div class="stat-value">$45,230</div>
+        <div class="stat-subtitle">vs $38,100 last month <span class="positive">(+18.7%)</span></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon orange">
+        <i class="fas fa-bullseye"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Active Campaigns</div>
+        <div class="stat-value">8</div>
+        <div class="stat-subtitle"><span class="neutral">3 ending this week</span></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon teal">
+        <i class="fas fa-brain"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Avg Engagement Score</div>
+        <div class="stat-value">72<span style="font-size: 1rem; color: #94a3b8;">/100</span></div>
+        <div class="stat-subtitle"><span class="positive">Up from 68 last month</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Donor Retention Rate Widget -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-chart-line me-2" style="color: var(--accent);"></i>Donor Retention Rate</h3>
+    </div>
+    <div class="dash-card-body">
+      <div class="row align-items-center">
+        <div class="col-md-4 text-center text-md-start mb-3 mb-md-0">
+          <div class="retention-big">67.3%</div>
+          <div class="retention-benchmark">
+            <i class="fas fa-check-circle me-1"></i>Industry benchmark: 45.5% &mdash; You're above average
+          </div>
+        </div>
+        <div class="col-md-5">
+          <div style="font-size: 0.6875rem; color: var(--text-secondary); font-weight: 600; margin-bottom: 0.25rem;">6-MONTH TREND</div>
+          <div class="retention-chart">
+            <div class="retention-bar-group">
+              <div class="retention-bar-value">62%</div>
+              <div class="retention-bar" style="height: 62%;"></div>
+              <div class="retention-bar-label">Jan</div>
+            </div>
+            <div class="retention-bar-group">
+              <div class="retention-bar-value">64%</div>
+              <div class="retention-bar" style="height: 64%;"></div>
+              <div class="retention-bar-label">Feb</div>
+            </div>
+            <div class="retention-bar-group">
+              <div class="retention-bar-value">63%</div>
+              <div class="retention-bar" style="height: 63%;"></div>
+              <div class="retention-bar-label">Mar</div>
+            </div>
+            <div class="retention-bar-group">
+              <div class="retention-bar-value">66%</div>
+              <div class="retention-bar" style="height: 66%;"></div>
+              <div class="retention-bar-label">Apr</div>
+            </div>
+            <div class="retention-bar-group">
+              <div class="retention-bar-value">68%</div>
+              <div class="retention-bar" style="height: 68%;"></div>
+              <div class="retention-bar-label">May</div>
+            </div>
+            <div class="retention-bar-group">
+              <div class="retention-bar-value">67.3%</div>
+              <div class="retention-bar" style="height: 67.3%; background: linear-gradient(180deg, var(--warning-color), #fbbf24);"></div>
+              <div class="retention-bar-label">Jun</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="lybunt-sybunt" style="flex-direction: column; gap: 0.75rem; border-top: none; border-left: 1px solid var(--border-color); padding-left: 1.25rem; margin-top: 0; padding-top: 0;">
+            <div class="metric">
+              <span class="metric-label">LYBUNT Donors</span>
+              <span class="metric-value">1,234</span>
+              <span style="font-size: 0.6875rem; color: var(--text-secondary);">Last Year But Unfortunately Not This</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">SYBUNT Donors</span>
+              <span class="metric-value">456</span>
+              <span style="font-size: 0.6875rem; color: var(--text-secondary);">Some Years But Unfortunately Not This</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Two-Column Section: Activity Feed + Quick Actions -->
+  <div class="row g-3 section-gap two-col-section">
+    <!-- Recent Activity Feed -->
+    <div class="col-lg-7">
+      <div class="dash-card" style="height: 100%;">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-clock-rotate-left me-2" style="color: var(--accent);"></i>Recent Activity</h3>
+          <span style="font-size: 0.75rem; color: var(--text-secondary);">Last 7 days</span>
+        </div>
+        <div class="dash-card-body activity-feed">
+          <div class="activity-item">
+            <div class="activity-icon green"><i class="fas fa-heart"></i></div>
+            <div class="activity-text">Sarah Johnson donated <strong>$500</strong> to Children's Education Fund</div>
+            <div class="activity-time">2 hours ago</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-icon blue"><i class="fas fa-envelope"></i></div>
+            <div class="activity-text">Bulk email campaign <strong>'Spring Appeal'</strong> sent to 3,240 contacts</div>
+            <div class="activity-time">4 hours ago</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-icon teal"><i class="fas fa-user-plus"></i></div>
+            <div class="activity-text">New contact imported: <strong>Ahmad Family</strong> (4 members)</div>
+            <div class="activity-time">Yesterday</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-icon green"><i class="fas fa-money-bill"></i></div>
+            <div class="activity-text">Field Agent Ravi collected <strong>$1,200</strong> via receipt book #RB-0045</div>
+            <div class="activity-time">Yesterday</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-icon orange"><i class="fas fa-bullseye"></i></div>
+            <div class="activity-text">Campaign <strong>'Clean Water Initiative'</strong> reached 75% of goal</div>
+            <div class="activity-time">2 days ago</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-icon red"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="activity-text">Monthly recurring donation of <strong>$50</strong> failed for Contact #4521 &mdash; card expired</div>
+            <div class="activity-time">2 days ago</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-icon purple"><i class="fas fa-clock"></i></div>
+            <div class="activity-text">Volunteer Maria Santos logged <strong>8 hours</strong> for Event Setup</div>
+            <div class="activity-time">3 days ago</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-icon blue"><i class="fas fa-file"></i></div>
+            <div class="activity-text">Grant application <strong>'Community Health'</strong> submitted to Ford Foundation</div>
+            <div class="activity-time">3 days ago</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="col-lg-5">
+      <div class="dash-card" style="height: 100%;">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-bolt me-2" style="color: var(--accent);"></i>Quick Actions</h3>
+        </div>
+        <div class="dash-card-body">
+          <div class="quick-actions-grid">
+            <button class="quick-action-btn" onclick="parent.loadContent('fundraising/donation-form')">
+              <i class="fas fa-plus-circle"></i> New Donation
+            </button>
+            <button class="quick-action-btn" onclick="parent.loadContent('contacts/contact-form')">
+              <i class="fas fa-user-plus"></i> New Contact
+            </button>
+            <button class="quick-action-btn" onclick="parent.loadContent('communication/email-campaign-builder')">
+              <i class="fas fa-paper-plane"></i> Send Email
+            </button>
+            <button class="quick-action-btn" onclick="parent.loadContent('organization/campaign-form')">
+              <i class="fas fa-flag"></i> New Campaign
+            </button>
+            <button class="quick-action-btn" onclick="parent.loadContent('contacts/contact-import')">
+              <i class="fas fa-file-import"></i> Import Data
+            </button>
+            <button class="quick-action-btn" onclick="parent.loadContent('reports/report-catalog')">
+              <i class="fas fa-chart-bar"></i> View Reports
+            </button>
+            <button class="quick-action-btn" onclick="parent.loadContent('field-collection/collection-form')">
+              <i class="fas fa-money-bill-wave"></i> Log Collection
+            </button>
+            <button class="quick-action-btn" onclick="parent.loadContent('volunteer/volunteer-form')">
+              <i class="fas fa-hands-helping"></i> Add Volunteer
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pending Approvals / Tasks -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3>
+        <i class="fas fa-clipboard-check me-2" style="color: var(--accent);"></i>Pending Approvals
+        <span class="badge-count">5</span>
+      </h3>
+      <span style="font-size: 0.75rem; color: var(--text-secondary);">Action required</span>
+    </div>
+    <div class="dash-card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="approvals-table">
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th>Type</th>
+              <th>Priority</th>
+              <th>Due Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Review duplicate contacts (12 pairs)</td>
+              <td><span class="badge-type crm">CRM</span></td>
+              <td><span class="priority-medium">Medium</span></td>
+              <td>Today</td>
+              <td><button class="btn-action" onclick="parent.loadContent('contacts/duplicate-merge')">Review</button></td>
+            </tr>
+            <tr>
+              <td>Approve field collection batch #FC-0089</td>
+              <td><span class="badge-type collection">Collection</span></td>
+              <td><span class="priority-high">High</span></td>
+              <td>Today</td>
+              <td><button class="btn-action" onclick="parent.loadContent('field-collection/collection-list')">Approve</button></td>
+            </tr>
+            <tr>
+              <td>Process 3 pending refund requests</td>
+              <td><span class="badge-type fundraising">Fundraising</span></td>
+              <td><span class="priority-high">High</span></td>
+              <td>Tomorrow</td>
+              <td><button class="btn-action" onclick="parent.loadContent('fundraising/refund-management')">Process</button></td>
+            </tr>
+            <tr>
+              <td>Review volunteer hour submissions (8)</td>
+              <td><span class="badge-type volunteer">Volunteer</span></td>
+              <td><span class="priority-low">Low</span></td>
+              <td>This week</td>
+              <td><button class="btn-action" onclick="parent.loadContent('volunteer/hour-tracking')">Review</button></td>
+            </tr>
+            <tr>
+              <td>Grant report due: Community Health</td>
+              <td><span class="badge-type grants">Grants</span></td>
+              <td><span class="priority-high">High</span></td>
+              <td>Apr 15</td>
+              <td><button class="btn-action" onclick="parent.loadContent('grants/grant-reporting')">View</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fundraising Progress -->
+  <div class="dash-card">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-chart-bar me-2" style="color: var(--accent);"></i>Fundraising by Purpose (This Quarter)</h3>
+    </div>
+    <div class="dash-card-body">
+      <div class="fund-item">
+        <div class="fund-header">
+          <span class="fund-name">Children's Education</span>
+          <span class="fund-amount">$18,500 / $25,000</span>
+        </div>
+        <div class="fund-bar-track">
+          <div class="fund-bar-fill teal" style="width: 74%;"></div>
+        </div>
+        <div class="fund-percent">74%</div>
+      </div>
+      <div class="fund-item">
+        <div class="fund-header">
+          <span class="fund-name">Clean Water Initiative</span>
+          <span class="fund-amount">$12,300 / $20,000</span>
+        </div>
+        <div class="fund-bar-track">
+          <div class="fund-bar-fill blue" style="width: 61.5%;"></div>
+        </div>
+        <div class="fund-percent">61.5%</div>
+      </div>
+      <div class="fund-item">
+        <div class="fund-header">
+          <span class="fund-name">Medical Aid Fund</span>
+          <span class="fund-amount">$8,900 / $15,000</span>
+        </div>
+        <div class="fund-bar-track">
+          <div class="fund-bar-fill green" style="width: 59.3%;"></div>
+        </div>
+        <div class="fund-percent">59.3%</div>
+      </div>
+      <div class="fund-item">
+        <div class="fund-header">
+          <span class="fund-name">Community Development</span>
+          <span class="fund-amount">$5,530 / $10,000</span>
+        </div>
+        <div class="fund-bar-track">
+          <div class="fund-bar-fill orange" style="width: 55.3%;"></div>
+        </div>
+        <div class="fund-percent">55.3%</div>
+      </div>
+      <div class="fund-item">
+        <div class="fund-header">
+          <span class="fund-name">General Fund</span>
+          <span class="fund-amount">$3,200 / $5,000</span>
+        </div>
+        <div class="fund-bar-track">
+          <div class="fund-bar-fill gray" style="width: 64%;"></div>
+        </div>
+        <div class="fund-percent">64%</div>
+      </div>
+    </div>
+  </div>
+
+</body>
+
+</html>

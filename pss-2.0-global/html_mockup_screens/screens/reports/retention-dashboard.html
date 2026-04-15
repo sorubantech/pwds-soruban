@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Donor Retention Dashboard - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+      --reports-accent: #7c3aed;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      margin-bottom: 1.5rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .page-header p {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .breadcrumb {
+      font-size: 0.8125rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .breadcrumb a {
+      color: var(--reports-accent);
+      text-decoration: none;
+    }
+
+    .breadcrumb a:hover {
+      text-decoration: underline;
+    }
+
+    .breadcrumb .separator {
+      color: var(--text-secondary);
+      margin: 0 0.375rem;
+    }
+
+    .breadcrumb .current {
+      color: var(--text-secondary);
+    }
+
+    .btn-back {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid var(--border-color);
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+
+    .btn-back:hover {
+      background: var(--accent-bg);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* Button Styles */
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      border-radius: 0.5rem;
+      padding: 0.5rem 1rem;
+    }
+
+    .btn-primary-accent:hover {
+      background: #0c6980;
+      border-color: #0c6980;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      border-radius: 0.5rem;
+      padding: 0.5rem 1rem;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent-bg);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .btn-reports-accent {
+      background: var(--reports-accent);
+      border-color: var(--reports-accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      border-radius: 0.5rem;
+      padding: 0.5rem 1rem;
+    }
+
+    .btn-reports-accent:hover {
+      background: #6d28d9;
+      border-color: #6d28d9;
+      color: white;
+    }
+
+    /* Card Base */
+    .dash-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      margin-bottom: 1.5rem;
+    }
+
+    .dash-card-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .dash-card-header h3 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      margin: 0;
+      color: var(--text-primary);
+    }
+
+    .dash-card-header .subtitle {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .dash-card-body {
+      padding: 1.25rem;
+    }
+
+    /* KPI Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1.25rem;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .stat-icon.purple { background: #faf5ff; color: #7c3aed; }
+    .stat-icon.teal { background: var(--accent-bg); color: var(--accent); }
+    .stat-icon.green { background: #f0fdf4; color: #22c55e; }
+    .stat-icon.orange { background: #fff7ed; color: #f97316; }
+    .stat-icon.red { background: #fef2f2; color: #dc2626; }
+    .stat-icon.blue { background: #eff6ff; color: #3b82f6; }
+
+    .stat-info { flex: 1; }
+
+    .stat-value {
+      font-size: 1.625rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .stat-label {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 0.125rem;
+    }
+
+    .stat-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .stat-subtitle .positive { color: var(--success-color); font-weight: 600; }
+    .stat-subtitle .negative { color: var(--danger-color); font-weight: 600; }
+
+    /* Retention Trend Chart */
+    .trend-chart-container {
+      position: relative;
+      padding: 1rem 0;
+    }
+
+    .trend-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 1rem;
+      height: 220px;
+      padding: 0 1rem;
+      position: relative;
+    }
+
+    .trend-bar-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .trend-bar {
+      width: 100%;
+      max-width: 60px;
+      border-radius: 6px 6px 0 0;
+      background: linear-gradient(180deg, var(--reports-accent), #a78bfa);
+      transition: height 0.3s, opacity 0.15s;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .trend-bar:hover {
+      opacity: 0.85;
+    }
+
+    .trend-bar-value {
+      font-size: 0.75rem;
+      color: var(--text-primary);
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .trend-bar-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      text-align: center;
+    }
+
+    .trend-avg-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      border-top: 2px dashed var(--danger-color);
+      z-index: 1;
+    }
+
+    .trend-avg-label {
+      position: absolute;
+      right: 0;
+      font-size: 0.6875rem;
+      color: var(--danger-color);
+      font-weight: 600;
+      background: white;
+      padding: 0 0.375rem;
+      transform: translateY(-50%);
+    }
+
+    .trend-goal-label {
+      font-size: 0.8125rem;
+      color: var(--reports-accent);
+      font-weight: 600;
+      text-align: right;
+      margin-top: 0.75rem;
+    }
+
+    /* Cohort Matrix */
+    .cohort-table-wrap {
+      overflow-x: auto;
+    }
+
+    .cohort-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    .cohort-table th {
+      text-transform: uppercase;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: #f8fafc;
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .cohort-table th:first-child {
+      text-align: left;
+    }
+
+    .cohort-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: center;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .cohort-table td:first-child {
+      text-align: left;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .cohort-table td:hover {
+      opacity: 0.8;
+    }
+
+    /* Standard Tables */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    .data-table th {
+      text-transform: uppercase;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: #f8fafc;
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    .data-table td {
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+
+    .data-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    /* Alert Banner */
+    .alert-banner {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 0.5rem;
+      padding: 0.875rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+      font-size: 0.8125rem;
+    }
+
+    .alert-banner i {
+      color: var(--warning-color);
+      font-size: 1.125rem;
+      flex-shrink: 0;
+    }
+
+    .alert-banner strong {
+      color: #92400e;
+    }
+
+    .alert-banner span {
+      color: #78350f;
+    }
+
+    /* Engagement Score Badge */
+    .score-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.125rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      min-width: 32px;
+    }
+
+    .score-badge.green { background: #dcfce7; color: #166534; }
+    .score-badge.amber { background: #fef3c7; color: #92400e; }
+    .score-badge.red { background: #fef2f2; color: #991b1b; }
+
+    /* Donor Link */
+    .donor-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .donor-link:hover {
+      text-decoration: underline;
+      color: #0c6980;
+    }
+
+    /* Horizontal Bar Chart */
+    .hbar-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .hbar-label {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      width: 160px;
+      flex-shrink: 0;
+      text-align: right;
+    }
+
+    .hbar-track {
+      flex: 1;
+      height: 28px;
+      background: #f1f5f9;
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hbar-fill {
+      height: 100%;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      padding: 0 0.625rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: white;
+      transition: width 0.4s ease;
+    }
+
+    .hbar-value {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      width: 48px;
+      flex-shrink: 0;
+      text-align: right;
+      color: var(--text-primary);
+    }
+
+    /* Upgrade/Downgrade */
+    .ud-section {
+      padding: 1rem;
+      border-radius: 0.75rem;
+    }
+
+    .ud-section.upgrade {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+    }
+
+    .ud-section.downgrade {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+    }
+
+    .ud-section h5 {
+      font-size: 0.875rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    .ud-section.upgrade h5 { color: #166534; }
+    .ud-section.downgrade h5 { color: #991b1b; }
+
+    .ud-stat {
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      margin-bottom: 0.375rem;
+    }
+
+    .ud-stat strong {
+      font-weight: 700;
+    }
+
+    .ud-highlight {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .ud-bar-track {
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      margin-top: 0.75rem;
+      overflow: hidden;
+    }
+
+    .ud-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+    }
+
+    /* SYBUNT Collapse Toggle */
+    .sybunt-toggle {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: var(--card-radius);
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      width: 100%;
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0;
+      transition: all 0.15s;
+    }
+
+    .sybunt-toggle:hover {
+      background: #f8fafc;
+    }
+
+    .sybunt-toggle[aria-expanded="true"] {
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+      border-bottom-color: transparent;
+    }
+
+    .sybunt-content {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-top: none;
+      border-radius: 0 0 var(--card-radius) var(--card-radius);
+      box-shadow: var(--card-shadow);
+    }
+
+    .sybunt-content .dash-card-body {
+      padding: 1.25rem;
+    }
+
+    /* Form Controls */
+    .form-select-sm-custom {
+      font-size: 0.8125rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      padding: 0.375rem 2rem 0.375rem 0.75rem;
+      color: var(--text-primary);
+      background-color: white;
+    }
+
+    .form-select-sm-custom:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    /* Dropdown Menu */
+    .dropdown-menu {
+      font-size: 0.8125rem;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border-radius: 0.5rem;
+    }
+
+    .dropdown-item {
+      padding: 0.5rem 1rem;
+      font-size: 0.8125rem;
+    }
+
+    .dropdown-item i {
+      width: 18px;
+      text-align: center;
+      margin-right: 0.5rem;
+      color: var(--text-secondary);
+    }
+
+    .dropdown-item:hover {
+      background: var(--accent-bg);
+      color: var(--accent);
+    }
+
+    /* Re-engage Button */
+    .btn-reengage {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.625rem;
+      border-radius: 0.375rem;
+      border: 1px solid var(--reports-accent);
+      color: var(--reports-accent);
+      background: white;
+      white-space: nowrap;
+    }
+
+    .btn-reengage:hover {
+      background: #faf5ff;
+      color: var(--reports-accent);
+      border-color: var(--reports-accent);
+    }
+
+    /* Responsive */
+    @media (max-width: 991px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 767px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .page-header .d-flex {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 1rem;
+      }
+
+      .header-actions {
+        width: 100%;
+      }
+
+      .hbar-label {
+        width: 100px;
+        font-size: 0.75rem;
+      }
+
+      .trend-chart {
+        gap: 0.5rem;
+        height: 180px;
+      }
+    }
+
+    /* Print */
+    @media print {
+      .page-header .header-actions,
+      .btn-outline-accent,
+      .btn-primary-accent,
+      .btn-reports-accent,
+      .dropdown { display: none !important; }
+      body { padding: 0.5rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="d-flex justify-content-between align-items-start">
+      <div>
+        <div class="breadcrumb">
+          <a href="#" onclick="parent.loadContent('reports/report-catalog')">Reports</a>
+          <span class="separator">/</span>
+          <span class="current">Donor Retention Dashboard</span>
+        </div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <button class="btn-back" onclick="parent.loadContent('reports/report-catalog')" title="Back to Reports">
+            <i class="fas fa-arrow-left"></i>
+          </button>
+          <h1 class="mb-0">Donor Retention Dashboard</h1>
+        </div>
+        <p>Track donor loyalty, identify lapsed donors, and measure retention trends</p>
+      </div>
+      <div class="header-actions">
+        <select class="form-select form-select-sm-custom">
+          <option selected>2026</option>
+          <option>2025</option>
+          <option>2024</option>
+          <option>2023</option>
+        </select>
+        <select class="form-select form-select-sm-custom">
+          <option selected>All Branches</option>
+          <option>Main Branch</option>
+          <option>North Region</option>
+          <option>South Region</option>
+          <option>East Region</option>
+          <option>West Region</option>
+        </select>
+        <button class="btn btn-outline-accent">
+          <i class="fas fa-file-export me-1"></i>Export Report
+        </button>
+        <button class="btn btn-outline-accent" onclick="window.print()">
+          <i class="fas fa-print me-1"></i>Print
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Hero Cards -->
+  <div class="stats-grid">
+    <!-- Overall Retention Rate -->
+    <div class="stat-card">
+      <div class="stat-icon purple">
+        <i class="fas fa-users-between-lines"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Overall Retention Rate</div>
+        <div class="stat-value">68.4%</div>
+        <div class="stat-subtitle">
+          <span class="positive"><i class="fas fa-arrow-up"></i> 2.1%</span> vs 2025 (66.3%)
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Active Donors -->
+    <div class="stat-card">
+      <div class="stat-icon teal">
+        <i class="fas fa-users"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Total Active Donors (2026)</div>
+        <div class="stat-value">2,847</div>
+        <div class="stat-subtitle">Gave at least once this year</div>
+      </div>
+    </div>
+
+    <!-- New Donors -->
+    <div class="stat-card">
+      <div class="stat-icon green">
+        <i class="fas fa-user-plus"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">New Donors (2026)</div>
+        <div class="stat-value">634</div>
+        <div class="stat-subtitle">First-time donors this year</div>
+      </div>
+    </div>
+
+    <!-- LYBUNT Count -->
+    <div class="stat-card">
+      <div class="stat-icon orange">
+        <i class="fas fa-user-clock"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">LYBUNT Count</div>
+        <div class="stat-value">456</div>
+        <div class="stat-subtitle">Gave in 2025, not yet in 2026</div>
+      </div>
+    </div>
+
+    <!-- SYBUNT Count -->
+    <div class="stat-card">
+      <div class="stat-icon red">
+        <i class="fas fa-user-xmark"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">SYBUNT Count</div>
+        <div class="stat-value">1,234</div>
+        <div class="stat-subtitle">Gave before 2025, not since</div>
+      </div>
+    </div>
+
+    <!-- Donor Lifetime Value -->
+    <div class="stat-card">
+      <div class="stat-icon blue">
+        <i class="fas fa-gem"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Donor Lifetime Value (Avg)</div>
+        <div class="stat-value">$1,245</div>
+        <div class="stat-subtitle">Across all giving years</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Retention Trend Chart -->
+  <div class="dash-card">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-chart-line me-2" style="color: var(--reports-accent);"></i>Retention Trend (Year-over-Year)</h3>
+    </div>
+    <div class="dash-card-body">
+      <div class="trend-chart-container">
+        <div class="trend-chart" style="position: relative;">
+          <!-- Industry Average Line at 45% — positioned relative to max height -->
+          <!-- Chart max ~100%, bar area 220px, so 45% = bottom 99px -->
+          <div class="trend-avg-line" style="bottom: calc(45% * 2.2); bottom: 99px;">
+            <span class="trend-avg-label">Industry Avg: 45%</span>
+          </div>
+
+          <div class="trend-bar-group">
+            <div class="trend-bar-value">58%</div>
+            <div class="trend-bar" style="height: calc(58% * 2.2); height: 127.6px;"></div>
+            <div class="trend-bar-label">2020</div>
+          </div>
+          <div class="trend-bar-group">
+            <div class="trend-bar-value">61%</div>
+            <div class="trend-bar" style="height: calc(61% * 2.2); height: 134.2px;"></div>
+            <div class="trend-bar-label">2021</div>
+          </div>
+          <div class="trend-bar-group">
+            <div class="trend-bar-value">63%</div>
+            <div class="trend-bar" style="height: calc(63% * 2.2); height: 138.6px;"></div>
+            <div class="trend-bar-label">2022</div>
+          </div>
+          <div class="trend-bar-group">
+            <div class="trend-bar-value">64%</div>
+            <div class="trend-bar" style="height: calc(64% * 2.2); height: 140.8px;"></div>
+            <div class="trend-bar-label">2023</div>
+          </div>
+          <div class="trend-bar-group">
+            <div class="trend-bar-value">65%</div>
+            <div class="trend-bar" style="height: calc(65% * 2.2); height: 143px;"></div>
+            <div class="trend-bar-label">2024</div>
+          </div>
+          <div class="trend-bar-group">
+            <div class="trend-bar-value">66.3%</div>
+            <div class="trend-bar" style="height: calc(66.3% * 2.2); height: 145.86px;"></div>
+            <div class="trend-bar-label">2025</div>
+          </div>
+          <div class="trend-bar-group">
+            <div class="trend-bar-value" style="color: var(--reports-accent); font-size: 0.875rem;">68.4%</div>
+            <div class="trend-bar" style="height: calc(68.4% * 2.2); height: 150.48px; background: linear-gradient(180deg, var(--reports-accent), #c4b5fd);"></div>
+            <div class="trend-bar-label" style="font-weight: 700;">2026</div>
+          </div>
+        </div>
+        <div class="trend-goal-label">
+          <i class="fas fa-bullseye me-1"></i> Goal: 75% by 2027
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Retention Cohort Matrix -->
+  <div class="dash-card">
+    <div class="dash-card-header">
+      <div>
+        <h3><i class="fas fa-th me-2" style="color: var(--reports-accent);"></i>Retention Cohort Matrix</h3>
+        <p class="subtitle mb-0 mt-1">Percentage of donors from each acquisition year still active in subsequent years</p>
+      </div>
+    </div>
+    <div class="dash-card-body">
+      <div class="cohort-table-wrap">
+        <table class="cohort-table">
+          <thead>
+            <tr>
+              <th>Acquired</th>
+              <th>Year 1</th>
+              <th>Year 2</th>
+              <th>Year 3</th>
+              <th>Year 4</th>
+              <th>Year 5</th>
+              <th>Year 6</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>2020 <span style="color: var(--text-secondary); font-size: 0.6875rem;">(500 donors)</span></td>
+              <td style="background: #7c3aed; color: white;">100%</td>
+              <td style="background: #f0fdf4; color: #15803d;">62%</td>
+              <td style="background: #fef9c3; color: #854d0e;">48%</td>
+              <td style="background: #fef9c3; color: #854d0e;">41%</td>
+              <td style="background: #fef9c3; color: #854d0e;">38%</td>
+              <td style="background: #fef9c3; color: #854d0e;">35%</td>
+            </tr>
+            <tr>
+              <td>2021 <span style="color: var(--text-secondary); font-size: 0.6875rem;">(580 donors)</span></td>
+              <td style="background: #7c3aed; color: white;">100%</td>
+              <td style="background: #f0fdf4; color: #15803d;">65%</td>
+              <td style="background: #f0fdf4; color: #15803d;">52%</td>
+              <td style="background: #fef9c3; color: #854d0e;">44%</td>
+              <td style="background: #fef9c3; color: #854d0e;">40%</td>
+              <td style="background: #f8fafc; color: #94a3b8;">&mdash;</td>
+            </tr>
+            <tr>
+              <td>2022 <span style="color: var(--text-secondary); font-size: 0.6875rem;">(620 donors)</span></td>
+              <td style="background: #7c3aed; color: white;">100%</td>
+              <td style="background: #f0fdf4; color: #15803d;">68%</td>
+              <td style="background: #f0fdf4; color: #15803d;">55%</td>
+              <td style="background: #fef9c3; color: #854d0e;">47%</td>
+              <td style="background: #f8fafc; color: #94a3b8;">&mdash;</td>
+              <td style="background: #f8fafc; color: #94a3b8;">&mdash;</td>
+            </tr>
+            <tr>
+              <td>2023 <span style="color: var(--text-secondary); font-size: 0.6875rem;">(680 donors)</span></td>
+              <td style="background: #7c3aed; color: white;">100%</td>
+              <td style="background: #dcfce7; color: #166534;">70%</td>
+              <td style="background: #f0fdf4; color: #15803d;">58%</td>
+              <td style="background: #f8fafc; color: #94a3b8;">&mdash;</td>
+              <td style="background: #f8fafc; color: #94a3b8;">&mdash;</td>
+              <td style="background: #f8fafc; color: #94a3b8;">&mdash;</td>
+            </tr>
+            <tr>
+              <td>2024 <span style="color: var(--text-secondary); font-size: 0.6875rem;">(750 donors)</span></td>
+              <td style="background: #7c3aed; color: white;">100%</td>
+              <td style="background: #dcfce7; color: #166534;">72%</td>
+              <td style="background: #f8fafc; color: #94a3b8;">&mdash;</td>
+              <td style="background: #f8fafc; color: #94a3b8;">&mdash;</td>
+              <td style="background: #f8fafc; color: #94a3b8;">&mdash;</td>
+              <td style="background: #f8fafc; color: #94a3b8;">&mdash;</td>
+            </tr>
+            <tr>
+              <td>2025 <span style="color: var(--text-secondary); font-size: 0.6875rem;">(820 donors)</span></td>
+              <td style="background: #7c3aed; color: white;">100%</td>
+              <td style="background: #f8fafc; color: #94a3b8;">&mdash;</td>
+              <td style="background: #f8fafc; color: #94a3b8;">&mdash;</td>
+              <td style="background: #f8fafc; color: #94a3b8;">&mdash;</td>
+              <td style="background: #f8fafc; color: #94a3b8;">&mdash;</td>
+              <td style="background: #f8fafc; color: #94a3b8;">&mdash;</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- LYBUNT Analysis -->
+  <div class="dash-card">
+    <div class="dash-card-header">
+      <h3>
+        <i class="fas fa-triangle-exclamation me-2" style="color: var(--warning-color);"></i>LYBUNT Analysis
+      </h3>
+    </div>
+    <div class="dash-card-body">
+      <!-- Alert Banner -->
+      <div class="alert-banner">
+        <i class="fas fa-exclamation-triangle"></i>
+        <div>
+          <strong>456 donors</strong> gave in 2025 but <strong>NOT yet in 2026</strong>
+          <span class="mx-2">|</span>
+          <span>Total at-risk revenue: <strong>$234,500</strong></span>
+          <span class="mx-2">|</span>
+          <span>Avg giving: <strong>$514</strong></span>
+        </div>
+      </div>
+
+      <!-- LYBUNT Breakdown by Last Gift Amount -->
+      <h6 class="mb-3" style="font-size: 0.8125rem; font-weight: 700; color: var(--text-primary);">
+        <i class="fas fa-chart-pie me-1" style="color: var(--reports-accent);"></i>
+        Breakdown by Last Gift Amount
+      </h6>
+      <div class="table-responsive mb-4">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Range</th>
+              <th class="text-end">Count</th>
+              <th class="text-end">% of LYBUNT</th>
+              <th class="text-end">Total at Risk</th>
+              <th>Recovery Suggestion</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>$1,000+</strong></td>
+              <td class="text-end">34</td>
+              <td class="text-end">7.5%</td>
+              <td class="text-end"><strong>$78,200</strong></td>
+              <td><span class="badge" style="background: #faf5ff; color: #7c3aed; font-weight: 500;">Personal call from director</span></td>
+            </tr>
+            <tr>
+              <td><strong>$500 &ndash; $999</strong></td>
+              <td class="text-end">67</td>
+              <td class="text-end">14.7%</td>
+              <td class="text-end"><strong>$45,600</strong></td>
+              <td><span class="badge" style="background: #eff6ff; color: #3b82f6; font-weight: 500;">Personalized email + call</span></td>
+            </tr>
+            <tr>
+              <td><strong>$100 &ndash; $499</strong></td>
+              <td class="text-end">198</td>
+              <td class="text-end">43.4%</td>
+              <td class="text-end"><strong>$62,300</strong></td>
+              <td><span class="badge" style="background: var(--accent-bg); color: var(--accent); font-weight: 500;">Email campaign + SMS</span></td>
+            </tr>
+            <tr>
+              <td><strong>Under $100</strong></td>
+              <td class="text-end">157</td>
+              <td class="text-end">34.4%</td>
+              <td class="text-end"><strong>$48,400</strong></td>
+              <td><span class="badge" style="background: #f0fdf4; color: #22c55e; font-weight: 500;">Email blast + social</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- LYBUNT Donor Table -->
+      <h6 class="mb-3" style="font-size: 0.8125rem; font-weight: 700; color: var(--text-primary);">
+        <i class="fas fa-user-clock me-1" style="color: var(--warning-color);"></i>
+        Top LYBUNT Donors
+      </h6>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Donor</th>
+              <th>Last Gift Date</th>
+              <th class="text-end">Last Amount</th>
+              <th class="text-end">Total Lifetime</th>
+              <th class="text-center">Engagement Score</th>
+              <th>Days Since</th>
+              <th class="text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a class="donor-link" onclick="parent.loadContent('contacts/contact-detail')">Khalid Al-Mansouri</a></td>
+              <td>Dec 15, 2025</td>
+              <td class="text-end">$1,500</td>
+              <td class="text-end">$12,400</td>
+              <td class="text-center"><span class="score-badge green">72</span></td>
+              <td>118 days</td>
+              <td class="text-center">
+                <div class="dropdown">
+                  <button class="btn btn-reengage dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Re-engage
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-envelope"></i>Send Email</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-comment-sms"></i>Send SMS</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fab fa-whatsapp"></i>Send WhatsApp</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-bullhorn"></i>Add to Campaign</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-user-tag"></i>Assign to Staff</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-sticky-note"></i>Log Note</a></li>
+                  </ul>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><a class="donor-link" onclick="parent.loadContent('contacts/contact-detail')">Fatima Zahra</a></td>
+              <td>Nov 3, 2025</td>
+              <td class="text-end">$800</td>
+              <td class="text-end">$4,200</td>
+              <td class="text-center"><span class="score-badge amber">55</span></td>
+              <td>160 days</td>
+              <td class="text-center">
+                <div class="dropdown">
+                  <button class="btn btn-reengage dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Re-engage
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-envelope"></i>Send Email</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-comment-sms"></i>Send SMS</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fab fa-whatsapp"></i>Send WhatsApp</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-bullhorn"></i>Add to Campaign</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-user-tag"></i>Assign to Staff</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-sticky-note"></i>Log Note</a></li>
+                  </ul>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><a class="donor-link" onclick="parent.loadContent('contacts/contact-detail')">Ravi Sharma</a></td>
+              <td>Oct 20, 2025</td>
+              <td class="text-end">$500</td>
+              <td class="text-end">$3,100</td>
+              <td class="text-center"><span class="score-badge amber">48</span></td>
+              <td>174 days</td>
+              <td class="text-center">
+                <div class="dropdown">
+                  <button class="btn btn-reengage dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Re-engage
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-envelope"></i>Send Email</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-comment-sms"></i>Send SMS</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fab fa-whatsapp"></i>Send WhatsApp</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-bullhorn"></i>Add to Campaign</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-user-tag"></i>Assign to Staff</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-sticky-note"></i>Log Note</a></li>
+                  </ul>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><a class="donor-link" onclick="parent.loadContent('contacts/contact-detail')">Amina Hassan</a></td>
+              <td>Sep 8, 2025</td>
+              <td class="text-end">$350</td>
+              <td class="text-end">$2,800</td>
+              <td class="text-center"><span class="score-badge amber">42</span></td>
+              <td>216 days</td>
+              <td class="text-center">
+                <div class="dropdown">
+                  <button class="btn btn-reengage dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Re-engage
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-envelope"></i>Send Email</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-comment-sms"></i>Send SMS</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fab fa-whatsapp"></i>Send WhatsApp</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-bullhorn"></i>Add to Campaign</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-user-tag"></i>Assign to Staff</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-sticky-note"></i>Log Note</a></li>
+                  </ul>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><a class="donor-link" onclick="parent.loadContent('contacts/contact-detail')">John Martinez</a></td>
+              <td>Aug 22, 2025</td>
+              <td class="text-end">$200</td>
+              <td class="text-end">$1,500</td>
+              <td class="text-center"><span class="score-badge red">35</span></td>
+              <td>233 days</td>
+              <td class="text-center">
+                <div class="dropdown">
+                  <button class="btn btn-reengage dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Re-engage
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-envelope"></i>Send Email</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-comment-sms"></i>Send SMS</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fab fa-whatsapp"></i>Send WhatsApp</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-bullhorn"></i>Add to Campaign</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-user-tag"></i>Assign to Staff</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-sticky-note"></i>Log Note</a></li>
+                  </ul>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Footer Actions -->
+      <div class="d-flex justify-content-between align-items-center mt-3 pt-3" style="border-top: 1px solid var(--border-color);">
+        <button class="btn btn-outline-accent">
+          <i class="fas fa-list me-1"></i>View All 456 LYBUNT Donors
+        </button>
+        <button class="btn btn-reports-accent" onclick="parent.loadContent('communication/email-campaign-builder')">
+          <i class="fas fa-paper-plane me-1"></i>Create Re-engagement Campaign
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SYBUNT Section (Collapsible) -->
+  <div class="mb-4">
+    <button class="sybunt-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#sybuntContent" aria-expanded="false" aria-controls="sybuntContent">
+      <span>
+        <i class="fas fa-user-xmark me-2" style="color: var(--danger-color);"></i>
+        SYBUNT Analysis (1,234 donors)
+      </span>
+      <i class="fas fa-chevron-down"></i>
+    </button>
+    <div class="collapse sybunt-content" id="sybuntContent">
+      <div class="dash-card-body">
+        <p style="font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 1rem;">
+          Donors who gave in prior years but <strong>NOT in 2025 or 2026</strong>
+        </p>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Last Giving Year</th>
+                <th class="text-end">Donor Count</th>
+                <th class="text-end">Recovery Rate</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>2024</strong></td>
+                <td class="text-end">312</td>
+                <td class="text-end"><span style="color: var(--success-color); font-weight: 600;">22%</span></td>
+                <td>
+                  <div style="width: 100px; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden;">
+                    <div style="width: 22%; height: 100%; background: var(--success-color); border-radius: 3px;"></div>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>2023</strong></td>
+                <td class="text-end">289</td>
+                <td class="text-end"><span style="color: var(--warning-color); font-weight: 600;">12%</span></td>
+                <td>
+                  <div style="width: 100px; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden;">
+                    <div style="width: 12%; height: 100%; background: var(--warning-color); border-radius: 3px;"></div>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>2022</strong></td>
+                <td class="text-end">245</td>
+                <td class="text-end"><span style="color: var(--warning-color); font-weight: 600;">8%</span></td>
+                <td>
+                  <div style="width: 100px; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden;">
+                    <div style="width: 8%; height: 100%; background: var(--warning-color); border-radius: 3px;"></div>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>2021 &amp; earlier</strong></td>
+                <td class="text-end">388</td>
+                <td class="text-end"><span style="color: var(--danger-color); font-weight: 600;">5%</span></td>
+                <td>
+                  <div style="width: 100px; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden;">
+                    <div style="width: 5%; height: 100%; background: var(--danger-color); border-radius: 3px;"></div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="mt-3">
+          <button class="btn btn-outline-accent">
+            <i class="fas fa-list me-1"></i>View All SYBUNT
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upgrade/Downgrade Analysis -->
+  <div class="dash-card">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-arrow-right-arrow-left me-2" style="color: var(--reports-accent);"></i>Upgrade/Downgrade Analysis (2026 vs 2025)</h3>
+    </div>
+    <div class="dash-card-body">
+      <div class="row g-3">
+        <!-- Upgrades -->
+        <div class="col-md-6">
+          <div class="ud-section upgrade">
+            <h5><i class="fas fa-arrow-trend-up me-1"></i> Upgrades</h5>
+            <div class="ud-stat"><strong>234</strong> donors upgraded <span style="color: var(--text-secondary);">(9.8% of active donors)</span></div>
+            <div class="ud-stat">Avg increase: <strong style="color: #166534;">+$120</strong> <span style="color: var(--text-secondary);">(28% lift)</span></div>
+            <div class="ud-highlight">
+              <i class="fas fa-trophy me-1" style="color: #f59e0b;"></i>
+              Top upgrade: <strong>Sarah Ahmed</strong>: $200 &rarr; $1,000 <span style="color: #166534; font-weight: 600;">(+400%)</span>
+            </div>
+            <div class="ud-bar-track">
+              <div class="ud-bar-fill" style="width: 65%; background: linear-gradient(90deg, #22c55e, #86efac);"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Downgrades -->
+        <div class="col-md-6">
+          <div class="ud-section downgrade">
+            <h5><i class="fas fa-arrow-trend-down me-1"></i> Downgrades</h5>
+            <div class="ud-stat"><strong>178</strong> donors downgraded <span style="color: var(--text-secondary);">(7.5% of active donors)</span></div>
+            <div class="ud-stat">Avg decrease: <strong style="color: #991b1b;">-$85</strong> <span style="color: var(--text-secondary);">(22% drop)</span></div>
+            <div class="ud-highlight">
+              <i class="fas fa-exclamation-circle me-1" style="color: var(--danger-color);"></i>
+              Top downgrade: <strong>Mohamed Ali</strong>: $5,000 &rarr; $1,000 <span style="color: #991b1b; font-weight: 600;">(-80%)</span>
+            </div>
+            <div class="ud-bar-track">
+              <div class="ud-bar-fill" style="width: 48%; background: linear-gradient(90deg, #dc2626, #fca5a5);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Retention by Segment -->
+  <div class="dash-card">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-chart-bar me-2" style="color: var(--reports-accent);"></i>Retention by Segment</h3>
+    </div>
+    <div class="dash-card-body">
+      <!-- Recurring Donors -->
+      <div class="hbar-row">
+        <div class="hbar-label">Recurring Donors</div>
+        <div class="hbar-track">
+          <div class="hbar-fill" style="width: 92%; background: linear-gradient(90deg, #22c55e, #4ade80);">92%</div>
+        </div>
+        <div class="hbar-value">92%</div>
+      </div>
+
+      <!-- Major Donors -->
+      <div class="hbar-row">
+        <div class="hbar-label">Major Donors ($5K+)</div>
+        <div class="hbar-track">
+          <div class="hbar-fill" style="width: 89%; background: linear-gradient(90deg, #22c55e, #4ade80);">89%</div>
+        </div>
+        <div class="hbar-value">89%</div>
+      </div>
+
+      <!-- Mid-Level -->
+      <div class="hbar-row">
+        <div class="hbar-label">Mid-Level ($1K-$5K)</div>
+        <div class="hbar-track">
+          <div class="hbar-fill" style="width: 78%; background: linear-gradient(90deg, var(--accent), var(--accent-light));">78%</div>
+        </div>
+        <div class="hbar-value">78%</div>
+      </div>
+
+      <!-- Regular -->
+      <div class="hbar-row">
+        <div class="hbar-label">Regular ($100-$1K)</div>
+        <div class="hbar-track">
+          <div class="hbar-fill" style="width: 65%; background: linear-gradient(90deg, #f59e0b, #fbbf24);">65%</div>
+        </div>
+        <div class="hbar-value">65%</div>
+      </div>
+
+      <!-- Small -->
+      <div class="hbar-row">
+        <div class="hbar-label">Small (&lt;$100)</div>
+        <div class="hbar-track">
+          <div class="hbar-fill" style="width: 42%; background: linear-gradient(90deg, #f97316, #fb923c);">42%</div>
+        </div>
+        <div class="hbar-value">42%</div>
+      </div>
+
+      <!-- One-Time -->
+      <div class="hbar-row">
+        <div class="hbar-label">One-Time Donors</div>
+        <div class="hbar-track">
+          <div class="hbar-fill" style="width: 34%; background: linear-gradient(90deg, #dc2626, #f87171);">34%</div>
+        </div>
+        <div class="hbar-value">34%</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

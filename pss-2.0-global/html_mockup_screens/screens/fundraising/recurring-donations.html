@@ -1,0 +1,1995 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recurring Donations - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #0c6577;
+      border-color: #0c6577;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Export dropdown */
+    .export-wrapper {
+      position: relative;
+    }
+
+    .export-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 0.25rem;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      z-index: 100;
+      min-width: 180px;
+      overflow: hidden;
+    }
+
+    .export-dropdown.show {
+      display: block;
+    }
+
+    .export-dropdown a {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      text-decoration: none;
+      transition: background 0.1s;
+    }
+
+    .export-dropdown a:hover {
+      background: #f8fafc;
+      color: var(--accent);
+    }
+
+    .export-dropdown a i {
+      width: 16px;
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    /* KPI Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1.25rem;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .stat-icon.green { background: #f0fdf4; color: #22c55e; }
+    .stat-icon.blue { background: #eff6ff; color: #3b82f6; }
+    .stat-icon.teal { background: var(--accent-bg); color: var(--accent); }
+    .stat-icon.red { background: #fef2f2; color: #dc2626; }
+
+    .stat-info { flex: 1; }
+
+    .stat-value {
+      font-size: 1.625rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .stat-label {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 0.125rem;
+    }
+
+    .stat-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .stat-subtitle .positive { color: var(--success-color); font-weight: 600; }
+    .stat-subtitle .negative { color: var(--danger-color); font-weight: 600; }
+
+    /* Failed Payments Alert Banner */
+    .failed-alert-banner {
+      background: linear-gradient(135deg, #fef2f2, #fff7ed);
+      border: 1px solid #fecaca;
+      border-radius: var(--card-radius);
+      margin-bottom: 1.25rem;
+      overflow: hidden;
+    }
+
+    .failed-alert-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.875rem 1.25rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .failed-alert-header:hover {
+      background: rgba(220, 38, 38, 0.03);
+    }
+
+    .failed-alert-title {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #991b1b;
+    }
+
+    .failed-alert-title i {
+      font-size: 1.125rem;
+      color: #dc2626;
+    }
+
+    .failed-alert-toggle {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .failed-alert-toggle i {
+      transition: transform 0.2s;
+    }
+
+    .failed-alert-banner.collapsed .failed-alert-toggle i {
+      transform: rotate(-90deg);
+    }
+
+    .failed-alert-body {
+      padding: 0 1.25rem 1rem;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    .failed-alert-banner.collapsed .failed-alert-body {
+      max-height: 0 !important;
+      padding: 0 1.25rem;
+    }
+
+    .failed-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    .failed-table th {
+      background: rgba(220, 38, 38, 0.05);
+      font-weight: 600;
+      color: #991b1b;
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid #fecaca;
+      white-space: nowrap;
+    }
+
+    .failed-table td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid #fee2e2;
+      color: var(--text-primary);
+      vertical-align: middle;
+    }
+
+    .failed-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .failed-action-btn {
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.375rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      border: 1px solid;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .failed-action-btn.contact {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: white;
+    }
+
+    .failed-action-btn.contact:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    .failed-action-btn.retry {
+      border-color: var(--warning-color);
+      color: #92400e;
+      background: #fffbeb;
+    }
+
+    .failed-action-btn.retry:hover {
+      background: var(--warning-color);
+      color: white;
+    }
+
+    .failed-action-btn.cancel {
+      border-color: var(--danger-color);
+      color: var(--danger-color);
+      background: white;
+    }
+
+    .failed-action-btn.cancel:hover {
+      background: var(--danger-color);
+      color: white;
+    }
+
+    .failed-action-btn.pause {
+      border-color: var(--warning-color);
+      color: #92400e;
+      background: white;
+    }
+
+    .failed-action-btn.pause:hover {
+      background: var(--warning-color);
+      color: white;
+    }
+
+    /* Card */
+    .list-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .search-input {
+      position: relative;
+      flex: 1;
+      min-width: 240px;
+    }
+
+    .search-input i {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .search-input input {
+      width: 100%;
+      padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .search-input input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    /* Filter Chips */
+    .filter-chips {
+      display: flex;
+      gap: 0.375rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-chip {
+      padding: 0.3125rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .filter-chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .filter-chip.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    /* Advanced Filters Panel */
+    .advanced-filters {
+      display: none;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      background: #f8fafc;
+    }
+
+    .advanced-filters.show {
+      display: block;
+    }
+
+    .filter-group label {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.25rem;
+      display: block;
+    }
+
+    .filter-group select,
+    .filter-group input {
+      width: 100%;
+      padding: 0.375rem 0.625rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+    }
+
+    .filter-group select:focus,
+    .filter-group input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Table */
+    .table-container {
+      overflow-x: auto;
+    }
+
+    .recurring-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1400px;
+    }
+
+    .recurring-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .recurring-table th:hover {
+      color: var(--accent);
+    }
+
+    .recurring-table th .sort-icon {
+      margin-left: 0.25rem;
+      font-size: 0.5625rem;
+      opacity: 0.4;
+    }
+
+    .recurring-table th.sorted .sort-icon {
+      opacity: 1;
+      color: var(--accent);
+    }
+
+    .recurring-table td {
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      vertical-align: middle;
+    }
+
+    .recurring-table tr {
+      cursor: pointer;
+    }
+
+    .recurring-table tr:hover td {
+      background: #f8fafc;
+    }
+
+    .recurring-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Schedule ID link */
+    .schedule-link {
+      color: var(--accent);
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .schedule-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Contact cell */
+    .contact-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.6875rem;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .contact-name-cell {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .contact-name-link {
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .contact-name-link:hover {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+
+    /* Amount cell */
+    .amount-cell {
+      font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .freq-suffix {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    /* Frequency badge */
+    .freq-badge {
+      font-size: 0.6875rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .freq-badge.monthly { background: #eff6ff; color: #1e40af; }
+    .freq-badge.quarterly { background: #faf5ff; color: #7c3aed; }
+    .freq-badge.annual { background: #f0fdf4; color: #166534; }
+
+    /* Gateway icon */
+    .gateway-cell {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      white-space: nowrap;
+    }
+
+    .gateway-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.625rem;
+      font-weight: 700;
+      color: white;
+    }
+
+    .gateway-icon.stripe { background: #635bff; }
+    .gateway-icon.paypal { background: #003087; }
+    .gateway-icon.razorpay { background: #072654; }
+
+    /* Payment method */
+    .payment-method {
+      font-size: 0.8125rem;
+      white-space: nowrap;
+    }
+
+    .payment-method i {
+      margin-right: 0.25rem;
+      color: var(--text-secondary);
+    }
+
+    /* Status badge */
+    .status-badge {
+      font-size: 0.6875rem;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .status-badge.active { background: #f0fdf4; color: #166534; }
+    .status-badge.paused { background: #fefce8; color: #854d0e; }
+    .status-badge.cancelled { background: #f1f5f9; color: #475569; }
+    .status-badge.failed { background: #fef2f2; color: #991b1b; }
+
+    /* Last charged status */
+    .charge-success { color: var(--success-color); }
+    .charge-failed { color: var(--danger-color); }
+
+    /* Failures count */
+    .failure-count {
+      font-weight: 600;
+    }
+
+    .failure-count.has-failures {
+      color: var(--danger-color);
+    }
+
+    /* Total charged */
+    .total-cell {
+      font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .total-payments {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    /* Actions Menu */
+    .actions-menu {
+      position: relative;
+    }
+
+    .actions-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      transition: all 0.15s;
+    }
+
+    .actions-btn:hover {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .actions-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 0.25rem;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      z-index: 100;
+      min-width: 180px;
+      overflow: hidden;
+    }
+
+    .actions-dropdown.show {
+      display: block;
+    }
+
+    .actions-dropdown a {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      text-decoration: none;
+      transition: background 0.1s;
+    }
+
+    .actions-dropdown a:hover {
+      background: #f8fafc;
+      color: var(--accent);
+    }
+
+    .actions-dropdown a i {
+      width: 16px;
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .actions-dropdown a:hover i {
+      color: var(--accent);
+    }
+
+    .actions-dropdown a.danger {
+      color: var(--danger-color);
+    }
+
+    .actions-dropdown a.danger i {
+      color: var(--danger-color);
+    }
+
+    .actions-dropdown .divider {
+      height: 1px;
+      background: var(--border-color);
+      margin: 0.25rem 0;
+    }
+
+    /* Pagination */
+    .table-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1.25rem;
+      border-top: 1px solid var(--border-color);
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .table-footer .showing-text {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .pagination-controls {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .page-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .page-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .page-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    /* Detail Slide-in Panel */
+    .detail-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.3);
+      z-index: 1050;
+    }
+
+    .detail-overlay.show {
+      display: block;
+    }
+
+    .detail-panel {
+      position: fixed;
+      top: 0;
+      right: -460px;
+      bottom: 0;
+      width: 460px;
+      background: white;
+      box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+      z-index: 1060;
+      transition: right 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .detail-panel.show {
+      right: 0;
+    }
+
+    .detail-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      flex-shrink: 0;
+    }
+
+    .detail-panel-header h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .detail-close-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      transition: all 0.15s;
+    }
+
+    .detail-close-btn:hover {
+      border-color: var(--danger-color);
+      color: var(--danger-color);
+    }
+
+    .detail-panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.25rem;
+    }
+
+    .detail-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .detail-section-title {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.375rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.375rem 0;
+      font-size: 0.8125rem;
+    }
+
+    .detail-row .label {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .detail-row .value {
+      font-weight: 600;
+      color: var(--text-primary);
+      text-align: right;
+    }
+
+    .donor-mini-card {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      background: #f8fafc;
+      border-radius: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .donor-mini-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.75rem;
+      color: white;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .donor-mini-info {
+      flex: 1;
+    }
+
+    .donor-mini-name {
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: var(--text-primary);
+    }
+
+    .donor-mini-email {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .donor-mini-score {
+      font-size: 0.6875rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      background: #f0fdf4;
+      color: #166534;
+    }
+
+    /* Distribution table in detail */
+    .dist-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    .dist-table th {
+      text-align: left;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      padding: 0.375rem 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .dist-table td {
+      padding: 0.375rem 0.5rem;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .dist-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Charge history table in detail */
+    .charge-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.75rem;
+    }
+
+    .charge-table th {
+      text-align: left;
+      font-size: 0.625rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.375rem 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .charge-table td {
+      padding: 0.375rem 0.5rem;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+
+    .charge-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Detail panel actions */
+    .detail-panel-footer {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .detail-action-btn {
+      padding: 0.4375rem 0.875rem;
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      border: 1px solid;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .detail-action-btn.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .detail-action-btn.primary:hover {
+      background: #0c6577;
+    }
+
+    .detail-action-btn.warning {
+      background: white;
+      border-color: var(--warning-color);
+      color: #92400e;
+    }
+
+    .detail-action-btn.warning:hover {
+      background: var(--warning-color);
+      color: white;
+    }
+
+    .detail-action-btn.danger {
+      background: white;
+      border-color: var(--danger-color);
+      color: var(--danger-color);
+    }
+
+    .detail-action-btn.danger:hover {
+      background: var(--danger-color);
+      color: white;
+    }
+
+    .detail-action-btn.outline {
+      background: white;
+      border-color: var(--border-color);
+      color: var(--text-primary);
+    }
+
+    .detail-action-btn.outline:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .detail-panel {
+        width: 100%;
+        right: -100%;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Scrollbar */
+    .detail-panel-body::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .detail-panel-body::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .detail-panel-body::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+
+    .table-container::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .table-container::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+
+    .table-container::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-repeat" style="color: var(--accent); font-size: 1.25rem; margin-right: 0.5rem;"></i>Recurring Donations</h1>
+      <p class="subtitle">Manage recurring donation schedules, monitor billing, and handle failed payments</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline-accent" onclick="parent.loadContent('fundraising/donation-list')">
+        <i class="fas fa-arrow-left"></i> Back to Donations
+      </button>
+      <div class="export-wrapper">
+        <button class="btn-outline-accent" onclick="toggleExport()">
+          <i class="fas fa-download"></i> Export
+        </button>
+        <div class="export-dropdown" id="exportDropdown">
+          <a href="#"><i class="fas fa-file-csv"></i> Export as CSV</a>
+          <a href="#"><i class="fas fa-file-excel"></i> Export as Excel</a>
+          <a href="#"><i class="fas fa-file-pdf"></i> Export as PDF</a>
+        </div>
+      </div>
+      <button class="btn-primary-accent">
+        <i class="fas fa-plus"></i> New Schedule
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon green">
+        <i class="fas fa-repeat"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Active Schedules</div>
+        <div class="stat-value">890</div>
+        <div class="stat-subtitle"><span class="positive">+34</span> this month</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon teal">
+        <i class="fas fa-dollar-sign"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Monthly Recurring Revenue</div>
+        <div class="stat-value">$22,500</div>
+        <div class="stat-subtitle"><span class="positive">+8.2%</span> vs last month</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon red">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Failed This Month</div>
+        <div class="stat-value">23</div>
+        <div class="stat-subtitle">12 retried, <span class="positive">8 recovered</span></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon blue">
+        <i class="fas fa-calendar"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Avg Duration</div>
+        <div class="stat-value">14.3 <span style="font-size:0.875rem; font-weight:500;">months</span></div>
+        <div class="stat-subtitle">Across all active schedules</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Failed Payments Alert Banner -->
+  <div class="failed-alert-banner" id="failedAlertBanner">
+    <div class="failed-alert-header" onclick="toggleFailedAlert()">
+      <div class="failed-alert-title">
+        <i class="fas fa-triangle-exclamation"></i>
+        23 recurring payments failed this month. 12 auto-retried, 8 recovered, <strong>3 need attention.</strong>
+      </div>
+      <div class="failed-alert-toggle">
+        <span>Details</span>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+    </div>
+    <div class="failed-alert-body">
+      <table class="failed-table">
+        <thead>
+          <tr>
+            <th>Donor</th>
+            <th>Amount</th>
+            <th>Last Attempt</th>
+            <th>Failures</th>
+            <th>Reason</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-weight:600;">David Miller</td>
+            <td>$100/mo</td>
+            <td>Apr 1</td>
+            <td><span style="color:#dc2626; font-weight:600;">3 consecutive</span></td>
+            <td>Card expired</td>
+            <td>
+              <div style="display:flex; gap:0.375rem;">
+                <button class="failed-action-btn contact" onclick="parent.loadContent('communication/email-campaign-builder')">Contact Donor</button>
+                <button class="failed-action-btn retry">Retry</button>
+                <button class="failed-action-btn cancel">Cancel</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;">Carlos Mendez</td>
+            <td>$25/mo</td>
+            <td>Apr 5</td>
+            <td><span style="color:#dc2626; font-weight:600;">1</span></td>
+            <td>Insufficient funds</td>
+            <td>
+              <div style="display:flex; gap:0.375rem;">
+                <button class="failed-action-btn retry">Retry</button>
+                <button class="failed-action-btn pause">Pause</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Main Table Card -->
+  <div class="list-card">
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="d-flex align-items-center gap-3 flex-wrap mb-2">
+        <div class="search-input">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Search by donor name, email, schedule ID...">
+        </div>
+        <button class="btn-outline-accent" style="font-size:0.75rem; padding:0.4375rem 0.75rem;" onclick="toggleAdvancedFilters()">
+          <i class="fas fa-sliders"></i> Advanced
+        </button>
+      </div>
+      <div class="filter-chips">
+        <button class="filter-chip active" onclick="setFilter(this)">All</button>
+        <button class="filter-chip" onclick="setFilter(this)">Active</button>
+        <button class="filter-chip" onclick="setFilter(this)">Paused</button>
+        <button class="filter-chip" onclick="setFilter(this)">Cancelled</button>
+        <button class="filter-chip" onclick="setFilter(this)">Failed</button>
+        <button class="filter-chip" onclick="setFilter(this)">Expiring Soon</button>
+      </div>
+    </div>
+
+    <!-- Advanced Filters -->
+    <div class="advanced-filters" id="advancedFilters">
+      <div class="row g-3">
+        <div class="col-md-3 filter-group">
+          <label>Frequency</label>
+          <select>
+            <option value="">All Frequencies</option>
+            <option>Monthly</option>
+            <option>Quarterly</option>
+            <option>Semi-Annual</option>
+            <option>Annual</option>
+          </select>
+        </div>
+        <div class="col-md-3 filter-group">
+          <label>Payment Gateway</label>
+          <select>
+            <option value="">All Gateways</option>
+            <option>Stripe</option>
+            <option>PayPal</option>
+            <option>Razorpay</option>
+          </select>
+        </div>
+        <div class="col-md-3 filter-group">
+          <label>Amount Min</label>
+          <input type="number" placeholder="0.00">
+        </div>
+        <div class="col-md-3 filter-group">
+          <label>Amount Max</label>
+          <input type="number" placeholder="99999.00">
+        </div>
+        <div class="col-md-3 filter-group">
+          <label>Currency</label>
+          <select>
+            <option value="">All Currencies</option>
+            <option>USD</option>
+            <option>AED</option>
+            <option>INR</option>
+            <option>NGN</option>
+            <option>MAD</option>
+            <option>BRL</option>
+            <option>JPY</option>
+          </select>
+        </div>
+        <div class="col-md-3 filter-group">
+          <label>Created From</label>
+          <input type="date">
+        </div>
+        <div class="col-md-3 filter-group">
+          <label>Created To</label>
+          <input type="date">
+        </div>
+        <div class="col-md-3 filter-group">
+          <label>Next Billing From</label>
+          <input type="date">
+        </div>
+        <div class="col-md-3 filter-group">
+          <label>Next Billing To</label>
+          <input type="date">
+        </div>
+        <div class="col-12 d-flex gap-2 mt-2">
+          <button class="btn-primary-accent" style="font-size:0.75rem; padding:0.375rem 0.75rem;">
+            <i class="fas fa-check"></i> Apply
+          </button>
+          <button class="btn-outline-accent" style="font-size:0.75rem; padding:0.375rem 0.75rem;" onclick="toggleAdvancedFilters()">
+            <i class="fas fa-times"></i> Clear
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-container">
+      <table class="recurring-table">
+        <thead>
+          <tr>
+            <th class="sorted">Schedule ID <i class="fas fa-sort-down sort-icon"></i></th>
+            <th>Donor <i class="fas fa-sort sort-icon"></i></th>
+            <th>Amount <i class="fas fa-sort sort-icon"></i></th>
+            <th>Frequency <i class="fas fa-sort sort-icon"></i></th>
+            <th>Gateway</th>
+            <th>Payment Method</th>
+            <th>Status <i class="fas fa-sort sort-icon"></i></th>
+            <th>Next Billing <i class="fas fa-sort sort-icon"></i></th>
+            <th>Last Charged</th>
+            <th>Total Charged</th>
+            <th>Failures</th>
+            <th style="text-align:center;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- REC-0001 -->
+          <tr onclick="openDetail('REC-0001')">
+            <td><a class="schedule-link" onclick="event.stopPropagation();">REC-0001</a></td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background:#0e7490;">SJ</div>
+                <a class="contact-name-link" onclick="event.stopPropagation(); parent.loadContent('contacts/contact-detail')">Sarah Johnson</a>
+              </div>
+            </td>
+            <td class="amount-cell">$50.00 <span class="freq-suffix">/mo</span></td>
+            <td><span class="freq-badge monthly">Monthly</span></td>
+            <td>
+              <div class="gateway-cell">
+                <div class="gateway-icon stripe">S</div> Stripe
+              </div>
+            </td>
+            <td class="payment-method"><i class="fab fa-cc-visa"></i> Visa &#8226;&#8226;&#8226;4242</td>
+            <td><span class="status-badge active">Active</span></td>
+            <td>May 1, 2026</td>
+            <td>Apr 1 <i class="fas fa-check-circle charge-success"></i></td>
+            <td class="total-cell">$600 <span class="total-payments">(12)</span></td>
+            <td><span class="failure-count">0</span></td>
+            <td style="text-align:center;" onclick="event.stopPropagation();">
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a href="#" onclick="openDetail('REC-0001')"><i class="fas fa-eye"></i> View Details</a>
+                  <a href="#"><i class="fas fa-pause"></i> Pause</a>
+                  <a href="#"><i class="fas fa-credit-card"></i> Update Payment</a>
+                  <div class="divider"></div>
+                  <a href="#" class="danger"><i class="fas fa-ban"></i> Cancel</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- REC-0002 -->
+          <tr onclick="openDetail('REC-0002')">
+            <td><a class="schedule-link" onclick="event.stopPropagation();">REC-0002</a></td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background:#7c3aed;">AA</div>
+                <a class="contact-name-link" onclick="event.stopPropagation(); parent.loadContent('contacts/contact-detail')">Ahmad Al-Hassan</a>
+              </div>
+            </td>
+            <td class="amount-cell">AED 500 <span class="freq-suffix">/mo</span></td>
+            <td><span class="freq-badge monthly">Monthly</span></td>
+            <td>
+              <div class="gateway-cell">
+                <div class="gateway-icon stripe">S</div> Stripe
+              </div>
+            </td>
+            <td class="payment-method"><i class="fab fa-cc-mastercard"></i> MC &#8226;&#8226;&#8226;8810</td>
+            <td><span class="status-badge active">Active</span></td>
+            <td>May 1, 2026</td>
+            <td>Apr 1 <i class="fas fa-check-circle charge-success"></i></td>
+            <td class="total-cell">AED 6,000 <span class="total-payments">(12)</span></td>
+            <td><span class="failure-count">0</span></td>
+            <td style="text-align:center;" onclick="event.stopPropagation();">
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a href="#" onclick="openDetail('REC-0002')"><i class="fas fa-eye"></i> View Details</a>
+                  <a href="#"><i class="fas fa-pause"></i> Pause</a>
+                  <a href="#"><i class="fas fa-credit-card"></i> Update Payment</a>
+                  <div class="divider"></div>
+                  <a href="#" class="danger"><i class="fas fa-ban"></i> Cancel</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- REC-0003 -->
+          <tr onclick="openDetail('REC-0003')">
+            <td><a class="schedule-link" onclick="event.stopPropagation();">REC-0003</a></td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background:#f97316;">RK</div>
+                <a class="contact-name-link" onclick="event.stopPropagation(); parent.loadContent('contacts/contact-detail')">Ravi Krishnan</a>
+              </div>
+            </td>
+            <td class="amount-cell">&#8377;2,000 <span class="freq-suffix">/mo</span></td>
+            <td><span class="freq-badge monthly">Monthly</span></td>
+            <td>
+              <div class="gateway-cell">
+                <div class="gateway-icon razorpay">R</div> Razorpay
+              </div>
+            </td>
+            <td class="payment-method"><i class="fas fa-mobile-screen-button"></i> UPI</td>
+            <td><span class="status-badge active">Active</span></td>
+            <td>May 5, 2026</td>
+            <td>Apr 5 <i class="fas fa-check-circle charge-success"></i></td>
+            <td class="total-cell">&#8377;16,000 <span class="total-payments">(8)</span></td>
+            <td><span class="failure-count">0</span></td>
+            <td style="text-align:center;" onclick="event.stopPropagation();">
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a href="#" onclick="openDetail('REC-0003')"><i class="fas fa-eye"></i> View Details</a>
+                  <a href="#"><i class="fas fa-pause"></i> Pause</a>
+                  <a href="#"><i class="fas fa-credit-card"></i> Update Payment</a>
+                  <div class="divider"></div>
+                  <a href="#" class="danger"><i class="fas fa-ban"></i> Cancel</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- REC-0004 (Failed) -->
+          <tr onclick="openDetail('REC-0004')">
+            <td><a class="schedule-link" onclick="event.stopPropagation();">REC-0004</a></td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background:#dc2626;">DM</div>
+                <a class="contact-name-link" onclick="event.stopPropagation(); parent.loadContent('contacts/contact-detail')">David Miller</a>
+              </div>
+            </td>
+            <td class="amount-cell">$100.00 <span class="freq-suffix">/mo</span></td>
+            <td><span class="freq-badge monthly">Monthly</span></td>
+            <td>
+              <div class="gateway-cell">
+                <div class="gateway-icon stripe">S</div> Stripe
+              </div>
+            </td>
+            <td class="payment-method"><i class="fab fa-cc-visa"></i> Visa &#8226;&#8226;&#8226;1234</td>
+            <td><span class="status-badge failed">Failed</span></td>
+            <td>&mdash;</td>
+            <td>Apr 1 <i class="fas fa-times-circle charge-failed"></i></td>
+            <td class="total-cell">$300 <span class="total-payments">(3)</span></td>
+            <td><span class="failure-count has-failures">3</span></td>
+            <td style="text-align:center;" onclick="event.stopPropagation();">
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a href="#" onclick="openDetail('REC-0004')"><i class="fas fa-eye"></i> View Details</a>
+                  <a href="#"><i class="fas fa-rotate-right"></i> Retry Now</a>
+                  <a href="#"><i class="fas fa-credit-card"></i> Update Payment</a>
+                  <a href="#"><i class="fas fa-envelope"></i> Contact Donor</a>
+                  <div class="divider"></div>
+                  <a href="#" class="danger"><i class="fas fa-ban"></i> Cancel</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- REC-0005 -->
+          <tr onclick="openDetail('REC-0005')">
+            <td><a class="schedule-link" onclick="event.stopPropagation();">REC-0005</a></td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background:#3b82f6;">EC</div>
+                <a class="contact-name-link" onclick="event.stopPropagation(); parent.loadContent('contacts/contact-detail')">Emily Chen</a>
+              </div>
+            </td>
+            <td class="amount-cell">$200.00 <span class="freq-suffix">/qtr</span></td>
+            <td><span class="freq-badge quarterly">Quarterly</span></td>
+            <td>
+              <div class="gateway-cell">
+                <div class="gateway-icon paypal">P</div> PayPal
+              </div>
+            </td>
+            <td class="payment-method"><i class="fab fa-paypal"></i> PayPal Balance</td>
+            <td><span class="status-badge active">Active</span></td>
+            <td>Jul 1, 2026</td>
+            <td>Apr 1 <i class="fas fa-check-circle charge-success"></i></td>
+            <td class="total-cell">$800 <span class="total-payments">(4)</span></td>
+            <td><span class="failure-count">0</span></td>
+            <td style="text-align:center;" onclick="event.stopPropagation();">
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a href="#" onclick="openDetail('REC-0005')"><i class="fas fa-eye"></i> View Details</a>
+                  <a href="#"><i class="fas fa-pause"></i> Pause</a>
+                  <a href="#"><i class="fas fa-credit-card"></i> Update Payment</a>
+                  <div class="divider"></div>
+                  <a href="#" class="danger"><i class="fas fa-ban"></i> Cancel</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- REC-0006 (Paused) -->
+          <tr onclick="openDetail('REC-0006')">
+            <td><a class="schedule-link" onclick="event.stopPropagation();">REC-0006</a></td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background:#22c55e;">JO</div>
+                <a class="contact-name-link" onclick="event.stopPropagation(); parent.loadContent('contacts/contact-detail')">James Okonkwo</a>
+              </div>
+            </td>
+            <td class="amount-cell">&#8358;10,000 <span class="freq-suffix">/mo</span></td>
+            <td><span class="freq-badge monthly">Monthly</span></td>
+            <td>
+              <div class="gateway-cell">
+                <div class="gateway-icon stripe">S</div> Stripe
+              </div>
+            </td>
+            <td class="payment-method"><i class="fas fa-building-columns"></i> Bank Debit</td>
+            <td><span class="status-badge paused">Paused</span></td>
+            <td>&mdash;</td>
+            <td>Mar 1 <i class="fas fa-check-circle charge-success"></i></td>
+            <td class="total-cell">&#8358;30,000 <span class="total-payments">(3)</span></td>
+            <td><span class="failure-count">0</span></td>
+            <td style="text-align:center;" onclick="event.stopPropagation();">
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a href="#" onclick="openDetail('REC-0006')"><i class="fas fa-eye"></i> View Details</a>
+                  <a href="#"><i class="fas fa-play"></i> Resume</a>
+                  <a href="#"><i class="fas fa-credit-card"></i> Update Payment</a>
+                  <div class="divider"></div>
+                  <a href="#" class="danger"><i class="fas fa-ban"></i> Cancel</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- REC-0007 -->
+          <tr onclick="openDetail('REC-0007')">
+            <td><a class="schedule-link" onclick="event.stopPropagation();">REC-0007</a></td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background:#a855f7;">FZ</div>
+                <a class="contact-name-link" onclick="event.stopPropagation(); parent.loadContent('contacts/contact-detail')">Fatima Zahra</a>
+              </div>
+            </td>
+            <td class="amount-cell">MAD 300 <span class="freq-suffix">/mo</span></td>
+            <td><span class="freq-badge monthly">Monthly</span></td>
+            <td>
+              <div class="gateway-cell">
+                <div class="gateway-icon stripe">S</div> Stripe
+              </div>
+            </td>
+            <td class="payment-method"><i class="fab fa-cc-visa"></i> Visa &#8226;&#8226;&#8226;5678</td>
+            <td><span class="status-badge active">Active</span></td>
+            <td>May 1, 2026</td>
+            <td>Apr 1 <i class="fas fa-check-circle charge-success"></i></td>
+            <td class="total-cell">MAD 2,100 <span class="total-payments">(7)</span></td>
+            <td><span class="failure-count">0</span></td>
+            <td style="text-align:center;" onclick="event.stopPropagation();">
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a href="#" onclick="openDetail('REC-0007')"><i class="fas fa-eye"></i> View Details</a>
+                  <a href="#"><i class="fas fa-pause"></i> Pause</a>
+                  <a href="#"><i class="fas fa-credit-card"></i> Update Payment</a>
+                  <div class="divider"></div>
+                  <a href="#" class="danger"><i class="fas fa-ban"></i> Cancel</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- REC-0008 (Cancelled) -->
+          <tr onclick="openDetail('REC-0008')">
+            <td><a class="schedule-link" onclick="event.stopPropagation();">REC-0008</a></td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background:#64748b;">MS</div>
+                <a class="contact-name-link" onclick="event.stopPropagation(); parent.loadContent('contacts/contact-detail')">Maria Santos</a>
+              </div>
+            </td>
+            <td class="amount-cell">R$100 <span class="freq-suffix">/mo</span></td>
+            <td><span class="freq-badge monthly">Monthly</span></td>
+            <td>
+              <div class="gateway-cell">
+                <div class="gateway-icon stripe">S</div> Stripe
+              </div>
+            </td>
+            <td class="payment-method"><i class="fab fa-cc-mastercard"></i> MC &#8226;&#8226;&#8226;9900</td>
+            <td><span class="status-badge cancelled">Cancelled</span></td>
+            <td>&mdash;</td>
+            <td>Feb 1 <i class="fas fa-check-circle charge-success"></i></td>
+            <td class="total-cell">R$400 <span class="total-payments">(4)</span></td>
+            <td><span class="failure-count">0</span></td>
+            <td style="text-align:center;" onclick="event.stopPropagation();">
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a href="#" onclick="openDetail('REC-0008')"><i class="fas fa-eye"></i> View Details</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- REC-0009 -->
+          <tr onclick="openDetail('REC-0009')">
+            <td><a class="schedule-link" onclick="event.stopPropagation();">REC-0009</a></td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background:#ec4899;">ST</div>
+                <a class="contact-name-link" onclick="event.stopPropagation(); parent.loadContent('contacts/contact-detail')">Sakura Tanaka</a>
+              </div>
+            </td>
+            <td class="amount-cell">&yen;5,000 <span class="freq-suffix">/yr</span></td>
+            <td><span class="freq-badge annual">Annual</span></td>
+            <td>
+              <div class="gateway-cell">
+                <div class="gateway-icon paypal">P</div> PayPal
+              </div>
+            </td>
+            <td class="payment-method"><i class="fab fa-paypal"></i> PayPal Balance</td>
+            <td><span class="status-badge active">Active</span></td>
+            <td>Jan 1, 2027</td>
+            <td>Jan 1 <i class="fas fa-check-circle charge-success"></i></td>
+            <td class="total-cell">&yen;10,000 <span class="total-payments">(2)</span></td>
+            <td><span class="failure-count">0</span></td>
+            <td style="text-align:center;" onclick="event.stopPropagation();">
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a href="#" onclick="openDetail('REC-0009')"><i class="fas fa-eye"></i> View Details</a>
+                  <a href="#"><i class="fas fa-pause"></i> Pause</a>
+                  <a href="#"><i class="fas fa-credit-card"></i> Update Payment</a>
+                  <div class="divider"></div>
+                  <a href="#" class="danger"><i class="fas fa-ban"></i> Cancel</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- REC-0010 (Failed) -->
+          <tr onclick="openDetail('REC-0010')">
+            <td><a class="schedule-link" onclick="event.stopPropagation();">REC-0010</a></td>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar" style="background:#eab308;">CM</div>
+                <a class="contact-name-link" onclick="event.stopPropagation(); parent.loadContent('contacts/contact-detail')">Carlos Mendez</a>
+              </div>
+            </td>
+            <td class="amount-cell">$25.00 <span class="freq-suffix">/mo</span></td>
+            <td><span class="freq-badge monthly">Monthly</span></td>
+            <td>
+              <div class="gateway-cell">
+                <div class="gateway-icon stripe">S</div> Stripe
+              </div>
+            </td>
+            <td class="payment-method"><i class="fab fa-cc-amex"></i> Amex &#8226;&#8226;&#8226;3456</td>
+            <td><span class="status-badge failed">Failed</span></td>
+            <td>&mdash;</td>
+            <td>Apr 5 <i class="fas fa-times-circle charge-failed"></i></td>
+            <td class="total-cell">$150 <span class="total-payments">(6)</span></td>
+            <td><span class="failure-count has-failures">1</span></td>
+            <td style="text-align:center;" onclick="event.stopPropagation();">
+              <div class="actions-menu">
+                <button class="actions-btn" onclick="toggleActions(this)"><i class="fas fa-ellipsis-vertical"></i></button>
+                <div class="actions-dropdown">
+                  <a href="#" onclick="openDetail('REC-0010')"><i class="fas fa-eye"></i> View Details</a>
+                  <a href="#"><i class="fas fa-rotate-right"></i> Retry Now</a>
+                  <a href="#"><i class="fas fa-credit-card"></i> Update Payment</a>
+                  <a href="#"><i class="fas fa-envelope"></i> Contact Donor</a>
+                  <div class="divider"></div>
+                  <a href="#" class="danger"><i class="fas fa-ban"></i> Cancel</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="table-footer">
+      <span class="showing-text">Showing 1-10 of 890 schedules</span>
+      <div class="pagination-controls">
+        <button class="page-btn" disabled><i class="fas fa-chevron-left"></i></button>
+        <button class="page-btn active">1</button>
+        <button class="page-btn">2</button>
+        <button class="page-btn">3</button>
+        <button class="page-btn">...</button>
+        <button class="page-btn">89</button>
+        <button class="page-btn"><i class="fas fa-chevron-right"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail Slide-in Panel -->
+  <div class="detail-overlay" id="detailOverlay" onclick="closeDetail()"></div>
+  <div class="detail-panel" id="detailPanel">
+    <div class="detail-panel-header">
+      <h3>
+        <i class="fas fa-repeat" style="color: var(--accent);"></i>
+        <span id="detailScheduleId">REC-0001</span>
+        <span class="status-badge active" id="detailStatusBadge">Active</span>
+      </h3>
+      <button class="detail-close-btn" onclick="closeDetail()"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div class="detail-panel-body">
+
+      <!-- Donor Mini Card -->
+      <div class="detail-section">
+        <div class="detail-section-title">Donor</div>
+        <div class="donor-mini-card">
+          <div class="donor-mini-avatar">SJ</div>
+          <div class="donor-mini-info">
+            <div class="donor-mini-name">Sarah Johnson</div>
+            <div class="donor-mini-email">sarah.johnson@email.com</div>
+          </div>
+          <span class="donor-mini-score">Score: 92</span>
+        </div>
+      </div>
+
+      <!-- Schedule Info -->
+      <div class="detail-section">
+        <div class="detail-section-title">Schedule Info</div>
+        <div class="detail-row">
+          <span class="label">Schedule ID</span>
+          <span class="value">REC-0001</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Status</span>
+          <span class="value"><span class="status-badge active">Active</span></span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Created Date</span>
+          <span class="value">Apr 1, 2025</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Gateway Sub ID</span>
+          <span class="value" style="font-family:monospace; font-size:0.75rem;">sub_1NqKr2LkdIwHu7</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Amount</span>
+          <span class="value">$50.00 USD</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Frequency</span>
+          <span class="value">Monthly</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Start Date</span>
+          <span class="value">Apr 1, 2025</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">End Date</span>
+          <span class="value" style="color:var(--text-secondary);">Not set (ongoing)</span>
+        </div>
+      </div>
+
+      <!-- Payment Method -->
+      <div class="detail-section">
+        <div class="detail-section-title">Payment Method</div>
+        <div class="detail-row">
+          <span class="label">Card</span>
+          <span class="value"><i class="fab fa-cc-visa" style="color:#1a1f71;"></i> Visa &#8226;&#8226;&#8226;4242</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Expiry</span>
+          <span class="value">12/2028</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Token Status</span>
+          <span class="value" style="color:var(--success-color);">Valid</span>
+        </div>
+      </div>
+
+      <!-- Distribution -->
+      <div class="detail-section">
+        <div class="detail-section-title">Distribution</div>
+        <table class="dist-table">
+          <thead>
+            <tr>
+              <th>Purpose</th>
+              <th style="text-align:right;">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Children's Education Fund</td>
+              <td style="text-align:right; font-weight:600;">$30.00</td>
+            </tr>
+            <tr>
+              <td>General Fund</td>
+              <td style="text-align:right; font-weight:600;">$20.00</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Charge History -->
+      <div class="detail-section">
+        <div class="detail-section-title">Charge History (Last 6)</div>
+        <table class="charge-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Transaction ID</th>
+              <th>Failure Reason</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Apr 1, 2026</td>
+              <td>$50</td>
+              <td><i class="fas fa-check-circle charge-success"></i> Success</td>
+              <td style="font-family:monospace; font-size:0.6875rem;">pi_abc123</td>
+              <td style="color:var(--text-secondary);">&mdash;</td>
+            </tr>
+            <tr>
+              <td>Mar 1, 2026</td>
+              <td>$50</td>
+              <td><i class="fas fa-check-circle charge-success"></i> Success</td>
+              <td style="font-family:monospace; font-size:0.6875rem;">pi_def456</td>
+              <td style="color:var(--text-secondary);">&mdash;</td>
+            </tr>
+            <tr>
+              <td>Feb 1, 2026</td>
+              <td>$50</td>
+              <td><i class="fas fa-check-circle charge-success"></i> Success</td>
+              <td style="font-family:monospace; font-size:0.6875rem;">pi_ghi789</td>
+              <td style="color:var(--text-secondary);">&mdash;</td>
+            </tr>
+            <tr>
+              <td>Jan 1, 2026</td>
+              <td>$50</td>
+              <td><i class="fas fa-times-circle charge-failed"></i> Failed <i class="fas fa-arrow-right" style="font-size:0.5rem; color:var(--text-secondary); margin:0 0.25rem;"></i> <i class="fas fa-check-circle charge-success"></i> Retried</td>
+              <td style="font-family:monospace; font-size:0.6875rem;">pi_jkl012</td>
+              <td style="font-size:0.6875rem;">Card declined &rarr; retry succeeded</td>
+            </tr>
+            <tr>
+              <td>Dec 1, 2025</td>
+              <td>$50</td>
+              <td><i class="fas fa-check-circle charge-success"></i> Success</td>
+              <td style="font-family:monospace; font-size:0.6875rem;">pi_mno345</td>
+              <td style="color:var(--text-secondary);">&mdash;</td>
+            </tr>
+            <tr>
+              <td>Nov 1, 2025</td>
+              <td>$50</td>
+              <td><i class="fas fa-check-circle charge-success"></i> Success</td>
+              <td style="font-family:monospace; font-size:0.6875rem;">pi_pqr678</td>
+              <td style="color:var(--text-secondary);">&mdash;</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+    <!-- Detail Panel Footer Actions -->
+    <div class="detail-panel-footer">
+      <button class="detail-action-btn warning"><i class="fas fa-pause"></i> Pause Schedule</button>
+      <button class="detail-action-btn danger"><i class="fas fa-ban"></i> Cancel Schedule</button>
+      <button class="detail-action-btn primary"><i class="fas fa-credit-card"></i> Update Payment</button>
+      <button class="detail-action-btn outline"><i class="fas fa-pen"></i> Edit Amount</button>
+    </div>
+  </div>
+
+
+  <script>
+    // Toggle export dropdown
+    function toggleExport() {
+      const dd = document.getElementById('exportDropdown');
+      dd.classList.toggle('show');
+    }
+
+    // Toggle advanced filters
+    function toggleAdvancedFilters() {
+      const af = document.getElementById('advancedFilters');
+      af.classList.toggle('show');
+    }
+
+    // Filter chip selection
+    function setFilter(chip) {
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+    }
+
+    // Toggle failed alert banner
+    function toggleFailedAlert() {
+      const banner = document.getElementById('failedAlertBanner');
+      banner.classList.toggle('collapsed');
+    }
+
+    // Actions menu toggle
+    function toggleActions(btn) {
+      // Close all other open dropdowns
+      document.querySelectorAll('.actions-dropdown.show').forEach(dd => {
+        if (dd !== btn.nextElementSibling) dd.classList.remove('show');
+      });
+      btn.nextElementSibling.classList.toggle('show');
+    }
+
+    // Open detail panel
+    function openDetail(scheduleId) {
+      document.getElementById('detailOverlay').classList.add('show');
+      document.getElementById('detailPanel').classList.add('show');
+      document.getElementById('detailScheduleId').textContent = scheduleId;
+    }
+
+    // Close detail panel
+    function closeDetail() {
+      document.getElementById('detailOverlay').classList.remove('show');
+      document.getElementById('detailPanel').classList.remove('show');
+    }
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(e) {
+      // Close action dropdowns
+      if (!e.target.closest('.actions-menu')) {
+        document.querySelectorAll('.actions-dropdown.show').forEach(dd => dd.classList.remove('show'));
+      }
+      // Close export dropdown
+      if (!e.target.closest('.export-wrapper')) {
+        document.getElementById('exportDropdown').classList.remove('show');
+      }
+    });
+
+    // Keyboard: Escape to close detail panel
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeDetail();
+      }
+    });
+  </script>
+
+</body>
+
+</html>

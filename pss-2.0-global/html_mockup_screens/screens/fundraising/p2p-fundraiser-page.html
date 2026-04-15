@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>P2P Fundraiser Page Preview - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Admin Controls Bar */
+    .admin-controls { background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
+    .admin-controls-left { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .admin-controls-right { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+
+    .btn-primary-accent { background: var(--accent); border-color: var(--accent); color: white; font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid var(--accent); cursor: pointer; transition: all 0.15s; }
+    .btn-primary-accent:hover { background: #0c6577; border-color: #0c6577; color: white; }
+    .btn-outline-accent { background: white; border: 1px solid var(--accent); color: var(--accent); font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.15s; }
+    .btn-outline-accent:hover { background: var(--accent); color: white; }
+    .btn-sm-icon { background: white; border: 1px solid var(--border-color); color: var(--text-secondary); font-size: 0.75rem; padding: 0.35rem 0.625rem; border-radius: 0.375rem; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 0.35rem; }
+    .btn-sm-icon:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+
+    /* Device switcher */
+    .device-switcher { display: flex; background: white; border-radius: 0.5rem; padding: 2px; border: 1px solid var(--border-color); }
+    .device-btn { padding: 0.375rem 0.75rem; border: none; background: none; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); border-radius: 0.375rem; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 0.375rem; }
+    .device-btn.active { background: var(--accent); color: white; }
+    .device-btn:hover:not(.active) { background: #f1f5f9; }
+
+    /* Page URL */
+    .url-bar-admin { display: flex; align-items: center; gap: 0.5rem; padding: 0.375rem 0.75rem; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 0.75rem; flex: 1; min-width: 260px; }
+    .url-bar-admin .url-text { color: var(--accent); font-weight: 600; word-break: break-all; }
+    .url-copy-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 2px 6px; border-radius: 4px; font-size: 0.8125rem; }
+    .url-copy-btn:hover { color: var(--accent); background: var(--accent-bg); }
+
+    /* Browser Chrome */
+    .browser-chrome { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 0.75rem; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    .browser-topbar { background: #e2e8f0; padding: 0.5rem 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+    .browser-dots { display: flex; gap: 5px; }
+    .browser-dots span { width: 10px; height: 10px; border-radius: 50%; }
+    .browser-dots .red { background: #ef4444; }
+    .browser-dots .yellow { background: #f59e0b; }
+    .browser-dots .green { background: #22c55e; }
+    .browser-url-bar { flex: 1; background: white; border-radius: 4px; padding: 0.25rem 0.625rem; font-size: 0.625rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.375rem; }
+    .browser-url-bar i { color: var(--success-color); font-size: 0.5rem; }
+    .browser-body { overflow-y: auto; max-height: 720px; background: white; }
+    .browser-body::-webkit-scrollbar { width: 4px; }
+    .browser-body::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+    /* Phone Frame */
+    .phone-frame { width: 375px; max-width: 100%; background: #1e293b; border-radius: 2.5rem; padding: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); margin: 0 auto; display: none; }
+    .phone-inner { background: white; border-radius: 1.75rem; overflow: hidden; }
+    .phone-notch { width: 100px; height: 22px; background: #1e293b; border-radius: 0 0 14px 14px; margin: 0 auto; position: relative; z-index: 1; margin-top: -1px; }
+    .phone-screen { overflow-y: auto; max-height: 650px; }
+    .phone-screen::-webkit-scrollbar { width: 3px; }
+    .phone-screen::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+    /* ============================================ */
+    /* PUBLIC PAGE STYLES                            */
+    /* ============================================ */
+
+    /* Org Header */
+    .org-header { background: linear-gradient(135deg, var(--accent), var(--accent-light)); color: white; padding: 0.625rem 1.25rem; display: flex; align-items: center; justify-content: space-between; }
+    .org-brand { display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.8125rem; }
+    .org-brand i { font-size: 1rem; }
+    .org-nav { display: flex; gap: 1rem; }
+    .org-nav a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.6875rem; font-weight: 500; cursor: pointer; }
+    .org-nav a:hover { color: white; }
+
+    /* Cover Photo */
+    .cover-photo { height: 200px; background: linear-gradient(135deg, rgba(14,116,144,0.85), rgba(6,182,212,0.85)), linear-gradient(180deg, #0e7490, #06b6d4); display: flex; align-items: center; justify-content: center; position: relative; }
+    .cover-photo .cover-text { text-align: center; color: white; }
+    .cover-photo .cover-text i { font-size: 2.5rem; opacity: 0.5; margin-bottom: 0.5rem; }
+    .cover-photo .cover-text p { font-size: 0.75rem; opacity: 0.7; }
+
+    /* Two Column Layout */
+    .fundraiser-content { display: flex; gap: 0; min-height: 500px; }
+    .content-left { flex: 6; padding: 1.5rem; border-right: 1px solid var(--border-color); }
+    .content-right { flex: 4; padding: 1.5rem; background: #f8fafc; }
+
+    /* Fundraiser Profile */
+    .fr-profile { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+    .fr-avatar { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-light)); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; font-weight: 700; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.15); flex-shrink: 0; }
+    .fr-name { font-size: 1.25rem; font-weight: 800; color: var(--text-primary); }
+    .fr-tagline { font-size: 0.875rem; color: var(--text-secondary); font-style: italic; margin-top: 0.125rem; }
+    .fr-campaign-link { font-size: 0.75rem; color: var(--accent); margin-top: 0.25rem; }
+    .fr-campaign-link a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    .fr-campaign-link a:hover { text-decoration: underline; }
+
+    /* Section Headers */
+    .pub-section-title { font-size: 0.9375rem; font-weight: 700; color: var(--text-primary); margin: 1.5rem 0 0.75rem; padding-bottom: 0.375rem; border-bottom: 2px solid var(--border-color); }
+
+    /* Story */
+    .fr-story { font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.7; }
+
+    /* Donor Wall */
+    .donor-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid #f1f5f9; }
+    .donor-item:last-child { border-bottom: none; }
+    .donor-avatar { width: 36px; height: 36px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 0.6875rem; font-weight: 700; color: var(--text-secondary); flex-shrink: 0; }
+    .donor-info { flex: 1; }
+    .donor-name-row { display: flex; align-items: center; gap: 0.5rem; }
+    .donor-name { font-weight: 600; font-size: 0.8125rem; }
+    .donor-amount { font-weight: 700; color: var(--accent); font-size: 0.8125rem; }
+    .donor-message { font-size: 0.75rem; color: var(--text-secondary); font-style: italic; margin-top: 0.125rem; }
+    .donor-time { font-size: 0.6875rem; color: #94a3b8; margin-top: 0.125rem; }
+    .see-all-link { font-size: 0.8125rem; color: var(--accent); font-weight: 600; cursor: pointer; margin-top: 0.5rem; display: inline-block; }
+
+    /* Updates */
+    .update-item { padding: 0.75rem 0; border-bottom: 1px solid #f1f5f9; }
+    .update-item:last-child { border-bottom: none; }
+    .update-date { font-size: 0.6875rem; font-weight: 700; color: var(--accent); }
+    .update-text { font-size: 0.8125rem; color: var(--text-secondary); margin-top: 0.25rem; }
+
+    /* Team Section */
+    .team-progress { margin-bottom: 0.75rem; }
+    .team-total { font-size: 0.875rem; font-weight: 700; }
+    .team-bar-track { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin: 0.375rem 0; }
+    .team-bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--accent), var(--accent-light)); }
+    .team-member { display: flex; align-items: center; gap: 0.5rem; padding: 0.375rem 0; font-size: 0.8125rem; }
+    .team-member-avatar { width: 24px; height: 24px; border-radius: 50%; background: var(--accent-bg); display: flex; align-items: center; justify-content: center; font-size: 0.5rem; font-weight: 700; color: var(--accent); }
+    .team-member-amount { margin-left: auto; font-weight: 700; color: var(--accent); }
+
+    /* ============================================ */
+    /* RIGHT PANEL — DONATION FORM                  */
+    /* ============================================ */
+
+    /* Progress Widget */
+    .progress-widget { margin-bottom: 1.5rem; }
+    .pw-raised { font-size: 2rem; font-weight: 800; color: var(--accent); }
+    .pw-goal { font-size: 0.875rem; color: var(--text-secondary); }
+    .pw-bar-track { height: 12px; background: #e2e8f0; border-radius: 6px; overflow: hidden; margin: 0.75rem 0; }
+    .pw-bar-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--accent), var(--accent-light)); transition: width 0.5s; }
+    .pw-stats { display: flex; gap: 1rem; }
+    .pw-stat { font-size: 0.8125rem; color: var(--text-secondary); }
+    .pw-stat strong { color: var(--text-primary); }
+
+    /* Donation Form */
+    .donate-form { background: white; border-radius: var(--card-radius); padding: 1.25rem; border: 1px solid var(--border-color); margin-bottom: 1.25rem; }
+    .amount-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1rem; }
+    .amount-btn { padding: 0.625rem; border: 2px solid var(--border-color); border-radius: 0.5rem; background: white; font-size: 0.9375rem; font-weight: 700; color: var(--text-primary); cursor: pointer; transition: all 0.15s; text-align: center; }
+    .amount-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .amount-btn.selected { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
+    .amount-btn.custom { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); }
+
+    .freq-toggle { display: flex; background: #f1f5f9; border-radius: 0.5rem; padding: 3px; margin-bottom: 1rem; }
+    .freq-btn { flex: 1; padding: 0.5rem; border: none; background: none; font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); border-radius: 0.375rem; cursor: pointer; transition: all 0.15s; text-align: center; }
+    .freq-btn.active { background: white; color: var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+    .cover-fees { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: #f8fafc; border-radius: 0.5rem; margin-bottom: 1rem; font-size: 0.75rem; color: var(--text-secondary); }
+    .cover-fees input[type="checkbox"] { accent-color: var(--accent); }
+
+    .donate-btn { width: 100%; padding: 0.875rem; background: var(--accent); color: white; border: none; border-radius: 0.5rem; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+    .donate-btn:hover { background: #0c6577; }
+
+    .donate-note { font-size: 0.6875rem; color: var(--text-secondary); text-align: center; margin-top: 0.75rem; line-height: 1.5; }
+    .payment-logos { display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin-top: 0.75rem; }
+    .payment-logos i { font-size: 1.5rem; color: #94a3b8; }
+
+    /* Share Section */
+    .share-section { margin-bottom: 1.5rem; }
+    .share-section .pub-section-title { margin-top: 0; }
+    .share-buttons { display: flex; flex-direction: column; gap: 0.5rem; }
+    .share-btn { display: flex; align-items: center; gap: 0.625rem; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.8125rem; font-weight: 600; cursor: pointer; border: none; color: white; transition: opacity 0.15s; }
+    .share-btn:hover { opacity: 0.9; }
+    .share-btn.facebook { background: #1877f2; }
+    .share-btn.twitter { background: #1da1f2; }
+    .share-btn.whatsapp { background: #25d366; }
+    .share-btn.linkedin { background: #0a66c2; }
+    .share-btn.copy-link { background: #64748b; }
+    .share-btn.email-share { background: #6b7280; }
+    .share-btn i { width: 18px; text-align: center; }
+
+    /* Campaign Card */
+    .campaign-card { background: white; border-radius: var(--card-radius); padding: 1rem; border: 1px solid var(--border-color); }
+    .campaign-card-title { font-size: 0.9375rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.375rem; }
+    .campaign-card-raised { font-size: 0.875rem; color: var(--accent); font-weight: 700; }
+    .campaign-card-meta { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; }
+    .campaign-card .view-campaign-btn { display: block; margin-top: 0.75rem; text-align: center; padding: 0.5rem; border: 1px solid var(--accent); border-radius: 0.375rem; font-size: 0.8125rem; font-weight: 600; color: var(--accent); background: white; cursor: pointer; text-decoration: none; transition: all 0.15s; }
+    .campaign-card .view-campaign-btn:hover { background: var(--accent); color: white; }
+
+    /* Footer */
+    .pub-footer { background: var(--accent); color: rgba(255,255,255,0.8); text-align: center; padding: 0.75rem; font-size: 0.625rem; }
+    .pub-footer a { color: rgba(255,255,255,0.9); text-decoration: none; margin: 0 0.5rem; }
+
+    /* ============================================ */
+    /* MOBILE PREVIEW OVERRIDES                      */
+    /* ============================================ */
+    .phone-screen .fundraiser-content { flex-direction: column; }
+    .phone-screen .content-left { border-right: none; border-bottom: 1px solid var(--border-color); padding: 1rem; }
+    .phone-screen .content-right { padding: 1rem; }
+    .phone-screen .cover-photo { height: 140px; }
+    .phone-screen .fr-avatar { width: 50px; height: 50px; font-size: 1.125rem; margin-top: -30px; position: relative; z-index: 1; }
+    .phone-screen .fr-profile { flex-direction: column; text-align: center; margin-top: -10px; }
+    .phone-screen .fr-name { font-size: 1.0625rem; }
+    .phone-screen .amount-grid { grid-template-columns: repeat(3, 1fr); }
+    .phone-screen .share-buttons { flex-direction: row; flex-wrap: wrap; }
+    .phone-screen .share-btn { flex: 1; min-width: 80px; font-size: 0.6875rem; padding: 0.375rem 0.5rem; justify-content: center; }
+
+    /* Sticky donate bar (mobile) */
+    .mobile-donate-bar { display: none; position: sticky; bottom: 0; background: white; border-top: 1px solid var(--border-color); padding: 0.75rem 1rem; box-shadow: 0 -2px 8px rgba(0,0,0,0.1); z-index: 10; }
+    .phone-screen .mobile-donate-bar { display: flex; align-items: center; justify-content: space-between; }
+    .mobile-donate-bar .mdb-info { font-size: 0.8125rem; }
+    .mobile-donate-bar .mdb-raised { font-weight: 800; color: var(--accent); }
+    .mobile-donate-bar .mdb-btn { padding: 0.5rem 1.25rem; background: var(--accent); color: white; border: none; border-radius: 0.5rem; font-weight: 700; font-size: 0.8125rem; cursor: pointer; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Admin Controls Bar -->
+  <div class="admin-controls">
+    <div class="admin-controls-left">
+      <div class="device-switcher">
+        <button class="device-btn active" onclick="switchDevice('desktop', this)"><i class="fas fa-desktop"></i> Desktop</button>
+        <button class="device-btn" onclick="switchDevice('mobile', this)"><i class="fas fa-mobile-alt"></i> Mobile</button>
+      </div>
+      <div class="url-bar-admin">
+        <i class="fas fa-lock" style="color:var(--success-color);font-size:0.6875rem"></i>
+        <span class="url-text">https://pss2.com/fundraise/run-for-education/maria-santos</span>
+        <button class="url-copy-btn" title="Copy URL"><i class="fas fa-copy"></i></button>
+      </div>
+    </div>
+    <div class="admin-controls-right">
+      <button class="btn-primary-accent"><i class="fas fa-check me-1"></i> Approve Page</button>
+      <button class="btn-outline-accent"><i class="fas fa-pen me-1"></i> Edit Content</button>
+      <button class="btn-sm-icon"><i class="fas fa-star"></i> Feature on Campaign</button>
+      <button class="btn-sm-icon"><i class="fas fa-share-alt"></i> Share Link</button>
+      <button class="btn-sm-icon" onclick="parent.loadContent('fundraising/p2p-fundraiser-list')"><i class="fas fa-arrow-left"></i> Back to List</button>
+    </div>
+  </div>
+
+  <!-- Desktop Preview -->
+  <div id="desktopPreview">
+    <div class="browser-chrome">
+      <div class="browser-topbar">
+        <div class="browser-dots">
+          <span class="red"></span>
+          <span class="yellow"></span>
+          <span class="green"></span>
+        </div>
+        <div class="browser-url-bar">
+          <i class="fas fa-lock"></i>
+          <span>pss2.com/fundraise/run-for-education/maria-santos</span>
+        </div>
+      </div>
+      <div class="browser-body">
+
+        <!-- Org Header -->
+        <div class="org-header">
+          <div class="org-brand"><i class="fas fa-hand-holding-heart"></i> Hope Foundation</div>
+          <div class="org-nav">
+            <a>About</a>
+            <a>All Campaigns</a>
+          </div>
+        </div>
+
+        <!-- Cover Photo -->
+        <div class="cover-photo">
+          <div class="cover-text">
+            <i class="fas fa-image"></i>
+            <p>Cover Photo: Maria at the finish line</p>
+          </div>
+        </div>
+
+        <!-- Two Column Content -->
+        <div class="fundraiser-content">
+
+          <!-- LEFT COLUMN (60%) -->
+          <div class="content-left">
+
+            <!-- Fundraiser Profile -->
+            <div class="fr-profile">
+              <div class="fr-avatar">MS</div>
+              <div>
+                <div class="fr-name">Maria Santos</div>
+                <div class="fr-tagline">"Running 26.2 miles for education!"</div>
+                <div class="fr-campaign-link">Part of: <a onclick="parent.loadContent('fundraising/p2p-campaign-list')">Run for Education 2026</a> by Hope Foundation</div>
+              </div>
+            </div>
+
+            <!-- My Story -->
+            <div class="pub-section-title">My Story</div>
+            <div class="fr-story">
+              "Education changed my life. Growing up in S&atilde;o Paulo, I didn't have access to quality schools. Now I'm running this marathon to give kids the chance I never had. Every dollar sends a child to school for a month. Please join me! 🏃‍♀️💪"
+            </div>
+
+            <!-- Recent Donors -->
+            <div class="pub-section-title">Recent Donors</div>
+            <div>
+              <div class="donor-item">
+                <div class="donor-avatar">A</div>
+                <div class="donor-info">
+                  <div class="donor-name-row">
+                    <span class="donor-name">Anonymous</span>
+                    <span class="donor-amount">$100</span>
+                  </div>
+                  <div class="donor-message">"Go Maria! 🏃‍♀️"</div>
+                  <div class="donor-time">2 hours ago</div>
+                </div>
+              </div>
+              <div class="donor-item">
+                <div class="donor-avatar">LK</div>
+                <div class="donor-info">
+                  <div class="donor-name-row">
+                    <span class="donor-name">Lisa Kim</span>
+                    <span class="donor-amount">$50</span>
+                  </div>
+                  <div class="donor-message">"So proud of you!"</div>
+                  <div class="donor-time">1 day ago</div>
+                </div>
+              </div>
+              <div class="donor-item">
+                <div class="donor-avatar">TW</div>
+                <div class="donor-info">
+                  <div class="donor-name-row">
+                    <span class="donor-name">Tom Wilson</span>
+                    <span class="donor-amount">$250</span>
+                  </div>
+                  <div class="donor-message">"For the kids!"</div>
+                  <div class="donor-time">2 days ago</div>
+                </div>
+              </div>
+              <span class="see-all-link">... see all 34 donors</span>
+            </div>
+
+            <!-- Updates -->
+            <div class="pub-section-title">Updates</div>
+            <div>
+              <div class="update-item">
+                <div class="update-date">Apr 10</div>
+                <div class="update-text">"Hit 500%! You all are incredible! 🎉"</div>
+              </div>
+              <div class="update-item">
+                <div class="update-date">Apr 5</div>
+                <div class="update-text">"Training going great. Marathon is Apr 20."</div>
+              </div>
+            </div>
+
+            <!-- Team Section -->
+            <div class="pub-section-title">Team</div>
+            <div class="team-progress">
+              <div class="team-total">Team Sunrise: $4,300 / $5,000</div>
+              <div class="team-bar-track"><div class="team-bar-fill" style="width:86%"></div></div>
+            </div>
+            <div class="team-member">
+              <div class="team-member-avatar">MS</div>
+              <span>Maria</span>
+              <span class="team-member-amount">$3,200</span>
+            </div>
+            <div class="team-member">
+              <div class="team-member-avatar">JD</div>
+              <span>John</span>
+              <span class="team-member-amount">$600</span>
+            </div>
+            <div class="team-member">
+              <div class="team-member-avatar">LS</div>
+              <span>Lisa</span>
+              <span class="team-member-amount">$500</span>
+            </div>
+
+          </div>
+
+          <!-- RIGHT COLUMN (40%) -->
+          <div class="content-right">
+
+            <!-- Progress Widget -->
+            <div class="progress-widget">
+              <div class="pw-raised">$3,200</div>
+              <div class="pw-goal">raised of <strong>$500</strong> goal</div>
+              <div class="pw-bar-track"><div class="pw-bar-fill" style="width:100%"></div></div>
+              <div class="pw-stats">
+                <div class="pw-stat"><strong>34</strong> donors</div>
+                <div class="pw-stat"><strong>1,234</strong> views</div>
+              </div>
+            </div>
+
+            <!-- Donation Form -->
+            <div class="donate-form">
+              <div class="amount-grid">
+                <button class="amount-btn">$25</button>
+                <button class="amount-btn selected">$50</button>
+                <button class="amount-btn">$100</button>
+                <button class="amount-btn">$250</button>
+                <button class="amount-btn custom" colspan="2">Custom</button>
+              </div>
+              <div class="freq-toggle">
+                <button class="freq-btn active">One-time</button>
+                <button class="freq-btn">Monthly</button>
+              </div>
+              <div class="cover-fees">
+                <input type="checkbox" id="coverFees">
+                <label for="coverFees">Add $2.50 to cover fees so 100% goes to the cause</label>
+              </div>
+              <button class="donate-btn"><i class="fas fa-heart me-1"></i> Donate Now</button>
+              <div class="donate-note">Your donation goes to Hope Foundation for Children's Education</div>
+              <div class="payment-logos">
+                <i class="fab fa-cc-visa"></i>
+                <i class="fab fa-cc-mastercard"></i>
+                <i class="fab fa-cc-paypal"></i>
+              </div>
+            </div>
+
+            <!-- Share Section -->
+            <div class="share-section">
+              <div class="pub-section-title">Share</div>
+              <div class="share-buttons">
+                <button class="share-btn facebook"><i class="fab fa-facebook-f"></i> Facebook</button>
+                <button class="share-btn twitter"><i class="fab fa-twitter"></i> Twitter / X</button>
+                <button class="share-btn whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+                <button class="share-btn linkedin"><i class="fab fa-linkedin-in"></i> LinkedIn</button>
+                <button class="share-btn copy-link"><i class="fas fa-link"></i> Copy Link</button>
+                <button class="share-btn email-share"><i class="fas fa-envelope"></i> Email</button>
+              </div>
+            </div>
+
+            <!-- Campaign Card -->
+            <div class="campaign-card">
+              <div class="pub-section-title" style="margin-top:0;border-bottom:none;padding-bottom:0;font-size:0.75rem;color:var(--text-secondary)">CAMPAIGN</div>
+              <div class="campaign-card-title">Run for Education 2026</div>
+              <div class="campaign-card-raised">$34,560 / $50,000</div>
+              <div class="campaign-card-meta">89 fundraisers</div>
+              <a class="view-campaign-btn" onclick="parent.loadContent('fundraising/p2p-campaign-list')">View Campaign</a>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="pub-footer">
+          Powered by Hope Foundation &middot;
+          <a href="#">Privacy</a> &middot;
+          <a href="#">Terms</a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Preview -->
+  <div id="mobilePreview" style="display:none">
+    <div class="phone-frame" style="display:block">
+      <div class="phone-inner">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+
+          <!-- Org Header -->
+          <div class="org-header" style="padding:0.5rem 0.75rem;font-size:0.75rem">
+            <div class="org-brand" style="font-size:0.75rem"><i class="fas fa-hand-holding-heart"></i> Hope Foundation</div>
+            <div class="org-nav" style="gap:0.5rem">
+              <a style="font-size:0.625rem">About</a>
+              <a style="font-size:0.625rem">Campaigns</a>
+            </div>
+          </div>
+
+          <!-- Cover Photo -->
+          <div class="cover-photo" style="height:140px">
+            <div class="cover-text">
+              <i class="fas fa-image" style="font-size:1.5rem"></i>
+              <p style="font-size:0.625rem">Cover Photo</p>
+            </div>
+          </div>
+
+          <!-- Profile (overlapping) -->
+          <div style="text-align:center;padding:0 1rem;margin-top:-30px;position:relative;z-index:2">
+            <div class="fr-avatar" style="width:56px;height:56px;margin:0 auto;font-size:1.25rem;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.15)">MS</div>
+            <div class="fr-name" style="font-size:1.0625rem;margin-top:0.5rem">Maria Santos</div>
+            <div class="fr-tagline" style="font-size:0.75rem">"Running 26.2 miles for education!"</div>
+            <div class="fr-campaign-link" style="font-size:0.6875rem;margin-top:0.25rem">Part of: Run for Education 2026</div>
+          </div>
+
+          <!-- Progress + Donate -->
+          <div style="padding:1rem">
+            <div class="progress-widget" style="margin-bottom:1rem">
+              <div class="pw-raised" style="font-size:1.5rem">$3,200</div>
+              <div class="pw-goal" style="font-size:0.75rem">raised of <strong>$500</strong> goal</div>
+              <div class="pw-bar-track" style="height:10px"><div class="pw-bar-fill" style="width:100%"></div></div>
+              <div class="pw-stats" style="font-size:0.75rem">
+                <div class="pw-stat"><strong>34</strong> donors</div>
+                <div class="pw-stat"><strong>1,234</strong> views</div>
+              </div>
+            </div>
+
+            <!-- Story -->
+            <div class="pub-section-title" style="font-size:0.8125rem">My Story</div>
+            <div class="fr-story" style="font-size:0.75rem;margin-bottom:1rem">
+              "Education changed my life. Growing up in S&atilde;o Paulo, I didn't have access to quality schools. Now I'm running this marathon to give kids the chance I never had..."
+            </div>
+
+            <!-- Donors (collapsed) -->
+            <div class="pub-section-title" style="font-size:0.8125rem">Recent Donors</div>
+            <div class="donor-item" style="padding:0.5rem 0">
+              <div class="donor-avatar" style="width:28px;height:28px;font-size:0.5625rem">A</div>
+              <div class="donor-info">
+                <div class="donor-name-row"><span class="donor-name" style="font-size:0.75rem">Anonymous</span><span class="donor-amount" style="font-size:0.75rem">$100</span></div>
+                <div class="donor-message" style="font-size:0.6875rem">"Go Maria!"</div>
+              </div>
+            </div>
+            <div class="donor-item" style="padding:0.5rem 0">
+              <div class="donor-avatar" style="width:28px;height:28px;font-size:0.5625rem">LK</div>
+              <div class="donor-info">
+                <div class="donor-name-row"><span class="donor-name" style="font-size:0.75rem">Lisa Kim</span><span class="donor-amount" style="font-size:0.75rem">$50</span></div>
+                <div class="donor-message" style="font-size:0.6875rem">"So proud!"</div>
+              </div>
+            </div>
+            <span class="see-all-link" style="font-size:0.75rem">see all 34 donors</span>
+
+            <!-- Share horizontal -->
+            <div class="pub-section-title" style="font-size:0.8125rem;margin-top:1rem">Share</div>
+            <div style="display:flex;gap:0.375rem;flex-wrap:wrap;margin-bottom:1rem">
+              <button class="share-btn facebook" style="flex:1;min-width:60px;font-size:0.625rem;padding:0.375rem;justify-content:center"><i class="fab fa-facebook-f"></i></button>
+              <button class="share-btn twitter" style="flex:1;min-width:60px;font-size:0.625rem;padding:0.375rem;justify-content:center"><i class="fab fa-twitter"></i></button>
+              <button class="share-btn whatsapp" style="flex:1;min-width:60px;font-size:0.625rem;padding:0.375rem;justify-content:center"><i class="fab fa-whatsapp"></i></button>
+              <button class="share-btn linkedin" style="flex:1;min-width:60px;font-size:0.625rem;padding:0.375rem;justify-content:center"><i class="fab fa-linkedin-in"></i></button>
+              <button class="share-btn copy-link" style="flex:1;min-width:60px;font-size:0.625rem;padding:0.375rem;justify-content:center"><i class="fas fa-link"></i></button>
+            </div>
+          </div>
+
+          <!-- Sticky Donate Bar -->
+          <div class="mobile-donate-bar" style="display:flex">
+            <div class="mdb-info">
+              <span class="mdb-raised">$3,200</span> raised
+            </div>
+            <button class="mdb-btn"><i class="fas fa-heart me-1"></i> Donate Now</button>
+          </div>
+
+          <!-- Footer -->
+          <div class="pub-footer" style="font-size:0.5rem;padding:0.5rem">
+            Powered by Hope Foundation &middot; Privacy &middot; Terms
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Device toggle
+    function switchDevice(device, btn) {
+      document.querySelectorAll('.device-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      if (device === 'desktop') {
+        document.getElementById('desktopPreview').style.display = '';
+        document.getElementById('mobilePreview').style.display = 'none';
+      } else {
+        document.getElementById('desktopPreview').style.display = 'none';
+        document.getElementById('mobilePreview').style.display = '';
+      }
+    }
+
+    // Amount button selection
+    document.querySelectorAll('.amount-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        this.closest('.amount-grid').querySelectorAll('.amount-btn').forEach(b => b.classList.remove('selected'));
+        this.classList.add('selected');
+      });
+    });
+
+    // Frequency toggle
+    document.querySelectorAll('.freq-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        this.closest('.freq-toggle').querySelectorAll('.freq-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+  </script>
+
+</body>
+</html>

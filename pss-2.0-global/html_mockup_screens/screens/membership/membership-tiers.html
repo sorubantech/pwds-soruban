@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Membership Tiers - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --membership-accent: #d97706;
+      --membership-bg: #fffbeb;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #0c6577;
+      border-color: #0c6577;
+      color: white;
+    }
+
+    /* Tier Cards */
+    .tier-cards {
+      display: flex;
+      gap: 1rem;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .tier-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 2px solid var(--border-color);
+      min-width: 200px;
+      flex: 1;
+      text-align: center;
+      padding: 1.25rem 1rem;
+      position: relative;
+      transition: all 0.2s;
+    }
+
+    .tier-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      transform: translateY(-2px);
+    }
+
+    .tier-card.bronze { border-top: 4px solid #cd7f32; }
+    .tier-card.silver { border-top: 4px solid #c0c0c0; }
+    .tier-card.gold { border-top: 4px solid #ffd700; }
+    .tier-card.platinum { border-top: 4px solid #e5e4e2; }
+    .tier-card.lifetime { border-top: 4px solid #f59e0b; }
+
+    .tier-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .tier-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.125rem;
+    }
+
+    .tier-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+    }
+
+    .tier-price {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 0.25rem;
+    }
+
+    .tier-price span {
+      font-size: 0.75rem;
+      font-weight: 400;
+      color: var(--text-secondary);
+    }
+
+    .tier-members {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+    }
+
+    .tier-members strong {
+      color: var(--text-primary);
+    }
+
+    .tier-actions {
+      display: flex;
+      justify-content: center;
+      gap: 0.375rem;
+    }
+
+    .tier-btn {
+      padding: 0.3125rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .tier-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .tier-btn.edit {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .tier-btn.edit:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Dropdown */
+    .dropdown-menu {
+      font-size: 0.8125rem;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border-radius: 0.5rem;
+      padding: 0.25rem;
+    }
+
+    .dropdown-item {
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 0.8125rem;
+    }
+
+    .dropdown-item:hover {
+      background: var(--accent-bg);
+      color: var(--accent);
+    }
+
+    .dropdown-item.text-danger:hover {
+      background: #fef2f2;
+      color: var(--danger-color);
+    }
+
+    /* Benefits Comparison Table */
+    .comparison-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+
+    .comparison-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .comparison-header h3 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .comparison-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .comparison-table th:first-child {
+      text-align: left;
+      min-width: 200px;
+    }
+
+    .comparison-table td {
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      text-align: center;
+    }
+
+    .comparison-table td:first-child {
+      text-align: left;
+      font-weight: 500;
+    }
+
+    .comparison-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .comparison-table tr:hover td {
+      background: #f8fafc;
+    }
+
+    .check-yes {
+      color: var(--success-color);
+      font-size: 0.875rem;
+    }
+
+    .check-no {
+      color: #cbd5e1;
+      font-size: 0.875rem;
+    }
+
+    /* Slide-In Panel */
+    .slide-panel-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.3);
+      z-index: 1040;
+    }
+
+    .slide-panel-overlay.show {
+      display: block;
+    }
+
+    .slide-panel {
+      position: fixed;
+      top: 0;
+      right: -520px;
+      width: 520px;
+      height: 100vh;
+      background: white;
+      box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+      z-index: 1050;
+      transition: right 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .slide-panel.show {
+      right: 0;
+    }
+
+    .panel-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .panel-header h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .panel-close {
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: 0.375rem;
+    }
+
+    .panel-close:hover {
+      background: #f1f5f9;
+      color: var(--text-primary);
+    }
+
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.25rem;
+    }
+
+    .panel-footer {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    /* Form Styles */
+    .form-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-section-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .form-group {
+      margin-bottom: 0.875rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .form-group label .required {
+      color: var(--danger-color);
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .form-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 40px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #cbd5e1;
+      border-radius: 22px;
+      transition: 0.2s;
+    }
+
+    .toggle-slider:before {
+      content: '';
+      position: absolute;
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.2s;
+    }
+
+    .toggle-switch input:checked+.toggle-slider {
+      background: var(--accent);
+    }
+
+    .toggle-switch input:checked+.toggle-slider:before {
+      transform: translateX(18px);
+    }
+
+    /* Benefits List */
+    .benefit-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .benefit-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .benefit-item:last-child {
+      border-bottom: none;
+    }
+
+    .benefit-item input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .benefit-text {
+      flex: 1;
+      font-size: 0.8125rem;
+    }
+
+    .benefit-actions {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .benefit-actions button {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 0.75rem;
+      padding: 0.125rem 0.375rem;
+      border-radius: 0.25rem;
+    }
+
+    .benefit-actions button:hover {
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .add-benefit-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.8125rem;
+      color: var(--accent);
+      background: none;
+      border: 1px dashed var(--accent);
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
+
+    .add-benefit-btn:hover {
+      background: var(--accent-bg);
+    }
+
+    /* Color Picker */
+    .color-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .color-row input[type="color"] {
+      width: 36px;
+      height: 36px;
+      padding: 2px;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      cursor: pointer;
+    }
+
+    .color-row input[type="text"] {
+      flex: 1;
+    }
+
+    .btn-cancel {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+    }
+
+    .btn-cancel:hover {
+      background: #f1f5f9;
+    }
+
+    @media (max-width: 768px) {
+      .tier-cards {
+        flex-direction: column;
+      }
+      .tier-card {
+        min-width: 100%;
+      }
+      .slide-panel {
+        width: 100%;
+        right: -100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-layer-group" style="color: var(--membership-accent); margin-right: 0.5rem;"></i>Membership Tiers</h1>
+      <p class="subtitle">Configure membership levels, pricing, and benefits</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="openEditPanel('new')">
+        <i class="fas fa-plus me-1"></i> New Tier
+      </button>
+    </div>
+  </div>
+
+  <!-- Tier Cards -->
+  <div class="tier-cards">
+    <!-- Bronze -->
+    <div class="tier-card bronze">
+      <div class="tier-icon">🥉</div>
+      <div class="tier-name">Bronze</div>
+      <div class="tier-label">Basic</div>
+      <div class="tier-price">$50 <span>/year</span></div>
+      <div class="tier-members"><strong>89</strong> members</div>
+      <div class="tier-actions">
+        <button class="tier-btn edit" onclick="openEditPanel('bronze')"><i class="fas fa-pen me-1"></i>Edit</button>
+        <div class="dropdown">
+          <button class="tier-btn" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-vertical"></i></button>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#" onclick="openEditPanel('bronze')"><i class="fas fa-pen me-2"></i>Edit</a></li>
+            <li><a class="dropdown-item" href="#" onclick="parent.loadContent('membership/member-list')"><i class="fas fa-users me-2"></i>View Members</a></li>
+            <li><a class="dropdown-item" href="#"><i class="fas fa-copy me-2"></i>Duplicate</a></li>
+            <li><a class="dropdown-item" href="#"><i class="fas fa-pause me-2"></i>Deactivate</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-trash me-2"></i>Delete</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Silver -->
+    <div class="tier-card silver">
+      <div class="tier-icon">🥈</div>
+      <div class="tier-name">Silver</div>
+      <div class="tier-label">Standard</div>
+      <div class="tier-price">$150 <span>/year</span></div>
+      <div class="tier-members"><strong>56</strong> members</div>
+      <div class="tier-actions">
+        <button class="tier-btn edit" onclick="openEditPanel('silver')"><i class="fas fa-pen me-1"></i>Edit</button>
+        <div class="dropdown">
+          <button class="tier-btn" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-vertical"></i></button>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#" onclick="openEditPanel('silver')"><i class="fas fa-pen me-2"></i>Edit</a></li>
+            <li><a class="dropdown-item" href="#" onclick="parent.loadContent('membership/member-list')"><i class="fas fa-users me-2"></i>View Members</a></li>
+            <li><a class="dropdown-item" href="#"><i class="fas fa-copy me-2"></i>Duplicate</a></li>
+            <li><a class="dropdown-item" href="#"><i class="fas fa-pause me-2"></i>Deactivate</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-trash me-2"></i>Delete</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gold -->
+    <div class="tier-card gold">
+      <div class="tier-icon">🥇</div>
+      <div class="tier-name">Gold</div>
+      <div class="tier-label">Premium</div>
+      <div class="tier-price">$500 <span>/year</span></div>
+      <div class="tier-members"><strong>23</strong> members</div>
+      <div class="tier-actions">
+        <button class="tier-btn edit" onclick="openEditPanel('gold')"><i class="fas fa-pen me-1"></i>Edit</button>
+        <div class="dropdown">
+          <button class="tier-btn" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-vertical"></i></button>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#" onclick="openEditPanel('gold')"><i class="fas fa-pen me-2"></i>Edit</a></li>
+            <li><a class="dropdown-item" href="#" onclick="parent.loadContent('membership/member-list')"><i class="fas fa-users me-2"></i>View Members</a></li>
+            <li><a class="dropdown-item" href="#"><i class="fas fa-copy me-2"></i>Duplicate</a></li>
+            <li><a class="dropdown-item" href="#"><i class="fas fa-pause me-2"></i>Deactivate</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-trash me-2"></i>Delete</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Platinum -->
+    <div class="tier-card platinum">
+      <div class="tier-icon">💎</div>
+      <div class="tier-name">Platinum</div>
+      <div class="tier-label">VIP</div>
+      <div class="tier-price">$1,000 <span>/year</span></div>
+      <div class="tier-members"><strong>8</strong> members</div>
+      <div class="tier-actions">
+        <button class="tier-btn edit" onclick="openEditPanel('platinum')"><i class="fas fa-pen me-1"></i>Edit</button>
+        <div class="dropdown">
+          <button class="tier-btn" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-vertical"></i></button>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#" onclick="openEditPanel('platinum')"><i class="fas fa-pen me-2"></i>Edit</a></li>
+            <li><a class="dropdown-item" href="#" onclick="parent.loadContent('membership/member-list')"><i class="fas fa-users me-2"></i>View Members</a></li>
+            <li><a class="dropdown-item" href="#"><i class="fas fa-copy me-2"></i>Duplicate</a></li>
+            <li><a class="dropdown-item" href="#"><i class="fas fa-pause me-2"></i>Deactivate</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-trash me-2"></i>Delete</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lifetime -->
+    <div class="tier-card lifetime">
+      <div class="tier-icon">⭐</div>
+      <div class="tier-name">Lifetime</div>
+      <div class="tier-label">Elite</div>
+      <div class="tier-price">$5,000 <span>one-time</span></div>
+      <div class="tier-members"><strong>3</strong> members</div>
+      <div class="tier-actions">
+        <button class="tier-btn edit" onclick="openEditPanel('lifetime')"><i class="fas fa-pen me-1"></i>Edit</button>
+        <div class="dropdown">
+          <button class="tier-btn" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-vertical"></i></button>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#" onclick="openEditPanel('lifetime')"><i class="fas fa-pen me-2"></i>Edit</a></li>
+            <li><a class="dropdown-item" href="#" onclick="parent.loadContent('membership/member-list')"><i class="fas fa-users me-2"></i>View Members</a></li>
+            <li><a class="dropdown-item" href="#"><i class="fas fa-copy me-2"></i>Duplicate</a></li>
+            <li><a class="dropdown-item" href="#"><i class="fas fa-pause me-2"></i>Deactivate</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-trash me-2"></i>Delete</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Benefits Comparison Table -->
+  <div class="comparison-card">
+    <div class="comparison-header">
+      <h3><i class="fas fa-table-list me-2" style="color: var(--membership-accent);"></i>Benefits Comparison</h3>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th style="text-align: left;">Benefit</th>
+            <th>🥉 Bronze</th>
+            <th>🥈 Silver</th>
+            <th>🥇 Gold</th>
+            <th>💎 Platinum</th>
+            <th>⭐ Lifetime</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Newsletter</td>
+            <td><i class="fas fa-check-circle check-yes"></i></td>
+            <td><i class="fas fa-check-circle check-yes"></i></td>
+            <td><i class="fas fa-check-circle check-yes"></i></td>
+            <td><i class="fas fa-check-circle check-yes"></i></td>
+            <td><i class="fas fa-check-circle check-yes"></i></td>
+          </tr>
+          <tr>
+            <td>Impact Report</td>
+            <td><i class="fas fa-minus-circle check-no"></i></td>
+            <td><i class="fas fa-check-circle check-yes"></i></td>
+            <td><i class="fas fa-check-circle check-yes"></i></td>
+            <td><i class="fas fa-check-circle check-yes"></i></td>
+            <td><i class="fas fa-check-circle check-yes"></i></td>
+          </tr>
+          <tr>
+            <td>Member Events</td>
+            <td><i class="fas fa-minus-circle check-no"></i></td>
+            <td><i class="fas fa-check-circle check-yes"></i></td>
+            <td><i class="fas fa-check-circle check-yes"></i></td>
+            <td><i class="fas fa-check-circle check-yes"></i></td>
+            <td><i class="fas fa-check-circle check-yes"></i></td>
+          </tr>
+          <tr>
+            <td>Voting Rights</td>
+            <td><i class="fas fa-minus-circle check-no"></i></td>
+            <td><i class="fas fa-minus-circle check-no"></i></td>
+            <td><i class="fas fa-check-circle check-yes"></i></td>
+            <td><i class="fas fa-check-circle check-yes"></i></td>
+            <td><i class="fas fa-check-circle check-yes"></i></td>
+          </tr>
+          <tr>
+            <td>Website Recognition</td>
+            <td><i class="fas fa-minus-circle check-no"></i></td>
+            <td><i class="fas fa-minus-circle check-no"></i></td>
+            <td><i class="fas fa-check-circle check-yes"></i></td>
+            <td><i class="fas fa-check-circle check-yes"></i></td>
+            <td><i class="fas fa-check-circle check-yes"></i></td>
+          </tr>
+          <tr>
+            <td>VIP Seating</td>
+            <td><i class="fas fa-minus-circle check-no"></i></td>
+            <td><i class="fas fa-minus-circle check-no"></i></td>
+            <td><i class="fas fa-minus-circle check-no"></i></td>
+            <td><i class="fas fa-check-circle check-yes"></i></td>
+            <td><i class="fas fa-check-circle check-yes"></i></td>
+          </tr>
+          <tr>
+            <td>Director Meeting</td>
+            <td><i class="fas fa-minus-circle check-no"></i></td>
+            <td><i class="fas fa-minus-circle check-no"></i></td>
+            <td><i class="fas fa-minus-circle check-no"></i></td>
+            <td><i class="fas fa-check-circle check-yes"></i></td>
+            <td><i class="fas fa-check-circle check-yes"></i></td>
+          </tr>
+          <tr>
+            <td>Named Sponsorship</td>
+            <td><i class="fas fa-minus-circle check-no"></i></td>
+            <td><i class="fas fa-minus-circle check-no"></i></td>
+            <td><i class="fas fa-minus-circle check-no"></i></td>
+            <td><i class="fas fa-minus-circle check-no"></i></td>
+            <td><i class="fas fa-check-circle check-yes"></i></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Slide-In Edit Panel -->
+  <div class="slide-panel-overlay" id="panelOverlay" onclick="closeEditPanel()"></div>
+  <div class="slide-panel" id="editPanel">
+    <div class="panel-header">
+      <h3><i class="fas fa-pen me-2" style="color: var(--membership-accent);"></i>Edit Tier — <span id="panelTierName">Gold</span></h3>
+      <button class="panel-close" onclick="closeEditPanel()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="panel-body">
+      <!-- Tier Details -->
+      <div class="form-section">
+        <div class="form-section-title">Tier Details</div>
+        <div class="form-group">
+          <label>Tier Name <span class="required">*</span></label>
+          <input type="text" value="Gold">
+        </div>
+        <div class="form-group">
+          <label>Display Name</label>
+          <input type="text" value="Gold Member" placeholder="Shown to members">
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea>Premium membership with exclusive event access and recognition</textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Icon/Badge</label>
+            <input type="text" value="🥇" style="text-align: center; font-size: 1.25rem;">
+          </div>
+          <div class="form-group">
+            <label>Sort Order</label>
+            <input type="number" value="3">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Color</label>
+          <div class="color-row">
+            <input type="color" value="#FFD700">
+            <input type="text" value="#FFD700" placeholder="#hex">
+          </div>
+        </div>
+      </div>
+
+      <!-- Pricing -->
+      <div class="form-section">
+        <div class="form-section-title">Pricing</div>
+        <div class="form-group">
+          <label>Pricing Model <span class="required">*</span></label>
+          <select>
+            <option selected>Fixed Annual</option>
+            <option>Fixed Monthly</option>
+            <option>Tiered/Sliding Scale</option>
+            <option>Pay What You Want</option>
+            <option>Free</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Annual Fee</label>
+            <input type="text" value="$500">
+          </div>
+          <div class="form-group">
+            <label>Monthly Fee</label>
+            <input type="text" value="$45" placeholder="If monthly option">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Setup/Joining Fee</label>
+            <input type="text" value="$0">
+          </div>
+          <div class="form-group">
+            <label>Currency</label>
+            <select>
+              <option selected>USD</option>
+              <option>EUR</option>
+              <option>GBP</option>
+              <option>AED</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-toggle">
+            <label class="toggle-switch">
+              <input type="checkbox" checked>
+              <span class="toggle-slider"></span>
+            </label>
+            <span style="font-size: 0.8125rem;">Auto-Renew Default</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Grace Period</label>
+          <select>
+            <option>15 days</option>
+            <option selected>30 days</option>
+            <option>60 days</option>
+            <option>90 days</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Benefits -->
+      <div class="form-section">
+        <div class="form-section-title">Benefits</div>
+        <ul class="benefit-list">
+          <li class="benefit-item">
+            <input type="checkbox" checked>
+            <span class="benefit-text">Quarterly newsletter (exclusive content)</span>
+            <div class="benefit-actions">
+              <button title="Edit"><i class="fas fa-pen"></i></button>
+              <button title="Delete"><i class="fas fa-trash"></i></button>
+            </div>
+          </li>
+          <li class="benefit-item">
+            <input type="checkbox" checked>
+            <span class="benefit-text">Annual impact report (personalized)</span>
+            <div class="benefit-actions">
+              <button title="Edit"><i class="fas fa-pen"></i></button>
+              <button title="Delete"><i class="fas fa-trash"></i></button>
+            </div>
+          </li>
+          <li class="benefit-item">
+            <input type="checkbox" checked>
+            <span class="benefit-text">Invitation to member-only events</span>
+            <div class="benefit-actions">
+              <button title="Edit"><i class="fas fa-pen"></i></button>
+              <button title="Delete"><i class="fas fa-trash"></i></button>
+            </div>
+          </li>
+          <li class="benefit-item">
+            <input type="checkbox" checked>
+            <span class="benefit-text">Voting rights in annual general meeting</span>
+            <div class="benefit-actions">
+              <button title="Edit"><i class="fas fa-pen"></i></button>
+              <button title="Delete"><i class="fas fa-trash"></i></button>
+            </div>
+          </li>
+          <li class="benefit-item">
+            <input type="checkbox" checked>
+            <span class="benefit-text">Recognition on website donor wall</span>
+            <div class="benefit-actions">
+              <button title="Edit"><i class="fas fa-pen"></i></button>
+              <button title="Delete"><i class="fas fa-trash"></i></button>
+            </div>
+          </li>
+          <li class="benefit-item">
+            <input type="checkbox" checked>
+            <span class="benefit-text">VIP seating at events</span>
+            <div class="benefit-actions">
+              <button title="Edit"><i class="fas fa-pen"></i></button>
+              <button title="Delete"><i class="fas fa-trash"></i></button>
+            </div>
+          </li>
+          <li class="benefit-item">
+            <input type="checkbox">
+            <span class="benefit-text">1-on-1 meeting with director (Platinum only)</span>
+            <div class="benefit-actions">
+              <button title="Edit"><i class="fas fa-pen"></i></button>
+              <button title="Delete"><i class="fas fa-trash"></i></button>
+            </div>
+          </li>
+          <li class="benefit-item">
+            <input type="checkbox">
+            <span class="benefit-text">Named fund/project sponsorship (Platinum only)</span>
+            <div class="benefit-actions">
+              <button title="Edit"><i class="fas fa-pen"></i></button>
+              <button title="Delete"><i class="fas fa-trash"></i></button>
+            </div>
+          </li>
+        </ul>
+        <button class="add-benefit-btn"><i class="fas fa-plus"></i> Add Custom Benefit</button>
+      </div>
+
+      <!-- Eligibility & Rules -->
+      <div class="form-section">
+        <div class="form-section-title">Eligibility & Rules</div>
+        <div class="form-group">
+          <label>Minimum Donation History</label>
+          <select>
+            <option selected>No minimum</option>
+            <option>$100+</option>
+            <option>$500+</option>
+            <option>$1,000+</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Upgrade Path</label>
+          <select>
+            <option>None</option>
+            <option>From Bronze</option>
+            <option selected>From Silver</option>
+            <option>From Gold</option>
+            <option>From Platinum</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Downgrade Policy</label>
+          <select>
+            <option selected>Allow</option>
+            <option>Prevent</option>
+            <option>Allow with pro-rata refund</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Maximum Members</label>
+          <select>
+            <option selected>Unlimited</option>
+            <option>50</option>
+            <option>100</option>
+            <option>Custom</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="panel-footer">
+      <button class="btn-cancel" onclick="closeEditPanel()">Cancel</button>
+      <button class="btn-primary-accent" onclick="closeEditPanel()"><i class="fas fa-check me-1"></i>Save Tier</button>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function openEditPanel(tier) {
+      const names = { bronze: 'Bronze', silver: 'Silver', gold: 'Gold', platinum: 'Platinum', lifetime: 'Lifetime', new: 'New Tier' };
+      document.getElementById('panelTierName').textContent = names[tier] || tier;
+      document.getElementById('panelOverlay').classList.add('show');
+      document.getElementById('editPanel').classList.add('show');
+    }
+
+    function closeEditPanel() {
+      document.getElementById('panelOverlay').classList.remove('show');
+      document.getElementById('editPanel').classList.remove('show');
+    }
+  </script>
+
+</body>
+
+</html>

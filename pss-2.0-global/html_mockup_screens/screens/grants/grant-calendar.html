@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grant Calendar - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --grants-accent: #0369a1;
+      --grants-accent-bg: #e0f2fe;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header h1 i {
+      color: var(--grants-accent);
+      margin-right: 0.5rem;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--grants-accent);
+      border-color: var(--grants-accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--grants-accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #025e8c;
+      border-color: #025e8c;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--grants-accent);
+      color: var(--grants-accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--grants-accent-bg);
+      color: var(--grants-accent);
+    }
+
+    /* Toolbar */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    /* View Toggle */
+    .view-toggle {
+      display: inline-flex;
+      border-radius: 0.5rem;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+    }
+
+    .view-toggle .toggle-btn {
+      padding: 0.4rem 1rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      border: none;
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+      border-right: 1px solid var(--border-color);
+    }
+
+    .view-toggle .toggle-btn:last-child {
+      border-right: none;
+    }
+
+    .view-toggle .toggle-btn.active {
+      background: var(--grants-accent);
+      color: white;
+    }
+
+    .view-toggle .toggle-btn:hover:not(.active) {
+      background: #f8fafc;
+    }
+
+    /* Filter Dropdowns */
+    .filter-select {
+      font-size: 0.8125rem;
+      padding: 0.4rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      background: white;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    /* Card */
+    .content-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+
+    .card-header-bar {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-header-bar h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    /* Calendar Navigation */
+    .cal-nav {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .cal-nav button {
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--border-color);
+      background: white;
+      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+    }
+
+    .cal-nav button:hover {
+      background: var(--grants-accent-bg);
+      color: var(--grants-accent);
+      border-color: var(--grants-accent);
+    }
+
+    .cal-nav .cal-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      min-width: 160px;
+      text-align: center;
+    }
+
+    /* Calendar Grid */
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+    }
+
+    .cal-grid .cal-header-cell {
+      padding: 0.6rem;
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border-color);
+      border-right: 1px solid var(--border-color);
+    }
+
+    .cal-grid .cal-header-cell:last-child {
+      border-right: none;
+    }
+
+    .cal-grid .cal-day {
+      min-height: 95px;
+      padding: 0.4rem;
+      border-bottom: 1px solid var(--border-color);
+      border-right: 1px solid var(--border-color);
+      background: white;
+      cursor: pointer;
+      transition: background 0.15s;
+      position: relative;
+    }
+
+    .cal-grid .cal-day:nth-child(7n) {
+      border-right: none;
+    }
+
+    .cal-grid .cal-day:hover {
+      background: #f0f9ff;
+    }
+
+    .cal-grid .cal-day.other-month {
+      background: #fafafa;
+      color: #cbd5e1;
+    }
+
+    .cal-grid .cal-day.today {
+      background: var(--grants-accent-bg);
+      border: 2px solid var(--grants-accent);
+    }
+
+    .cal-grid .cal-day.weekend {
+      background: #f8fafc;
+    }
+
+    .cal-grid .cal-day.weekend:hover {
+      background: #f0f9ff;
+    }
+
+    .cal-day .day-number {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 0.25rem;
+    }
+
+    .cal-day.today .day-number {
+      color: var(--grants-accent);
+      font-weight: 700;
+    }
+
+    .cal-day.other-month .day-number {
+      color: #cbd5e1;
+    }
+
+    /* Event Chips */
+    .event-chip {
+      font-size: 0.6875rem;
+      padding: 0.15rem 0.4rem;
+      border-radius: 0.25rem;
+      margin-bottom: 0.2rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: block;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .event-chip.red {
+      background: #fee2e2;
+      color: #b91c1c;
+      border-left: 3px solid #dc2626;
+    }
+
+    .event-chip.yellow {
+      background: #fef9c3;
+      color: #a16207;
+      border-left: 3px solid #f59e0b;
+    }
+
+    .event-chip.orange {
+      background: #ffedd5;
+      color: #c2410c;
+      border-left: 3px solid #f97316;
+    }
+
+    .event-chip.green {
+      background: #dcfce7;
+      color: #15803d;
+      border-left: 3px solid #22c55e;
+    }
+
+    .event-chip.blue {
+      background: #dbeafe;
+      color: #1d4ed8;
+      border-left: 3px solid #3b82f6;
+    }
+
+    /* Legend */
+    .cal-legend {
+      display: flex;
+      gap: 1.25rem;
+      padding: 0.75rem 1.25rem;
+      border-top: 1px solid var(--border-color);
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .legend-dot.red { background: #dc2626; }
+    .legend-dot.yellow { background: #f59e0b; }
+    .legend-dot.orange { background: #f97316; }
+    .legend-dot.green { background: #22c55e; }
+    .legend-dot.blue { background: #3b82f6; }
+
+    /* Side Panel */
+    .side-panel-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.3);
+      z-index: 1040;
+    }
+
+    .side-panel-overlay.show {
+      display: block;
+    }
+
+    .side-panel {
+      position: fixed;
+      top: 0;
+      right: -420px;
+      width: 400px;
+      max-width: 90vw;
+      height: 100vh;
+      background: white;
+      box-shadow: -4px 0 24px rgba(0,0,0,0.15);
+      z-index: 1050;
+      transition: right 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .side-panel.show {
+      right: 0;
+    }
+
+    .side-panel-header {
+      padding: 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .side-panel-header h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .side-panel-header .close-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: #f1f5f9;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+    }
+
+    .side-panel-header .close-btn:hover {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .side-panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.25rem;
+    }
+
+    .panel-event {
+      padding: 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .panel-event .event-type-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+    }
+
+    .panel-event .event-type-icon.red { background: #fee2e2; color: #dc2626; }
+    .panel-event .event-type-icon.yellow { background: #fef9c3; color: #a16207; }
+    .panel-event .event-type-icon.orange { background: #ffedd5; color: #c2410c; }
+
+    .panel-event-title {
+      font-weight: 600;
+      font-size: 0.875rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .panel-event-grant {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .side-panel-footer {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    /* Upcoming Deadlines Table */
+    .deadline-table {
+      width: 100%;
+      font-size: 0.8125rem;
+    }
+
+    .deadline-table thead th {
+      background: #f8fafc;
+      padding: 0.65rem 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      letter-spacing: 0.05em;
+      border-bottom: 2px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    .deadline-table tbody td {
+      padding: 0.65rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+
+    .deadline-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    .deadline-table tbody tr.urgent {
+      background: #fef2f2;
+    }
+
+    .deadline-table tbody tr.urgent:hover {
+      background: #fee2e2;
+    }
+
+    .deadline-table tbody tr.warning {
+      background: #fffbeb;
+    }
+
+    .deadline-table tbody tr.warning:hover {
+      background: #fef9c3;
+    }
+
+    .type-badge {
+      font-size: 0.6875rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 1rem;
+      font-weight: 600;
+    }
+
+    .type-badge.application { background: #f3e8ff; color: #7c3aed; }
+    .type-badge.meeting { background: #fef9c3; color: #a16207; }
+    .type-badge.decision { background: #ffedd5; color: #c2410c; }
+    .type-badge.report { background: #dbeafe; color: #1d4ed8; }
+
+    .grant-link {
+      color: var(--grants-accent);
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .grant-link:hover {
+      text-decoration: underline;
+    }
+
+    .status-text {
+      font-weight: 600;
+      font-size: 0.75rem;
+    }
+
+    .status-text.danger { color: #dc2626; }
+    .status-text.warning { color: #d97706; }
+    .status-text.normal { color: var(--text-secondary); }
+
+    .btn-sm-action {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 0.375rem;
+      border: 1px solid var(--grants-accent);
+      background: white;
+      color: var(--grants-accent);
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .btn-sm-action:hover {
+      background: var(--grants-accent);
+      color: white;
+    }
+
+    /* Timeline View */
+    .timeline-container {
+      overflow-x: auto;
+    }
+
+    .timeline-grid {
+      display: grid;
+      grid-template-columns: 180px repeat(12, 1fr);
+      min-width: 1100px;
+    }
+
+    .timeline-header-cell {
+      padding: 0.6rem 0.5rem;
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      background: #f8fafc;
+      border-bottom: 2px solid var(--border-color);
+      border-right: 1px solid var(--border-color);
+    }
+
+    .timeline-header-cell:first-child {
+      text-align: left;
+      padding-left: 1rem;
+    }
+
+    .timeline-header-cell.current-month {
+      background: var(--grants-accent-bg);
+      color: var(--grants-accent);
+    }
+
+    .timeline-row {
+      display: contents;
+    }
+
+    .timeline-grant-name {
+      padding: 0.75rem 1rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-color);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      background: white;
+    }
+
+    .timeline-cell {
+      padding: 0.5rem 0.25rem;
+      border-bottom: 1px solid var(--border-color);
+      border-right: 1px solid var(--border-color);
+      position: relative;
+      min-height: 50px;
+      background: white;
+    }
+
+    .timeline-cell.current-month {
+      background: #f0f9ff;
+    }
+
+    .timeline-bar {
+      height: 24px;
+      border-radius: 4px;
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      left: 4px;
+      right: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .timeline-bar.active { background: var(--grants-accent); opacity: 0.8; }
+    .timeline-bar.on-track { background: #22c55e; opacity: 0.7; }
+    .timeline-bar.upcoming { background: #f59e0b; opacity: 0.7; }
+
+    .timeline-marker {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.55rem;
+      color: white;
+      font-weight: 700;
+      z-index: 2;
+      cursor: pointer;
+    }
+
+    .timeline-marker.report { background: #3b82f6; }
+    .timeline-marker.milestone { background: #f97316; }
+    .timeline-marker.deadline { background: #dc2626; }
+    .timeline-marker.decision { background: #8b5cf6; }
+    .timeline-marker.review { background: #f59e0b; }
+
+    .timeline-marker[title]:hover::after {
+      content: attr(title);
+      position: absolute;
+      top: -28px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e293b;
+      color: white;
+      font-size: 0.65rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 0.25rem;
+      white-space: nowrap;
+      z-index: 10;
+    }
+
+    /* Quarter View */
+    .quarter-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      padding: 1rem;
+    }
+
+    .quarter-month {
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      overflow: hidden;
+    }
+
+    .quarter-month-header {
+      background: #f8fafc;
+      padding: 0.5rem;
+      text-align: center;
+      font-weight: 700;
+      font-size: 0.875rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .quarter-cal {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+    }
+
+    .quarter-cal .qc-header {
+      padding: 0.25rem;
+      text-align: center;
+      font-size: 0.625rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      background: #fafafa;
+    }
+
+    .quarter-cal .qc-day {
+      padding: 0.2rem;
+      text-align: center;
+      font-size: 0.6875rem;
+      min-height: 32px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .quarter-cal .qc-day:hover {
+      background: #f0f9ff;
+    }
+
+    .quarter-cal .qc-day.today {
+      background: var(--grants-accent-bg);
+      font-weight: 700;
+      color: var(--grants-accent);
+    }
+
+    .quarter-cal .qc-day.other-month {
+      color: #cbd5e1;
+    }
+
+    .quarter-cal .qc-day .qc-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      margin: 1px auto 0;
+    }
+
+    /* Section title */
+    .section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .section-title i {
+      color: var(--grants-accent);
+    }
+
+    /* View Containers */
+    .view-container {
+      display: none;
+    }
+
+    .view-container.active {
+      display: block;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .cal-grid .cal-day {
+        min-height: 60px;
+      }
+      .event-chip {
+        font-size: 0.6rem;
+      }
+      .quarter-grid {
+        grid-template-columns: 1fr;
+      }
+      .deadline-table {
+        display: block;
+        overflow-x: auto;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-calendar-alt"></i> Grant Calendar</h1>
+      <p class="subtitle">Track deadlines, reports, and milestones across all grants</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline-accent" onclick="openAddDeadline()"><i class="fas fa-plus me-1"></i>Add Deadline</button>
+      <button class="btn-outline-accent"><i class="fas fa-file-export me-1"></i>Export Calendar</button>
+      <button class="btn-outline-accent"><i class="fas fa-sync-alt me-1"></i>Sync to Outlook/Google</button>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <div class="view-toggle">
+        <button class="toggle-btn active" onclick="switchView('month')" id="btn-month">Month</button>
+        <button class="toggle-btn" onclick="switchView('quarter')" id="btn-quarter">Quarter</button>
+        <button class="toggle-btn" onclick="switchView('timeline')" id="btn-timeline">Timeline</button>
+      </div>
+      <select class="filter-select" id="filterGrant">
+        <option value="all">All Grants</option>
+        <option value="GRT-008">GRT-008 (USAID)</option>
+        <option value="GRT-009">GRT-009 (Dubai Cares)</option>
+        <option value="GRT-010">GRT-010 (DFID)</option>
+        <option value="GRT-011">GRT-011 (UNICEF)</option>
+        <option value="GRT-012">GRT-012 (Gates Foundation)</option>
+      </select>
+      <select class="filter-select" id="filterType">
+        <option value="all">All Types</option>
+        <option value="report">Reports</option>
+        <option value="meeting">Meetings</option>
+        <option value="deadline">Deadlines</option>
+        <option value="milestone">Milestones</option>
+        <option value="decision">Decisions</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- ========== MONTH VIEW ========== -->
+  <div class="view-container active" id="view-month">
+    <div class="content-card mb-4">
+      <div class="card-header-bar">
+        <div class="cal-nav">
+          <button onclick="prevMonth()" title="Previous Month"><i class="fas fa-chevron-left"></i></button>
+          <span class="cal-title" id="calTitle">April 2026</span>
+          <button onclick="nextMonth()" title="Next Month"><i class="fas fa-chevron-right"></i></button>
+        </div>
+        <button class="btn-outline-accent" style="font-size:0.75rem;padding:0.3rem 0.75rem;" onclick="goToToday()"><i class="fas fa-crosshairs me-1"></i>Today</button>
+      </div>
+
+      <!-- Calendar Grid -->
+      <div class="cal-grid">
+        <!-- Headers -->
+        <div class="cal-header-cell">Mon</div>
+        <div class="cal-header-cell">Tue</div>
+        <div class="cal-header-cell">Wed</div>
+        <div class="cal-header-cell">Thu</div>
+        <div class="cal-header-cell">Fri</div>
+        <div class="cal-header-cell">Sat</div>
+        <div class="cal-header-cell">Sun</div>
+
+        <!-- Week 1: Mar 30 - Apr 5 -->
+        <div class="cal-day other-month" onclick="openDatePanel('March 30, 2026')">
+          <div class="day-number">30</div>
+        </div>
+        <div class="cal-day other-month" onclick="openDatePanel('March 31, 2026')">
+          <div class="day-number">31</div>
+        </div>
+        <div class="cal-day" onclick="openDatePanel('April 1, 2026')">
+          <div class="day-number">1</div>
+        </div>
+        <div class="cal-day" onclick="openDatePanel('April 2, 2026')">
+          <div class="day-number">2</div>
+        </div>
+        <div class="cal-day" onclick="openDatePanel('April 3, 2026')">
+          <div class="day-number">3</div>
+        </div>
+        <div class="cal-day weekend" onclick="openDatePanel('April 4, 2026')">
+          <div class="day-number">4</div>
+        </div>
+        <div class="cal-day weekend" onclick="openDatePanel('April 5, 2026')">
+          <div class="day-number">5</div>
+        </div>
+
+        <!-- Week 2: Apr 6-12 -->
+        <div class="cal-day" onclick="openDatePanel('April 6, 2026')">
+          <div class="day-number">6</div>
+        </div>
+        <div class="cal-day" onclick="openDatePanel('April 7, 2026')">
+          <div class="day-number">7</div>
+        </div>
+        <div class="cal-day" onclick="openDatePanel('April 8, 2026')">
+          <div class="day-number">8</div>
+        </div>
+        <div class="cal-day" onclick="openDatePanel('April 9, 2026')">
+          <div class="day-number">9</div>
+        </div>
+        <div class="cal-day" onclick="openDatePanel('April 10, 2026')">
+          <div class="day-number">10</div>
+        </div>
+        <div class="cal-day weekend" onclick="openDatePanel('April 11, 2026')">
+          <div class="day-number">11</div>
+        </div>
+        <div class="cal-day weekend" onclick="openDatePanel('April 12, 2026')">
+          <div class="day-number">12</div>
+        </div>
+
+        <!-- Week 3: Apr 13-19 -->
+        <div class="cal-day today" onclick="openDatePanel('April 13, 2026')">
+          <div class="day-number">13</div>
+        </div>
+        <div class="cal-day" onclick="openDatePanel('April 14, 2026')">
+          <div class="day-number">14</div>
+        </div>
+        <div class="cal-day" onclick="openDatePanel('April 15, 2026')">
+          <div class="day-number">15</div>
+          <span class="event-chip red" onclick="event.stopPropagation(); openDatePanel('April 15, 2026')">USAID Application Deadline</span>
+        </div>
+        <div class="cal-day" onclick="openDatePanel('April 16, 2026')">
+          <div class="day-number">16</div>
+        </div>
+        <div class="cal-day" onclick="openDatePanel('April 17, 2026')">
+          <div class="day-number">17</div>
+        </div>
+        <div class="cal-day weekend" onclick="openDatePanel('April 18, 2026')">
+          <div class="day-number">18</div>
+        </div>
+        <div class="cal-day weekend" onclick="openDatePanel('April 19, 2026')">
+          <div class="day-number">19</div>
+        </div>
+
+        <!-- Week 4: Apr 20-26 -->
+        <div class="cal-day" onclick="openDatePanel('April 20, 2026')">
+          <div class="day-number">20</div>
+          <span class="event-chip yellow" onclick="event.stopPropagation(); openDatePanel('April 20, 2026')">DFID Review Meeting</span>
+        </div>
+        <div class="cal-day" onclick="openDatePanel('April 21, 2026')">
+          <div class="day-number">21</div>
+        </div>
+        <div class="cal-day" onclick="openDatePanel('April 22, 2026')">
+          <div class="day-number">22</div>
+        </div>
+        <div class="cal-day" onclick="openDatePanel('April 23, 2026')">
+          <div class="day-number">23</div>
+        </div>
+        <div class="cal-day" onclick="openDatePanel('April 24, 2026')">
+          <div class="day-number">24</div>
+        </div>
+        <div class="cal-day weekend" onclick="openDatePanel('April 25, 2026')">
+          <div class="day-number">25</div>
+          <span class="event-chip orange" onclick="event.stopPropagation(); openDatePanel('April 25, 2026')">Dubai Cares Decision</span>
+        </div>
+        <div class="cal-day weekend" onclick="openDatePanel('April 26, 2026')">
+          <div class="day-number">26</div>
+        </div>
+
+        <!-- Week 5: Apr 27 - May 3 -->
+        <div class="cal-day" onclick="openDatePanel('April 27, 2026')">
+          <div class="day-number">27</div>
+        </div>
+        <div class="cal-day" onclick="openDatePanel('April 28, 2026')">
+          <div class="day-number">28</div>
+        </div>
+        <div class="cal-day" onclick="openDatePanel('April 29, 2026')">
+          <div class="day-number">29</div>
+        </div>
+        <div class="cal-day" onclick="openDatePanel('April 30, 2026')">
+          <div class="day-number">30</div>
+          <span class="event-chip red" onclick="event.stopPropagation(); openDatePanel('April 30, 2026')">Gates Q1 Report Due</span>
+          <span class="event-chip red" onclick="event.stopPropagation(); openDatePanel('April 30, 2026')">UNICEF Q1 Report Due</span>
+        </div>
+        <div class="cal-day other-month" onclick="openDatePanel('May 1, 2026')">
+          <div class="day-number">1</div>
+        </div>
+        <div class="cal-day other-month weekend" onclick="openDatePanel('May 2, 2026')">
+          <div class="day-number">2</div>
+        </div>
+        <div class="cal-day other-month weekend" onclick="openDatePanel('May 3, 2026')">
+          <div class="day-number">3</div>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="cal-legend">
+        <div class="legend-item"><span class="legend-dot red"></span> Report Due / Application Deadline</div>
+        <div class="legend-item"><span class="legend-dot yellow"></span> Meeting / Review</div>
+        <div class="legend-item"><span class="legend-dot orange"></span> Decision / Milestone</div>
+        <div class="legend-item"><span class="legend-dot green"></span> Disbursement / Approval</div>
+        <div class="legend-item"><span class="legend-dot blue"></span> Grant Start / End</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== QUARTER VIEW ========== -->
+  <div class="view-container" id="view-quarter">
+    <div class="content-card mb-4">
+      <div class="card-header-bar">
+        <div class="cal-nav">
+          <button onclick="prevMonth()"><i class="fas fa-chevron-left"></i></button>
+          <span class="cal-title">Q2 2026 (Apr - Jun)</span>
+          <button onclick="nextMonth()"><i class="fas fa-chevron-right"></i></button>
+        </div>
+      </div>
+      <div class="quarter-grid">
+        <!-- April -->
+        <div class="quarter-month">
+          <div class="quarter-month-header">April 2026</div>
+          <div class="quarter-cal">
+            <div class="qc-header">M</div><div class="qc-header">T</div><div class="qc-header">W</div><div class="qc-header">T</div><div class="qc-header">F</div><div class="qc-header">S</div><div class="qc-header">S</div>
+            <div class="qc-day other-month">30</div><div class="qc-day other-month">31</div>
+            <div class="qc-day">1</div><div class="qc-day">2</div><div class="qc-day">3</div><div class="qc-day">4</div><div class="qc-day">5</div>
+            <div class="qc-day">6</div><div class="qc-day">7</div><div class="qc-day">8</div><div class="qc-day">9</div><div class="qc-day">10</div><div class="qc-day">11</div><div class="qc-day">12</div>
+            <div class="qc-day today">13</div><div class="qc-day">14</div>
+            <div class="qc-day">15<div class="qc-dot" style="background:#dc2626;"></div></div>
+            <div class="qc-day">16</div><div class="qc-day">17</div><div class="qc-day">18</div><div class="qc-day">19</div>
+            <div class="qc-day">20<div class="qc-dot" style="background:#f59e0b;"></div></div>
+            <div class="qc-day">21</div><div class="qc-day">22</div><div class="qc-day">23</div><div class="qc-day">24</div>
+            <div class="qc-day">25<div class="qc-dot" style="background:#f97316;"></div></div>
+            <div class="qc-day">26</div>
+            <div class="qc-day">27</div><div class="qc-day">28</div><div class="qc-day">29</div>
+            <div class="qc-day">30<div class="qc-dot" style="background:#dc2626;"></div></div>
+            <div class="qc-day other-month">1</div><div class="qc-day other-month">2</div><div class="qc-day other-month">3</div>
+          </div>
+        </div>
+
+        <!-- May -->
+        <div class="quarter-month">
+          <div class="quarter-month-header">May 2026</div>
+          <div class="quarter-cal">
+            <div class="qc-header">M</div><div class="qc-header">T</div><div class="qc-header">W</div><div class="qc-header">T</div><div class="qc-header">F</div><div class="qc-header">S</div><div class="qc-header">S</div>
+            <div class="qc-day other-month">27</div><div class="qc-day other-month">28</div><div class="qc-day other-month">29</div><div class="qc-day other-month">30</div>
+            <div class="qc-day">1</div><div class="qc-day">2</div><div class="qc-day">3</div>
+            <div class="qc-day">4</div><div class="qc-day">5</div><div class="qc-day">6</div><div class="qc-day">7</div><div class="qc-day">8</div><div class="qc-day">9</div><div class="qc-day">10</div>
+            <div class="qc-day">11</div><div class="qc-day">12</div><div class="qc-day">13</div><div class="qc-day">14</div>
+            <div class="qc-day">15<div class="qc-dot" style="background:#3b82f6;"></div></div>
+            <div class="qc-day">16</div><div class="qc-day">17</div>
+            <div class="qc-day">18</div><div class="qc-day">19</div><div class="qc-day">20</div><div class="qc-day">21</div><div class="qc-day">22</div><div class="qc-day">23</div><div class="qc-day">24</div>
+            <div class="qc-day">25</div><div class="qc-day">26</div><div class="qc-day">27</div><div class="qc-day">28</div><div class="qc-day">29</div><div class="qc-day">30</div><div class="qc-day">31</div>
+          </div>
+        </div>
+
+        <!-- June -->
+        <div class="quarter-month">
+          <div class="quarter-month-header">June 2026</div>
+          <div class="quarter-cal">
+            <div class="qc-header">M</div><div class="qc-header">T</div><div class="qc-header">W</div><div class="qc-header">T</div><div class="qc-header">F</div><div class="qc-header">S</div><div class="qc-header">S</div>
+            <div class="qc-day">1</div><div class="qc-day">2</div><div class="qc-day">3</div><div class="qc-day">4</div><div class="qc-day">5</div><div class="qc-day">6</div><div class="qc-day">7</div>
+            <div class="qc-day">8</div><div class="qc-day">9</div><div class="qc-day">10</div><div class="qc-day">11</div><div class="qc-day">12</div><div class="qc-day">13</div><div class="qc-day">14</div>
+            <div class="qc-day">15</div><div class="qc-day">16</div><div class="qc-day">17</div><div class="qc-day">18</div><div class="qc-day">19</div><div class="qc-day">20</div><div class="qc-day">21</div>
+            <div class="qc-day">22</div><div class="qc-day">23</div><div class="qc-day">24</div><div class="qc-day">25</div><div class="qc-day">26</div><div class="qc-day">27</div><div class="qc-day">28</div>
+            <div class="qc-day">29</div>
+            <div class="qc-day">30<div class="qc-dot" style="background:#3b82f6;"></div></div>
+            <div class="qc-day other-month">1</div><div class="qc-day other-month">2</div><div class="qc-day other-month">3</div><div class="qc-day other-month">4</div><div class="qc-day other-month">5</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cal-legend">
+        <div class="legend-item"><span class="legend-dot red"></span> Report Due / Deadline</div>
+        <div class="legend-item"><span class="legend-dot yellow"></span> Meeting / Review</div>
+        <div class="legend-item"><span class="legend-dot orange"></span> Decision / Milestone</div>
+        <div class="legend-item"><span class="legend-dot green"></span> Disbursement / Approval</div>
+        <div class="legend-item"><span class="legend-dot blue"></span> Grant Start / End</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== TIMELINE VIEW ========== -->
+  <div class="view-container" id="view-timeline">
+    <div class="content-card mb-4">
+      <div class="card-header-bar">
+        <h2><i class="fas fa-stream me-2" style="color:var(--grants-accent)"></i>Grant Timeline - 2026</h2>
+      </div>
+      <div class="timeline-container" style="padding:0;">
+        <div class="timeline-grid">
+          <!-- Header Row -->
+          <div class="timeline-header-cell">Grant</div>
+          <div class="timeline-header-cell">Jan</div>
+          <div class="timeline-header-cell">Feb</div>
+          <div class="timeline-header-cell">Mar</div>
+          <div class="timeline-header-cell current-month">Apr</div>
+          <div class="timeline-header-cell">May</div>
+          <div class="timeline-header-cell">Jun</div>
+          <div class="timeline-header-cell">Jul</div>
+          <div class="timeline-header-cell">Aug</div>
+          <div class="timeline-header-cell">Sep</div>
+          <div class="timeline-header-cell">Oct</div>
+          <div class="timeline-header-cell">Nov</div>
+          <div class="timeline-header-cell">Dec</div>
+
+          <!-- GRT-012 Gates Foundation -->
+          <div class="timeline-row">
+            <div class="timeline-grant-name">
+              <span class="grant-link" onclick="parent.loadContent('grants/grant-detail')">GRT-012 Gates</span>
+            </div>
+            <div class="timeline-cell"><div class="timeline-bar on-track"></div></div>
+            <div class="timeline-cell"><div class="timeline-bar on-track"></div><div class="timeline-marker report" title="Q4 Report">R</div></div>
+            <div class="timeline-cell"><div class="timeline-bar on-track"></div><div class="timeline-marker milestone" title="Milestone M2">M</div></div>
+            <div class="timeline-cell current-month"><div class="timeline-bar upcoming"></div><div class="timeline-marker report" title="Q1 Report Due">R</div></div>
+            <div class="timeline-cell"><div class="timeline-bar active"></div></div>
+            <div class="timeline-cell"><div class="timeline-bar active"></div><div class="timeline-marker report" title="Q2 Report">R</div><div class="timeline-marker milestone" title="Milestone M3" style="left:75%">M</div></div>
+            <div class="timeline-cell"><div class="timeline-bar active"></div></div>
+            <div class="timeline-cell"><div class="timeline-bar active"></div><div class="timeline-marker report" title="Q3 Report">R</div></div>
+            <div class="timeline-cell"><div class="timeline-bar active"></div></div>
+            <div class="timeline-cell"><div class="timeline-bar active"></div><div class="timeline-marker report" title="Annual Report">R</div></div>
+            <div class="timeline-cell"><div class="timeline-bar active"></div></div>
+            <div class="timeline-cell"><div class="timeline-bar active"></div><div class="timeline-marker report" title="Final Report">R</div><div class="timeline-marker milestone" title="Milestone M4" style="left:75%">M</div></div>
+          </div>
+
+          <!-- GRT-011 UNICEF -->
+          <div class="timeline-row">
+            <div class="timeline-grant-name">
+              <span class="grant-link" onclick="parent.loadContent('grants/grant-detail')">GRT-011 UNICEF</span>
+            </div>
+            <div class="timeline-cell"><div class="timeline-bar on-track"></div></div>
+            <div class="timeline-cell"><div class="timeline-bar on-track"></div><div class="timeline-marker report" title="Q4 Report">R</div></div>
+            <div class="timeline-cell"><div class="timeline-bar on-track"></div></div>
+            <div class="timeline-cell current-month"><div class="timeline-bar upcoming"></div><div class="timeline-marker report" title="Q1 Report Due">R</div></div>
+            <div class="timeline-cell"><div class="timeline-bar active"></div></div>
+            <div class="timeline-cell"><div class="timeline-bar active"></div><div class="timeline-marker report" title="Q2 Report">R</div></div>
+            <div class="timeline-cell"><div class="timeline-bar active"></div></div>
+            <div class="timeline-cell"><div class="timeline-bar active"></div><div class="timeline-marker deadline" title="Final Report">R</div></div>
+            <div class="timeline-cell"></div>
+            <div class="timeline-cell"></div>
+            <div class="timeline-cell"></div>
+            <div class="timeline-cell"></div>
+          </div>
+
+          <!-- GRT-010 DFID -->
+          <div class="timeline-row">
+            <div class="timeline-grant-name">
+              <span class="grant-link" onclick="parent.loadContent('grants/grant-detail')">GRT-010 DFID</span>
+            </div>
+            <div class="timeline-cell"><div class="timeline-bar on-track"></div></div>
+            <div class="timeline-cell"><div class="timeline-bar on-track"></div></div>
+            <div class="timeline-cell"><div class="timeline-bar on-track"></div></div>
+            <div class="timeline-cell current-month"><div class="timeline-bar upcoming"></div><div class="timeline-marker deadline" title="Final Report">R</div></div>
+            <div class="timeline-cell"></div>
+            <div class="timeline-cell"></div>
+            <div class="timeline-cell"></div>
+            <div class="timeline-cell"></div>
+            <div class="timeline-cell"></div>
+            <div class="timeline-cell"></div>
+            <div class="timeline-cell"></div>
+            <div class="timeline-cell"></div>
+          </div>
+
+          <!-- GRT-008 USAID -->
+          <div class="timeline-row">
+            <div class="timeline-grant-name">
+              <span class="grant-link" onclick="parent.loadContent('grants/grant-detail')">GRT-008 USAID</span>
+            </div>
+            <div class="timeline-cell"></div>
+            <div class="timeline-cell"></div>
+            <div class="timeline-cell"></div>
+            <div class="timeline-cell current-month"><div class="timeline-marker deadline" title="Application Deadline">!</div></div>
+            <div class="timeline-cell"><div class="timeline-bar active"></div></div>
+            <div class="timeline-cell"><div class="timeline-bar active"></div></div>
+            <div class="timeline-cell"><div class="timeline-bar active"></div></div>
+            <div class="timeline-cell"><div class="timeline-bar active"></div></div>
+            <div class="timeline-cell"><div class="timeline-bar active"></div></div>
+            <div class="timeline-cell"><div class="timeline-bar active"></div></div>
+            <div class="timeline-cell"><div class="timeline-bar active"></div></div>
+            <div class="timeline-cell"><div class="timeline-bar active"></div></div>
+          </div>
+
+          <!-- GRT-009 Dubai Cares -->
+          <div class="timeline-row">
+            <div class="timeline-grant-name">
+              <span class="grant-link" onclick="parent.loadContent('grants/grant-detail')">GRT-009 Dubai Cares</span>
+            </div>
+            <div class="timeline-cell"></div>
+            <div class="timeline-cell"><div class="timeline-marker review" title="Review">?</div></div>
+            <div class="timeline-cell"></div>
+            <div class="timeline-cell current-month"><div class="timeline-marker decision" title="Decision Expected">D</div></div>
+            <div class="timeline-cell"><div class="timeline-bar active"></div></div>
+            <div class="timeline-cell"><div class="timeline-bar active"></div></div>
+            <div class="timeline-cell"><div class="timeline-bar active"></div></div>
+            <div class="timeline-cell"><div class="timeline-bar active"></div></div>
+            <div class="timeline-cell"><div class="timeline-bar active"></div></div>
+            <div class="timeline-cell"><div class="timeline-bar active"></div></div>
+            <div class="timeline-cell"><div class="timeline-bar active"></div></div>
+            <div class="timeline-cell"><div class="timeline-bar active"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Timeline Legend -->
+      <div class="cal-legend">
+        <div class="legend-item"><span class="legend-dot" style="background:var(--grants-accent);opacity:0.8;"></span> Active</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#22c55e;opacity:0.7;"></span> On Track</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#f59e0b;opacity:0.7;"></span> Upcoming Deadline</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#3b82f6;"></span> Report (R)</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#f97316;"></span> Milestone (M)</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#dc2626;"></span> Deadline (!)</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#8b5cf6;"></span> Decision (D)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== UPCOMING DEADLINES (always visible) ========== -->
+  <div class="content-card">
+    <div class="card-header-bar">
+      <h2><i class="fas fa-clock me-2" style="color:var(--grants-accent)"></i>Upcoming Deadlines</h2>
+      <span style="font-size:0.75rem;color:var(--text-secondary);">6 upcoming events</span>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="deadline-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Grant</th>
+            <th>Event</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="urgent">
+            <td><strong>Apr 15, 2026</strong></td>
+            <td><span class="grant-link" onclick="parent.loadContent('grants/grant-detail')">GRT-008</span> (USAID)</td>
+            <td>Application Deadline</td>
+            <td><span class="type-badge application">Application</span></td>
+            <td><span class="status-text danger"><i class="fas fa-exclamation-circle me-1"></i>3 days left</span></td>
+            <td><button class="btn-sm-action" onclick="parent.loadContent('grants/grant-form')">View Application</button></td>
+          </tr>
+          <tr class="warning">
+            <td><strong>Apr 20, 2026</strong></td>
+            <td><span class="grant-link" onclick="parent.loadContent('grants/grant-detail')">GRT-010</span> (DFID)</td>
+            <td>Review Meeting</td>
+            <td><span class="type-badge meeting">Meeting</span></td>
+            <td><span class="status-text warning"><i class="fas fa-clock me-1"></i>8 days</span></td>
+            <td><button class="btn-sm-action" onclick="parent.loadContent('grants/grant-detail')">Prepare</button></td>
+          </tr>
+          <tr class="warning">
+            <td><strong>Apr 25, 2026</strong></td>
+            <td><span class="grant-link" onclick="parent.loadContent('grants/grant-detail')">GRT-009</span> (Dubai Cares)</td>
+            <td>Decision Expected</td>
+            <td><span class="type-badge decision">Decision</span></td>
+            <td><span class="status-text warning"><i class="fas fa-clock me-1"></i>13 days</span></td>
+            <td><button class="btn-sm-action" onclick="parent.loadContent('grants/grant-detail')">View</button></td>
+          </tr>
+          <tr class="warning">
+            <td><strong>Apr 30, 2026</strong></td>
+            <td><span class="grant-link" onclick="parent.loadContent('grants/grant-detail')">GRT-012</span> (Gates Foundation)</td>
+            <td>Q1 Progress Report</td>
+            <td><span class="type-badge report">Report</span></td>
+            <td><span class="status-text warning"><i class="fas fa-clock me-1"></i>18 days</span></td>
+            <td><button class="btn-sm-action" onclick="parent.loadContent('grants/grant-reporting')">Create Report</button></td>
+          </tr>
+          <tr class="warning">
+            <td><strong>Apr 30, 2026</strong></td>
+            <td><span class="grant-link" onclick="parent.loadContent('grants/grant-detail')">GRT-011</span> (UNICEF)</td>
+            <td>Q1 Progress Report</td>
+            <td><span class="type-badge report">Report</span></td>
+            <td><span class="status-text warning"><i class="fas fa-clock me-1"></i>18 days</span></td>
+            <td><button class="btn-sm-action" onclick="parent.loadContent('grants/grant-reporting')">Create Report</button></td>
+          </tr>
+          <tr>
+            <td><strong>May 15, 2026</strong></td>
+            <td><span class="grant-link" onclick="parent.loadContent('grants/grant-detail')">GRT-010</span> (DFID)</td>
+            <td>Final Report</td>
+            <td><span class="type-badge report">Report</span></td>
+            <td><span class="status-text normal"><i class="fas fa-clock me-1"></i>33 days</span></td>
+            <td><button class="btn-sm-action" onclick="parent.loadContent('grants/grant-reporting')">Start</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ========== SIDE PANEL ========== -->
+  <div class="side-panel-overlay" id="panelOverlay" onclick="closeDatePanel()"></div>
+  <div class="side-panel" id="datePanel">
+    <div class="side-panel-header">
+      <h3 id="panelDateTitle">April 15, 2026</h3>
+      <button class="close-btn" onclick="closeDatePanel()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="side-panel-body" id="panelBody">
+      <!-- Dynamic content injected by JS -->
+    </div>
+    <div class="side-panel-footer">
+      <button class="btn-outline-accent w-100" onclick="closeDatePanel()"><i class="fas fa-times me-1"></i>Close</button>
+    </div>
+  </div>
+
+  <script>
+    // Event data
+    const events = {
+      'April 15, 2026': [
+        { type: 'red', icon: 'fa-file-alt', title: 'USAID Application Deadline', grant: 'GRT-008 (USAID)', action: 'View Application', actionFn: "parent.loadContent('grants/grant-form')" }
+      ],
+      'April 20, 2026': [
+        { type: 'yellow', icon: 'fa-users', title: 'DFID Review Meeting', grant: 'GRT-010 (DFID)', action: 'Prepare', actionFn: "parent.loadContent('grants/grant-detail')" }
+      ],
+      'April 25, 2026': [
+        { type: 'orange', icon: 'fa-gavel', title: 'Decision Expected', grant: 'GRT-009 (Dubai Cares)', action: 'View', actionFn: "parent.loadContent('grants/grant-detail')" }
+      ],
+      'April 30, 2026': [
+        { type: 'red', icon: 'fa-file-alt', title: 'Q1 Progress Report Due', grant: 'GRT-012 (Gates Foundation)', action: 'Create Report', actionFn: "parent.loadContent('grants/grant-reporting')" },
+        { type: 'red', icon: 'fa-file-alt', title: 'Q1 Progress Report Due', grant: 'GRT-011 (UNICEF)', action: 'Create Report', actionFn: "parent.loadContent('grants/grant-reporting')" }
+      ]
+    };
+
+    // Switch views
+    function switchView(view) {
+      document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
+      document.querySelectorAll('.view-toggle .toggle-btn').forEach(b => b.classList.remove('active'));
+
+      document.getElementById('view-' + view).classList.add('active');
+      document.getElementById('btn-' + view).classList.add('active');
+    }
+
+    // Calendar navigation (visual only)
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    let currentMonthIndex = 3; // April
+    let currentYear = 2026;
+
+    function prevMonth() {
+      currentMonthIndex--;
+      if (currentMonthIndex < 0) {
+        currentMonthIndex = 11;
+        currentYear--;
+      }
+      document.getElementById('calTitle').textContent = months[currentMonthIndex] + ' ' + currentYear;
+    }
+
+    function nextMonth() {
+      currentMonthIndex++;
+      if (currentMonthIndex > 11) {
+        currentMonthIndex = 0;
+        currentYear++;
+      }
+      document.getElementById('calTitle').textContent = months[currentMonthIndex] + ' ' + currentYear;
+    }
+
+    function goToToday() {
+      currentMonthIndex = 3;
+      currentYear = 2026;
+      document.getElementById('calTitle').textContent = 'April 2026';
+    }
+
+    // Side panel
+    function openDatePanel(date) {
+      const panel = document.getElementById('datePanel');
+      const overlay = document.getElementById('panelOverlay');
+      const title = document.getElementById('panelDateTitle');
+      const body = document.getElementById('panelBody');
+
+      title.textContent = date;
+
+      const dateEvents = events[date];
+      if (dateEvents && dateEvents.length > 0) {
+        let html = '';
+        dateEvents.forEach(ev => {
+          html += `
+            <div class="panel-event">
+              <div class="d-flex align-items-start gap-3">
+                <div class="event-type-icon ${ev.type}">
+                  <i class="fas ${ev.icon}"></i>
+                </div>
+                <div class="flex-grow-1">
+                  <div class="panel-event-title">${ev.title}</div>
+                  <div class="panel-event-grant"><i class="fas fa-folder-open me-1"></i>${ev.grant}</div>
+                  <button class="btn-sm-action mt-2" onclick="${ev.actionFn}">${ev.action}</button>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        body.innerHTML = html;
+      } else {
+        body.innerHTML = `
+          <div class="text-center py-4">
+            <i class="fas fa-calendar-day fa-2x mb-2" style="color:#cbd5e1;"></i>
+            <p class="text-muted mb-0">No events scheduled for this date.</p>
+          </div>
+        `;
+      }
+
+      panel.classList.add('show');
+      overlay.classList.add('show');
+    }
+
+    function closeDatePanel() {
+      document.getElementById('datePanel').classList.remove('show');
+      document.getElementById('panelOverlay').classList.remove('show');
+    }
+
+    // Add deadline placeholder
+    function openAddDeadline() {
+      alert('Add Deadline form would open here.');
+    }
+
+    // Close panel on Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeDatePanel();
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document Types - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+      --settings-accent: #6366f1;
+      --settings-accent-bg: #eef2ff;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons */
+    .btn-primary-accent {
+      background: var(--settings-accent);
+      border-color: var(--settings-accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--settings-accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #4f46e5;
+      border-color: #4f46e5;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--settings-accent);
+      color: var(--settings-accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--settings-accent);
+      color: white;
+    }
+
+    .btn-sm {
+      font-size: 0.75rem;
+      padding: 0.375rem 0.75rem;
+    }
+
+    /* Summary Cards */
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .summary-card {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1.25rem;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .summary-card .card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.125rem;
+      flex-shrink: 0;
+    }
+
+    .summary-card .card-icon.indigo { background: #e0e7ff; color: #4f46e5; }
+    .summary-card .card-icon.blue { background: #dbeafe; color: #2563eb; }
+    .summary-card .card-icon.purple { background: #ede9fe; color: #7c3aed; }
+
+    .summary-card .card-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .summary-card .card-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.125rem;
+    }
+
+    .summary-card .card-sub {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .progress-bar-wrap {
+      width: 100%;
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 999px;
+      margin-top: 0.5rem;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.3s;
+    }
+
+    .progress-bar-fill.indigo { background: var(--settings-accent); }
+
+    /* Table Card */
+    .table-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      margin-bottom: 1.25rem;
+    }
+
+    .table-card-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .table-card-header h2 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .table-card-header .count-badge {
+      background: var(--settings-accent-bg);
+      color: var(--settings-accent);
+      font-size: 0.6875rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+      margin-left: 0.5rem;
+    }
+
+    .search-input {
+      position: relative;
+    }
+
+    .search-input input {
+      width: 220px;
+      padding: 0.4375rem 0.75rem 0.4375rem 2rem;
+      font-size: 0.8125rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .search-input input:focus {
+      border-color: var(--settings-accent);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .search-input i {
+      position: absolute;
+      left: 0.625rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+    }
+
+    /* Data Table */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    .data-table thead th {
+      background: #f8fafc;
+      padding: 0.625rem 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      font-size: 0.6875rem;
+      letter-spacing: 0.04em;
+      border-bottom: 2px solid var(--border-color);
+      white-space: nowrap;
+      text-align: left;
+    }
+
+    .data-table tbody td {
+      padding: 0.6875rem 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+
+    .data-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    .data-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .doc-type-cell {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .doc-type-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      flex-shrink: 0;
+    }
+
+    .doc-type-icon.photo { background: #fce7f3; color: #db2777; }
+    .doc-type-icon.pdf { background: #fef2f2; color: #dc2626; }
+    .doc-type-icon.doc { background: #dbeafe; color: #2563eb; }
+    .doc-type-icon.media { background: #ede9fe; color: #7c3aed; }
+    .doc-type-icon.data { background: #dcfce7; color: #16a34a; }
+
+    .doc-type-name {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Format Tags */
+    .format-tags {
+      display: flex;
+      gap: 0.25rem;
+      flex-wrap: wrap;
+    }
+
+    .format-tag {
+      font-size: 0.625rem;
+      font-weight: 700;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .format-tag.pdf { background: #fef2f2; color: #dc2626; }
+    .format-tag.jpg, .format-tag.png, .format-tag.webp, .format-tag.svg { background: #fce7f3; color: #db2777; }
+    .format-tag.doc, .format-tag.docx { background: #dbeafe; color: #2563eb; }
+    .format-tag.xls, .format-tag.xlsx, .format-tag.csv { background: #dcfce7; color: #16a34a; }
+    .format-tag.mp4, .format-tag.webm { background: #ede9fe; color: #7c3aed; }
+
+    .size-cell {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .storage-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .storage-badge.cloud { background: #dbeafe; color: #2563eb; }
+    .storage-badge.local { background: #f1f5f9; color: #64748b; }
+
+    .count-cell {
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-size: 0.75rem;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+    }
+
+    .status-badge.active {
+      background: #dcfce7;
+      color: #16a34a;
+    }
+
+    .status-badge .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .action-btns {
+      display: flex;
+      gap: 0.25rem;
+      align-items: center;
+    }
+
+    .btn-icon {
+      background: none;
+      border: none;
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      transition: all 0.12s;
+    }
+
+    .btn-icon:hover {
+      background: #f1f5f9;
+      color: var(--settings-accent);
+    }
+
+    /* Dropdown */
+    .dropdown-menu-custom {
+      position: absolute;
+      right: 0;
+      top: 100%;
+      background: white;
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+      border: 1px solid var(--border-color);
+      padding: 0.375rem;
+      min-width: 160px;
+      z-index: 100;
+      display: none;
+    }
+
+    .dropdown-menu-custom.show { display: block; }
+
+    .dropdown-item-custom {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4375rem 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      border-radius: 0.375rem;
+      cursor: pointer;
+      transition: background 0.1s;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+
+    .dropdown-item-custom:hover { background: #f1f5f9; }
+    .dropdown-item-custom.danger { color: var(--danger-color); }
+    .dropdown-item-custom.danger:hover { background: #fef2f2; }
+
+    /* Storage Accounts Section */
+    .collapsible-section {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      margin-bottom: 1.25rem;
+    }
+
+    .collapsible-header {
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+
+    .collapsible-header:hover { background: #f8fafc; }
+
+    .collapsible-header h2 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .collapsible-header .toggle-icon {
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      transition: transform 0.2s;
+    }
+
+    .collapsible-body {
+      border-top: 1px solid var(--border-color);
+    }
+
+    .collapsible-body.collapsed {
+      display: none;
+    }
+
+    .storage-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+    }
+
+    .storage-status.connected { color: var(--success-color); }
+    .storage-status.active { color: var(--success-color); }
+
+    .btn-test {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+
+    .btn-test:hover {
+      border-color: var(--settings-accent);
+      color: var(--settings-accent);
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+
+    .modal-overlay.hidden { display: none; }
+
+    .modal-box {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+      width: 580px;
+      max-width: 95vw;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-header h3 {
+      font-size: 1.0625rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.125rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: 6px;
+      transition: all 0.12s;
+    }
+
+    .modal-close:hover {
+      background: #f1f5f9;
+      color: var(--text-primary);
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+    }
+
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 0.375rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .form-group label .required {
+      color: var(--danger-color);
+    }
+
+    .form-control-custom {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8125rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      outline: none;
+      transition: border-color 0.15s;
+      color: var(--text-primary);
+      background: white;
+    }
+
+    .form-control-custom:focus {
+      border-color: var(--settings-accent);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .form-hint {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .btn-cancel {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-cancel:hover {
+      background: #f8fafc;
+      color: var(--text-primary);
+    }
+
+    /* Tag Input */
+    .tag-input-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+      padding: 0.375rem 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      min-height: 38px;
+      align-items: center;
+      cursor: text;
+      transition: border-color 0.15s;
+    }
+
+    .tag-input-wrap:focus-within {
+      border-color: var(--settings-accent);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .tag-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      background: #fef2f2;
+      color: #dc2626;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .tag-item .tag-remove {
+      cursor: pointer;
+      font-size: 0.5625rem;
+      opacity: 0.6;
+    }
+
+    .tag-item .tag-remove:hover { opacity: 1; }
+
+    .tag-input {
+      border: none;
+      outline: none;
+      font-size: 0.8125rem;
+      flex: 1;
+      min-width: 80px;
+      padding: 0.125rem;
+    }
+
+    .preset-btns {
+      display: flex;
+      gap: 0.375rem;
+      margin-top: 0.375rem;
+    }
+
+    .preset-btn {
+      font-size: 0.6875rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+      background: white;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.12s;
+    }
+
+    .preset-btn:hover {
+      border-color: var(--settings-accent);
+      color: var(--settings-accent);
+      background: var(--settings-accent-bg);
+    }
+
+    /* Toggle Switch */
+    .toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      background: #cbd5e1;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .toggle-switch.on { background: var(--settings-accent); }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background: white;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
+
+    .toggle-switch.on::after { transform: translateX(16px); }
+
+    .toggle-label {
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .summary-cards {
+        grid-template-columns: 1fr;
+      }
+
+      .data-table-wrapper {
+        overflow-x: auto;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .search-input input {
+        width: 160px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fa-solid fa-file-lines" style="color: var(--settings-accent); margin-right: 0.5rem;"></i>Document Types</h1>
+      <p class="subtitle">Configure file upload rules, formats, and storage for each document category</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="openDocTypeModal()">
+        <i class="fa-solid fa-plus"></i> New Document Type
+      </button>
+    </div>
+  </div>
+
+  <!-- Storage Summary Cards -->
+  <div class="summary-cards">
+    <div class="summary-card">
+      <div class="card-icon indigo"><i class="fa-solid fa-database"></i></div>
+      <div style="flex:1;">
+        <div class="card-value">12.3 GB</div>
+        <div class="card-label">Total Storage Used</div>
+        <div class="card-sub">of 50 GB (24.6%)</div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill indigo" style="width:24.6%;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="card-icon blue"><i class="fa-solid fa-file"></i></div>
+      <div>
+        <div class="card-value">8,456</div>
+        <div class="card-label">Total Documents</div>
+        <div class="card-sub">This month: +234</div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="card-icon purple"><i class="fa-solid fa-cloud"></i></div>
+      <div>
+        <div class="card-value">2</div>
+        <div class="card-label">Storage Accounts</div>
+        <div class="card-sub">Azure Blob + Local</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Document Types Table -->
+  <div class="table-card">
+    <div class="table-card-header">
+      <div style="display:flex;align-items:center;">
+        <h2>Document Types</h2>
+        <span class="count-badge">9 types</span>
+      </div>
+      <div class="search-input">
+        <i class="fa-solid fa-search"></i>
+        <input type="text" placeholder="Search document types...">
+      </div>
+    </div>
+    <div class="data-table-wrapper" style="overflow-x:auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Document Type</th>
+            <th>Allowed Formats</th>
+            <th>Max Size</th>
+            <th>Storage</th>
+            <th>Count</th>
+            <th>Size</th>
+            <th>Status</th>
+            <th style="width:80px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- 1: Profile Photo -->
+          <tr>
+            <td style="color:var(--text-secondary);">1</td>
+            <td>
+              <div class="doc-type-cell">
+                <div class="doc-type-icon photo"><i class="fa-solid fa-image"></i></div>
+                <span class="doc-type-name">Profile Photo</span>
+              </div>
+            </td>
+            <td>
+              <div class="format-tags">
+                <span class="format-tag jpg">JPG</span>
+                <span class="format-tag png">PNG</span>
+                <span class="format-tag webp">WebP</span>
+              </div>
+            </td>
+            <td class="size-cell">2 MB</td>
+            <td><span class="storage-badge cloud"><i class="fa-solid fa-cloud" style="font-size:0.5625rem;"></i> Azure Blob</span></td>
+            <td class="count-cell">1,234</td>
+            <td class="count-cell">890 MB</td>
+            <td><span class="status-badge active"><span class="dot"></span> Active</span></td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-icon" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                <div style="position:relative;">
+                  <button class="btn-icon" title="More" onclick="toggleDropdown(this)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                  <div class="dropdown-menu-custom">
+                    <button class="dropdown-item-custom"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+                    <button class="dropdown-item-custom"><i class="fa-solid fa-copy"></i> Duplicate</button>
+                    <button class="dropdown-item-custom danger"><i class="fa-solid fa-toggle-off"></i> Deactivate</button>
+                    <button class="dropdown-item-custom danger"><i class="fa-solid fa-trash"></i> Delete</button>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <!-- 2: Donation Receipt -->
+          <tr>
+            <td style="color:var(--text-secondary);">2</td>
+            <td>
+              <div class="doc-type-cell">
+                <div class="doc-type-icon pdf"><i class="fa-solid fa-file-pdf"></i></div>
+                <span class="doc-type-name">Donation Receipt</span>
+              </div>
+            </td>
+            <td>
+              <div class="format-tags"><span class="format-tag pdf">PDF</span></div>
+            </td>
+            <td class="size-cell">5 MB</td>
+            <td><span class="storage-badge cloud"><i class="fa-solid fa-cloud" style="font-size:0.5625rem;"></i> Azure Blob</span></td>
+            <td class="count-cell">3,456</td>
+            <td class="count-cell">2.1 GB</td>
+            <td><span class="status-badge active"><span class="dot"></span> Active</span></td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-icon" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                <div style="position:relative;">
+                  <button class="btn-icon" title="More" onclick="toggleDropdown(this)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                  <div class="dropdown-menu-custom">
+                    <button class="dropdown-item-custom"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+                    <button class="dropdown-item-custom"><i class="fa-solid fa-copy"></i> Duplicate</button>
+                    <button class="dropdown-item-custom danger"><i class="fa-solid fa-toggle-off"></i> Deactivate</button>
+                    <button class="dropdown-item-custom danger"><i class="fa-solid fa-trash"></i> Delete</button>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <!-- 3: Tax Certificate -->
+          <tr>
+            <td style="color:var(--text-secondary);">3</td>
+            <td>
+              <div class="doc-type-cell">
+                <div class="doc-type-icon pdf"><i class="fa-solid fa-file-pdf"></i></div>
+                <span class="doc-type-name">Tax Certificate</span>
+              </div>
+            </td>
+            <td>
+              <div class="format-tags"><span class="format-tag pdf">PDF</span></div>
+            </td>
+            <td class="size-cell">10 MB</td>
+            <td><span class="storage-badge cloud"><i class="fa-solid fa-cloud" style="font-size:0.5625rem;"></i> Azure Blob</span></td>
+            <td class="count-cell">890</td>
+            <td class="count-cell">1.8 GB</td>
+            <td><span class="status-badge active"><span class="dot"></span> Active</span></td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-icon" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                <div style="position:relative;">
+                  <button class="btn-icon" title="More" onclick="toggleDropdown(this)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                  <div class="dropdown-menu-custom">
+                    <button class="dropdown-item-custom"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+                    <button class="dropdown-item-custom"><i class="fa-solid fa-copy"></i> Duplicate</button>
+                    <button class="dropdown-item-custom danger"><i class="fa-solid fa-toggle-off"></i> Deactivate</button>
+                    <button class="dropdown-item-custom danger"><i class="fa-solid fa-trash"></i> Delete</button>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <!-- 4: Contact Document -->
+          <tr>
+            <td style="color:var(--text-secondary);">4</td>
+            <td>
+              <div class="doc-type-cell">
+                <div class="doc-type-icon doc"><i class="fa-solid fa-file-word"></i></div>
+                <span class="doc-type-name">Contact Document</span>
+              </div>
+            </td>
+            <td>
+              <div class="format-tags">
+                <span class="format-tag pdf">PDF</span>
+                <span class="format-tag doc">DOC</span>
+                <span class="format-tag docx">DOCX</span>
+                <span class="format-tag xls">XLS</span>
+              </div>
+            </td>
+            <td class="size-cell">10 MB</td>
+            <td><span class="storage-badge cloud"><i class="fa-solid fa-cloud" style="font-size:0.5625rem;"></i> Azure Blob</span></td>
+            <td class="count-cell">567</td>
+            <td class="count-cell">1.2 GB</td>
+            <td><span class="status-badge active"><span class="dot"></span> Active</span></td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-icon" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                <div style="position:relative;">
+                  <button class="btn-icon" title="More" onclick="toggleDropdown(this)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                  <div class="dropdown-menu-custom">
+                    <button class="dropdown-item-custom"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+                    <button class="dropdown-item-custom"><i class="fa-solid fa-copy"></i> Duplicate</button>
+                    <button class="dropdown-item-custom danger"><i class="fa-solid fa-toggle-off"></i> Deactivate</button>
+                    <button class="dropdown-item-custom danger"><i class="fa-solid fa-trash"></i> Delete</button>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <!-- 5: Grant Proposal -->
+          <tr>
+            <td style="color:var(--text-secondary);">5</td>
+            <td>
+              <div class="doc-type-cell">
+                <div class="doc-type-icon doc"><i class="fa-solid fa-file-contract"></i></div>
+                <span class="doc-type-name">Grant Proposal</span>
+              </div>
+            </td>
+            <td>
+              <div class="format-tags">
+                <span class="format-tag pdf">PDF</span>
+                <span class="format-tag doc">DOC</span>
+                <span class="format-tag docx">DOCX</span>
+              </div>
+            </td>
+            <td class="size-cell">25 MB</td>
+            <td><span class="storage-badge cloud"><i class="fa-solid fa-cloud" style="font-size:0.5625rem;"></i> Azure Blob</span></td>
+            <td class="count-cell">45</td>
+            <td class="count-cell">340 MB</td>
+            <td><span class="status-badge active"><span class="dot"></span> Active</span></td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-icon" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                <div style="position:relative;">
+                  <button class="btn-icon" title="More" onclick="toggleDropdown(this)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                  <div class="dropdown-menu-custom">
+                    <button class="dropdown-item-custom"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+                    <button class="dropdown-item-custom"><i class="fa-solid fa-copy"></i> Duplicate</button>
+                    <button class="dropdown-item-custom danger"><i class="fa-solid fa-toggle-off"></i> Deactivate</button>
+                    <button class="dropdown-item-custom danger"><i class="fa-solid fa-trash"></i> Delete</button>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <!-- 6: Event Banner -->
+          <tr>
+            <td style="color:var(--text-secondary);">6</td>
+            <td>
+              <div class="doc-type-cell">
+                <div class="doc-type-icon photo"><i class="fa-solid fa-panorama"></i></div>
+                <span class="doc-type-name">Event Banner</span>
+              </div>
+            </td>
+            <td>
+              <div class="format-tags">
+                <span class="format-tag jpg">JPG</span>
+                <span class="format-tag png">PNG</span>
+                <span class="format-tag svg">SVG</span>
+              </div>
+            </td>
+            <td class="size-cell">5 MB</td>
+            <td><span class="storage-badge cloud"><i class="fa-solid fa-cloud" style="font-size:0.5625rem;"></i> Azure Blob</span></td>
+            <td class="count-cell">89</td>
+            <td class="count-cell">210 MB</td>
+            <td><span class="status-badge active"><span class="dot"></span> Active</span></td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-icon" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                <div style="position:relative;">
+                  <button class="btn-icon" title="More" onclick="toggleDropdown(this)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                  <div class="dropdown-menu-custom">
+                    <button class="dropdown-item-custom"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+                    <button class="dropdown-item-custom"><i class="fa-solid fa-copy"></i> Duplicate</button>
+                    <button class="dropdown-item-custom danger"><i class="fa-solid fa-toggle-off"></i> Deactivate</button>
+                    <button class="dropdown-item-custom danger"><i class="fa-solid fa-trash"></i> Delete</button>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <!-- 7: Import File -->
+          <tr>
+            <td style="color:var(--text-secondary);">7</td>
+            <td>
+              <div class="doc-type-cell">
+                <div class="doc-type-icon data"><i class="fa-solid fa-file-csv"></i></div>
+                <span class="doc-type-name">Import File</span>
+              </div>
+            </td>
+            <td>
+              <div class="format-tags">
+                <span class="format-tag csv">CSV</span>
+                <span class="format-tag xls">XLS</span>
+                <span class="format-tag xlsx">XLSX</span>
+              </div>
+            </td>
+            <td class="size-cell">50 MB</td>
+            <td><span class="storage-badge local"><i class="fa-solid fa-hard-drive" style="font-size:0.5625rem;"></i> Local</span></td>
+            <td class="count-cell">234</td>
+            <td class="count-cell">1.5 GB</td>
+            <td><span class="status-badge active"><span class="dot"></span> Active</span></td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-icon" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                <div style="position:relative;">
+                  <button class="btn-icon" title="More" onclick="toggleDropdown(this)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                  <div class="dropdown-menu-custom">
+                    <button class="dropdown-item-custom"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+                    <button class="dropdown-item-custom"><i class="fa-solid fa-copy"></i> Duplicate</button>
+                    <button class="dropdown-item-custom danger"><i class="fa-solid fa-toggle-off"></i> Deactivate</button>
+                    <button class="dropdown-item-custom danger"><i class="fa-solid fa-trash"></i> Delete</button>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <!-- 8: Email Attachment -->
+          <tr>
+            <td style="color:var(--text-secondary);">8</td>
+            <td>
+              <div class="doc-type-cell">
+                <div class="doc-type-icon pdf"><i class="fa-solid fa-paperclip"></i></div>
+                <span class="doc-type-name">Email Attachment</span>
+              </div>
+            </td>
+            <td>
+              <div class="format-tags">
+                <span class="format-tag pdf">PDF</span>
+                <span class="format-tag jpg">JPG</span>
+                <span class="format-tag png">PNG</span>
+              </div>
+            </td>
+            <td class="size-cell">10 MB</td>
+            <td><span class="storage-badge cloud"><i class="fa-solid fa-cloud" style="font-size:0.5625rem;"></i> Azure Blob</span></td>
+            <td class="count-cell">1,890</td>
+            <td class="count-cell">3.8 GB</td>
+            <td><span class="status-badge active"><span class="dot"></span> Active</span></td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-icon" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                <div style="position:relative;">
+                  <button class="btn-icon" title="More" onclick="toggleDropdown(this)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                  <div class="dropdown-menu-custom">
+                    <button class="dropdown-item-custom"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+                    <button class="dropdown-item-custom"><i class="fa-solid fa-copy"></i> Duplicate</button>
+                    <button class="dropdown-item-custom danger"><i class="fa-solid fa-toggle-off"></i> Deactivate</button>
+                    <button class="dropdown-item-custom danger"><i class="fa-solid fa-trash"></i> Delete</button>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <!-- 9: Campaign Media -->
+          <tr>
+            <td style="color:var(--text-secondary);">9</td>
+            <td>
+              <div class="doc-type-cell">
+                <div class="doc-type-icon media"><i class="fa-solid fa-photo-film"></i></div>
+                <span class="doc-type-name">Campaign Media</span>
+              </div>
+            </td>
+            <td>
+              <div class="format-tags">
+                <span class="format-tag jpg">JPG</span>
+                <span class="format-tag png">PNG</span>
+                <span class="format-tag mp4">MP4</span>
+                <span class="format-tag webm">WebM</span>
+              </div>
+            </td>
+            <td class="size-cell">50 MB</td>
+            <td><span class="storage-badge cloud"><i class="fa-solid fa-cloud" style="font-size:0.5625rem;"></i> Azure Blob</span></td>
+            <td class="count-cell">51</td>
+            <td class="count-cell">890 MB</td>
+            <td><span class="status-badge active"><span class="dot"></span> Active</span></td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-icon" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                <div style="position:relative;">
+                  <button class="btn-icon" title="More" onclick="toggleDropdown(this)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                  <div class="dropdown-menu-custom">
+                    <button class="dropdown-item-custom"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+                    <button class="dropdown-item-custom"><i class="fa-solid fa-copy"></i> Duplicate</button>
+                    <button class="dropdown-item-custom danger"><i class="fa-solid fa-toggle-off"></i> Deactivate</button>
+                    <button class="dropdown-item-custom danger"><i class="fa-solid fa-trash"></i> Delete</button>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Storage Accounts (Collapsible) -->
+  <div class="collapsible-section">
+    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+      <h2><i class="fa-solid fa-server" style="color:var(--settings-accent);"></i> Storage Accounts</h2>
+      <div style="display:flex;align-items:center;gap:0.75rem;">
+        <button class="btn-outline-accent btn-sm" onclick="event.stopPropagation();openStorageModal()"><i class="fa-solid fa-plus"></i> Add Account</button>
+        <span class="toggle-icon"><i class="fa-solid fa-chevron-down"></i></span>
+      </div>
+    </div>
+    <div class="collapsible-body">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Account Name</th>
+            <th>Type</th>
+            <th>Endpoint</th>
+            <th>Status</th>
+            <th>Used</th>
+            <th style="width:120px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-weight:600;">Azure Blob - Primary</td>
+            <td>Azure Blob Storage</td>
+            <td style="font-family:monospace;font-size:0.75rem;">ghf.blob.core.windows.net</td>
+            <td><span class="storage-status connected"><i class="fa-solid fa-circle" style="font-size:0.375rem;"></i> Connected</span></td>
+            <td style="font-weight:600;">11.2 GB</td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-icon" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                <button class="btn-test"><i class="fa-solid fa-plug"></i> Test</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;">Local Storage</td>
+            <td>File System</td>
+            <td style="font-family:monospace;font-size:0.75rem;">/data/uploads/</td>
+            <td><span class="storage-status active"><i class="fa-solid fa-circle" style="font-size:0.375rem;"></i> Active</span></td>
+            <td style="font-weight:600;">1.1 GB</td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-icon" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                <button class="btn-test"><i class="fa-solid fa-plug"></i> Test</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Add/Edit Document Type Modal -->
+  <div class="modal-overlay hidden" id="docTypeModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-file-lines" style="color:var(--settings-accent);margin-right:0.5rem;"></i>Add Document Type</h3>
+        <button class="modal-close" onclick="closeDocTypeModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Type Name <span class="required">*</span></label>
+            <input type="text" class="form-control-custom" placeholder="e.g. Donation Receipt" value="Donation Receipt">
+          </div>
+          <div class="form-group">
+            <label>Type Code</label>
+            <input type="text" class="form-control-custom" value="DONATION_RECEIPT" style="background:#f8fafc;" readonly>
+            <div class="form-hint">Auto-generated from name</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <input type="text" class="form-control-custom" placeholder="Brief description..." value="PDF receipts for tax-deductible donations">
+        </div>
+
+        <div class="form-group">
+          <label>Allowed File Formats <span class="required">*</span></label>
+          <div class="tag-input-wrap">
+            <span class="tag-item">PDF <span class="tag-remove"><i class="fa-solid fa-xmark"></i></span></span>
+            <input type="text" class="tag-input" placeholder="+ Add format">
+          </div>
+          <div class="preset-btns">
+            <button class="preset-btn">Images</button>
+            <button class="preset-btn">Documents</button>
+            <button class="preset-btn">Spreadsheets</button>
+            <button class="preset-btn">Media</button>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Max File Size <span class="required">*</span></label>
+            <div style="display:flex;gap:0.5rem;">
+              <input type="number" class="form-control-custom" value="5" style="width:80px;">
+              <select class="form-control-custom" style="width:auto;">
+                <option>KB</option>
+                <option selected>MB</option>
+                <option>GB</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Max Files Per Record</label>
+            <select class="form-control-custom">
+              <option selected>1</option>
+              <option>5</option>
+              <option>10</option>
+              <option>Unlimited</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Storage Account <span class="required">*</span></label>
+            <select class="form-control-custom">
+              <option selected>Azure Blob - Primary</option>
+              <option>Local Storage</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Storage Path Pattern</label>
+            <input type="text" class="form-control-custom" placeholder="e.g. receipts/{year}/{month}/{filename}" value="receipts/{year}/{month}/{filename}">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Auto-Delete After</label>
+            <select class="form-control-custom">
+              <option>30 days</option>
+              <option>90 days</option>
+              <option>1 year</option>
+              <option>3 years</option>
+              <option selected>Never</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Access Level</label>
+            <select class="form-control-custom">
+              <option>Public URL</option>
+              <option selected>Authenticated Users</option>
+              <option>Role-Based</option>
+              <option>Owner Only</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:0.75rem;margin-top:0.5rem;">
+          <div class="toggle-wrap">
+            <div class="toggle-switch" onclick="this.classList.toggle('on')"></div>
+            <span class="toggle-label">Require Approval &mdash; uploaded files need admin approval</span>
+          </div>
+          <div class="toggle-wrap">
+            <div class="toggle-switch on" onclick="this.classList.toggle('on')"></div>
+            <span class="toggle-label">Virus Scan &mdash; scan uploads for malware</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeDocTypeModal()">Cancel</button>
+        <button class="btn-primary-accent" onclick="closeDocTypeModal()"><i class="fa-solid fa-check"></i> Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Storage Account Modal -->
+  <div class="modal-overlay hidden" id="storageModal">
+    <div class="modal-box" style="width:480px;">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-server" style="color:var(--settings-accent);margin-right:0.5rem;"></i>Add Storage Account</h3>
+        <button class="modal-close" onclick="closeStorageModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Account Name <span class="required">*</span></label>
+          <input type="text" class="form-control-custom" placeholder="e.g. Azure Blob - Primary">
+        </div>
+
+        <div class="form-group">
+          <label>Type <span class="required">*</span></label>
+          <select class="form-control-custom" id="storageType" onchange="toggleStorageFields()">
+            <option value="azure" selected>Azure Blob Storage</option>
+            <option value="s3">AWS S3</option>
+            <option value="gcs">Google Cloud Storage</option>
+            <option value="local">Local File System</option>
+          </select>
+        </div>
+
+        <!-- Azure Fields -->
+        <div id="azureFields">
+          <div class="form-group">
+            <label>Account Name</label>
+            <input type="text" class="form-control-custom" placeholder="e.g. ghfstorageaccount">
+          </div>
+          <div class="form-group">
+            <label>Container</label>
+            <input type="text" class="form-control-custom" placeholder="e.g. documents">
+          </div>
+          <div class="form-group">
+            <label>Access Key</label>
+            <input type="password" class="form-control-custom" value="****************************">
+          </div>
+          <div class="form-group">
+            <label>SAS Token</label>
+            <input type="password" class="form-control-custom" placeholder="Optional">
+          </div>
+        </div>
+
+        <!-- Test Connection -->
+        <div style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem;background:#dcfce7;border-radius:0.5rem;margin-top:0.5rem;">
+          <i class="fa-solid fa-circle-check" style="color:#16a34a;font-size:1rem;"></i>
+          <span style="font-size:0.8125rem;font-weight:600;color:#16a34a;">Connected successfully</span>
+          <button class="btn-outline-accent btn-sm" style="margin-left:auto;" onclick="event.preventDefault()"><i class="fa-solid fa-plug"></i> Test Connection</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeStorageModal()">Cancel</button>
+        <button class="btn-primary-accent" onclick="closeStorageModal()"><i class="fa-solid fa-check"></i> Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleDropdown(btn) {
+      document.querySelectorAll('.dropdown-menu-custom').forEach(d => {
+        if (d !== btn.nextElementSibling) d.classList.remove('show');
+      });
+      btn.nextElementSibling.classList.toggle('show');
+    }
+
+    function openDocTypeModal() {
+      document.getElementById('docTypeModal').classList.remove('hidden');
+    }
+
+    function closeDocTypeModal() {
+      document.getElementById('docTypeModal').classList.add('hidden');
+    }
+
+    function openStorageModal() {
+      document.getElementById('storageModal').classList.remove('hidden');
+    }
+
+    function closeStorageModal() {
+      document.getElementById('storageModal').classList.add('hidden');
+    }
+
+    function toggleCollapsible(header) {
+      const body = header.nextElementSibling;
+      const icon = header.querySelector('.toggle-icon i');
+      body.classList.toggle('collapsed');
+      icon.className = body.classList.contains('collapsed')
+        ? 'fa-solid fa-chevron-right'
+        : 'fa-solid fa-chevron-down';
+    }
+
+    function toggleStorageFields() {
+      const type = document.getElementById('storageType').value;
+      document.getElementById('azureFields').style.display = type === 'azure' ? 'block' : 'none';
+    }
+
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.btn-icon') && !e.target.closest('.dropdown-menu-custom')) {
+        document.querySelectorAll('.dropdown-menu-custom').forEach(d => d.classList.remove('show'));
+      }
+    });
+  </script>
+
+</body>
+</html>

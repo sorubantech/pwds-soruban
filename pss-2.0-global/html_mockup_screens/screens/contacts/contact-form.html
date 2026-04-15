@@ -1,0 +1,1687 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Form - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .back-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 1rem;
+    }
+
+    .back-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover { background: #0c6577; border-color: #0c6577; color: white; }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover { background: var(--accent); color: white; }
+
+    .btn-text {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-text:hover { color: var(--danger-color); }
+
+    /* Accordion Sections */
+    .form-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      margin-bottom: 0.75rem;
+      overflow: hidden;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.875rem 1.25rem;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+    }
+
+    .section-header:hover { background: #f8fafc; }
+
+    .section-header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+
+    .section-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 0.5rem;
+      background: var(--accent-bg);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+    }
+
+    .section-title {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .section-toggle {
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      transition: transform 0.25s;
+    }
+
+    .section-header.collapsed .section-toggle {
+      transform: rotate(-90deg);
+    }
+
+    .section-body {
+      padding: 0 1.25rem 1.25rem;
+      transition: max-height 0.3s ease;
+      overflow: hidden;
+    }
+
+    .section-body.collapsed {
+      max-height: 0 !important;
+      padding: 0 1.25rem;
+    }
+
+    /* Form Controls */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .form-grid .full-width { grid-column: 1 / -1; }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .form-group label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .form-group label .required {
+      color: var(--danger-color);
+      margin-left: 2px;
+    }
+
+    .form-control, .form-select {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .form-control:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    textarea.form-control {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .form-check-input:checked {
+      background-color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .form-check-input:focus {
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.15);
+    }
+
+    /* Radio Group Inline */
+    .radio-group {
+      display: flex;
+      gap: 1.5rem;
+      padding-top: 0.25rem;
+    }
+
+    .radio-group .form-check {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .radio-group .form-check-label {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+
+    .toggle-switch .form-check-input {
+      width: 2.5rem;
+      height: 1.25rem;
+      cursor: pointer;
+    }
+
+    .toggle-switch label {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    /* Profile Image Upload */
+    .image-upload-area {
+      border: 2px dashed var(--border-color);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #f8fafc;
+    }
+
+    .image-upload-area:hover {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .image-upload-area i {
+      font-size: 1.5rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .image-upload-area p {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .image-upload-area .browse-link {
+      color: var(--accent);
+      font-weight: 600;
+      text-decoration: underline;
+    }
+
+    /* Repeatable Groups */
+    .repeatable-row {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 0.625rem;
+      padding: 0.875rem;
+      margin-bottom: 0.5rem;
+      position: relative;
+    }
+
+    .repeatable-row .row-fields {
+      display: flex;
+      gap: 0.625rem;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .repeatable-row .row-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      flex: 1;
+      min-width: 120px;
+    }
+
+    .repeatable-row .row-field label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .repeatable-row .row-field .form-control,
+    .repeatable-row .row-field .form-select {
+      font-size: 0.8125rem;
+      padding: 0.4375rem 0.625rem;
+    }
+
+    .repeatable-row .row-checks {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      padding-top: 0.25rem;
+    }
+
+    .repeatable-row .row-checks .form-check {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      margin: 0;
+    }
+
+    .repeatable-row .row-checks .form-check-label {
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .btn-remove-row {
+      background: none;
+      border: none;
+      color: var(--danger-color);
+      font-size: 0.8125rem;
+      cursor: pointer;
+      padding: 0.375rem;
+      border-radius: 0.375rem;
+      transition: all 0.15s;
+      flex-shrink: 0;
+      align-self: flex-end;
+    }
+
+    .btn-remove-row:hover {
+      background: rgba(220, 38, 38, 0.08);
+    }
+
+    .btn-add-row {
+      background: none;
+      border: 1px dashed var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-top: 0.375rem;
+    }
+
+    .btn-add-row:hover {
+      background: var(--accent-bg);
+    }
+
+    .btn-add-row i { margin-right: 0.375rem; }
+
+    /* Sub-section Label */
+    .sub-section-label {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+      margin-top: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .sub-section-label:first-child { margin-top: 0; }
+
+    .sub-section-label i {
+      color: var(--accent);
+      font-size: 0.75rem;
+    }
+
+    /* Address Block */
+    .address-block {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 0.625rem;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .address-block .address-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .address-block .address-grid .full-width { grid-column: 1 / -1; }
+
+    .address-block .address-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+
+    .address-block .address-header .address-label {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    /* Relationship Mini Table */
+    .mini-table {
+      width: 100%;
+      font-size: 0.8125rem;
+    }
+
+    .mini-table th {
+      background: #f1f5f9;
+      padding: 0.5rem 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .mini-table td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+
+    .mini-table .form-control,
+    .mini-table .form-select {
+      font-size: 0.8125rem;
+      padding: 0.375rem 0.5rem;
+    }
+
+    /* Contact Type Tags */
+    .contact-type-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.625rem;
+    }
+
+    .contact-type-tag {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.625rem 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      background: white;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 0.8125rem;
+      font-weight: 500;
+    }
+
+    .contact-type-tag:hover {
+      border-color: var(--accent);
+    }
+
+    .contact-type-tag.selected {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .contact-type-tag .form-check-input {
+      margin: 0;
+    }
+
+    .contact-type-tag .assigned-date {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+
+    /* Validation */
+    .is-invalid { border-color: var(--danger-color) !important; }
+    .invalid-feedback {
+      font-size: 0.75rem;
+      color: var(--danger-color);
+      margin-top: 0.125rem;
+    }
+
+    /* Success Toast */
+    .toast-container {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 9999;
+    }
+
+    .toast-success {
+      background: white;
+      border: 1px solid var(--success-color);
+      border-left: 4px solid var(--success-color);
+      border-radius: 0.5rem;
+      padding: 0.875rem 1.25rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      animation: slideIn 0.3s ease;
+    }
+
+    .toast-success i { color: var(--success-color); font-size: 1rem; }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Inline Family Form */
+    .inline-form {
+      background: var(--accent-bg);
+      border: 1px solid rgba(14, 116, 144, 0.2);
+      border-radius: 0.625rem;
+      padding: 1rem;
+      margin-top: 0.75rem;
+      display: none;
+    }
+
+    .inline-form.show { display: block; }
+
+    .inline-form .form-grid {
+      gap: 0.75rem;
+    }
+
+    /* Sticky Footer (Mobile) */
+    .sticky-footer {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid var(--border-color);
+      padding: 0.75rem 1.25rem;
+      z-index: 100;
+      gap: 0.5rem;
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .sticky-footer .btn-primary-accent,
+    .sticky-footer .btn-text {
+      flex: 1;
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 1rem; padding-bottom: 5rem; }
+
+      .form-grid,
+      .address-block .address-grid { grid-template-columns: 1fr; }
+
+      .repeatable-row .row-fields { flex-direction: column; }
+
+      .header-actions { display: none; }
+
+      .sticky-footer { display: flex; }
+
+      .page-header h1 { font-size: 1.25rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" onclick="parent.loadContent('contacts/contact-list')" title="Back to Contacts">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <h1 id="pageTitle">New Contact</h1>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="saveContact()">
+        <i class="fas fa-check me-1"></i> Save
+      </button>
+      <button class="btn-outline-accent" onclick="saveAndAddAnother()">
+        <i class="fas fa-plus me-1"></i> Save & Add Another
+      </button>
+      <button class="btn-text" onclick="parent.loadContent('contacts/contact-list')">Cancel</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 1: Basic Information -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header" onclick="toggleAccordion(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-user"></i></div>
+        <span class="section-title">Basic Information</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body" id="sectionBasic">
+
+      <div class="form-grid">
+        <!-- Contact Base Type -->
+        <div class="form-group full-width">
+          <label>Contact Base Type <span class="required">*</span></label>
+          <div class="radio-group">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="baseType" id="typeIndividual" value="Individual" checked onchange="toggleBaseType()">
+              <label class="form-check-label" for="typeIndividual">Individual</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="baseType" id="typeOrganization" value="Organization" onchange="toggleBaseType()">
+              <label class="form-check-label" for="typeOrganization">Organization</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Organization fields (hidden by default) -->
+        <div class="form-group full-width" id="orgNameGroup" style="display:none;">
+          <label>Organization Name <span class="required">*</span></label>
+          <input type="text" class="form-control" placeholder="Enter organization name" maxlength="200">
+        </div>
+        <div class="form-group" id="orgTypeGroup" style="display:none;">
+          <label>Organization Type</label>
+          <select class="form-select">
+            <option value="">Select type...</option>
+            <option>Non-Profit</option>
+            <option>Church</option>
+            <option>Foundation</option>
+            <option>Corporate</option>
+            <option>Government</option>
+            <option>Educational</option>
+          </select>
+        </div>
+
+        <!-- Individual fields -->
+        <div class="form-group individual-field">
+          <label>Prefix</label>
+          <select class="form-select">
+            <option value="">Select...</option>
+            <option>Mr.</option>
+            <option>Mrs.</option>
+            <option>Ms.</option>
+            <option>Dr.</option>
+            <option>Rev.</option>
+            <option>Pastor</option>
+            <option>Prof.</option>
+          </select>
+        </div>
+
+        <div class="form-group individual-field">
+          <label>First Name <span class="required">*</span></label>
+          <input type="text" class="form-control" placeholder="First name" maxlength="100">
+        </div>
+
+        <div class="form-group individual-field">
+          <label>Middle Name</label>
+          <input type="text" class="form-control" placeholder="Middle name" maxlength="100">
+        </div>
+
+        <div class="form-group individual-field">
+          <label>Last Name <span class="required">*</span></label>
+          <input type="text" class="form-control" placeholder="Last name" maxlength="100">
+        </div>
+
+        <div class="form-group">
+          <label>Nickname</label>
+          <input type="text" class="form-control" placeholder="Nickname" maxlength="200">
+        </div>
+
+        <div class="form-group">
+          <label>Display Name</label>
+          <input type="text" class="form-control" id="displayName" placeholder="Auto-generated from name" maxlength="200">
+        </div>
+
+        <div class="form-group individual-field">
+          <label>Date of Birth</label>
+          <input type="date" class="form-control">
+        </div>
+
+        <div class="form-group individual-field">
+          <label>Date of Wedding</label>
+          <input type="date" class="form-control">
+        </div>
+
+        <div class="form-group individual-field">
+          <label>Gender <span class="required">*</span></label>
+          <select class="form-select">
+            <option value="">Select gender...</option>
+            <option>Male</option>
+            <option>Female</option>
+            <option>Other</option>
+            <option>Prefer not to say</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Language</label>
+          <select class="form-select">
+            <option value="">Select language...</option>
+            <option>English</option>
+            <option>Tamil</option>
+            <option>Hindi</option>
+            <option>Spanish</option>
+            <option>French</option>
+            <option>Portuguese</option>
+            <option>German</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Occupation</label>
+          <select class="form-select">
+            <option value="">Select occupation...</option>
+            <option>Business Owner</option>
+            <option>Engineer</option>
+            <option>Teacher</option>
+            <option>Doctor</option>
+            <option>Lawyer</option>
+            <option>Accountant</option>
+            <option>Student</option>
+            <option>Retired</option>
+            <option>Homemaker</option>
+            <option>Other</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Employer Organization</label>
+          <input type="text" class="form-control" placeholder="Employer name" maxlength="150">
+        </div>
+
+        <div class="form-group">
+          <label>Job Title</label>
+          <input type="text" class="form-control" placeholder="Job title" maxlength="150">
+        </div>
+
+        <div class="form-group">
+          <label>Contact Source</label>
+          <select class="form-select">
+            <option value="">Select source...</option>
+            <option>Website</option>
+            <option>Referral</option>
+            <option>Event</option>
+            <option>Walk-in</option>
+            <option>Social Media</option>
+            <option>Campaign</option>
+            <option>Import</option>
+            <option>Other</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Assigned Staff</label>
+          <select class="form-select">
+            <option value="">Search staff...</option>
+            <option>John Smith</option>
+            <option>Mary Johnson</option>
+            <option>David Williams</option>
+            <option>Rachel Green</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Status</label>
+          <select class="form-select">
+            <option>Active</option>
+            <option>Inactive</option>
+            <option>Deceased</option>
+          </select>
+        </div>
+
+        <!-- Profile Image -->
+        <div class="form-group">
+          <label>Profile Image</label>
+          <div class="image-upload-area" onclick="document.getElementById('profileUpload').click()">
+            <i class="fas fa-cloud-upload-alt d-block"></i>
+            <p>Drag & drop an image here, or <span class="browse-link">browse</span></p>
+            <p style="font-size: 0.6875rem; margin-top: 0.25rem; color: #94a3b8;">JPG, PNG up to 5MB</p>
+            <input type="file" id="profileUpload" accept="image/*" style="display:none;">
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="form-group full-width">
+          <label>Notes</label>
+          <textarea class="form-control" placeholder="Any additional notes about this contact..." rows="3"></textarea>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 2: Contact Information -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header" onclick="toggleAccordion(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-phone"></i></div>
+        <span class="section-title">Contact Information</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body" id="sectionContact">
+
+      <!-- Phone Numbers -->
+      <div class="sub-section-label"><i class="fas fa-phone"></i> Phone Numbers</div>
+      <div id="phoneRows">
+        <div class="repeatable-row">
+          <div class="row-fields">
+            <div class="row-field" style="max-width:140px;">
+              <label>Phone Type</label>
+              <select class="form-select">
+                <option>Mobile</option>
+                <option>Home</option>
+                <option>Work</option>
+                <option>Fax</option>
+              </select>
+            </div>
+            <div class="row-field" style="max-width:140px;">
+              <label>Country Code</label>
+              <select class="form-select">
+                <option>+91 IN</option>
+                <option>+1 US</option>
+                <option>+44 UK</option>
+                <option>+61 AU</option>
+                <option>+49 DE</option>
+                <option>+33 FR</option>
+                <option>+81 JP</option>
+              </select>
+            </div>
+            <div class="row-field">
+              <label>Phone Number</label>
+              <input type="text" class="form-control" placeholder="Phone number" maxlength="100">
+            </div>
+            <div class="row-checks">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="primaryPhone" checked>
+                <label class="form-check-label">Primary</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox">
+                <label class="form-check-label">WhatsApp</label>
+              </div>
+            </div>
+            <button class="btn-remove-row" title="Remove" onclick="removeRow(this)"><i class="fas fa-trash-alt"></i></button>
+          </div>
+        </div>
+      </div>
+      <button class="btn-add-row" onclick="addPhoneRow()"><i class="fas fa-plus"></i> Add Phone Number</button>
+
+      <!-- Email Addresses -->
+      <div class="sub-section-label" style="margin-top:1.25rem;"><i class="fas fa-envelope"></i> Email Addresses</div>
+      <div id="emailRows">
+        <div class="repeatable-row">
+          <div class="row-fields">
+            <div class="row-field" style="max-width:140px;">
+              <label>Email Type</label>
+              <select class="form-select">
+                <option>Personal</option>
+                <option>Work</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="row-field">
+              <label>Email Address</label>
+              <input type="email" class="form-control" placeholder="email@example.com" maxlength="100">
+            </div>
+            <div class="row-checks">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="primaryEmail" checked>
+                <label class="form-check-label">Primary</label>
+              </div>
+            </div>
+            <button class="btn-remove-row" title="Remove" onclick="removeRow(this)"><i class="fas fa-trash-alt"></i></button>
+          </div>
+        </div>
+      </div>
+      <button class="btn-add-row" onclick="addEmailRow()"><i class="fas fa-plus"></i> Add Email Address</button>
+
+      <!-- Social Links -->
+      <div class="sub-section-label" style="margin-top:1.25rem;"><i class="fas fa-share-alt"></i> Social Links</div>
+      <div id="socialRows">
+        <div class="repeatable-row">
+          <div class="row-fields">
+            <div class="row-field" style="max-width:160px;">
+              <label>Social Type</label>
+              <select class="form-select">
+                <option>Facebook</option>
+                <option>Twitter/X</option>
+                <option>LinkedIn</option>
+                <option>Instagram</option>
+                <option>YouTube</option>
+                <option>Website</option>
+              </select>
+            </div>
+            <div class="row-field">
+              <label>Link URL</label>
+              <input type="url" class="form-control" placeholder="https://" maxlength="1000">
+            </div>
+            <button class="btn-remove-row" title="Remove" onclick="removeRow(this)"><i class="fas fa-trash-alt"></i></button>
+          </div>
+        </div>
+      </div>
+      <button class="btn-add-row" onclick="addSocialRow()"><i class="fas fa-plus"></i> Add Social Link</button>
+
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 3: Address -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header collapsed" onclick="toggleAccordion(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-map-marker-alt"></i></div>
+        <span class="section-title">Address</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body collapsed" id="sectionAddress">
+
+      <div id="addressBlocks">
+        <div class="address-block">
+          <div class="address-header">
+            <span class="address-label">Address #1</span>
+            <button class="btn-remove-row" title="Remove" onclick="removeRow(this, '.address-block')"><i class="fas fa-trash-alt"></i></button>
+          </div>
+          <div class="address-grid">
+            <div class="form-group">
+              <label>Address Type</label>
+              <select class="form-select">
+                <option>Home</option>
+                <option>Work</option>
+                <option>Mailing</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Address Line 1 <span class="required">*</span></label>
+              <input type="text" class="form-control" placeholder="Street address" maxlength="1000">
+            </div>
+            <div class="form-group">
+              <label>Address Line 2</label>
+              <input type="text" class="form-control" placeholder="Apartment, suite, etc.">
+            </div>
+            <div class="form-group">
+              <label>Address Line 3</label>
+              <input type="text" class="form-control" placeholder="Additional line">
+            </div>
+            <div class="form-group">
+              <label>Address Line 4</label>
+              <input type="text" class="form-control" placeholder="Additional line">
+            </div>
+            <div class="form-group">
+              <label>Country <span class="required">*</span></label>
+              <select class="form-select" onchange="cascadeRegion(this, 'state')">
+                <option value="">Select country...</option>
+                <option value="IN">India</option>
+                <option value="US">United States</option>
+                <option value="GB">United Kingdom</option>
+                <option value="AU">Australia</option>
+                <option value="CA">Canada</option>
+                <option value="DE">Germany</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>State</label>
+              <select class="form-select" onchange="cascadeRegion(this, 'district')">
+                <option value="">Select state...</option>
+                <option>Tamil Nadu</option>
+                <option>Karnataka</option>
+                <option>Kerala</option>
+                <option>Maharashtra</option>
+                <option>Delhi</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>District</label>
+              <select class="form-select" onchange="cascadeRegion(this, 'city')">
+                <option value="">Select district...</option>
+                <option>Chennai</option>
+                <option>Coimbatore</option>
+                <option>Madurai</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>City</label>
+              <select class="form-select" onchange="cascadeRegion(this, 'locality')">
+                <option value="">Select city...</option>
+                <option>Chennai</option>
+                <option>Tambaram</option>
+                <option>Velachery</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Locality</label>
+              <select class="form-select">
+                <option value="">Select locality...</option>
+                <option>Anna Nagar</option>
+                <option>T. Nagar</option>
+                <option>Adyar</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Pincode</label>
+              <select class="form-select">
+                <option value="">Select pincode...</option>
+                <option>600001</option>
+                <option>600002</option>
+                <option>600040</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="btn-add-row" onclick="addAddressBlock()"><i class="fas fa-plus"></i> Add Address</button>
+
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 4: Communication Preferences -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header collapsed" onclick="toggleAccordion(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-comment-dots"></i></div>
+        <span class="section-title">Communication Preferences</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body collapsed" id="sectionComm">
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Preferred Communication</label>
+          <select class="form-select">
+            <option value="">Select...</option>
+            <option>Email</option>
+            <option>Phone</option>
+            <option>SMS</option>
+            <option>WhatsApp</option>
+            <option>Postal</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Email Opt-In Date</label>
+          <input type="date" class="form-control">
+        </div>
+
+        <div class="form-group full-width">
+          <div style="display: flex; gap: 2rem; flex-wrap: wrap; padding-top: 0.25rem;">
+            <div class="toggle-switch">
+              <input class="form-check-input" type="checkbox" role="switch" id="doNotEmail">
+              <label for="doNotEmail">Do Not Email</label>
+            </div>
+            <div class="toggle-switch">
+              <input class="form-check-input" type="checkbox" role="switch" id="doNotPhone">
+              <label for="doNotPhone">Do Not Phone</label>
+            </div>
+            <div class="toggle-switch">
+              <input class="form-check-input" type="checkbox" role="switch" id="doNotSMS">
+              <label for="doNotSMS">Do Not SMS</label>
+            </div>
+            <div class="toggle-switch">
+              <input class="form-check-input" type="checkbox" role="switch" id="doNotPostal">
+              <label for="doNotPostal">Do Not Postal</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Email Opt-Out Date</label>
+          <input type="date" class="form-control">
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 5: Family & Relationships -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header collapsed" onclick="toggleAccordion(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-people-roof"></i></div>
+        <span class="section-title">Family & Relationships</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body collapsed" id="sectionFamily">
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Family</label>
+          <select class="form-select">
+            <option value="">Search family...</option>
+            <option>FAM-001 — Johnson Family</option>
+            <option>FAM-002 — Williams Family</option>
+            <option>FAM-003 — Brown Family</option>
+            <option>FAM-004 — Garcia Family</option>
+          </select>
+        </div>
+        <div class="form-group" style="justify-content: flex-end;">
+          <div class="form-check" style="padding-top: 0.25rem;">
+            <input class="form-check-input" type="checkbox" id="isFamilyHead">
+            <label class="form-check-label" for="isFamilyHead" style="font-size: 0.8125rem; font-weight: 600;">Is Family Head</label>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-add-row" onclick="toggleInlineFamily()" style="margin-top: 0.5rem; margin-bottom: 0.75rem;">
+        <i class="fas fa-plus"></i> Create New Family
+      </button>
+
+      <!-- Inline New Family Form -->
+      <div class="inline-form" id="newFamilyForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Family Code</label>
+            <input type="text" class="form-control" placeholder="Auto-generated">
+          </div>
+          <div class="form-group">
+            <label>Family Name</label>
+            <input type="text" class="form-control" placeholder="Family name">
+          </div>
+          <div class="form-group full-width">
+            <label>Address</label>
+            <input type="text" class="form-control" placeholder="Family address">
+          </div>
+        </div>
+      </div>
+
+      <!-- Relationship Quick Add -->
+      <div class="sub-section-label" style="margin-top:1rem;"><i class="fas fa-link"></i> Quick Relationship Add</div>
+      <div style="overflow-x: auto;">
+        <table class="mini-table">
+          <thead>
+            <tr>
+              <th>Related Contact</th>
+              <th>Relation Type</th>
+              <th>Start Date</th>
+              <th style="width:60px;"></th>
+            </tr>
+          </thead>
+          <tbody id="relationshipRows">
+            <tr>
+              <td>
+                <select class="form-select">
+                  <option value="">Search contact...</option>
+                  <option>Sarah Johnson</option>
+                  <option>Michael Williams</option>
+                  <option>Emily Brown</option>
+                  <option>Robert Garcia</option>
+                </select>
+              </td>
+              <td>
+                <select class="form-select">
+                  <option value="">Select...</option>
+                  <option>Spouse</option>
+                  <option>Parent</option>
+                  <option>Child</option>
+                  <option>Sibling</option>
+                  <option>Employer</option>
+                  <option>Referrer</option>
+                </select>
+              </td>
+              <td><input type="date" class="form-control"></td>
+              <td><button class="btn-remove-row" onclick="this.closest('tr').remove()"><i class="fas fa-trash-alt"></i></button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <button class="btn-add-row" onclick="addRelationshipRow()" style="margin-top: 0.375rem;"><i class="fas fa-plus"></i> Add</button>
+
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 6: Organizational Unit Assignment -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header collapsed" onclick="toggleAccordion(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-sitemap"></i></div>
+        <span class="section-title">Organizational Unit Assignment</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body collapsed" id="sectionOrgUnit">
+
+      <div id="orgUnitRows">
+        <div class="repeatable-row">
+          <div class="row-fields">
+            <div class="row-field">
+              <label>Organizational Unit</label>
+              <select class="form-select">
+                <option value="">Search org unit...</option>
+                <option>HQ - Head Office</option>
+                <option>North Region</option>
+                <option>South Region</option>
+                <option>Chennai Branch</option>
+                <option>Mumbai Branch</option>
+              </select>
+            </div>
+            <div class="row-field" style="max-width: 130px;">
+              <label>Currency</label>
+              <select class="form-select">
+                <option>INR</option>
+                <option>USD</option>
+                <option>GBP</option>
+                <option>EUR</option>
+                <option>AUD</option>
+              </select>
+            </div>
+            <div class="row-field" style="max-width: 140px;">
+              <label>Configured Amount</label>
+              <input type="number" class="form-control" placeholder="0.00" step="0.01">
+            </div>
+            <div class="row-field" style="max-width: 140px;">
+              <label>Pledge Amount</label>
+              <input type="number" class="form-control" placeholder="0.00" step="0.01">
+            </div>
+            <button class="btn-remove-row" title="Remove" onclick="removeRow(this)"><i class="fas fa-trash-alt"></i></button>
+          </div>
+        </div>
+      </div>
+      <button class="btn-add-row" onclick="addOrgUnitRow()"><i class="fas fa-plus"></i> Add Assignment</button>
+
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 7: Contact Types -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header collapsed" onclick="toggleAccordion(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-tags"></i></div>
+        <span class="section-title">Contact Types</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body collapsed" id="sectionTypes">
+
+      <div class="contact-type-grid">
+        <label class="contact-type-tag" onclick="toggleContactType(this)">
+          <input class="form-check-input" type="checkbox" value="Donor">
+          <span>Donor</span>
+          <span class="assigned-date"></span>
+        </label>
+        <label class="contact-type-tag" onclick="toggleContactType(this)">
+          <input class="form-check-input" type="checkbox" value="Volunteer">
+          <span>Volunteer</span>
+          <span class="assigned-date"></span>
+        </label>
+        <label class="contact-type-tag" onclick="toggleContactType(this)">
+          <input class="form-check-input" type="checkbox" value="Member">
+          <span>Member</span>
+          <span class="assigned-date"></span>
+        </label>
+        <label class="contact-type-tag" onclick="toggleContactType(this)">
+          <input class="form-check-input" type="checkbox" value="Prospect">
+          <span>Prospect</span>
+          <span class="assigned-date"></span>
+        </label>
+        <label class="contact-type-tag" onclick="toggleContactType(this)">
+          <input class="form-check-input" type="checkbox" value="Board Member">
+          <span>Board Member</span>
+          <span class="assigned-date"></span>
+        </label>
+        <label class="contact-type-tag" onclick="toggleContactType(this)">
+          <input class="form-check-input" type="checkbox" value="Staff">
+          <span>Staff</span>
+          <span class="assigned-date"></span>
+        </label>
+        <label class="contact-type-tag" onclick="toggleContactType(this)">
+          <input class="form-check-input" type="checkbox" value="Ambassador">
+          <span>Ambassador</span>
+          <span class="assigned-date"></span>
+        </label>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 8: Custom Fields -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header collapsed" onclick="toggleAccordion(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-puzzle-piece"></i></div>
+        <span class="section-title">Custom Fields</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body collapsed" id="sectionCustom">
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Anniversary Date</label>
+          <input type="date" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Referred By</label>
+          <input type="text" class="form-control" placeholder="Referrer name">
+        </div>
+        <div class="form-group">
+          <label>Preferred Contact Time</label>
+          <select class="form-select">
+            <option value="">Select...</option>
+            <option>Morning</option>
+            <option>Afternoon</option>
+            <option>Evening</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tax ID Number</label>
+          <input type="text" class="form-control" placeholder="Tax ID / PAN">
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Mobile Sticky Footer -->
+  <div class="sticky-footer">
+    <button class="btn-primary-accent" onclick="saveContact()"><i class="fas fa-check me-1"></i> Save</button>
+    <button class="btn-text" onclick="parent.loadContent('contacts/contact-list')">Cancel</button>
+  </div>
+
+  <script>
+    // ---- Accordion Toggle ----
+    function toggleAccordion(header) {
+      header.classList.toggle('collapsed');
+      const body = header.nextElementSibling;
+      body.classList.toggle('collapsed');
+    }
+
+    // ---- Contact Base Type Toggle ----
+    function toggleBaseType() {
+      const isOrg = document.getElementById('typeOrganization').checked;
+      const individualFields = document.querySelectorAll('.individual-field');
+      const orgName = document.getElementById('orgNameGroup');
+      const orgType = document.getElementById('orgTypeGroup');
+
+      individualFields.forEach(f => f.style.display = isOrg ? 'none' : '');
+      orgName.style.display = isOrg ? '' : 'none';
+      orgType.style.display = isOrg ? '' : 'none';
+
+      document.getElementById('pageTitle').textContent = isOrg ? 'New Organization' : 'New Contact';
+    }
+
+    // ---- Remove Row ----
+    function removeRow(btn, selector) {
+      const target = selector ? btn.closest(selector) : btn.closest('.repeatable-row');
+      if (target) target.remove();
+    }
+
+    // ---- Add Phone Row ----
+    function addPhoneRow() {
+      const container = document.getElementById('phoneRows');
+      const count = container.children.length + 1;
+      const html = `
+        <div class="repeatable-row">
+          <div class="row-fields">
+            <div class="row-field" style="max-width:140px;">
+              <label>Phone Type</label>
+              <select class="form-select">
+                <option>Mobile</option><option>Home</option><option>Work</option><option>Fax</option>
+              </select>
+            </div>
+            <div class="row-field" style="max-width:140px;">
+              <label>Country Code</label>
+              <select class="form-select">
+                <option>+91 IN</option><option>+1 US</option><option>+44 UK</option><option>+61 AU</option><option>+49 DE</option><option>+33 FR</option><option>+81 JP</option>
+              </select>
+            </div>
+            <div class="row-field">
+              <label>Phone Number</label>
+              <input type="text" class="form-control" placeholder="Phone number" maxlength="100">
+            </div>
+            <div class="row-checks">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="primaryPhone">
+                <label class="form-check-label">Primary</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox">
+                <label class="form-check-label">WhatsApp</label>
+              </div>
+            </div>
+            <button class="btn-remove-row" title="Remove" onclick="removeRow(this)"><i class="fas fa-trash-alt"></i></button>
+          </div>
+        </div>`;
+      container.insertAdjacentHTML('beforeend', html);
+    }
+
+    // ---- Add Email Row ----
+    function addEmailRow() {
+      const container = document.getElementById('emailRows');
+      const html = `
+        <div class="repeatable-row">
+          <div class="row-fields">
+            <div class="row-field" style="max-width:140px;">
+              <label>Email Type</label>
+              <select class="form-select">
+                <option>Personal</option><option>Work</option><option>Other</option>
+              </select>
+            </div>
+            <div class="row-field">
+              <label>Email Address</label>
+              <input type="email" class="form-control" placeholder="email@example.com" maxlength="100">
+            </div>
+            <div class="row-checks">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="primaryEmail">
+                <label class="form-check-label">Primary</label>
+              </div>
+            </div>
+            <button class="btn-remove-row" title="Remove" onclick="removeRow(this)"><i class="fas fa-trash-alt"></i></button>
+          </div>
+        </div>`;
+      container.insertAdjacentHTML('beforeend', html);
+    }
+
+    // ---- Add Social Row ----
+    function addSocialRow() {
+      const container = document.getElementById('socialRows');
+      const html = `
+        <div class="repeatable-row">
+          <div class="row-fields">
+            <div class="row-field" style="max-width:160px;">
+              <label>Social Type</label>
+              <select class="form-select">
+                <option>Facebook</option><option>Twitter/X</option><option>LinkedIn</option><option>Instagram</option><option>YouTube</option><option>Website</option>
+              </select>
+            </div>
+            <div class="row-field">
+              <label>Link URL</label>
+              <input type="url" class="form-control" placeholder="https://" maxlength="1000">
+            </div>
+            <button class="btn-remove-row" title="Remove" onclick="removeRow(this)"><i class="fas fa-trash-alt"></i></button>
+          </div>
+        </div>`;
+      container.insertAdjacentHTML('beforeend', html);
+    }
+
+    // ---- Add Address Block ----
+    function addAddressBlock() {
+      const container = document.getElementById('addressBlocks');
+      const count = container.children.length + 1;
+      const html = `
+        <div class="address-block">
+          <div class="address-header">
+            <span class="address-label">Address #${count}</span>
+            <button class="btn-remove-row" title="Remove" onclick="removeRow(this, '.address-block')"><i class="fas fa-trash-alt"></i></button>
+          </div>
+          <div class="address-grid">
+            <div class="form-group">
+              <label>Address Type</label>
+              <select class="form-select"><option>Home</option><option>Work</option><option>Mailing</option><option>Other</option></select>
+            </div>
+            <div class="form-group">
+              <label>Address Line 1 <span class="required">*</span></label>
+              <input type="text" class="form-control" placeholder="Street address" maxlength="1000">
+            </div>
+            <div class="form-group">
+              <label>Address Line 2</label>
+              <input type="text" class="form-control" placeholder="Apartment, suite, etc.">
+            </div>
+            <div class="form-group">
+              <label>Address Line 3</label>
+              <input type="text" class="form-control" placeholder="Additional line">
+            </div>
+            <div class="form-group">
+              <label>Address Line 4</label>
+              <input type="text" class="form-control" placeholder="Additional line">
+            </div>
+            <div class="form-group">
+              <label>Country <span class="required">*</span></label>
+              <select class="form-select" onchange="cascadeRegion(this, 'state')">
+                <option value="">Select country...</option><option value="IN">India</option><option value="US">United States</option><option value="GB">United Kingdom</option><option value="AU">Australia</option><option value="CA">Canada</option><option value="DE">Germany</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>State</label>
+              <select class="form-select" onchange="cascadeRegion(this, 'district')">
+                <option value="">Select state...</option><option>Tamil Nadu</option><option>Karnataka</option><option>Kerala</option><option>Maharashtra</option><option>Delhi</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>District</label>
+              <select class="form-select" onchange="cascadeRegion(this, 'city')">
+                <option value="">Select district...</option><option>Chennai</option><option>Coimbatore</option><option>Madurai</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>City</label>
+              <select class="form-select" onchange="cascadeRegion(this, 'locality')">
+                <option value="">Select city...</option><option>Chennai</option><option>Tambaram</option><option>Velachery</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Locality</label>
+              <select class="form-select"><option value="">Select locality...</option><option>Anna Nagar</option><option>T. Nagar</option><option>Adyar</option></select>
+            </div>
+            <div class="form-group">
+              <label>Pincode</label>
+              <select class="form-select"><option value="">Select pincode...</option><option>600001</option><option>600002</option><option>600040</option></select>
+            </div>
+          </div>
+        </div>`;
+      container.insertAdjacentHTML('beforeend', html);
+    }
+
+    // ---- Add Org Unit Row ----
+    function addOrgUnitRow() {
+      const container = document.getElementById('orgUnitRows');
+      const html = `
+        <div class="repeatable-row">
+          <div class="row-fields">
+            <div class="row-field">
+              <label>Organizational Unit</label>
+              <select class="form-select">
+                <option value="">Search org unit...</option><option>HQ - Head Office</option><option>North Region</option><option>South Region</option><option>Chennai Branch</option><option>Mumbai Branch</option>
+              </select>
+            </div>
+            <div class="row-field" style="max-width: 130px;">
+              <label>Currency</label>
+              <select class="form-select"><option>INR</option><option>USD</option><option>GBP</option><option>EUR</option><option>AUD</option></select>
+            </div>
+            <div class="row-field" style="max-width: 140px;">
+              <label>Configured Amount</label>
+              <input type="number" class="form-control" placeholder="0.00" step="0.01">
+            </div>
+            <div class="row-field" style="max-width: 140px;">
+              <label>Pledge Amount</label>
+              <input type="number" class="form-control" placeholder="0.00" step="0.01">
+            </div>
+            <button class="btn-remove-row" title="Remove" onclick="removeRow(this)"><i class="fas fa-trash-alt"></i></button>
+          </div>
+        </div>`;
+      container.insertAdjacentHTML('beforeend', html);
+    }
+
+    // ---- Add Relationship Row ----
+    function addRelationshipRow() {
+      const tbody = document.getElementById('relationshipRows');
+      const html = `
+        <tr>
+          <td>
+            <select class="form-select">
+              <option value="">Search contact...</option><option>Sarah Johnson</option><option>Michael Williams</option><option>Emily Brown</option><option>Robert Garcia</option>
+            </select>
+          </td>
+          <td>
+            <select class="form-select">
+              <option value="">Select...</option><option>Spouse</option><option>Parent</option><option>Child</option><option>Sibling</option><option>Employer</option><option>Referrer</option>
+            </select>
+          </td>
+          <td><input type="date" class="form-control"></td>
+          <td><button class="btn-remove-row" onclick="this.closest('tr').remove()"><i class="fas fa-trash-alt"></i></button></td>
+        </tr>`;
+      tbody.insertAdjacentHTML('beforeend', html);
+    }
+
+    // ---- Toggle Inline Family Form ----
+    function toggleInlineFamily() {
+      document.getElementById('newFamilyForm').classList.toggle('show');
+    }
+
+    // ---- Contact Type Toggle ----
+    function toggleContactType(tag) {
+      const checkbox = tag.querySelector('input[type="checkbox"]');
+      const dateSpan = tag.querySelector('.assigned-date');
+
+      // Allow the checkbox to toggle naturally
+      setTimeout(() => {
+        if (checkbox.checked) {
+          tag.classList.add('selected');
+          dateSpan.textContent = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        } else {
+          tag.classList.remove('selected');
+          dateSpan.textContent = '';
+        }
+      }, 0);
+    }
+
+    // ---- Cascade Region (stub) ----
+    function cascadeRegion(selectEl, nextLevel) {
+      // In a real app, this would filter the next dropdown based on selected value
+      // For mockup, the options are static
+    }
+
+    // ---- Save Contact ----
+    function saveContact() {
+      showToast('Contact saved successfully!');
+      setTimeout(() => {
+        parent.loadContent('contacts/contact-detail');
+      }, 1200);
+    }
+
+    // ---- Save & Add Another ----
+    function saveAndAddAnother() {
+      showToast('Contact saved! Form reset for new entry.');
+      setTimeout(() => {
+        location.reload();
+      }, 1200);
+    }
+
+    // ---- Show Toast ----
+    function showToast(message) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'toast-success';
+      toast.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+  </script>
+
+</body>
+
+</html>

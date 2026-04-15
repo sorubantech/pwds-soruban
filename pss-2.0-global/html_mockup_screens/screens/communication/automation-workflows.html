@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Automation Workflows - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+    .page-header .subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 0; }
+
+    .header-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+
+    .btn-primary-accent {
+      background: var(--accent); border-color: var(--accent); color: white;
+      font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem;
+      border-radius: 0.5rem; border: 1px solid var(--accent); cursor: pointer; transition: all 0.15s;
+    }
+    .btn-primary-accent:hover { background: #0c6577; border-color: #0c6577; color: white; }
+
+    .btn-outline-accent {
+      background: white; border: 1px solid var(--border-color); color: var(--text-primary);
+      font-size: 0.8125rem; font-weight: 500; padding: 0.5rem 1rem;
+      border-radius: 0.5rem; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-outline-accent:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* KPI Cards */
+    .kpi-row {
+      display: flex; gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap;
+    }
+    .kpi-card {
+      background: white; border-radius: var(--card-radius); padding: 1rem 1.25rem;
+      box-shadow: var(--card-shadow); flex: 1; min-width: 180px;
+      display: flex; align-items: center; gap: 0.875rem;
+    }
+    .kpi-icon {
+      width: 42px; height: 42px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+    }
+    .kpi-icon.active { background: #dcfce7; color: #16a34a; }
+    .kpi-icon.paused { background: #fef3c7; color: #d97706; }
+    .kpi-icon.executions { background: var(--accent-bg); color: var(--accent); }
+    .kpi-value { font-size: 1.375rem; font-weight: 700; line-height: 1.2; }
+    .kpi-label { font-size: 0.75rem; color: var(--text-secondary); }
+
+    /* Filter Bar */
+    .filter-bar {
+      background: white; border-radius: var(--card-radius); padding: 1rem 1.25rem;
+      box-shadow: var(--card-shadow); margin-bottom: 1.25rem;
+      display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;
+    }
+    .filter-bar .form-control, .filter-bar .form-select {
+      font-size: 0.8125rem; border-radius: 0.5rem; border: 1px solid var(--border-color);
+      padding: 0.45rem 0.75rem;
+    }
+    .filter-bar .form-control:focus, .filter-bar .form-select:focus {
+      border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14,116,144,0.1);
+    }
+    .search-input { min-width: 260px; }
+
+    /* Workflow Cards */
+    .workflow-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .workflow-card {
+      background: white; border-radius: var(--card-radius); padding: 1rem 1.25rem;
+      box-shadow: var(--card-shadow); display: flex; align-items: center;
+      gap: 1rem; flex-wrap: wrap; transition: box-shadow 0.15s;
+    }
+    .workflow-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+
+    .wf-status-indicator {
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    }
+    .wf-status-indicator.active { background: var(--success-color); }
+    .wf-status-indicator.paused { background: var(--warning-color); }
+    .wf-status-indicator.draft { background: var(--border-color); }
+
+    .wf-info { flex: 1; min-width: 200px; }
+    .wf-name { font-weight: 600; font-size: 0.9rem; color: var(--text-primary); margin-bottom: 0.2rem; }
+    .wf-trigger { font-size: 0.75rem; color: var(--text-secondary); }
+
+    .wf-meta {
+      display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap;
+    }
+    .wf-meta-item { text-align: center; min-width: 80px; }
+    .wf-meta-label { font-size: 0.6875rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px; }
+    .wf-meta-value { font-size: 0.8125rem; font-weight: 600; }
+
+    .wf-steps-badge {
+      background: var(--accent-bg); color: var(--accent); font-size: 0.75rem;
+      font-weight: 600; padding: 0.25rem 0.625rem; border-radius: 1rem;
+    }
+    .wf-status-badge {
+      font-size: 0.75rem; font-weight: 500; padding: 0.25rem 0.625rem; border-radius: 1rem;
+    }
+    .wf-status-badge.active { background: #dcfce7; color: #16a34a; }
+    .wf-status-badge.paused { background: #fef3c7; color: #d97706; }
+    .wf-status-badge.draft { background: #f1f5f9; color: var(--text-secondary); }
+
+    .wf-actions { display: flex; gap: 0.25rem; flex-shrink: 0; }
+    .wf-actions .btn {
+      font-size: 0.75rem; padding: 0.3rem 0.5rem; border-radius: 0.375rem;
+      border: 1px solid var(--border-color); background: white; color: var(--text-secondary);
+      cursor: pointer; transition: all 0.15s;
+    }
+    .wf-actions .btn:hover { border-color: var(--accent); color: var(--accent); }
+    .wf-actions .btn.text-danger:hover { border-color: var(--danger-color); color: var(--danger-color); }
+
+    /* ================ BUILDER VIEW ================ */
+    .builder-view { display: none; }
+    .builder-view.active { display: block; }
+    .list-view.hidden { display: none; }
+
+    .builder-header {
+      background: white; border-radius: var(--card-radius); padding: 1rem 1.25rem;
+      box-shadow: var(--card-shadow); margin-bottom: 1.25rem;
+      display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+    }
+    .builder-header .back-btn {
+      background: none; border: 1px solid var(--border-color); color: var(--text-secondary);
+      width: 36px; height: 36px; border-radius: 0.5rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+    }
+    .builder-header .back-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .builder-header .wf-name-input {
+      font-size: 1.125rem; font-weight: 700; border: none; outline: none;
+      padding: 0.25rem 0.5rem; border-radius: 0.375rem; flex: 1; min-width: 200px;
+      background: transparent; color: var(--text-primary);
+    }
+    .builder-header .wf-name-input:hover { background: #f8fafc; }
+    .builder-header .wf-name-input:focus { background: white; box-shadow: 0 0 0 2px rgba(14,116,144,0.2); }
+
+    .status-toggle {
+      display: flex; border: 1px solid var(--border-color); border-radius: 0.5rem; overflow: hidden;
+    }
+    .status-toggle .toggle-btn {
+      font-size: 0.75rem; padding: 0.35rem 0.75rem; border: none; background: white;
+      color: var(--text-secondary); cursor: pointer; transition: all 0.15s;
+    }
+    .status-toggle .toggle-btn.active-toggle { background: var(--accent); color: white; }
+    .status-toggle .toggle-btn:not(:last-child) { border-right: 1px solid var(--border-color); }
+
+    /* Flow Canvas */
+    .flow-canvas {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 1.5rem 0; min-height: 400px;
+    }
+
+    /* Flow Nodes */
+    .flow-node {
+      background: white; border-radius: var(--card-radius); padding: 1rem 1.25rem;
+      box-shadow: var(--card-shadow); width: 420px; max-width: 100%;
+      position: relative; border-left: 4px solid var(--border-color);
+    }
+    .flow-node.trigger { border-left-color: var(--success-color); }
+    .flow-node.action { border-left-color: var(--accent); }
+    .flow-node.delay { border-left-color: #94a3b8; }
+    .flow-node.condition { border-left-color: var(--warning-color); }
+
+    .flow-node-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+    .flow-node-type {
+      font-size: 0.6875rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.5px; display: flex; align-items: center; gap: 0.375rem;
+    }
+    .flow-node-type.trigger-type { color: var(--success-color); }
+    .flow-node-type.action-type { color: var(--accent); }
+    .flow-node-type.delay-type { color: #64748b; }
+    .flow-node-type.condition-type { color: var(--warning-color); }
+
+    .flow-node-actions { display: flex; gap: 0.25rem; }
+    .flow-node-actions .btn-icon {
+      width: 28px; height: 28px; border-radius: 0.375rem; border: 1px solid var(--border-color);
+      background: white; color: var(--text-secondary); cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 0.75rem;
+      transition: all 0.15s;
+    }
+    .flow-node-actions .btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+    .flow-node-actions .btn-icon.delete:hover { border-color: var(--danger-color); color: var(--danger-color); }
+
+    .flow-node-body { font-size: 0.8125rem; color: var(--text-secondary); }
+    .flow-node-body .field-row {
+      display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;
+    }
+    .flow-node-body .field-label { font-weight: 600; color: var(--text-primary); min-width: 70px; }
+    .flow-node-body .field-value { color: var(--text-secondary); }
+    .flow-node-body .form-select, .flow-node-body .form-control {
+      font-size: 0.8125rem; padding: 0.35rem 0.625rem; border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+    }
+
+    /* Connector Lines */
+    .connector {
+      width: 2px; height: 32px; background: var(--border-color); position: relative;
+    }
+
+    /* Add Step Button */
+    .add-step-btn {
+      width: 36px; height: 36px; border-radius: 50%; border: 2px dashed var(--border-color);
+      background: white; color: var(--text-secondary); cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 0.875rem;
+      transition: all 0.2s; position: relative;
+    }
+    .add-step-btn:hover {
+      border-color: var(--accent); color: var(--accent); background: var(--accent-bg);
+      transform: scale(1.1);
+    }
+
+    /* Add Step Dropdown */
+    .add-step-dropdown {
+      display: none; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+      background: white; border-radius: var(--card-radius); box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      border: 1px solid var(--border-color); padding: 0.5rem; z-index: 100;
+      min-width: 240px; margin-top: 0.5rem;
+    }
+    .add-step-dropdown.show { display: block; }
+    .add-step-dropdown .dropdown-item {
+      display: flex; align-items: center; gap: 0.625rem; padding: 0.5rem 0.75rem;
+      border-radius: 0.375rem; font-size: 0.8125rem; color: var(--text-primary);
+      cursor: pointer; transition: background 0.15s; border: none; background: none; width: 100%;
+      text-align: left;
+    }
+    .add-step-dropdown .dropdown-item:hover { background: var(--accent-bg); color: var(--accent); }
+    .add-step-dropdown .dropdown-item i { width: 18px; text-align: center; font-size: 0.875rem; }
+    .add-step-dropdown .dropdown-divider {
+      height: 1px; background: var(--border-color); margin: 0.35rem 0;
+    }
+
+    /* Condition Branch */
+    .branch-container {
+      display: flex; gap: 2rem; justify-content: center; width: 100%; max-width: 860px;
+    }
+    .branch {
+      flex: 1; display: flex; flex-direction: column; align-items: center; max-width: 420px;
+    }
+    .branch-label {
+      font-size: 0.6875rem; font-weight: 700; text-transform: uppercase;
+      padding: 0.2rem 0.625rem; border-radius: 1rem; margin-bottom: 0.5rem;
+    }
+    .branch-label.yes { background: #dcfce7; color: #16a34a; }
+    .branch-label.no { background: #fee2e2; color: #dc2626; }
+
+    .branch-fork {
+      display: flex; align-items: flex-start; justify-content: center;
+      position: relative; width: 100%; height: 40px;
+    }
+    .branch-fork::before {
+      content: ''; position: absolute; top: 0; left: 50%; width: 2px; height: 12px;
+      background: var(--border-color);
+    }
+    .branch-fork::after {
+      content: ''; position: absolute; top: 12px; left: calc(25% + 5px); right: calc(25% + 5px);
+      height: 2px; background: var(--border-color);
+    }
+    .branch-fork .fork-left, .branch-fork .fork-right {
+      position: absolute; top: 12px; width: 2px; height: 28px; background: var(--border-color);
+    }
+    .branch-fork .fork-left { left: calc(25% + 5px); }
+    .branch-fork .fork-right { right: calc(25% + 5px); }
+
+    /* ================ EXECUTION LOG VIEW ================ */
+    .log-view { display: none; }
+    .log-view.active { display: block; }
+
+    .log-header-card {
+      background: white; border-radius: var(--card-radius); padding: 1.25rem;
+      box-shadow: var(--card-shadow); margin-bottom: 1.25rem;
+    }
+    .log-stats {
+      display: flex; gap: 2rem; flex-wrap: wrap; margin-top: 0.75rem;
+    }
+    .log-stat { text-align: center; }
+    .log-stat-value { font-size: 1.25rem; font-weight: 700; color: var(--accent); }
+    .log-stat-label { font-size: 0.75rem; color: var(--text-secondary); }
+
+    /* Table Styles */
+    .table-card {
+      background: white; border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow); overflow: hidden;
+    }
+    .table-card table { margin: 0; font-size: 0.8125rem; }
+    .table-card th {
+      background: #f8fafc; font-weight: 600; font-size: 0.75rem;
+      text-transform: uppercase; letter-spacing: 0.3px; color: var(--text-secondary);
+      border-bottom: 2px solid var(--border-color); padding: 0.75rem 1rem;
+      white-space: nowrap;
+    }
+    .table-card td { padding: 0.75rem 1rem; vertical-align: middle; border-bottom: 1px solid #f1f5f9; }
+    .table-card tbody tr:hover { background: #fafbfc; }
+
+    .status-pill {
+      font-size: 0.6875rem; font-weight: 600; padding: 0.2rem 0.5rem;
+      border-radius: 1rem; display: inline-flex; align-items: center; gap: 0.25rem;
+    }
+    .status-pill.in-progress { background: #dbeafe; color: #2563eb; }
+    .status-pill.completed { background: #dcfce7; color: #16a34a; }
+    .status-pill.failed { background: #fee2e2; color: #dc2626; }
+
+    .contact-link {
+      color: var(--accent); text-decoration: none; font-weight: 500; cursor: pointer;
+    }
+    .contact-link:hover { text-decoration: underline; }
+
+    /* End Node */
+    .end-node {
+      width: 48px; height: 48px; border-radius: 50%; background: #f1f5f9;
+      border: 2px solid var(--border-color);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-secondary); font-size: 0.75rem; font-weight: 600;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .flow-node { width: 100%; }
+      .branch-container { flex-direction: column; gap: 1rem; }
+      .branch { max-width: 100%; }
+      .wf-meta { gap: 0.75rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ==================== LIST VIEW ==================== -->
+  <div class="list-view" id="listView">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <h1>Automation Workflows</h1>
+        <p class="subtitle">Set up automated communication sequences</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn-primary-accent" onclick="showBuilder(null)">
+          <i class="fas fa-plus me-1"></i> Create Workflow
+        </button>
+      </div>
+    </div>
+
+    <!-- KPI Row -->
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-icon active"><i class="fas fa-play-circle"></i></div>
+        <div>
+          <div class="kpi-value">8</div>
+          <div class="kpi-label">Active Workflows</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon paused"><i class="fas fa-pause-circle"></i></div>
+        <div>
+          <div class="kpi-value">3</div>
+          <div class="kpi-label">Paused</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon executions"><i class="fas fa-bolt"></i></div>
+        <div>
+          <div class="kpi-value">2,456</div>
+          <div class="kpi-label">Total Executions (This Month)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="position-relative">
+        <i class="fas fa-search position-absolute" style="left:10px;top:50%;transform:translateY(-50%);color:var(--text-secondary);font-size:0.75rem;"></i>
+        <input type="text" class="form-control search-input" placeholder="Search workflows..." style="padding-left:2rem;" id="searchInput">
+      </div>
+      <select class="form-select" style="width:auto;" id="statusFilter">
+        <option value="">All Status</option>
+        <option value="active">Active</option>
+        <option value="paused">Paused</option>
+        <option value="draft">Draft</option>
+      </select>
+      <select class="form-select" style="width:auto;" id="triggerFilter">
+        <option value="">All Triggers</option>
+        <option value="donation">Donation</option>
+        <option value="contact">Contact</option>
+        <option value="event">Event</option>
+        <option value="campaign">Campaign</option>
+        <option value="schedule">Schedule</option>
+      </select>
+    </div>
+
+    <!-- Workflow Cards -->
+    <div class="workflow-list" id="workflowList">
+
+      <!-- Workflow 1 -->
+      <div class="workflow-card" data-status="active" data-trigger="contact">
+        <div class="wf-status-indicator active"></div>
+        <div class="wf-info">
+          <div class="wf-name">New Donor Welcome Series</div>
+          <div class="wf-trigger"><i class="fas fa-user-plus me-1"></i>New contact created (type: Donor)</div>
+        </div>
+        <div class="wf-meta">
+          <div class="wf-meta-item">
+            <div class="wf-steps-badge">4 steps</div>
+          </div>
+          <div class="wf-meta-item">
+            <div class="wf-status-badge active">Active</div>
+          </div>
+          <div class="wf-meta-item">
+            <div class="wf-meta-value">234</div>
+            <div class="wf-meta-label">Executions (30d)</div>
+          </div>
+          <div class="wf-meta-item">
+            <div class="wf-meta-value" style="font-size:0.75rem;">Apr 12, 10:23 AM</div>
+            <div class="wf-meta-label">Last Run</div>
+          </div>
+        </div>
+        <div class="wf-actions">
+          <button class="btn" title="Edit" onclick="showBuilder('New Donor Welcome Series')"><i class="fas fa-pen"></i></button>
+          <button class="btn" title="Pause"><i class="fas fa-pause"></i></button>
+          <button class="btn" title="View Log" onclick="showLog('New Donor Welcome Series')"><i class="fas fa-list-alt"></i></button>
+          <button class="btn" title="Duplicate"><i class="fas fa-copy"></i></button>
+          <button class="btn text-danger" title="Delete"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+
+      <!-- Workflow 2 -->
+      <div class="workflow-card" data-status="active" data-trigger="donation">
+        <div class="wf-status-indicator active"></div>
+        <div class="wf-info">
+          <div class="wf-name">Donation Thank You</div>
+          <div class="wf-trigger"><i class="fas fa-hand-holding-heart me-1"></i>Donation received</div>
+        </div>
+        <div class="wf-meta">
+          <div class="wf-meta-item"><div class="wf-steps-badge">2 steps</div></div>
+          <div class="wf-meta-item"><div class="wf-status-badge active">Active</div></div>
+          <div class="wf-meta-item">
+            <div class="wf-meta-value">892</div>
+            <div class="wf-meta-label">Executions (30d)</div>
+          </div>
+          <div class="wf-meta-item">
+            <div class="wf-meta-value" style="font-size:0.75rem;">Apr 12, 10:15 AM</div>
+            <div class="wf-meta-label">Last Run</div>
+          </div>
+        </div>
+        <div class="wf-actions">
+          <button class="btn" title="Edit" onclick="showBuilder('Donation Thank You')"><i class="fas fa-pen"></i></button>
+          <button class="btn" title="Pause"><i class="fas fa-pause"></i></button>
+          <button class="btn" title="View Log" onclick="showLog('Donation Thank You')"><i class="fas fa-list-alt"></i></button>
+          <button class="btn" title="Duplicate"><i class="fas fa-copy"></i></button>
+          <button class="btn text-danger" title="Delete"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+
+      <!-- Workflow 3 -->
+      <div class="workflow-card" data-status="active" data-trigger="donation">
+        <div class="wf-status-indicator active"></div>
+        <div class="wf-info">
+          <div class="wf-name">Major Donor VIP Follow-up</div>
+          <div class="wf-trigger"><i class="fas fa-gem me-1"></i>Donation > $1,000</div>
+        </div>
+        <div class="wf-meta">
+          <div class="wf-meta-item"><div class="wf-steps-badge">5 steps</div></div>
+          <div class="wf-meta-item"><div class="wf-status-badge active">Active</div></div>
+          <div class="wf-meta-item">
+            <div class="wf-meta-value">45</div>
+            <div class="wf-meta-label">Executions (30d)</div>
+          </div>
+          <div class="wf-meta-item">
+            <div class="wf-meta-value" style="font-size:0.75rem;">Apr 11, 3:30 PM</div>
+            <div class="wf-meta-label">Last Run</div>
+          </div>
+        </div>
+        <div class="wf-actions">
+          <button class="btn" title="Edit" onclick="showBuilder('Major Donor VIP Follow-up')"><i class="fas fa-pen"></i></button>
+          <button class="btn" title="Pause"><i class="fas fa-pause"></i></button>
+          <button class="btn" title="View Log" onclick="showLog('Major Donor VIP Follow-up')"><i class="fas fa-list-alt"></i></button>
+          <button class="btn" title="Duplicate"><i class="fas fa-copy"></i></button>
+          <button class="btn text-danger" title="Delete"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+
+      <!-- Workflow 4 -->
+      <div class="workflow-card" data-status="active" data-trigger="donation">
+        <div class="wf-status-indicator active"></div>
+        <div class="wf-info">
+          <div class="wf-name">Recurring Payment Failed</div>
+          <div class="wf-trigger"><i class="fas fa-exclamation-triangle me-1"></i>Recurring payment failed</div>
+        </div>
+        <div class="wf-meta">
+          <div class="wf-meta-item"><div class="wf-steps-badge">3 steps</div></div>
+          <div class="wf-meta-item"><div class="wf-status-badge active">Active</div></div>
+          <div class="wf-meta-item">
+            <div class="wf-meta-value">12</div>
+            <div class="wf-meta-label">Executions (30d)</div>
+          </div>
+          <div class="wf-meta-item">
+            <div class="wf-meta-value" style="font-size:0.75rem;">Apr 10, 9:00 AM</div>
+            <div class="wf-meta-label">Last Run</div>
+          </div>
+        </div>
+        <div class="wf-actions">
+          <button class="btn" title="Edit" onclick="showBuilder('Recurring Payment Failed')"><i class="fas fa-pen"></i></button>
+          <button class="btn" title="Pause"><i class="fas fa-pause"></i></button>
+          <button class="btn" title="View Log" onclick="showLog('Recurring Payment Failed')"><i class="fas fa-list-alt"></i></button>
+          <button class="btn" title="Duplicate"><i class="fas fa-copy"></i></button>
+          <button class="btn text-danger" title="Delete"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+
+      <!-- Workflow 5 -->
+      <div class="workflow-card" data-status="active" data-trigger="donation">
+        <div class="wf-status-indicator active"></div>
+        <div class="wf-info">
+          <div class="wf-name">Pledge Payment Reminder</div>
+          <div class="wf-trigger"><i class="fas fa-clock me-1"></i>3 days before pledge due</div>
+        </div>
+        <div class="wf-meta">
+          <div class="wf-meta-item"><div class="wf-steps-badge">2 steps</div></div>
+          <div class="wf-meta-item"><div class="wf-status-badge active">Active</div></div>
+          <div class="wf-meta-item">
+            <div class="wf-meta-value">67</div>
+            <div class="wf-meta-label">Executions (30d)</div>
+          </div>
+          <div class="wf-meta-item">
+            <div class="wf-meta-value" style="font-size:0.75rem;">Apr 9, 8:00 AM</div>
+            <div class="wf-meta-label">Last Run</div>
+          </div>
+        </div>
+        <div class="wf-actions">
+          <button class="btn" title="Edit" onclick="showBuilder('Pledge Payment Reminder')"><i class="fas fa-pen"></i></button>
+          <button class="btn" title="Pause"><i class="fas fa-pause"></i></button>
+          <button class="btn" title="View Log" onclick="showLog('Pledge Payment Reminder')"><i class="fas fa-list-alt"></i></button>
+          <button class="btn" title="Duplicate"><i class="fas fa-copy"></i></button>
+          <button class="btn text-danger" title="Delete"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+
+      <!-- Workflow 6 -->
+      <div class="workflow-card" data-status="active" data-trigger="contact">
+        <div class="wf-status-indicator active"></div>
+        <div class="wf-info">
+          <div class="wf-name">Lapsed Donor Re-engagement</div>
+          <div class="wf-trigger"><i class="fas fa-user-clock me-1"></i>No donation in 90 days</div>
+        </div>
+        <div class="wf-meta">
+          <div class="wf-meta-item"><div class="wf-steps-badge">4 steps</div></div>
+          <div class="wf-meta-item"><div class="wf-status-badge active">Active</div></div>
+          <div class="wf-meta-item">
+            <div class="wf-meta-value">156</div>
+            <div class="wf-meta-label">Executions (30d)</div>
+          </div>
+          <div class="wf-meta-item">
+            <div class="wf-meta-value" style="font-size:0.75rem;">Apr 8, 10:00 AM</div>
+            <div class="wf-meta-label">Last Run</div>
+          </div>
+        </div>
+        <div class="wf-actions">
+          <button class="btn" title="Edit" onclick="showBuilder('Lapsed Donor Re-engagement')"><i class="fas fa-pen"></i></button>
+          <button class="btn" title="Pause"><i class="fas fa-pause"></i></button>
+          <button class="btn" title="View Log" onclick="showLog('Lapsed Donor Re-engagement')"><i class="fas fa-list-alt"></i></button>
+          <button class="btn" title="Duplicate"><i class="fas fa-copy"></i></button>
+          <button class="btn text-danger" title="Delete"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+
+      <!-- Workflow 7 -->
+      <div class="workflow-card" data-status="active" data-trigger="event">
+        <div class="wf-status-indicator active"></div>
+        <div class="wf-info">
+          <div class="wf-name">Event Registration Confirmation</div>
+          <div class="wf-trigger"><i class="fas fa-calendar-check me-1"></i>Event registration</div>
+        </div>
+        <div class="wf-meta">
+          <div class="wf-meta-item"><div class="wf-steps-badge">2 steps</div></div>
+          <div class="wf-meta-item"><div class="wf-status-badge active">Active</div></div>
+          <div class="wf-meta-item">
+            <div class="wf-meta-value">89</div>
+            <div class="wf-meta-label">Executions (30d)</div>
+          </div>
+          <div class="wf-meta-item">
+            <div class="wf-meta-value" style="font-size:0.75rem;">Apr 7, 2:00 PM</div>
+            <div class="wf-meta-label">Last Run</div>
+          </div>
+        </div>
+        <div class="wf-actions">
+          <button class="btn" title="Edit" onclick="showBuilder('Event Registration Confirmation')"><i class="fas fa-pen"></i></button>
+          <button class="btn" title="Pause"><i class="fas fa-pause"></i></button>
+          <button class="btn" title="View Log" onclick="showLog('Event Registration Confirmation')"><i class="fas fa-list-alt"></i></button>
+          <button class="btn" title="Duplicate"><i class="fas fa-copy"></i></button>
+          <button class="btn text-danger" title="Delete"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+
+      <!-- Workflow 8 -->
+      <div class="workflow-card" data-status="active" data-trigger="contact">
+        <div class="wf-status-indicator active"></div>
+        <div class="wf-info">
+          <div class="wf-name">Birthday Greeting</div>
+          <div class="wf-trigger"><i class="fas fa-birthday-cake me-1"></i>Contact birthday = today</div>
+        </div>
+        <div class="wf-meta">
+          <div class="wf-meta-item"><div class="wf-steps-badge">1 step</div></div>
+          <div class="wf-meta-item"><div class="wf-status-badge active">Active</div></div>
+          <div class="wf-meta-item">
+            <div class="wf-meta-value">5</div>
+            <div class="wf-meta-label">Executions (30d)</div>
+          </div>
+          <div class="wf-meta-item">
+            <div class="wf-meta-value" style="font-size:0.75rem;">Apr 12, 9:00 AM</div>
+            <div class="wf-meta-label">Last Run</div>
+          </div>
+        </div>
+        <div class="wf-actions">
+          <button class="btn" title="Edit" onclick="showBuilder('Birthday Greeting')"><i class="fas fa-pen"></i></button>
+          <button class="btn" title="Pause"><i class="fas fa-pause"></i></button>
+          <button class="btn" title="View Log" onclick="showLog('Birthday Greeting')"><i class="fas fa-list-alt"></i></button>
+          <button class="btn" title="Duplicate"><i class="fas fa-copy"></i></button>
+          <button class="btn text-danger" title="Delete"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+
+      <!-- Workflow 9 (Paused) -->
+      <div class="workflow-card" data-status="paused" data-trigger="schedule">
+        <div class="wf-status-indicator paused"></div>
+        <div class="wf-info">
+          <div class="wf-name">Monthly Newsletter Schedule</div>
+          <div class="wf-trigger"><i class="fas fa-calendar-alt me-1"></i>1st of every month</div>
+        </div>
+        <div class="wf-meta">
+          <div class="wf-meta-item"><div class="wf-steps-badge">1 step</div></div>
+          <div class="wf-meta-item"><div class="wf-status-badge paused">Paused</div></div>
+          <div class="wf-meta-item">
+            <div class="wf-meta-value">0</div>
+            <div class="wf-meta-label">Executions (30d)</div>
+          </div>
+          <div class="wf-meta-item">
+            <div class="wf-meta-value" style="font-size:0.75rem;">Mar 1, 2026</div>
+            <div class="wf-meta-label">Last Run</div>
+          </div>
+        </div>
+        <div class="wf-actions">
+          <button class="btn" title="Edit" onclick="showBuilder('Monthly Newsletter Schedule')"><i class="fas fa-pen"></i></button>
+          <button class="btn" title="Resume" style="color:var(--success-color);"><i class="fas fa-play"></i></button>
+          <button class="btn" title="View Log" onclick="showLog('Monthly Newsletter Schedule')"><i class="fas fa-list-alt"></i></button>
+          <button class="btn" title="Duplicate"><i class="fas fa-copy"></i></button>
+          <button class="btn text-danger" title="Delete"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+
+      <!-- Workflow 10 (Paused) -->
+      <div class="workflow-card" data-status="paused" data-trigger="schedule">
+        <div class="wf-status-indicator paused"></div>
+        <div class="wf-info">
+          <div class="wf-name">Year-End Tax Receipt</div>
+          <div class="wf-trigger"><i class="fas fa-file-invoice me-1"></i>December 31, annually</div>
+        </div>
+        <div class="wf-meta">
+          <div class="wf-meta-item"><div class="wf-steps-badge">2 steps</div></div>
+          <div class="wf-meta-item"><div class="wf-status-badge paused">Paused</div></div>
+          <div class="wf-meta-item">
+            <div class="wf-meta-value">0</div>
+            <div class="wf-meta-label">Executions (30d)</div>
+          </div>
+          <div class="wf-meta-item">
+            <div class="wf-meta-value" style="font-size:0.75rem;">Dec 31, 2025</div>
+            <div class="wf-meta-label">Last Run</div>
+          </div>
+        </div>
+        <div class="wf-actions">
+          <button class="btn" title="Edit" onclick="showBuilder('Year-End Tax Receipt')"><i class="fas fa-pen"></i></button>
+          <button class="btn" title="Resume" style="color:var(--success-color);"><i class="fas fa-play"></i></button>
+          <button class="btn" title="View Log" onclick="showLog('Year-End Tax Receipt')"><i class="fas fa-list-alt"></i></button>
+          <button class="btn" title="Duplicate"><i class="fas fa-copy"></i></button>
+          <button class="btn text-danger" title="Delete"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+
+      <!-- Workflow 11 (Draft) -->
+      <div class="workflow-card" data-status="draft" data-trigger="campaign">
+        <div class="wf-status-indicator draft"></div>
+        <div class="wf-info">
+          <div class="wf-name">Campaign End Thank You</div>
+          <div class="wf-trigger"><i class="fas fa-bullhorn me-1"></i>Campaign end date reached</div>
+        </div>
+        <div class="wf-meta">
+          <div class="wf-meta-item"><div class="wf-steps-badge">3 steps</div></div>
+          <div class="wf-meta-item"><div class="wf-status-badge draft">Draft</div></div>
+          <div class="wf-meta-item">
+            <div class="wf-meta-value">0</div>
+            <div class="wf-meta-label">Executions (30d)</div>
+          </div>
+          <div class="wf-meta-item">
+            <div class="wf-meta-value" style="font-size:0.75rem;">&mdash;</div>
+            <div class="wf-meta-label">Last Run</div>
+          </div>
+        </div>
+        <div class="wf-actions">
+          <button class="btn" title="Edit" onclick="showBuilder('Campaign End Thank You')"><i class="fas fa-pen"></i></button>
+          <button class="btn" title="Activate" style="color:var(--success-color);"><i class="fas fa-check-circle"></i></button>
+          <button class="btn text-danger" title="Delete"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== BUILDER VIEW ==================== -->
+  <div class="builder-view" id="builderView">
+    <!-- Builder Header -->
+    <div class="builder-header">
+      <button class="back-btn" onclick="showList()" title="Back to list">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <input type="text" class="wf-name-input" id="builderWfName" value="New Donor Welcome Series">
+      <div class="status-toggle">
+        <button class="toggle-btn active-toggle" onclick="setBuilderStatus(this)">Active</button>
+        <button class="toggle-btn" onclick="setBuilderStatus(this)">Paused</button>
+        <button class="toggle-btn" onclick="setBuilderStatus(this)">Draft</button>
+      </div>
+      <div class="header-actions">
+        <button class="btn-outline-accent" onclick="alert('Test run initiated. Select a contact to simulate this workflow.')">
+          <i class="fas fa-flask me-1"></i> Test Run
+        </button>
+        <button class="btn-primary-accent" onclick="alert('Workflow saved successfully!')">
+          <i class="fas fa-save me-1"></i> Save
+        </button>
+      </div>
+    </div>
+
+    <!-- Flow Canvas -->
+    <div class="flow-canvas" id="flowCanvas">
+
+      <!-- TRIGGER Node -->
+      <div class="flow-node trigger">
+        <div class="flow-node-header">
+          <div class="flow-node-type trigger-type"><i class="fas fa-crosshairs"></i> TRIGGER</div>
+          <div class="flow-node-actions">
+            <button class="btn-icon" title="Edit"><i class="fas fa-pen"></i></button>
+          </div>
+        </div>
+        <div class="flow-node-body">
+          <div class="field-row">
+            <span class="field-label">When:</span>
+            <select class="form-select" style="flex:1;">
+              <option>New contact created</option>
+              <option>Donation received</option>
+              <option>Donation > amount</option>
+              <option>First donation</option>
+              <option>Recurring payment failed</option>
+              <option>Pledge payment overdue</option>
+              <option>Contact updated</option>
+              <option>Contact birthday</option>
+              <option>Contact anniversary</option>
+              <option>Campaign started</option>
+              <option>Campaign goal reached</option>
+              <option>Campaign ended</option>
+              <option>Event registration</option>
+              <option>Event check-in</option>
+              <option>Event ended</option>
+              <option>Daily at time</option>
+              <option>Weekly on day</option>
+              <option>Monthly on date</option>
+              <option>Custom cron</option>
+              <option>Manual trigger</option>
+            </select>
+          </div>
+          <div class="field-row mt-2">
+            <span class="field-label">Condition:</span>
+            <span class="field-value">Contact type = Donor</span>
+          </div>
+          <div style="margin-top:0.5rem;">
+            <button class="btn-outline-accent" style="font-size:0.75rem;padding:0.25rem 0.625rem;">
+              <i class="fas fa-plus me-1"></i> Add Condition
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="connector"></div>
+
+      <!-- Add Step -->
+      <div style="position:relative;">
+        <button class="add-step-btn" onclick="toggleDropdown(this)"><i class="fas fa-plus"></i></button>
+        <div class="add-step-dropdown">
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-envelope" style="color:var(--accent);"></i> Send Email</button>
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fab fa-whatsapp" style="color:#25d366;"></i> Send WhatsApp</button>
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-bell" style="color:#8b5cf6;"></i> Send Notification</button>
+          <div class="dropdown-divider"></div>
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-clock" style="color:#64748b;"></i> Wait / Delay</button>
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-code-branch" style="color:var(--warning-color);"></i> Condition (If/Else)</button>
+          <div class="dropdown-divider"></div>
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-user-edit" style="color:#0ea5e9;"></i> Update Contact</button>
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-tag" style="color:#ec4899;"></i> Add Tag</button>
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-tag" style="color:#ef4444;"></i> Remove Tag</button>
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-tasks" style="color:#f59e0b;"></i> Create Task</button>
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-link" style="color:#6366f1;"></i> Send to Webhook</button>
+        </div>
+      </div>
+
+      <div class="connector"></div>
+
+      <!-- ACTION: Send Email -->
+      <div class="flow-node action">
+        <div class="flow-node-header">
+          <div class="flow-node-type action-type"><i class="fas fa-envelope"></i> SEND EMAIL</div>
+          <div class="flow-node-actions">
+            <button class="btn-icon" title="Edit"><i class="fas fa-pen"></i></button>
+            <button class="btn-icon delete" title="Remove"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+        <div class="flow-node-body">
+          <div class="field-row">
+            <span class="field-label">Template:</span>
+            <select class="form-select" style="flex:1;">
+              <option>Welcome New Donor</option>
+              <option>Donation Thank You</option>
+              <option>Impact Update</option>
+            </select>
+          </div>
+          <div class="field-row">
+            <span class="field-label">From:</span>
+            <span class="field-value">info@ngo.org</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="connector"></div>
+
+      <div style="position:relative;">
+        <button class="add-step-btn" onclick="toggleDropdown(this)"><i class="fas fa-plus"></i></button>
+        <div class="add-step-dropdown">
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-envelope" style="color:var(--accent);"></i> Send Email</button>
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fab fa-whatsapp" style="color:#25d366;"></i> Send WhatsApp</button>
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-bell" style="color:#8b5cf6;"></i> Send Notification</button>
+          <div class="dropdown-divider"></div>
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-clock" style="color:#64748b;"></i> Wait / Delay</button>
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-code-branch" style="color:var(--warning-color);"></i> Condition (If/Else)</button>
+          <div class="dropdown-divider"></div>
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-user-edit" style="color:#0ea5e9;"></i> Update Contact</button>
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-tag" style="color:#ec4899;"></i> Add Tag</button>
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-tag" style="color:#ef4444;"></i> Remove Tag</button>
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-tasks" style="color:#f59e0b;"></i> Create Task</button>
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-link" style="color:#6366f1;"></i> Send to Webhook</button>
+        </div>
+      </div>
+
+      <div class="connector"></div>
+
+      <!-- DELAY Node -->
+      <div class="flow-node delay">
+        <div class="flow-node-header">
+          <div class="flow-node-type delay-type"><i class="fas fa-clock"></i> WAIT</div>
+          <div class="flow-node-actions">
+            <button class="btn-icon" title="Edit"><i class="fas fa-pen"></i></button>
+            <button class="btn-icon delete" title="Remove"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+        <div class="flow-node-body">
+          <div class="field-row">
+            <span class="field-label">Wait for:</span>
+            <input type="number" class="form-control" value="1" style="width:60px;">
+            <select class="form-select" style="width:auto;">
+              <option>Minutes</option>
+              <option>Hours</option>
+              <option selected>Days</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="connector"></div>
+
+      <div style="position:relative;">
+        <button class="add-step-btn" onclick="toggleDropdown(this)"><i class="fas fa-plus"></i></button>
+        <div class="add-step-dropdown">
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-envelope" style="color:var(--accent);"></i> Send Email</button>
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fab fa-whatsapp" style="color:#25d366;"></i> Send WhatsApp</button>
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-bell" style="color:#8b5cf6;"></i> Send Notification</button>
+          <div class="dropdown-divider"></div>
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-clock" style="color:#64748b;"></i> Wait / Delay</button>
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-code-branch" style="color:var(--warning-color);"></i> Condition (If/Else)</button>
+          <div class="dropdown-divider"></div>
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-user-edit" style="color:#0ea5e9;"></i> Update Contact</button>
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-tag" style="color:#ec4899;"></i> Add Tag</button>
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-tag" style="color:#ef4444;"></i> Remove Tag</button>
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-tasks" style="color:#f59e0b;"></i> Create Task</button>
+          <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-link" style="color:#6366f1;"></i> Send to Webhook</button>
+        </div>
+      </div>
+
+      <div class="connector"></div>
+
+      <!-- ACTION: Notify Staff -->
+      <div class="flow-node action">
+        <div class="flow-node-header">
+          <div class="flow-node-type action-type"><i class="fas fa-bell"></i> IN-APP NOTIFICATION</div>
+          <div class="flow-node-actions">
+            <button class="btn-icon" title="Edit"><i class="fas fa-pen"></i></button>
+            <button class="btn-icon delete" title="Remove"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+        <div class="flow-node-body">
+          <div class="field-row">
+            <span class="field-label">Template:</span>
+            <span class="field-value">Follow up with new donor {{ContactName}}</span>
+          </div>
+          <div class="field-row">
+            <span class="field-label">To:</span>
+            <select class="form-select" style="flex:1;">
+              <option selected>Assigned Staff</option>
+              <option>All Admins</option>
+              <option>Specific User...</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="connector"></div>
+
+      <!-- DELAY Node 2 -->
+      <div class="flow-node delay">
+        <div class="flow-node-header">
+          <div class="flow-node-type delay-type"><i class="fas fa-clock"></i> WAIT</div>
+          <div class="flow-node-actions">
+            <button class="btn-icon" title="Edit"><i class="fas fa-pen"></i></button>
+            <button class="btn-icon delete" title="Remove"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+        <div class="flow-node-body">
+          <div class="field-row">
+            <span class="field-label">Wait for:</span>
+            <input type="number" class="form-control" value="7" style="width:60px;">
+            <select class="form-select" style="width:auto;">
+              <option>Minutes</option>
+              <option>Hours</option>
+              <option selected>Days</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="connector"></div>
+
+      <!-- CONDITION Node -->
+      <div class="flow-node condition">
+        <div class="flow-node-header">
+          <div class="flow-node-type condition-type"><i class="fas fa-code-branch"></i> IF / ELSE</div>
+          <div class="flow-node-actions">
+            <button class="btn-icon" title="Edit"><i class="fas fa-pen"></i></button>
+            <button class="btn-icon delete" title="Remove"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+        <div class="flow-node-body">
+          <div class="field-row">
+            <span class="field-label">If:</span>
+            <select class="form-select" style="width:auto;">
+              <option selected>Has donated</option>
+              <option>Donation Amount</option>
+              <option>Contact Tag</option>
+              <option>Email Opened</option>
+            </select>
+            <select class="form-select" style="width:auto;">
+              <option selected>= Yes</option>
+              <option>= No</option>
+              <option>&gt;</option>
+              <option>&lt;</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Branch Fork -->
+      <div class="branch-fork">
+        <div class="fork-left"></div>
+        <div class="fork-right"></div>
+      </div>
+
+      <!-- Branches -->
+      <div class="branch-container">
+
+        <!-- YES Branch -->
+        <div class="branch">
+          <div class="branch-label yes"><i class="fas fa-check me-1"></i> YES</div>
+          <div class="connector"></div>
+
+          <div class="flow-node action" style="width:100%;">
+            <div class="flow-node-header">
+              <div class="flow-node-type action-type"><i class="fas fa-envelope"></i> SEND EMAIL</div>
+              <div class="flow-node-actions">
+                <button class="btn-icon" title="Edit"><i class="fas fa-pen"></i></button>
+                <button class="btn-icon delete" title="Remove"><i class="fas fa-trash"></i></button>
+              </div>
+            </div>
+            <div class="flow-node-body">
+              <div class="field-row">
+                <span class="field-label">Template:</span>
+                <span class="field-value">Impact Update</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="connector"></div>
+
+          <div class="flow-node action" style="width:100%;">
+            <div class="flow-node-header">
+              <div class="flow-node-type action-type"><i class="fas fa-tag"></i> ADD TAG</div>
+              <div class="flow-node-actions">
+                <button class="btn-icon" title="Edit"><i class="fas fa-pen"></i></button>
+                <button class="btn-icon delete" title="Remove"><i class="fas fa-trash"></i></button>
+              </div>
+            </div>
+            <div class="flow-node-body">
+              <div class="field-row">
+                <span class="field-label">Tag:</span>
+                <span class="field-value">Engaged New Donor</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="connector"></div>
+          <div style="position:relative;">
+            <button class="add-step-btn" onclick="toggleDropdown(this)"><i class="fas fa-plus"></i></button>
+            <div class="add-step-dropdown">
+              <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-envelope" style="color:var(--accent);"></i> Send Email</button>
+              <button class="dropdown-item" onclick="hideDropdowns()"><i class="fab fa-whatsapp" style="color:#25d366;"></i> Send WhatsApp</button>
+              <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-bell" style="color:#8b5cf6;"></i> Send Notification</button>
+              <div class="dropdown-divider"></div>
+              <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-clock" style="color:#64748b;"></i> Wait / Delay</button>
+              <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-code-branch" style="color:var(--warning-color);"></i> Condition (If/Else)</button>
+            </div>
+          </div>
+          <div class="connector"></div>
+          <div class="end-node">END</div>
+        </div>
+
+        <!-- NO Branch -->
+        <div class="branch">
+          <div class="branch-label no"><i class="fas fa-times me-1"></i> NO</div>
+          <div class="connector"></div>
+
+          <div class="flow-node action" style="width:100%;">
+            <div class="flow-node-header">
+              <div class="flow-node-type action-type"><i class="fas fa-envelope"></i> SEND EMAIL</div>
+              <div class="flow-node-actions">
+                <button class="btn-icon" title="Edit"><i class="fas fa-pen"></i></button>
+                <button class="btn-icon delete" title="Remove"><i class="fas fa-trash"></i></button>
+              </div>
+            </div>
+            <div class="flow-node-body">
+              <div class="field-row">
+                <span class="field-label">Template:</span>
+                <span class="field-value">Gentle Giving Reminder</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="connector"></div>
+
+          <div class="flow-node delay" style="width:100%;">
+            <div class="flow-node-header">
+              <div class="flow-node-type delay-type"><i class="fas fa-clock"></i> WAIT</div>
+              <div class="flow-node-actions">
+                <button class="btn-icon" title="Edit"><i class="fas fa-pen"></i></button>
+                <button class="btn-icon delete" title="Remove"><i class="fas fa-trash"></i></button>
+              </div>
+            </div>
+            <div class="flow-node-body">
+              <div class="field-row">
+                <span class="field-label">Wait for:</span>
+                <span class="field-value">14 Days</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="connector"></div>
+
+          <div class="flow-node action" style="width:100%;">
+            <div class="flow-node-header">
+              <div class="flow-node-type action-type"><i class="fas fa-envelope"></i> SEND EMAIL</div>
+              <div class="flow-node-actions">
+                <button class="btn-icon" title="Edit"><i class="fas fa-pen"></i></button>
+                <button class="btn-icon delete" title="Remove"><i class="fas fa-trash"></i></button>
+              </div>
+            </div>
+            <div class="flow-node-body">
+              <div class="field-row">
+                <span class="field-label">Template:</span>
+                <span class="field-value">Last chance &mdash; your impact awaits</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="connector"></div>
+          <div style="position:relative;">
+            <button class="add-step-btn" onclick="toggleDropdown(this)"><i class="fas fa-plus"></i></button>
+            <div class="add-step-dropdown">
+              <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-envelope" style="color:var(--accent);"></i> Send Email</button>
+              <button class="dropdown-item" onclick="hideDropdowns()"><i class="fab fa-whatsapp" style="color:#25d366;"></i> Send WhatsApp</button>
+              <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-bell" style="color:#8b5cf6;"></i> Send Notification</button>
+              <div class="dropdown-divider"></div>
+              <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-clock" style="color:#64748b;"></i> Wait / Delay</button>
+              <button class="dropdown-item" onclick="hideDropdowns()"><i class="fas fa-code-branch" style="color:var(--warning-color);"></i> Condition (If/Else)</button>
+            </div>
+          </div>
+          <div class="connector"></div>
+          <div class="end-node">END</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== LOG VIEW ==================== -->
+  <div class="log-view" id="logView">
+    <div class="builder-header">
+      <button class="back-btn" onclick="showList()" title="Back to list">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <div style="flex:1;">
+        <div style="font-size:1.125rem;font-weight:700;" id="logWfName">New Donor Welcome Series</div>
+        <div style="font-size:0.8125rem;color:var(--text-secondary);">Execution Log</div>
+      </div>
+      <button class="btn-outline-accent" onclick="showBuilder(document.getElementById('logWfName').textContent)">
+        <i class="fas fa-pen me-1"></i> Edit Workflow
+      </button>
+    </div>
+
+    <!-- Log Stats -->
+    <div class="log-header-card">
+      <div style="font-weight:600;font-size:0.9375rem;margin-bottom:0.25rem;">Workflow Performance</div>
+      <div class="log-stats">
+        <div class="log-stat">
+          <div class="log-stat-value">234</div>
+          <div class="log-stat-label">Total Executions (30d)</div>
+        </div>
+        <div class="log-stat">
+          <div class="log-stat-value" style="color:var(--success-color);">97.8%</div>
+          <div class="log-stat-label">Success Rate</div>
+        </div>
+        <div class="log-stat">
+          <div class="log-stat-value" style="color:var(--accent);">12</div>
+          <div class="log-stat-label">Active Instances</div>
+        </div>
+        <div class="log-stat">
+          <div class="log-stat-value" style="color:var(--danger-color);">5</div>
+          <div class="log-stat-label">Failed</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Execution Table -->
+    <div class="table-card">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Contact</th>
+            <th>Started</th>
+            <th>Current Step</th>
+            <th>Status</th>
+            <th>Completed</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a class="contact-link" onclick="parent.loadContent('contacts/contact-detail')">Sarah Johnson</a></td>
+            <td>Apr 12, 10:23 AM</td>
+            <td>Step 1: Welcome Email</td>
+            <td><span class="status-pill in-progress"><i class="fas fa-sync-alt fa-spin" style="font-size:0.6rem;"></i> In Progress</span></td>
+            <td>&mdash;</td>
+            <td><button class="btn-outline-accent" style="font-size:0.6875rem;padding:0.2rem 0.5rem;">Cancel</button></td>
+          </tr>
+          <tr>
+            <td><a class="contact-link" onclick="parent.loadContent('contacts/contact-detail')">Ahmad Al-Hassan</a></td>
+            <td>Apr 11, 9:00 AM</td>
+            <td>Step 3: Waiting (7 days)</td>
+            <td><span class="status-pill in-progress"><i class="fas fa-sync-alt fa-spin" style="font-size:0.6rem;"></i> In Progress</span></td>
+            <td>&mdash;</td>
+            <td><button class="btn-outline-accent" style="font-size:0.6875rem;padding:0.2rem 0.5rem;">Cancel</button></td>
+          </tr>
+          <tr>
+            <td><a class="contact-link" onclick="parent.loadContent('contacts/contact-detail')">Ravi Krishnan</a></td>
+            <td>Apr 5, 2:00 PM</td>
+            <td>Completed (YES branch)</td>
+            <td><span class="status-pill completed"><i class="fas fa-check-circle" style="font-size:0.6rem;"></i> Completed</span></td>
+            <td>Apr 12</td>
+            <td>&mdash;</td>
+          </tr>
+          <tr>
+            <td><a class="contact-link" onclick="parent.loadContent('contacts/contact-detail')">Maria Santos</a></td>
+            <td>Apr 3, 11:00 AM</td>
+            <td>Completed (NO branch)</td>
+            <td><span class="status-pill completed"><i class="fas fa-check-circle" style="font-size:0.6rem;"></i> Completed</span></td>
+            <td>Apr 10</td>
+            <td>&mdash;</td>
+          </tr>
+          <tr>
+            <td><a class="contact-link" onclick="parent.loadContent('contacts/contact-detail')">James Okonkwo</a></td>
+            <td>Apr 1, 3:00 PM</td>
+            <td>Step 2: Email sent</td>
+            <td><span class="status-pill failed"><i class="fas fa-times-circle" style="font-size:0.6rem;"></i> Failed (email bounced)</span></td>
+            <td>&mdash;</td>
+            <td><button class="btn-outline-accent" style="font-size:0.6875rem;padding:0.2rem 0.5rem;">Retry</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // View switching
+    function showList() {
+      document.getElementById('listView').classList.remove('hidden');
+      document.getElementById('builderView').classList.remove('active');
+      document.getElementById('logView').classList.remove('active');
+    }
+
+    function showBuilder(name) {
+      document.getElementById('listView').classList.add('hidden');
+      document.getElementById('logView').classList.remove('active');
+      document.getElementById('builderView').classList.add('active');
+      if (name) {
+        document.getElementById('builderWfName').value = name;
+      } else {
+        document.getElementById('builderWfName').value = 'Untitled Workflow';
+      }
+      hideDropdowns();
+    }
+
+    function showLog(name) {
+      document.getElementById('listView').classList.add('hidden');
+      document.getElementById('builderView').classList.remove('active');
+      document.getElementById('logView').classList.add('active');
+      document.getElementById('logWfName').textContent = name;
+    }
+
+    // Status toggle in builder
+    function setBuilderStatus(btn) {
+      btn.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active-toggle'));
+      btn.classList.add('active-toggle');
+    }
+
+    // Add step dropdown
+    function toggleDropdown(btn) {
+      const dd = btn.nextElementSibling;
+      const wasOpen = dd.classList.contains('show');
+      hideDropdowns();
+      if (!wasOpen) dd.classList.add('show');
+    }
+
+    function hideDropdowns() {
+      document.querySelectorAll('.add-step-dropdown').forEach(d => d.classList.remove('show'));
+    }
+
+    // Close dropdowns on outside click
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.add-step-btn') && !e.target.closest('.add-step-dropdown')) {
+        hideDropdowns();
+      }
+    });
+
+    // Filter workflows
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+    const triggerFilter = document.getElementById('triggerFilter');
+
+    function filterWorkflows() {
+      const search = searchInput.value.toLowerCase();
+      const status = statusFilter.value;
+      const trigger = triggerFilter.value;
+      document.querySelectorAll('.workflow-card').forEach(card => {
+        const name = card.querySelector('.wf-name').textContent.toLowerCase();
+        const triggerText = card.querySelector('.wf-trigger').textContent.toLowerCase();
+        const cardStatus = card.dataset.status;
+        const cardTrigger = card.dataset.trigger;
+
+        const matchSearch = !search || name.includes(search) || triggerText.includes(search);
+        const matchStatus = !status || cardStatus === status;
+        const matchTrigger = !trigger || cardTrigger === trigger;
+
+        card.style.display = (matchSearch && matchStatus && matchTrigger) ? 'flex' : 'none';
+      });
+    }
+
+    searchInput.addEventListener('input', filterWorkflows);
+    statusFilter.addEventListener('change', filterWorkflows);
+    triggerFilter.addEventListener('change', filterWorkflows);
+  </script>
+
+</body>
+
+</html>

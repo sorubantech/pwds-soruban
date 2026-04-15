@@ -1,0 +1,1537 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audit Trail - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --admin-accent: #dc2626;
+      --admin-accent-bg: #fef2f2;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .admin-badge {
+      display: inline-block;
+      background: var(--admin-accent);
+      color: #fff;
+      font-size: 0.625rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      vertical-align: middle;
+      margin-left: 0.5rem;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-accent {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      font-weight: 600;
+      font-size: 0.8125rem;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+    }
+
+    .btn-accent:hover {
+      background: #0c6a82;
+      color: #fff;
+    }
+
+    .btn-outline-accent {
+      background: #fff;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      font-weight: 600;
+      font-size: 0.8125rem;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent-bg);
+      color: var(--accent);
+    }
+
+    /* Info Banner */
+    .info-banner {
+      background: var(--accent-bg);
+      border: 1px solid #a5f3fc;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      margin-bottom: 1.25rem;
+      font-size: 0.8125rem;
+      color: var(--accent);
+    }
+
+    .info-banner i {
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    /* Summary Cards */
+    .summary-card {
+      background: #fff;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      padding: 1.25rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      height: 100%;
+    }
+
+    .summary-card .icon-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 1.125rem;
+    }
+
+    .icon-circle.accent {
+      background: var(--accent-bg);
+      color: var(--accent);
+    }
+
+    .icon-circle.danger {
+      background: var(--admin-accent-bg);
+      color: var(--danger-color);
+    }
+
+    .summary-card .card-info h3 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    .summary-card .card-info .card-label {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+      margin-bottom: 0.125rem;
+    }
+
+    .summary-card .card-info .card-sub {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    /* Filter Panel */
+    .filter-card {
+      background: #fff;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      margin-bottom: 1.25rem;
+      overflow: hidden;
+    }
+
+    .filter-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.875rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      background: #fafbfc;
+      cursor: pointer;
+    }
+
+    .filter-header h6 {
+      margin: 0;
+      font-weight: 600;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .filter-header .toggle-icon {
+      transition: transform 0.2s;
+    }
+
+    .filter-header.collapsed .toggle-icon {
+      transform: rotate(-90deg);
+    }
+
+    .filter-body {
+      padding: 1rem 1.25rem;
+    }
+
+    .filter-body.collapsed {
+      display: none;
+    }
+
+    .filter-body label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .filter-body .form-control,
+    .filter-body .form-select {
+      font-size: 0.8125rem;
+      border-color: var(--border-color);
+      border-radius: 0.5rem;
+    }
+
+    .filter-body .form-control:focus,
+    .filter-body .form-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .quick-date-btns .btn {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.625rem;
+      border-radius: 999px;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      background: #fff;
+      font-weight: 500;
+    }
+
+    .quick-date-btns .btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .quick-date-btns .btn:hover:not(.active) {
+      background: #f8fafc;
+      border-color: var(--accent-light);
+      color: var(--accent);
+    }
+
+    .filter-actions {
+      display: flex;
+      gap: 0.5rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border-color);
+      margin-top: 0.75rem;
+    }
+
+    /* View Toggle */
+    .view-toggle-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .view-toggle .btn {
+      font-size: 0.8125rem;
+      padding: 0.4rem 1rem;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      background: #fff;
+    }
+
+    .view-toggle .btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .view-toggle .btn:first-child {
+      border-radius: 0.5rem 0 0 0.5rem;
+    }
+
+    .view-toggle .btn:last-child {
+      border-radius: 0 0.5rem 0.5rem 0;
+    }
+
+    /* Audit Table */
+    .audit-table-card {
+      background: #fff;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+    }
+
+    .audit-table {
+      width: 100%;
+      font-size: 0.8125rem;
+      margin: 0;
+    }
+
+    .audit-table thead th {
+      background: #f8fafc;
+      border-bottom: 2px solid var(--border-color);
+      padding: 0.625rem 0.75rem;
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+    }
+
+    .audit-table tbody tr {
+      border-bottom: 1px solid #f1f5f9;
+      transition: background 0.15s;
+    }
+
+    .audit-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    .audit-table tbody td {
+      padding: 0.5rem 0.75rem;
+      vertical-align: middle;
+    }
+
+    .audit-table .timestamp {
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      white-space: nowrap;
+    }
+
+    .audit-table .user-name {
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .audit-table .ip-cell {
+      font-family: 'Courier New', monospace;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .audit-table .desc-cell {
+      max-width: 280px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    tr.row-warning {
+      background: #fffbeb !important;
+    }
+
+    tr.row-warning:hover {
+      background: #fef9c3 !important;
+    }
+
+    tr.row-critical {
+      background: #fef2f2 !important;
+    }
+
+    tr.row-critical:hover {
+      background: #fee2e2 !important;
+    }
+
+    /* Action Pills */
+    .action-pill {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .action-pill.create { background: #dcfce7; color: #166534; }
+    .action-pill.update { background: #dbeafe; color: #1e40af; }
+    .action-pill.delete { background: #fee2e2; color: #991b1b; }
+    .action-pill.login { background: #f3e8ff; color: #6b21a8; }
+    .action-pill.export { background: #fef3c7; color: #92400e; }
+    .action-pill.send { background: #ccfbf1; color: #115e59; }
+    .action-pill.approve { background: #d1fae5; color: #065f46; }
+
+    /* Status Badges */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+    }
+
+    .status-badge.success { background: #dcfce7; color: #166534; }
+    .status-badge.warning { background: #fef3c7; color: #92400e; }
+    .status-badge.critical { background: #fee2e2; color: #991b1b; }
+    .status-badge.failed { background: #fee2e2; color: #991b1b; }
+    .status-badge.denied { background: #f1f5f9; color: #64748b; }
+
+    .btn-view {
+      font-size: 0.75rem;
+      padding: 0.2rem 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      color: var(--accent);
+      background: #fff;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .btn-view:hover {
+      background: var(--accent-bg);
+      border-color: var(--accent);
+    }
+
+    /* Pagination */
+    .table-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      border-top: 1px solid var(--border-color);
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .pagination-btns {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .pagination-btns .btn {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      color: var(--text-secondary);
+      background: #fff;
+      min-width: 32px;
+      text-align: center;
+    }
+
+    .pagination-btns .btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .pagination-btns .btn:hover:not(.active) {
+      background: #f8fafc;
+    }
+
+    /* Timeline View */
+    .timeline-view {
+      display: none;
+    }
+
+    .timeline-view.active {
+      display: block;
+    }
+
+    .table-view.active {
+      display: block;
+    }
+
+    .table-view {
+      display: block;
+    }
+
+    .timeline-date-header {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      padding: 0.75rem 0;
+      border-bottom: 2px solid var(--border-color);
+      margin-bottom: 1rem;
+    }
+
+    .timeline-item {
+      display: flex;
+      gap: 1rem;
+      padding: 0.75rem 0;
+      position: relative;
+    }
+
+    .timeline-item:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 87px;
+      top: 2.5rem;
+      bottom: 0;
+      width: 2px;
+      background: var(--border-color);
+    }
+
+    .timeline-time {
+      width: 70px;
+      flex-shrink: 0;
+      text-align: right;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+      padding-top: 0.125rem;
+    }
+
+    .timeline-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 0.25rem;
+      border: 3px solid;
+      position: relative;
+      z-index: 1;
+      background: #fff;
+    }
+
+    .timeline-dot.success { border-color: var(--success-color); }
+    .timeline-dot.warning { border-color: var(--warning-color); }
+    .timeline-dot.critical { border-color: var(--danger-color); }
+
+    .timeline-content {
+      flex: 1;
+      background: #fff;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+      padding: 0.75rem 1rem;
+    }
+
+    .timeline-content .tl-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .timeline-content .tl-user {
+      font-weight: 600;
+      font-size: 0.8125rem;
+    }
+
+    .timeline-content .tl-desc {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .timeline-content .tl-meta {
+      display: flex;
+      gap: 1rem;
+      margin-top: 0.375rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    /* Detail Slide-in Panel */
+    .detail-panel-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.3);
+      z-index: 1040;
+    }
+
+    .detail-panel-overlay.active {
+      display: block;
+    }
+
+    .detail-panel {
+      position: fixed;
+      top: 0;
+      right: -500px;
+      width: 480px;
+      height: 100%;
+      background: #fff;
+      box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+      z-index: 1050;
+      transition: right 0.3s ease;
+      overflow-y: auto;
+    }
+
+    .detail-panel.active {
+      right: 0;
+    }
+
+    .detail-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      background: #fff;
+      z-index: 2;
+    }
+
+    .detail-panel-header h5 {
+      margin: 0;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .detail-panel-header .btn-close-panel {
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0.25rem;
+      line-height: 1;
+    }
+
+    .detail-panel-header .btn-close-panel:hover {
+      color: var(--text-primary);
+    }
+
+    .detail-panel-body {
+      padding: 1.25rem;
+    }
+
+    .detail-section {
+      margin-bottom: 1.25rem;
+    }
+
+    .detail-section h6 {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.375rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .detail-row {
+      display: flex;
+      padding: 0.375rem 0;
+      font-size: 0.8125rem;
+    }
+
+    .detail-row .detail-label {
+      width: 120px;
+      flex-shrink: 0;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .detail-row .detail-value {
+      flex: 1;
+      font-weight: 500;
+    }
+
+    .changes-table {
+      width: 100%;
+      font-size: 0.8125rem;
+      border-collapse: collapse;
+    }
+
+    .changes-table th {
+      background: #f8fafc;
+      padding: 0.375rem 0.625rem;
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: var(--text-secondary);
+      font-weight: 600;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .changes-table td {
+      padding: 0.375rem 0.625rem;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .changes-table .val-before {
+      background: #fef2f2;
+      color: #991b1b;
+      font-weight: 500;
+    }
+
+    .changes-table .val-after {
+      background: #dcfce7;
+      color: #166534;
+      font-weight: 500;
+    }
+
+    .related-record {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0;
+      font-size: 0.8125rem;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .related-record:last-child {
+      border-bottom: none;
+    }
+
+    .related-record .rr-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6875rem;
+      flex-shrink: 0;
+    }
+
+    .security-timeline {
+      position: relative;
+      padding-left: 1.25rem;
+    }
+
+    .security-timeline::before {
+      content: '';
+      position: absolute;
+      left: 4px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--border-color);
+    }
+
+    .sec-event {
+      position: relative;
+      padding: 0.5rem 0;
+      font-size: 0.8125rem;
+    }
+
+    .sec-event::before {
+      content: '';
+      position: absolute;
+      left: -1.25rem;
+      top: 0.75rem;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid;
+      background: #fff;
+    }
+
+    .sec-event.evt-warning::before { border-color: var(--warning-color); }
+    .sec-event.evt-critical::before { border-color: var(--danger-color); }
+    .sec-event.evt-info::before { border-color: var(--accent); }
+
+    .sec-event .sec-time {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+    }
+
+    /* Entity link */
+    .entity-link {
+      color: var(--accent);
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .entity-link:hover {
+      text-decoration: underline;
+      color: #0c6a82;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .detail-panel {
+        width: 100%;
+        right: -100%;
+      }
+
+      .audit-table {
+        font-size: 0.75rem;
+      }
+
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1>Audit Trail <span class="admin-badge">Admin</span></h1>
+      <p class="subtitle">Complete activity log of all system actions</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-accent"><i class="fa-solid fa-file-export me-1"></i> Export Log</button>
+      <button class="btn btn-outline-accent"><i class="fa-solid fa-print me-1"></i> Print</button>
+    </div>
+  </div>
+
+  <!-- Info Banner -->
+  <div class="info-banner">
+    <i class="fa-solid fa-circle-info"></i>
+    <span>Audit records are immutable and cannot be modified or deleted</span>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-lg-3 col-md-6">
+      <div class="summary-card">
+        <div class="icon-circle accent">
+          <i class="fa-solid fa-clock"></i>
+        </div>
+        <div class="card-info">
+          <div class="card-label">Today's Actions</div>
+          <h3>234</h3>
+          <div class="card-sub">Peak hour: 10 AM (45 actions)</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+      <div class="summary-card">
+        <div class="icon-circle accent">
+          <i class="fa-solid fa-user-check"></i>
+        </div>
+        <div class="card-info">
+          <div class="card-label">Active Users Today</div>
+          <h3>23 <span style="font-size: 0.875rem; font-weight: 400; color: var(--text-secondary)">/ 134 total</span></h3>
+          <div class="card-sub">17% of registered users</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+      <div class="summary-card">
+        <div class="icon-circle accent">
+          <i class="fa-solid fa-pen"></i>
+        </div>
+        <div class="card-info">
+          <div class="card-label">Data Modifications</div>
+          <h3>156</h3>
+          <div class="card-sub">Creates: 45 &middot; Updates: 98 &middot; Deletes: 13</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+      <div class="summary-card">
+        <div class="icon-circle danger">
+          <i class="fa-solid fa-shield"></i>
+        </div>
+        <div class="card-info">
+          <div class="card-label">Security Events</div>
+          <h3 style="color: var(--danger-color)">8</h3>
+          <div class="card-sub">3 failed logins, 2 password resets, 3 role changes</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Panel -->
+  <div class="filter-card">
+    <div class="filter-header" id="filterToggle" onclick="toggleFilter()">
+      <h6><i class="fa-solid fa-filter"></i> Filters</h6>
+      <i class="fa-solid fa-chevron-down toggle-icon" id="filterToggleIcon"></i>
+    </div>
+    <div class="filter-body" id="filterBody">
+      <!-- Row 1 -->
+      <div class="row g-3 mb-3">
+        <div class="col-lg-5">
+          <label>Date Range</label>
+          <div class="d-flex gap-2 mb-2">
+            <input type="date" class="form-control" value="2026-04-12" style="flex:1">
+            <span class="align-self-center text-secondary" style="font-size:0.75rem">to</span>
+            <input type="date" class="form-control" value="2026-04-12" style="flex:1">
+          </div>
+          <div class="quick-date-btns d-flex gap-1 flex-wrap">
+            <button class="btn active" onclick="setQuickDate(this)">Today</button>
+            <button class="btn" onclick="setQuickDate(this)">Yesterday</button>
+            <button class="btn" onclick="setQuickDate(this)">This Week</button>
+            <button class="btn" onclick="setQuickDate(this)">This Month</button>
+            <button class="btn" onclick="setQuickDate(this)">Custom</button>
+          </div>
+        </div>
+        <div class="col-lg-3">
+          <label>User</label>
+          <select class="form-select">
+            <option value="">All Users</option>
+            <option>Ahmed Salim</option>
+            <option>Fatima Al-Zahra</option>
+            <option>Ravi Kumar</option>
+            <option>James Okonkwo</option>
+            <option>Admin</option>
+            <option>System</option>
+          </select>
+        </div>
+        <div class="col-lg-4">
+          <label>Action Type</label>
+          <select class="form-select">
+            <option value="">All Actions</option>
+            <option>Create</option>
+            <option>Update</option>
+            <option>Delete</option>
+            <option>Login</option>
+            <option>Logout</option>
+            <option>Export</option>
+            <option>Import</option>
+            <option>Send</option>
+            <option>Approve</option>
+            <option>Reject</option>
+          </select>
+        </div>
+      </div>
+      <!-- Row 2 -->
+      <div class="row g-3 mb-3">
+        <div class="col-lg-3">
+          <label>Entity / Module</label>
+          <select class="form-select">
+            <option value="">All Modules</option>
+            <option>Contacts</option>
+            <option>Donations</option>
+            <option>Campaigns</option>
+            <option>Events</option>
+            <option>Volunteers</option>
+            <option>Users</option>
+            <option>Roles</option>
+            <option>Settings</option>
+            <option>Reports</option>
+            <option>Email</option>
+            <option>Collections</option>
+            <option>Receipts</option>
+          </select>
+        </div>
+        <div class="col-lg-3">
+          <label>Status</label>
+          <select class="form-select">
+            <option value="">All Statuses</option>
+            <option>Success</option>
+            <option>Warning</option>
+            <option>Critical</option>
+            <option>Failed</option>
+            <option>Denied</option>
+          </select>
+        </div>
+        <div class="col-lg-3">
+          <label>Severity</label>
+          <select class="form-select">
+            <option value="">All Severities</option>
+            <option>Low</option>
+            <option>Medium</option>
+            <option>High</option>
+            <option>Critical</option>
+          </select>
+        </div>
+        <div class="col-lg-3">
+          <label>Search</label>
+          <input type="text" class="form-control" placeholder="Search descriptions, IPs...">
+        </div>
+      </div>
+      <!-- Filter Actions -->
+      <div class="filter-actions">
+        <button class="btn btn-accent btn-sm"><i class="fa-solid fa-check me-1"></i> Apply</button>
+        <button class="btn btn-outline-accent btn-sm"><i class="fa-solid fa-rotate-left me-1"></i> Clear</button>
+        <button class="btn btn-outline-accent btn-sm"><i class="fa-regular fa-bookmark me-1"></i> Save Filter</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Toggle -->
+  <div class="view-toggle-bar">
+    <div class="view-toggle">
+      <button class="btn active" id="btnTableView" onclick="switchView('table')"><i class="fa-solid fa-table me-1"></i> Table View</button><button class="btn" id="btnTimelineView" onclick="switchView('timeline')"><i class="fa-solid fa-timeline me-1"></i> Timeline View</button>
+    </div>
+    <div style="font-size: 0.8125rem; color: var(--text-secondary)">
+      <i class="fa-solid fa-circle-info me-1"></i> Showing results for <strong>Today, Apr 12, 2026</strong>
+    </div>
+  </div>
+
+  <!-- Table View -->
+  <div class="table-view active" id="tableView">
+    <div class="audit-table-card">
+      <div style="overflow-x: auto;">
+        <table class="audit-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>User</th>
+              <th>Action</th>
+              <th>Entity</th>
+              <th>Description</th>
+              <th>IP Address</th>
+              <th>Status</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="timestamp">Apr 12, 2:30:45 PM</td>
+              <td class="user-name">Ahmed Salim</td>
+              <td><span class="action-pill update">Update</span></td>
+              <td><a class="entity-link" onclick="parent.loadContent('fundraising/donation-detail')">Donation #DON-4523</a></td>
+              <td class="desc-cell">Updated amount from $200 to $500</td>
+              <td class="ip-cell">192.168.1.45</td>
+              <td><span class="status-badge success">&#x2705; Success</span></td>
+              <td><button class="btn-view" onclick="openDetail('update')"><i class="fa-solid fa-eye"></i> View</button></td>
+            </tr>
+            <tr>
+              <td class="timestamp">Apr 12, 2:28:12 PM</td>
+              <td class="user-name">Ahmed Salim</td>
+              <td><span class="action-pill create">Create</span></td>
+              <td><a class="entity-link" onclick="parent.loadContent('contacts/contact-detail')">Contact #CON-1892</a></td>
+              <td class="desc-cell">Created new contact: Sarah Mohammed</td>
+              <td class="ip-cell">192.168.1.45</td>
+              <td><span class="status-badge success">&#x2705; Success</span></td>
+              <td><button class="btn-view" onclick="openDetail('create')"><i class="fa-solid fa-eye"></i> View</button></td>
+            </tr>
+            <tr>
+              <td class="timestamp">Apr 12, 2:15:33 PM</td>
+              <td class="user-name">Fatima Al-Zahra</td>
+              <td><span class="action-pill export">Export</span></td>
+              <td>Contact List</td>
+              <td class="desc-cell">Exported 1,234 contacts as Excel</td>
+              <td class="ip-cell">192.168.1.50</td>
+              <td><span class="status-badge success">&#x2705; Success</span></td>
+              <td><button class="btn-view" onclick="openDetail('export')"><i class="fa-solid fa-eye"></i> View</button></td>
+            </tr>
+            <tr>
+              <td class="timestamp">Apr 12, 2:10:00 PM</td>
+              <td class="user-name" style="color: var(--accent)">System</td>
+              <td><span class="action-pill send">Send</span></td>
+              <td>Email Campaign #EC-089</td>
+              <td class="desc-cell">Sent "Ramadan Appeal" to 2,500 recipients</td>
+              <td class="ip-cell">&mdash;</td>
+              <td><span class="status-badge success">&#x2705; Success</span></td>
+              <td><button class="btn-view" onclick="openDetail('send')"><i class="fa-solid fa-eye"></i> View</button></td>
+            </tr>
+            <tr>
+              <td class="timestamp">Apr 12, 1:45:22 PM</td>
+              <td class="user-name">Ravi Kumar</td>
+              <td><span class="action-pill delete">Delete</span></td>
+              <td><a class="entity-link" onclick="parent.loadContent('fundraising/donation-detail')">Donation #DON-4519</a></td>
+              <td class="desc-cell">Deleted donation (reason: duplicate entry)</td>
+              <td class="ip-cell">10.0.0.23</td>
+              <td><span class="status-badge success">&#x2705; Success</span></td>
+              <td><button class="btn-view" onclick="openDetail('delete')"><i class="fa-solid fa-eye"></i> View</button></td>
+            </tr>
+            <tr class="row-warning">
+              <td class="timestamp">Apr 12, 1:30:00 PM</td>
+              <td class="user-name" style="color: var(--text-secondary); font-style: italic;">Unknown</td>
+              <td><span class="action-pill login">Login</span></td>
+              <td>User: test@ghf.org</td>
+              <td class="desc-cell">Failed login attempt (wrong password, attempt 4/5)</td>
+              <td class="ip-cell">203.0.113.42</td>
+              <td><span class="status-badge warning">&#x26A0;&#xFE0F; Warning</span></td>
+              <td><button class="btn-view" onclick="openDetail('login-warning')"><i class="fa-solid fa-eye"></i> View</button></td>
+            </tr>
+            <tr>
+              <td class="timestamp">Apr 12, 1:15:10 PM</td>
+              <td class="user-name">Admin</td>
+              <td><span class="action-pill update">Update</span></td>
+              <td>Role: Staff</td>
+              <td class="desc-cell">Added "Export Contacts" capability to Staff role</td>
+              <td class="ip-cell">192.168.1.45</td>
+              <td><span class="status-badge success">&#x2705; Success</span></td>
+              <td><button class="btn-view" onclick="openDetail('role-update')"><i class="fa-solid fa-eye"></i> View</button></td>
+            </tr>
+            <tr class="row-critical">
+              <td class="timestamp">Apr 12, 12:00:00 PM</td>
+              <td class="user-name" style="color: var(--text-secondary); font-style: italic;">Unknown</td>
+              <td><span class="action-pill login">Login</span></td>
+              <td>User: test@ghf.org</td>
+              <td class="desc-cell">Account locked after 5 failed attempts</td>
+              <td class="ip-cell">203.0.113.42</td>
+              <td><span class="status-badge critical">&#x1F534; Critical</span></td>
+              <td><button class="btn-view" onclick="openDetail('login-critical')"><i class="fa-solid fa-eye"></i> View</button></td>
+            </tr>
+            <tr>
+              <td class="timestamp">Apr 12, 11:45:30 AM</td>
+              <td class="user-name">James Okonkwo</td>
+              <td><span class="action-pill approve">Approve</span></td>
+              <td><a class="entity-link" onclick="parent.loadContent('fundraising/collection-detail')">Collection #FC-789</a></td>
+              <td class="desc-cell">Approved field collection of KES 15,000</td>
+              <td class="ip-cell">10.0.0.56</td>
+              <td><span class="status-badge success">&#x2705; Success</span></td>
+              <td><button class="btn-view" onclick="openDetail('approve')"><i class="fa-solid fa-eye"></i> View</button></td>
+            </tr>
+            <tr>
+              <td class="timestamp">Apr 12, 11:30:00 AM</td>
+              <td class="user-name" style="color: var(--accent)">System</td>
+              <td><span class="action-pill create">Create</span></td>
+              <td><a class="entity-link" onclick="parent.loadContent('fundraising/receipt-detail')">Receipt #REC-4546</a></td>
+              <td class="desc-cell">Auto-generated receipt for DON-4522</td>
+              <td class="ip-cell">&mdash;</td>
+              <td><span class="status-badge success">&#x2705; Success</span></td>
+              <td><button class="btn-view" onclick="openDetail('auto-create')"><i class="fa-solid fa-eye"></i> View</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-footer">
+        <span>Showing 1&ndash;50 of 234 entries</span>
+        <div class="pagination-btns">
+          <button class="btn" disabled><i class="fa-solid fa-chevron-left"></i></button>
+          <button class="btn active">1</button>
+          <button class="btn">2</button>
+          <button class="btn">3</button>
+          <button class="btn">4</button>
+          <button class="btn">5</button>
+          <button class="btn"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeline View -->
+  <div class="timeline-view" id="timelineView">
+    <div class="audit-table-card" style="padding: 1.25rem;">
+      <div class="timeline-date-header"><i class="fa-regular fa-calendar me-2"></i> April 12, 2026</div>
+
+      <div class="timeline-item">
+        <div class="timeline-time">2:30 PM</div>
+        <div class="timeline-dot success"></div>
+        <div class="timeline-content">
+          <div class="tl-header">
+            <span class="tl-user">Ahmed Salim</span>
+            <span class="action-pill update">Update</span>
+            <span class="status-badge success" style="font-size:0.6875rem">Success</span>
+          </div>
+          <div class="tl-desc">Updated <a class="entity-link" onclick="parent.loadContent('fundraising/donation-detail')">Donation #DON-4523</a> amount from $200 to $500</div>
+          <div class="tl-meta"><span><i class="fa-solid fa-globe me-1"></i>192.168.1.45</span></div>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-time">2:28 PM</div>
+        <div class="timeline-dot success"></div>
+        <div class="timeline-content">
+          <div class="tl-header">
+            <span class="tl-user">Ahmed Salim</span>
+            <span class="action-pill create">Create</span>
+            <span class="status-badge success" style="font-size:0.6875rem">Success</span>
+          </div>
+          <div class="tl-desc">Created new <a class="entity-link" onclick="parent.loadContent('contacts/contact-detail')">Contact #CON-1892</a>: Sarah Mohammed</div>
+          <div class="tl-meta"><span><i class="fa-solid fa-globe me-1"></i>192.168.1.45</span></div>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-time">2:15 PM</div>
+        <div class="timeline-dot success"></div>
+        <div class="timeline-content">
+          <div class="tl-header">
+            <span class="tl-user">Fatima Al-Zahra</span>
+            <span class="action-pill export">Export</span>
+            <span class="status-badge success" style="font-size:0.6875rem">Success</span>
+          </div>
+          <div class="tl-desc">Exported 1,234 contacts as Excel from Contact List</div>
+          <div class="tl-meta"><span><i class="fa-solid fa-globe me-1"></i>192.168.1.50</span></div>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-time">2:10 PM</div>
+        <div class="timeline-dot success"></div>
+        <div class="timeline-content">
+          <div class="tl-header">
+            <span class="tl-user" style="color:var(--accent)">System</span>
+            <span class="action-pill send">Send</span>
+            <span class="status-badge success" style="font-size:0.6875rem">Success</span>
+          </div>
+          <div class="tl-desc">Sent "Ramadan Appeal" email campaign to 2,500 recipients</div>
+          <div class="tl-meta"><span><i class="fa-solid fa-robot me-1"></i>Automated</span></div>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-time">1:45 PM</div>
+        <div class="timeline-dot success"></div>
+        <div class="timeline-content">
+          <div class="tl-header">
+            <span class="tl-user">Ravi Kumar</span>
+            <span class="action-pill delete">Delete</span>
+            <span class="status-badge success" style="font-size:0.6875rem">Success</span>
+          </div>
+          <div class="tl-desc">Deleted <a class="entity-link" onclick="parent.loadContent('fundraising/donation-detail')">Donation #DON-4519</a> (reason: duplicate entry)</div>
+          <div class="tl-meta"><span><i class="fa-solid fa-globe me-1"></i>10.0.0.23</span></div>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-time">1:30 PM</div>
+        <div class="timeline-dot warning"></div>
+        <div class="timeline-content" style="border-color: var(--warning-color); border-left: 3px solid var(--warning-color);">
+          <div class="tl-header">
+            <span class="tl-user" style="color: var(--text-secondary); font-style: italic;">Unknown</span>
+            <span class="action-pill login">Login</span>
+            <span class="status-badge warning" style="font-size:0.6875rem">Warning</span>
+          </div>
+          <div class="tl-desc">Failed login attempt for test@ghf.org (wrong password, attempt 4/5)</div>
+          <div class="tl-meta"><span><i class="fa-solid fa-globe me-1"></i>203.0.113.42</span></div>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-time">1:15 PM</div>
+        <div class="timeline-dot success"></div>
+        <div class="timeline-content">
+          <div class="tl-header">
+            <span class="tl-user">Admin</span>
+            <span class="action-pill update">Update</span>
+            <span class="status-badge success" style="font-size:0.6875rem">Success</span>
+          </div>
+          <div class="tl-desc">Added "Export Contacts" capability to Staff role</div>
+          <div class="tl-meta"><span><i class="fa-solid fa-globe me-1"></i>192.168.1.45</span></div>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-time">12:00 PM</div>
+        <div class="timeline-dot critical"></div>
+        <div class="timeline-content" style="border-color: var(--danger-color); border-left: 3px solid var(--danger-color);">
+          <div class="tl-header">
+            <span class="tl-user" style="color: var(--text-secondary); font-style: italic;">Unknown</span>
+            <span class="action-pill login">Login</span>
+            <span class="status-badge critical" style="font-size:0.6875rem">Critical</span>
+          </div>
+          <div class="tl-desc">Account locked for test@ghf.org after 5 failed login attempts</div>
+          <div class="tl-meta"><span><i class="fa-solid fa-globe me-1"></i>203.0.113.42</span><span><i class="fa-solid fa-triangle-exclamation me-1"></i>Security Alert</span></div>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-time">11:45 AM</div>
+        <div class="timeline-dot success"></div>
+        <div class="timeline-content">
+          <div class="tl-header">
+            <span class="tl-user">James Okonkwo</span>
+            <span class="action-pill approve">Approve</span>
+            <span class="status-badge success" style="font-size:0.6875rem">Success</span>
+          </div>
+          <div class="tl-desc">Approved field <a class="entity-link" onclick="parent.loadContent('fundraising/collection-detail')">Collection #FC-789</a> of KES 15,000</div>
+          <div class="tl-meta"><span><i class="fa-solid fa-globe me-1"></i>10.0.0.56</span></div>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-time">11:30 AM</div>
+        <div class="timeline-dot success"></div>
+        <div class="timeline-content">
+          <div class="tl-header">
+            <span class="tl-user" style="color:var(--accent)">System</span>
+            <span class="action-pill create">Create</span>
+            <span class="status-badge success" style="font-size:0.6875rem">Success</span>
+          </div>
+          <div class="tl-desc">Auto-generated <a class="entity-link" onclick="parent.loadContent('fundraising/receipt-detail')">Receipt #REC-4546</a> for DON-4522</div>
+          <div class="tl-meta"><span><i class="fa-solid fa-robot me-1"></i>Automated</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail Panel Overlay -->
+  <div class="detail-panel-overlay" id="detailOverlay" onclick="closeDetail()"></div>
+
+  <!-- Detail Panel: Update -->
+  <div class="detail-panel" id="detailPanel">
+    <!-- Content populated by JS -->
+  </div>
+
+  <script>
+    // Filter toggle
+    function toggleFilter() {
+      const body = document.getElementById('filterBody');
+      const header = document.getElementById('filterToggle');
+      const icon = document.getElementById('filterToggleIcon');
+      body.classList.toggle('collapsed');
+      header.classList.toggle('collapsed');
+    }
+
+    // Quick date buttons
+    function setQuickDate(btn) {
+      document.querySelectorAll('.quick-date-btns .btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    // View toggle
+    function switchView(view) {
+      const tableView = document.getElementById('tableView');
+      const timelineView = document.getElementById('timelineView');
+      const btnTable = document.getElementById('btnTableView');
+      const btnTimeline = document.getElementById('btnTimelineView');
+
+      if (view === 'table') {
+        tableView.style.display = 'block';
+        timelineView.style.display = 'none';
+        btnTable.classList.add('active');
+        btnTimeline.classList.remove('active');
+      } else {
+        tableView.style.display = 'none';
+        timelineView.style.display = 'block';
+        btnTable.classList.remove('active');
+        btnTimeline.classList.add('active');
+      }
+    }
+
+    // Detail panel templates
+    const detailTemplates = {
+      'update': `
+        <div class="detail-panel-header">
+          <h5><i class="fa-solid fa-file-lines me-2" style="color:var(--accent)"></i> Audit Record</h5>
+          <button class="btn-close-panel" onclick="closeDetail()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="detail-panel-body">
+          <div class="detail-section">
+            <h6>Record Information</h6>
+            <div class="detail-row"><span class="detail-label">Audit ID</span><span class="detail-value" style="font-family: monospace; font-size: 0.75rem">#AUD-20260412-001847</span></div>
+            <div class="detail-row"><span class="detail-label">Action</span><span class="detail-value"><span class="action-pill update">Update</span></span></div>
+            <div class="detail-row"><span class="detail-label">Entity</span><span class="detail-value"><a class="entity-link" onclick="parent.loadContent('fundraising/donation-detail')">Donation #DON-4523</a></span></div>
+            <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value"><span class="status-badge success">&#x2705; Success</span></span></div>
+          </div>
+          <div class="detail-section">
+            <h6>User Information</h6>
+            <div class="detail-row"><span class="detail-label">User</span><span class="detail-value">Ahmed Salim</span></div>
+            <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">ahmed.salim@ghf.org</span></div>
+            <div class="detail-row"><span class="detail-label">Role</span><span class="detail-value">Fundraising Manager</span></div>
+          </div>
+          <div class="detail-section">
+            <h6>Session Details</h6>
+            <div class="detail-row"><span class="detail-label">Timestamp</span><span class="detail-value">Apr 12, 2026, 2:30:45 PM UTC+3</span></div>
+            <div class="detail-row"><span class="detail-label">IP Address</span><span class="detail-value" style="font-family:monospace;font-size:0.75rem">192.168.1.45</span></div>
+            <div class="detail-row"><span class="detail-label">Device</span><span class="detail-value">Chrome 124 / Windows 11</span></div>
+            <div class="detail-row"><span class="detail-label">Session ID</span><span class="detail-value" style="font-family:monospace;font-size:0.75rem">sess_a8f2c91d</span></div>
+          </div>
+          <div class="detail-section">
+            <h6>Changes</h6>
+            <table class="changes-table">
+              <thead><tr><th>Field</th><th>Before</th><th>After</th></tr></thead>
+              <tbody>
+                <tr><td>Amount</td><td class="val-before">$200.00</td><td class="val-after">$500.00</td></tr>
+                <tr><td>Notes</td><td class="val-before">Initial pledge</td><td class="val-after">Increased pledge - donor called</td></tr>
+                <tr><td>Updated At</td><td class="val-before">Apr 10, 2026</td><td class="val-after">Apr 12, 2026</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="detail-section">
+            <h6>Related Records</h6>
+            <div class="related-record">
+              <div class="rr-icon" style="background:var(--accent-bg);color:var(--accent)"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+              <div>
+                <div style="font-weight:600"><a class="entity-link" onclick="parent.loadContent('fundraising/donation-detail')">Donation #DON-4523</a></div>
+                <div style="font-size:0.75rem;color:var(--text-secondary)">Donor: Mohammed Al-Farsi &middot; Campaign: Ramadan 2026</div>
+              </div>
+            </div>
+            <div class="related-record">
+              <div class="rr-icon" style="background:#dcfce7;color:#166534"><i class="fa-solid fa-receipt"></i></div>
+              <div>
+                <div style="font-weight:600"><a class="entity-link" onclick="parent.loadContent('fundraising/receipt-detail')">Receipt #REC-4540</a></div>
+                <div style="font-size:0.75rem;color:var(--text-secondary)">Issued: Apr 10, 2026 &middot; Original amount: $200</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `,
+      'login-warning': `
+        <div class="detail-panel-header">
+          <h5><i class="fa-solid fa-triangle-exclamation me-2" style="color:var(--warning-color)"></i> Security Event</h5>
+          <button class="btn-close-panel" onclick="closeDetail()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="detail-panel-body">
+          <div class="detail-section">
+            <h6>Record Information</h6>
+            <div class="detail-row"><span class="detail-label">Audit ID</span><span class="detail-value" style="font-family:monospace;font-size:0.75rem">#AUD-20260412-001623</span></div>
+            <div class="detail-row"><span class="detail-label">Action</span><span class="detail-value"><span class="action-pill login">Login</span></span></div>
+            <div class="detail-row"><span class="detail-label">Entity</span><span class="detail-value">User: test@ghf.org</span></div>
+            <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value"><span class="status-badge warning">&#x26A0;&#xFE0F; Warning</span></span></div>
+            <div class="detail-row"><span class="detail-label">Attempt</span><span class="detail-value"><strong style="color:var(--warning-color)">4 of 5</strong></span></div>
+          </div>
+          <div class="detail-section">
+            <h6>Connection Details</h6>
+            <div class="detail-row"><span class="detail-label">Timestamp</span><span class="detail-value">Apr 12, 2026, 1:30:00 PM UTC+3</span></div>
+            <div class="detail-row"><span class="detail-label">IP Address</span><span class="detail-value" style="font-family:monospace;font-size:0.75rem">203.0.113.42</span></div>
+            <div class="detail-row"><span class="detail-label">Geolocation</span><span class="detail-value">Lagos, Nigeria (estimated)</span></div>
+            <div class="detail-row"><span class="detail-label">User Agent</span><span class="detail-value" style="font-size:0.75rem">Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0</span></div>
+            <div class="detail-row"><span class="detail-label">Failure Reason</span><span class="detail-value" style="color:var(--warning-color);font-weight:600">Incorrect password</span></div>
+          </div>
+          <div class="detail-section">
+            <h6>Related Security Events</h6>
+            <div class="security-timeline">
+              <div class="sec-event evt-warning">
+                <div style="font-weight:600">1:30:00 PM &mdash; Failed login (attempt 4/5)</div>
+                <div class="sec-time">IP: 203.0.113.42 &middot; Reason: Wrong password</div>
+              </div>
+              <div class="sec-event evt-warning">
+                <div style="font-weight:600">1:25:12 PM &mdash; Failed login (attempt 3/5)</div>
+                <div class="sec-time">IP: 203.0.113.42 &middot; Reason: Wrong password</div>
+              </div>
+              <div class="sec-event evt-info">
+                <div style="font-weight:600">1:20:45 PM &mdash; Failed login (attempt 2/5)</div>
+                <div class="sec-time">IP: 203.0.113.42 &middot; Reason: Wrong password</div>
+              </div>
+              <div class="sec-event evt-info">
+                <div style="font-weight:600">1:15:30 PM &mdash; Failed login (attempt 1/5)</div>
+                <div class="sec-time">IP: 203.0.113.42 &middot; Reason: Wrong password</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `,
+      'login-critical': `
+        <div class="detail-panel-header">
+          <h5><i class="fa-solid fa-shield-halved me-2" style="color:var(--danger-color)"></i> Critical Security Event</h5>
+          <button class="btn-close-panel" onclick="closeDetail()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="detail-panel-body">
+          <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:0.5rem;padding:0.75rem 1rem;margin-bottom:1rem;font-size:0.8125rem;color:#991b1b;display:flex;align-items:center;gap:0.5rem">
+            <i class="fa-solid fa-lock"></i>
+            <span>Account has been automatically locked due to excessive failed login attempts</span>
+          </div>
+          <div class="detail-section">
+            <h6>Record Information</h6>
+            <div class="detail-row"><span class="detail-label">Audit ID</span><span class="detail-value" style="font-family:monospace;font-size:0.75rem">#AUD-20260412-001410</span></div>
+            <div class="detail-row"><span class="detail-label">Action</span><span class="detail-value"><span class="action-pill login">Login</span></span></div>
+            <div class="detail-row"><span class="detail-label">Entity</span><span class="detail-value">User: test@ghf.org</span></div>
+            <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value"><span class="status-badge critical">&#x1F534; Critical</span></span></div>
+            <div class="detail-row"><span class="detail-label">Attempt</span><span class="detail-value"><strong style="color:var(--danger-color)">5 of 5 &mdash; Account Locked</strong></span></div>
+          </div>
+          <div class="detail-section">
+            <h6>Connection Details</h6>
+            <div class="detail-row"><span class="detail-label">Timestamp</span><span class="detail-value">Apr 12, 2026, 12:00:00 PM UTC+3</span></div>
+            <div class="detail-row"><span class="detail-label">IP Address</span><span class="detail-value" style="font-family:monospace;font-size:0.75rem">203.0.113.42</span></div>
+            <div class="detail-row"><span class="detail-label">Geolocation</span><span class="detail-value">Lagos, Nigeria (estimated)</span></div>
+            <div class="detail-row"><span class="detail-label">User Agent</span><span class="detail-value" style="font-size:0.75rem">Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0</span></div>
+            <div class="detail-row"><span class="detail-label">Failure Reason</span><span class="detail-value" style="color:var(--danger-color);font-weight:600">Account locked &mdash; 5 consecutive failures</span></div>
+          </div>
+          <div class="detail-section">
+            <h6>All Login Attempts</h6>
+            <div class="security-timeline">
+              <div class="sec-event evt-critical">
+                <div style="font-weight:600">12:00:00 PM &mdash; Account Locked (attempt 5/5)</div>
+                <div class="sec-time">IP: 203.0.113.42 &middot; Auto-lock triggered</div>
+              </div>
+              <div class="sec-event evt-warning">
+                <div style="font-weight:600">1:30:00 PM &mdash; Failed login (attempt 4/5)</div>
+                <div class="sec-time">IP: 203.0.113.42 &middot; Wrong password</div>
+              </div>
+              <div class="sec-event evt-warning">
+                <div style="font-weight:600">1:25:12 PM &mdash; Failed login (attempt 3/5)</div>
+                <div class="sec-time">IP: 203.0.113.42 &middot; Wrong password</div>
+              </div>
+              <div class="sec-event evt-info">
+                <div style="font-weight:600">1:20:45 PM &mdash; Failed login (attempt 2/5)</div>
+                <div class="sec-time">IP: 203.0.113.42 &middot; Wrong password</div>
+              </div>
+              <div class="sec-event evt-info">
+                <div style="font-weight:600">1:15:30 PM &mdash; Failed login (attempt 1/5)</div>
+                <div class="sec-time">IP: 203.0.113.42 &middot; Wrong password</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `
+    };
+
+    // Default detail for other types
+    function getDefaultDetail(type) {
+      return `
+        <div class="detail-panel-header">
+          <h5><i class="fa-solid fa-file-lines me-2" style="color:var(--accent)"></i> Audit Record</h5>
+          <button class="btn-close-panel" onclick="closeDetail()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="detail-panel-body">
+          <div class="detail-section">
+            <h6>Record Information</h6>
+            <div class="detail-row"><span class="detail-label">Audit ID</span><span class="detail-value" style="font-family:monospace;font-size:0.75rem">#AUD-20260412-${String(Math.floor(Math.random()*9999)).padStart(6,'0')}</span></div>
+            <div class="detail-row"><span class="detail-label">Action</span><span class="detail-value">${type}</span></div>
+            <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value"><span class="status-badge success">&#x2705; Success</span></span></div>
+          </div>
+          <div style="text-align:center;padding:2rem;color:var(--text-secondary)">
+            <i class="fa-solid fa-file-lines" style="font-size:2rem;margin-bottom:0.5rem;display:block"></i>
+            <p style="margin:0;font-size:0.8125rem">Full audit details available in the detailed record view</p>
+          </div>
+        </div>
+      `;
+    }
+
+    // Open detail panel
+    function openDetail(type) {
+      const panel = document.getElementById('detailPanel');
+      const overlay = document.getElementById('detailOverlay');
+      panel.innerHTML = detailTemplates[type] || getDefaultDetail(type);
+      overlay.classList.add('active');
+      // Small delay for animation
+      requestAnimationFrame(() => {
+        panel.classList.add('active');
+      });
+    }
+
+    // Close detail panel
+    function closeDetail() {
+      const panel = document.getElementById('detailPanel');
+      const overlay = document.getElementById('detailOverlay');
+      panel.classList.remove('active');
+      setTimeout(() => {
+        overlay.classList.remove('active');
+      }, 300);
+    }
+
+    // Close on Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeDetail();
+    });
+  </script>
+
+</body>
+</html>

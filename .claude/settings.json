@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C 'd:\\\\clients\\\\pwds\\\\projects\\\\pwds-soruban' status)",
+      "Bash(git -C 'd:\\\\clients\\\\pwds\\\\projects\\\\pwds-soruban' add .gitignore .claude/ pss-2.0-global/)"
+    ]
+  }
+}

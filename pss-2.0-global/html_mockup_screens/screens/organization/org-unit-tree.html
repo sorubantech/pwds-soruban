@@ -1,0 +1,1983 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Organization Structure - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons */
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #0c6577;
+      border-color: #0c6577;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-outline-danger {
+      background: white;
+      border: 1px solid var(--danger-color);
+      color: var(--danger-color);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-danger:hover {
+      background: var(--danger-color);
+      color: white;
+    }
+
+    /* Summary Cards */
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .summary-card {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1.25rem;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .summary-card .card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.125rem;
+      flex-shrink: 0;
+    }
+
+    .summary-card .card-icon.blue { background: #dbeafe; color: #2563eb; }
+    .summary-card .card-icon.purple { background: #ede9fe; color: #7c3aed; }
+    .summary-card .card-icon.green { background: #dcfce7; color: #16a34a; }
+    .summary-card .card-icon.amber { background: #fef3c7; color: #d97706; }
+
+    .summary-card .card-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .summary-card .card-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.125rem;
+    }
+
+    .summary-card .card-sub {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    /* Split Pane Layout */
+    .split-pane {
+      display: flex;
+      gap: 1rem;
+      min-height: calc(100vh - 240px);
+    }
+
+    .left-panel {
+      width: 40%;
+      min-width: 340px;
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .right-panel {
+      flex: 1;
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Left Panel: Search & Filter */
+    .tree-toolbar {
+      padding: 0.875rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 0.625rem;
+    }
+
+    .tree-search {
+      position: relative;
+    }
+
+    .tree-search input {
+      width: 100%;
+      padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+      font-size: 0.8125rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .tree-search input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .tree-search i {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+    }
+
+    .tree-filters {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .filter-select {
+      font-size: 0.75rem;
+      padding: 0.3rem 0.6rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      color: var(--text-secondary);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .view-toggle {
+      display: flex;
+      margin-left: auto;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      overflow: hidden;
+    }
+
+    .view-toggle button {
+      background: white;
+      border: none;
+      padding: 0.3rem 0.6rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+    }
+
+    .view-toggle button.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Tree View */
+    .tree-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.75rem 0;
+    }
+
+    .tree-container::-webkit-scrollbar { width: 4px; }
+    .tree-container::-webkit-scrollbar-track { background: transparent; }
+    .tree-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+    .tree-node {
+      user-select: none;
+    }
+
+    .tree-node-row {
+      display: flex;
+      align-items: center;
+      padding: 0.4375rem 0.75rem 0.4375rem 0;
+      cursor: pointer;
+      transition: all 0.12s;
+      border-left: 3px solid transparent;
+      gap: 0.25rem;
+    }
+
+    .tree-node-row:hover {
+      background: #f8fafc;
+    }
+
+    .tree-node-row.selected {
+      background: var(--accent-bg);
+      border-left-color: var(--accent);
+    }
+
+    .tree-node-row.selected .node-name {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .tree-toggle {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.625rem;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+      cursor: pointer;
+      border-radius: 3px;
+      transition: all 0.15s;
+    }
+
+    .tree-toggle:hover {
+      background: #e2e8f0;
+      color: var(--text-primary);
+    }
+
+    .tree-toggle.empty {
+      visibility: hidden;
+    }
+
+    .node-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6875rem;
+      flex-shrink: 0;
+      margin-right: 0.375rem;
+    }
+
+    .node-icon.hq { background: #dbeafe; color: #2563eb; }
+    .node-icon.region { background: #dcfce7; color: #16a34a; }
+    .node-icon.branch { background: #fed7aa; color: #ea580c; }
+    .node-icon.subunit { background: #f1f5f9; color: #64748b; }
+
+    .node-name {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .node-code {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      margin-left: 0.375rem;
+      flex-shrink: 0;
+    }
+
+    .node-status {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-left: 0.375rem;
+      flex-shrink: 0;
+    }
+
+    .node-status.active { background: var(--success-color); }
+    .node-status.inactive { background: var(--danger-color); }
+
+    .tree-children {
+      display: none;
+    }
+
+    .tree-children.expanded {
+      display: block;
+    }
+
+    .tree-node[data-level="1"] .tree-node-row { padding-left: calc(0.75rem + 0px); }
+    .tree-node[data-level="2"] .tree-node-row { padding-left: calc(0.75rem + 20px); }
+    .tree-node[data-level="3"] .tree-node-row { padding-left: calc(0.75rem + 40px); }
+    .tree-node[data-level="4"] .tree-node-row { padding-left: calc(0.75rem + 60px); }
+
+    /* Tree connecting lines */
+    .tree-node[data-level="2"] .tree-node-row::before,
+    .tree-node[data-level="3"] .tree-node-row::before,
+    .tree-node[data-level="4"] .tree-node-row::before {
+      content: '';
+      position: absolute;
+      left: calc(0.75rem + (var(--level, 1) - 1) * 20px - 10px);
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: var(--border-color);
+    }
+
+    /* Context Menu */
+    .context-menu {
+      position: fixed;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      padding: 0.375rem 0;
+      min-width: 180px;
+      z-index: 1000;
+      display: none;
+    }
+
+    .context-menu.show { display: block; }
+
+    .context-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      padding: 0.5rem 0.875rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+
+    .context-menu-item:hover { background: #f1f5f9; }
+
+    .context-menu-item i { width: 16px; text-align: center; color: var(--text-secondary); font-size: 0.75rem; }
+
+    .context-menu-item.danger { color: var(--danger-color); }
+    .context-menu-item.danger i { color: var(--danger-color); }
+
+    .context-menu-divider { height: 1px; background: var(--border-color); margin: 0.25rem 0; }
+
+    /* Right Panel: Detail */
+    .detail-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .detail-header-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .detail-unit-name {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .detail-badges {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.375rem;
+      flex-wrap: wrap;
+    }
+
+    .badge-code {
+      background: #f1f5f9;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-family: 'SFMono-Regular', Consolas, monospace;
+    }
+
+    .badge-type {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .badge-type.branch { background: #fed7aa; color: #ea580c; }
+    .badge-type.region { background: #dcfce7; color: #16a34a; }
+    .badge-type.hq { background: #dbeafe; color: #2563eb; }
+    .badge-type.subunit { background: #f1f5f9; color: #64748b; }
+
+    .badge-status {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .badge-status.active { background: #dcfce7; color: #16a34a; }
+    .badge-status.inactive { background: #fef2f2; color: #dc2626; }
+
+    .badge-status .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .badge-status.active .dot { background: #16a34a; }
+    .badge-status.inactive .dot { background: #dc2626; }
+
+    .detail-actions {
+      display: flex;
+      gap: 0.375rem;
+      flex-wrap: wrap;
+    }
+
+    .detail-actions button {
+      font-size: 0.75rem;
+      padding: 0.375rem 0.75rem;
+    }
+
+    /* Tab Navigation */
+    .tab-nav {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid var(--border-color);
+      padding: 0 1.5rem;
+    }
+
+    .tab-btn {
+      padding: 0.75rem 1rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover { color: var(--accent); }
+
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-panel {
+      display: none;
+      padding: 1.25rem 1.5rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .tab-panel.active { display: block; }
+
+    /* Detail Content */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+    }
+
+    .info-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .info-value {
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .info-value a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .info-value a:hover { text-decoration: underline; }
+
+    .section-title {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.75rem;
+      margin-top: 0.25rem;
+    }
+
+    /* Child Units */
+    .child-unit-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
+      margin-bottom: 1rem;
+    }
+
+    .child-unit-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: #f8fafc;
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+
+    .child-unit-item:hover { background: var(--accent-bg); }
+
+    .child-unit-item .child-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.625rem;
+    }
+
+    .child-unit-item .child-code {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      font-family: monospace;
+      margin-left: auto;
+    }
+
+    .child-unit-item .child-status {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* Quick Stats */
+    .quick-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .quick-stat {
+      background: #f8fafc;
+      border-radius: 0.5rem;
+      padding: 0.75rem;
+      text-align: center;
+    }
+
+    .quick-stat .stat-value {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .quick-stat .stat-label {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.125rem;
+    }
+
+    /* Staff Table */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    .data-table thead th {
+      background: #f8fafc;
+      padding: 0.625rem 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      font-size: 0.6875rem;
+      letter-spacing: 0.04em;
+      border-bottom: 2px solid var(--border-color);
+      white-space: nowrap;
+      text-align: left;
+    }
+
+    .data-table tbody tr {
+      border-bottom: 1px solid var(--border-color);
+      transition: background 0.12s;
+    }
+
+    .data-table tbody tr:hover { background: #f8fafc; }
+
+    .data-table tbody td {
+      padding: 0.625rem 0.75rem;
+      vertical-align: middle;
+      color: var(--text-primary);
+    }
+
+    .staff-name-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .staff-name-link:hover { text-decoration: underline; }
+
+    .status-dot {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.75rem;
+    }
+
+    .status-dot::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .status-dot.active::before { background: var(--success-color); }
+    .status-dot.inactive::before { background: var(--danger-color); }
+
+    .btn-sm-action {
+      font-size: 0.6875rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+
+    .btn-sm-action:hover { border-color: var(--danger-color); color: var(--danger-color); }
+
+    /* Progress Bars */
+    .progress-bar-custom {
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      overflow: hidden;
+      flex: 1;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s;
+    }
+
+    .progress-bar-fill.green { background: var(--success-color); }
+    .progress-bar-fill.amber { background: var(--warning-color); }
+    .progress-bar-fill.red { background: var(--danger-color); }
+
+    .progress-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .progress-label {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      min-width: 140px;
+    }
+
+    .progress-pct {
+      font-size: 0.75rem;
+      font-weight: 600;
+      min-width: 50px;
+      text-align: right;
+    }
+
+    /* Target Card */
+    .target-card {
+      background: #f8fafc;
+      border-radius: 0.75rem;
+      padding: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .target-card .target-main {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+
+    .target-card .target-amount {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .target-card .target-pct {
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .target-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+    }
+
+    .target-stat {
+      text-align: center;
+    }
+
+    .target-stat .ts-val {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .target-stat .ts-label {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+    }
+
+    /* Monthly Chart Placeholder */
+    .chart-placeholder {
+      background: #f8fafc;
+      border: 2px dashed var(--border-color);
+      border-radius: 0.75rem;
+      padding: 2rem;
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .chart-placeholder i {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    /* Peer Comparison Table */
+    .rank-badge {
+      font-size: 0.8125rem;
+      margin-right: 0.25rem;
+    }
+
+    .current-row {
+      background: var(--accent-bg) !important;
+      font-weight: 600;
+    }
+
+    /* Settings Tab */
+    .settings-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .settings-section h6 {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    .radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .radio-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      padding: 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .radio-option:hover { border-color: var(--accent); }
+
+    .radio-option.selected {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .radio-option input[type="radio"] {
+      margin-top: 0.125rem;
+      accent-color: var(--accent);
+    }
+
+    .radio-option .ro-title {
+      font-size: 0.8125rem;
+      font-weight: 600;
+    }
+
+    .radio-option .ro-desc {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .setting-row:last-child { border-bottom: none; }
+
+    .setting-label {
+      font-size: 0.8125rem;
+      font-weight: 500;
+    }
+
+    .setting-select {
+      font-size: 0.8125rem;
+      padding: 0.375rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      outline: none;
+      min-width: 200px;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 40px;
+      height: 22px;
+      background: #cbd5e1;
+      border-radius: 11px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .toggle-switch.on { background: var(--accent); }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      background: white;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    .toggle-switch.on::after { transform: translateX(18px); }
+
+    /* Empty State */
+    .empty-detail {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-secondary);
+      gap: 0.75rem;
+      padding: 3rem;
+    }
+
+    .empty-detail i {
+      font-size: 3rem;
+      opacity: 0.3;
+    }
+
+    .empty-detail p {
+      font-size: 0.875rem;
+    }
+
+    /* List View Table */
+    .list-view-container {
+      flex: 1;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .list-view-container.active { display: block; }
+
+    .tree-container.hidden { display: none; }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .summary-cards { grid-template-columns: repeat(2, 1fr); }
+      .split-pane { flex-direction: column; }
+      .left-panel { width: 100%; min-height: 350px; }
+      .right-panel { min-height: 500px; }
+      .info-grid { grid-template-columns: 1fr; }
+      .quick-stats { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 576px) {
+      .summary-cards { grid-template-columns: 1fr; }
+      .tab-nav { overflow-x: auto; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1>Organization Structure</h1>
+      <p class="subtitle">Manage your organizational unit hierarchy</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="parent.loadContent('organization/org-unit-form')">
+        <i class="fas fa-plus me-1"></i> Add Unit
+      </button>
+      <button class="btn-outline-accent" onclick="expandAll()">
+        <i class="fas fa-expand me-1"></i> Expand All
+      </button>
+      <button class="btn-outline-accent" onclick="collapseAll()">
+        <i class="fas fa-compress me-1"></i> Collapse All
+      </button>
+      <button class="btn-outline-accent">
+        <i class="fas fa-file-export me-1"></i> Export Structure
+      </button>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="summary-cards">
+    <div class="summary-card">
+      <div class="card-icon blue"><i class="fas fa-sitemap"></i></div>
+      <div>
+        <div class="card-value">24</div>
+        <div class="card-label">Total Units</div>
+        <div class="card-sub">Active: 22 &bull; Inactive: 2</div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="card-icon purple"><i class="fas fa-layer-group"></i></div>
+      <div>
+        <div class="card-value">4</div>
+        <div class="card-label">Levels</div>
+        <div class="card-sub">HQ &rarr; Region &rarr; Branch &rarr; Sub-unit</div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="card-icon green"><i class="fas fa-users"></i></div>
+      <div>
+        <div class="card-value">156</div>
+        <div class="card-label">Staff Assigned</div>
+        <div class="card-sub">Across all units</div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="card-icon amber"><i class="fas fa-bullseye"></i></div>
+      <div>
+        <div class="card-value">$2.45M</div>
+        <div class="card-label">Total Annual Target</div>
+        <div class="card-sub">Achieved: $1.82M (74.4%)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Split Pane -->
+  <div class="split-pane">
+
+    <!-- LEFT PANEL: Tree -->
+    <div class="left-panel">
+      <div class="tree-toolbar">
+        <div class="tree-search">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Search units by name or code..." id="treeSearch" oninput="filterTree(this.value)">
+        </div>
+        <div class="tree-filters">
+          <select class="filter-select" id="statusFilter" onchange="filterTree(document.getElementById('treeSearch').value)">
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+          <div class="view-toggle">
+            <button class="active" id="btnTreeView" onclick="switchView('tree')"><i class="fas fa-sitemap me-1"></i>Tree</button>
+            <button id="btnListView" onclick="switchView('list')"><i class="fas fa-list me-1"></i>List</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tree View -->
+      <div class="tree-container" id="treeView">
+
+        <!-- HQ -->
+        <div class="tree-node" data-level="1" data-name="Hope Foundation" data-code="HQ-001" data-status="active">
+          <div class="tree-node-row selected" onclick="selectNode(this)" oncontextmenu="showContextMenu(event, this)">
+            <span class="tree-toggle" onclick="toggleNode(event, this)"><i class="fas fa-chevron-down"></i></span>
+            <span class="node-icon hq"><i class="fas fa-building"></i></span>
+            <span class="node-name">Hope Foundation (HQ)</span>
+            <span class="node-code">HQ-001</span>
+            <span class="node-status active"></span>
+          </div>
+          <div class="tree-children expanded">
+
+            <!-- North America Region -->
+            <div class="tree-node" data-level="2" data-name="North America Region" data-code="REG-NA" data-status="active">
+              <div class="tree-node-row" onclick="selectNode(this)" oncontextmenu="showContextMenu(event, this)">
+                <span class="tree-toggle" onclick="toggleNode(event, this)"><i class="fas fa-chevron-down"></i></span>
+                <span class="node-icon region"><i class="fas fa-globe-americas"></i></span>
+                <span class="node-name">North America Region</span>
+                <span class="node-code">REG-NA</span>
+                <span class="node-status active"></span>
+              </div>
+              <div class="tree-children expanded">
+                <!-- New York Branch -->
+                <div class="tree-node" data-level="3" data-name="New York Branch" data-code="BR-NY" data-status="active">
+                  <div class="tree-node-row" onclick="selectNode(this)" oncontextmenu="showContextMenu(event, this)">
+                    <span class="tree-toggle" onclick="toggleNode(event, this)"><i class="fas fa-chevron-right"></i></span>
+                    <span class="node-icon branch"><i class="fas fa-building-flag"></i></span>
+                    <span class="node-name">New York Branch</span>
+                    <span class="node-code">BR-NY</span>
+                    <span class="node-status active"></span>
+                  </div>
+                  <div class="tree-children">
+                    <div class="tree-node" data-level="4" data-name="Education Program" data-code="SU-NY-ED" data-status="active">
+                      <div class="tree-node-row" onclick="selectNode(this)" oncontextmenu="showContextMenu(event, this)">
+                        <span class="tree-toggle empty"><i class="fas fa-chevron-right"></i></span>
+                        <span class="node-icon subunit"><i class="fas fa-file-alt"></i></span>
+                        <span class="node-name">Education Program</span>
+                        <span class="node-code">SU-NY-ED</span>
+                        <span class="node-status active"></span>
+                      </div>
+                    </div>
+                    <div class="tree-node" data-level="4" data-name="Healthcare Program" data-code="SU-NY-HC" data-status="active">
+                      <div class="tree-node-row" onclick="selectNode(this)" oncontextmenu="showContextMenu(event, this)">
+                        <span class="tree-toggle empty"><i class="fas fa-chevron-right"></i></span>
+                        <span class="node-icon subunit"><i class="fas fa-file-alt"></i></span>
+                        <span class="node-name">Healthcare Program</span>
+                        <span class="node-code">SU-NY-HC</span>
+                        <span class="node-status active"></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Los Angeles Branch -->
+                <div class="tree-node" data-level="3" data-name="Los Angeles Branch" data-code="BR-LA" data-status="active">
+                  <div class="tree-node-row" onclick="selectNode(this)" oncontextmenu="showContextMenu(event, this)">
+                    <span class="tree-toggle" onclick="toggleNode(event, this)"><i class="fas fa-chevron-right"></i></span>
+                    <span class="node-icon branch"><i class="fas fa-building-flag"></i></span>
+                    <span class="node-name">Los Angeles Branch</span>
+                    <span class="node-code">BR-LA</span>
+                    <span class="node-status active"></span>
+                  </div>
+                  <div class="tree-children">
+                    <div class="tree-node" data-level="4" data-name="Community Outreach" data-code="SU-LA-CO" data-status="active">
+                      <div class="tree-node-row" onclick="selectNode(this)" oncontextmenu="showContextMenu(event, this)">
+                        <span class="tree-toggle empty"><i class="fas fa-chevron-right"></i></span>
+                        <span class="node-icon subunit"><i class="fas fa-file-alt"></i></span>
+                        <span class="node-name">Community Outreach</span>
+                        <span class="node-code">SU-LA-CO</span>
+                        <span class="node-status active"></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Chicago Branch -->
+                <div class="tree-node" data-level="3" data-name="Chicago Branch" data-code="BR-CHI" data-status="active">
+                  <div class="tree-node-row" onclick="selectNode(this)" oncontextmenu="showContextMenu(event, this)">
+                    <span class="tree-toggle empty"><i class="fas fa-chevron-right"></i></span>
+                    <span class="node-icon branch"><i class="fas fa-building-flag"></i></span>
+                    <span class="node-name">Chicago Branch</span>
+                    <span class="node-code">BR-CHI</span>
+                    <span class="node-status active"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Middle East & Africa Region -->
+            <div class="tree-node" data-level="2" data-name="Middle East & Africa Region" data-code="REG-MEA" data-status="active">
+              <div class="tree-node-row" onclick="selectNode(this)" oncontextmenu="showContextMenu(event, this)">
+                <span class="tree-toggle" onclick="toggleNode(event, this)"><i class="fas fa-chevron-down"></i></span>
+                <span class="node-icon region"><i class="fas fa-globe-africa"></i></span>
+                <span class="node-name">Middle East & Africa Region</span>
+                <span class="node-code">REG-MEA</span>
+                <span class="node-status active"></span>
+              </div>
+              <div class="tree-children expanded">
+                <!-- Dubai Branch -->
+                <div class="tree-node" data-level="3" data-name="Dubai Branch" data-code="BR-DXB" data-status="active">
+                  <div class="tree-node-row" onclick="selectNode(this)" oncontextmenu="showContextMenu(event, this)">
+                    <span class="tree-toggle" onclick="toggleNode(event, this)"><i class="fas fa-chevron-right"></i></span>
+                    <span class="node-icon branch"><i class="fas fa-building-flag"></i></span>
+                    <span class="node-name">Dubai Branch</span>
+                    <span class="node-code">BR-DXB</span>
+                    <span class="node-status active"></span>
+                  </div>
+                  <div class="tree-children">
+                    <div class="tree-node" data-level="4" data-name="Orphan Care Program" data-code="SU-DXB-OC" data-status="active">
+                      <div class="tree-node-row" onclick="selectNode(this)" oncontextmenu="showContextMenu(event, this)">
+                        <span class="tree-toggle empty"><i class="fas fa-chevron-right"></i></span>
+                        <span class="node-icon subunit"><i class="fas fa-file-alt"></i></span>
+                        <span class="node-name">Orphan Care Program</span>
+                        <span class="node-code">SU-DXB-OC</span>
+                        <span class="node-status active"></span>
+                      </div>
+                    </div>
+                    <div class="tree-node" data-level="4" data-name="Water Wells Project" data-code="SU-DXB-WW" data-status="active">
+                      <div class="tree-node-row" onclick="selectNode(this)" oncontextmenu="showContextMenu(event, this)">
+                        <span class="tree-toggle empty"><i class="fas fa-chevron-right"></i></span>
+                        <span class="node-icon subunit"><i class="fas fa-file-alt"></i></span>
+                        <span class="node-name">Water Wells Project</span>
+                        <span class="node-code">SU-DXB-WW</span>
+                        <span class="node-status active"></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Riyadh Branch -->
+                <div class="tree-node" data-level="3" data-name="Riyadh Branch" data-code="BR-RYD" data-status="active">
+                  <div class="tree-node-row" onclick="selectNode(this)" oncontextmenu="showContextMenu(event, this)">
+                    <span class="tree-toggle empty"><i class="fas fa-chevron-right"></i></span>
+                    <span class="node-icon branch"><i class="fas fa-building-flag"></i></span>
+                    <span class="node-name">Riyadh Branch</span>
+                    <span class="node-code">BR-RYD</span>
+                    <span class="node-status active"></span>
+                  </div>
+                </div>
+                <!-- Nairobi Branch -->
+                <div class="tree-node" data-level="3" data-name="Nairobi Branch" data-code="BR-NBO" data-status="active">
+                  <div class="tree-node-row" onclick="selectNode(this)" oncontextmenu="showContextMenu(event, this)">
+                    <span class="tree-toggle empty"><i class="fas fa-chevron-right"></i></span>
+                    <span class="node-icon branch"><i class="fas fa-building-flag"></i></span>
+                    <span class="node-name">Nairobi Branch</span>
+                    <span class="node-code">BR-NBO</span>
+                    <span class="node-status active"></span>
+                  </div>
+                </div>
+                <!-- Cairo Branch (Inactive) -->
+                <div class="tree-node" data-level="3" data-name="Cairo Branch" data-code="BR-CAI" data-status="inactive">
+                  <div class="tree-node-row" onclick="selectNode(this)" oncontextmenu="showContextMenu(event, this)">
+                    <span class="tree-toggle empty"><i class="fas fa-chevron-right"></i></span>
+                    <span class="node-icon branch"><i class="fas fa-building-flag"></i></span>
+                    <span class="node-name">Cairo Branch</span>
+                    <span class="node-code">BR-CAI</span>
+                    <span class="node-status inactive"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- South Asia Region -->
+            <div class="tree-node" data-level="2" data-name="South Asia Region" data-code="REG-SA" data-status="active">
+              <div class="tree-node-row" onclick="selectNode(this)" oncontextmenu="showContextMenu(event, this)">
+                <span class="tree-toggle" onclick="toggleNode(event, this)"><i class="fas fa-chevron-down"></i></span>
+                <span class="node-icon region"><i class="fas fa-globe-asia"></i></span>
+                <span class="node-name">South Asia Region</span>
+                <span class="node-code">REG-SA</span>
+                <span class="node-status active"></span>
+              </div>
+              <div class="tree-children expanded">
+                <!-- Mumbai Branch -->
+                <div class="tree-node" data-level="3" data-name="Mumbai Branch" data-code="BR-MUM" data-status="active">
+                  <div class="tree-node-row" onclick="selectNode(this)" oncontextmenu="showContextMenu(event, this)">
+                    <span class="tree-toggle" onclick="toggleNode(event, this)"><i class="fas fa-chevron-right"></i></span>
+                    <span class="node-icon branch"><i class="fas fa-building-flag"></i></span>
+                    <span class="node-name">Mumbai Branch</span>
+                    <span class="node-code">BR-MUM</span>
+                    <span class="node-status active"></span>
+                  </div>
+                  <div class="tree-children">
+                    <div class="tree-node" data-level="4" data-name="Slum Education" data-code="SU-MUM-SE" data-status="active">
+                      <div class="tree-node-row" onclick="selectNode(this)" oncontextmenu="showContextMenu(event, this)">
+                        <span class="tree-toggle empty"><i class="fas fa-chevron-right"></i></span>
+                        <span class="node-icon subunit"><i class="fas fa-file-alt"></i></span>
+                        <span class="node-name">Slum Education</span>
+                        <span class="node-code">SU-MUM-SE</span>
+                        <span class="node-status active"></span>
+                      </div>
+                    </div>
+                    <div class="tree-node" data-level="4" data-name="Women Empowerment" data-code="SU-MUM-WE" data-status="active">
+                      <div class="tree-node-row" onclick="selectNode(this)" oncontextmenu="showContextMenu(event, this)">
+                        <span class="tree-toggle empty"><i class="fas fa-chevron-right"></i></span>
+                        <span class="node-icon subunit"><i class="fas fa-file-alt"></i></span>
+                        <span class="node-name">Women Empowerment</span>
+                        <span class="node-code">SU-MUM-WE</span>
+                        <span class="node-status active"></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Delhi Branch -->
+                <div class="tree-node" data-level="3" data-name="Delhi Branch" data-code="BR-DEL" data-status="active">
+                  <div class="tree-node-row" onclick="selectNode(this)" oncontextmenu="showContextMenu(event, this)">
+                    <span class="tree-toggle empty"><i class="fas fa-chevron-right"></i></span>
+                    <span class="node-icon branch"><i class="fas fa-building-flag"></i></span>
+                    <span class="node-name">Delhi Branch</span>
+                    <span class="node-code">BR-DEL</span>
+                    <span class="node-status active"></span>
+                  </div>
+                </div>
+                <!-- Dhaka Branch -->
+                <div class="tree-node" data-level="3" data-name="Dhaka Branch" data-code="BR-DHK" data-status="active">
+                  <div class="tree-node-row" onclick="selectNode(this)" oncontextmenu="showContextMenu(event, this)">
+                    <span class="tree-toggle empty"><i class="fas fa-chevron-right"></i></span>
+                    <span class="node-icon branch"><i class="fas fa-building-flag"></i></span>
+                    <span class="node-name">Dhaka Branch</span>
+                    <span class="node-code">BR-DHK</span>
+                    <span class="node-status active"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Europe Region -->
+            <div class="tree-node" data-level="2" data-name="Europe Region" data-code="REG-EU" data-status="active">
+              <div class="tree-node-row" onclick="selectNode(this)" oncontextmenu="showContextMenu(event, this)">
+                <span class="tree-toggle" onclick="toggleNode(event, this)"><i class="fas fa-chevron-down"></i></span>
+                <span class="node-icon region"><i class="fas fa-globe-europe"></i></span>
+                <span class="node-name">Europe Region</span>
+                <span class="node-code">REG-EU</span>
+                <span class="node-status active"></span>
+              </div>
+              <div class="tree-children expanded">
+                <!-- London Branch -->
+                <div class="tree-node" data-level="3" data-name="London Branch" data-code="BR-LON" data-status="active">
+                  <div class="tree-node-row" onclick="selectNode(this)" oncontextmenu="showContextMenu(event, this)">
+                    <span class="tree-toggle empty"><i class="fas fa-chevron-right"></i></span>
+                    <span class="node-icon branch"><i class="fas fa-building-flag"></i></span>
+                    <span class="node-name">London Branch</span>
+                    <span class="node-code">BR-LON</span>
+                    <span class="node-status active"></span>
+                  </div>
+                </div>
+                <!-- Paris Branch (Inactive) -->
+                <div class="tree-node" data-level="3" data-name="Paris Branch" data-code="BR-PAR" data-status="inactive">
+                  <div class="tree-node-row" onclick="selectNode(this)" oncontextmenu="showContextMenu(event, this)">
+                    <span class="tree-toggle empty"><i class="fas fa-chevron-right"></i></span>
+                    <span class="node-icon branch"><i class="fas fa-building-flag"></i></span>
+                    <span class="node-name">Paris Branch</span>
+                    <span class="node-code">BR-PAR</span>
+                    <span class="node-status inactive"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- List View (hidden by default) -->
+      <div class="list-view-container" id="listView">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Unit Name</th>
+                <th>Code</th>
+                <th>Type</th>
+                <th>Parent</th>
+                <th>Staff</th>
+                <th>Annual Target</th>
+                <th>YTD Collection</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr onclick="selectNodeByCode('HQ-001')"><td><i class="fas fa-building text-primary me-1"></i> Hope Foundation (HQ)</td><td><code>HQ-001</code></td><td>HQ</td><td>—</td><td>8</td><td>$2,450,000</td><td>$1,823,000</td><td><span class="status-dot active">Active</span></td></tr>
+              <tr onclick="selectNodeByCode('REG-NA')"><td>&nbsp;&nbsp;<i class="fas fa-globe-americas text-success me-1"></i> North America Region</td><td><code>REG-NA</code></td><td>Region</td><td>HQ-001</td><td>28</td><td>$650,000</td><td>$498,200</td><td><span class="status-dot active">Active</span></td></tr>
+              <tr onclick="selectNodeByCode('BR-NY')"><td>&nbsp;&nbsp;&nbsp;&nbsp;<i class="fas fa-building-flag text-warning me-1"></i> New York Branch</td><td><code>BR-NY</code></td><td>Branch</td><td>REG-NA</td><td>15</td><td>$400,000</td><td>$298,000</td><td><span class="status-dot active">Active</span></td></tr>
+              <tr onclick="selectNodeByCode('BR-LA')"><td>&nbsp;&nbsp;&nbsp;&nbsp;<i class="fas fa-building-flag text-warning me-1"></i> Los Angeles Branch</td><td><code>BR-LA</code></td><td>Branch</td><td>REG-NA</td><td>8</td><td>$150,000</td><td>$112,500</td><td><span class="status-dot active">Active</span></td></tr>
+              <tr onclick="selectNodeByCode('BR-CHI')"><td>&nbsp;&nbsp;&nbsp;&nbsp;<i class="fas fa-building-flag text-warning me-1"></i> Chicago Branch</td><td><code>BR-CHI</code></td><td>Branch</td><td>REG-NA</td><td>5</td><td>$100,000</td><td>$87,700</td><td><span class="status-dot active">Active</span></td></tr>
+              <tr onclick="selectNodeByCode('REG-MEA')"><td>&nbsp;&nbsp;<i class="fas fa-globe-africa text-success me-1"></i> Middle East & Africa Region</td><td><code>REG-MEA</code></td><td>Region</td><td>HQ-001</td><td>42</td><td>$800,000</td><td>$578,900</td><td><span class="status-dot active">Active</span></td></tr>
+              <tr onclick="selectNodeByCode('BR-DXB')"><td>&nbsp;&nbsp;&nbsp;&nbsp;<i class="fas fa-building-flag text-warning me-1"></i> Dubai Branch</td><td><code>BR-DXB</code></td><td>Branch</td><td>REG-MEA</td><td>12</td><td>$250,000</td><td>$156,780</td><td><span class="status-dot active">Active</span></td></tr>
+              <tr onclick="selectNodeByCode('BR-RYD')"><td>&nbsp;&nbsp;&nbsp;&nbsp;<i class="fas fa-building-flag text-warning me-1"></i> Riyadh Branch</td><td><code>BR-RYD</code></td><td>Branch</td><td>REG-MEA</td><td>10</td><td>$200,000</td><td>$145,200</td><td><span class="status-dot active">Active</span></td></tr>
+              <tr onclick="selectNodeByCode('BR-NBO')"><td>&nbsp;&nbsp;&nbsp;&nbsp;<i class="fas fa-building-flag text-warning me-1"></i> Nairobi Branch</td><td><code>BR-NBO</code></td><td>Branch</td><td>REG-MEA</td><td>14</td><td>$150,000</td><td>$78,900</td><td><span class="status-dot active">Active</span></td></tr>
+              <tr onclick="selectNodeByCode('BR-CAI')"><td>&nbsp;&nbsp;&nbsp;&nbsp;<i class="fas fa-building-flag text-warning me-1"></i> Cairo Branch</td><td><code>BR-CAI</code></td><td>Branch</td><td>REG-MEA</td><td>0</td><td>$0</td><td>$0</td><td><span class="status-dot inactive">Inactive</span></td></tr>
+              <tr onclick="selectNodeByCode('REG-SA')"><td>&nbsp;&nbsp;<i class="fas fa-globe-asia text-success me-1"></i> South Asia Region</td><td><code>REG-SA</code></td><td>Region</td><td>HQ-001</td><td>52</td><td>$600,000</td><td>$489,400</td><td><span class="status-dot active">Active</span></td></tr>
+              <tr onclick="selectNodeByCode('REG-EU')"><td>&nbsp;&nbsp;<i class="fas fa-globe-europe text-success me-1"></i> Europe Region</td><td><code>REG-EU</code></td><td>Region</td><td>HQ-001</td><td>26</td><td>$400,000</td><td>$256,500</td><td><span class="status-dot active">Active</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: Detail -->
+    <div class="right-panel" id="detailPanel">
+
+      <!-- Detail Header -->
+      <div class="detail-header" id="detailHeader">
+        <div class="detail-header-top">
+          <div>
+            <h2 class="detail-unit-name" id="detailName">Dubai Branch</h2>
+            <div class="detail-badges">
+              <span class="badge-code" id="detailCode">BR-DXB</span>
+              <span class="badge-type branch" id="detailType">Branch</span>
+              <span class="badge-status active" id="detailStatus"><span class="dot"></span> Active</span>
+            </div>
+          </div>
+          <div class="detail-actions">
+            <button class="btn-primary-accent" onclick="parent.loadContent('organization/org-unit-form')"><i class="fas fa-edit me-1"></i>Edit</button>
+            <button class="btn-outline-accent" onclick="parent.loadContent('organization/org-unit-form')"><i class="fas fa-plus me-1"></i>Add Child</button>
+            <button class="btn-outline-danger"><i class="fas fa-ban me-1"></i>Deactivate</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('overview')"><i class="fas fa-info-circle me-1"></i>Overview</button>
+        <button class="tab-btn" onclick="switchTab('staff')"><i class="fas fa-users me-1"></i>Staff</button>
+        <button class="tab-btn" onclick="switchTab('targets')"><i class="fas fa-chart-bar me-1"></i>Targets & Performance</button>
+        <button class="tab-btn" onclick="switchTab('settings')"><i class="fas fa-cog me-1"></i>Settings</button>
+      </div>
+
+      <!-- TAB: Overview -->
+      <div class="tab-panel active" id="tab-overview">
+        <h6 class="section-title"><i class="fas fa-info-circle me-1"></i> Unit Information</h6>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Full Name</span>
+            <span class="info-value">Dubai Branch</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Short Name</span>
+            <span class="info-value">Dubai</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Unit Code</span>
+            <span class="info-value"><code>BR-DXB</code></span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Unit Type</span>
+            <span class="info-value">Branch</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Parent Unit</span>
+            <span class="info-value"><a href="#" onclick="event.preventDefault()">Middle East & Africa Region (REG-MEA)</a></span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Level</span>
+            <span class="info-value">3 of 4</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Country</span>
+            <span class="info-value">&#127462;&#127466; United Arab Emirates</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">City</span>
+            <span class="info-value">Dubai</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Address</span>
+            <span class="info-value">Office 401, Business Bay Tower, Dubai, UAE</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Phone</span>
+            <span class="info-value">+971 4-123-4567</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Email</span>
+            <span class="info-value"><a href="mailto:dubai@hopefoundation.org">dubai@hopefoundation.org</a></span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Head / Manager</span>
+            <span class="info-value"><a href="#" onclick="parent.loadContent('organization/staff-management'); event.preventDefault();">Mohammad Al-Rashid</a></span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Created</span>
+            <span class="info-value">Jan 15, 2024</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Status</span>
+            <span class="info-value"><span class="status-dot active">Active</span></span>
+          </div>
+        </div>
+
+        <h6 class="section-title"><i class="fas fa-sitemap me-1"></i> Child Units</h6>
+        <div class="child-unit-list">
+          <div class="child-unit-item" onclick="selectNodeByCode('SU-DXB-OC')">
+            <span class="child-icon node-icon subunit"><i class="fas fa-file-alt"></i></span>
+            <span>Orphan Care Program</span>
+            <span class="child-code">SU-DXB-OC</span>
+            <span class="child-status" style="background: var(--success-color); width:6px;height:6px;border-radius:50%;"></span>
+          </div>
+          <div class="child-unit-item" onclick="selectNodeByCode('SU-DXB-WW')">
+            <span class="child-icon node-icon subunit"><i class="fas fa-file-alt"></i></span>
+            <span>Water Wells Project</span>
+            <span class="child-code">SU-DXB-WW</span>
+            <span class="child-status" style="background: var(--success-color); width:6px;height:6px;border-radius:50%;"></span>
+          </div>
+        </div>
+        <button class="btn-outline-accent" style="font-size:0.75rem; padding:0.3rem 0.75rem;" onclick="parent.loadContent('organization/org-unit-form')">
+          <i class="fas fa-plus me-1"></i> Add Child Unit
+        </button>
+
+        <h6 class="section-title" style="margin-top:1.5rem;"><i class="fas fa-chart-pie me-1"></i> Quick Stats</h6>
+        <div class="quick-stats">
+          <div class="quick-stat">
+            <div class="stat-value" style="color:var(--accent);">1,234</div>
+            <div class="stat-label">Total Contacts</div>
+          </div>
+          <div class="quick-stat">
+            <div class="stat-value" style="color:#16a34a;">$156,780</div>
+            <div class="stat-label">Donations (YTD)</div>
+          </div>
+          <div class="quick-stat">
+            <div class="stat-value" style="color:#7c3aed;">3</div>
+            <div class="stat-label">Active Campaigns</div>
+          </div>
+          <div class="quick-stat">
+            <div class="stat-value" style="color:#d97706;">2</div>
+            <div class="stat-label">Upcoming Events</div>
+          </div>
+          <div class="quick-stat">
+            <div class="stat-value" style="color:#2563eb;">12</div>
+            <div class="stat-label">Staff Count</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Staff -->
+      <div class="tab-panel" id="tab-staff">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+          <h6 class="section-title" style="margin:0;"><i class="fas fa-users me-1"></i> Assigned Staff (12)</h6>
+          <button class="btn-primary-accent" style="font-size:0.75rem; padding:0.375rem 0.75rem;"><i class="fas fa-plus me-1"></i>Assign Staff</button>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Role</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Assigned Since</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><a class="staff-name-link" onclick="parent.loadContent('organization/staff-management')">Mohammad Al-Rashid</a></td>
+                <td>Branch Manager</td>
+                <td>m.rashid@hopefound.org</td>
+                <td><span class="status-dot active">Active</span></td>
+                <td>Jan 2024</td>
+                <td><button class="btn-sm-action">Remove</button></td>
+              </tr>
+              <tr>
+                <td><a class="staff-name-link" onclick="parent.loadContent('organization/staff-management')">Fatima Hassan</a></td>
+                <td>Program Coordinator</td>
+                <td>f.hassan@hopefound.org</td>
+                <td><span class="status-dot active">Active</span></td>
+                <td>Mar 2024</td>
+                <td><button class="btn-sm-action">Remove</button></td>
+              </tr>
+              <tr>
+                <td><a class="staff-name-link" onclick="parent.loadContent('organization/staff-management')">Ahmed Salim</a></td>
+                <td>Field Officer</td>
+                <td>a.salim@hopefound.org</td>
+                <td><span class="status-dot active">Active</span></td>
+                <td>Jun 2024</td>
+                <td><button class="btn-sm-action">Remove</button></td>
+              </tr>
+              <tr>
+                <td><a class="staff-name-link" onclick="parent.loadContent('organization/staff-management')">Sara Al-Mansoori</a></td>
+                <td>Data Entry</td>
+                <td>s.mansoori@hopefound.org</td>
+                <td><span class="status-dot active">Active</span></td>
+                <td>Sep 2024</td>
+                <td><button class="btn-sm-action">Remove</button></td>
+              </tr>
+              <tr>
+                <td><a class="staff-name-link" onclick="parent.loadContent('organization/staff-management')">Khalid Ibrahim</a></td>
+                <td>Finance Officer</td>
+                <td>k.ibrahim@hopefound.org</td>
+                <td><span class="status-dot active">Active</span></td>
+                <td>Feb 2024</td>
+                <td><button class="btn-sm-action">Remove</button></td>
+              </tr>
+              <tr>
+                <td><a class="staff-name-link" onclick="parent.loadContent('organization/staff-management')">Aisha Mahmoud</a></td>
+                <td>Volunteer Coordinator</td>
+                <td>a.mahmoud@hopefound.org</td>
+                <td><span class="status-dot active">Active</span></td>
+                <td>Apr 2024</td>
+                <td><button class="btn-sm-action">Remove</button></td>
+              </tr>
+              <tr>
+                <td><a class="staff-name-link" onclick="parent.loadContent('organization/staff-management')">Omar Farooq</a></td>
+                <td>IT Support</td>
+                <td>o.farooq@hopefound.org</td>
+                <td><span class="status-dot active">Active</span></td>
+                <td>May 2024</td>
+                <td><button class="btn-sm-action">Remove</button></td>
+              </tr>
+              <tr>
+                <td><a class="staff-name-link" onclick="parent.loadContent('organization/staff-management')">Layla Ahmed</a></td>
+                <td>Communications</td>
+                <td>l.ahmed@hopefound.org</td>
+                <td><span class="status-dot active">Active</span></td>
+                <td>Jul 2024</td>
+                <td><button class="btn-sm-action">Remove</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:0.75rem;">Showing 8 of 12 staff members</div>
+      </div>
+
+      <!-- TAB: Targets & Performance -->
+      <div class="tab-panel" id="tab-targets">
+        <h6 class="section-title"><i class="fas fa-bullseye me-1"></i> Annual Fundraising Target</h6>
+        <div class="target-card">
+          <div class="target-main">
+            <div>
+              <div style="font-size:0.75rem; color:var(--text-secondary);">Annual Target</div>
+              <div class="target-amount">$250,000</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:0.75rem; color:var(--text-secondary);">YTD Collected</div>
+              <div class="target-amount" style="color:var(--accent);">$156,780</div>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:0.75rem;">
+            <div class="progress-bar-custom" style="flex:1;">
+              <div class="progress-bar-fill amber" style="width: 62.7%;"></div>
+            </div>
+            <span style="font-size:0.8125rem; font-weight:600; color:var(--warning-color);">62.7%</span>
+          </div>
+          <div class="target-stats">
+            <div class="target-stat">
+              <div class="ts-val">$26,130</div>
+              <div class="ts-label">Monthly Average</div>
+            </div>
+            <div class="target-stat">
+              <div class="ts-val" style="color:var(--success-color);">$313,560</div>
+              <div class="ts-label">Projected Year-End</div>
+            </div>
+            <div class="target-stat">
+              <div class="ts-val" style="color:var(--success-color);">125.4%</div>
+              <div class="ts-label">Projected % of Target</div>
+            </div>
+          </div>
+        </div>
+
+        <h6 class="section-title"><i class="fas fa-chart-bar me-1"></i> Monthly Breakdown</h6>
+        <div class="chart-placeholder">
+          <i class="fas fa-chart-bar"></i>
+          <div>Monthly Collection Bar Chart</div>
+          <div style="font-size:0.75rem; margin-top:0.5rem;">Jan: $18,200 &bull; Feb: $22,450 &bull; Mar: $31,200 (Ramadan) &bull; Apr: $28,900 &bull; May: $24,100 &bull; Jun: $31,930</div>
+        </div>
+
+        <h6 class="section-title"><i class="fas fa-sitemap me-1"></i> Target by Child Unit</h6>
+        <div class="table-responsive" style="margin-bottom:1.25rem;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Sub-unit</th>
+                <th>Target</th>
+                <th>Collected</th>
+                <th style="width:200px;">Progress</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Orphan Care Program</td>
+                <td>$150,000</td>
+                <td>$98,450 (65.6%)</td>
+                <td>
+                  <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <div class="progress-bar-custom"><div class="progress-bar-fill amber" style="width:65.6%;"></div></div>
+                    <span style="font-size:0.6875rem; font-weight:600;">65.6%</span>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>Water Wells Project</td>
+                <td>$100,000</td>
+                <td>$58,330 (58.3%)</td>
+                <td>
+                  <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <div class="progress-bar-custom"><div class="progress-bar-fill amber" style="width:58.3%;"></div></div>
+                    <span style="font-size:0.6875rem; font-weight:600;">58.3%</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h6 class="section-title"><i class="fas fa-trophy me-1"></i> Comparison with Peer Branches</h6>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Branch</th>
+                <th>Target</th>
+                <th>Collected</th>
+                <th style="width:150px;">Progress</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="rank-badge">&#129351;</span></td>
+                <td>Mumbai</td>
+                <td>$300,000</td>
+                <td>$234,500</td>
+                <td>
+                  <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <div class="progress-bar-custom"><div class="progress-bar-fill green" style="width:78.2%;"></div></div>
+                    <span style="font-size:0.6875rem; font-weight:600;">78.2%</span>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="rank-badge">&#129352;</span></td>
+                <td>New York</td>
+                <td>$400,000</td>
+                <td>$298,000</td>
+                <td>
+                  <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <div class="progress-bar-custom"><div class="progress-bar-fill amber" style="width:74.5%;"></div></div>
+                    <span style="font-size:0.6875rem; font-weight:600;">74.5%</span>
+                  </div>
+                </td>
+              </tr>
+              <tr class="current-row">
+                <td><span class="rank-badge">&#129353;</span></td>
+                <td><strong>Dubai</strong></td>
+                <td><strong>$250,000</strong></td>
+                <td><strong>$156,780</strong></td>
+                <td>
+                  <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <div class="progress-bar-custom"><div class="progress-bar-fill amber" style="width:62.7%;"></div></div>
+                    <span style="font-size:0.6875rem; font-weight:600;">62.7%</span>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>London</td>
+                <td>$200,000</td>
+                <td>$112,340</td>
+                <td>
+                  <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <div class="progress-bar-custom"><div class="progress-bar-fill amber" style="width:56.2%;"></div></div>
+                    <span style="font-size:0.6875rem; font-weight:600;">56.2%</span>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td>Nairobi</td>
+                <td>$150,000</td>
+                <td>$78,900</td>
+                <td>
+                  <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <div class="progress-bar-custom"><div class="progress-bar-fill red" style="width:52.6%;"></div></div>
+                    <span style="font-size:0.6875rem; font-weight:600;">52.6%</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB: Settings -->
+      <div class="tab-panel" id="tab-settings">
+        <div class="settings-section">
+          <h6><i class="fas fa-shield-alt me-1"></i> Data Access Scope</h6>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" name="dataAccess" value="isolated">
+              <div>
+                <div class="ro-title">&#128274; Isolated</div>
+                <div class="ro-desc">Staff in this unit only see this unit's data</div>
+              </div>
+            </label>
+            <label class="radio-option selected">
+              <input type="radio" name="dataAccess" value="inherited" checked>
+              <div>
+                <div class="ro-title">&#128065; Inherited</div>
+                <div class="ro-desc">Staff see this unit + all child units' data</div>
+              </div>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="dataAccess" value="global">
+              <div>
+                <div class="ro-title">&#127760; Global</div>
+                <div class="ro-desc">Staff see all units' data (use with caution)</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h6><i class="fas fa-sliders-h me-1"></i> Unit Configuration</h6>
+          <div class="setting-row">
+            <span class="setting-label">Default Currency</span>
+            <select class="setting-select">
+              <option selected>AED (د.إ) — UAE Dirham</option>
+              <option>USD ($) — US Dollar</option>
+              <option>GBP (£) — British Pound</option>
+              <option>INR (₹) — Indian Rupee</option>
+              <option>EUR (€) — Euro</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">Timezone</span>
+            <select class="setting-select">
+              <option selected>Asia/Dubai (GMT+4)</option>
+              <option>America/New_York (GMT-5)</option>
+              <option>Europe/London (GMT+0)</option>
+              <option>Asia/Kolkata (GMT+5:30)</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">Fiscal Year Start</span>
+            <select class="setting-select">
+              <option selected>January</option>
+              <option>April</option>
+              <option>July</option>
+              <option>October</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">Auto-assign new contacts</span>
+            <div class="toggle-switch on" onclick="this.classList.toggle('on')"></div>
+          </div>
+        </div>
+
+        <button class="btn-primary-accent"><i class="fas fa-save me-1"></i>Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Context Menu -->
+  <div class="context-menu" id="contextMenu">
+    <div class="context-menu-item" onclick="parent.loadContent('organization/org-unit-form')"><i class="fas fa-plus"></i> Add Child Unit</div>
+    <div class="context-menu-item" onclick="parent.loadContent('organization/org-unit-form')"><i class="fas fa-edit"></i> Edit</div>
+    <div class="context-menu-divider"></div>
+    <div class="context-menu-item"><i class="fas fa-arrows-alt"></i> Move (Re-parent)</div>
+    <div class="context-menu-item"><i class="fas fa-ban"></i> Deactivate</div>
+    <div class="context-menu-divider"></div>
+    <div class="context-menu-item danger"><i class="fas fa-trash"></i> Delete</div>
+  </div>
+
+  <script>
+    // Tree toggle expand/collapse
+    function toggleNode(event, el) {
+      event.stopPropagation();
+      const node = el.closest('.tree-node');
+      const children = node.querySelector(':scope > .tree-children');
+      if (!children) return;
+      const icon = el.querySelector('i');
+      if (children.classList.contains('expanded')) {
+        children.classList.remove('expanded');
+        icon.className = 'fas fa-chevron-right';
+      } else {
+        children.classList.add('expanded');
+        icon.className = 'fas fa-chevron-down';
+      }
+    }
+
+    // Select node
+    function selectNode(rowEl) {
+      document.querySelectorAll('.tree-node-row.selected').forEach(r => r.classList.remove('selected'));
+      rowEl.classList.add('selected');
+      hideContextMenu();
+    }
+
+    function selectNodeByCode(code) {
+      const node = document.querySelector(`.tree-node[data-code="${code}"]`);
+      if (node) {
+        const row = node.querySelector(':scope > .tree-node-row');
+        selectNode(row);
+        // Expand parents
+        let parent = node.parentElement;
+        while (parent) {
+          if (parent.classList.contains('tree-children') && !parent.classList.contains('expanded')) {
+            parent.classList.add('expanded');
+            const toggle = parent.previousElementSibling?.querySelector('.tree-toggle i');
+            if (toggle) toggle.className = 'fas fa-chevron-down';
+          }
+          parent = parent.parentElement;
+        }
+      }
+    }
+
+    // Context menu
+    function showContextMenu(event, rowEl) {
+      event.preventDefault();
+      event.stopPropagation();
+      selectNode(rowEl);
+      const menu = document.getElementById('contextMenu');
+      menu.style.left = event.clientX + 'px';
+      menu.style.top = event.clientY + 'px';
+      menu.classList.add('show');
+    }
+
+    function hideContextMenu() {
+      document.getElementById('contextMenu').classList.remove('show');
+    }
+
+    document.addEventListener('click', hideContextMenu);
+
+    // Expand/Collapse all
+    function expandAll() {
+      document.querySelectorAll('.tree-children').forEach(c => c.classList.add('expanded'));
+      document.querySelectorAll('.tree-toggle:not(.empty) i').forEach(i => i.className = 'fas fa-chevron-down');
+    }
+
+    function collapseAll() {
+      document.querySelectorAll('.tree-children').forEach(c => c.classList.remove('expanded'));
+      document.querySelectorAll('.tree-toggle:not(.empty) i').forEach(i => i.className = 'fas fa-chevron-right');
+    }
+
+    // Tab switching
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      event.target.closest('.tab-btn').classList.add('active');
+      document.getElementById('tab-' + tabId).classList.add('active');
+    }
+
+    // View toggle (tree/list)
+    function switchView(view) {
+      document.getElementById('btnTreeView').classList.toggle('active', view === 'tree');
+      document.getElementById('btnListView').classList.toggle('active', view === 'list');
+      if (view === 'tree') {
+        document.getElementById('treeView').style.display = '';
+        document.getElementById('treeView').classList.remove('hidden');
+        document.getElementById('listView').classList.remove('active');
+      } else {
+        document.getElementById('treeView').style.display = 'none';
+        document.getElementById('listView').classList.add('active');
+      }
+    }
+
+    // Filter tree
+    function filterTree(searchText) {
+      const status = document.getElementById('statusFilter').value;
+      const query = (searchText || '').toLowerCase();
+      document.querySelectorAll('.tree-node').forEach(node => {
+        const name = (node.getAttribute('data-name') || '').toLowerCase();
+        const code = (node.getAttribute('data-code') || '').toLowerCase();
+        const nodeStatus = node.getAttribute('data-status');
+        const matchesSearch = !query || name.includes(query) || code.includes(query);
+        const matchesStatus = status === 'all' || nodeStatus === status;
+        const row = node.querySelector(':scope > .tree-node-row');
+        if (row) {
+          row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
+        }
+      });
+    }
+
+    // Radio option selection
+    document.querySelectorAll('.radio-option').forEach(opt => {
+      opt.addEventListener('click', function () {
+        this.closest('.radio-group').querySelectorAll('.radio-option').forEach(o => o.classList.remove('selected'));
+        this.classList.add('selected');
+      });
+    });
+  </script>
+
+</body>
+</html>

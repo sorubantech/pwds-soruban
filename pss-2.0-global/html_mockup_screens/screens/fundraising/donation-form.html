@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Donation Form - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .back-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 1rem;
+    }
+
+    .back-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover { background: #0c6577; border-color: #0c6577; color: white; }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover { background: var(--accent); color: white; }
+
+    .btn-text {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-text:hover { color: var(--danger-color); }
+
+    /* Accordion Sections */
+    .form-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      margin-bottom: 0.75rem;
+      overflow: hidden;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.875rem 1.25rem;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+    }
+
+    .section-header:hover { background: #f8fafc; }
+
+    .section-header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+
+    .section-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 0.5rem;
+      background: var(--accent-bg);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+    }
+
+    .section-title {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .section-toggle {
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      transition: transform 0.25s;
+    }
+
+    .section-header.collapsed .section-toggle {
+      transform: rotate(-90deg);
+    }
+
+    .section-body {
+      padding: 0 1.25rem 1.25rem;
+      transition: max-height 0.3s ease;
+      overflow: hidden;
+    }
+
+    .section-body.collapsed {
+      max-height: 0 !important;
+      padding: 0 1.25rem;
+    }
+
+    /* Form Controls */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .form-grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .form-grid .full-width,
+    .form-grid-3 .full-width { grid-column: 1 / -1; }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .form-group label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .form-group label .required {
+      color: var(--danger-color);
+      margin-left: 2px;
+    }
+
+    .form-control, .form-select {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .form-control:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    textarea.form-control {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .form-check-input:checked {
+      background-color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .form-check-input:focus {
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.15);
+    }
+
+    /* Donor Mini Card */
+    .donor-mini-card {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 0.625rem;
+      padding: 0.875rem 1rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
+
+    .donor-mini-card.show { display: flex; }
+
+    .donor-mini-card .donor-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.875rem;
+      flex-shrink: 0;
+    }
+
+    .donor-mini-card .donor-info {
+      flex: 1;
+      margin-left: 0.75rem;
+    }
+
+    .donor-mini-card .donor-name {
+      font-weight: 700;
+      font-size: 0.875rem;
+    }
+
+    .donor-mini-card .donor-meta {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      display: flex;
+      gap: 1rem;
+      margin-top: 0.125rem;
+    }
+
+    .donor-mini-card .donor-score {
+      background: #f0fdf4;
+      color: #16a34a;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 700;
+    }
+
+    .donor-mini-card .donor-last-donation {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    /* Donation Mode Cards */
+    .mode-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 0.5rem;
+    }
+
+    .mode-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.875rem 0.5rem;
+      border: 2px solid var(--border-color);
+      border-radius: 0.625rem;
+      background: white;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+    }
+
+    .mode-card:hover {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .mode-card.selected {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .mode-card input[type="radio"] { display: none; }
+
+    .mode-card .mode-icon {
+      font-size: 1.25rem;
+      width: 40px;
+      height: 40px;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f1f5f9;
+      transition: all 0.15s;
+    }
+
+    .mode-card.selected .mode-icon {
+      background: var(--accent);
+      color: white;
+    }
+
+    .mode-card .mode-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Amount Display */
+    .amount-input-large {
+      font-size: 1.5rem;
+      font-weight: 700;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, monospace;
+      padding: 0.625rem 0.75rem;
+    }
+
+    .calculated-value {
+      font-family: 'SF Mono', SFMono-Regular, Consolas, monospace;
+      font-weight: 600;
+      background: #f8fafc;
+    }
+
+    /* Distribution Rows */
+    .distribution-row {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 0.625rem;
+      padding: 0.875rem;
+      margin-bottom: 0.5rem;
+      position: relative;
+    }
+
+    .distribution-row .row-fields {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1.5fr 1fr 1fr 2fr auto;
+      gap: 0.625rem;
+      align-items: flex-end;
+    }
+
+    .distribution-row .row-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .distribution-row .row-field label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .distribution-row .row-field .form-control,
+    .distribution-row .row-field .form-select {
+      font-size: 0.8125rem;
+      padding: 0.4375rem 0.625rem;
+    }
+
+    .btn-remove-row {
+      background: none;
+      border: none;
+      color: var(--danger-color);
+      font-size: 0.8125rem;
+      cursor: pointer;
+      padding: 0.375rem;
+      border-radius: 0.375rem;
+      transition: all 0.15s;
+      flex-shrink: 0;
+      align-self: flex-end;
+    }
+
+    .btn-remove-row:hover { background: rgba(220, 38, 38, 0.08); }
+
+    .btn-add-row {
+      background: none;
+      border: 1px dashed var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-top: 0.375rem;
+    }
+
+    .btn-add-row:hover { background: var(--accent-bg); }
+    .btn-add-row i { margin-right: 0.375rem; }
+
+    /* Allocation Status */
+    .allocation-status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.625rem 0.875rem;
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      margin-top: 0.75rem;
+    }
+
+    .allocation-status.balanced {
+      background: #f0fdf4;
+      color: #16a34a;
+      border: 1px solid #bbf7d0;
+    }
+
+    .allocation-status.unbalanced {
+      background: #fffbeb;
+      color: #d97706;
+      border: 1px solid #fde68a;
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+
+    .toggle-switch .form-check-input {
+      width: 2.5rem;
+      height: 1.25rem;
+      cursor: pointer;
+    }
+
+    .toggle-switch label {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    /* Receipt Delivery Method Cards */
+    .delivery-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.625rem;
+    }
+
+    .delivery-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.875rem 0.5rem;
+      border: 2px solid var(--border-color);
+      border-radius: 0.625rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: white;
+      text-align: center;
+    }
+
+    .delivery-card:hover {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .delivery-card.selected {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+      box-shadow: 0 0 0 1px var(--accent);
+    }
+
+    .delivery-card input[type="radio"] { display: none; }
+
+    .delivery-card .delivery-icon {
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+
+    .delivery-card .delivery-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .delivery-card .delivery-detail {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      word-break: break-all;
+    }
+
+    .delivery-hint {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      font-style: italic;
+      margin-top: 0.375rem;
+    }
+
+    @media (max-width: 768px) {
+      .delivery-cards { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 480px) {
+      .delivery-cards { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* File Upload */
+    .file-upload-area {
+      border: 2px dashed var(--border-color);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #f8fafc;
+    }
+
+    .file-upload-area:hover {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .file-upload-area i {
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.25rem;
+    }
+
+    .file-upload-area p {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .file-upload-area .browse-link {
+      color: var(--accent);
+      font-weight: 600;
+      text-decoration: underline;
+    }
+
+    /* Validation */
+    .is-invalid { border-color: var(--danger-color) !important; }
+    .invalid-feedback {
+      font-size: 0.75rem;
+      color: var(--danger-color);
+      margin-top: 0.125rem;
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 9999;
+    }
+
+    .toast-success {
+      background: white;
+      border: 1px solid var(--success-color);
+      border-left: 4px solid var(--success-color);
+      border-radius: 0.5rem;
+      padding: 0.875rem 1.25rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      animation: slideIn 0.3s ease;
+    }
+
+    .toast-success i { color: var(--success-color); font-size: 1rem; }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Sticky Footer (Mobile) */
+    .sticky-footer {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid var(--border-color);
+      padding: 0.75rem 1.25rem;
+      z-index: 100;
+      gap: 0.5rem;
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .sticky-footer .btn-primary-accent,
+    .sticky-footer .btn-outline-accent,
+    .sticky-footer .btn-text {
+      flex: 1;
+    }
+
+    @media (max-width: 992px) {
+      .form-grid, .form-grid-3 { grid-template-columns: 1fr; }
+      .distribution-row .row-fields { grid-template-columns: 1fr 1fr; }
+      .mode-cards { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 1rem; padding-bottom: 5rem; }
+      .form-grid, .form-grid-3 { grid-template-columns: 1fr; }
+      .distribution-row .row-fields { grid-template-columns: 1fr; }
+      .mode-cards { grid-template-columns: repeat(2, 1fr); }
+      .header-actions { display: none; }
+      .sticky-footer { display: flex; }
+      .page-header h1 { font-size: 1.25rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" onclick="parent.loadContent('fundraising/donation-list')" title="Back to Donations">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <h1 id="pageTitle">New Donation</h1>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="saveAndReceipt()">
+        <i class="fas fa-receipt me-1"></i> Save & Generate Receipt
+      </button>
+      <button class="btn-outline-accent" onclick="saveDraft()">
+        <i class="fas fa-file-pen me-1"></i> Save as Draft
+      </button>
+      <button class="btn-text" onclick="parent.loadContent('fundraising/donation-list')">Cancel</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 1: Donor Information -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header" onclick="toggleAccordion(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-user"></i></div>
+        <span class="section-title">Donor Information</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body" id="sectionDonor">
+      <div class="form-grid">
+        <!-- Contact Lookup -->
+        <div class="form-group">
+          <label>Contact <span class="required">*</span></label>
+          <select class="form-select" id="contactSelect" onchange="showDonorCard()">
+            <option value="">Search contact by name, code or email...</option>
+            <option value="CON-0001">Sarah Johnson — CON-0001 (Donor)</option>
+            <option value="CON-0002">Michael Chen — CON-0002 (Donor, Volunteer)</option>
+            <option value="CON-0003">Priya Sharma — CON-0003 (Donor)</option>
+            <option value="CON-0004">Global Relief Foundation — CON-0004 (Organization)</option>
+            <option value="CON-0005">David Williams — CON-0005 (Donor, Member)</option>
+          </select>
+        </div>
+
+        <!-- Org Unit -->
+        <div class="form-group">
+          <label>Organizational Unit</label>
+          <select class="form-select">
+            <option value="">Select unit...</option>
+            <option value="hq">HQ — Head Office</option>
+            <option value="north">North Region</option>
+            <option value="south">South Region</option>
+            <option value="east">East Region</option>
+            <option value="west">West Region</option>
+          </select>
+        </div>
+
+        <!-- Anonymous Toggle -->
+        <div class="form-group full-width">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="anonymousDonation" onchange="toggleAnonymous()">
+            <label class="form-check-label" for="anonymousDonation" style="font-size: 0.8125rem; font-weight: 500;">
+              Is Anonymous Donation
+            </label>
+          </div>
+        </div>
+
+        <!-- Donor Mini Card -->
+        <div class="full-width">
+          <div class="donor-mini-card show" id="donorMiniCard">
+            <div class="donor-avatar">SJ</div>
+            <div class="donor-info">
+              <div class="donor-name">
+                Sarah Johnson
+                <span class="donor-score">92</span>
+              </div>
+              <div class="donor-meta">
+                <span><i class="fas fa-envelope me-1"></i>sarah.j@email.com</span>
+                <span><i class="fas fa-phone me-1"></i>+1 555-0101</span>
+              </div>
+              <div class="donor-last-donation">
+                <i class="fas fa-hand-holding-heart me-1"></i>Last donation: $500 on Mar 15, 2026
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 2: Donation Details -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header" onclick="toggleAccordion(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-hand-holding-heart"></i></div>
+        <span class="section-title">Donation Details</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body" id="sectionDetails">
+      <div class="form-grid">
+        <!-- Donation Date -->
+        <div class="form-group">
+          <label>Donation Date <span class="required">*</span></label>
+          <input type="date" class="form-control" value="2026-04-12">
+        </div>
+
+        <!-- Received Date -->
+        <div class="form-group">
+          <label>Received Date</label>
+          <input type="date" class="form-control" value="2026-04-12">
+        </div>
+
+        <!-- Donation Type -->
+        <div class="form-group">
+          <label>Donation Type</label>
+          <select class="form-select">
+            <option value="one-time" selected>One-time</option>
+            <option value="recurring">Recurring</option>
+            <option value="pledge">Pledge Payment</option>
+          </select>
+        </div>
+
+        <div class="form-group"></div>
+
+        <!-- Donation Mode -->
+        <div class="form-group full-width">
+          <label>Donation Mode <span class="required">*</span></label>
+          <div class="mode-cards" id="donationModeCards">
+            <label class="mode-card" onclick="selectMode('online', this)">
+              <input type="radio" name="donationMode" value="online">
+              <div class="mode-icon"><i class="fas fa-globe"></i></div>
+              <span class="mode-label">Online</span>
+            </label>
+            <label class="mode-card" onclick="selectMode('receipt-book', this)">
+              <input type="radio" name="donationMode" value="receipt-book">
+              <div class="mode-icon"><i class="fas fa-book-open"></i></div>
+              <span class="mode-label">Receipt Book</span>
+            </label>
+            <label class="mode-card selected" onclick="selectMode('cheque', this)">
+              <input type="radio" name="donationMode" value="cheque" checked>
+              <div class="mode-icon"><i class="fas fa-money-check"></i></div>
+              <span class="mode-label">Cheque / DD</span>
+            </label>
+            <label class="mode-card" onclick="selectMode('cash', this)">
+              <input type="radio" name="donationMode" value="cash">
+              <div class="mode-icon"><i class="fas fa-money-bill-wave"></i></div>
+              <span class="mode-label">Cash</span>
+            </label>
+            <label class="mode-card" onclick="selectMode('bank-transfer', this)">
+              <input type="radio" name="donationMode" value="bank-transfer">
+              <div class="mode-icon"><i class="fas fa-building-columns"></i></div>
+              <span class="mode-label">Bank Transfer</span>
+            </label>
+            <label class="mode-card" onclick="selectMode('in-kind', this)">
+              <input type="radio" name="donationMode" value="in-kind">
+              <div class="mode-icon"><i class="fas fa-gift"></i></div>
+              <span class="mode-label">In-Kind</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 3: Amount & Currency -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header" onclick="toggleAccordion(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-coins"></i></div>
+        <span class="section-title">Amount & Currency</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body" id="sectionAmount">
+      <div class="form-grid-3">
+        <!-- Currency -->
+        <div class="form-group">
+          <label>Currency <span class="required">*</span></label>
+          <select class="form-select" id="currencySelect">
+            <option value="USD" selected>USD - US Dollar ($)</option>
+            <option value="EUR">EUR - Euro (&euro;)</option>
+            <option value="GBP">GBP - British Pound (&pound;)</option>
+            <option value="INR">INR - Indian Rupee (&rupee;)</option>
+            <option value="AUD">AUD - Australian Dollar (A$)</option>
+            <option value="CAD">CAD - Canadian Dollar (C$)</option>
+            <option value="SGD">SGD - Singapore Dollar (S$)</option>
+          </select>
+        </div>
+
+        <!-- Donation Amount -->
+        <div class="form-group">
+          <label>Donation Amount <span class="required">*</span></label>
+          <input type="text" class="form-control amount-input-large" id="donationAmount" value="500.00" placeholder="0.00" oninput="calculateAmounts()">
+        </div>
+
+        <div class="form-group"></div>
+
+        <!-- Base Currency -->
+        <div class="form-group">
+          <label>Base Currency</label>
+          <input type="text" class="form-control calculated-value" value="INR - Indian Rupee" readonly>
+        </div>
+
+        <!-- Exchange Rate -->
+        <div class="form-group">
+          <label>Exchange Rate</label>
+          <input type="number" class="form-control" id="exchangeRate" value="83.50" step="0.01" oninput="calculateAmounts()">
+        </div>
+
+        <!-- Base Currency Amount -->
+        <div class="form-group">
+          <label>Base Currency Amount</label>
+          <input type="text" class="form-control calculated-value" id="baseAmount" value="41,750.00" readonly>
+        </div>
+
+        <!-- Fee Amount -->
+        <div class="form-group">
+          <label>Fee Amount</label>
+          <input type="number" class="form-control" id="feeAmount" value="0.00" step="0.01" placeholder="0.00" oninput="calculateAmounts()">
+        </div>
+
+        <!-- Net Amount -->
+        <div class="form-group">
+          <label>Net Amount</label>
+          <input type="text" class="form-control calculated-value" id="netAmount" value="500.00" readonly>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 4: Purpose & Distribution -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header" onclick="toggleAccordion(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-layer-group"></i></div>
+        <span class="section-title">Purpose & Distribution</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body" id="sectionPurpose">
+
+      <!-- Distribution Row 1 -->
+      <div class="distribution-row" id="distRow1">
+        <div class="row-fields">
+          <div class="row-field">
+            <label>Donation Purpose <span class="required" style="color: var(--danger-color);">*</span></label>
+            <select class="form-select">
+              <option value="">Select purpose...</option>
+              <option value="edu" selected>Children's Education Fund</option>
+              <option value="water">Clean Water Initiative</option>
+              <option value="health">Healthcare Program</option>
+              <option value="food">Food Security Project</option>
+              <option value="shelter">Shelter & Housing</option>
+              <option value="general">General Fund</option>
+            </select>
+          </div>
+          <div class="row-field">
+            <label>Category</label>
+            <input type="text" class="form-control calculated-value" value="Education" readonly>
+          </div>
+          <div class="row-field">
+            <label>Allocated Amount <span class="required" style="color: var(--danger-color);">*</span></label>
+            <input type="number" class="form-control alloc-amount" value="300" step="0.01" oninput="updateAllocation()">
+          </div>
+          <div class="row-field">
+            <label>Participant Role</label>
+            <select class="form-select">
+              <option value="donor" selected>Donor</option>
+              <option value="sponsor">Sponsor</option>
+              <option value="beneficiary">Beneficiary</option>
+            </select>
+          </div>
+          <div class="row-field">
+            <label>Occasion</label>
+            <select class="form-select">
+              <option value="general" selected>General</option>
+              <option value="birthday">Birthday</option>
+              <option value="memorial">Memorial</option>
+              <option value="anniversary">Anniversary</option>
+            </select>
+          </div>
+          <div class="row-field">
+            <label>Note</label>
+            <input type="text" class="form-control" placeholder="Optional note...">
+          </div>
+          <button class="btn-remove-row" onclick="removeDistRow(this)" title="Remove">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Distribution Row 2 -->
+      <div class="distribution-row" id="distRow2">
+        <div class="row-fields">
+          <div class="row-field">
+            <label>Donation Purpose <span class="required" style="color: var(--danger-color);">*</span></label>
+            <select class="form-select">
+              <option value="">Select purpose...</option>
+              <option value="edu">Children's Education Fund</option>
+              <option value="water" selected>Clean Water Initiative</option>
+              <option value="health">Healthcare Program</option>
+              <option value="food">Food Security Project</option>
+              <option value="shelter">Shelter & Housing</option>
+              <option value="general">General Fund</option>
+            </select>
+          </div>
+          <div class="row-field">
+            <label>Category</label>
+            <input type="text" class="form-control calculated-value" value="Environment" readonly>
+          </div>
+          <div class="row-field">
+            <label>Allocated Amount <span class="required" style="color: var(--danger-color);">*</span></label>
+            <input type="number" class="form-control alloc-amount" value="200" step="0.01" oninput="updateAllocation()">
+          </div>
+          <div class="row-field">
+            <label>Participant Role</label>
+            <select class="form-select">
+              <option value="donor" selected>Donor</option>
+              <option value="sponsor">Sponsor</option>
+              <option value="beneficiary">Beneficiary</option>
+            </select>
+          </div>
+          <div class="row-field">
+            <label>Occasion</label>
+            <select class="form-select">
+              <option value="general" selected>General</option>
+              <option value="birthday">Birthday</option>
+              <option value="memorial">Memorial</option>
+              <option value="anniversary">Anniversary</option>
+            </select>
+          </div>
+          <div class="row-field">
+            <label>Note</label>
+            <input type="text" class="form-control" placeholder="Optional note...">
+          </div>
+          <button class="btn-remove-row" onclick="removeDistRow(this)" title="Remove">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </div>
+      </div>
+
+      <button class="btn-add-row" onclick="addDistRow()">
+        <i class="fas fa-plus"></i> Add Distribution
+      </button>
+
+      <!-- Allocation Status -->
+      <div class="allocation-status balanced" id="allocationStatus">
+        <span><i class="fas fa-check-circle me-1"></i> Allocated: $500.00 of $500.00</span>
+        <span>Fully allocated</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 5: Payment Details -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header collapsed" onclick="toggleAccordion(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-credit-card"></i></div>
+        <span class="section-title">Payment Details</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body collapsed" id="sectionPayment">
+
+      <!-- Online Fields -->
+      <div class="payment-fields" id="payOnline" style="display: none;">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Payment Gateway</label>
+            <select class="form-select">
+              <option value="">Select gateway...</option>
+              <option value="stripe">Stripe</option>
+              <option value="paypal">PayPal</option>
+              <option value="razorpay">Razorpay</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Gateway Transaction ID</label>
+            <input type="text" class="form-control" placeholder="e.g., pi_3P2abc123def456">
+          </div>
+          <div class="form-group">
+            <label>Gateway Reference</label>
+            <input type="text" class="form-control" placeholder="Reference number">
+          </div>
+          <div class="form-group">
+            <label>Payment Method</label>
+            <select class="form-select">
+              <option value="">Select method...</option>
+              <option value="credit-card">Credit Card</option>
+              <option value="debit-card">Debit Card</option>
+              <option value="upi">UPI</option>
+              <option value="net-banking">Net Banking</option>
+              <option value="wallet">Wallet</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Transaction Status</label>
+            <select class="form-select">
+              <option value="completed">Completed</option>
+              <option value="pending">Pending</option>
+              <option value="failed">Failed</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Receipt Book Fields -->
+      <div class="payment-fields" id="payReceiptBook" style="display: none;">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Receipt Book</label>
+            <select class="form-select">
+              <option value="">Select receipt book...</option>
+              <option value="rb-001">RB-2026-001 (North Region)</option>
+              <option value="rb-002">RB-2026-002 (South Region)</option>
+              <option value="rb-003">RB-2026-003 (East Region)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Receipt Number</label>
+            <input type="text" class="form-control calculated-value" value="AUTO-0456" readonly>
+          </div>
+          <div class="form-group">
+            <label>Collected By</label>
+            <select class="form-select">
+              <option value="">Select staff...</option>
+              <option value="john">John Smith</option>
+              <option value="maria">Maria Garcia</option>
+              <option value="arun">Arun Kumar</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Collection Location</label>
+            <input type="text" class="form-control" placeholder="Location of collection">
+          </div>
+          <div class="form-group">
+            <label>Collection Date</label>
+            <input type="date" class="form-control" value="2026-04-12">
+          </div>
+        </div>
+      </div>
+
+      <!-- Cheque Fields (shown by default) -->
+      <div class="payment-fields" id="payCheque">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Cheque Number</label>
+            <input type="text" class="form-control" value="456789" placeholder="Enter cheque number">
+          </div>
+          <div class="form-group">
+            <label>Cheque Date</label>
+            <input type="date" class="form-control" value="2026-04-10">
+          </div>
+          <div class="form-group">
+            <label>Bank Name</label>
+            <select class="form-select">
+              <option value="">Select bank...</option>
+              <option value="chase" selected>Chase Bank</option>
+              <option value="bofa">Bank of America</option>
+              <option value="wells">Wells Fargo</option>
+              <option value="citi">Citibank</option>
+              <option value="hsbc">HSBC</option>
+              <option value="sbi">State Bank of India</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Bank Branch</label>
+            <input type="text" class="form-control" value="Downtown Branch" placeholder="Branch name">
+          </div>
+          <div class="form-group">
+            <label>Account Holder Name</label>
+            <input type="text" class="form-control" value="Sarah Johnson" placeholder="Name on cheque">
+          </div>
+          <div class="form-group">
+            <label>Cheque Type</label>
+            <select class="form-select">
+              <option value="bearer">Bearer</option>
+              <option value="crossed" selected>Crossed</option>
+              <option value="ac-payee">A/C Payee</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Cheque Status</label>
+            <select class="form-select">
+              <option value="received" selected>Received</option>
+              <option value="deposited">Deposited</option>
+              <option value="cleared">Cleared</option>
+              <option value="bounced">Bounced</option>
+            </select>
+          </div>
+          <div class="form-group"></div>
+          <div class="form-group">
+            <label>Cheque Front Image</label>
+            <div class="file-upload-area">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <p>Drag & drop or <span class="browse-link">browse</span></p>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Cheque Back Image</label>
+            <div class="file-upload-area">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <p>Drag & drop or <span class="browse-link">browse</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bank Transfer Fields -->
+      <div class="payment-fields" id="payBankTransfer" style="display: none;">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Bank Reference Number</label>
+            <input type="text" class="form-control" placeholder="Reference number">
+          </div>
+          <div class="form-group">
+            <label>Transfer Date</label>
+            <input type="date" class="form-control" value="2026-04-12">
+          </div>
+          <div class="form-group">
+            <label>From Bank</label>
+            <input type="text" class="form-control" placeholder="Sender's bank name">
+          </div>
+          <div class="form-group">
+            <label>Deposited To</label>
+            <select class="form-select">
+              <option value="">Select company bank account...</option>
+              <option value="acc1">Main Operations — Chase XXXX-4521</option>
+              <option value="acc2">Donations — Bank of America XXXX-7832</option>
+              <option value="acc3">Grants — Citibank XXXX-1290</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- In-Kind Fields -->
+      <div class="payment-fields" id="payInKind" style="display: none;">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Item Category</label>
+            <select class="form-select">
+              <option value="">Select category...</option>
+              <option value="medical">Medical Supplies</option>
+              <option value="food">Food</option>
+              <option value="clothing">Clothing</option>
+              <option value="equipment">Equipment</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group full-width">
+            <label>Item Description</label>
+            <textarea class="form-control" rows="2" placeholder="Describe the donated items..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Estimated Value</label>
+            <input type="number" class="form-control" placeholder="0.00" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>Bill Number</label>
+            <input type="text" class="form-control" placeholder="Bill / Invoice number">
+          </div>
+          <div class="form-group">
+            <label>Bill Date</label>
+            <input type="date" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Valuation Receipt</label>
+            <div class="file-upload-area">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <p>Drag & drop or <span class="browse-link">browse</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 6: Receipt & Communication -->
+  <!-- ============================================================ -->
+  <div class="form-card">
+    <div class="section-header collapsed" onclick="toggleAccordion(this)">
+      <div class="section-header-left">
+        <div class="section-icon"><i class="fas fa-envelope-open-text"></i></div>
+        <span class="section-title">Receipt & Communication</span>
+      </div>
+      <i class="fas fa-chevron-down section-toggle"></i>
+    </div>
+    <div class="section-body collapsed" id="sectionReceipt">
+      <div class="form-grid">
+        <!-- Generate Receipt Toggle -->
+        <div class="form-group full-width">
+          <div class="toggle-switch">
+            <input class="form-check-input" type="checkbox" role="switch" id="generateReceipt" checked>
+            <label for="generateReceipt">Generate Receipt</label>
+          </div>
+        </div>
+
+        <!-- Receipt Delivery Method -->
+        <div class="form-group full-width">
+          <label>Receipt Delivery Method</label>
+          <div class="delivery-cards" id="deliveryCards">
+            <label class="delivery-card selected" onclick="selectDelivery('email', this)">
+              <input type="radio" name="deliveryMethod" value="email" checked>
+              <span class="delivery-icon">&#128231;</span>
+              <span class="delivery-label">Email</span>
+              <span class="delivery-detail" id="deliveryEmailPreview">sarah.j@email.com</span>
+            </label>
+            <label class="delivery-card" onclick="selectDelivery('whatsapp', this)">
+              <input type="radio" name="deliveryMethod" value="whatsapp">
+              <span class="delivery-icon">&#128172;</span>
+              <span class="delivery-label">WhatsApp</span>
+              <span class="delivery-detail" id="deliveryWhatsappPreview">+1 555-0123</span>
+            </label>
+            <label class="delivery-card" onclick="selectDelivery('print', this)">
+              <input type="radio" name="deliveryMethod" value="print">
+              <span class="delivery-icon">&#128424;</span>
+              <span class="delivery-label">Print</span>
+              <span class="delivery-detail">&nbsp;</span>
+            </label>
+            <label class="delivery-card" onclick="selectDelivery('dontsend', this)">
+              <input type="radio" name="deliveryMethod" value="dontsend">
+              <span class="delivery-icon">&#9208;&#65039;</span>
+              <span class="delivery-label">Don't Send</span>
+              <span class="delivery-detail">Generate Only</span>
+            </label>
+          </div>
+          <div class="delivery-hint" id="deliveryHint">Based on donor's communication preference</div>
+        </div>
+
+        <!-- Send To (dynamic based on delivery method) -->
+        <div class="form-group full-width" id="sendToGroup">
+          <label id="sendToLabel">Send To (Email)</label>
+          <input type="text" class="form-control" id="sendToInput" value="sarah.j@email.com" placeholder="Email address">
+        </div>
+
+        <!-- Prayer Request -->
+        <div class="form-group full-width">
+          <label>Prayer Request</label>
+          <textarea class="form-control" rows="2" placeholder="Enter prayer request if any..."></textarea>
+        </div>
+
+        <!-- Internal Note -->
+        <div class="form-group full-width">
+          <label>Note</label>
+          <textarea class="form-control" rows="2" placeholder="Internal note (not visible to donor)..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sticky Footer (Mobile) -->
+  <div class="sticky-footer">
+    <button class="btn-primary-accent" onclick="saveAndReceipt()">
+      <i class="fas fa-receipt me-1"></i> Save & Receipt
+    </button>
+    <button class="btn-outline-accent" onclick="saveDraft()">
+      <i class="fas fa-file-pen me-1"></i> Draft
+    </button>
+    <button class="btn-text" onclick="parent.loadContent('fundraising/donation-list')">Cancel</button>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    // Accordion toggle
+    function toggleAccordion(header) {
+      header.classList.toggle('collapsed');
+      const body = header.nextElementSibling;
+      if (body) body.classList.toggle('collapsed');
+    }
+
+    // Mode selection
+    function selectMode(mode, el) {
+      document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+
+      // Show/hide payment detail sections
+      document.querySelectorAll('.payment-fields').forEach(f => f.style.display = 'none');
+
+      const map = {
+        'online': 'payOnline',
+        'receipt-book': 'payReceiptBook',
+        'cheque': 'payCheque',
+        'bank-transfer': 'payBankTransfer',
+        'in-kind': 'payInKind'
+      };
+
+      if (map[mode]) {
+        document.getElementById(map[mode]).style.display = 'block';
+      }
+
+      // Auto-expand payment section
+      const paymentHeader = document.getElementById('sectionPayment').previousElementSibling;
+      const paymentBody = document.getElementById('sectionPayment');
+      if (paymentBody.classList.contains('collapsed')) {
+        paymentHeader.classList.remove('collapsed');
+        paymentBody.classList.remove('collapsed');
+      }
+    }
+
+    // Show donor mini-card
+    function showDonorCard() {
+      const select = document.getElementById('contactSelect');
+      const card = document.getElementById('donorMiniCard');
+      if (select.value) {
+        card.classList.add('show');
+      } else {
+        card.classList.remove('show');
+      }
+    }
+
+    // Toggle anonymous
+    function toggleAnonymous() {
+      const checked = document.getElementById('anonymousDonation').checked;
+      const contactSelect = document.getElementById('contactSelect');
+      const label = contactSelect.parentElement.querySelector('label .required');
+      if (checked) {
+        if (label) label.style.display = 'none';
+      } else {
+        if (label) label.style.display = '';
+      }
+    }
+
+    // Calculate amounts
+    function calculateAmounts() {
+      const amount = parseFloat(document.getElementById('donationAmount').value) || 0;
+      const rate = parseFloat(document.getElementById('exchangeRate').value) || 1;
+      const fee = parseFloat(document.getElementById('feeAmount').value) || 0;
+
+      const baseAmount = amount * rate;
+      const netAmount = amount - fee;
+
+      document.getElementById('baseAmount').value = baseAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('netAmount').value = netAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      updateAllocation();
+    }
+
+    // Update allocation status
+    function updateAllocation() {
+      const totalAmount = parseFloat(document.getElementById('donationAmount').value) || 0;
+      const allocInputs = document.querySelectorAll('.alloc-amount');
+      let totalAlloc = 0;
+      allocInputs.forEach(inp => { totalAlloc += parseFloat(inp.value) || 0; });
+
+      const statusEl = document.getElementById('allocationStatus');
+      const remaining = totalAmount - totalAlloc;
+
+      if (Math.abs(remaining) < 0.01) {
+        statusEl.className = 'allocation-status balanced';
+        statusEl.innerHTML = '<span><i class="fas fa-check-circle me-1"></i> Allocated: $' + totalAlloc.toFixed(2) + ' of $' + totalAmount.toFixed(2) + '</span><span>Fully allocated</span>';
+      } else {
+        statusEl.className = 'allocation-status unbalanced';
+        statusEl.innerHTML = '<span><i class="fas fa-exclamation-triangle me-1"></i> Allocated: $' + totalAlloc.toFixed(2) + ' of $' + totalAmount.toFixed(2) + '</span><span>$' + Math.abs(remaining).toFixed(2) + ' ' + (remaining > 0 ? 'unallocated' : 'over-allocated') + '</span>';
+      }
+    }
+
+    // Add distribution row
+    function addDistRow() {
+      const row = document.createElement('div');
+      row.className = 'distribution-row';
+      row.innerHTML = `
+        <div class="row-fields">
+          <div class="row-field">
+            <label>Donation Purpose <span class="required" style="color: var(--danger-color);">*</span></label>
+            <select class="form-select">
+              <option value="">Select purpose...</option>
+              <option value="edu">Children's Education Fund</option>
+              <option value="water">Clean Water Initiative</option>
+              <option value="health">Healthcare Program</option>
+              <option value="food">Food Security Project</option>
+              <option value="shelter">Shelter & Housing</option>
+              <option value="general">General Fund</option>
+            </select>
+          </div>
+          <div class="row-field">
+            <label>Category</label>
+            <input type="text" class="form-control calculated-value" value="" readonly>
+          </div>
+          <div class="row-field">
+            <label>Allocated Amount <span class="required" style="color: var(--danger-color);">*</span></label>
+            <input type="number" class="form-control alloc-amount" value="" step="0.01" placeholder="0.00" oninput="updateAllocation()">
+          </div>
+          <div class="row-field">
+            <label>Participant Role</label>
+            <select class="form-select">
+              <option value="donor">Donor</option>
+              <option value="sponsor">Sponsor</option>
+              <option value="beneficiary">Beneficiary</option>
+            </select>
+          </div>
+          <div class="row-field">
+            <label>Occasion</label>
+            <select class="form-select">
+              <option value="general">General</option>
+              <option value="birthday">Birthday</option>
+              <option value="memorial">Memorial</option>
+              <option value="anniversary">Anniversary</option>
+            </select>
+          </div>
+          <div class="row-field">
+            <label>Note</label>
+            <input type="text" class="form-control" placeholder="Optional note...">
+          </div>
+          <button class="btn-remove-row" onclick="removeDistRow(this)" title="Remove">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </div>
+      `;
+      const addBtn = document.querySelector('.btn-add-row');
+      addBtn.parentElement.insertBefore(row, addBtn);
+    }
+
+    // Remove distribution row
+    function removeDistRow(btn) {
+      const rows = document.querySelectorAll('.distribution-row');
+      if (rows.length > 1) {
+        btn.closest('.distribution-row').remove();
+        updateAllocation();
+      }
+    }
+
+    // Receipt delivery method selection
+    function selectDelivery(method, el) {
+      document.querySelectorAll('.delivery-card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      el.querySelector('input[type="radio"]').checked = true;
+
+      const sendToGroup = document.getElementById('sendToGroup');
+      const sendToLabel = document.getElementById('sendToLabel');
+      const sendToInput = document.getElementById('sendToInput');
+      const hint = document.getElementById('deliveryHint');
+
+      if (method === 'email') {
+        sendToGroup.style.display = '';
+        sendToLabel.textContent = 'Send To (Email)';
+        sendToInput.value = 'sarah.j@email.com';
+        sendToInput.placeholder = 'Email address';
+        hint.textContent = 'Based on donor\'s communication preference';
+      } else if (method === 'whatsapp') {
+        sendToGroup.style.display = '';
+        sendToLabel.textContent = 'Send To (WhatsApp)';
+        sendToInput.value = '+1 555-0123';
+        sendToInput.placeholder = 'Phone number with country code';
+        hint.textContent = 'Based on donor\'s communication preference';
+      } else if (method === 'print') {
+        sendToGroup.style.display = 'none';
+        hint.textContent = 'Receipt will be available for printing after save';
+      } else if (method === 'dontsend') {
+        sendToGroup.style.display = 'none';
+        hint.textContent = 'Receipt will be generated but not delivered to the donor';
+      }
+    }
+
+    // Save actions
+    function saveAndReceipt() {
+      showToast('Donation saved and receipt generated successfully!');
+      setTimeout(() => parent.loadContent('fundraising/donation-list'), 1500);
+    }
+
+    function saveDraft() {
+      showToast('Donation saved as draft.');
+      setTimeout(() => parent.loadContent('fundraising/donation-list'), 1500);
+    }
+
+    function showToast(msg) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'toast-success';
+      toast.innerHTML = '<i class="fas fa-check-circle"></i> ' + msg;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+  </script>
+
+</body>
+
+</html>

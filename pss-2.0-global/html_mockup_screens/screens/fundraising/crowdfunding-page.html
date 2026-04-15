@@ -1,0 +1,1471 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crowdfunding Campaigns - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+    .page-header .subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 0; }
+    .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .btn-primary-accent { background: var(--accent); border-color: var(--accent); color: white; font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid var(--accent); cursor: pointer; transition: all 0.15s; }
+    .btn-primary-accent:hover { background: #0c6577; border-color: #0c6577; color: white; }
+    .btn-outline-accent { background: white; border: 1px solid var(--accent); color: var(--accent); font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.15s; }
+    .btn-outline-accent:hover { background: var(--accent); color: white; }
+
+    /* KPI Stats Grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+    .stat-card { background: white; border-radius: var(--card-radius); padding: 1.25rem; box-shadow: var(--card-shadow); border: 1px solid var(--border-color); display: flex; align-items: flex-start; gap: 1rem; transition: transform 0.15s, box-shadow 0.15s; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .stat-icon { width: 48px; height: 48px; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; }
+    .stat-icon.green { background: #f0fdf4; color: #22c55e; }
+    .stat-icon.blue { background: #eff6ff; color: #3b82f6; }
+    .stat-icon.purple { background: #faf5ff; color: #a855f7; }
+    .stat-icon.teal { background: var(--accent-bg); color: var(--accent); }
+    .stat-info { flex: 1; }
+    .stat-value { font-size: 1.625rem; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+    .stat-label { font-size: 0.8125rem; color: var(--text-secondary); font-weight: 500; margin-bottom: 0.125rem; }
+    .stat-subtitle { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; }
+
+    /* List Card */
+    .list-card { background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); }
+
+    /* Filter Bar */
+    .filter-bar { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); }
+    .search-input { position: relative; flex: 1; min-width: 240px; }
+    .search-input i { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 0.875rem; }
+    .search-input input { width: 100%; padding: 0.5rem 0.75rem 0.5rem 2.25rem; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 0.8125rem; color: var(--text-primary); transition: border-color 0.15s; }
+    .search-input input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14,116,144,0.1); }
+
+    /* Filter Chips */
+    .filter-chips { display: flex; gap: 0.375rem; flex-wrap: wrap; }
+    .filter-chip { padding: 0.3125rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; border: 1px solid var(--border-color); background: white; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+    .filter-chip:hover { border-color: var(--accent); color: var(--accent); }
+    .filter-chip.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+    /* Status Badges */
+    .status-badge { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.25rem 0.625rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; white-space: nowrap; }
+    .status-badge.active { background: #f0fdf4; color: #16a34a; }
+    .status-badge.goal-met { background: #f0fdf4; color: #15803d; }
+    .status-badge.draft { background: #fefce8; color: #a16207; }
+
+    /* Action buttons */
+    .action-btn { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.5rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 0.6875rem; font-weight: 500; color: var(--text-secondary); background: white; cursor: pointer; transition: all 0.15s; text-decoration: none; white-space: nowrap; }
+    .action-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+    .action-btn.danger:hover { border-color: var(--danger-color); color: var(--danger-color); background: #fef2f2; }
+
+    /* ============================================ */
+    /* CAMPAIGN CARDS GRID                          */
+    /* ============================================ */
+    .campaigns-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem; padding: 1.25rem; }
+    .campaign-card { background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); overflow: hidden; transition: transform 0.15s, box-shadow 0.15s; }
+    .campaign-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+    .campaign-hero { height: 160px; display: flex; align-items: center; justify-content: center; position: relative; }
+    .campaign-hero i { font-size: 2.5rem; color: rgba(255,255,255,0.5); }
+    .campaign-hero .campaign-status-float { position: absolute; top: 0.75rem; right: 0.75rem; }
+    .campaign-card-body { padding: 1.25rem; }
+    .campaign-card-name { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.75rem; cursor: pointer; }
+    .campaign-card-name:hover { color: var(--accent); }
+    .campaign-progress-bar { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-bottom: 0.5rem; }
+    .campaign-progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--accent), var(--accent-light)); transition: width 0.5s; }
+    .campaign-progress-fill.complete { background: linear-gradient(90deg, #16a34a, #22c55e); }
+    .campaign-amounts { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.75rem; }
+    .campaign-raised { font-size: 1.125rem; font-weight: 800; color: var(--accent); }
+    .campaign-goal { font-size: 0.8125rem; color: var(--text-secondary); }
+    .campaign-meta { display: flex; align-items: center; gap: 1rem; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 1rem; }
+    .campaign-meta i { width: 14px; text-align: center; color: var(--accent); }
+    .campaign-card-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; border-top: 1px solid var(--border-color); padding-top: 1rem; }
+
+    /* ============================================ */
+    /* CAMPAIGN EDITOR                              */
+    /* ============================================ */
+    .editor-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; padding: 2rem; }
+    .editor-panel { background: white; border-radius: var(--card-radius); max-width: 960px; margin: 0 auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+    .editor-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
+    .editor-header h2 { font-size: 1.125rem; font-weight: 700; margin: 0; }
+    .editor-close { background: none; border: none; font-size: 1.25rem; color: var(--text-secondary); cursor: pointer; padding: 0.25rem; }
+    .editor-close:hover { color: var(--text-primary); }
+
+    /* Editor Tabs */
+    .editor-tabs { display: flex; border-bottom: 2px solid var(--border-color); padding: 0 1.5rem; background: #f8fafc; }
+    .editor-tab { padding: 0.75rem 1.25rem; font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s; white-space: nowrap; }
+    .editor-tab:hover { color: var(--accent); }
+    .editor-tab.active { color: var(--accent); border-bottom-color: var(--accent); background: white; }
+    .editor-tab-content { padding: 1.5rem; display: none; }
+    .editor-tab-content.active { display: block; }
+
+    /* Form Styles */
+    .form-label-sm { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.375rem; }
+    .form-control-sm-custom { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 0.8125rem; color: var(--text-primary); transition: border-color 0.15s; }
+    .form-control-sm-custom:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14,116,144,0.1); }
+    select.form-control-sm-custom { appearance: auto; }
+    textarea.form-control-sm-custom { resize: vertical; min-height: 100px; }
+    .form-hint { font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.25rem; }
+
+    /* Toggle Switch */
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 0.625rem 0; border-bottom: 1px solid #f1f5f9; }
+    .toggle-row:last-child { border-bottom: none; }
+    .toggle-label { font-size: 0.8125rem; font-weight: 500; color: var(--text-primary); }
+    .toggle-switch { position: relative; width: 40px; height: 22px; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #cbd5e1; border-radius: 11px; transition: 0.2s; }
+    .toggle-slider::before { content: ''; position: absolute; height: 16px; width: 16px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s; }
+    .toggle-switch input:checked + .toggle-slider { background: var(--accent); }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); }
+
+    /* Suggested Amount Tags */
+    .suggested-amounts { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+    .suggested-tag { padding: 0.375rem 0.875rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); background: white; display: flex; align-items: center; gap: 0.5rem; }
+    .suggested-tag .remove-tag { color: var(--text-secondary); cursor: pointer; font-size: 0.75rem; }
+    .suggested-tag .remove-tag:hover { color: var(--danger-color); }
+
+    /* Milestones */
+    .milestone-row { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid #f1f5f9; }
+    .milestone-marker { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6875rem; font-weight: 700; flex-shrink: 0; }
+    .milestone-marker.reached { background: #f0fdf4; color: #16a34a; }
+    .milestone-marker.in-progress { background: #eff6ff; color: #3b82f6; }
+    .milestone-marker.upcoming { background: #f1f5f9; color: var(--text-secondary); }
+    .milestone-info { flex: 1; }
+    .milestone-name { font-size: 0.8125rem; font-weight: 600; }
+    .milestone-amount { font-size: 0.75rem; color: var(--text-secondary); }
+    .milestone-status { font-size: 0.6875rem; font-weight: 600; padding: 0.125rem 0.5rem; border-radius: 9999px; }
+    .milestone-status.reached { background: #f0fdf4; color: #16a34a; }
+    .milestone-status.in-progress { background: #eff6ff; color: #3b82f6; }
+    .milestone-status.upcoming { background: #f1f5f9; color: var(--text-secondary); }
+
+    /* Updates Table */
+    .updates-table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+    .updates-table th { padding: 0.625rem 0.75rem; text-align: left; font-size: 0.6875rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid var(--border-color); }
+    .updates-table td { padding: 0.625rem 0.75rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .updates-table tr:hover { background: #f8fafc; }
+
+    /* Impact Row */
+    .impact-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0; border-bottom: 1px solid #f1f5f9; }
+    .impact-amount { font-weight: 700; color: var(--accent); font-size: 0.875rem; min-width: 60px; }
+    .impact-desc { font-size: 0.8125rem; color: var(--text-primary); flex: 1; }
+    .impact-remove { color: var(--text-secondary); cursor: pointer; font-size: 0.75rem; }
+    .impact-remove:hover { color: var(--danger-color); }
+
+    /* Upload Area */
+    .upload-area { border: 2px dashed var(--border-color); border-radius: var(--card-radius); padding: 2rem; text-align: center; color: var(--text-secondary); cursor: pointer; transition: border-color 0.15s; }
+    .upload-area:hover { border-color: var(--accent); }
+    .upload-area i { font-size: 2rem; margin-bottom: 0.5rem; color: #cbd5e1; }
+
+    /* Design Tab: Section Checkboxes */
+    .section-toggle { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; margin-bottom: 0.5rem; }
+    .section-toggle input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px; }
+    .section-toggle label { font-size: 0.8125rem; font-weight: 500; color: var(--text-primary); cursor: pointer; }
+
+    /* Color Swatch */
+    .color-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+    .color-swatch { width: 36px; height: 36px; border-radius: 0.375rem; border: 2px solid var(--border-color); cursor: pointer; }
+    .color-label { font-size: 0.8125rem; color: var(--text-primary); }
+
+    /* ============================================ */
+    /* VIEW 2: PUBLIC PREVIEW                       */
+    /* ============================================ */
+    #publicPreview { display: none; }
+
+    /* Admin Controls Bar */
+    .admin-controls { background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
+    .admin-controls-left { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .admin-controls-right { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+
+    /* Device switcher */
+    .device-switcher { display: flex; background: white; border-radius: 0.5rem; padding: 2px; border: 1px solid var(--border-color); }
+    .device-btn { padding: 0.375rem 0.75rem; border: none; background: none; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); border-radius: 0.375rem; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 0.375rem; }
+    .device-btn.active { background: var(--accent); color: white; }
+    .device-btn:hover:not(.active) { background: #f1f5f9; }
+
+    /* URL bar */
+    .url-bar-admin { display: flex; align-items: center; gap: 0.5rem; padding: 0.375rem 0.75rem; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 0.75rem; flex: 1; min-width: 260px; }
+    .url-bar-admin .url-text { color: var(--accent); font-weight: 600; word-break: break-all; }
+    .url-copy-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 2px 6px; border-radius: 4px; font-size: 0.8125rem; }
+    .url-copy-btn:hover { color: var(--accent); background: var(--accent-bg); }
+
+    /* Browser Chrome */
+    .browser-chrome { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 0.75rem; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    .browser-topbar { background: #e2e8f0; padding: 0.5rem 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+    .browser-dots { display: flex; gap: 5px; }
+    .browser-dots span { width: 10px; height: 10px; border-radius: 50%; }
+    .browser-dots .red { background: #ef4444; }
+    .browser-dots .yellow { background: #f59e0b; }
+    .browser-dots .green { background: #22c55e; }
+    .browser-url-bar { flex: 1; background: white; border-radius: 4px; padding: 0.25rem 0.625rem; font-size: 0.625rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.375rem; }
+    .browser-url-bar i { color: var(--success-color); font-size: 0.5rem; }
+    .browser-body { overflow-y: auto; max-height: 780px; background: white; }
+    .browser-body::-webkit-scrollbar { width: 4px; }
+    .browser-body::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+    /* Phone Frame */
+    .phone-frame { width: 375px; max-width: 100%; background: #1e293b; border-radius: 2.5rem; padding: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); margin: 0 auto; display: none; }
+    .phone-inner { background: white; border-radius: 1.75rem; overflow: hidden; }
+    .phone-notch { width: 100px; height: 22px; background: #1e293b; border-radius: 0 0 14px 14px; margin: 0 auto; position: relative; z-index: 1; margin-top: -1px; }
+    .phone-screen { overflow-y: auto; max-height: 650px; }
+    .phone-screen::-webkit-scrollbar { width: 3px; }
+    .phone-screen::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+    /* ============================================ */
+    /* PUBLIC PAGE STYLES                            */
+    /* ============================================ */
+    .pub-page { font-size: 13px; }
+
+    /* Org Header */
+    .org-header { background: linear-gradient(135deg, var(--accent), var(--accent-light)); color: white; padding: 0.625rem 1.25rem; display: flex; align-items: center; justify-content: space-between; }
+    .org-brand { display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.8125rem; }
+    .org-brand i { font-size: 1rem; }
+    .org-nav { display: flex; gap: 1rem; }
+    .org-nav a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.6875rem; font-weight: 500; cursor: pointer; }
+    .org-nav a:hover { color: white; }
+
+    /* Hero */
+    .pub-hero { height: 240px; background: linear-gradient(135deg, rgba(14,116,144,0.85), rgba(6,182,212,0.65)), linear-gradient(180deg, #0e7490, #06b6d4); display: flex; align-items: center; justify-content: center; position: relative; }
+    .pub-hero i { font-size: 3rem; color: rgba(255,255,255,0.4); }
+
+    /* Two Column Layout */
+    .pub-content { display: flex; gap: 0; min-height: 500px; }
+    .pub-left { flex: 6; padding: 1.5rem; border-right: 1px solid var(--border-color); }
+    .pub-right { flex: 4; padding: 1.5rem; background: #f8fafc; position: sticky; top: 0; align-self: flex-start; }
+
+    .pub-headline { font-size: 1.375rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.75rem; line-height: 1.3; }
+    .pub-org-tags { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .pub-tag { padding: 0.25rem 0.625rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; }
+    .pub-tag.org { background: var(--accent-bg); color: var(--accent); }
+    .pub-tag.cat { background: #f0fdf4; color: #16a34a; }
+
+    .pub-section-title { font-size: 0.9375rem; font-weight: 700; color: var(--text-primary); margin: 1.5rem 0 0.75rem; padding-bottom: 0.375rem; border-bottom: 2px solid var(--border-color); }
+    .pub-story { font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.7; }
+
+    /* Impact Section */
+    .pub-impact-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 0.75rem; border-radius: 0.5rem; margin-bottom: 0.375rem; transition: background 0.15s; }
+    .pub-impact-row:hover { background: var(--accent-bg); }
+    .pub-impact-icon { width: 36px; height: 36px; border-radius: 50%; background: var(--accent-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 0.875rem; flex-shrink: 0; }
+    .pub-impact-amount { font-weight: 700; color: var(--accent); font-size: 0.875rem; min-width: 50px; }
+    .pub-impact-desc { font-size: 0.8125rem; color: var(--text-primary); }
+
+    /* Milestones Timeline */
+    .pub-timeline { position: relative; padding-left: 2rem; }
+    .pub-timeline::before { content: ''; position: absolute; left: 14px; top: 0; bottom: 0; width: 2px; background: var(--border-color); }
+    .pub-milestone { position: relative; padding-bottom: 1.5rem; }
+    .pub-milestone:last-child { padding-bottom: 0; }
+    .pub-milestone-dot { position: absolute; left: -2rem; top: 0; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.625rem; font-weight: 700; z-index: 1; }
+    .pub-milestone-dot.reached { background: #f0fdf4; color: #16a34a; border: 2px solid #22c55e; }
+    .pub-milestone-dot.in-progress { background: #eff6ff; color: #3b82f6; border: 2px solid #3b82f6; }
+    .pub-milestone-dot.upcoming { background: #f8fafc; color: #94a3b8; border: 2px solid var(--border-color); }
+    .pub-milestone-title { font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); }
+    .pub-milestone-meta { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.125rem; }
+
+    /* Donor Wall */
+    .donor-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid #f1f5f9; }
+    .donor-item:last-child { border-bottom: none; }
+    .donor-avatar { width: 36px; height: 36px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 0.6875rem; font-weight: 700; color: var(--text-secondary); flex-shrink: 0; }
+    .donor-info { flex: 1; }
+    .donor-name-row { display: flex; align-items: center; gap: 0.5rem; }
+    .donor-name { font-weight: 600; font-size: 0.8125rem; }
+    .donor-amount { font-weight: 700; color: var(--accent); font-size: 0.8125rem; }
+    .donor-message { font-size: 0.75rem; color: var(--text-secondary); font-style: italic; margin-top: 0.125rem; }
+    .donor-time { font-size: 0.6875rem; color: #94a3b8; margin-top: 0.125rem; }
+
+    /* Updates */
+    .pub-update { padding: 0.75rem 0; border-bottom: 1px solid #f1f5f9; }
+    .pub-update:last-child { border-bottom: none; }
+    .pub-update-date { font-size: 0.6875rem; font-weight: 700; color: var(--accent); }
+    .pub-update-title { font-size: 0.8125rem; font-weight: 600; margin-top: 0.125rem; }
+    .pub-update-text { font-size: 0.8125rem; color: var(--text-secondary); margin-top: 0.25rem; line-height: 1.5; }
+
+    /* FAQ Accordion */
+    .pub-faq { border: 1px solid var(--border-color); border-radius: 0.5rem; overflow: hidden; }
+    .pub-faq-item { border-bottom: 1px solid var(--border-color); }
+    .pub-faq-item:last-child { border-bottom: none; }
+    .pub-faq-q { padding: 0.75rem 1rem; font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: background 0.15s; }
+    .pub-faq-q:hover { background: #f8fafc; }
+    .pub-faq-a { padding: 0 1rem 0.75rem; font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.6; display: none; }
+    .pub-faq-item.open .pub-faq-a { display: block; }
+    .pub-faq-item.open .pub-faq-q .fa-chevron-down { transform: rotate(180deg); }
+
+    /* Right Panel: Progress Widget */
+    .pw-raised { font-size: 2rem; font-weight: 800; color: var(--accent); }
+    .pw-goal { font-size: 0.875rem; color: var(--text-secondary); }
+    .pw-bar-track { height: 12px; background: #e2e8f0; border-radius: 6px; overflow: hidden; margin: 0.75rem 0; }
+    .pw-bar-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--accent), var(--accent-light)); transition: width 0.5s; }
+    .pw-stats { display: flex; gap: 1rem; margin-bottom: 1.25rem; }
+    .pw-stat { font-size: 0.8125rem; color: var(--text-secondary); }
+    .pw-stat strong { color: var(--text-primary); }
+
+    /* Donate Form */
+    .donate-form { background: white; border-radius: var(--card-radius); padding: 1.25rem; border: 1px solid var(--border-color); margin-bottom: 1.25rem; }
+    .amount-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1rem; }
+    .amount-btn { padding: 0.625rem; border: 2px solid var(--border-color); border-radius: 0.5rem; background: white; font-size: 0.9375rem; font-weight: 700; color: var(--text-primary); cursor: pointer; transition: all 0.15s; text-align: center; }
+    .amount-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .amount-btn.selected { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
+    .amount-btn.custom { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); }
+
+    .cover-fees { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: #f8fafc; border-radius: 0.5rem; margin-bottom: 0.75rem; font-size: 0.75rem; color: var(--text-secondary); }
+    .cover-fees input[type="checkbox"] { accent-color: var(--accent); }
+
+    .donate-btn { width: 100%; padding: 0.875rem; background: var(--accent); color: white; border: none; border-radius: 0.5rem; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+    .donate-btn:hover { background: #0c6577; }
+
+    /* Share Buttons */
+    .share-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
+    .share-btn { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; color: white; cursor: pointer; border: none; transition: opacity 0.15s; font-size: 0.875rem; }
+    .share-btn:hover { opacity: 0.85; }
+    .share-btn.facebook { background: #1877f2; }
+    .share-btn.twitter { background: #1da1f2; }
+    .share-btn.whatsapp { background: #25d366; }
+    .share-btn.linkedin { background: #0a66c2; }
+    .share-btn.copy-link { background: #64748b; }
+
+    /* Public Footer */
+    .pub-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border-color); background: #f8fafc; text-align: center; font-size: 0.6875rem; color: var(--text-secondary); }
+    .pub-footer a { color: var(--accent); text-decoration: none; margin: 0 0.5rem; }
+    .pub-footer a:hover { text-decoration: underline; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .campaigns-grid { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ============================================ -->
+  <!-- VIEW 1: ADMIN — CAMPAIGN LIST + EDITOR       -->
+  <!-- ============================================ -->
+  <div id="adminView">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <h1>Crowdfunding Campaigns</h1>
+        <p class="subtitle">Create and manage public fundraising campaign pages</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn-primary-accent" onclick="openEditor('new')">
+          <i class="fas fa-plus me-1"></i> Create Campaign Page
+        </button>
+      </div>
+    </div>
+
+    <!-- KPI Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon teal"><i class="fas fa-bullhorn"></i></div>
+        <div class="stat-info">
+          <div class="stat-label">Active Campaigns</div>
+          <div class="stat-value">3</div>
+          <div class="stat-subtitle">Total: 5</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green"><i class="fas fa-hand-holding-dollar"></i></div>
+        <div class="stat-info">
+          <div class="stat-label">Total Raised</div>
+          <div class="stat-value">$163,300</div>
+          <div class="stat-subtitle">Across all campaigns</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+        <div class="stat-info">
+          <div class="stat-label">Total Donors</div>
+          <div class="stat-value">1,880</div>
+          <div class="stat-subtitle">Unique supporters</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon purple"><i class="fas fa-trophy"></i></div>
+        <div class="stat-info">
+          <div class="stat-label">Goals Met</div>
+          <div class="stat-value">1</div>
+          <div class="stat-subtitle">20% completion rate</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Campaign Cards Container -->
+    <div class="list-card">
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+          <div class="search-input">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Search campaigns by name, category..." id="searchInput">
+          </div>
+        </div>
+        <div class="filter-chips">
+          <span class="filter-chip active" onclick="filterCards(this, 'all')">All (5)</span>
+          <span class="filter-chip" onclick="filterCards(this, 'active')">Active (3)</span>
+          <span class="filter-chip" onclick="filterCards(this, 'goal-met')">Goal Met (1)</span>
+          <span class="filter-chip" onclick="filterCards(this, 'draft')">Draft (1)</span>
+        </div>
+      </div>
+
+      <!-- Campaign Cards Grid -->
+      <div class="campaigns-grid">
+
+        <!-- Card 1: Build a School in Kenya -->
+        <div class="campaign-card" data-status="active">
+          <div class="campaign-hero" style="background: linear-gradient(135deg, #0e7490, #06b6d4);">
+            <i class="fas fa-school"></i>
+            <div class="campaign-status-float">
+              <span class="status-badge active"><i class="fas fa-circle" style="font-size:0.375rem"></i> Active</span>
+            </div>
+          </div>
+          <div class="campaign-card-body">
+            <div class="campaign-card-name" onclick="openEditor('school')">Build a School in Kenya</div>
+            <div class="campaign-progress-bar"><div class="campaign-progress-fill" style="width:76.8%"></div></div>
+            <div class="campaign-amounts">
+              <span class="campaign-raised">$38,400</span>
+              <span class="campaign-goal">of $50,000 (76.8%)</span>
+            </div>
+            <div class="campaign-meta">
+              <span><i class="fas fa-users"></i> 345 donors</span>
+              <span><i class="fas fa-calendar"></i> Ends Jun 30</span>
+            </div>
+            <div class="campaign-card-actions">
+              <button class="action-btn" onclick="openEditor('school')"><i class="fas fa-pen"></i> Edit</button>
+              <button class="action-btn" onclick="showPreview()"><i class="fas fa-eye"></i> View Page</button>
+              <button class="action-btn"><i class="fas fa-gauge-high"></i> Dashboard</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Emergency Earthquake Relief -->
+        <div class="campaign-card" data-status="active">
+          <div class="campaign-hero" style="background: linear-gradient(135deg, #dc2626, #f59e0b);">
+            <i class="fas fa-house-crack"></i>
+            <div class="campaign-status-float">
+              <span class="status-badge active"><i class="fas fa-circle" style="font-size:0.375rem"></i> Active</span>
+            </div>
+          </div>
+          <div class="campaign-card-body">
+            <div class="campaign-card-name" onclick="openEditor('earthquake')">Emergency: Earthquake Relief</div>
+            <div class="campaign-progress-bar"><div class="campaign-progress-fill" style="width:87.6%"></div></div>
+            <div class="campaign-amounts">
+              <span class="campaign-raised">$87,600</span>
+              <span class="campaign-goal">of $100,000 (87.6%)</span>
+            </div>
+            <div class="campaign-meta">
+              <span><i class="fas fa-users"></i> 1,234 donors</span>
+              <span><i class="fas fa-calendar"></i> Ends May 15</span>
+            </div>
+            <div class="campaign-card-actions">
+              <button class="action-btn" onclick="openEditor('earthquake')"><i class="fas fa-pen"></i> Edit</button>
+              <button class="action-btn" onclick="showPreview()"><i class="fas fa-eye"></i> View Page</button>
+              <button class="action-btn"><i class="fas fa-gauge-high"></i> Dashboard</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Clean Water for 10 Villages -->
+        <div class="campaign-card" data-status="goal-met">
+          <div class="campaign-hero" style="background: linear-gradient(135deg, #0284c7, #22c55e);">
+            <i class="fas fa-droplet"></i>
+            <div class="campaign-status-float">
+              <span class="status-badge goal-met"><i class="fas fa-check-circle" style="font-size:0.5rem"></i> Goal Met</span>
+            </div>
+          </div>
+          <div class="campaign-card-body">
+            <div class="campaign-card-name">Clean Water for 10 Villages</div>
+            <div class="campaign-progress-bar"><div class="campaign-progress-fill complete" style="width:100%"></div></div>
+            <div class="campaign-amounts">
+              <span class="campaign-raised" style="color: var(--success-color);">$25,000</span>
+              <span class="campaign-goal">of $25,000 (100%)</span>
+            </div>
+            <div class="campaign-meta">
+              <span><i class="fas fa-users"></i> 234 donors</span>
+              <span><i class="fas fa-calendar"></i> Ended Apr 30</span>
+            </div>
+            <div class="campaign-card-actions">
+              <button class="action-btn" onclick="showPreview()"><i class="fas fa-eye"></i> View Page</button>
+              <button class="action-btn"><i class="fas fa-gauge-high"></i> Dashboard</button>
+              <button class="action-btn danger"><i class="fas fa-lock"></i> Close</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4: Mobile Health Clinic -->
+        <div class="campaign-card" data-status="active">
+          <div class="campaign-hero" style="background: linear-gradient(135deg, #7c3aed, #a855f7);">
+            <i class="fas fa-truck-medical"></i>
+            <div class="campaign-status-float">
+              <span class="status-badge active"><i class="fas fa-circle" style="font-size:0.375rem"></i> Active</span>
+            </div>
+          </div>
+          <div class="campaign-card-body">
+            <div class="campaign-card-name" onclick="openEditor('health')">Mobile Health Clinic</div>
+            <div class="campaign-progress-bar"><div class="campaign-progress-fill" style="width:16.4%"></div></div>
+            <div class="campaign-amounts">
+              <span class="campaign-raised">$12,300</span>
+              <span class="campaign-goal">of $75,000 (16.4%)</span>
+            </div>
+            <div class="campaign-meta">
+              <span><i class="fas fa-users"></i> 67 donors</span>
+              <span><i class="fas fa-calendar"></i> Ends Aug 31</span>
+            </div>
+            <div class="campaign-card-actions">
+              <button class="action-btn" onclick="openEditor('health')"><i class="fas fa-pen"></i> Edit</button>
+              <button class="action-btn" onclick="showPreview()"><i class="fas fa-eye"></i> View Page</button>
+              <button class="action-btn"><i class="fas fa-gauge-high"></i> Dashboard</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 5: Girls Education Scholarship (Draft) -->
+        <div class="campaign-card" data-status="draft">
+          <div class="campaign-hero" style="background: linear-gradient(135deg, #94a3b8, #cbd5e1);">
+            <i class="fas fa-graduation-cap"></i>
+            <div class="campaign-status-float">
+              <span class="status-badge draft"><i class="fas fa-pen-to-square" style="font-size:0.5rem"></i> Draft</span>
+            </div>
+          </div>
+          <div class="campaign-card-body">
+            <div class="campaign-card-name" onclick="openEditor('scholarship')">Girls Education Scholarship</div>
+            <div class="campaign-progress-bar"><div class="campaign-progress-fill" style="width:0%"></div></div>
+            <div class="campaign-amounts">
+              <span class="campaign-raised" style="color: var(--text-secondary);">$0</span>
+              <span class="campaign-goal">of $30,000 (0%)</span>
+            </div>
+            <div class="campaign-meta">
+              <span><i class="fas fa-users"></i> 0 donors</span>
+              <span><i class="fas fa-calendar"></i> Starts Sep 1</span>
+            </div>
+            <div class="campaign-card-actions">
+              <button class="action-btn" onclick="openEditor('scholarship')"><i class="fas fa-pen"></i> Edit</button>
+              <button class="action-btn"><i class="fas fa-eye"></i> Preview</button>
+              <button class="action-btn" style="border-color: var(--accent); color: var(--accent);"><i class="fas fa-rocket"></i> Publish</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /campaigns-grid -->
+    </div><!-- /list-card -->
+
+    <!-- ============================================ -->
+    <!-- CAMPAIGN EDITOR MODAL                        -->
+    <!-- ============================================ -->
+    <div class="editor-overlay" id="editorOverlay">
+      <div class="editor-panel">
+        <div class="editor-header">
+          <h2><i class="fas fa-pen-ruler me-2" style="color:var(--accent)"></i> Campaign Page Editor</h2>
+          <button class="editor-close" onclick="closeEditor()"><i class="fas fa-times"></i></button>
+        </div>
+
+        <!-- Tabs -->
+        <div class="editor-tabs">
+          <div class="editor-tab active" onclick="switchEditorTab(this, 'tab-basic')">Basic</div>
+          <div class="editor-tab" onclick="switchEditorTab(this, 'tab-content')">Content</div>
+          <div class="editor-tab" onclick="switchEditorTab(this, 'tab-donation')">Donation Settings</div>
+          <div class="editor-tab" onclick="switchEditorTab(this, 'tab-milestones')">Milestones</div>
+          <div class="editor-tab" onclick="switchEditorTab(this, 'tab-updates')">Updates</div>
+          <div class="editor-tab" onclick="switchEditorTab(this, 'tab-design')">Design</div>
+        </div>
+
+        <!-- Tab: Basic -->
+        <div class="editor-tab-content active" id="tab-basic">
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label class="form-label-sm">Campaign Name</label>
+              <input type="text" class="form-control-sm-custom" value="Build a School in Kenya">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label-sm">Slug</label>
+              <div style="display:flex; align-items:center; gap:0.25rem;">
+                <span style="font-size:0.75rem; color:var(--text-secondary);">/campaign/</span>
+                <input type="text" class="form-control-sm-custom" value="build-a-school-kenya">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label-sm">Goal Amount</label>
+              <div style="display:flex; align-items:center; gap:0.5rem;">
+                <select class="form-control-sm-custom" style="width:80px;">
+                  <option>USD</option><option>EUR</option><option>GBP</option><option>INR</option>
+                </select>
+                <input type="text" class="form-control-sm-custom" value="50,000">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label-sm">Start Date</label>
+              <input type="date" class="form-control-sm-custom" value="2026-03-01">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label-sm">End Date</label>
+              <input type="date" class="form-control-sm-custom" value="2026-06-30">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label-sm">Linked Donation Purpose</label>
+              <select class="form-control-sm-custom">
+                <option>Education - School Building</option>
+                <option>Healthcare</option>
+                <option>Emergency Relief</option>
+                <option>Clean Water</option>
+                <option>General Fund</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label-sm">Campaign Category</label>
+              <select class="form-control-sm-custom">
+                <option selected>Education</option>
+                <option>Healthcare</option>
+                <option>Emergency</option>
+                <option>Environment</option>
+                <option>Community</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label-sm">Organizational Unit</label>
+              <select class="form-control-sm-custom">
+                <option>Hope Foundation - Global</option>
+                <option>Hope Foundation - East Africa</option>
+                <option>Hope Foundation - South Asia</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top:1.5rem; display:flex; gap:0.5rem; justify-content:flex-end;">
+            <button class="btn-outline-accent" onclick="closeEditor()">Cancel</button>
+            <button class="btn-primary-accent"><i class="fas fa-save me-1"></i> Save Changes</button>
+          </div>
+        </div>
+
+        <!-- Tab: Content -->
+        <div class="editor-tab-content" id="tab-content">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label-sm">Headline</label>
+              <input type="text" class="form-control-sm-custom" value="Help Us Build a School for 500 Children in Rural Kenya">
+            </div>
+            <div class="col-12">
+              <label class="form-label-sm">Hero Image / Video</label>
+              <div class="upload-area">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p style="font-size:0.8125rem; margin:0;">Drag and drop an image or click to upload</p>
+                <p style="font-size:0.6875rem; color:#94a3b8; margin:0.25rem 0 0;">Recommended: 1200x630px. JPG, PNG or MP4</p>
+                <div style="margin-top:0.75rem; font-size:0.75rem; color:var(--text-secondary);">
+                  Or paste YouTube URL: <input type="text" class="form-control-sm-custom" placeholder="https://youtube.com/watch?v=..." style="display:inline-block; width:300px; margin-left:0.5rem;">
+                </div>
+              </div>
+            </div>
+            <div class="col-12">
+              <label class="form-label-sm">Campaign Story</label>
+              <div style="border:1px solid var(--border-color); border-radius:0.5rem; overflow:hidden;">
+                <div style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--border-color); background:#f8fafc; display:flex; gap:0.25rem; flex-wrap:wrap;">
+                  <button class="action-btn" style="border:none;"><i class="fas fa-bold"></i></button>
+                  <button class="action-btn" style="border:none;"><i class="fas fa-italic"></i></button>
+                  <button class="action-btn" style="border:none;"><i class="fas fa-underline"></i></button>
+                  <span style="width:1px; background:var(--border-color); margin:0 0.25rem;"></span>
+                  <button class="action-btn" style="border:none;"><i class="fas fa-list-ul"></i></button>
+                  <button class="action-btn" style="border:none;"><i class="fas fa-list-ol"></i></button>
+                  <span style="width:1px; background:var(--border-color); margin:0 0.25rem;"></span>
+                  <button class="action-btn" style="border:none;"><i class="fas fa-link"></i></button>
+                  <button class="action-btn" style="border:none;"><i class="fas fa-image"></i></button>
+                </div>
+                <textarea class="form-control-sm-custom" style="border:none; border-radius:0; min-height:150px;">In the heart of Makueni County, Kenya, over 500 children walk more than 5 kilometers daily to attend classes in an overcrowded, crumbling structure. The building has no proper roof, no desks, and barely any supplies.
+
+Our mission is to build a modern, 8-classroom primary school that will serve this community for generations to come. The new school will include proper classrooms, a library, clean water access, and solar-powered lighting.
+
+Every dollar you donate brings us one step closer to giving these children the education they deserve. Join us in making this dream a reality.</textarea>
+              </div>
+            </div>
+            <div class="col-12">
+              <label class="form-label-sm">Impact Breakdown</label>
+              <p class="form-hint">Show donors exactly what their contribution provides</p>
+              <div style="border:1px solid var(--border-color); border-radius:0.5rem; padding:0.75rem;">
+                <div class="impact-row">
+                  <div class="impact-amount">$50</div>
+                  <div class="impact-desc">Provides a desk and chair for one student</div>
+                  <span class="impact-remove"><i class="fas fa-times"></i></span>
+                </div>
+                <div class="impact-row">
+                  <div class="impact-amount">$100</div>
+                  <div class="impact-desc">Funds a teacher's salary for one month</div>
+                  <span class="impact-remove"><i class="fas fa-times"></i></span>
+                </div>
+                <div class="impact-row">
+                  <div class="impact-amount">$500</div>
+                  <div class="impact-desc">Builds one section of exterior wall</div>
+                  <span class="impact-remove"><i class="fas fa-times"></i></span>
+                </div>
+                <div class="impact-row">
+                  <div class="impact-amount">$1,000</div>
+                  <div class="impact-desc">Completes one full classroom</div>
+                  <span class="impact-remove"><i class="fas fa-times"></i></span>
+                </div>
+                <div class="impact-row" style="border-bottom:none;">
+                  <div class="impact-amount">$5,000</div>
+                  <div class="impact-desc">Builds the school library</div>
+                  <span class="impact-remove"><i class="fas fa-times"></i></span>
+                </div>
+                <button class="btn-outline-accent" style="margin-top:0.75rem; font-size:0.75rem; padding:0.375rem 0.75rem;">
+                  <i class="fas fa-plus me-1"></i> Add Impact Level
+                </button>
+              </div>
+            </div>
+            <div class="col-12">
+              <label class="form-label-sm">FAQ Section</label>
+              <div style="border:1px solid var(--border-color); border-radius:0.5rem; padding:0.75rem;">
+                <div style="padding:0.5rem 0; border-bottom:1px solid #f1f5f9;">
+                  <strong style="font-size:0.8125rem;">Q: Where exactly will the school be built?</strong>
+                  <p style="font-size:0.75rem; color:var(--text-secondary); margin:0.25rem 0 0;">A: In Makueni County, approximately 200km southeast of Nairobi.</p>
+                </div>
+                <div style="padding:0.5rem 0; border-bottom:1px solid #f1f5f9;">
+                  <strong style="font-size:0.8125rem;">Q: How will funds be used?</strong>
+                  <p style="font-size:0.75rem; color:var(--text-secondary); margin:0.25rem 0 0;">A: 85% goes directly to construction, 10% to supplies, 5% to admin.</p>
+                </div>
+                <div style="padding:0.5rem 0;">
+                  <strong style="font-size:0.8125rem;">Q: When will the school be completed?</strong>
+                  <p style="font-size:0.75rem; color:var(--text-secondary); margin:0.25rem 0 0;">A: We aim to complete construction by December 2026.</p>
+                </div>
+                <button class="btn-outline-accent" style="margin-top:0.75rem; font-size:0.75rem; padding:0.375rem 0.75rem;">
+                  <i class="fas fa-plus me-1"></i> Add FAQ
+                </button>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:1.5rem; display:flex; gap:0.5rem; justify-content:flex-end;">
+            <button class="btn-outline-accent" onclick="closeEditor()">Cancel</button>
+            <button class="btn-primary-accent"><i class="fas fa-save me-1"></i> Save Changes</button>
+          </div>
+        </div>
+
+        <!-- Tab: Donation Settings -->
+        <div class="editor-tab-content" id="tab-donation">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label-sm">Suggested Donation Amounts</label>
+              <div class="suggested-amounts">
+                <span class="suggested-tag">$50 <span class="remove-tag"><i class="fas fa-times"></i></span></span>
+                <span class="suggested-tag">$100 <span class="remove-tag"><i class="fas fa-times"></i></span></span>
+                <span class="suggested-tag">$250 <span class="remove-tag"><i class="fas fa-times"></i></span></span>
+                <span class="suggested-tag">$500 <span class="remove-tag"><i class="fas fa-times"></i></span></span>
+                <span class="suggested-tag">$1,000 <span class="remove-tag"><i class="fas fa-times"></i></span></span>
+                <span class="suggested-tag" style="background:var(--accent-bg); color:var(--accent); border-color:var(--accent);">Custom <span class="remove-tag"><i class="fas fa-times"></i></span></span>
+              </div>
+              <div style="display:flex; gap:0.5rem; align-items:center;">
+                <input type="text" class="form-control-sm-custom" placeholder="Add amount..." style="width:120px;">
+                <button class="btn-outline-accent" style="font-size:0.75rem; padding:0.375rem 0.75rem;"><i class="fas fa-plus me-1"></i> Add</button>
+              </div>
+            </div>
+            <div class="col-12">
+              <label class="form-label-sm mb-2">Donation Options</label>
+              <div style="border:1px solid var(--border-color); border-radius:0.5rem; padding:0.75rem;">
+                <div class="toggle-row">
+                  <span class="toggle-label">Allow Recurring Donations</span>
+                  <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                </div>
+                <div class="toggle-row">
+                  <span class="toggle-label">Allow Anonymous Donations</span>
+                  <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                </div>
+                <div class="toggle-row">
+                  <span class="toggle-label">Offer "Cover Processing Fees" Option</span>
+                  <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-sm mb-2">Payment Methods</label>
+              <div style="border:1px solid var(--border-color); border-radius:0.5rem; padding:0.75rem;">
+                <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
+                  <input type="checkbox" checked style="accent-color:var(--accent);">
+                  <i class="fab fa-stripe" style="font-size:1.25rem; color:#635bff;"></i>
+                  <span style="font-size:0.8125rem; font-weight:500;">Stripe</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                  <input type="checkbox" checked style="accent-color:var(--accent);">
+                  <i class="fab fa-paypal" style="font-size:1.25rem; color:#003087;"></i>
+                  <span style="font-size:0.8125rem; font-weight:500;">PayPal</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-sm mb-2">Display Options</label>
+              <div style="border:1px solid var(--border-color); border-radius:0.5rem; padding:0.75rem;">
+                <div class="toggle-row">
+                  <span class="toggle-label">Show Goal Thermometer</span>
+                  <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                </div>
+                <div class="toggle-row">
+                  <span class="toggle-label">Show Donor Count</span>
+                  <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                </div>
+                <div class="toggle-row">
+                  <span class="toggle-label">Show Donor Wall</span>
+                  <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                </div>
+              </div>
+            </div>
+            <div class="col-12">
+              <label class="form-label-sm mb-2">When Goal is Exceeded</label>
+              <div style="border:1px solid var(--border-color); border-radius:0.5rem; padding:0.75rem;">
+                <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
+                  <input type="radio" name="goalBehavior" checked style="accent-color:var(--accent);">
+                  <span style="font-size:0.8125rem;">Keep accepting donations</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
+                  <input type="radio" name="goalBehavior" style="accent-color:var(--accent);">
+                  <span style="font-size:0.8125rem;">Auto-close campaign</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                  <input type="radio" name="goalBehavior" style="accent-color:var(--accent);">
+                  <span style="font-size:0.8125rem;">Show stretch goal</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:1.5rem; display:flex; gap:0.5rem; justify-content:flex-end;">
+            <button class="btn-outline-accent" onclick="closeEditor()">Cancel</button>
+            <button class="btn-primary-accent"><i class="fas fa-save me-1"></i> Save Changes</button>
+          </div>
+        </div>
+
+        <!-- Tab: Milestones -->
+        <div class="editor-tab-content" id="tab-milestones">
+          <p style="font-size:0.8125rem; color:var(--text-secondary); margin-bottom:1rem;">Define campaign milestones to show donors the progress and impact of their contributions.</p>
+          <div style="border:1px solid var(--border-color); border-radius:0.5rem; padding:0.75rem;">
+            <div class="milestone-row">
+              <div class="milestone-marker reached"><i class="fas fa-check"></i></div>
+              <div class="milestone-info">
+                <div class="milestone-name">Foundation Laid</div>
+                <div class="milestone-amount">25% &mdash; $12,500</div>
+              </div>
+              <span class="milestone-status reached">Reached</span>
+              <button class="action-btn" style="margin-left:0.5rem;"><i class="fas fa-pen"></i></button>
+            </div>
+            <div class="milestone-row">
+              <div class="milestone-marker reached"><i class="fas fa-check"></i></div>
+              <div class="milestone-info">
+                <div class="milestone-name">Walls Up</div>
+                <div class="milestone-amount">50% &mdash; $25,000</div>
+              </div>
+              <span class="milestone-status reached">Reached</span>
+              <button class="action-btn" style="margin-left:0.5rem;"><i class="fas fa-pen"></i></button>
+            </div>
+            <div class="milestone-row">
+              <div class="milestone-marker in-progress"><i class="fas fa-spinner"></i></div>
+              <div class="milestone-info">
+                <div class="milestone-name">Roof &amp; Interiors</div>
+                <div class="milestone-amount">75% &mdash; $37,500</div>
+              </div>
+              <span class="milestone-status in-progress">In Progress</span>
+              <button class="action-btn" style="margin-left:0.5rem;"><i class="fas fa-pen"></i></button>
+            </div>
+            <div class="milestone-row" style="border-bottom:none;">
+              <div class="milestone-marker upcoming"><i class="fas fa-flag"></i></div>
+              <div class="milestone-info">
+                <div class="milestone-name">Grand Opening</div>
+                <div class="milestone-amount">100% &mdash; $50,000</div>
+              </div>
+              <span class="milestone-status upcoming">Upcoming</span>
+              <button class="action-btn" style="margin-left:0.5rem;"><i class="fas fa-pen"></i></button>
+            </div>
+          </div>
+          <button class="btn-outline-accent" style="margin-top:1rem; font-size:0.8125rem;">
+            <i class="fas fa-plus me-1"></i> Add Milestone
+          </button>
+          <div style="margin-top:1.5rem; display:flex; gap:0.5rem; justify-content:flex-end;">
+            <button class="btn-outline-accent" onclick="closeEditor()">Cancel</button>
+            <button class="btn-primary-accent"><i class="fas fa-save me-1"></i> Save Changes</button>
+          </div>
+        </div>
+
+        <!-- Tab: Updates -->
+        <div class="editor-tab-content" id="tab-updates">
+          <p style="font-size:0.8125rem; color:var(--text-secondary); margin-bottom:1rem;">Keep donors informed with progress updates on the campaign.</p>
+          <table class="updates-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Title</th>
+                <th>Content</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Apr 10, 2026</td>
+                <td><strong>Foundation Complete!</strong></td>
+                <td style="color:var(--text-secondary);">We are thrilled to announce that the school foundation has been successfully laid...</td>
+                <td>
+                  <div class="d-flex gap-1">
+                    <button class="action-btn"><i class="fas fa-pen"></i> Edit</button>
+                    <button class="action-btn danger"><i class="fas fa-trash"></i> Delete</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>Mar 25, 2026</td>
+                <td><strong>Construction Begins</strong></td>
+                <td style="color:var(--text-secondary);">Ground was broken on March 20th with a ceremony attended by local community leaders...</td>
+                <td>
+                  <div class="d-flex gap-1">
+                    <button class="action-btn"><i class="fas fa-pen"></i> Edit</button>
+                    <button class="action-btn danger"><i class="fas fa-trash"></i> Delete</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>Mar 1, 2026</td>
+                <td><strong>Campaign Launch</strong></td>
+                <td style="color:var(--text-secondary);">Thank you for supporting our mission! We have officially launched the campaign...</td>
+                <td>
+                  <div class="d-flex gap-1">
+                    <button class="action-btn"><i class="fas fa-pen"></i> Edit</button>
+                    <button class="action-btn danger"><i class="fas fa-trash"></i> Delete</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <button class="btn-outline-accent" style="margin-top:1rem; font-size:0.8125rem;">
+            <i class="fas fa-plus me-1"></i> Post Update
+          </button>
+          <div style="margin-top:1.5rem; display:flex; gap:0.5rem; justify-content:flex-end;">
+            <button class="btn-outline-accent" onclick="closeEditor()">Cancel</button>
+            <button class="btn-primary-accent"><i class="fas fa-save me-1"></i> Save Changes</button>
+          </div>
+        </div>
+
+        <!-- Tab: Design -->
+        <div class="editor-tab-content" id="tab-design">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label-sm mb-2">Theme Colors</label>
+              <div style="border:1px solid var(--border-color); border-radius:0.5rem; padding:0.75rem;">
+                <div class="color-row">
+                  <input type="color" class="color-swatch" value="#0e7490">
+                  <span class="color-label">Primary Color</span>
+                </div>
+                <div class="color-row">
+                  <input type="color" class="color-swatch" value="#06b6d4">
+                  <span class="color-label">Accent Color</span>
+                </div>
+                <div class="color-row" style="margin-bottom:0;">
+                  <input type="color" class="color-swatch" value="#ffffff">
+                  <span class="color-label">Background Color</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-sm mb-2">Logo / Branding</label>
+              <div class="upload-area" style="padding:1.25rem;">
+                <i class="fas fa-image" style="font-size:1.5rem;"></i>
+                <p style="font-size:0.75rem; margin:0.25rem 0 0;">Upload organization logo</p>
+              </div>
+              <div style="margin-top:1rem;">
+                <label class="form-label-sm">Font Family</label>
+                <select class="form-control-sm-custom">
+                  <option>System Default (Inter, Segoe UI)</option>
+                  <option>Georgia (Serif)</option>
+                  <option>Poppins</option>
+                  <option>Open Sans</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-12">
+              <label class="form-label-sm mb-2">Custom Sections</label>
+              <p class="form-hint" style="margin-bottom:0.75rem;">Toggle which sections appear on the public campaign page</p>
+              <div class="row g-2">
+                <div class="col-md-6">
+                  <div class="section-toggle"><input type="checkbox" checked id="sec-impact"><label for="sec-impact">Impact Breakdown</label></div>
+                </div>
+                <div class="col-md-6">
+                  <div class="section-toggle"><input type="checkbox" checked id="sec-milestone"><label for="sec-milestone">Milestone Timeline</label></div>
+                </div>
+                <div class="col-md-6">
+                  <div class="section-toggle"><input type="checkbox" checked id="sec-updates"><label for="sec-updates">Updates Feed</label></div>
+                </div>
+                <div class="col-md-6">
+                  <div class="section-toggle"><input type="checkbox" checked id="sec-donors"><label for="sec-donors">Donor Wall</label></div>
+                </div>
+                <div class="col-md-6">
+                  <div class="section-toggle"><input type="checkbox" checked id="sec-faq"><label for="sec-faq">FAQ Section</label></div>
+                </div>
+                <div class="col-md-6">
+                  <div class="section-toggle"><input type="checkbox" checked id="sec-share"><label for="sec-share">Share Buttons</label></div>
+                </div>
+                <div class="col-md-6">
+                  <div class="section-toggle"><input type="checkbox" id="sec-countdown"><label for="sec-countdown">Countdown Timer</label></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:1.5rem; display:flex; gap:0.5rem; justify-content:flex-end;">
+            <button class="btn-outline-accent" onclick="closeEditor()">Cancel</button>
+            <button class="btn-primary-accent"><i class="fas fa-save me-1"></i> Save Changes</button>
+          </div>
+        </div>
+
+      </div><!-- /editor-panel -->
+    </div><!-- /editor-overlay -->
+
+  </div><!-- /adminView -->
+
+
+  <!-- ============================================ -->
+  <!-- VIEW 2: PUBLIC CAMPAIGN PAGE PREVIEW         -->
+  <!-- ============================================ -->
+  <div id="publicPreview">
+
+    <!-- Admin Controls Bar -->
+    <div class="admin-controls">
+      <div class="admin-controls-left">
+        <button class="btn-outline-accent" onclick="showAdmin()">
+          <i class="fas fa-arrow-left me-1"></i> Back to Admin
+        </button>
+        <div class="device-switcher">
+          <button class="device-btn active" onclick="switchDevice('desktop', this)"><i class="fas fa-desktop"></i> Desktop</button>
+          <button class="device-btn" onclick="switchDevice('mobile', this)"><i class="fas fa-mobile-alt"></i> Mobile</button>
+        </div>
+      </div>
+      <div class="admin-controls-right">
+        <div class="url-bar-admin">
+          <i class="fas fa-lock" style="color:var(--success-color); font-size:0.625rem;"></i>
+          <span class="url-text">pss2.com/campaign/build-a-school-kenya</span>
+        </div>
+        <button class="btn-outline-accent" style="font-size:0.75rem; padding:0.35rem 0.75rem;" onclick="copyLink()">
+          <i class="fas fa-copy me-1"></i> Copy Link
+        </button>
+      </div>
+    </div>
+
+    <!-- Desktop Browser Chrome -->
+    <div class="browser-chrome" id="desktopFrame">
+      <div class="browser-topbar">
+        <div class="browser-dots">
+          <span class="red"></span>
+          <span class="yellow"></span>
+          <span class="green"></span>
+        </div>
+        <div class="browser-url-bar">
+          <i class="fas fa-lock"></i>
+          <span>https://pss2.com/campaign/build-a-school-kenya</span>
+        </div>
+      </div>
+      <div class="browser-body" id="desktopBody">
+        <!-- Public Page Content (cloned for mobile too) -->
+        <div class="pub-page">
+          <!-- Org Header -->
+          <div class="org-header">
+            <div class="org-brand"><i class="fas fa-heart-pulse"></i> Hope Foundation</div>
+            <div class="org-nav">
+              <a>Home</a>
+              <a>About Us</a>
+              <a>Campaigns</a>
+              <a>Contact</a>
+            </div>
+          </div>
+
+          <!-- Hero Image -->
+          <div class="pub-hero">
+            <i class="fas fa-school"></i>
+          </div>
+
+          <!-- Two Column Content -->
+          <div class="pub-content">
+            <!-- Left Column -->
+            <div class="pub-left">
+              <div class="pub-headline">Help Us Build a School for 500 Children in Rural Kenya</div>
+              <div class="pub-org-tags">
+                <span class="pub-tag org"><i class="fas fa-heart me-1"></i> Hope Foundation</span>
+                <span class="pub-tag cat"><i class="fas fa-graduation-cap me-1"></i> Education</span>
+              </div>
+
+              <div class="pub-story">
+                <p>In the heart of Makueni County, Kenya, over 500 children walk more than 5 kilometers daily to attend classes in an overcrowded, crumbling structure. The building has no proper roof, no desks, and barely any supplies.</p>
+                <p>Our mission is to build a modern, 8-classroom primary school that will serve this community for generations to come. The new school will include proper classrooms, a library, clean water access, and solar-powered lighting.</p>
+                <p>Every dollar you donate brings us one step closer to giving these children the education they deserve. Join us in making this dream a reality.</p>
+              </div>
+
+              <!-- Your Impact -->
+              <div class="pub-section-title"><i class="fas fa-hand-holding-heart me-2" style="color:var(--accent);"></i> Your Impact</div>
+              <div class="pub-impact-row">
+                <div class="pub-impact-icon"><i class="fas fa-chair"></i></div>
+                <div class="pub-impact-amount">$50</div>
+                <div class="pub-impact-desc">Provides a desk and chair for one student</div>
+              </div>
+              <div class="pub-impact-row">
+                <div class="pub-impact-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+                <div class="pub-impact-amount">$100</div>
+                <div class="pub-impact-desc">Funds a teacher's salary for one month</div>
+              </div>
+              <div class="pub-impact-row">
+                <div class="pub-impact-icon"><i class="fas fa-bricks"></i></div>
+                <div class="pub-impact-amount">$500</div>
+                <div class="pub-impact-desc">Builds one section of exterior wall</div>
+              </div>
+              <div class="pub-impact-row">
+                <div class="pub-impact-icon"><i class="fas fa-door-open"></i></div>
+                <div class="pub-impact-amount">$1,000</div>
+                <div class="pub-impact-desc">Completes one full classroom</div>
+              </div>
+              <div class="pub-impact-row">
+                <div class="pub-impact-icon"><i class="fas fa-book-open"></i></div>
+                <div class="pub-impact-amount">$5,000</div>
+                <div class="pub-impact-desc">Builds the school library</div>
+              </div>
+
+              <!-- Milestones Timeline -->
+              <div class="pub-section-title"><i class="fas fa-flag-checkered me-2" style="color:var(--accent);"></i> Campaign Milestones</div>
+              <div class="pub-timeline">
+                <div class="pub-milestone">
+                  <div class="pub-milestone-dot reached"><i class="fas fa-check"></i></div>
+                  <div class="pub-milestone-title">Foundation Laid</div>
+                  <div class="pub-milestone-meta">25% &mdash; $12,500 &bull; <span style="color:var(--success-color); font-weight:600;">Reached</span></div>
+                </div>
+                <div class="pub-milestone">
+                  <div class="pub-milestone-dot reached"><i class="fas fa-check"></i></div>
+                  <div class="pub-milestone-title">Walls Up</div>
+                  <div class="pub-milestone-meta">50% &mdash; $25,000 &bull; <span style="color:var(--success-color); font-weight:600;">Reached</span></div>
+                </div>
+                <div class="pub-milestone">
+                  <div class="pub-milestone-dot in-progress"><i class="fas fa-spinner"></i></div>
+                  <div class="pub-milestone-title">Roof &amp; Interiors</div>
+                  <div class="pub-milestone-meta">75% &mdash; $37,500 &bull; <span style="color:#3b82f6; font-weight:600;">In Progress</span></div>
+                </div>
+                <div class="pub-milestone">
+                  <div class="pub-milestone-dot upcoming"><i class="fas fa-flag"></i></div>
+                  <div class="pub-milestone-title">Grand Opening</div>
+                  <div class="pub-milestone-meta">100% &mdash; $50,000 &bull; <span style="color:var(--text-secondary);">Upcoming</span></div>
+                </div>
+              </div>
+
+              <!-- Updates -->
+              <div class="pub-section-title"><i class="fas fa-newspaper me-2" style="color:var(--accent);"></i> Campaign Updates</div>
+              <div class="pub-update">
+                <div class="pub-update-date">April 10, 2026</div>
+                <div class="pub-update-title">Foundation Complete!</div>
+                <div class="pub-update-text">We are thrilled to announce that the school foundation has been successfully laid. The construction team worked tirelessly over the past 3 weeks, and we are ahead of schedule!</div>
+              </div>
+              <div class="pub-update">
+                <div class="pub-update-date">March 25, 2026</div>
+                <div class="pub-update-title">Construction Begins</div>
+                <div class="pub-update-text">Ground was broken on March 20th with a ceremony attended by local community leaders. Over 200 villagers came to celebrate this momentous occasion.</div>
+              </div>
+              <div class="pub-update">
+                <div class="pub-update-date">March 1, 2026</div>
+                <div class="pub-update-title">Campaign Launch</div>
+                <div class="pub-update-text">Thank you for supporting our mission! We have officially launched the campaign and are overwhelmed by the response from our community.</div>
+              </div>
+
+              <!-- Donor Wall -->
+              <div class="pub-section-title"><i class="fas fa-users me-2" style="color:var(--accent);"></i> Recent Supporters</div>
+              <div class="donor-item">
+                <div class="donor-avatar" style="background:#dbeafe; color:#3b82f6;">JM</div>
+                <div class="donor-info">
+                  <div class="donor-name-row">
+                    <span class="donor-name">James Mitchell</span>
+                    <span class="donor-amount">$1,000</span>
+                  </div>
+                  <div class="donor-message">"Education changes everything. Proud to support this!"</div>
+                  <div class="donor-time">2 hours ago</div>
+                </div>
+              </div>
+              <div class="donor-item">
+                <div class="donor-avatar" style="background:#fce7f3; color:#ec4899;">SR</div>
+                <div class="donor-info">
+                  <div class="donor-name-row">
+                    <span class="donor-name">Sarah Rodriguez</span>
+                    <span class="donor-amount">$250</span>
+                  </div>
+                  <div class="donor-message">"Every child deserves a chance to learn."</div>
+                  <div class="donor-time">5 hours ago</div>
+                </div>
+              </div>
+              <div class="donor-item">
+                <div class="donor-avatar" style="background:#f0fdf4; color:#22c55e;">AK</div>
+                <div class="donor-info">
+                  <div class="donor-name-row">
+                    <span class="donor-name">Anonymous</span>
+                    <span class="donor-amount">$500</span>
+                  </div>
+                  <div class="donor-message">"Keep up the great work!"</div>
+                  <div class="donor-time">1 day ago</div>
+                </div>
+              </div>
+              <div class="donor-item">
+                <div class="donor-avatar" style="background:#fef3c7; color:#f59e0b;">DL</div>
+                <div class="donor-info">
+                  <div class="donor-name-row">
+                    <span class="donor-name">David Lee</span>
+                    <span class="donor-amount">$100</span>
+                  </div>
+                  <div class="donor-message">"Small contributions make a big difference."</div>
+                  <div class="donor-time">2 days ago</div>
+                </div>
+              </div>
+
+              <!-- FAQ -->
+              <div class="pub-section-title"><i class="fas fa-circle-question me-2" style="color:var(--accent);"></i> Frequently Asked Questions</div>
+              <div class="pub-faq">
+                <div class="pub-faq-item open">
+                  <div class="pub-faq-q" onclick="toggleFaq(this)">
+                    <span>Where exactly will the school be built?</span>
+                    <i class="fas fa-chevron-down" style="font-size:0.625rem; transition:transform 0.2s;"></i>
+                  </div>
+                  <div class="pub-faq-a">In Makueni County, approximately 200km southeast of Nairobi. The site was donated by the local village chief and is centrally located to serve children from 5 surrounding villages.</div>
+                </div>
+                <div class="pub-faq-item">
+                  <div class="pub-faq-q" onclick="toggleFaq(this)">
+                    <span>How will the funds be used?</span>
+                    <i class="fas fa-chevron-down" style="font-size:0.625rem; transition:transform 0.2s;"></i>
+                  </div>
+                  <div class="pub-faq-a">85% of funds go directly to construction materials and labor, 10% to school supplies and furniture, and 5% to administrative and logistics costs.</div>
+                </div>
+                <div class="pub-faq-item">
+                  <div class="pub-faq-q" onclick="toggleFaq(this)">
+                    <span>When will the school be completed?</span>
+                    <i class="fas fa-chevron-down" style="font-size:0.625rem; transition:transform 0.2s;"></i>
+                  </div>
+                  <div class="pub-faq-a">We aim to complete construction by December 2026, with the grand opening ceremony planned for January 2027 to coincide with the new school year.</div>
+                </div>
+              </div>
+            </div><!-- /pub-left -->
+
+            <!-- Right Column (Sticky Sidebar) -->
+            <div class="pub-right">
+              <!-- Progress Widget -->
+              <div style="margin-bottom:1.25rem;">
+                <div class="pw-raised">$38,400</div>
+                <div class="pw-goal">raised of <strong>$50,000</strong> goal</div>
+                <div class="pw-bar-track">
+                  <div class="pw-bar-fill" style="width:76.8%"></div>
+                </div>
+                <div class="pw-stats">
+                  <div class="pw-stat"><strong>345</strong> donors</div>
+                  <div class="pw-stat"><strong>52</strong> days left</div>
+                </div>
+              </div>
+
+              <!-- Donate Form -->
+              <div class="donate-form">
+                <div style="font-size:0.875rem; font-weight:700; margin-bottom:0.75rem;">Choose an Amount</div>
+                <div class="amount-grid">
+                  <button class="amount-btn" onclick="selectAmount(this)">$50</button>
+                  <button class="amount-btn selected" onclick="selectAmount(this)">$100</button>
+                  <button class="amount-btn" onclick="selectAmount(this)">$250</button>
+                  <button class="amount-btn" onclick="selectAmount(this)">$500</button>
+                  <button class="amount-btn" onclick="selectAmount(this)">$1K</button>
+                  <button class="amount-btn custom" onclick="selectAmount(this)">Custom</button>
+                </div>
+
+                <div class="cover-fees">
+                  <input type="checkbox" checked>
+                  <label style="cursor:pointer;">Make it monthly <span style="color:var(--accent); font-weight:600;">($100/month)</span></label>
+                </div>
+
+                <div class="cover-fees">
+                  <input type="checkbox" checked>
+                  <label style="cursor:pointer;">Cover processing fees so 100% goes to the cause <span style="color:var(--accent); font-weight:600;">(+$2.90)</span></label>
+                </div>
+
+                <button class="donate-btn">
+                  <i class="fas fa-heart me-2"></i> Donate Now
+                </button>
+
+                <div style="font-size:0.6875rem; color:var(--text-secondary); text-align:center; margin-top:0.75rem;">
+                  <i class="fas fa-lock me-1"></i> Secure payment via Stripe &amp; PayPal
+                </div>
+              </div>
+
+              <!-- Share -->
+              <div style="font-size:0.875rem; font-weight:700; margin-bottom:0.5rem;">Share This Campaign</div>
+              <div class="share-buttons">
+                <button class="share-btn facebook" title="Facebook"><i class="fab fa-facebook-f"></i></button>
+                <button class="share-btn twitter" title="X / Twitter"><i class="fab fa-x-twitter"></i></button>
+                <button class="share-btn whatsapp" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                <button class="share-btn linkedin" title="LinkedIn"><i class="fab fa-linkedin-in"></i></button>
+                <button class="share-btn copy-link" title="Copy Link"><i class="fas fa-link"></i></button>
+              </div>
+            </div><!-- /pub-right -->
+          </div><!-- /pub-content -->
+
+          <!-- Footer -->
+          <div class="pub-footer">
+            Hope Foundation &copy; 2026 &mdash;
+            <a href="#">Privacy Policy</a> &bull;
+            <a href="#">Terms of Service</a> &bull;
+            <a href="#">Contact Us</a>
+          </div>
+        </div><!-- /pub-page -->
+      </div><!-- /browser-body -->
+    </div><!-- /browser-chrome -->
+
+    <!-- Mobile Phone Frame -->
+    <div class="phone-frame" id="mobileFrame">
+      <div class="phone-inner">
+        <div class="phone-notch"></div>
+        <div class="phone-screen" id="mobileBody">
+          <!-- Content cloned via JS -->
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /publicPreview -->
+
+
+  <script>
+    /* ============================================ */
+    /* VIEW SWITCHING                               */
+    /* ============================================ */
+    function showPreview() {
+      document.getElementById('adminView').style.display = 'none';
+      document.getElementById('publicPreview').style.display = 'block';
+      // Clone content for mobile
+      const src = document.getElementById('desktopBody').innerHTML;
+      document.getElementById('mobileBody').innerHTML = src;
+    }
+
+    function showAdmin() {
+      document.getElementById('adminView').style.display = 'block';
+      document.getElementById('publicPreview').style.display = 'none';
+    }
+
+    /* ============================================ */
+    /* DEVICE SWITCHER                              */
+    /* ============================================ */
+    function switchDevice(device, btn) {
+      document.querySelectorAll('.device-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (device === 'mobile') {
+        document.getElementById('desktopFrame').style.display = 'none';
+        document.getElementById('mobileFrame').style.display = 'block';
+        // Clone content for mobile view
+        const src = document.getElementById('desktopBody').innerHTML;
+        document.getElementById('mobileBody').innerHTML = src;
+        // Adjust mobile layout: stack columns
+        const mobileRight = document.querySelector('#mobileBody .pub-right');
+        const mobileLeft = document.querySelector('#mobileBody .pub-left');
+        const mobileContent = document.querySelector('#mobileBody .pub-content');
+        if (mobileContent) {
+          mobileContent.style.flexDirection = 'column';
+        }
+        if (mobileLeft) {
+          mobileLeft.style.borderRight = 'none';
+          mobileLeft.style.borderBottom = '1px solid var(--border-color)';
+        }
+        if (mobileRight) {
+          mobileRight.style.position = 'static';
+        }
+      } else {
+        document.getElementById('desktopFrame').style.display = 'block';
+        document.getElementById('mobileFrame').style.display = 'none';
+      }
+    }
+
+    /* ============================================ */
+    /* CAMPAIGN EDITOR                              */
+    /* ============================================ */
+    function openEditor(campaign) {
+      document.getElementById('editorOverlay').style.display = 'block';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeEditor() {
+      document.getElementById('editorOverlay').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    // Close editor on overlay click
+    document.getElementById('editorOverlay').addEventListener('click', function(e) {
+      if (e.target === this) closeEditor();
+    });
+
+    function switchEditorTab(tab, contentId) {
+      document.querySelectorAll('.editor-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.editor-tab-content').forEach(c => c.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(contentId).classList.add('active');
+    }
+
+    /* ============================================ */
+    /* FILTER CHIPS                                 */
+    /* ============================================ */
+    function filterCards(chip, status) {
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      document.querySelectorAll('.campaign-card').forEach(card => {
+        if (status === 'all') {
+          card.style.display = '';
+        } else {
+          card.style.display = card.dataset.status === status ? '' : 'none';
+        }
+      });
+    }
+
+    // Search
+    document.getElementById('searchInput').addEventListener('input', function() {
+      const q = this.value.toLowerCase();
+      document.querySelectorAll('.campaign-card').forEach(card => {
+        const text = card.textContent.toLowerCase();
+        card.style.display = text.includes(q) ? '' : 'none';
+      });
+    });
+
+    /* ============================================ */
+    /* DONATION FORM INTERACTIONS                    */
+    /* ============================================ */
+    function selectAmount(btn) {
+      const grid = btn.closest('.amount-grid');
+      grid.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    }
+
+    /* ============================================ */
+    /* FAQ ACCORDION                                */
+    /* ============================================ */
+    function toggleFaq(el) {
+      const item = el.closest('.pub-faq-item');
+      item.classList.toggle('open');
+    }
+
+    /* ============================================ */
+    /* COPY LINK                                    */
+    /* ============================================ */
+    function copyLink() {
+      const url = 'https://pss2.com/campaign/build-a-school-kenya';
+      navigator.clipboard.writeText(url).then(() => {
+        const btn = event.target.closest('button');
+        const origText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check me-1"></i> Copied!';
+        setTimeout(() => { btn.innerHTML = origText; }, 1500);
+      }).catch(() => {});
+    }
+  </script>
+
+</body>
+</html>

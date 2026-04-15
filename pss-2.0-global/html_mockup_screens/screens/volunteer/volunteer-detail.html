@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Volunteer Detail - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --volunteer: #059669;
+      --volunteer-light: #d1fae5;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .back-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 1rem;
+    }
+
+    .back-btn:hover {
+      border-color: var(--volunteer);
+      color: var(--volunteer);
+      background: var(--volunteer-light);
+    }
+
+    .vol-header-info {
+      display: flex;
+      align-items: center;
+      gap: 0.875rem;
+    }
+
+    .vol-header-avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--volunteer);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .vol-header-name h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+
+    .vol-header-meta {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-top: 0.125rem;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3125rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+    }
+
+    .status-badge.active { background: #d1fae5; color: #065f46; }
+
+    .contact-link {
+      color: var(--accent);
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      font-size: 0.8125rem;
+    }
+
+    .contact-link:hover { text-decoration: underline; }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--volunteer);
+      border-color: var(--volunteer);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--volunteer);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover { background: #047857; border-color: #047857; color: white; }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover { background: var(--accent); color: white; }
+
+    .btn-secondary {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* More Dropdown */
+    .more-dropdown { position: relative; display: inline-block; }
+
+    .more-dropdown-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 0.25rem;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      min-width: 160px;
+      z-index: 100;
+    }
+
+    .more-dropdown-menu.show { display: block; }
+
+    .more-dropdown-menu a {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+
+    .more-dropdown-menu a:hover { background: #f8fafc; }
+    .more-dropdown-menu a.danger { color: var(--danger-color); }
+    .more-dropdown-menu a i { width: 16px; text-align: center; }
+
+    /* Quick Stats Row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      padding: 1rem 1.25rem;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .stat-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-sub {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.125rem;
+    }
+
+    .stat-sub .up { color: var(--success-color); font-weight: 600; }
+
+    /* Tabs */
+    .detail-tabs {
+      display: flex;
+      border-bottom: 2px solid var(--border-color);
+      margin-bottom: 1.25rem;
+      overflow-x: auto;
+      gap: 0;
+    }
+
+    .detail-tabs::-webkit-scrollbar { height: 0; }
+
+    .detail-tab {
+      padding: 0.75rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      border: none;
+      background: none;
+      cursor: pointer;
+      white-space: nowrap;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.15s;
+    }
+
+    .detail-tab:hover { color: var(--volunteer); }
+
+    .detail-tab.active {
+      color: var(--volunteer);
+      border-bottom-color: var(--volunteer);
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Cards */
+    .detail-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      margin-bottom: 1rem;
+    }
+
+    .detail-card-header {
+      padding: 0.875rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .detail-card-header i { color: var(--volunteer); font-size: 0.875rem; }
+
+    .detail-card-body { padding: 1.25rem; }
+
+    /* Info List */
+    .info-list { list-style: none; padding: 0; margin: 0; }
+
+    .info-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.8125rem;
+    }
+
+    .info-list li:last-child { border-bottom: none; }
+
+    .info-label {
+      color: var(--text-secondary);
+      font-weight: 500;
+      flex-shrink: 0;
+      margin-right: 0.75rem;
+    }
+
+    .info-value {
+      color: var(--text-primary);
+      font-weight: 600;
+      text-align: right;
+    }
+
+    /* Skill Tags */
+    .skill-tag {
+      display: inline-block;
+      font-size: 0.6875rem;
+      padding: 0.25rem 0.625rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      margin-right: 0.25rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .skill-tag.event { background: #dbeafe; color: #1e40af; }
+    .skill-tag.fundraising { background: #fce7f3; color: #be185d; }
+    .skill-tag.speaking { background: #fef3c7; color: #92400e; }
+    .skill-tag.translation { background: #e0e7ff; color: #4338ca; }
+    .skill-tag.default { background: var(--volunteer-light); color: #065f46; }
+
+    .interest-tag {
+      display: inline-block;
+      font-size: 0.6875rem;
+      padding: 0.25rem 0.625rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      background: #f1f5f9;
+      color: var(--text-secondary);
+      margin-right: 0.25rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .lang-tag {
+      display: inline-block;
+      font-size: 0.6875rem;
+      padding: 0.25rem 0.625rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      background: var(--accent-bg);
+      color: var(--accent);
+      margin-right: 0.25rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .cert-tag {
+      display: inline-block;
+      font-size: 0.6875rem;
+      padding: 0.25rem 0.625rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      background: #fff7ed;
+      color: #c2410c;
+      margin-right: 0.25rem;
+      margin-bottom: 0.25rem;
+    }
+
+    /* Availability Grid */
+    .avail-days {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.75rem;
+    }
+
+    .avail-day {
+      width: 40px;
+      height: 40px;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+    }
+
+    .avail-day.available {
+      background: var(--volunteer-light);
+      color: var(--volunteer);
+      border-color: var(--volunteer);
+    }
+
+    .avail-day.partial {
+      background: #fef3c7;
+      color: #92400e;
+      border-color: #f59e0b;
+    }
+
+    /* Notes */
+    .note-item {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+      font-style: italic;
+    }
+
+    /* Schedule Table */
+    .schedule-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .schedule-table th {
+      background: #f8fafc;
+      padding: 0.625rem 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .schedule-table td {
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.8125rem;
+      vertical-align: middle;
+    }
+
+    .schedule-table tr:last-child td { border-bottom: none; }
+
+    .shift-type {
+      display: inline-block;
+      font-size: 0.625rem;
+      padding: 0.15rem 0.4375rem;
+      border-radius: 0.25rem;
+      font-weight: 600;
+    }
+
+    .shift-type.event { background: #dbeafe; color: #1e40af; }
+    .shift-type.office { background: #d1fae5; color: #065f46; }
+    .shift-type.field { background: #ffedd5; color: #c2410c; }
+
+    .shift-status {
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .shift-status.confirmed { color: var(--success-color); }
+    .shift-status.pending-shift { color: var(--warning-color); }
+
+    /* Hours Log Table */
+    .hours-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .hours-table th {
+      background: #f8fafc;
+      padding: 0.625rem 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .hours-table td {
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.8125rem;
+      vertical-align: middle;
+    }
+
+    .hours-table tr:last-child td { border-bottom: none; }
+
+    /* Donation Summary */
+    .donation-summary {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 1rem;
+      background: #f0fdf4;
+      border-radius: 0.5rem;
+      border: 1px solid #bbf7d0;
+      margin-bottom: 1rem;
+    }
+
+    .donation-summary-value {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--volunteer);
+    }
+
+    .donation-summary-label {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    /* Recognition */
+    .badge-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.875rem;
+      background: #fef3c7;
+      border: 1px solid #fde68a;
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #92400e;
+      margin-right: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .badge-item i { font-size: 1rem; }
+
+    .cert-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .cert-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 0.5rem;
+      background: var(--volunteer-light);
+      color: var(--volunteer);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      flex-shrink: 0;
+    }
+
+    .cert-name {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .cert-date {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+    }
+
+    .manager-comment {
+      background: #f0fdf4;
+      border-left: 3px solid var(--volunteer);
+      padding: 0.875rem 1rem;
+      border-radius: 0 0.5rem 0.5rem 0;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      font-style: italic;
+      margin-top: 1rem;
+    }
+
+    /* Calendar Mini */
+    .calendar-legend {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 0.25rem;
+    }
+
+    .legend-dot.event { background: #3b82f6; }
+    .legend-dot.office { background: #22c55e; }
+    .legend-dot.field { background: #f97316; }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .stats-row { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (max-width: 992px) {
+      .page-header { flex-direction: column; align-items: flex-start; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 576px) {
+      body { padding: 1rem; }
+      .stats-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" onclick="parent.loadContent('volunteer/volunteer-list')" title="Back to Volunteers">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <div class="vol-header-info">
+        <div class="vol-header-avatar">AS</div>
+        <div class="vol-header-name">
+          <h1>
+            Ahmed Salim
+            <span class="status-badge active"><i class="fas fa-circle" style="font-size: 6px;"></i> Active</span>
+          </h1>
+          <div class="vol-header-meta">
+            <span>Volunteer since: Jan 2024</span>
+            <span>&middot;</span>
+            <span>Linked Contact: <a class="contact-link" onclick="parent.loadContent('contacts/contact-detail')">CON-1245 <i class="fas fa-external-link-alt" style="font-size: 0.625rem;"></i></a></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="parent.loadContent('volunteer/volunteer-form')">
+        <i class="fas fa-pen me-1"></i> Edit
+      </button>
+      <button class="btn-outline-accent" onclick="parent.loadContent('volunteer/hour-tracking')">
+        <i class="fas fa-clock me-1"></i> Log Hours
+      </button>
+      <button class="btn-outline-accent" onclick="parent.loadContent('volunteer/volunteer-scheduling')">
+        <i class="fas fa-calendar-plus me-1"></i> Assign Shift
+      </button>
+      <button class="btn-secondary">
+        <i class="fas fa-envelope me-1"></i> Send Message
+      </button>
+      <div class="more-dropdown">
+        <button class="btn-secondary" onclick="toggleMoreMenu(event)">
+          <i class="fas fa-ellipsis-vertical"></i>
+        </button>
+        <div class="more-dropdown-menu" id="moreMenu">
+          <a href="#"><i class="fas fa-print"></i> Print Profile</a>
+          <a href="#"><i class="fas fa-file-export"></i> Export</a>
+          <a class="danger" href="#"><i class="fas fa-ban"></i> Deactivate</a>
+          <a class="danger" href="#"><i class="fas fa-trash"></i> Remove</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Stats Row -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Total Hours</div>
+      <div class="stat-value">245</div>
+      <div class="stat-sub">Rank: #5 of 234</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">This Month</div>
+      <div class="stat-value">18 <span style="font-size: 0.875rem; font-weight: 600;">hrs</span></div>
+      <div class="stat-sub"><span class="up"><i class="fas fa-arrow-up"></i> 5</span> vs last month</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Shifts Completed</div>
+      <div class="stat-value">67</div>
+      <div class="stat-sub">2 upcoming</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Events Volunteered</div>
+      <div class="stat-value">12</div>
+      <div class="stat-sub">Next: Fundraising Gala (Apr 20)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Donations Made</div>
+      <div class="stat-value" style="color: var(--volunteer);">$4,200</div>
+      <div class="stat-sub">Also a donor</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="detail-tabs">
+    <button class="detail-tab active" onclick="switchTab(event, 'tabOverview')">Overview</button>
+    <button class="detail-tab" onclick="switchTab(event, 'tabSchedule')">Schedule</button>
+    <button class="detail-tab" onclick="switchTab(event, 'tabHours')">Hours Log</button>
+    <button class="detail-tab" onclick="switchTab(event, 'tabDonations')">Donations</button>
+    <button class="detail-tab" onclick="switchTab(event, 'tabRecognition')">Recognition</button>
+  </div>
+
+  <!-- Tab 1: Overview -->
+  <div class="tab-content active" id="tabOverview">
+    <div class="row">
+      <div class="col-lg-6">
+        <!-- Personal Info -->
+        <div class="detail-card">
+          <div class="detail-card-header"><i class="fas fa-user"></i> Personal Information</div>
+          <div class="detail-card-body">
+            <ul class="info-list">
+              <li><span class="info-label">Name</span><span class="info-value">Ahmed Salim</span></li>
+              <li><span class="info-label">Email</span><span class="info-value">ahmed@gmail.com</span></li>
+              <li><span class="info-label">Phone</span><span class="info-value">+971 50 123 4567</span></li>
+              <li><span class="info-label">Location</span><span class="info-value">Dubai, UAE</span></li>
+              <li><span class="info-label">Branch</span><span class="info-value">Dubai (HQ)</span></li>
+              <li><span class="info-label">Emergency Contact</span><span class="info-value">Fatima Salim (wife)<br><span style="color: var(--text-secondary); font-weight: 400; font-size: 0.75rem;">+971 50 987 6543</span></span></li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Availability -->
+        <div class="detail-card">
+          <div class="detail-card-header"><i class="fas fa-calendar-alt"></i> Availability</div>
+          <div class="detail-card-body">
+            <div class="avail-days">
+              <div class="avail-day">Mon</div>
+              <div class="avail-day">Tue</div>
+              <div class="avail-day">Wed</div>
+              <div class="avail-day">Thu</div>
+              <div class="avail-day partial" title="After 2 PM">Fri</div>
+              <div class="avail-day available">Sat</div>
+              <div class="avail-day available">Sun</div>
+            </div>
+            <ul class="info-list">
+              <li><span class="info-label">Preferred Times</span><span class="info-value">9 AM - 5 PM</span></li>
+              <li><span class="info-label">Max Hours/Week</span><span class="info-value">12</span></li>
+              <li><span class="info-label">Blackout Dates</span><span class="info-value">May 1-15 (travel)<br>Jul 10-20 (family)</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <!-- Skills & Interests -->
+        <div class="detail-card">
+          <div class="detail-card-header"><i class="fas fa-star"></i> Skills & Interests</div>
+          <div class="detail-card-body">
+            <div style="margin-bottom: 0.875rem;">
+              <div style="font-size: 0.6875rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.375rem;">Skills</div>
+              <span class="skill-tag event">Event Management</span>
+              <span class="skill-tag fundraising">Fundraising</span>
+              <span class="skill-tag speaking">Public Speaking</span>
+              <span class="skill-tag translation">Arabic Translation</span>
+            </div>
+            <div style="margin-bottom: 0.875rem;">
+              <div style="font-size: 0.6875rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.375rem;">Interests</div>
+              <span class="interest-tag">Education programs</span>
+              <span class="interest-tag">Orphan care</span>
+              <span class="interest-tag">Community events</span>
+            </div>
+            <div style="margin-bottom: 0.875rem;">
+              <div style="font-size: 0.6875rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.375rem;">Languages</div>
+              <span class="lang-tag">Arabic (native)</span>
+              <span class="lang-tag">English (fluent)</span>
+              <span class="lang-tag">Hindi (basic)</span>
+            </div>
+            <div>
+              <div style="font-size: 0.6875rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.375rem;">Certifications</div>
+              <span class="cert-tag">First Aid (valid until Dec 2026)</span>
+              <span class="cert-tag">Event Safety</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="detail-card">
+          <div class="detail-card-header"><i class="fas fa-sticky-note"></i> Notes</div>
+          <div class="detail-card-body">
+            <div class="note-item">"Very reliable, great with donors. Prefers outdoor events."</div>
+            <div class="note-item">"Speaks 3 languages -- great for multicultural events"</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 2: Schedule -->
+  <div class="tab-content" id="tabSchedule">
+    <div class="detail-card">
+      <div class="detail-card-header">
+        <i class="fas fa-calendar-check"></i> Upcoming Shifts
+        <div style="margin-left: auto;">
+          <div class="calendar-legend">
+            <div class="legend-item"><div class="legend-dot event"></div> Event</div>
+            <div class="legend-item"><div class="legend-dot office"></div> Office</div>
+            <div class="legend-item"><div class="legend-dot field"></div> Field</div>
+          </div>
+        </div>
+      </div>
+      <div class="detail-card-body" style="padding: 0;">
+        <div style="overflow-x: auto;">
+          <table class="schedule-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Shift</th>
+                <th>Event / Location</th>
+                <th>Time</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Apr 15</strong></td>
+                <td><span class="shift-type event">Event Setup</span></td>
+                <td>Fundraising Gala, Grand Hyatt</td>
+                <td>8 AM - 12 PM</td>
+                <td><span class="shift-status confirmed"><i class="fas fa-check-circle me-1"></i> Confirmed</span></td>
+              </tr>
+              <tr>
+                <td><strong>Apr 20</strong></td>
+                <td><span class="shift-type event">Event Day</span></td>
+                <td>Fundraising Gala, Grand Hyatt</td>
+                <td>9 AM - 6 PM</td>
+                <td><span class="shift-status confirmed"><i class="fas fa-check-circle me-1"></i> Confirmed</span></td>
+              </tr>
+              <tr>
+                <td><strong>Apr 26</strong></td>
+                <td><span class="shift-type office">Office</span></td>
+                <td>HQ Data Entry</td>
+                <td>10 AM - 2 PM</td>
+                <td><span class="shift-status pending-shift"><i class="fas fa-clock me-1"></i> Pending</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 3: Hours Log -->
+  <div class="tab-content" id="tabHours">
+    <div class="detail-card">
+      <div class="detail-card-header">
+        <i class="fas fa-clock"></i> Hours Log
+        <button class="btn-primary-accent" style="margin-left: auto; padding: 0.375rem 0.875rem; font-size: 0.75rem;" onclick="parent.loadContent('volunteer/hour-tracking')">
+          <i class="fas fa-plus me-1"></i> Log Hours
+        </button>
+      </div>
+      <div class="detail-card-body" style="padding: 0;">
+        <div style="overflow-x: auto;">
+          <table class="hours-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Activity</th>
+                <th>Hours</th>
+                <th>Approved By</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Apr 11</strong></td>
+                <td>Ramadan food pack distribution</td>
+                <td><strong>6.0</strong></td>
+                <td>Fatima Al-Zahra</td>
+                <td>Led team of 5</td>
+              </tr>
+              <tr>
+                <td><strong>Apr 5</strong></td>
+                <td>Data entry -- donation records</td>
+                <td><strong>4.0</strong></td>
+                <td>Ahmed Salim (self)</td>
+                <td>Remote work</td>
+              </tr>
+              <tr>
+                <td><strong>Mar 28</strong></td>
+                <td>Fundraising dinner setup</td>
+                <td><strong>3.0</strong></td>
+                <td>Fatima Al-Zahra</td>
+                <td>Venue setup & registration desk</td>
+              </tr>
+              <tr>
+                <td><strong>Mar 15</strong></td>
+                <td>Community outreach -- Deira</td>
+                <td><strong>5.0</strong></td>
+                <td>Fatima Al-Zahra</td>
+                <td>Door-to-door awareness</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="padding: 0.75rem 1.25rem; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 0.8125rem; color: var(--text-secondary);">Showing 4 of 67 entries &middot; Total: <strong>245 hours</strong></span>
+          <button class="btn-outline-accent" style="padding: 0.375rem 0.875rem; font-size: 0.75rem; border-color: var(--volunteer); color: var(--volunteer);">View All</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 4: Donations -->
+  <div class="tab-content" id="tabDonations">
+    <div class="donation-summary">
+      <div>
+        <div class="donation-summary-value">$4,200</div>
+        <div class="donation-summary-label">Total donated over 15 donations since 2024</div>
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <div class="detail-card-header"><i class="fas fa-hand-holding-usd"></i> Recent Donations</div>
+      <div class="detail-card-body" style="padding: 0;">
+        <div style="overflow-x: auto;">
+          <table class="hours-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Campaign</th>
+                <th>Amount</th>
+                <th>Method</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Apr 8</strong></td>
+                <td>Ramadan Campaign 2026</td>
+                <td><strong style="color: var(--volunteer);">$500</strong></td>
+                <td>Credit Card</td>
+                <td><span style="color: var(--success-color); font-weight: 600; font-size: 0.75rem;"><i class="fas fa-check-circle me-1"></i> Completed</span></td>
+              </tr>
+              <tr>
+                <td><strong>Mar 15</strong></td>
+                <td>Orphan Sponsorship</td>
+                <td><strong style="color: var(--volunteer);">$300</strong></td>
+                <td>Bank Transfer</td>
+                <td><span style="color: var(--success-color); font-weight: 600; font-size: 0.75rem;"><i class="fas fa-check-circle me-1"></i> Completed</span></td>
+              </tr>
+              <tr>
+                <td><strong>Feb 1</strong></td>
+                <td>Monthly Giving</td>
+                <td><strong style="color: var(--volunteer);">$200</strong></td>
+                <td>Credit Card</td>
+                <td><span style="color: var(--success-color); font-weight: 600; font-size: 0.75rem;"><i class="fas fa-check-circle me-1"></i> Completed</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.5rem; padding: 0.875rem 1rem; font-size: 0.8125rem; color: #065f46; display: flex; align-items: center; gap: 0.5rem;">
+      <i class="fas fa-info-circle"></i>
+      This volunteer is also a donor -- <a class="contact-link" onclick="parent.loadContent('contacts/contact-detail')">view full giving history in contact profile</a>
+    </div>
+  </div>
+
+  <!-- Tab 5: Recognition -->
+  <div class="tab-content" id="tabRecognition">
+    <div class="row">
+      <div class="col-lg-6">
+        <!-- Badges -->
+        <div class="detail-card">
+          <div class="detail-card-header"><i class="fas fa-award"></i> Badges</div>
+          <div class="detail-card-body">
+            <div class="badge-item"><i class="fas fa-trophy"></i> 100+ Hours</div>
+            <div class="badge-item"><i class="fas fa-star"></i> Top 10 Volunteer 2025</div>
+            <div class="badge-item"><i class="fas fa-medal"></i> Event Champion</div>
+          </div>
+        </div>
+
+        <!-- Certificates -->
+        <div class="detail-card">
+          <div class="detail-card-header"><i class="fas fa-certificate"></i> Certificates Issued</div>
+          <div class="detail-card-body">
+            <div class="cert-item">
+              <div class="cert-icon"><i class="fas fa-scroll"></i></div>
+              <div>
+                <div class="cert-name">Volunteer Appreciation 2025</div>
+                <div class="cert-date">Issued: Dec 2025</div>
+              </div>
+            </div>
+            <div class="cert-item">
+              <div class="cert-icon"><i class="fas fa-scroll"></i></div>
+              <div>
+                <div class="cert-name">Ramadan Campaign 2026</div>
+                <div class="cert-date">Issued: Apr 2026</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <!-- Manager Comments -->
+        <div class="detail-card">
+          <div class="detail-card-header"><i class="fas fa-comment-dots"></i> Manager Comments</div>
+          <div class="detail-card-body">
+            <div class="manager-comment">
+              "Ahmed has been instrumental in our Dubai events. Highly recommended for leadership roles."
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Tab switching
+    function switchTab(event, tabId) {
+      document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    // More dropdown
+    function toggleMoreMenu(event) {
+      event.stopPropagation();
+      document.getElementById('moreMenu').classList.toggle('show');
+    }
+
+    // Close dropdowns on outside click
+    document.addEventListener('click', function () {
+      document.getElementById('moreMenu').classList.remove('show');
+    });
+  </script>
+
+</body>
+
+</html>

@@ -1,0 +1,1652 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Report Catalog - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --report-accent: #7c3aed;
+      --report-accent-bg: #f5f3ff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--report-accent);
+      border-color: var(--report-accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--report-accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #6d28d9;
+      border-color: #6d28d9;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Search & Filter Bar */
+    .filter-bar {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-bar .search-input {
+      flex: 1;
+      min-width: 220px;
+      padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      background: #f8fafc;
+      position: relative;
+    }
+
+    .filter-bar .search-input:focus {
+      outline: none;
+      border-color: var(--report-accent);
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    }
+
+    .search-wrapper {
+      position: relative;
+      flex: 1;
+      min-width: 220px;
+    }
+
+    .search-wrapper i {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+    }
+
+    .filter-select {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      background: white;
+      cursor: pointer;
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: var(--report-accent);
+    }
+
+    .btn-clear-filters {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      cursor: pointer;
+      padding: 0.5rem 0.75rem;
+      font-weight: 500;
+    }
+
+    .btn-clear-filters:hover {
+      color: var(--danger-color);
+    }
+
+    /* Recent Reports Strip */
+    .recent-strip {
+      margin-bottom: 1.25rem;
+    }
+
+    .recent-strip h3 {
+      font-size: 0.875rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      color: var(--text-primary);
+    }
+
+    .recent-scroll {
+      display: flex;
+      gap: 0.75rem;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+    }
+
+    .recent-scroll::-webkit-scrollbar { height: 4px; }
+    .recent-scroll::-webkit-scrollbar-track { background: transparent; }
+    .recent-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+    .recent-card {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.625rem;
+      padding: 0.75rem 1rem;
+      min-width: 240px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      transition: all 0.15s;
+    }
+
+    .recent-card:hover {
+      border-color: var(--report-accent);
+      box-shadow: 0 2px 8px rgba(124, 58, 237, 0.1);
+    }
+
+    .recent-card-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .recent-card-name {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .recent-card-meta {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.125rem;
+    }
+
+    .module-badge {
+      font-size: 0.625rem;
+      font-weight: 600;
+      padding: 0.125rem 0.4rem;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .module-badge.fundraising { background: #f0fdf4; color: #16a34a; }
+    .module-badge.contacts { background: #eff6ff; color: #3b82f6; }
+    .module-badge.communication { background: #fef3c7; color: #d97706; }
+    .module-badge.organization { background: #fce7f3; color: #db2777; }
+    .module-badge.field-collection { background: #fff7ed; color: #ea580c; }
+    .module-badge.custom { background: var(--report-accent-bg); color: var(--report-accent); }
+
+    .btn-run-sm {
+      background: var(--report-accent);
+      color: white;
+      border: none;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.25rem 0.625rem;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .btn-run-sm:hover {
+      background: #6d28d9;
+    }
+
+    /* Favorites Section */
+    .favorites-section {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      margin-bottom: 1.25rem;
+    }
+
+    .section-toggle {
+      padding: 0.875rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+
+    .section-toggle h3 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .section-toggle .toggle-icon {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      transition: transform 0.2s;
+    }
+
+    .section-toggle.collapsed .toggle-icon {
+      transform: rotate(-90deg);
+    }
+
+    .favorites-body {
+      padding: 0 1.25rem 1rem;
+    }
+
+    .favorites-scroll {
+      display: flex;
+      gap: 0.75rem;
+      overflow-x: auto;
+      padding-bottom: 0.25rem;
+    }
+
+    .favorites-scroll::-webkit-scrollbar { height: 4px; }
+    .favorites-scroll::-webkit-scrollbar-track { background: transparent; }
+    .favorites-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+    /* Module Report Sections */
+    .module-section {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+
+    .module-header {
+      padding: 0.875rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border-color);
+      background: #fafbfc;
+      transition: background 0.15s;
+    }
+
+    .module-header:hover {
+      background: #f1f5f9;
+    }
+
+    .module-header h3 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .module-header .report-count {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: #f1f5f9;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+    }
+
+    .module-header .toggle-icon {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      transition: transform 0.2s;
+    }
+
+    .module-header.collapsed .toggle-icon {
+      transform: rotate(-90deg);
+    }
+
+    .module-header.collapsed + .module-body {
+      display: none;
+    }
+
+    /* Report Table */
+    .report-table {
+      width: 100%;
+      font-size: 0.8125rem;
+    }
+
+    .report-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.625rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .report-table td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #f1f5f9;
+      color: var(--text-primary);
+      vertical-align: middle;
+    }
+
+    .report-table tr:last-child td { border-bottom: none; }
+
+    .report-table tr:hover td {
+      background: #fafbfc;
+    }
+
+    .report-name {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .report-desc {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.125rem;
+    }
+
+    .type-badge {
+      font-size: 0.625rem;
+      font-weight: 600;
+      padding: 0.15rem 0.5rem;
+      border-radius: 9999px;
+    }
+
+    .type-badge.standard { background: #ecfeff; color: var(--accent); }
+    .type-badge.custom { background: var(--report-accent-bg); color: var(--report-accent); }
+    .type-badge.scheduled { background: #fef3c7; color: #d97706; }
+
+    .report-actions {
+      display: flex;
+      gap: 0.375rem;
+      align-items: center;
+    }
+
+    .btn-report-action {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-report-action:hover {
+      border-color: var(--report-accent);
+      color: var(--report-accent);
+    }
+
+    .btn-report-action.run {
+      background: var(--report-accent);
+      border-color: var(--report-accent);
+      color: white;
+    }
+
+    .btn-report-action.run:hover {
+      background: #6d28d9;
+      border-color: #6d28d9;
+    }
+
+    .btn-star {
+      background: none;
+      border: none;
+      color: #cbd5e1;
+      cursor: pointer;
+      font-size: 0.875rem;
+      padding: 0.125rem;
+      transition: color 0.15s;
+    }
+
+    .btn-star:hover,
+    .btn-star.active {
+      color: #f59e0b;
+    }
+
+    /* Modal */
+    .modal-backdrop-custom {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 1040;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-backdrop-custom.show {
+      display: flex;
+    }
+
+    .modal-box {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+      width: 100%;
+      max-width: 560px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 0;
+    }
+
+    .modal-header-custom {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-header-custom h4 {
+      font-size: 1.0625rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0.25rem;
+    }
+
+    .modal-body-custom {
+      padding: 1.5rem;
+    }
+
+    .modal-footer-custom {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+    }
+
+    .form-label-sm {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.375rem;
+    }
+
+    .form-control-sm-custom {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      width: 100%;
+      color: var(--text-primary);
+    }
+
+    .form-control-sm-custom:focus {
+      outline: none;
+      border-color: var(--report-accent);
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    }
+
+    .form-select-sm-custom {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      background: white;
+    }
+
+    .form-select-sm-custom:focus {
+      outline: none;
+      border-color: var(--report-accent);
+    }
+
+    .btn-modal-primary {
+      background: var(--report-accent);
+      border: 1px solid var(--report-accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1.25rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-modal-primary:hover {
+      background: #6d28d9;
+    }
+
+    .btn-modal-cancel {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1.25rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-modal-cancel:hover {
+      border-color: var(--text-secondary);
+      color: var(--text-primary);
+    }
+
+    .date-range-group {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .date-range-group span {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .form-check-custom {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.375rem;
+    }
+
+    .form-check-custom input[type="checkbox"] {
+      accent-color: var(--report-accent);
+    }
+
+    .form-check-custom label {
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .search-wrapper {
+        min-width: 100%;
+      }
+      .report-table th:nth-child(3),
+      .report-table td:nth-child(3),
+      .report-table th:nth-child(4),
+      .report-table td:nth-child(4) {
+        display: none;
+      }
+    }
+
+    @media (max-width: 576px) {
+      body { padding: 1rem; }
+      .report-actions { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-chart-bar me-2" style="color: var(--report-accent);"></i>Reports</h1>
+      <p class="subtitle">Browse, run, and schedule reports across all modules</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="parent.loadContent('reports/custom-report-builder')">
+        <i class="fas fa-plus me-1"></i> Custom Report
+      </button>
+      <button class="btn-outline-accent" onclick="parent.loadContent('reports/scheduled-reports')">
+        <i class="fas fa-clock me-1"></i> My Scheduled Reports
+      </button>
+    </div>
+  </div>
+
+  <!-- Search & Filter Bar -->
+  <div class="filter-bar">
+    <div class="search-wrapper">
+      <i class="fas fa-search"></i>
+      <input type="text" class="search-input" placeholder="Search reports by name or description..." id="searchReports">
+    </div>
+    <select class="filter-select" id="moduleFilter">
+      <option value="">All Modules</option>
+      <option value="fundraising">Fundraising</option>
+      <option value="contacts">Contacts</option>
+      <option value="communication">Communication</option>
+      <option value="organization">Organization</option>
+      <option value="field-collection">Field Collection</option>
+      <option value="custom">Custom</option>
+    </select>
+    <select class="filter-select" id="typeFilter">
+      <option value="">All Types</option>
+      <option value="standard">Standard</option>
+      <option value="custom">Custom</option>
+      <option value="scheduled">Scheduled</option>
+    </select>
+    <button class="btn-clear-filters" onclick="clearFilters()"><i class="fas fa-times me-1"></i>Clear Filters</button>
+  </div>
+
+  <!-- My Recent Reports -->
+  <div class="recent-strip">
+    <h3><i class="fas fa-clock-rotate-left me-2" style="color: var(--report-accent);"></i>My Recent Reports</h3>
+    <div class="recent-scroll">
+      <div class="recent-card">
+        <div class="recent-card-info">
+          <div class="recent-card-name">Donation Summary</div>
+          <div class="recent-card-meta">
+            <span class="module-badge fundraising">Fundraising</span>
+            <span>Apr 10, 2026</span>
+          </div>
+        </div>
+        <button class="btn-run-sm" onclick="openRunModal('Donation Summary')">Run Again</button>
+      </div>
+      <div class="recent-card">
+        <div class="recent-card-info">
+          <div class="recent-card-name">Contact Directory</div>
+          <div class="recent-card-meta">
+            <span class="module-badge contacts">Contacts</span>
+            <span>Apr 10, 2026</span>
+          </div>
+        </div>
+        <button class="btn-run-sm" onclick="openRunModal('Contact Directory')">Run Again</button>
+      </div>
+      <div class="recent-card">
+        <div class="recent-card-info">
+          <div class="recent-card-name">Ambassador Collection Summary</div>
+          <div class="recent-card-meta">
+            <span class="module-badge field-collection">Field Collection</span>
+            <span>Apr 10, 2026</span>
+          </div>
+        </div>
+        <button class="btn-run-sm" onclick="openRunModal('Ambassador Collection Summary')">Run Again</button>
+      </div>
+      <div class="recent-card">
+        <div class="recent-card-info">
+          <div class="recent-card-name">Campaign Progress</div>
+          <div class="recent-card-meta">
+            <span class="module-badge organization">Organization</span>
+            <span>Apr 10, 2026</span>
+          </div>
+        </div>
+        <button class="btn-run-sm" onclick="openRunModal('Campaign Progress')">Run Again</button>
+      </div>
+      <div class="recent-card">
+        <div class="recent-card-info">
+          <div class="recent-card-name">Email Campaign Performance</div>
+          <div class="recent-card-meta">
+            <span class="module-badge communication">Communication</span>
+            <span>Apr 9, 2026</span>
+          </div>
+        </div>
+        <button class="btn-run-sm" onclick="openRunModal('Email Campaign Performance')">Run Again</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- My Favorites -->
+  <div class="favorites-section">
+    <button class="section-toggle" onclick="toggleFavorites(this)">
+      <h3><i class="fas fa-star me-1" style="color: #f59e0b;"></i>My Favorites</h3>
+      <i class="fas fa-chevron-down toggle-icon"></i>
+    </button>
+    <div class="favorites-body" id="favoritesBody">
+      <div class="favorites-scroll">
+        <div class="recent-card">
+          <div class="recent-card-info">
+            <div class="recent-card-name">Donation Summary</div>
+            <div class="recent-card-meta">
+              <span class="module-badge fundraising">Fundraising</span>
+              <span>Standard</span>
+            </div>
+          </div>
+          <button class="btn-run-sm" onclick="openRunModal('Donation Summary')">Run</button>
+        </div>
+        <div class="recent-card">
+          <div class="recent-card-info">
+            <div class="recent-card-name">Donor Retention (LYBUNT/SYBUNT)</div>
+            <div class="recent-card-meta">
+              <span class="module-badge contacts">Contacts</span>
+              <span>Standard</span>
+            </div>
+          </div>
+          <button class="btn-run-sm" onclick="openRunModal('Donor Retention')">Run</button>
+        </div>
+        <div class="recent-card">
+          <div class="recent-card-info">
+            <div class="recent-card-name">Monthly Board Report</div>
+            <div class="recent-card-meta">
+              <span class="module-badge custom">Custom</span>
+              <span>Custom</span>
+            </div>
+          </div>
+          <button class="btn-run-sm" onclick="openRunModal('Monthly Board Report')">Run</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fundraising Reports -->
+  <div class="module-section" data-module="fundraising">
+    <div class="module-header" onclick="toggleModule(this)">
+      <h3>
+        <i class="fas fa-chart-line" style="color: #16a34a;"></i>
+        Fundraising Reports
+        <span class="report-count">8 reports</span>
+      </h3>
+      <i class="fas fa-chevron-down toggle-icon"></i>
+    </div>
+    <div class="module-body">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Report</th>
+            <th>Type</th>
+            <th>Last Run</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="report-name">Donation Summary</div>
+              <div class="report-desc">Donations by purpose, period, payment mode, campaign</div>
+            </td>
+            <td><span class="type-badge standard">Standard</span></td>
+            <td>Apr 10</td>
+            <td>
+              <div class="report-actions">
+                <button class="btn-report-action run" onclick="openRunModal('Donation Summary')">Run</button>
+                <button class="btn-report-action" onclick="openScheduleModal('Donation Summary')">Schedule</button>
+                <button class="btn-star active" onclick="toggleStar(this)"><i class="fas fa-star"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="report-name">Donor Giving History</div>
+              <div class="report-desc">Individual donor giving patterns over time</div>
+            </td>
+            <td><span class="type-badge standard">Standard</span></td>
+            <td>Apr 8</td>
+            <td>
+              <div class="report-actions">
+                <button class="btn-report-action run" onclick="openRunModal('Donor Giving History')">Run</button>
+                <button class="btn-report-action" onclick="openScheduleModal('Donor Giving History')">Schedule</button>
+                <button class="btn-star" onclick="toggleStar(this)"><i class="fas fa-star"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="report-name">Recurring Donation Status</div>
+              <div class="report-desc">Active/paused/cancelled recurring schedules</div>
+            </td>
+            <td><span class="type-badge standard">Standard</span></td>
+            <td>Apr 5</td>
+            <td>
+              <div class="report-actions">
+                <button class="btn-report-action run" onclick="openRunModal('Recurring Donation Status')">Run</button>
+                <button class="btn-report-action" onclick="openScheduleModal('Recurring Donation Status')">Schedule</button>
+                <button class="btn-star" onclick="toggleStar(this)"><i class="fas fa-star"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="report-name">Payment Reconciliation</div>
+              <div class="report-desc">Gateway transactions vs bank records</div>
+            </td>
+            <td><span class="type-badge standard">Standard</span></td>
+            <td>Apr 1</td>
+            <td>
+              <div class="report-actions">
+                <button class="btn-report-action run" onclick="openRunModal('Payment Reconciliation')">Run</button>
+                <button class="btn-report-action" onclick="openScheduleModal('Payment Reconciliation')">Schedule</button>
+                <button class="btn-star" onclick="toggleStar(this)"><i class="fas fa-star"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="report-name">Pledge Fulfillment</div>
+              <div class="report-desc">Pledges with payment tracking and completion %</div>
+            </td>
+            <td><span class="type-badge standard">Standard</span></td>
+            <td>Mar 28</td>
+            <td>
+              <div class="report-actions">
+                <button class="btn-report-action run" onclick="openRunModal('Pledge Fulfillment')">Run</button>
+                <button class="btn-report-action" onclick="openScheduleModal('Pledge Fulfillment')">Schedule</button>
+                <button class="btn-star" onclick="toggleStar(this)"><i class="fas fa-star"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="report-name">Receipt Register</div>
+              <div class="report-desc">All receipts issued with delivery status</div>
+            </td>
+            <td><span class="type-badge standard">Standard</span></td>
+            <td>Apr 10</td>
+            <td>
+              <div class="report-actions">
+                <button class="btn-report-action run" onclick="openRunModal('Receipt Register')">Run</button>
+                <button class="btn-report-action" onclick="openScheduleModal('Receipt Register')">Schedule</button>
+                <button class="btn-star" onclick="toggleStar(this)"><i class="fas fa-star"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="report-name">In-Kind Donations</div>
+              <div class="report-desc">Non-cash donations with valuation</div>
+            </td>
+            <td><span class="type-badge standard">Standard</span></td>
+            <td>Mar 15</td>
+            <td>
+              <div class="report-actions">
+                <button class="btn-report-action run" onclick="openRunModal('In-Kind Donations')">Run</button>
+                <button class="btn-report-action" onclick="openScheduleModal('In-Kind Donations')">Schedule</button>
+                <button class="btn-star" onclick="toggleStar(this)"><i class="fas fa-star"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="report-name">Purpose-wise Collection</div>
+              <div class="report-desc">Collections grouped by donation purpose hierarchy</div>
+            </td>
+            <td><span class="type-badge standard">Standard</span></td>
+            <td>Apr 9</td>
+            <td>
+              <div class="report-actions">
+                <button class="btn-report-action run" onclick="openRunModal('Purpose-wise Collection')">Run</button>
+                <button class="btn-report-action" onclick="openScheduleModal('Purpose-wise Collection')">Schedule</button>
+                <button class="btn-star" onclick="toggleStar(this)"><i class="fas fa-star"></i></button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Contact Reports -->
+  <div class="module-section" data-module="contacts">
+    <div class="module-header" onclick="toggleModule(this)">
+      <h3>
+        <i class="fas fa-users" style="color: #3b82f6;"></i>
+        Contact Reports
+        <span class="report-count">5 reports</span>
+      </h3>
+      <i class="fas fa-chevron-down toggle-icon"></i>
+    </div>
+    <div class="module-body">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Report</th>
+            <th>Type</th>
+            <th>Last Run</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="report-name">Contact Directory</div>
+              <div class="report-desc">Full contact list with customizable columns</div>
+            </td>
+            <td><span class="type-badge standard">Standard</span></td>
+            <td>Apr 10</td>
+            <td>
+              <div class="report-actions">
+                <button class="btn-report-action run" onclick="openRunModal('Contact Directory')">Run</button>
+                <button class="btn-report-action" onclick="openScheduleModal('Contact Directory')">Schedule</button>
+                <button class="btn-star" onclick="toggleStar(this)"><i class="fas fa-star"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="report-name">Donor Retention (LYBUNT/SYBUNT)</div>
+              <div class="report-desc">Donors who gave last year but not this year</div>
+            </td>
+            <td><span class="type-badge standard">Standard</span></td>
+            <td>Apr 1</td>
+            <td>
+              <div class="report-actions">
+                <button class="btn-report-action run" onclick="openRunModal('Donor Retention')">Run</button>
+                <button class="btn-report-action" onclick="openScheduleModal('Donor Retention')">Schedule</button>
+                <button class="btn-star active" onclick="toggleStar(this)"><i class="fas fa-star"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="report-name">New Donors</div>
+              <div class="report-desc">Contacts added in a date range with source</div>
+            </td>
+            <td><span class="type-badge standard">Standard</span></td>
+            <td>Apr 5</td>
+            <td>
+              <div class="report-actions">
+                <button class="btn-report-action run" onclick="openRunModal('New Donors')">Run</button>
+                <button class="btn-report-action" onclick="openScheduleModal('New Donors')">Schedule</button>
+                <button class="btn-star" onclick="toggleStar(this)"><i class="fas fa-star"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="report-name">Duplicate Suspects</div>
+              <div class="report-desc">Potential duplicate contacts for review</div>
+            </td>
+            <td><span class="type-badge standard">Standard</span></td>
+            <td>Mar 20</td>
+            <td>
+              <div class="report-actions">
+                <button class="btn-report-action run" onclick="openRunModal('Duplicate Suspects')">Run</button>
+                <button class="btn-report-action" onclick="openScheduleModal('Duplicate Suspects')">Schedule</button>
+                <button class="btn-star" onclick="toggleStar(this)"><i class="fas fa-star"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="report-name">Tag/Segment Report</div>
+              <div class="report-desc">Contact counts by tags and segments</div>
+            </td>
+            <td><span class="type-badge standard">Standard</span></td>
+            <td>Apr 8</td>
+            <td>
+              <div class="report-actions">
+                <button class="btn-report-action run" onclick="openRunModal('Tag/Segment Report')">Run</button>
+                <button class="btn-report-action" onclick="openScheduleModal('Tag/Segment Report')">Schedule</button>
+                <button class="btn-star" onclick="toggleStar(this)"><i class="fas fa-star"></i></button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Communication Reports -->
+  <div class="module-section" data-module="communication">
+    <div class="module-header" onclick="toggleModule(this)">
+      <h3>
+        <i class="fas fa-envelope" style="color: #d97706;"></i>
+        Communication Reports
+        <span class="report-count">4 reports</span>
+      </h3>
+      <i class="fas fa-chevron-down toggle-icon"></i>
+    </div>
+    <div class="module-body">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Report</th>
+            <th>Type</th>
+            <th>Last Run</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="report-name">Email Campaign Performance</div>
+              <div class="report-desc">Open/click/bounce rates across campaigns</div>
+            </td>
+            <td><span class="type-badge standard">Standard</span></td>
+            <td>Apr 9</td>
+            <td>
+              <div class="report-actions">
+                <button class="btn-report-action run" onclick="openRunModal('Email Campaign Performance')">Run</button>
+                <button class="btn-report-action" onclick="openScheduleModal('Email Campaign Performance')">Schedule</button>
+                <button class="btn-star" onclick="toggleStar(this)"><i class="fas fa-star"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="report-name">SMS Delivery Report</div>
+              <div class="report-desc">SMS sent/delivered/failed by campaign</div>
+            </td>
+            <td><span class="type-badge standard">Standard</span></td>
+            <td>Apr 7</td>
+            <td>
+              <div class="report-actions">
+                <button class="btn-report-action run" onclick="openRunModal('SMS Delivery Report')">Run</button>
+                <button class="btn-report-action" onclick="openScheduleModal('SMS Delivery Report')">Schedule</button>
+                <button class="btn-star" onclick="toggleStar(this)"><i class="fas fa-star"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="report-name">WhatsApp Delivery Report</div>
+              <div class="report-desc">WhatsApp message delivery and read status</div>
+            </td>
+            <td><span class="type-badge standard">Standard</span></td>
+            <td>Apr 6</td>
+            <td>
+              <div class="report-actions">
+                <button class="btn-report-action run" onclick="openRunModal('WhatsApp Delivery Report')">Run</button>
+                <button class="btn-report-action" onclick="openScheduleModal('WhatsApp Delivery Report')">Schedule</button>
+                <button class="btn-star" onclick="toggleStar(this)"><i class="fas fa-star"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="report-name">Communication Preferences</div>
+              <div class="report-desc">Donor opt-in/opt-out across channels</div>
+            </td>
+            <td><span class="type-badge standard">Standard</span></td>
+            <td>Mar 25</td>
+            <td>
+              <div class="report-actions">
+                <button class="btn-report-action run" onclick="openRunModal('Communication Preferences')">Run</button>
+                <button class="btn-report-action" onclick="openScheduleModal('Communication Preferences')">Schedule</button>
+                <button class="btn-star" onclick="toggleStar(this)"><i class="fas fa-star"></i></button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Organization Reports -->
+  <div class="module-section" data-module="organization">
+    <div class="module-header" onclick="toggleModule(this)">
+      <h3>
+        <i class="fas fa-building" style="color: #db2777;"></i>
+        Organization Reports
+        <span class="report-count">4 reports</span>
+      </h3>
+      <i class="fas fa-chevron-down toggle-icon"></i>
+    </div>
+    <div class="module-body">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Report</th>
+            <th>Type</th>
+            <th>Last Run</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="report-name">Branch Performance</div>
+              <div class="report-desc">Collections and donations by branch</div>
+            </td>
+            <td><span class="type-badge standard">Standard</span></td>
+            <td>Apr 8</td>
+            <td>
+              <div class="report-actions">
+                <button class="btn-report-action run" onclick="openRunModal('Branch Performance')">Run</button>
+                <button class="btn-report-action" onclick="openScheduleModal('Branch Performance')">Schedule</button>
+                <button class="btn-star" onclick="toggleStar(this)"><i class="fas fa-star"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="report-name">Campaign Progress</div>
+              <div class="report-desc">Campaign goals vs actuals with timeline</div>
+            </td>
+            <td><span class="type-badge standard">Standard</span></td>
+            <td>Apr 10</td>
+            <td>
+              <div class="report-actions">
+                <button class="btn-report-action run" onclick="openRunModal('Campaign Progress')">Run</button>
+                <button class="btn-report-action" onclick="openScheduleModal('Campaign Progress')">Schedule</button>
+                <button class="btn-star" onclick="toggleStar(this)"><i class="fas fa-star"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="report-name">Event Summary</div>
+              <div class="report-desc">Event registrations, attendance, and donations</div>
+            </td>
+            <td><span class="type-badge standard">Standard</span></td>
+            <td>Apr 3</td>
+            <td>
+              <div class="report-actions">
+                <button class="btn-report-action run" onclick="openRunModal('Event Summary')">Run</button>
+                <button class="btn-report-action" onclick="openScheduleModal('Event Summary')">Schedule</button>
+                <button class="btn-star" onclick="toggleStar(this)"><i class="fas fa-star"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="report-name">Staff Activity</div>
+              <div class="report-desc">Staff actions and productivity metrics</div>
+            </td>
+            <td><span class="type-badge standard">Standard</span></td>
+            <td>Apr 1</td>
+            <td>
+              <div class="report-actions">
+                <button class="btn-report-action run" onclick="openRunModal('Staff Activity')">Run</button>
+                <button class="btn-report-action" onclick="openScheduleModal('Staff Activity')">Schedule</button>
+                <button class="btn-star" onclick="toggleStar(this)"><i class="fas fa-star"></i></button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Field Collection Reports -->
+  <div class="module-section" data-module="field-collection">
+    <div class="module-header" onclick="toggleModule(this)">
+      <h3>
+        <i class="fas fa-person-walking" style="color: #ea580c;"></i>
+        Field Collection Reports
+        <span class="report-count">4 reports</span>
+      </h3>
+      <i class="fas fa-chevron-down toggle-icon"></i>
+    </div>
+    <div class="module-body">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Report</th>
+            <th>Type</th>
+            <th>Last Run</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="report-name">Ambassador Collection Summary</div>
+              <div class="report-desc">Collections by ambassador with targets</div>
+            </td>
+            <td><span class="type-badge standard">Standard</span></td>
+            <td>Apr 10</td>
+            <td>
+              <div class="report-actions">
+                <button class="btn-report-action run" onclick="openRunModal('Ambassador Collection Summary')">Run</button>
+                <button class="btn-report-action" onclick="openScheduleModal('Ambassador Collection Summary')">Schedule</button>
+                <button class="btn-star" onclick="toggleStar(this)"><i class="fas fa-star"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="report-name">Receipt Book Inventory</div>
+              <div class="report-desc">Book allocation, usage, and gaps</div>
+            </td>
+            <td><span class="type-badge standard">Standard</span></td>
+            <td>Apr 9</td>
+            <td>
+              <div class="report-actions">
+                <button class="btn-report-action run" onclick="openRunModal('Receipt Book Inventory')">Run</button>
+                <button class="btn-report-action" onclick="openScheduleModal('Receipt Book Inventory')">Schedule</button>
+                <button class="btn-star" onclick="toggleStar(this)"><i class="fas fa-star"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="report-name">Territory Coverage</div>
+              <div class="report-desc">Ambassador visits vs contact density</div>
+            </td>
+            <td><span class="type-badge standard">Standard</span></td>
+            <td>Apr 5</td>
+            <td>
+              <div class="report-actions">
+                <button class="btn-report-action run" onclick="openRunModal('Territory Coverage')">Run</button>
+                <button class="btn-report-action" onclick="openScheduleModal('Territory Coverage')">Schedule</button>
+                <button class="btn-star" onclick="toggleStar(this)"><i class="fas fa-star"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="report-name">Collection Reconciliation</div>
+              <div class="report-desc">Field collections vs donation module sync</div>
+            </td>
+            <td><span class="type-badge standard">Standard</span></td>
+            <td>Apr 8</td>
+            <td>
+              <div class="report-actions">
+                <button class="btn-report-action run" onclick="openRunModal('Collection Reconciliation')">Run</button>
+                <button class="btn-report-action" onclick="openScheduleModal('Collection Reconciliation')">Schedule</button>
+                <button class="btn-star" onclick="toggleStar(this)"><i class="fas fa-star"></i></button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Custom Reports -->
+  <div class="module-section" data-module="custom">
+    <div class="module-header" onclick="toggleModule(this)">
+      <h3>
+        <i class="fas fa-wrench" style="color: var(--report-accent);"></i>
+        Custom Reports
+        <span class="report-count">2 reports</span>
+      </h3>
+      <i class="fas fa-chevron-down toggle-icon"></i>
+    </div>
+    <div class="module-body">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Report</th>
+            <th>Type</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="report-name">Monthly Board Report</div>
+              <div class="report-desc">Custom: donations + donors + campaigns summary</div>
+            </td>
+            <td><span class="type-badge custom">Custom</span></td>
+            <td>Mar 1</td>
+            <td>
+              <div class="report-actions">
+                <button class="btn-report-action run" onclick="openRunModal('Monthly Board Report')">Run</button>
+                <button class="btn-report-action" onclick="parent.loadContent('reports/custom-report-builder')">Edit</button>
+                <button class="btn-report-action" onclick="openScheduleModal('Monthly Board Report')">Schedule</button>
+                <button class="btn-star active" onclick="toggleStar(this)"><i class="fas fa-star"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="report-name">Regional Comparison Q1</div>
+              <div class="report-desc">Custom: branch-wise quarterly comparison</div>
+            </td>
+            <td><span class="type-badge custom">Custom</span></td>
+            <td>Jan 15</td>
+            <td>
+              <div class="report-actions">
+                <button class="btn-report-action run" onclick="openRunModal('Regional Comparison Q1')">Run</button>
+                <button class="btn-report-action" onclick="parent.loadContent('reports/custom-report-builder')">Edit</button>
+                <button class="btn-report-action" onclick="openScheduleModal('Regional Comparison Q1')">Schedule</button>
+                <button class="btn-star" onclick="toggleStar(this)"><i class="fas fa-star"></i></button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Run Report Modal -->
+  <div class="modal-backdrop-custom" id="runModal">
+    <div class="modal-box">
+      <div class="modal-header-custom">
+        <h4><i class="fas fa-play-circle me-2" style="color: var(--report-accent);"></i>Run Report</h4>
+        <button class="modal-close" onclick="closeRunModal()">&times;</button>
+      </div>
+      <div class="modal-body-custom">
+        <div class="mb-3">
+          <div class="form-label-sm">Report</div>
+          <div style="font-weight: 600; color: var(--report-accent);" id="runReportName">Donation Summary</div>
+        </div>
+        <div class="mb-3">
+          <div class="form-label-sm">Date Range</div>
+          <div class="date-range-group">
+            <input type="date" class="form-control-sm-custom" value="2026-04-01" style="flex:1;">
+            <span>&mdash;</span>
+            <input type="date" class="form-control-sm-custom" value="2026-04-12" style="flex:1;">
+          </div>
+        </div>
+        <div class="mb-3">
+          <div class="form-label-sm">Branch</div>
+          <select class="form-select-sm-custom" style="width: 100%;">
+            <option>All Branches</option>
+            <option>HQ - Main Office</option>
+            <option>Dubai Branch</option>
+            <option>Mumbai Branch</option>
+            <option>London Branch</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <div class="form-label-sm">Purpose</div>
+          <select class="form-select-sm-custom" style="width: 100%;">
+            <option>All Purposes</option>
+            <option>Orphan Care</option>
+            <option>Education</option>
+            <option>Clean Water</option>
+            <option>Healthcare</option>
+            <option>Food Distribution</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <div class="form-label-sm">Payment Mode</div>
+          <select class="form-select-sm-custom" style="width: 100%;">
+            <option>All Modes</option>
+            <option>Cash</option>
+            <option>Cheque</option>
+            <option>Bank Transfer</option>
+            <option>Credit Card</option>
+            <option>Online Gateway</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <div class="form-label-sm">Group By</div>
+          <select class="form-select-sm-custom" style="width: 100%;">
+            <option>Purpose</option>
+            <option>Branch</option>
+            <option>Campaign</option>
+            <option>Payment Mode</option>
+            <option>Month</option>
+          </select>
+        </div>
+        <div class="mb-0">
+          <div class="form-label-sm">Output Format</div>
+          <select class="form-select-sm-custom" style="width: 100%;">
+            <option>View on Screen</option>
+            <option>Export as Excel</option>
+            <option>Export as PDF</option>
+            <option>Export as CSV</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer-custom">
+        <button class="btn-modal-cancel" onclick="closeRunModal()">Cancel</button>
+        <button class="btn-modal-primary" onclick="closeRunModal()"><i class="fas fa-play me-1"></i>Run Report</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Schedule Report Modal -->
+  <div class="modal-backdrop-custom" id="scheduleModal">
+    <div class="modal-box">
+      <div class="modal-header-custom">
+        <h4><i class="fas fa-calendar-check me-2" style="color: var(--report-accent);"></i>Schedule Report</h4>
+        <button class="modal-close" onclick="closeScheduleModal()">&times;</button>
+      </div>
+      <div class="modal-body-custom">
+        <div class="mb-3">
+          <div class="form-label-sm">Report</div>
+          <div style="font-weight: 600; color: var(--report-accent);" id="scheduleReportName">Donation Summary</div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-6">
+            <div class="form-label-sm">Frequency</div>
+            <select class="form-select-sm-custom" style="width: 100%;" id="scheduleFrequency" onchange="updateScheduleOptions()">
+              <option value="daily">Daily</option>
+              <option value="weekly" selected>Weekly</option>
+              <option value="monthly">Monthly</option>
+              <option value="quarterly">Quarterly</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <div class="form-label-sm" id="scheduleDayLabel">Day</div>
+            <select class="form-select-sm-custom" style="width: 100%;" id="scheduleDaySelect">
+              <option>Monday</option>
+              <option>Tuesday</option>
+              <option>Wednesday</option>
+              <option>Thursday</option>
+              <option>Friday</option>
+              <option>Saturday</option>
+              <option>Sunday</option>
+            </select>
+          </div>
+        </div>
+        <div class="mb-3">
+          <div class="form-label-sm">Time</div>
+          <input type="time" class="form-control-sm-custom" value="08:00" style="width: 160px;">
+        </div>
+        <div class="mb-3">
+          <div class="form-label-sm">Date Range (for each run)</div>
+          <div class="date-range-group">
+            <input type="date" class="form-control-sm-custom" value="2026-04-01" style="flex:1;">
+            <span>&mdash;</span>
+            <input type="date" class="form-control-sm-custom" value="2026-04-30" style="flex:1;">
+          </div>
+        </div>
+        <div class="mb-3">
+          <div class="form-label-sm">Delivery Method</div>
+          <div class="form-check-custom">
+            <input type="checkbox" id="deliverEmail" checked>
+            <label for="deliverEmail">Email to me</label>
+          </div>
+          <div class="form-check-custom">
+            <input type="checkbox" id="deliverOthers" checked>
+            <label for="deliverOthers">Email to others</label>
+          </div>
+          <input type="text" class="form-control-sm-custom mt-1" placeholder="Enter email addresses, comma separated" value="admin@ngo.org, finance@ngo.org" style="margin-left: 1.25rem; width: calc(100% - 1.25rem);">
+          <div class="form-check-custom mt-1">
+            <input type="checkbox" id="deliverDrive">
+            <label for="deliverDrive">Save to shared drive</label>
+          </div>
+        </div>
+        <div class="mb-0">
+          <div class="form-label-sm">Format</div>
+          <select class="form-select-sm-custom" style="width: 100%;">
+            <option>PDF</option>
+            <option>Excel</option>
+            <option>CSV</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer-custom">
+        <button class="btn-modal-cancel" onclick="closeScheduleModal()">Cancel</button>
+        <button class="btn-modal-primary" onclick="closeScheduleModal()"><i class="fas fa-calendar-plus me-1"></i>Create Schedule</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Toggle module sections
+    function toggleModule(header) {
+      header.classList.toggle('collapsed');
+      const body = header.nextElementSibling;
+      body.style.display = header.classList.contains('collapsed') ? 'none' : '';
+    }
+
+    // Toggle favorites
+    function toggleFavorites(btn) {
+      btn.classList.toggle('collapsed');
+      const body = document.getElementById('favoritesBody');
+      body.style.display = btn.classList.contains('collapsed') ? 'none' : '';
+    }
+
+    // Star toggle
+    function toggleStar(btn) {
+      btn.classList.toggle('active');
+    }
+
+    // Run modal
+    function openRunModal(name) {
+      document.getElementById('runReportName').textContent = name;
+      document.getElementById('runModal').classList.add('show');
+    }
+
+    function closeRunModal() {
+      document.getElementById('runModal').classList.remove('show');
+    }
+
+    // Schedule modal
+    function openScheduleModal(name) {
+      document.getElementById('scheduleReportName').textContent = name;
+      document.getElementById('scheduleModal').classList.add('show');
+    }
+
+    function closeScheduleModal() {
+      document.getElementById('scheduleModal').classList.remove('show');
+    }
+
+    function updateScheduleOptions() {
+      const freq = document.getElementById('scheduleFrequency').value;
+      const dayLabel = document.getElementById('scheduleDayLabel');
+      const daySelect = document.getElementById('scheduleDaySelect');
+
+      if (freq === 'daily') {
+        dayLabel.textContent = 'Time Only';
+        daySelect.style.display = 'none';
+      } else if (freq === 'weekly') {
+        dayLabel.textContent = 'Day';
+        daySelect.style.display = '';
+        daySelect.innerHTML = '<option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option>';
+      } else if (freq === 'monthly') {
+        dayLabel.textContent = 'Date';
+        daySelect.style.display = '';
+        daySelect.innerHTML = '<option>1st of month</option><option>5th of month</option><option>10th of month</option><option>15th of month</option><option>Last day of month</option>';
+      } else {
+        dayLabel.textContent = 'Quarter Start';
+        daySelect.style.display = '';
+        daySelect.innerHTML = '<option>Q1 (Jan 1)</option><option>Q2 (Apr 1)</option><option>Q3 (Jul 1)</option><option>Q4 (Oct 1)</option>';
+      }
+    }
+
+    // Search/Filter
+    function clearFilters() {
+      document.getElementById('searchReports').value = '';
+      document.getElementById('moduleFilter').value = '';
+      document.getElementById('typeFilter').value = '';
+      filterReports();
+    }
+
+    document.getElementById('searchReports').addEventListener('input', filterReports);
+    document.getElementById('moduleFilter').addEventListener('change', filterReports);
+    document.getElementById('typeFilter').addEventListener('change', filterReports);
+
+    function filterReports() {
+      const search = document.getElementById('searchReports').value.toLowerCase();
+      const module = document.getElementById('moduleFilter').value;
+      const type = document.getElementById('typeFilter').value;
+
+      document.querySelectorAll('.module-section').forEach(section => {
+        const sectionModule = section.dataset.module;
+        if (module && sectionModule !== module) {
+          section.style.display = 'none';
+          return;
+        }
+        section.style.display = '';
+
+        const rows = section.querySelectorAll('.report-table tbody tr');
+        let visibleCount = 0;
+        rows.forEach(row => {
+          const name = row.querySelector('.report-name')?.textContent.toLowerCase() || '';
+          const desc = row.querySelector('.report-desc')?.textContent.toLowerCase() || '';
+          const typeBadge = row.querySelector('.type-badge')?.textContent.toLowerCase() || '';
+
+          const matchSearch = !search || name.includes(search) || desc.includes(search);
+          const matchType = !type || typeBadge === type;
+
+          if (matchSearch && matchType) {
+            row.style.display = '';
+            visibleCount++;
+          } else {
+            row.style.display = 'none';
+          }
+        });
+
+        if (visibleCount === 0 && (search || type)) {
+          section.style.display = 'none';
+        }
+      });
+    }
+
+    // Close modals on backdrop click
+    document.getElementById('runModal').addEventListener('click', function (e) {
+      if (e.target === this) closeRunModal();
+    });
+    document.getElementById('scheduleModal').addEventListener('click', function (e) {
+      if (e.target === this) closeScheduleModal();
+    });
+  </script>
+
+</body>
+
+</html>

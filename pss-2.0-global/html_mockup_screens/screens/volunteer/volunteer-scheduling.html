@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Volunteer Scheduling - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+      --volunteer-accent: #059669;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+    .page-header .subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 0; }
+    .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+
+    .btn-primary-accent { background: var(--accent); border-color: var(--accent); color: white; font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid var(--accent); cursor: pointer; transition: all 0.15s; }
+    .btn-primary-accent:hover { background: #0c6577; border-color: #0c6577; color: white; }
+    .btn-outline-accent { background: white; border: 1px solid var(--accent); color: var(--accent); font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.15s; }
+    .btn-outline-accent:hover { background: var(--accent); color: white; }
+
+    /* View Toggle */
+    .view-toggle { display: inline-flex; gap: 0; }
+    .view-btn { padding: 0.4375rem 1rem; font-size: 0.8125rem; font-weight: 600; border: 1px solid var(--border-color); background: white; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+    .view-btn:first-child { border-radius: 0.5rem 0 0 0.5rem; }
+    .view-btn:last-child { border-radius: 0 0.5rem 0.5rem 0; border-left: none; }
+    .view-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+    .view-btn:not(.active):hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Calendar Card */
+    .cal-card { background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); }
+    .cal-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; }
+    .cal-nav { display: flex; align-items: center; gap: 0.75rem; }
+    .cal-nav-btn { background: white; border: 1px solid var(--border-color); border-radius: 0.375rem; padding: 0.375rem 0.625rem; cursor: pointer; color: var(--text-secondary); transition: all 0.15s; font-size: 0.8125rem; }
+    .cal-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .cal-nav span { font-size: 0.9375rem; font-weight: 700; }
+    .cal-range-toggle { display: inline-flex; gap: 0; }
+    .cal-range-btn { padding: 0.3125rem 0.625rem; font-size: 0.75rem; font-weight: 600; border: 1px solid var(--border-color); background: white; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+    .cal-range-btn:first-child { border-radius: 0.375rem 0 0 0.375rem; }
+    .cal-range-btn:last-child { border-radius: 0 0.375rem 0.375rem 0; border-left: none; }
+    .cal-range-btn:not(:first-child):not(:last-child) { border-left: none; }
+    .cal-range-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+    /* Calendar Grid */
+    .cal-grid { display: grid; grid-template-columns: 70px repeat(7, 1fr); }
+    .cal-day-header { padding: 0.625rem 0.5rem; text-align: center; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); background: #f8fafc; border-bottom: 1px solid var(--border-color); border-right: 1px solid #f1f5f9; }
+    .cal-day-header:first-child { border-right: 1px solid var(--border-color); }
+    .cal-time-label { padding: 0.5rem 0.5rem; font-size: 0.6875rem; font-weight: 500; color: var(--text-secondary); text-align: right; border-right: 1px solid var(--border-color); border-bottom: 1px solid #f1f5f9; height: 60px; }
+    .cal-cell { border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; padding: 2px; min-height: 60px; position: relative; cursor: pointer; transition: background 0.1s; }
+    .cal-cell:hover { background: #f8fafc; }
+
+    /* Shift Blocks */
+    .shift-block { padding: 0.25rem 0.375rem; border-radius: 0.25rem; font-size: 0.6875rem; font-weight: 600; line-height: 1.3; cursor: pointer; transition: transform 0.1s, box-shadow 0.1s; overflow: hidden; margin-bottom: 1px; }
+    .shift-block:hover { transform: scale(1.02); box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 5; }
+    .shift-block.event { background: #dcfce7; color: #166534; border-left: 3px solid #22c55e; }
+    .shift-block.office { background: #dbeafe; color: #1e40af; border-left: 3px solid #3b82f6; }
+    .shift-block.field { background: #ffedd5; color: #9a3412; border-left: 3px solid #f97316; }
+    .shift-block.remote { background: #f3e8ff; color: #6b21a8; border-left: 3px solid #a855f7; }
+    .shift-block.training { background: #dbeafe; color: #1e40af; border-left: 3px solid #3b82f6; }
+    .shift-block .shift-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .shift-block .shift-count { font-size: 0.625rem; font-weight: 500; opacity: 0.8; }
+    .shift-block.multi-row { position: absolute; left: 2px; right: 2px; z-index: 2; }
+
+    /* Color Legend */
+    .cal-legend { padding: 0.75rem 1.25rem; border-top: 1px solid var(--border-color); display: flex; gap: 1.25rem; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 0.375rem; font-size: 0.75rem; color: var(--text-secondary); }
+    .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+    .legend-dot.event { background: #22c55e; }
+    .legend-dot.office { background: #3b82f6; }
+    .legend-dot.field { background: #f97316; }
+    .legend-dot.remote { background: #a855f7; }
+
+    /* Side Panel */
+    .side-panel-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); z-index: 1040; }
+    .side-panel-overlay.show { display: block; }
+    .side-panel { position: fixed; top: 0; right: -480px; width: 480px; max-width: 100vw; height: 100vh; background: white; box-shadow: -4px 0 20px rgba(0,0,0,0.15); z-index: 1050; transition: right 0.3s; overflow-y: auto; }
+    .side-panel.show { right: 0; }
+    .side-panel-header { padding: 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: flex-start; justify-content: space-between; position: sticky; top: 0; background: white; z-index: 5; }
+    .side-panel-header h3 { font-size: 1.0625rem; font-weight: 700; margin: 0; }
+    .side-panel-close { background: none; border: none; font-size: 1.25rem; color: var(--text-secondary); cursor: pointer; padding: 0.25rem; }
+    .side-panel-close:hover { color: var(--text-primary); }
+    .side-panel-body { padding: 1.25rem; }
+
+    .detail-row { display: flex; gap: 0.5rem; margin-bottom: 0.625rem; font-size: 0.8125rem; }
+    .detail-label { font-weight: 600; color: var(--text-secondary); min-width: 120px; flex-shrink: 0; }
+    .detail-value { color: var(--text-primary); }
+
+    .status-bar { display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem 1rem; background: #f8fafc; border-radius: 0.5rem; margin: 1rem 0; }
+    .status-bar .status-item { text-align: center; flex: 1; }
+    .status-bar .status-num { font-size: 1.25rem; font-weight: 700; }
+    .status-bar .status-lbl { font-size: 0.6875rem; color: var(--text-secondary); }
+    .status-bar .status-divider { width: 1px; height: 32px; background: var(--border-color); }
+
+    /* Mini table in panel */
+    .panel-table { width: 100%; font-size: 0.8125rem; }
+    .panel-table th { background: #f8fafc; font-weight: 600; color: var(--text-secondary); font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.5rem 0.625rem; border-bottom: 1px solid var(--border-color); }
+    .panel-table td { padding: 0.5rem 0.625rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .panel-table tr:last-child td { border-bottom: none; }
+
+    .badge-confirmed { background: #dcfce7; color: #166534; padding: 0.1875rem 0.5rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; }
+    .badge-pending { background: #fef3c7; color: #92400e; padding: 0.1875rem 0.5rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; }
+    .skill-tag { display: inline-block; padding: 0.125rem 0.375rem; border-radius: 0.25rem; font-size: 0.625rem; font-weight: 600; margin-right: 0.25rem; margin-bottom: 0.125rem; }
+    .skill-tag.match { background: #dcfce7; color: #166534; }
+    .skill-tag.no-match { background: #f1f5f9; color: var(--text-secondary); }
+
+    .btn-sm-action { padding: 0.25rem 0.5rem; font-size: 0.6875rem; font-weight: 600; border-radius: 0.375rem; border: 1px solid; cursor: pointer; transition: all 0.15s; }
+    .btn-sm-assign { border-color: var(--volunteer-accent); color: var(--volunteer-accent); background: white; }
+    .btn-sm-assign:hover { background: var(--volunteer-accent); color: white; }
+    .btn-sm-remove { border-color: var(--danger-color); color: var(--danger-color); background: white; }
+    .btn-sm-remove:hover { background: var(--danger-color); color: white; }
+    .btn-sm-remind { border-color: var(--warning-color); color: #92400e; background: white; }
+    .btn-sm-remind:hover { background: var(--warning-color); color: white; }
+
+    /* List View Table */
+    .list-card { background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); display: none; }
+    .list-card.show { display: block; }
+    .data-table { width: 100%; font-size: 0.8125rem; }
+    .data-table th { background: #f8fafc; font-weight: 600; color: var(--text-secondary); font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color); white-space: nowrap; }
+    .data-table td { padding: 0.75rem 1rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover { background: #f8fafc; }
+
+    .badge-status { padding: 0.1875rem 0.625rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; }
+    .badge-status.understaffed { background: #fef3c7; color: #92400e; }
+    .badge-status.full { background: #dcfce7; color: #166534; }
+    .badge-status.critical { background: #fef2f2; color: var(--danger-color); }
+
+    .type-badge { display: inline-block; padding: 0.1875rem 0.5rem; border-radius: 0.25rem; font-size: 0.6875rem; font-weight: 600; }
+    .type-badge.event { background: #dcfce7; color: #166534; }
+    .type-badge.office { background: #dbeafe; color: #1e40af; }
+    .type-badge.field { background: #ffedd5; color: #9a3412; }
+    .type-badge.remote { background: #f3e8ff; color: #6b21a8; }
+
+    /* Modal */
+    .modal-backdrop-custom { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1060; align-items: center; justify-content: center; }
+    .modal-backdrop-custom.show { display: flex; }
+    .modal-box { background: white; border-radius: var(--card-radius); width: 560px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+    .modal-header-custom { padding: 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
+    .modal-header-custom h3 { font-size: 1.0625rem; font-weight: 700; margin: 0; }
+    .modal-close { background: none; border: none; font-size: 1.25rem; color: var(--text-secondary); cursor: pointer; }
+    .modal-body-custom { padding: 1.25rem; }
+    .modal-footer-custom { padding: 1rem 1.25rem; border-top: 1px solid var(--border-color); display: flex; gap: 0.5rem; justify-content: flex-end; }
+
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.375rem; }
+    .form-group label .req { color: var(--danger-color); }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 0.8125rem; color: var(--text-primary); transition: border-color 0.15s; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1); }
+    .form-group textarea { resize: vertical; min-height: 60px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .tag-input { display: flex; flex-wrap: wrap; gap: 0.375rem; padding: 0.375rem 0.5rem; border: 1px solid var(--border-color); border-radius: 0.5rem; min-height: 38px; align-items: center; }
+    .tag-item { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.125rem 0.5rem; background: var(--accent-bg); color: var(--accent); border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; }
+    .tag-item .tag-remove { cursor: pointer; font-size: 0.75rem; opacity: 0.7; }
+    .tag-item .tag-remove:hover { opacity: 1; }
+
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; }
+    .toggle-switch { position: relative; width: 40px; height: 22px; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: #cbd5e1; border-radius: 9999px; cursor: pointer; transition: 0.3s; }
+    .toggle-slider::before { content: ''; position: absolute; width: 16px; height: 16px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.3s; }
+    .toggle-switch input:checked + .toggle-slider { background: var(--accent); }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .cal-grid { font-size: 0.6875rem; }
+      .cal-time-label { font-size: 0.625rem; padding: 0.375rem; }
+      .side-panel { width: 100vw; }
+    }
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .form-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-calendar-check me-2" style="color: var(--volunteer-accent);"></i>Volunteer Scheduling</h1>
+      <p class="subtitle">Manage shifts, assignments, and volunteer availability</p>
+    </div>
+    <div class="header-actions">
+      <div class="view-toggle">
+        <button class="view-btn active" onclick="toggleView('calendar')"><i class="fas fa-calendar-week me-1"></i> Calendar View</button>
+        <button class="view-btn" onclick="toggleView('list')"><i class="fas fa-list me-1"></i> List View</button>
+      </div>
+      <button class="btn-primary-accent" onclick="openModal()"><i class="fas fa-plus me-1"></i> Create Shift</button>
+      <button class="btn-outline-accent"><i class="fas fa-wand-magic-sparkles me-1"></i> Auto-Schedule</button>
+    </div>
+  </div>
+
+  <!-- Calendar View -->
+  <div class="cal-card" id="calendarView">
+    <div class="cal-header">
+      <div class="cal-nav">
+        <button class="cal-nav-btn"><i class="fas fa-chevron-left"></i></button>
+        <span>Apr 7 – 13, 2026</span>
+        <button class="cal-nav-btn"><i class="fas fa-chevron-right"></i></button>
+      </div>
+      <div class="cal-range-toggle">
+        <button class="cal-range-btn">Day</button>
+        <button class="cal-range-btn active">Week</button>
+        <button class="cal-range-btn">Month</button>
+      </div>
+    </div>
+
+    <div class="cal-grid">
+      <!-- Day Headers -->
+      <div class="cal-day-header"></div>
+      <div class="cal-day-header">Mon 7</div>
+      <div class="cal-day-header">Tue 8</div>
+      <div class="cal-day-header">Wed 9</div>
+      <div class="cal-day-header">Thu 10</div>
+      <div class="cal-day-header">Fri 11</div>
+      <div class="cal-day-header" style="background:#ecfdf5;">Sat 12</div>
+      <div class="cal-day-header">Sun 13</div>
+
+      <!-- 8 AM Row -->
+      <div class="cal-time-label">8 AM</div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell" onclick="openPanel()">
+        <div class="shift-block event">
+          <div class="shift-name">Food Pack Dist.</div>
+          <div class="shift-count">5/8 vols</div>
+        </div>
+      </div>
+      <div class="cal-cell"></div>
+
+      <!-- 9 AM Row -->
+      <div class="cal-time-label">9 AM</div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell">
+        <div class="shift-block office">
+          <div class="shift-name">Office Admin</div>
+          <div class="shift-count">2/2 vols</div>
+        </div>
+      </div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell" onclick="openPanel()">
+        <div class="shift-block event" style="opacity:0.6;">
+          <div class="shift-name" style="font-size:0.5625rem;">...cont'd</div>
+        </div>
+      </div>
+      <div class="cal-cell">
+        <div class="shift-block field">
+          <div class="shift-name">Community Outreach</div>
+          <div class="shift-count">3/4 vols</div>
+        </div>
+      </div>
+
+      <!-- 10 AM Row -->
+      <div class="cal-time-label">10 AM</div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell">
+        <div class="shift-block office" style="opacity:0.6;">
+          <div class="shift-name" style="font-size:0.5625rem;">...cont'd</div>
+        </div>
+      </div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell">
+        <div class="shift-block remote">
+          <div class="shift-name">Data Entry</div>
+          <div class="shift-count">2/2 vols</div>
+        </div>
+      </div>
+      <div class="cal-cell">
+        <div class="shift-block field" style="opacity:0.6;">
+          <div class="shift-name" style="font-size:0.5625rem;">...cont'd</div>
+        </div>
+      </div>
+
+      <!-- 11 AM Row -->
+      <div class="cal-time-label">11 AM</div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell" onclick="openPanel()">
+        <div class="shift-block event" style="opacity:0.6;">
+          <div class="shift-name" style="font-size:0.5625rem;">...cont'd</div>
+        </div>
+      </div>
+      <div class="cal-cell"></div>
+
+      <!-- 12 PM Row -->
+      <div class="cal-time-label">12 PM</div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+
+      <!-- 1 PM Row -->
+      <div class="cal-time-label">1 PM</div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+
+      <!-- 2 PM Row -->
+      <div class="cal-time-label">2 PM</div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell">
+        <div class="shift-block office">
+          <div class="shift-name">Training Session</div>
+          <div class="shift-count">8/8 vols</div>
+        </div>
+      </div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+
+      <!-- 3 PM Row -->
+      <div class="cal-time-label">3 PM</div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell">
+        <div class="shift-block office" style="opacity:0.6;">
+          <div class="shift-name" style="font-size:0.5625rem;">...cont'd</div>
+        </div>
+      </div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+
+      <!-- 4 PM Row -->
+      <div class="cal-time-label">4 PM</div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+
+      <!-- 5 PM Row -->
+      <div class="cal-time-label">5 PM</div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+
+      <!-- 6 PM Row -->
+      <div class="cal-time-label">6 PM</div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell">
+        <div class="shift-block remote">
+          <div class="shift-name">Donor Calls</div>
+          <div class="shift-count">4/4 vols</div>
+        </div>
+      </div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+      <div class="cal-cell"></div>
+    </div>
+
+    <div class="cal-legend">
+      <div class="legend-item"><div class="legend-dot event"></div> Event</div>
+      <div class="legend-item"><div class="legend-dot office"></div> Office / Training</div>
+      <div class="legend-item"><div class="legend-dot field"></div> Field</div>
+      <div class="legend-item"><div class="legend-dot remote"></div> Remote</div>
+    </div>
+  </div>
+
+  <!-- List View -->
+  <div class="list-card" id="listView">
+    <div style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+      <h3 style="font-size: 0.9375rem; font-weight: 700; margin: 0;"><i class="fas fa-list me-2" style="color: var(--volunteer-accent);"></i>All Shifts</h3>
+      <div style="display:flex; gap:0.5rem; align-items:center;">
+        <div style="position:relative;">
+          <i class="fas fa-search" style="position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);color:var(--text-secondary);font-size:0.8125rem;"></i>
+          <input type="text" placeholder="Search shifts..." style="padding:0.4375rem 0.75rem 0.4375rem 2rem;border:1px solid var(--border-color);border-radius:0.5rem;font-size:0.8125rem;width:200px;">
+        </div>
+        <select style="padding:0.4375rem 0.75rem;border:1px solid var(--border-color);border-radius:0.5rem;font-size:0.8125rem;background:white;">
+          <option>All Types</option>
+          <option>Event</option>
+          <option>Office</option>
+          <option>Field</option>
+          <option>Remote</option>
+        </select>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Shift</th>
+            <th>Time</th>
+            <th>Location</th>
+            <th>Type</th>
+            <th>Needed</th>
+            <th>Assigned</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Apr 12</td>
+            <td style="font-weight:600;">Food Pack Distribution</td>
+            <td>8AM – 12PM</td>
+            <td>Community Center</td>
+            <td><span class="type-badge event">Event</span></td>
+            <td>8</td>
+            <td>5/8</td>
+            <td><span class="badge-status understaffed">Understaffed</span></td>
+            <td><button class="btn-sm-action btn-sm-assign" onclick="openPanel()">Manage</button></td>
+          </tr>
+          <tr>
+            <td>Apr 12</td>
+            <td style="font-weight:600;">Data Entry (Remote)</td>
+            <td>10AM – 2PM</td>
+            <td>Remote</td>
+            <td><span class="type-badge remote">Remote</span></td>
+            <td>2</td>
+            <td>2/2</td>
+            <td><span class="badge-status full">Fully Staffed</span></td>
+            <td><button class="btn-sm-action btn-sm-assign">Manage</button></td>
+          </tr>
+          <tr>
+            <td>Apr 13</td>
+            <td style="font-weight:600;">Community Outreach</td>
+            <td>9AM – 11AM</td>
+            <td>Al Quoz Park</td>
+            <td><span class="type-badge field">Field</span></td>
+            <td>4</td>
+            <td>3/4</td>
+            <td><span class="badge-status understaffed">Understaffed</span></td>
+            <td><button class="btn-sm-action btn-sm-assign">Manage</button></td>
+          </tr>
+          <tr>
+            <td>Apr 14</td>
+            <td style="font-weight:600;">Office Data Entry</td>
+            <td>9AM – 1PM</td>
+            <td>HQ Office</td>
+            <td><span class="type-badge office">Office</span></td>
+            <td>2</td>
+            <td>2/2</td>
+            <td><span class="badge-status full">Fully Staffed</span></td>
+            <td><button class="btn-sm-action btn-sm-assign">Manage</button></td>
+          </tr>
+          <tr>
+            <td>Apr 15</td>
+            <td style="font-weight:600;">Gala Setup</td>
+            <td>8AM – 12PM</td>
+            <td>Grand Hyatt</td>
+            <td><span class="type-badge event">Event</span></td>
+            <td>12</td>
+            <td>8/12</td>
+            <td><span class="badge-status understaffed">Understaffed</span></td>
+            <td><button class="btn-sm-action btn-sm-assign">Manage</button></td>
+          </tr>
+          <tr>
+            <td>Apr 20</td>
+            <td style="font-weight:600;">Gala Event Day</td>
+            <td>9AM – 6PM</td>
+            <td>Grand Hyatt</td>
+            <td><span class="type-badge event">Event</span></td>
+            <td>20</td>
+            <td>15/20</td>
+            <td><span class="badge-status understaffed">Understaffed</span></td>
+            <td><button class="btn-sm-action btn-sm-assign">Manage</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Shift Detail Side Panel -->
+  <div class="side-panel-overlay" id="panelOverlay" onclick="closePanel()"></div>
+  <div class="side-panel" id="shiftPanel">
+    <div class="side-panel-header">
+      <div>
+        <h3>Ramadan Food Pack Distribution</h3>
+        <span style="font-size:0.75rem;color:var(--text-secondary);"><i class="fas fa-link me-1"></i>Linked: Ramadan Food Drive</span>
+      </div>
+      <button class="side-panel-close" onclick="closePanel()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="side-panel-body">
+      <div class="detail-row"><span class="detail-label"><i class="fas fa-calendar me-1"></i>Date</span><span class="detail-value">Sat, Apr 12, 2026</span></div>
+      <div class="detail-row"><span class="detail-label"><i class="fas fa-clock me-1"></i>Time</span><span class="detail-value">8:00 AM – 12:00 PM (4 hours)</span></div>
+      <div class="detail-row"><span class="detail-label"><i class="fas fa-location-dot me-1"></i>Location</span><span class="detail-value">Dubai Community Center, Al Quoz</span></div>
+      <div class="detail-row"><span class="detail-label"><i class="fas fa-tag me-1"></i>Type</span><span class="detail-value"><span class="type-badge event">Event</span></span></div>
+
+      <div class="status-bar">
+        <div class="status-item">
+          <div class="status-num" style="color:var(--accent);">8</div>
+          <div class="status-lbl">Needed</div>
+        </div>
+        <div class="status-divider"></div>
+        <div class="status-item">
+          <div class="status-num" style="color:var(--volunteer-accent);">5</div>
+          <div class="status-lbl">Assigned</div>
+        </div>
+        <div class="status-divider"></div>
+        <div class="status-item">
+          <div class="status-num" style="color:var(--success-color);">4</div>
+          <div class="status-lbl">Confirmed</div>
+        </div>
+      </div>
+
+      <h4 style="font-size:0.8125rem;font-weight:700;margin:0.75rem 0 0.5rem;"><i class="fas fa-user-check me-1" style="color:var(--volunteer-accent);"></i>Assigned Volunteers</h4>
+      <div style="overflow-x:auto;">
+        <table class="panel-table">
+          <thead>
+            <tr><th>Volunteer</th><th>Status</th><th>Skills</th><th></th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a href="#" onclick="parent.loadContent('volunteer/volunteer-detail');return false;" style="color:var(--accent);font-weight:600;text-decoration:none;">Ahmed Salim</a></td>
+              <td><span class="badge-confirmed">&#10003; Confirmed</span></td>
+              <td><span class="skill-tag match">Event Mgmt &#10003;</span></td>
+              <td><button class="btn-sm-action btn-sm-remove">Remove</button></td>
+            </tr>
+            <tr>
+              <td><a href="#" onclick="parent.loadContent('volunteer/volunteer-detail');return false;" style="color:var(--accent);font-weight:600;text-decoration:none;">Ravi Kumar</a></td>
+              <td><span class="badge-confirmed">&#10003; Confirmed</span></td>
+              <td><span class="skill-tag match">Photography &#10003;</span></td>
+              <td><button class="btn-sm-action btn-sm-remove">Remove</button></td>
+            </tr>
+            <tr>
+              <td><a href="#" onclick="parent.loadContent('volunteer/volunteer-detail');return false;" style="color:var(--accent);font-weight:600;text-decoration:none;">James Okonkwo</a></td>
+              <td><span class="badge-confirmed">&#10003; Confirmed</span></td>
+              <td><span class="skill-tag match">Field Work &#10003;</span><span class="skill-tag match">Driving &#10003;</span></td>
+              <td><button class="btn-sm-action btn-sm-remove">Remove</button></td>
+            </tr>
+            <tr>
+              <td><a href="#" onclick="parent.loadContent('volunteer/volunteer-detail');return false;" style="color:var(--accent);font-weight:600;text-decoration:none;">Fatima Al-Zahra</a></td>
+              <td><span class="badge-pending">&#128203; Pending</span></td>
+              <td><span class="skill-tag no-match">Teaching &#9744;</span></td>
+              <td><button class="btn-sm-action btn-sm-remind">Remind</button> <button class="btn-sm-action btn-sm-remove">Remove</button></td>
+            </tr>
+            <tr>
+              <td><a href="#" onclick="parent.loadContent('volunteer/volunteer-detail');return false;" style="color:var(--accent);font-weight:600;text-decoration:none;">Amina Hassan</a></td>
+              <td><span class="badge-confirmed">&#10003; Confirmed</span></td>
+              <td><span class="skill-tag match">Event Mgmt &#10003;</span></td>
+              <td><button class="btn-sm-action btn-sm-remove">Remove</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="display:flex;gap:0.5rem;margin:0.75rem 0;">
+        <button class="btn-outline-accent" style="font-size:0.75rem;padding:0.375rem 0.75rem;"><i class="fas fa-bell me-1"></i>Remind All Pending</button>
+        <button class="btn-outline-accent" style="font-size:0.75rem;padding:0.375rem 0.75rem;"><i class="fas fa-paper-plane me-1"></i>Notify Available</button>
+      </div>
+
+      <h4 style="font-size:0.8125rem;font-weight:700;margin:1rem 0 0.5rem;"><i class="fas fa-user-plus me-1" style="color:var(--accent);"></i>Available Volunteers</h4>
+      <div style="overflow-x:auto;">
+        <table class="panel-table">
+          <thead>
+            <tr><th>Volunteer</th><th>Skills</th><th>Availability</th><th>Distance</th><th></th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-weight:600;">Omar Farouk</td>
+              <td><span class="skill-tag match">Event Mgmt</span><span class="skill-tag match">Cooking</span></td>
+              <td style="color:var(--success-color);"><i class="fas fa-check-square me-1"></i>Sat available</td>
+              <td>5 km</td>
+              <td><button class="btn-sm-action btn-sm-assign">Assign</button></td>
+            </tr>
+            <tr>
+              <td style="font-weight:600;">Yusuf Ali</td>
+              <td><span class="skill-tag match">Driving</span><span class="skill-tag match">Field</span></td>
+              <td style="color:var(--success-color);"><i class="fas fa-check-square me-1"></i>Sat available</td>
+              <td>8 km</td>
+              <td><button class="btn-sm-action btn-sm-assign">Assign</button></td>
+            </tr>
+            <tr>
+              <td style="font-weight:600;">Sarah Ahmed</td>
+              <td><span class="skill-tag match">Medical</span></td>
+              <td style="color:var(--success-color);"><i class="fas fa-check-square me-1"></i>Sat available</td>
+              <td>12 km</td>
+              <td><button class="btn-sm-action btn-sm-assign">Assign</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Shift Modal -->
+  <div class="modal-backdrop-custom" id="createModal">
+    <div class="modal-box">
+      <div class="modal-header-custom">
+        <h3><i class="fas fa-plus-circle me-2" style="color:var(--accent);"></i>Create Shift</h3>
+        <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body-custom">
+        <div class="form-group">
+          <label>Shift Name <span class="req">*</span></label>
+          <input type="text" placeholder="e.g. Ramadan Food Pack Distribution">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Date <span class="req">*</span></label>
+            <input type="date" value="2026-04-12">
+          </div>
+          <div class="form-row" style="gap:0.5rem;">
+            <div class="form-group">
+              <label>Start Time <span class="req">*</span></label>
+              <input type="time" value="08:00">
+            </div>
+            <div class="form-group">
+              <label>End Time <span class="req">*</span></label>
+              <input type="time" value="12:00">
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Type</label>
+            <select>
+              <option>Event</option>
+              <option>Office</option>
+              <option>Field</option>
+              <option>Remote</option>
+              <option>Training</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Branch</label>
+            <select>
+              <option>Dubai</option>
+              <option>Mumbai</option>
+              <option>Delhi</option>
+              <option>Dhaka</option>
+              <option>Nairobi</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Location</label>
+          <input type="text" placeholder="e.g. Dubai Community Center, Al Quoz">
+        </div>
+        <div class="form-group">
+          <label>Linked Event <span style="font-weight:400;color:var(--text-secondary);">(optional)</span></label>
+          <select>
+            <option value="">— Select Event —</option>
+            <option>Ramadan Food Drive</option>
+            <option>Annual Gala 2026</option>
+            <option>Community Health Camp</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Volunteers Needed <span class="req">*</span></label>
+          <input type="number" value="8" min="1">
+        </div>
+        <div class="form-group">
+          <label>Required Skills</label>
+          <div class="tag-input">
+            <span class="tag-item">Event Management <span class="tag-remove">&times;</span></span>
+            <span class="tag-item">Cooking <span class="tag-remove">&times;</span></span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea placeholder="Shift description and instructions..."></textarea>
+        </div>
+        <div class="form-group">
+          <div class="toggle-row">
+            <label style="margin:0;">Auto-Assign matching available volunteers</label>
+            <label class="toggle-switch">
+              <input type="checkbox">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer-custom">
+        <button class="btn-outline-accent" onclick="closeModal()">Cancel</button>
+        <button class="btn-outline-accent"><i class="fas fa-plus me-1"></i>Create &amp; Assign</button>
+        <button class="btn-primary-accent"><i class="fas fa-check me-1"></i>Create Shift</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleView(view) {
+      const calView = document.getElementById('calendarView');
+      const listView = document.getElementById('listView');
+      const btns = document.querySelectorAll('.view-btn');
+      if (view === 'calendar') {
+        calView.style.display = '';
+        listView.classList.remove('show');
+        btns[0].classList.add('active');
+        btns[1].classList.remove('active');
+      } else {
+        calView.style.display = 'none';
+        listView.classList.add('show');
+        btns[1].classList.add('active');
+        btns[0].classList.remove('active');
+      }
+    }
+
+    function openPanel() {
+      document.getElementById('panelOverlay').classList.add('show');
+      document.getElementById('shiftPanel').classList.add('show');
+    }
+
+    function closePanel() {
+      document.getElementById('panelOverlay').classList.remove('show');
+      document.getElementById('shiftPanel').classList.remove('show');
+    }
+
+    function openModal() {
+      document.getElementById('createModal').classList.add('show');
+    }
+
+    function closeModal() {
+      document.getElementById('createModal').classList.remove('show');
+    }
+
+    // Range toggle
+    document.querySelectorAll('.cal-range-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.cal-range-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+  </script>
+
+</body>
+</html>

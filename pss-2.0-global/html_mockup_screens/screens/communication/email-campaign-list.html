@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Campaigns - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #0c6577;
+      border-color: #0c6577;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* KPI Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1.25rem;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .stat-icon.teal { background: var(--accent-bg); color: var(--accent); }
+    .stat-icon.blue { background: #eff6ff; color: #3b82f6; }
+    .stat-icon.green { background: #f0fdf4; color: #22c55e; }
+    .stat-icon.purple { background: #faf5ff; color: #a855f7; }
+
+    .stat-info { flex: 1; }
+
+    .stat-value {
+      font-size: 1.625rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .stat-label {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .stat-detail {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .stat-detail .positive {
+      color: var(--success-color);
+      font-weight: 600;
+    }
+
+    /* List Card */
+    .list-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .search-input {
+      position: relative;
+      flex: 1;
+      min-width: 240px;
+    }
+
+    .search-input i {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .search-input input {
+      width: 100%;
+      padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .search-input input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    /* Filter Chips */
+    .filter-chips {
+      display: flex;
+      gap: 0.375rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-chip {
+      padding: 0.3125rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .filter-chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .filter-chip.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    /* Bulk Actions */
+    .bulk-actions {
+      display: none;
+      padding: 0.75rem 1.25rem;
+      background: var(--accent-bg);
+      border-bottom: 1px solid #cffafe;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .bulk-actions.show {
+      display: flex;
+    }
+
+    .bulk-actions .selected-count {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .bulk-btn {
+      padding: 0.3125rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid var(--accent);
+      background: white;
+      color: var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .bulk-btn:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    .bulk-btn.danger {
+      border-color: var(--danger-color);
+      color: var(--danger-color);
+    }
+
+    .bulk-btn.danger:hover {
+      background: var(--danger-color);
+      color: white;
+    }
+
+    /* Table */
+    .table-container {
+      overflow-x: auto;
+    }
+
+    .campaign-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1100px;
+    }
+
+    .campaign-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .campaign-table th:hover {
+      color: var(--accent);
+    }
+
+    .campaign-table th .sort-icon {
+      margin-left: 0.25rem;
+      font-size: 0.5625rem;
+      opacity: 0.4;
+    }
+
+    .campaign-table td {
+      padding: 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.8125rem;
+      vertical-align: middle;
+    }
+
+    .campaign-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    .campaign-table tbody tr.selected-row {
+      background: var(--accent-bg);
+    }
+
+    .campaign-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .campaign-name:hover {
+      color: var(--accent);
+    }
+
+    /* Status Badges */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.1875rem 0.625rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .status-badge.sent {
+      background: #f0fdf4;
+      color: #15803d;
+    }
+
+    .status-badge.scheduled {
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+
+    .status-badge.active {
+      background: #f0fdf4;
+      color: #15803d;
+    }
+
+    .status-badge.draft {
+      background: #f8fafc;
+      color: var(--text-secondary);
+    }
+
+    .status-badge.paused {
+      background: #fffbeb;
+      color: #92400e;
+    }
+
+    .status-badge.failed {
+      background: #fef2f2;
+      color: #991b1b;
+    }
+
+    /* Type Badge */
+    .type-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      background: #f1f5f9;
+      color: var(--text-secondary);
+    }
+
+    .type-badge.campaign { background: var(--accent-bg); color: var(--accent); }
+    .type-badge.automated { background: #faf5ff; color: #7c3aed; }
+    .type-badge.newsletter { background: #fff7ed; color: #c2410c; }
+
+    /* Mini Bar Chart */
+    .rate-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .rate-bar .bar-track {
+      width: 60px;
+      height: 6px;
+      background: #f1f5f9;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .rate-bar .bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.3s;
+    }
+
+    .rate-bar .bar-fill.green { background: var(--success-color); }
+    .rate-bar .bar-fill.yellow { background: var(--warning-color); }
+    .rate-bar .bar-fill.red { background: var(--danger-color); }
+
+    .rate-value {
+      font-weight: 600;
+      font-size: 0.8125rem;
+      min-width: 40px;
+    }
+
+    /* Action Buttons */
+    .action-btn {
+      padding: 0.25rem 0.5rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      border-radius: 0.375rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .action-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .action-btn.primary {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .action-btn.primary:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    .action-btn.danger {
+      color: var(--danger-color);
+    }
+
+    .action-btn.danger:hover {
+      border-color: var(--danger-color);
+      background: var(--danger-color);
+      color: white;
+    }
+
+    /* Pagination */
+    .pagination-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1.25rem;
+      border-top: 1px solid var(--border-color);
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .pagination-info {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .pagination-controls {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .page-btn {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border-color);
+      background: white;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .page-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .page-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .page-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 576px) {
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1>Email Campaigns</h1>
+      <p class="subtitle">Manage and monitor your email campaigns</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" onclick="parent.loadContent('communication/email-campaign-builder')">
+        <i class="fas fa-plus me-1"></i> New Campaign
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon teal"><i class="fas fa-envelope"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">45</div>
+        <div class="stat-label">Total Campaigns</div>
+        <div class="stat-detail">This month: <strong>8</strong></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="fas fa-paper-plane"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">24,567</div>
+        <div class="stat-label">Emails Sent (Month)</div>
+        <div class="stat-detail"><span class="positive">+12%</span> vs last month</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green"><i class="fas fa-envelope-open"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">34.2%</div>
+        <div class="stat-label">Avg Open Rate</div>
+        <div class="stat-detail">Industry avg: 25% <span class="positive">&#10003;</span></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon purple"><i class="fas fa-mouse-pointer"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">5.8%</div>
+        <div class="stat-label">Avg Click Rate</div>
+        <div class="stat-detail">Industry avg: 3% <span class="positive">&#10003;</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Campaign List Card -->
+  <div class="list-card">
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="d-flex align-items-center gap-3 flex-wrap">
+        <div class="search-input">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Search campaigns...">
+        </div>
+        <div class="filter-chips">
+          <span class="filter-chip active" onclick="filterByStatus(this, 'all')">All</span>
+          <span class="filter-chip" onclick="filterByStatus(this, 'draft')">Draft</span>
+          <span class="filter-chip" onclick="filterByStatus(this, 'scheduled')">Scheduled</span>
+          <span class="filter-chip" onclick="filterByStatus(this, 'sending')">Sending</span>
+          <span class="filter-chip" onclick="filterByStatus(this, 'sent')">Sent</span>
+          <span class="filter-chip" onclick="filterByStatus(this, 'failed')">Failed</span>
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-2 mt-2 flex-wrap">
+        <div style="display: flex; align-items: center; gap: 0.375rem;">
+          <label style="font-size: 0.6875rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">Type:</label>
+          <select style="padding: 0.3125rem 0.5rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 0.75rem; color: var(--text-primary);">
+            <option>All Types</option>
+            <option>Campaign</option>
+            <option>Automated</option>
+            <option>Newsletter</option>
+          </select>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.375rem;">
+          <label style="font-size: 0.6875rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">From:</label>
+          <input type="date" style="padding: 0.3125rem 0.5rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 0.75rem; color: var(--text-primary);">
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.375rem;">
+          <label style="font-size: 0.6875rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">To:</label>
+          <input type="date" style="padding: 0.3125rem 0.5rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 0.75rem; color: var(--text-primary);">
+        </div>
+      </div>
+    </div>
+
+    <!-- Bulk Actions -->
+    <div class="bulk-actions" id="bulkActions">
+      <span class="selected-count"><span id="selectedCount">0</span> campaigns selected</span>
+      <button class="bulk-btn danger" onclick="alert('Delete selected campaigns?')"><i class="fas fa-trash me-1"></i> Delete Selected</button>
+      <button class="bulk-btn" onclick="alert('Duplicate selected campaigns?')"><i class="fas fa-copy me-1"></i> Duplicate Selected</button>
+      <button class="bulk-btn" onclick="alert('Export report for selected campaigns?')"><i class="fas fa-download me-1"></i> Export Report</button>
+    </div>
+
+    <!-- Table -->
+    <div class="table-container">
+      <table class="campaign-table">
+        <thead>
+          <tr>
+            <th style="width: 36px;"><input type="checkbox" onchange="toggleAllRows(this)"></th>
+            <th>Campaign Name <i class="fas fa-sort sort-icon"></i></th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Recipients</th>
+            <th>Sent</th>
+            <th>Open Rate</th>
+            <th>Click Rate</th>
+            <th>Date <i class="fas fa-sort sort-icon"></i></th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Row 1 -->
+          <tr>
+            <td><input type="checkbox" onchange="updateBulkActions()"></td>
+            <td><span class="campaign-name" onclick="parent.loadContent('communication/email-campaign-builder')">Spring Appeal 2026</span></td>
+            <td><span class="type-badge campaign">Campaign</span></td>
+            <td><span class="status-badge scheduled"><i class="fas fa-calendar"></i> Scheduled</span></td>
+            <td>1,375</td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+            <td style="font-size:0.75rem; white-space:nowrap;">Apr 15, 10:00 AM</td>
+            <td style="white-space: nowrap;">
+              <button class="action-btn" onclick="parent.loadContent('communication/email-campaign-builder')"><i class="fas fa-edit"></i></button>
+              <button class="action-btn" onclick="alert('Cancel campaign?')"><i class="fas fa-ban"></i></button>
+              <button class="action-btn" onclick="alert('Campaign duplicated!')"><i class="fas fa-copy"></i></button>
+            </td>
+          </tr>
+          <!-- Row 2 -->
+          <tr>
+            <td><input type="checkbox" onchange="updateBulkActions()"></td>
+            <td><span class="campaign-name">Monthly Newsletter #4</span></td>
+            <td><span class="type-badge newsletter">Newsletter</span></td>
+            <td><span class="status-badge sent"><i class="fas fa-check-circle"></i> Sent</span></td>
+            <td>8,234</td>
+            <td>8,189</td>
+            <td>
+              <div class="rate-bar">
+                <span class="rate-value" style="color: var(--success-color);">38.2%</span>
+                <div class="bar-track"><div class="bar-fill green" style="width: 38.2%;"></div></div>
+              </div>
+            </td>
+            <td>
+              <div class="rate-bar">
+                <span class="rate-value" style="color: var(--success-color);">6.1%</span>
+                <div class="bar-track"><div class="bar-fill green" style="width: 61%;"></div></div>
+              </div>
+            </td>
+            <td style="font-size:0.75rem; white-space:nowrap;">Apr 10, 2026</td>
+            <td style="white-space: nowrap;">
+              <button class="action-btn primary" onclick="parent.loadContent('communication/email-analytics')"><i class="fas fa-chart-bar"></i></button>
+              <button class="action-btn" onclick="alert('Campaign duplicated!')"><i class="fas fa-copy"></i></button>
+            </td>
+          </tr>
+          <!-- Row 3 -->
+          <tr>
+            <td><input type="checkbox" onchange="updateBulkActions()"></td>
+            <td><span class="campaign-name">Donation Thank You</span></td>
+            <td><span class="type-badge automated">Automated</span></td>
+            <td><span class="status-badge active"><i class="fas fa-circle" style="font-size:0.375rem;"></i> Active</span></td>
+            <td style="font-size:0.75rem; color:var(--text-secondary);">Auto</td>
+            <td>342</td>
+            <td>
+              <div class="rate-bar">
+                <span class="rate-value" style="color: var(--success-color);">67.5%</span>
+                <div class="bar-track"><div class="bar-fill green" style="width: 67.5%;"></div></div>
+              </div>
+            </td>
+            <td>
+              <div class="rate-bar">
+                <span class="rate-value" style="color: var(--success-color);">12.3%</span>
+                <div class="bar-track"><div class="bar-fill green" style="width: 100%;"></div></div>
+              </div>
+            </td>
+            <td style="font-size:0.75rem; white-space:nowrap; color:var(--text-secondary);">Always</td>
+            <td style="white-space: nowrap;">
+              <button class="action-btn" onclick="parent.loadContent('communication/email-campaign-builder')"><i class="fas fa-edit"></i></button>
+              <button class="action-btn" onclick="alert('Campaign paused')"><i class="fas fa-pause"></i></button>
+              <button class="action-btn primary" onclick="parent.loadContent('communication/email-analytics')"><i class="fas fa-chart-bar"></i></button>
+            </td>
+          </tr>
+          <!-- Row 4 -->
+          <tr>
+            <td><input type="checkbox" onchange="updateBulkActions()"></td>
+            <td><span class="campaign-name">Ramadan Appeal</span></td>
+            <td><span class="type-badge campaign">Campaign</span></td>
+            <td><span class="status-badge sent"><i class="fas fa-check-circle"></i> Sent</span></td>
+            <td>3,456</td>
+            <td>3,401</td>
+            <td>
+              <div class="rate-bar">
+                <span class="rate-value" style="color: var(--success-color);">42.1%</span>
+                <div class="bar-track"><div class="bar-fill green" style="width: 42.1%;"></div></div>
+              </div>
+            </td>
+            <td>
+              <div class="rate-bar">
+                <span class="rate-value" style="color: var(--success-color);">8.7%</span>
+                <div class="bar-track"><div class="bar-fill green" style="width: 87%;"></div></div>
+              </div>
+            </td>
+            <td style="font-size:0.75rem; white-space:nowrap;">Apr 1, 2026</td>
+            <td style="white-space: nowrap;">
+              <button class="action-btn primary" onclick="parent.loadContent('communication/email-analytics')"><i class="fas fa-chart-bar"></i></button>
+              <button class="action-btn" onclick="alert('Campaign duplicated!')"><i class="fas fa-copy"></i></button>
+            </td>
+          </tr>
+          <!-- Row 5 -->
+          <tr>
+            <td><input type="checkbox" onchange="updateBulkActions()"></td>
+            <td><span class="campaign-name">Easter Campaign</span></td>
+            <td><span class="type-badge campaign">Campaign</span></td>
+            <td><span class="status-badge sent"><i class="fas fa-check-circle"></i> Sent</span></td>
+            <td>2,890</td>
+            <td>2,845</td>
+            <td>
+              <div class="rate-bar">
+                <span class="rate-value" style="color: var(--success-color);">35.6%</span>
+                <div class="bar-track"><div class="bar-fill green" style="width: 35.6%;"></div></div>
+              </div>
+            </td>
+            <td>
+              <div class="rate-bar">
+                <span class="rate-value" style="color: var(--success-color);">5.2%</span>
+                <div class="bar-track"><div class="bar-fill green" style="width: 52%;"></div></div>
+              </div>
+            </td>
+            <td style="font-size:0.75rem; white-space:nowrap;">Mar 28, 2026</td>
+            <td style="white-space: nowrap;">
+              <button class="action-btn primary" onclick="parent.loadContent('communication/email-analytics')"><i class="fas fa-chart-bar"></i></button>
+              <button class="action-btn" onclick="alert('Campaign duplicated!')"><i class="fas fa-copy"></i></button>
+            </td>
+          </tr>
+          <!-- Row 6 -->
+          <tr>
+            <td><input type="checkbox" onchange="updateBulkActions()"></td>
+            <td><span class="campaign-name">Membership Renewal</span></td>
+            <td><span class="type-badge automated">Automated</span></td>
+            <td><span class="status-badge active"><i class="fas fa-circle" style="font-size:0.375rem;"></i> Active</span></td>
+            <td style="font-size:0.75rem; color:var(--text-secondary);">Auto</td>
+            <td>89</td>
+            <td>
+              <div class="rate-bar">
+                <span class="rate-value" style="color: var(--success-color);">55.2%</span>
+                <div class="bar-track"><div class="bar-fill green" style="width: 55.2%;"></div></div>
+              </div>
+            </td>
+            <td>
+              <div class="rate-bar">
+                <span class="rate-value" style="color: var(--success-color);">18.9%</span>
+                <div class="bar-track"><div class="bar-fill green" style="width: 100%;"></div></div>
+              </div>
+            </td>
+            <td style="font-size:0.75rem; white-space:nowrap; color:var(--text-secondary);">Always</td>
+            <td style="white-space: nowrap;">
+              <button class="action-btn" onclick="parent.loadContent('communication/email-campaign-builder')"><i class="fas fa-edit"></i></button>
+              <button class="action-btn" onclick="alert('Campaign paused')"><i class="fas fa-pause"></i></button>
+              <button class="action-btn primary" onclick="parent.loadContent('communication/email-analytics')"><i class="fas fa-chart-bar"></i></button>
+            </td>
+          </tr>
+          <!-- Row 7 -->
+          <tr>
+            <td><input type="checkbox" onchange="updateBulkActions()"></td>
+            <td><span class="campaign-name">Winter Gala Invite</span></td>
+            <td><span class="type-badge campaign">Campaign</span></td>
+            <td><span class="status-badge sent"><i class="fas fa-check-circle"></i> Sent</span></td>
+            <td>1,200</td>
+            <td>1,178</td>
+            <td>
+              <div class="rate-bar">
+                <span class="rate-value" style="color: var(--success-color);">48.3%</span>
+                <div class="bar-track"><div class="bar-fill green" style="width: 48.3%;"></div></div>
+              </div>
+            </td>
+            <td>
+              <div class="rate-bar">
+                <span class="rate-value" style="color: var(--success-color);">15.2%</span>
+                <div class="bar-track"><div class="bar-fill green" style="width: 100%;"></div></div>
+              </div>
+            </td>
+            <td style="font-size:0.75rem; white-space:nowrap;">Mar 15, 2026</td>
+            <td style="white-space: nowrap;">
+              <button class="action-btn primary" onclick="parent.loadContent('communication/email-analytics')"><i class="fas fa-chart-bar"></i></button>
+              <button class="action-btn" onclick="alert('Campaign duplicated!')"><i class="fas fa-copy"></i></button>
+            </td>
+          </tr>
+          <!-- Row 8 -->
+          <tr>
+            <td><input type="checkbox" onchange="updateBulkActions()"></td>
+            <td><span class="campaign-name">Welcome New Donor</span></td>
+            <td><span class="type-badge automated">Automated</span></td>
+            <td><span class="status-badge paused"><i class="fas fa-pause-circle"></i> Paused</span></td>
+            <td style="font-size:0.75rem; color:var(--text-secondary);">Auto</td>
+            <td>567</td>
+            <td>
+              <div class="rate-bar">
+                <span class="rate-value" style="color: var(--success-color);">72.1%</span>
+                <div class="bar-track"><div class="bar-fill green" style="width: 72.1%;"></div></div>
+              </div>
+            </td>
+            <td>
+              <div class="rate-bar">
+                <span class="rate-value" style="color: var(--success-color);">22.4%</span>
+                <div class="bar-track"><div class="bar-fill green" style="width: 100%;"></div></div>
+              </div>
+            </td>
+            <td style="font-size:0.75rem; white-space:nowrap; color:var(--text-secondary);">Paused</td>
+            <td style="white-space: nowrap;">
+              <button class="action-btn" onclick="parent.loadContent('communication/email-campaign-builder')"><i class="fas fa-edit"></i></button>
+              <button class="action-btn" style="color: var(--success-color);" onclick="alert('Campaign resumed!')"><i class="fas fa-play"></i></button>
+              <button class="action-btn primary" onclick="parent.loadContent('communication/email-analytics')"><i class="fas fa-chart-bar"></i></button>
+            </td>
+          </tr>
+          <!-- Row 9 -->
+          <tr>
+            <td><input type="checkbox" onchange="updateBulkActions()"></td>
+            <td><span class="campaign-name">Year-End Appeal</span></td>
+            <td><span class="type-badge campaign">Campaign</span></td>
+            <td><span class="status-badge draft"><i class="fas fa-pencil"></i> Draft</span></td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+            <td style="font-size:0.75rem; white-space:nowrap; color:var(--text-secondary);">—</td>
+            <td style="white-space: nowrap;">
+              <button class="action-btn" onclick="parent.loadContent('communication/email-campaign-builder')"><i class="fas fa-edit"></i></button>
+              <button class="action-btn danger" onclick="alert('Delete this draft?')"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+          <!-- Row 10 -->
+          <tr>
+            <td><input type="checkbox" onchange="updateBulkActions()"></td>
+            <td><span class="campaign-name">Failed Test Campaign</span></td>
+            <td><span class="type-badge campaign">Campaign</span></td>
+            <td><span class="status-badge failed"><i class="fas fa-times-circle"></i> Failed</span></td>
+            <td>500</td>
+            <td>23</td>
+            <td>—</td>
+            <td>—</td>
+            <td style="font-size:0.75rem; white-space:nowrap;">Mar 10, 2026</td>
+            <td style="white-space: nowrap;">
+              <button class="action-btn" style="color: var(--warning-color);" onclick="alert('Error: SMTP timeout after 23 sends. Server unreachable.')"><i class="fas fa-exclamation-triangle"></i></button>
+              <button class="action-btn" onclick="alert('Retrying campaign...')"><i class="fas fa-redo"></i></button>
+              <button class="action-btn danger" onclick="alert('Delete this campaign?')"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-bar">
+      <div class="pagination-info">Showing 1-10 of 45 campaigns</div>
+      <div class="pagination-controls">
+        <button class="page-btn" disabled><i class="fas fa-chevron-left"></i></button>
+        <button class="page-btn active">1</button>
+        <button class="page-btn">2</button>
+        <button class="page-btn">3</button>
+        <button class="page-btn">4</button>
+        <button class="page-btn">5</button>
+        <button class="page-btn"><i class="fas fa-chevron-right"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function filterByStatus(chip, status) {
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+    }
+
+    function toggleAllRows(masterCheckbox) {
+      const checkboxes = document.querySelectorAll('.campaign-table tbody input[type="checkbox"]');
+      checkboxes.forEach(cb => {
+        cb.checked = masterCheckbox.checked;
+        cb.closest('tr').classList.toggle('selected-row', masterCheckbox.checked);
+      });
+      updateBulkActions();
+    }
+
+    function updateBulkActions() {
+      const checked = document.querySelectorAll('.campaign-table tbody input[type="checkbox"]:checked');
+      const bulkBar = document.getElementById('bulkActions');
+      const countEl = document.getElementById('selectedCount');
+
+      if (checked.length > 0) {
+        bulkBar.classList.add('show');
+        countEl.textContent = checked.length;
+      } else {
+        bulkBar.classList.remove('show');
+      }
+
+      // Update row highlighting
+      document.querySelectorAll('.campaign-table tbody tr').forEach(row => {
+        const cb = row.querySelector('input[type="checkbox"]');
+        row.classList.toggle('selected-row', cb && cb.checked);
+      });
+    }
+  </script>
+
+</body>
+</html>

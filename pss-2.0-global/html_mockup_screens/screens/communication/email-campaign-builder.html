@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Campaign Builder - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .breadcrumb-nav {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.25rem;
+    }
+
+    .breadcrumb-nav a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .breadcrumb-nav a:hover {
+      text-decoration: underline;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #0c6577;
+      border-color: #0c6577;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--text-secondary);
+      color: var(--text-primary);
+    }
+
+    /* Step Progress Bar */
+    .step-progress {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1.25rem 2rem;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+    }
+
+    .step-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .step-number {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8125rem;
+      font-weight: 700;
+      border: 2px solid var(--border-color);
+      color: var(--text-secondary);
+      background: white;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .step-item.active .step-number {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .step-item.completed .step-number {
+      background: var(--success-color);
+      border-color: var(--success-color);
+      color: white;
+    }
+
+    .step-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .step-item.active .step-label {
+      color: var(--accent);
+    }
+
+    .step-item.completed .step-label {
+      color: var(--success-color);
+    }
+
+    .step-connector {
+      flex: 1;
+      height: 2px;
+      background: var(--border-color);
+      margin: 0 1rem;
+      min-width: 40px;
+      max-width: 100px;
+      transition: background 0.2s;
+    }
+
+    .step-connector.completed {
+      background: var(--success-color);
+    }
+
+    /* Step Content Card */
+    .step-content-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .step-content-card .step-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .step-content-card .step-desc {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      margin-bottom: 1.25rem;
+    }
+
+    /* Form Controls */
+    .form-label-custom {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.375rem;
+    }
+
+    .form-label-custom .required {
+      color: var(--danger-color);
+    }
+
+    .form-control-custom {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+    }
+
+    .form-control-custom:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .form-hint {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    /* Radio Card Options */
+    .radio-card-group {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .radio-card {
+      flex: 1;
+      min-width: 180px;
+      border: 2px solid var(--border-color);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      background: white;
+    }
+
+    .radio-card:hover {
+      border-color: var(--accent);
+    }
+
+    .radio-card.selected {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .radio-card .radio-icon {
+      font-size: 1.25rem;
+      margin-bottom: 0.375rem;
+    }
+
+    .radio-card .radio-title {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      margin-bottom: 0.125rem;
+    }
+
+    .radio-card .radio-desc {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+    }
+
+    /* Audience Preview Panel */
+    .audience-preview {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+    }
+
+    .audience-preview h6 {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    .audience-stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.375rem 0;
+      font-size: 0.8125rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .audience-stat-row:last-child {
+      border-bottom: none;
+    }
+
+    .audience-stat-row .label {
+      color: var(--text-secondary);
+    }
+
+    .audience-stat-row .value {
+      font-weight: 700;
+    }
+
+    .audience-stat-row .value.success {
+      color: var(--success-color);
+    }
+
+    .audience-stat-row .value.warning {
+      color: var(--warning-color);
+    }
+
+    .audience-stat-row .value.danger {
+      color: var(--danger-color);
+    }
+
+    .audience-stat-row.net {
+      padding-top: 0.625rem;
+      margin-top: 0.25rem;
+      border-top: 2px solid var(--accent);
+      border-bottom: none;
+    }
+
+    .audience-stat-row.net .value {
+      color: var(--accent);
+      font-size: 1rem;
+    }
+
+    /* Template Grid */
+    .template-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+
+    .template-card {
+      border: 2px solid var(--border-color);
+      border-radius: 0.75rem;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.15s;
+      background: white;
+    }
+
+    .template-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .template-card.selected {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.15);
+    }
+
+    .template-thumb {
+      height: 120px;
+      background: linear-gradient(135deg, #f0f9ff, #ecfeff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      color: var(--accent);
+    }
+
+    .template-card-body {
+      padding: 0.75rem;
+    }
+
+    .template-card-body .name {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      margin-bottom: 0.125rem;
+    }
+
+    .template-card-body .category {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+    }
+
+    /* Preview Panel */
+    .preview-panel {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 0.75rem;
+      overflow: hidden;
+    }
+
+    .preview-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      background: white;
+    }
+
+    .device-toggle {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .device-toggle button {
+      padding: 0.3125rem 0.625rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      color: var(--text-secondary);
+    }
+
+    .device-toggle button.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .preview-frame {
+      padding: 1.5rem;
+      min-height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .preview-email {
+      background: white;
+      border-radius: 0.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      width: 100%;
+      max-width: 500px;
+      overflow: hidden;
+    }
+
+    .preview-email.mobile {
+      max-width: 320px;
+    }
+
+    .preview-email-header {
+      background: var(--accent);
+      color: white;
+      padding: 1.25rem;
+      text-align: center;
+    }
+
+    .preview-email-header h3 {
+      font-size: 1.125rem;
+      font-weight: 700;
+      margin: 0 0 0.25rem;
+    }
+
+    .preview-email-header p {
+      font-size: 0.75rem;
+      margin: 0;
+      opacity: 0.9;
+    }
+
+    .preview-email-body {
+      padding: 1.25rem;
+    }
+
+    .preview-email-body p {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 0.75rem;
+    }
+
+    .preview-email-cta {
+      display: inline-block;
+      background: var(--accent);
+      color: white;
+      padding: 0.625rem 1.5rem;
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .preview-email-footer {
+      padding: 1rem 1.25rem;
+      background: #f8fafc;
+      text-align: center;
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      border-top: 1px solid var(--border-color);
+    }
+
+    /* Summary Card */
+    .summary-card {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+    }
+
+    .summary-row {
+      display: flex;
+      padding: 0.5rem 0;
+      font-size: 0.8125rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .summary-row:last-child {
+      border-bottom: none;
+    }
+
+    .summary-row .label {
+      width: 140px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+
+    .summary-row .value {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Schedule Options */
+    .schedule-option {
+      border: 2px solid var(--border-color);
+      border-radius: 0.75rem;
+      padding: 1rem 1.25rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-bottom: 0.75rem;
+      background: white;
+    }
+
+    .schedule-option:hover {
+      border-color: var(--accent);
+    }
+
+    .schedule-option.selected {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .schedule-option .sch-icon {
+      font-size: 1.25rem;
+      margin-right: 0.75rem;
+    }
+
+    .schedule-option .sch-title {
+      font-size: 0.8125rem;
+      font-weight: 700;
+    }
+
+    .schedule-option .sch-desc {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+    }
+
+    .schedule-fields {
+      display: none;
+      padding: 0.75rem 0 0 2.25rem;
+    }
+
+    .schedule-option.selected .schedule-fields {
+      display: block;
+    }
+
+    .suggested-times {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .suggested-time {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 0.25rem 0.625rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .suggested-time:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Checklist */
+    .checklist {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .checklist li {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0;
+      font-size: 0.8125rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .checklist li:last-child {
+      border-bottom: none;
+    }
+
+    .checklist li .check-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.625rem;
+      flex-shrink: 0;
+    }
+
+    .checklist li .check-icon.pass {
+      background: #f0fdf4;
+      color: var(--success-color);
+    }
+
+    .checklist li .check-icon.warn {
+      background: #fffbeb;
+      color: var(--warning-color);
+    }
+
+    /* Step Nav Buttons */
+    .step-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border-color);
+      margin-top: 1.25rem;
+    }
+
+    /* Mini Recipient Table */
+    .mini-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.75rem;
+      margin-top: 0.75rem;
+    }
+
+    .mini-table th {
+      background: #f1f5f9;
+      font-weight: 600;
+      color: var(--text-secondary);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .mini-table td {
+      padding: 0.375rem 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-primary);
+    }
+
+    .tag-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.625rem;
+      font-weight: 600;
+      background: var(--accent-bg);
+      color: var(--accent);
+      margin-right: 0.25rem;
+    }
+
+    /* Editor Area */
+    .editor-toolbar {
+      display: flex;
+      gap: 0.25rem;
+      padding: 0.5rem;
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem 0.5rem 0 0;
+      flex-wrap: wrap;
+    }
+
+    .editor-toolbar button {
+      padding: 0.375rem 0.5rem;
+      border: 1px solid transparent;
+      background: none;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      transition: all 0.15s;
+    }
+
+    .editor-toolbar button:hover {
+      background: white;
+      border-color: var(--border-color);
+      color: var(--text-primary);
+    }
+
+    .editor-area {
+      border: 1px solid var(--border-color);
+      border-top: none;
+      border-radius: 0 0 0.5rem 0.5rem;
+      padding: 1rem;
+      min-height: 200px;
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      color: var(--text-primary);
+    }
+
+    .placeholder-chip {
+      display: inline-block;
+      background: #dbeafe;
+      color: #1d4ed8;
+      padding: 0.125rem 0.375rem;
+      border-radius: 0.25rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      font-family: monospace;
+    }
+
+    /* Exclusion Section */
+    .exclusion-section {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 0.75rem;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+
+    .exclusion-section h6 {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--danger-color);
+      margin-bottom: 0.75rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .step-progress { padding: 1rem; flex-wrap: wrap; gap: 0.5rem; }
+      .step-connector { display: none; }
+      .step-label { display: none; }
+      .radio-card-group { flex-direction: column; }
+      .template-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <div class="breadcrumb-nav">
+        <a href="#" onclick="parent.loadContent('communication/email-campaign-list')">Communication</a>
+        <span> / </span>
+        <a href="#" onclick="parent.loadContent('communication/email-campaign-list')">Email Campaigns</a>
+        <span> / New Campaign</span>
+      </div>
+      <h1>Create Email Campaign</h1>
+      <p class="subtitle">Build and schedule your email campaign</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline-accent" onclick="saveDraft()"><i class="fas fa-save me-1"></i> Save Draft</button>
+      <button class="btn-secondary" onclick="parent.loadContent('communication/email-campaign-list')"><i class="fas fa-times me-1"></i> Cancel</button>
+    </div>
+  </div>
+
+  <!-- Step Progress Bar -->
+  <div class="step-progress">
+    <div class="step-item active" onclick="goToStep(1)" data-step="1">
+      <div class="step-number">1</div>
+      <span class="step-label">Campaign Setup</span>
+    </div>
+    <div class="step-connector" data-connector="1"></div>
+    <div class="step-item" onclick="goToStep(2)" data-step="2">
+      <div class="step-number">2</div>
+      <span class="step-label">Select Audience</span>
+    </div>
+    <div class="step-connector" data-connector="2"></div>
+    <div class="step-item" onclick="goToStep(3)" data-step="3">
+      <div class="step-number">3</div>
+      <span class="step-label">Design Content</span>
+    </div>
+    <div class="step-connector" data-connector="3"></div>
+    <div class="step-item" onclick="goToStep(4)" data-step="4">
+      <div class="step-number">4</div>
+      <span class="step-label">Review & Schedule</span>
+    </div>
+  </div>
+
+  <!-- STEP 1: Campaign Setup -->
+  <div class="step-content-card" id="step1">
+    <div class="step-title">Campaign Setup</div>
+    <div class="step-desc">Configure the basic details of your email campaign</div>
+
+    <div class="row g-3">
+      <div class="col-md-8">
+        <label class="form-label-custom">Campaign Name <span class="required">*</span></label>
+        <input type="text" class="form-control-custom" placeholder="e.g., Spring Appeal 2026" value="Spring Appeal 2026">
+      </div>
+      <div class="col-md-4"></div>
+
+      <div class="col-12">
+        <label class="form-label-custom">Campaign Type</label>
+        <div class="radio-card-group">
+          <div class="radio-card selected" onclick="selectRadioCard(this)">
+            <div class="radio-icon">📢</div>
+            <div class="radio-title">Campaign Email</div>
+            <div class="radio-desc">One-time blast to selected audience</div>
+          </div>
+          <div class="radio-card" onclick="selectRadioCard(this)">
+            <div class="radio-icon">🔄</div>
+            <div class="radio-title">Automated Email</div>
+            <div class="radio-desc">Triggered by event (donation received, contact created, etc.)</div>
+          </div>
+          <div class="radio-card" onclick="selectRadioCard(this)">
+            <div class="radio-icon">📰</div>
+            <div class="radio-title">Newsletter</div>
+            <div class="radio-desc">Periodic scheduled delivery</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-8">
+        <label class="form-label-custom">Subject Line <span class="required">*</span></label>
+        <input type="text" class="form-control-custom" placeholder="e.g., {{FirstName}}, your support changes lives!" value="{{FirstName}}, your support changes lives!">
+        <div class="form-hint">Use <span class="placeholder-chip">{{FirstName}}</span> <span class="placeholder-chip">{{LastName}}</span> <span class="placeholder-chip">{{OrgName}}</span> for personalization</div>
+      </div>
+
+      <div class="col-md-8">
+        <label class="form-label-custom">Preheader Text</label>
+        <input type="text" class="form-control-custom" placeholder="Brief text shown after subject in inbox" value="Donate today and double your impact">
+        <div class="form-hint">Shown as preview text in most email clients (50-100 characters recommended)</div>
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label-custom">From Name <span class="required">*</span></label>
+        <input type="text" class="form-control-custom" value="Hope Foundation">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label-custom">From Email <span class="required">*</span></label>
+        <select class="form-control-custom">
+          <option selected>info@hopefoundation.org</option>
+          <option>donations@hopefoundation.org</option>
+          <option>newsletter@hopefoundation.org</option>
+          <option>noreply@hopefoundation.org</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label-custom">Reply-To Email</label>
+        <input type="text" class="form-control-custom" placeholder="Same as from email" value="info@hopefoundation.org">
+      </div>
+    </div>
+
+    <div class="step-nav">
+      <div></div>
+      <button class="btn-primary-accent" onclick="goToStep(2)">Next <i class="fas fa-arrow-right ms-1"></i></button>
+    </div>
+  </div>
+
+  <!-- STEP 2: Select Audience -->
+  <div class="step-content-card" id="step2" style="display:none;">
+    <div class="step-title">Select Audience</div>
+    <div class="step-desc">Choose who will receive this campaign</div>
+
+    <div class="row g-4">
+      <div class="col-lg-7">
+        <label class="form-label-custom">Recipient Source</label>
+        <div class="radio-card-group" style="flex-direction: column;">
+          <div class="radio-card" onclick="selectRecipientSource(this, 'segment')">
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+              <span style="font-size:1.25rem;">📋</span>
+              <div style="flex:1;">
+                <div class="radio-title">Saved Segment</div>
+                <div class="radio-desc">Use a pre-defined contact segment</div>
+              </div>
+            </div>
+            <div class="schedule-fields" style="display:none; padding: 0.75rem 0 0 2rem;" id="segment-fields">
+              <select class="form-control-custom">
+                <option>Select a segment...</option>
+                <option>Major Donors ($1000+) — 234 contacts</option>
+                <option>Monthly Donors — 567 contacts</option>
+                <option>Lapsed Donors (6+ months) — 890 contacts</option>
+                <option>Event Attendees 2025 — 345 contacts</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="radio-card selected" onclick="selectRecipientSource(this, 'filter')">
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+              <span style="font-size:1.25rem;">🔍</span>
+              <div style="flex:1;">
+                <div class="radio-title">Saved Filter</div>
+                <div class="radio-desc">Use a saved search filter</div>
+              </div>
+            </div>
+            <div class="schedule-fields" id="filter-fields" style="padding: 0.75rem 0 0 2rem;">
+              <select class="form-control-custom">
+                <option>Active donors last 90 days — 1,456 contacts</option>
+                <option>New contacts this month — 234 contacts</option>
+                <option>High engagement score — 678 contacts</option>
+                <option>Ramadan donors — 1,200 contacts</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="radio-card" onclick="selectRecipientSource(this, 'tag')">
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+              <span style="font-size:1.25rem;">🏷️</span>
+              <div style="flex:1;">
+                <div class="radio-title">By Tag</div>
+                <div class="radio-desc">Select contacts by tag</div>
+              </div>
+            </div>
+            <div class="schedule-fields" style="display:none; padding: 0.75rem 0 0 2rem;" id="tag-fields">
+              <select class="form-control-custom" multiple style="height: 80px;">
+                <option>Donor</option>
+                <option>Volunteer</option>
+                <option>Board Member</option>
+                <option>Sponsor</option>
+                <option>Major Donor</option>
+                <option>Monthly Donor</option>
+              </select>
+              <div class="form-hint">Hold Ctrl/Cmd to select multiple tags</div>
+            </div>
+          </div>
+
+          <div class="radio-card" onclick="selectRecipientSource(this, 'import')">
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+              <span style="font-size:1.25rem;">📁</span>
+              <div style="flex:1;">
+                <div class="radio-title">Import List</div>
+                <div class="radio-desc">Upload a CSV file of email addresses</div>
+              </div>
+            </div>
+            <div class="schedule-fields" style="display:none; padding: 0.75rem 0 0 2rem;" id="import-fields">
+              <div style="border: 2px dashed var(--border-color); border-radius: 0.5rem; padding: 1.5rem; text-align: center;">
+                <i class="fas fa-cloud-upload-alt" style="font-size: 1.5rem; color: var(--text-secondary); margin-bottom: 0.5rem;"></i>
+                <p style="font-size: 0.8125rem; color: var(--text-secondary); margin: 0;">Drop CSV file here or <a href="#" style="color: var(--accent);">browse</a></p>
+              </div>
+            </div>
+          </div>
+
+          <div class="radio-card" onclick="selectRecipientSource(this, 'all')">
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+              <span style="font-size:1.25rem;">👥</span>
+              <div style="flex:1;">
+                <div class="radio-title">All Contacts</div>
+                <div class="radio-desc">Send to entire contact base</div>
+              </div>
+            </div>
+            <div class="schedule-fields" style="display:none; padding: 0.75rem 0 0 2rem;" id="all-fields">
+              <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 0.5rem; padding: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-exclamation-triangle" style="color: var(--warning-color);"></i>
+                <span style="font-size: 0.8125rem; color: #92400e;">This will send to <strong>12,345</strong> contacts</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Exclusions -->
+        <div class="exclusion-section">
+          <h6><i class="fas fa-ban me-1"></i> Exclusions</h6>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label-custom" style="color: var(--text-primary);">Exclude contacts with tag</label>
+              <select class="form-control-custom" multiple style="height: 60px;">
+                <option>Unsubscribed</option>
+                <option>Do Not Email</option>
+                <option>Inactive</option>
+                <option>Bounced</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-custom" style="color: var(--text-primary);">Exclude contacts in segment</label>
+              <select class="form-control-custom">
+                <option>None</option>
+                <option>Lapsed Donors (6+ months)</option>
+                <option>Board Members</option>
+                <option>Staff</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-custom" style="color: var(--text-primary);">Exclude recently emailed (within X days)</label>
+              <input type="number" class="form-control-custom" value="3" min="0" max="90" style="width: 100px;">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Audience Preview -->
+      <div class="col-lg-5">
+        <div class="audience-preview">
+          <h6><i class="fas fa-users me-1"></i> Audience Preview</h6>
+          <div class="audience-stat-row">
+            <span class="label">Total Recipients</span>
+            <span class="value">1,456</span>
+          </div>
+          <div class="audience-stat-row">
+            <span class="label">With Email</span>
+            <span class="value success">1,398 <span style="font-weight:400; font-size:0.6875rem;">(95.8%)</span></span>
+          </div>
+          <div class="audience-stat-row">
+            <span class="label">Without Email</span>
+            <span class="value warning">58 <span style="font-weight:400; font-size:0.6875rem;">(will be skipped)</span></span>
+          </div>
+          <div class="audience-stat-row">
+            <span class="label">Unsubscribed</span>
+            <span class="value danger">23 <span style="font-weight:400; font-size:0.6875rem;">(will be excluded)</span></span>
+          </div>
+          <div class="audience-stat-row net">
+            <span class="label" style="font-weight:700; color: var(--text-primary);">Net Recipients</span>
+            <span class="value">1,375</span>
+          </div>
+        </div>
+
+        <!-- Preview Recipients -->
+        <div style="margin-top: 1rem;">
+          <button class="btn-outline-accent" style="width:100%; font-size:0.75rem;" onclick="togglePreviewRecipients()">
+            <i class="fas fa-eye me-1"></i> Preview Recipients
+          </button>
+          <div id="previewRecipients" style="display:none; margin-top: 0.75rem;">
+            <table class="mini-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Tags</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Sarah Johnson</td>
+                  <td>sarah.j@email.com</td>
+                  <td><span class="tag-badge">Donor</span><span class="tag-badge">Monthly</span></td>
+                </tr>
+                <tr>
+                  <td>Ahmed Ali</td>
+                  <td>ahmed.ali@email.com</td>
+                  <td><span class="tag-badge">Donor</span></td>
+                </tr>
+                <tr>
+                  <td>Maria Garcia</td>
+                  <td>m.garcia@email.com</td>
+                  <td><span class="tag-badge">Major Donor</span></td>
+                </tr>
+                <tr>
+                  <td>James Chen</td>
+                  <td>j.chen@email.com</td>
+                  <td><span class="tag-badge">Volunteer</span><span class="tag-badge">Donor</span></td>
+                </tr>
+                <tr>
+                  <td>Fatima Hassan</td>
+                  <td>f.hassan@email.com</td>
+                  <td><span class="tag-badge">Monthly</span></td>
+                </tr>
+                <tr>
+                  <td>David Park</td>
+                  <td>d.park@email.com</td>
+                  <td><span class="tag-badge">Donor</span></td>
+                </tr>
+                <tr>
+                  <td>Priya Sharma</td>
+                  <td>p.sharma@email.com</td>
+                  <td><span class="tag-badge">Major Donor</span></td>
+                </tr>
+                <tr>
+                  <td>Carlos Rivera</td>
+                  <td>c.rivera@email.com</td>
+                  <td><span class="tag-badge">Donor</span><span class="tag-badge">Event</span></td>
+                </tr>
+                <tr>
+                  <td>Lisa Wong</td>
+                  <td>l.wong@email.com</td>
+                  <td><span class="tag-badge">Monthly</span></td>
+                </tr>
+                <tr>
+                  <td>Omar Khalid</td>
+                  <td>o.khalid@email.com</td>
+                  <td><span class="tag-badge">Donor</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-nav">
+      <button class="btn-secondary" onclick="goToStep(1)"><i class="fas fa-arrow-left me-1"></i> Back</button>
+      <button class="btn-primary-accent" onclick="goToStep(3)">Next <i class="fas fa-arrow-right ms-1"></i></button>
+    </div>
+  </div>
+
+  <!-- STEP 3: Design Content -->
+  <div class="step-content-card" id="step3" style="display:none;">
+    <div class="step-title">Design Content</div>
+    <div class="step-desc">Choose a template and customize your email content</div>
+
+    <div class="row g-4">
+      <div class="col-lg-7">
+        <!-- Template Selection -->
+        <label class="form-label-custom" style="margin-bottom: 0.75rem;">Choose Template</label>
+        <div class="template-grid" style="margin-bottom: 1.25rem;">
+          <div class="template-card selected" onclick="selectTemplate(this)">
+            <div class="template-thumb">
+              <i class="fas fa-bullhorn"></i>
+            </div>
+            <div class="template-card-body">
+              <div class="name">Campaign Appeal</div>
+              <div class="category">Fundraising</div>
+            </div>
+          </div>
+          <div class="template-card" onclick="selectTemplate(this)">
+            <div class="template-thumb" style="background: linear-gradient(135deg, #f0fdf4, #dcfce7);">
+              <i class="fas fa-heart" style="color: #22c55e;"></i>
+            </div>
+            <div class="template-card-body">
+              <div class="name">Thank You</div>
+              <div class="category">Donor Care</div>
+            </div>
+          </div>
+          <div class="template-card" onclick="selectTemplate(this)">
+            <div class="template-thumb" style="background: linear-gradient(135deg, #fef3c7, #fde68a);">
+              <i class="fas fa-newspaper" style="color: #f59e0b;"></i>
+            </div>
+            <div class="template-card-body">
+              <div class="name">Monthly Newsletter</div>
+              <div class="category">Newsletter</div>
+            </div>
+          </div>
+          <div class="template-card" onclick="selectTemplate(this)">
+            <div class="template-thumb" style="background: linear-gradient(135deg, #faf5ff, #e9d5ff);">
+              <i class="fas fa-calendar-check" style="color: #a855f7;"></i>
+            </div>
+            <div class="template-card-body">
+              <div class="name">Event Invitation</div>
+              <div class="category">Events</div>
+            </div>
+          </div>
+          <div class="template-card" onclick="selectTemplate(this)">
+            <div class="template-thumb" style="background: linear-gradient(135deg, #f1f5f9, #e2e8f0);">
+              <i class="fas fa-file" style="color: #64748b;"></i>
+            </div>
+            <div class="template-card-body">
+              <div class="name">Blank Template</div>
+              <div class="category">Start from scratch</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Content Editor -->
+        <label class="form-label-custom" style="margin-bottom: 0.5rem;">Content Customization</label>
+        <div class="editor-toolbar">
+          <button title="Bold"><i class="fas fa-bold"></i></button>
+          <button title="Italic"><i class="fas fa-italic"></i></button>
+          <button title="Underline"><i class="fas fa-underline"></i></button>
+          <button title="Link"><i class="fas fa-link"></i></button>
+          <button title="Image"><i class="fas fa-image"></i></button>
+          <button title="Align Left"><i class="fas fa-align-left"></i></button>
+          <button title="Align Center"><i class="fas fa-align-center"></i></button>
+          <button title="Bullet List"><i class="fas fa-list-ul"></i></button>
+          <span style="width:1px; background: var(--border-color); margin: 0 0.25rem;"></span>
+          <button title="Insert Placeholder" style="color: #1d4ed8; font-weight:600; font-size:0.6875rem;">
+            <i class="fas fa-code me-1"></i> Placeholder
+          </button>
+        </div>
+        <div class="editor-area" contenteditable="true">
+          <p style="margin-bottom:0.75rem;">Dear <span class="placeholder-chip">{{FirstName}}</span>,</p>
+          <p style="margin-bottom:0.75rem;">Spring is a season of renewal, and we're reaching out to you because your generosity has always helped us grow. This year, we're launching our biggest appeal yet — and we need your support.</p>
+          <p style="margin-bottom:0.75rem;">Every dollar you give will be <strong>matched 2:1</strong> by our corporate partners, tripling the impact of your donation.</p>
+          <p style="margin-bottom:0.75rem;"><strong>Here's what your donation can achieve:</strong></p>
+          <ul style="margin-bottom:0.75rem; padding-left:1.5rem;">
+            <li>$25 — provides meals for a family for a week</li>
+            <li>$50 — sponsors educational materials for 5 students</li>
+            <li>$100 — funds a community health clinic visit</li>
+          </ul>
+          <p style="margin-bottom:0.75rem; text-align:center;">
+            <a href="#" style="display:inline-block; background: var(--accent); color: white; padding: 0.75rem 2rem; border-radius: 0.5rem; text-decoration: none; font-weight: 600;">Donate Now</a>
+          </p>
+          <p style="margin-bottom:0.5rem;">With gratitude,<br>The Hope Foundation Team</p>
+        </div>
+
+        <!-- Send Test -->
+        <div style="margin-top: 1rem; display: flex; gap: 0.5rem; align-items: center;">
+          <input type="email" class="form-control-custom" placeholder="test@email.com" style="max-width: 250px;">
+          <button class="btn-outline-accent" style="white-space: nowrap; font-size: 0.75rem;">
+            <i class="fas fa-paper-plane me-1"></i> Send Test Email
+          </button>
+        </div>
+      </div>
+
+      <!-- Preview Panel -->
+      <div class="col-lg-5">
+        <div class="preview-panel">
+          <div class="preview-toolbar">
+            <span style="font-size: 0.8125rem; font-weight: 600;">Preview</span>
+            <div class="device-toggle">
+              <button class="active" onclick="toggleDevice(this, 'desktop')"><i class="fas fa-desktop me-1"></i> Desktop</button>
+              <button onclick="toggleDevice(this, 'mobile')"><i class="fas fa-mobile-alt me-1"></i> Mobile</button>
+            </div>
+          </div>
+          <div class="preview-frame">
+            <div class="preview-email" id="previewEmail">
+              <div class="preview-email-header">
+                <h3>Spring Appeal 2026</h3>
+                <p>Hope Foundation &lt;info@hopefoundation.org&gt;</p>
+              </div>
+              <div class="preview-email-body">
+                <p>Dear Sarah,</p>
+                <p>Spring is a season of renewal, and we're reaching out to you because your generosity has always helped us grow. This year, we're launching our biggest appeal yet — and we need your support.</p>
+                <p>Every dollar you give will be <strong>matched 2:1</strong> by our corporate partners, tripling the impact of your donation.</p>
+                <p style="text-align: center; margin: 1rem 0;">
+                  <a href="#" class="preview-email-cta">Donate Now</a>
+                </p>
+                <p>With gratitude,<br>The Hope Foundation Team</p>
+              </div>
+              <div class="preview-email-footer">
+                <p style="margin:0;">Hope Foundation | 123 Main St, City, Country</p>
+                <p style="margin:0.25rem 0 0;"><a href="#" style="color: var(--accent);">Unsubscribe</a> | <a href="#" style="color: var(--accent);">Manage Preferences</a></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-nav">
+      <button class="btn-secondary" onclick="goToStep(2)"><i class="fas fa-arrow-left me-1"></i> Back</button>
+      <button class="btn-primary-accent" onclick="goToStep(4)">Next <i class="fas fa-arrow-right ms-1"></i></button>
+    </div>
+  </div>
+
+  <!-- STEP 4: Review & Schedule -->
+  <div class="step-content-card" id="step4" style="display:none;">
+    <div class="step-title">Review & Schedule</div>
+    <div class="step-desc">Review your campaign details and choose when to send</div>
+
+    <div class="row g-4">
+      <div class="col-lg-7">
+        <!-- Campaign Summary -->
+        <div class="summary-card" style="margin-bottom: 1.25rem;">
+          <h6 style="font-size: 0.8125rem; font-weight: 700; margin-bottom: 0.75rem;"><i class="fas fa-clipboard-check me-2" style="color: var(--accent);"></i>Campaign Summary</h6>
+          <div class="summary-row">
+            <span class="label">Campaign</span>
+            <span class="value">Spring Appeal 2026</span>
+          </div>
+          <div class="summary-row">
+            <span class="label">Type</span>
+            <span class="value">Campaign Email</span>
+          </div>
+          <div class="summary-row">
+            <span class="label">Subject</span>
+            <span class="value">Sarah, your support changes lives!</span>
+          </div>
+          <div class="summary-row">
+            <span class="label">From</span>
+            <span class="value">Hope Foundation &lt;info@hopefoundation.org&gt;</span>
+          </div>
+          <div class="summary-row">
+            <span class="label">Recipients</span>
+            <span class="value" style="color: var(--accent);">1,375 contacts</span>
+          </div>
+          <div class="summary-row">
+            <span class="label">Template</span>
+            <span class="value">Campaign Appeal</span>
+          </div>
+          <div class="summary-row">
+            <span class="label">Est. Send Time</span>
+            <span class="value">~5 minutes</span>
+          </div>
+        </div>
+
+        <!-- Schedule Options -->
+        <label class="form-label-custom" style="margin-bottom: 0.75rem;">Schedule Options</label>
+
+        <div class="schedule-option" onclick="selectSchedule(this, 'now')">
+          <div style="display: flex; align-items: center;">
+            <span class="sch-icon">🚀</span>
+            <div>
+              <div class="sch-title">Send Now</div>
+              <div class="sch-desc">Begin delivering immediately</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="schedule-option selected" onclick="selectSchedule(this, 'later')">
+          <div style="display: flex; align-items: center;">
+            <span class="sch-icon">📅</span>
+            <div>
+              <div class="sch-title">Schedule for Later</div>
+              <div class="sch-desc">Choose the best date and time</div>
+            </div>
+          </div>
+          <div class="schedule-fields">
+            <div class="row g-2" style="margin-bottom: 0.5rem;">
+              <div class="col-md-4">
+                <label class="form-label-custom" style="font-size: 0.6875rem;">Date</label>
+                <input type="date" class="form-control-custom" value="2026-04-15">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label-custom" style="font-size: 0.6875rem;">Time</label>
+                <input type="time" class="form-control-custom" value="10:00">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label-custom" style="font-size: 0.6875rem;">Timezone</label>
+                <select class="form-control-custom">
+                  <option>UTC+00:00 (GMT)</option>
+                  <option selected>UTC+05:30 (IST)</option>
+                  <option>UTC-05:00 (EST)</option>
+                  <option>UTC-08:00 (PST)</option>
+                  <option>UTC+01:00 (CET)</option>
+                  <option>UTC+08:00 (SGT)</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="form-label-custom" style="font-size: 0.6875rem;">Suggested Best Times</label>
+              <div class="suggested-times">
+                <span class="suggested-time"><i class="fas fa-star me-1" style="font-size:0.5rem;"></i> Tue 10:00 AM (highest open rate)</span>
+                <span class="suggested-time">Thu 2:00 PM (second best)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="schedule-option" onclick="selectSchedule(this, 'recurring')">
+          <div style="display: flex; align-items: center;">
+            <span class="sch-icon">🔄</span>
+            <div>
+              <div class="sch-title">Recurring</div>
+              <div class="sch-desc">Set up periodic delivery (for newsletters)</div>
+            </div>
+          </div>
+          <div class="schedule-fields" style="display:none;">
+            <div class="row g-2">
+              <div class="col-md-4">
+                <label class="form-label-custom" style="font-size: 0.6875rem;">Frequency</label>
+                <select class="form-control-custom">
+                  <option>Weekly</option>
+                  <option>Bi-weekly</option>
+                  <option selected>Monthly</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label-custom" style="font-size: 0.6875rem;">Day</label>
+                <select class="form-control-custom">
+                  <option>Monday</option>
+                  <option selected>Tuesday</option>
+                  <option>Wednesday</option>
+                  <option>Thursday</option>
+                  <option>Friday</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label-custom" style="font-size: 0.6875rem;">Time</label>
+                <input type="time" class="form-control-custom" value="10:00">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pre-send Checklist -->
+      <div class="col-lg-5">
+        <div class="summary-card">
+          <h6 style="font-size: 0.8125rem; font-weight: 700; margin-bottom: 0.75rem;"><i class="fas fa-shield-check me-2" style="color: var(--success-color);"></i>Pre-send Checklist</h6>
+          <ul class="checklist">
+            <li>
+              <span class="check-icon pass"><i class="fas fa-check"></i></span>
+              <span>Subject line set</span>
+            </li>
+            <li>
+              <span class="check-icon pass"><i class="fas fa-check"></i></span>
+              <span>From address configured</span>
+            </li>
+            <li>
+              <span class="check-icon pass"><i class="fas fa-check"></i></span>
+              <span>Recipients selected <strong>(1,375)</strong></span>
+            </li>
+            <li>
+              <span class="check-icon pass"><i class="fas fa-check"></i></span>
+              <span>Template content ready</span>
+            </li>
+            <li>
+              <span class="check-icon pass"><i class="fas fa-check"></i></span>
+              <span>Unsubscribe link present</span>
+            </li>
+            <li>
+              <span class="check-icon warn"><i class="fas fa-exclamation"></i></span>
+              <span style="color: var(--warning-color);">No test email sent <span style="font-size: 0.6875rem; font-weight: 400;">(recommended, not required)</span></span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-nav">
+      <button class="btn-secondary" onclick="goToStep(3)"><i class="fas fa-arrow-left me-1"></i> Back</button>
+      <div style="display: flex; gap: 0.5rem;">
+        <button class="btn-outline-accent" onclick="saveDraft()"><i class="fas fa-save me-1"></i> Save Draft</button>
+        <button class="btn-primary-accent" onclick="scheduleCampaign()" style="background: var(--success-color); border-color: var(--success-color);">
+          <i class="fas fa-calendar-check me-1"></i> Schedule Campaign
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentStep = 1;
+
+    function goToStep(step) {
+      // Hide all steps
+      for (let i = 1; i <= 4; i++) {
+        document.getElementById('step' + i).style.display = 'none';
+      }
+      // Show target step
+      document.getElementById('step' + step).style.display = 'block';
+
+      // Update progress bar
+      document.querySelectorAll('.step-item').forEach((item, idx) => {
+        const s = idx + 1;
+        item.classList.remove('active', 'completed');
+        if (s === step) item.classList.add('active');
+        else if (s < step) item.classList.add('completed');
+      });
+
+      document.querySelectorAll('.step-connector').forEach((conn, idx) => {
+        const s = idx + 1;
+        conn.classList.toggle('completed', s < step);
+      });
+
+      currentStep = step;
+    }
+
+    function selectRadioCard(card) {
+      const group = card.closest('.radio-card-group');
+      group.querySelectorAll('.radio-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+    }
+
+    function selectRecipientSource(card, type) {
+      const group = card.closest('.radio-card-group');
+      group.querySelectorAll('.radio-card').forEach(c => {
+        c.classList.remove('selected');
+        const fields = c.querySelector('.schedule-fields');
+        if (fields) fields.style.display = 'none';
+      });
+      card.classList.add('selected');
+      const fields = card.querySelector('.schedule-fields');
+      if (fields) fields.style.display = 'block';
+    }
+
+    function selectTemplate(card) {
+      document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+    }
+
+    function selectSchedule(option, type) {
+      document.querySelectorAll('.schedule-option').forEach(o => {
+        o.classList.remove('selected');
+        const f = o.querySelector('.schedule-fields');
+        if (f) f.style.display = 'none';
+      });
+      option.classList.add('selected');
+      const fields = option.querySelector('.schedule-fields');
+      if (fields) fields.style.display = 'block';
+    }
+
+    function toggleDevice(btn, mode) {
+      document.querySelectorAll('.device-toggle button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const preview = document.getElementById('previewEmail');
+      preview.classList.toggle('mobile', mode === 'mobile');
+    }
+
+    function togglePreviewRecipients() {
+      const el = document.getElementById('previewRecipients');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function saveDraft() {
+      alert('Campaign saved as draft successfully!');
+    }
+
+    function scheduleCampaign() {
+      if (confirm('Are you sure you want to schedule this campaign for Apr 15, 2026 at 10:00 AM IST?\n\nThis will send to 1,375 recipients.')) {
+        alert('Campaign scheduled successfully!');
+        parent.loadContent('communication/email-campaign-list');
+      }
+    }
+  </script>
+
+</body>
+</html>

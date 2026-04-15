@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Receipt Books - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+      --field-accent: #059669;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons */
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #0c6577;
+      border-color: #0c6577;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* KPI Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1.25rem;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .stat-icon.teal { background: var(--accent-bg); color: var(--accent); }
+    .stat-icon.green { background: #f0fdf4; color: var(--success-color); }
+    .stat-icon.blue { background: #eff6ff; color: #3b82f6; }
+    .stat-icon.orange { background: #fff7ed; color: #f97316; }
+    .stat-icon.emerald { background: #ecfdf5; color: var(--field-accent); }
+
+    .stat-info { flex: 1; }
+
+    .stat-value {
+      font-size: 1.625rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .stat-label {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 0.125rem;
+    }
+
+    .stat-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .stat-subtitle .positive { color: var(--success-color); font-weight: 600; }
+    .stat-subtitle .warning { color: var(--warning-color); font-weight: 600; }
+    .stat-subtitle .danger { color: var(--danger-color); font-weight: 600; }
+
+    /* Filter Bar */
+    .filter-bar {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1rem 1.25rem;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      margin-bottom: 1.25rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .filter-bar .search-box {
+      flex: 1;
+      min-width: 200px;
+      position: relative;
+    }
+
+    .filter-bar .search-box input {
+      width: 100%;
+      padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .filter-bar .search-box input:focus {
+      border-color: var(--accent);
+    }
+
+    .filter-bar .search-box i {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+    }
+
+    .filter-bar select {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      background: white;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .filter-bar select:focus {
+      border-color: var(--accent);
+    }
+
+    .btn-text {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      cursor: pointer;
+      padding: 0.5rem 0.75rem;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+
+    .btn-text:hover {
+      color: var(--danger-color);
+    }
+
+    /* Data Table */
+    .data-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      margin-bottom: 1.25rem;
+    }
+
+    .data-card-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .data-card-header h3 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .data-table {
+      width: 100%;
+      font-size: 0.8125rem;
+    }
+
+    .data-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    .data-table td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+
+    .data-table tr:last-child td { border-bottom: none; }
+
+    .data-table tr:hover { background: #f8fafc; }
+
+    /* Status badges */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.25rem 0.625rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .status-badge.in-stock { background: #f0f9ff; color: #0284c7; }
+    .status-badge.issued { background: #f0fdf4; color: #16a34a; }
+    .status-badge.running-low { background: #fffbeb; color: #d97706; }
+    .status-badge.almost-full { background: #fef2f2; color: #dc2626; }
+    .status-badge.completed { background: #f0fdf4; color: #16a34a; }
+    .status-badge.cancelled { background: #f1f5f9; color: #64748b; }
+
+    /* Remaining color coding */
+    .remaining-green { color: var(--success-color); font-weight: 700; }
+    .remaining-amber { color: var(--warning-color); font-weight: 700; }
+    .remaining-red { color: var(--danger-color); font-weight: 700; }
+    .remaining-black { color: #1e293b; font-weight: 700; }
+
+    /* Progress bar in table */
+    .usage-bar {
+      width: 80px;
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 9999px;
+      overflow: hidden;
+      display: inline-block;
+      vertical-align: middle;
+      margin-left: 0.5rem;
+    }
+
+    .usage-bar-fill {
+      height: 100%;
+      border-radius: 9999px;
+      transition: width 0.3s;
+    }
+
+    .usage-bar-fill.green { background: var(--success-color); }
+    .usage-bar-fill.amber { background: var(--warning-color); }
+    .usage-bar-fill.red { background: var(--danger-color); }
+
+    /* Action buttons */
+    .btn-action {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.625rem;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-primary);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-action:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .btn-action.primary {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-action.primary:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-dots {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      font-size: 1rem;
+      border-radius: 0.25rem;
+      transition: background 0.15s;
+    }
+
+    .btn-dots:hover {
+      background: #f1f5f9;
+    }
+
+    /* Dropdown menu */
+    .dropdown-menu {
+      font-size: 0.8125rem;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border-radius: 0.5rem;
+    }
+
+    .dropdown-menu .dropdown-item {
+      padding: 0.5rem 1rem;
+      font-size: 0.8125rem;
+    }
+
+    .dropdown-menu .dropdown-item:hover {
+      background: var(--accent-bg);
+      color: var(--accent);
+    }
+
+    .dropdown-menu .dropdown-item.text-danger:hover {
+      background: #fef2f2;
+      color: var(--danger-color);
+    }
+
+    /* Modal styles */
+    .modal-content {
+      border-radius: var(--card-radius);
+      border: none;
+    }
+
+    .modal-header {
+      border-bottom: 1px solid var(--border-color);
+      padding: 1.25rem 1.5rem;
+    }
+
+    .modal-header .modal-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+    }
+
+    .modal-body label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.375rem;
+    }
+
+    .modal-body .form-control,
+    .modal-body .form-select {
+      font-size: 0.8125rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      padding: 0.5rem 0.75rem;
+    }
+
+    .modal-body .form-control:focus,
+    .modal-body .form-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .modal-footer {
+      border-top: 1px solid var(--border-color);
+      padding: 1rem 1.5rem;
+    }
+
+    .auto-field {
+      background: #f8fafc;
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    /* Bulk preview */
+    .bulk-preview {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      max-height: 200px;
+      overflow-y: auto;
+      font-size: 0.8125rem;
+    }
+
+    .bulk-preview-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.375rem 0;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .bulk-preview-item:last-child { border-bottom: none; }
+
+    /* Receipt tracking panel */
+    .tracking-panel {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      margin-bottom: 1.25rem;
+    }
+
+    .tracking-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .tracking-header h3 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .tracking-header .tracking-subtitle {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .receipt-grid {
+      padding: 1.25rem;
+    }
+
+    .receipt-status-table {
+      width: 100%;
+      font-size: 0.8125rem;
+    }
+
+    .receipt-status-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .receipt-status-table td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+
+    .receipt-status-table tr:last-child td { border-bottom: none; }
+
+    .receipt-used { color: var(--success-color); }
+    .receipt-voided { color: var(--danger-color); text-decoration: line-through; }
+    .receipt-unused { color: #94a3b8; }
+    .receipt-gap { background: #fef2f2; color: var(--danger-color); font-weight: 600; }
+
+    /* Pagination */
+    .pagination-bar {
+      padding: 0.75rem 1.25rem;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .pagination-bar .page-btns {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .pagination-bar .page-btn {
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      background: white;
+      color: var(--text-primary);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .pagination-bar .page-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .pagination-bar .page-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .filter-bar { flex-direction: column; }
+      .filter-bar .search-box { min-width: 100%; }
+    }
+
+    @media (max-width: 576px) {
+      body { padding: 1rem; }
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-book me-2" style="color: var(--field-accent);"></i>Receipt Books</h1>
+      <p class="subtitle">Manage and track physical receipt book inventory</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary-accent" data-bs-toggle="modal" data-bs-target="#createBookModal">
+        <i class="fas fa-plus me-1"></i> Create Book
+      </button>
+      <button class="btn-outline-accent" data-bs-toggle="modal" data-bs-target="#bulkCreateModal">
+        <i class="fas fa-layer-group me-1"></i> Bulk Create
+      </button>
+      <button class="btn-outline-accent">
+        <i class="fas fa-file-export me-1"></i> Export Inventory
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Summary Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon emerald"><i class="fas fa-book"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Total Books</div>
+        <div class="stat-value">85</div>
+        <div class="stat-subtitle">In Stock: <strong>12</strong> &middot; Issued: <strong>58</strong> &middot; Completed: <strong>15</strong></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon teal"><i class="fas fa-receipt"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Total Receipts</div>
+        <div class="stat-value">8,500</div>
+        <div class="stat-subtitle">Used: <strong>6,234</strong> &middot; Remaining: <strong>1,978</strong> &middot; <span class="danger">Voided: 45</span> &middot; <span class="danger">Gaps: 3</span></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="fas fa-person-walking"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Active Ambassadors with Books</div>
+        <div class="stat-value">28 <span style="font-size: 0.875rem; color: var(--text-secondary);">/ 34</span></div>
+        <div class="stat-subtitle"><span class="warning">6 need new books</span></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon orange"><i class="fas fa-triangle-exclamation"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Books Running Low (&gt;75% used)</div>
+        <div class="stat-value">8</div>
+        <div class="stat-subtitle"><span class="warning">Need reorder</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input type="text" placeholder="Search by book ID, serial range, ambassador...">
+    </div>
+    <select>
+      <option>All Status</option>
+      <option>In Stock</option>
+      <option>Issued (Active)</option>
+      <option>Completed</option>
+      <option>Cancelled</option>
+    </select>
+    <select>
+      <option>All Ambassadors</option>
+      <option>Ahmed Salim</option>
+      <option>Ravi Kumar</option>
+      <option>James Okonkwo</option>
+      <option>Rahim Hossain</option>
+      <option>Suresh Nair</option>
+    </select>
+    <select>
+      <option>All Branches</option>
+      <option>Dubai</option>
+      <option>Mumbai</option>
+      <option>Delhi</option>
+      <option>Dhaka</option>
+      <option>Nairobi</option>
+    </select>
+    <select>
+      <option>All Usage</option>
+      <option>Running Low (&gt;75%)</option>
+      <option>Almost Full (&gt;90%)</option>
+      <option>Full (100%)</option>
+    </select>
+    <button class="btn-text"><i class="fas fa-times me-1"></i>Clear Filters</button>
+  </div>
+
+  <!-- Receipt Book Table -->
+  <div class="data-card">
+    <div class="data-card-header">
+      <h3>Receipt Book Inventory</h3>
+      <span style="font-size: 0.75rem; color: var(--text-secondary);">Showing 9 of 85 books</span>
+    </div>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Book ID</th>
+            <th>Serial Range</th>
+            <th>Total</th>
+            <th>Used</th>
+            <th>Voided</th>
+            <th>Remaining</th>
+            <th>Usage</th>
+            <th>Ambassador</th>
+            <th>Branch</th>
+            <th>Issued Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>RB-045</strong></td>
+            <td>4501–4600</td>
+            <td>100</td>
+            <td>45</td>
+            <td>0</td>
+            <td><span class="remaining-green">55</span></td>
+            <td>
+              <div class="usage-bar"><div class="usage-bar-fill green" style="width: 45%;"></div></div>
+            </td>
+            <td><a href="#" onclick="parent.loadContent('field-collection/ambassador-list')" style="color: var(--accent); text-decoration: none; font-weight: 500;">Ahmed Salim</a></td>
+            <td>Dubai</td>
+            <td>Mar 1, 2026</td>
+            <td><span class="status-badge issued">🟢 Issued</span></td>
+            <td>
+              <button class="btn-action" onclick="document.getElementById('trackingPanel').style.display='block'">View</button>
+              <button class="btn-action primary" onclick="document.getElementById('trackingPanel').style.display='block'">Track</button>
+              <div class="dropdown d-inline-block">
+                <button class="btn-dots" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-vertical"></i></button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li><a class="dropdown-item" href="#">View Details</a></li>
+                  <li><a class="dropdown-item" href="#">Reassign</a></li>
+                  <li><a class="dropdown-item" href="#">Return to Stock</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item text-danger" href="#">Cancel Book</a></li>
+                  <li><a class="dropdown-item" href="#">Print Cover Sheet</a></li>
+                </ul>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>RB-067</strong></td>
+            <td>6701–6800</td>
+            <td>100</td>
+            <td>78</td>
+            <td>2</td>
+            <td><span class="remaining-amber">20</span></td>
+            <td>
+              <div class="usage-bar"><div class="usage-bar-fill amber" style="width: 78%;"></div></div>
+            </td>
+            <td><a href="#" onclick="parent.loadContent('field-collection/ambassador-list')" style="color: var(--accent); text-decoration: none; font-weight: 500;">Ravi Kumar</a></td>
+            <td>Mumbai</td>
+            <td>Jan 15, 2026</td>
+            <td><span class="status-badge running-low">🟡 Running Low</span></td>
+            <td>
+              <button class="btn-action">View</button>
+              <button class="btn-action primary">Track</button>
+              <div class="dropdown d-inline-block">
+                <button class="btn-dots" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-vertical"></i></button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li><a class="dropdown-item" href="#">View Details</a></li>
+                  <li><a class="dropdown-item" href="#">Reassign</a></li>
+                  <li><a class="dropdown-item" href="#">Return to Stock</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item text-danger" href="#">Cancel Book</a></li>
+                  <li><a class="dropdown-item" href="#">Print Cover Sheet</a></li>
+                </ul>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>RB-023</strong></td>
+            <td>2301–2350</td>
+            <td>50</td>
+            <td>23</td>
+            <td>0</td>
+            <td><span class="remaining-green">27</span></td>
+            <td>
+              <div class="usage-bar"><div class="usage-bar-fill green" style="width: 46%;"></div></div>
+            </td>
+            <td><a href="#" onclick="parent.loadContent('field-collection/ambassador-list')" style="color: var(--accent); text-decoration: none; font-weight: 500;">James Okonkwo</a></td>
+            <td>Nairobi</td>
+            <td>Feb 1, 2026</td>
+            <td><span class="status-badge issued">🟢 Issued</span></td>
+            <td>
+              <button class="btn-action">View</button>
+              <button class="btn-action primary">Track</button>
+              <div class="dropdown d-inline-block">
+                <button class="btn-dots" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-vertical"></i></button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li><a class="dropdown-item" href="#">View Details</a></li>
+                  <li><a class="dropdown-item" href="#">Reassign</a></li>
+                  <li><a class="dropdown-item" href="#">Return to Stock</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item text-danger" href="#">Cancel Book</a></li>
+                  <li><a class="dropdown-item" href="#">Print Cover Sheet</a></li>
+                </ul>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>RB-034</strong></td>
+            <td>3401–3450</td>
+            <td>50</td>
+            <td>34</td>
+            <td>1</td>
+            <td><span class="remaining-amber">15</span></td>
+            <td>
+              <div class="usage-bar"><div class="usage-bar-fill amber" style="width: 68%;"></div></div>
+            </td>
+            <td><a href="#" onclick="parent.loadContent('field-collection/ambassador-list')" style="color: var(--accent); text-decoration: none; font-weight: 500;">Rahim Hossain</a></td>
+            <td>Dhaka</td>
+            <td>Dec 1, 2025</td>
+            <td><span class="status-badge running-low">🟡 Running Low</span></td>
+            <td>
+              <button class="btn-action">View</button>
+              <button class="btn-action primary">Track</button>
+              <div class="dropdown d-inline-block">
+                <button class="btn-dots" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-vertical"></i></button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li><a class="dropdown-item" href="#">View Details</a></li>
+                  <li><a class="dropdown-item" href="#">Reassign</a></li>
+                  <li><a class="dropdown-item" href="#">Return to Stock</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item text-danger" href="#">Cancel Book</a></li>
+                  <li><a class="dropdown-item" href="#">Print Cover Sheet</a></li>
+                </ul>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>RB-078</strong></td>
+            <td>7801–7900</td>
+            <td>100</td>
+            <td>92</td>
+            <td>3</td>
+            <td><span class="remaining-red">5</span></td>
+            <td>
+              <div class="usage-bar"><div class="usage-bar-fill red" style="width: 92%;"></div></div>
+            </td>
+            <td><a href="#" onclick="parent.loadContent('field-collection/ambassador-list')" style="color: var(--accent); text-decoration: none; font-weight: 500;">Suresh Nair</a></td>
+            <td>Delhi</td>
+            <td>Nov 1, 2025</td>
+            <td><span class="status-badge almost-full">🔴 Almost Full</span></td>
+            <td>
+              <button class="btn-action">View</button>
+              <button class="btn-action primary">Track</button>
+              <div class="dropdown d-inline-block">
+                <button class="btn-dots" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-vertical"></i></button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li><a class="dropdown-item" href="#">View Details</a></li>
+                  <li><a class="dropdown-item" href="#">Reassign</a></li>
+                  <li><a class="dropdown-item" href="#">Return to Stock</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item text-danger" href="#">Cancel Book</a></li>
+                  <li><a class="dropdown-item" href="#">Print Cover Sheet</a></li>
+                </ul>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>RB-032</strong></td>
+            <td>3201–3300</td>
+            <td>100</td>
+            <td>97</td>
+            <td>3</td>
+            <td><span class="remaining-black">0</span></td>
+            <td>
+              <div class="usage-bar"><div class="usage-bar-fill green" style="width: 100%; background: var(--success-color);"></div></div>
+            </td>
+            <td><a href="#" onclick="parent.loadContent('field-collection/ambassador-list')" style="color: var(--accent); text-decoration: none; font-weight: 500;">Ahmed Salim</a></td>
+            <td>Dubai</td>
+            <td>Jan 1, 2026</td>
+            <td><span class="status-badge completed">&#9989; Completed</span></td>
+            <td>
+              <button class="btn-action">View</button>
+              <button class="btn-action primary">Audit</button>
+              <div class="dropdown d-inline-block">
+                <button class="btn-dots" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-vertical"></i></button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li><a class="dropdown-item" href="#">View Details</a></li>
+                  <li><a class="dropdown-item" href="#">Print Cover Sheet</a></li>
+                </ul>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>RB-086</strong></td>
+            <td>8601–8700</td>
+            <td>100</td>
+            <td>0</td>
+            <td>0</td>
+            <td><span class="remaining-green">100</span></td>
+            <td>
+              <div class="usage-bar"><div class="usage-bar-fill green" style="width: 0%;"></div></div>
+            </td>
+            <td><span style="color: var(--text-secondary);">— (Unassigned)</span></td>
+            <td><span style="color: var(--text-secondary);">—</span></td>
+            <td><span style="color: var(--text-secondary);">—</span></td>
+            <td><span class="status-badge in-stock">📦 In Stock</span></td>
+            <td>
+              <button class="btn-action primary" data-bs-toggle="modal" data-bs-target="#assignModal">Assign</button>
+              <div class="dropdown d-inline-block">
+                <button class="btn-dots" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-vertical"></i></button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li><a class="dropdown-item" href="#">View Details</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item text-danger" href="#">Cancel Book</a></li>
+                  <li><a class="dropdown-item" href="#">Print Cover Sheet</a></li>
+                </ul>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>RB-087</strong></td>
+            <td>8701–8800</td>
+            <td>100</td>
+            <td>0</td>
+            <td>0</td>
+            <td><span class="remaining-green">100</span></td>
+            <td>
+              <div class="usage-bar"><div class="usage-bar-fill green" style="width: 0%;"></div></div>
+            </td>
+            <td><span style="color: var(--text-secondary);">— (Unassigned)</span></td>
+            <td><span style="color: var(--text-secondary);">—</span></td>
+            <td><span style="color: var(--text-secondary);">—</span></td>
+            <td><span class="status-badge in-stock">📦 In Stock</span></td>
+            <td>
+              <button class="btn-action primary" data-bs-toggle="modal" data-bs-target="#assignModal">Assign</button>
+              <div class="dropdown d-inline-block">
+                <button class="btn-dots" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-vertical"></i></button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li><a class="dropdown-item" href="#">View Details</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item text-danger" href="#">Cancel Book</a></li>
+                  <li><a class="dropdown-item" href="#">Print Cover Sheet</a></li>
+                </ul>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>RB-088</strong></td>
+            <td>8801–8900</td>
+            <td>100</td>
+            <td>0</td>
+            <td>0</td>
+            <td><span class="remaining-green">100</span></td>
+            <td>
+              <div class="usage-bar"><div class="usage-bar-fill green" style="width: 0%;"></div></div>
+            </td>
+            <td><span style="color: var(--text-secondary);">— (Unassigned)</span></td>
+            <td><span style="color: var(--text-secondary);">—</span></td>
+            <td><span style="color: var(--text-secondary);">—</span></td>
+            <td><span class="status-badge in-stock">📦 In Stock</span></td>
+            <td>
+              <button class="btn-action primary" data-bs-toggle="modal" data-bs-target="#assignModal">Assign</button>
+              <div class="dropdown d-inline-block">
+                <button class="btn-dots" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-vertical"></i></button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li><a class="dropdown-item" href="#">View Details</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item text-danger" href="#">Cancel Book</a></li>
+                  <li><a class="dropdown-item" href="#">Print Cover Sheet</a></li>
+                </ul>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination-bar">
+      <span>Showing 1-9 of 85 books</span>
+      <div class="page-btns">
+        <button class="page-btn" disabled><i class="fas fa-chevron-left"></i></button>
+        <button class="page-btn active">1</button>
+        <button class="page-btn">2</button>
+        <button class="page-btn">3</button>
+        <button class="page-btn">4</button>
+        <button class="page-btn"><i class="fas fa-chevron-right"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Receipt-Level Tracking Panel (initially hidden, shown on [Track]) -->
+  <div class="tracking-panel" id="trackingPanel" style="display: none;">
+    <div class="tracking-header">
+      <div>
+        <h3><i class="fas fa-list-check me-2" style="color: var(--field-accent);"></i>Book: RB-045 (4501–4600)</h3>
+        <span class="tracking-subtitle">Ahmed Salim &middot; Dubai Branch &middot; 45 of 100 used</span>
+      </div>
+      <div>
+        <button class="btn-outline-accent" onclick="document.getElementById('trackingPanel').style.display='none'" style="font-size: 0.75rem; padding: 0.375rem 0.75rem;">
+          <i class="fas fa-times me-1"></i> Close
+        </button>
+      </div>
+    </div>
+    <div class="receipt-grid">
+      <div class="table-responsive">
+        <table class="receipt-status-table">
+          <thead>
+            <tr>
+              <th>Receipt #</th>
+              <th>Date</th>
+              <th>Donor</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>4501</strong></td>
+              <td>Mar 2</td>
+              <td><a href="#" onclick="parent.loadContent('contacts/contact-detail')" style="color: var(--accent); text-decoration: none;">Khalid Al-Mansouri</a></td>
+              <td>AED 500</td>
+              <td><span class="receipt-used">&#9989; Used</span></td>
+            </tr>
+            <tr>
+              <td><strong>4502</strong></td>
+              <td>Mar 2</td>
+              <td><a href="#" onclick="parent.loadContent('contacts/contact-detail')" style="color: var(--accent); text-decoration: none;">Fatima Al-Zahra</a></td>
+              <td>AED 200</td>
+              <td><span class="receipt-used">&#9989; Used</span></td>
+            </tr>
+            <tr>
+              <td><strong>4503</strong></td>
+              <td>Mar 3</td>
+              <td><a href="#" onclick="parent.loadContent('contacts/contact-detail')" style="color: var(--accent); text-decoration: none;">Ahmad Nasser</a></td>
+              <td>AED 1,000</td>
+              <td><span class="receipt-used">&#9989; Used</span></td>
+            </tr>
+            <tr>
+              <td><strong>4504</strong></td>
+              <td>Mar 3</td>
+              <td><a href="#" onclick="parent.loadContent('contacts/contact-detail')" style="color: var(--accent); text-decoration: none;">Yusuf Al-Rashid</a></td>
+              <td>AED 300</td>
+              <td><span class="receipt-used">&#9989; Used</span></td>
+            </tr>
+            <tr style="font-style: italic; color: var(--text-secondary);">
+              <td colspan="5" style="text-align: center; padding: 0.375rem;">... receipts 4505–4542 (38 more used) ...</td>
+            </tr>
+            <tr class="receipt-gap">
+              <td><strong>4543</strong></td>
+              <td>—</td>
+              <td>—</td>
+              <td>—</td>
+              <td><span style="color: var(--danger-color); font-weight: 600;">&#10067; Gap — receipt missing</span></td>
+            </tr>
+            <tr>
+              <td><strong>4544</strong></td>
+              <td>Apr 10</td>
+              <td><a href="#" onclick="parent.loadContent('contacts/contact-detail')" style="color: var(--accent); text-decoration: none;">Mariam Saleh</a></td>
+              <td>AED 1,000</td>
+              <td><span class="receipt-used">&#9989; Used</span></td>
+            </tr>
+            <tr>
+              <td><strong>4545</strong></td>
+              <td>Apr 12</td>
+              <td><a href="#" onclick="parent.loadContent('contacts/contact-detail')" style="color: var(--accent); text-decoration: none;">Fatima Zahra</a></td>
+              <td>AED 200</td>
+              <td><span class="receipt-used">&#9989; Used</span></td>
+            </tr>
+            <tr>
+              <td><strong>4546</strong></td>
+              <td>Apr 12</td>
+              <td><a href="#" onclick="parent.loadContent('contacts/contact-detail')" style="color: var(--accent); text-decoration: none;">Khalid Al-Mansouri</a></td>
+              <td>AED 500</td>
+              <td><span class="receipt-used">&#9989; Used</span></td>
+            </tr>
+            <tr>
+              <td><strong>4547</strong></td>
+              <td>—</td>
+              <td>—</td>
+              <td>—</td>
+              <td><span class="receipt-unused">&#11036; Unused</span></td>
+            </tr>
+            <tr>
+              <td><strong>4548</strong></td>
+              <td>—</td>
+              <td>—</td>
+              <td>—</td>
+              <td><span class="receipt-unused">&#11036; Unused</span></td>
+            </tr>
+            <tr>
+              <td><strong>4549</strong></td>
+              <td>—</td>
+              <td>—</td>
+              <td>—</td>
+              <td><span class="receipt-unused">&#11036; Unused</span></td>
+            </tr>
+            <tr>
+              <td><strong>4550</strong></td>
+              <td>—</td>
+              <td>—</td>
+              <td>—</td>
+              <td><span class="receipt-unused">&#11036; Unused</span></td>
+            </tr>
+            <tr style="font-style: italic; color: var(--text-secondary);">
+              <td colspan="5" style="text-align: center; padding: 0.375rem;">... receipts 4551–4600 (50 more unused) ...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Book Modal -->
+  <div class="modal fade" id="createBookModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-plus-circle me-2" style="color: var(--accent);"></i>Create Receipt Book</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label>Book ID</label>
+            <div class="auto-field">RB-089 <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 400;">(auto-generated)</span></div>
+          </div>
+          <div class="row mb-3">
+            <div class="col-6">
+              <label>Serial Start *</label>
+              <input type="number" class="form-control" value="8901">
+            </div>
+            <div class="col-6">
+              <label>Serial End *</label>
+              <input type="number" class="form-control" value="9000">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label>Total Receipts</label>
+            <div class="auto-field">100 <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 400;">(auto-calculated)</span></div>
+          </div>
+          <div class="mb-3">
+            <label>Book Size</label>
+            <div class="d-flex gap-3 mt-1">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="bookSize" id="size50">
+                <label class="form-check-label" for="size50" style="font-weight: 400;">50 receipts</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="bookSize" id="size100" checked>
+                <label class="form-check-label" for="size100" style="font-weight: 400;">100 receipts</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="bookSize" id="sizeCustom">
+                <label class="form-check-label" for="sizeCustom" style="font-weight: 400;">Custom</label>
+              </div>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label>Assign To</label>
+            <select class="form-select">
+              <option>Keep in Stock</option>
+              <option>Ahmed Salim — Dubai</option>
+              <option>Ravi Kumar — Mumbai</option>
+              <option>James Okonkwo — Nairobi</option>
+              <option>Rahim Hossain — Dhaka</option>
+              <option>Suresh Nair — Delhi</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label>Branch</label>
+            <div class="auto-field" style="color: var(--text-secondary);">Auto-filled from ambassador selection</div>
+          </div>
+          <div class="mb-0">
+            <label>Notes</label>
+            <textarea class="form-control" rows="2" placeholder="Optional notes..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-outline-accent" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn-outline-accent">Create Book</button>
+          <button type="button" class="btn-primary-accent">Create & Assign</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Create Modal -->
+  <div class="modal fade" id="bulkCreateModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-layer-group me-2" style="color: var(--accent);"></i>Bulk Create Receipt Books</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row mb-3">
+            <div class="col-6">
+              <label>Number of Books</label>
+              <input type="number" class="form-control" value="10">
+            </div>
+            <div class="col-6">
+              <label>Starting Serial</label>
+              <input type="number" class="form-control" value="8901">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label>Book Size</label>
+            <div class="d-flex gap-3 mt-1">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="bulkSize" id="bulkSize50">
+                <label class="form-check-label" for="bulkSize50" style="font-weight: 400;">50 receipts</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="bulkSize" id="bulkSize100" checked>
+                <label class="form-check-label" for="bulkSize100" style="font-weight: 400;">100 receipts</label>
+              </div>
+            </div>
+          </div>
+          <div class="mb-0">
+            <label class="mb-2">Preview</label>
+            <div class="bulk-preview">
+              <div class="bulk-preview-item"><span><strong>RB-089</strong></span><span>8901–9000</span></div>
+              <div class="bulk-preview-item"><span><strong>RB-090</strong></span><span>9001–9100</span></div>
+              <div class="bulk-preview-item"><span><strong>RB-091</strong></span><span>9101–9200</span></div>
+              <div class="bulk-preview-item"><span><strong>RB-092</strong></span><span>9201–9300</span></div>
+              <div class="bulk-preview-item"><span><strong>RB-093</strong></span><span>9301–9400</span></div>
+              <div class="bulk-preview-item"><span><strong>RB-094</strong></span><span>9401–9500</span></div>
+              <div class="bulk-preview-item"><span><strong>RB-095</strong></span><span>9501–9600</span></div>
+              <div class="bulk-preview-item"><span><strong>RB-096</strong></span><span>9601–9700</span></div>
+              <div class="bulk-preview-item"><span><strong>RB-097</strong></span><span>9701–9800</span></div>
+              <div class="bulk-preview-item"><span><strong>RB-098</strong></span><span>9801–9900</span></div>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.5rem; text-align: right;">
+              10 books &middot; 1,000 total receipts
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-outline-accent" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn-primary-accent"><i class="fas fa-layer-group me-1"></i> Create 10 Books</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Assign Modal -->
+  <div class="modal fade" id="assignModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-user-check me-2" style="color: var(--accent);"></i>Assign Book</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label>Book</label>
+            <div class="auto-field">RB-086 (8601–8700)</div>
+          </div>
+          <div class="mb-0">
+            <label>Assign To *</label>
+            <select class="form-select">
+              <option>Select Ambassador...</option>
+              <option>Ahmed Salim — Dubai</option>
+              <option>Ravi Kumar — Mumbai</option>
+              <option>James Okonkwo — Nairobi</option>
+              <option>Rahim Hossain — Dhaka</option>
+              <option>Suresh Nair — Delhi</option>
+              <option>Ibrahim Yusuf — Riyadh</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-outline-accent" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn-primary-accent">Assign Book</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

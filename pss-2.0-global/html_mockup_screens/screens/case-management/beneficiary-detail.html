@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beneficiary Detail - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --cm-accent: #0d9488;
+      --cm-accent-light: #14b8a6;
+      --cm-accent-bg: #f0fdfa;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .back-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 1rem;
+    }
+
+    .back-btn:hover { border-color: var(--cm-accent); color: var(--cm-accent); background: var(--cm-accent-bg); }
+
+    .ben-header-info { display: flex; align-items: center; gap: 0.875rem; }
+
+    .ben-header-avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--cm-accent);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .ben-header-text h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .ben-id { font-size: 0.875rem; color: var(--text-secondary); font-weight: 400; }
+
+    .ben-header-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-top: 0.25rem;
+      flex-wrap: wrap;
+    }
+
+    .ben-header-meta span {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .ben-header-meta .status-pill {
+      font-size: 0.6875rem;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      background: #f0fdf4;
+      color: #166534;
+    }
+
+    .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+    .btn-primary-accent {
+      background: var(--cm-accent);
+      border-color: var(--cm-accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--cm-accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover { background: #0b7f74; border-color: #0b7f74; color: white; }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--cm-accent);
+      color: var(--cm-accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover { background: var(--cm-accent); color: white; }
+
+    .btn-secondary {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-secondary:hover { border-color: var(--cm-accent); color: var(--cm-accent); }
+
+    /* Dropdown */
+    .more-dropdown { position: relative; display: inline-block; }
+
+    .more-dropdown-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 0.25rem;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      min-width: 180px;
+      z-index: 100;
+    }
+
+    .more-dropdown-menu.show { display: block; }
+
+    .more-dropdown-menu a {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+
+    .more-dropdown-menu a:hover { background: #f8fafc; }
+    .more-dropdown-menu a i { width: 16px; text-align: center; }
+
+    /* Quick Stats */
+    .quick-stats {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .qs-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      padding: 0.875rem 1rem;
+      text-align: center;
+    }
+
+    .qs-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+    }
+
+    .qs-value {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .qs-sub {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      margin-top: 0.125rem;
+    }
+
+    .qs-sub a {
+      color: var(--cm-accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .qs-sub a:hover { text-decoration: underline; }
+
+    /* Cards */
+    .detail-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      margin-bottom: 1rem;
+    }
+
+    .detail-card-header {
+      padding: 0.875rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .detail-card-header i { color: var(--cm-accent); font-size: 0.875rem; }
+
+    .detail-card-body { padding: 1.25rem; }
+
+    /* Info List */
+    .info-list { list-style: none; padding: 0; margin: 0; }
+
+    .info-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.8125rem;
+    }
+
+    .info-list li:last-child { border-bottom: none; }
+
+    .info-label {
+      color: var(--text-secondary);
+      font-weight: 500;
+      flex-shrink: 0;
+      margin-right: 0.75rem;
+    }
+
+    .info-value {
+      color: var(--text-primary);
+      font-weight: 600;
+      text-align: right;
+    }
+
+    /* Tags */
+    .tag-list { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+
+    .tag-badge {
+      padding: 0.25rem 0.625rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      background: var(--cm-accent-bg);
+      color: var(--cm-accent);
+      border: 1px solid rgba(13, 148, 136, 0.15);
+    }
+
+    /* Tabs */
+    .detail-tabs {
+      display: flex;
+      border-bottom: 2px solid var(--border-color);
+      margin-bottom: 1.25rem;
+      overflow-x: auto;
+      gap: 0;
+    }
+
+    .detail-tabs::-webkit-scrollbar { height: 0; }
+
+    .detail-tab {
+      padding: 0.75rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      border: none;
+      background: none;
+      cursor: pointer;
+      white-space: nowrap;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.15s;
+    }
+
+    .detail-tab:hover { color: var(--cm-accent); }
+
+    .detail-tab.active {
+      color: var(--cm-accent);
+      border-bottom-color: var(--cm-accent);
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Mini Tables */
+    .mini-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    .mini-table th {
+      background: #f8fafc;
+      padding: 0.5rem 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    .mini-table td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+
+    .mini-table tr:last-child td { border-bottom: none; }
+    .mini-table tr:hover td { background: #fafafa; }
+
+    /* Program Badges */
+    .program-badge {
+      font-size: 0.625rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      white-space: nowrap;
+      display: inline-block;
+    }
+
+    .program-badge.orphan { background: #fef3c7; color: #92400e; }
+    .program-badge.education { background: #eff6ff; color: #1e40af; }
+    .program-badge.healthcare { background: #fdf2f8; color: #9d174d; }
+
+    /* Status Badges */
+    .status-badge {
+      font-size: 0.6875rem;
+      padding: 0.25rem 0.625rem;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+
+    .status-badge.active { background: #f0fdf4; color: #166534; }
+    .status-badge.open { background: #f0fdf4; color: #166534; }
+    .status-badge.closed { background: #f1f5f9; color: #64748b; }
+    .status-badge.waitlist { background: #fefce8; color: #854d0e; }
+
+    .priority-badge {
+      font-size: 0.6875rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 0.25rem;
+      font-weight: 600;
+    }
+
+    .priority-badge.high { background: #fef2f2; color: #991b1b; }
+    .priority-badge.medium { background: #fefce8; color: #854d0e; }
+
+    /* Milestone icons */
+    .milestone-yes { color: var(--success-color); }
+    .milestone-progress { color: var(--warning-color); }
+    .milestone-no { color: var(--danger-color); }
+
+    /* Sponsor link */
+    .sponsor-link {
+      color: var(--cm-accent);
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .sponsor-link:hover { text-decoration: underline; }
+
+    /* Payment Status */
+    .payment-paid {
+      font-size: 0.6875rem;
+      color: var(--success-color);
+      font-weight: 600;
+    }
+
+    /* Timeline */
+    .timeline-list { position: relative; padding-left: 2rem; }
+
+    .timeline-list::before {
+      content: '';
+      position: absolute;
+      left: 11px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #e2e8f0;
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 1rem;
+      padding: 0.875rem 1rem;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.625rem;
+      transition: box-shadow 0.15s;
+    }
+
+    .timeline-item:hover { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); }
+
+    .timeline-dot {
+      position: absolute;
+      left: -2rem;
+      top: 1rem;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.625rem;
+      border: 2px solid white;
+      z-index: 1;
+    }
+
+    .timeline-dot.green { background: #f0fdf4; color: #22c55e; }
+    .timeline-dot.blue { background: #eff6ff; color: #3b82f6; }
+    .timeline-dot.teal { background: var(--cm-accent-bg); color: var(--cm-accent); }
+    .timeline-dot.orange { background: #fff7ed; color: #f97316; }
+    .timeline-dot.purple { background: #faf5ff; color: #a855f7; }
+
+    .timeline-date {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+    }
+
+    .timeline-title {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.125rem;
+    }
+
+    .timeline-desc {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    /* Documents */
+    .doc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .doc-item {
+      border: 1px solid var(--border-color);
+      border-radius: 0.625rem;
+      padding: 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .doc-item:hover { border-color: var(--cm-accent); background: var(--cm-accent-bg); }
+
+    .doc-item i { font-size: 1.5rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
+    .doc-item:hover i { color: var(--cm-accent); }
+
+    .doc-item .doc-name { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); }
+    .doc-item .doc-date { font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.25rem; }
+
+    /* Score */
+    .outcome-score {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .score-bar {
+      width: 60px;
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+
+    .score-bar-fill {
+      height: 100%;
+      border-radius: 9999px;
+      background: var(--cm-accent);
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .quick-stats { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+      .quick-stats { grid-template-columns: repeat(2, 1fr); }
+      body { padding: 1rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" onclick="parent.loadContent('case-management/beneficiary-list')" title="Back to Beneficiaries">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <div class="ben-header-info">
+        <div class="ben-header-avatar">YH</div>
+        <div class="ben-header-text">
+          <h1>Yusuf Hassan <span class="ben-id">BEN-001</span></h1>
+          <div class="ben-header-meta">
+            <span class="status-pill">Active</span>
+            <span>Age: 8</span>
+            <span>Since: Jan 2024</span>
+            <span><i class="fas fa-location-dot me-1"></i>Dubai, UAE</span>
+            <span>Sponsor: <a class="sponsor-link" onclick="parent.loadContent('contacts/contact-detail')">Khalid Al-Mansouri</a> (CON-1245)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline-accent" onclick="parent.loadContent('case-management/beneficiary-form')">
+        <i class="fas fa-pen me-1"></i> Edit
+      </button>
+      <button class="btn-primary-accent">
+        <i class="fas fa-layer-group me-1"></i> Add to Program
+      </button>
+      <div class="more-dropdown">
+        <button class="btn-secondary" onclick="toggleDropdown()">
+          More <i class="fas fa-chevron-down ms-1" style="font-size: 0.625rem;"></i>
+        </button>
+        <div class="more-dropdown-menu" id="moreMenu">
+          <a onclick="parent.loadContent('case-management/case-list')"><i class="fas fa-folder-plus"></i> Create Case</a>
+          <a onclick="parent.loadContent('reports/html-report-viewer')"><i class="fas fa-file-lines"></i> Generate Report</a>
+          <a href="#"><i class="fas fa-file-export"></i> Export</a>
+          <a href="#"><i class="fas fa-print"></i> Print</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Stats -->
+  <div class="quick-stats">
+    <div class="qs-card">
+      <div class="qs-label">Programs</div>
+      <div class="qs-value">2</div>
+      <div class="qs-sub">Orphan Care, Education</div>
+    </div>
+    <div class="qs-card">
+      <div class="qs-label">Active Cases</div>
+      <div class="qs-value">1</div>
+      <div class="qs-sub">Education follow-up</div>
+    </div>
+    <div class="qs-card">
+      <div class="qs-label">Services Received</div>
+      <div class="qs-value">24</div>
+      <div class="qs-sub">This year</div>
+    </div>
+    <div class="qs-card">
+      <div class="qs-label">Sponsor</div>
+      <div class="qs-value" style="font-size: 0.9375rem;">Khalid Al-Mansouri</div>
+      <div class="qs-sub"><a onclick="parent.loadContent('contacts/contact-detail')">$500/month</a></div>
+    </div>
+    <div class="qs-card">
+      <div class="qs-label">Outcome Score</div>
+      <div class="qs-value">78<span style="font-size: 0.75rem; font-weight: 400; color: var(--text-secondary);">/100</span></div>
+      <div class="qs-sub">Progressing well</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="detail-tabs">
+    <button class="detail-tab active" onclick="switchTab(event, 'tabOverview')">Overview</button>
+    <button class="detail-tab" onclick="switchTab(event, 'tabPrograms')">Programs & Services</button>
+    <button class="detail-tab" onclick="switchTab(event, 'tabCases')">Cases</button>
+    <button class="detail-tab" onclick="switchTab(event, 'tabSponsorship')">Sponsorship</button>
+    <button class="detail-tab" onclick="switchTab(event, 'tabDocuments')">Documents</button>
+    <button class="detail-tab" onclick="switchTab(event, 'tabTimeline')">Timeline</button>
+  </div>
+
+  <!-- ===================== TAB 1: Overview ===================== -->
+  <div class="tab-content active" id="tabOverview">
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <div class="detail-card">
+          <div class="detail-card-header"><i class="fas fa-user"></i> Personal Information</div>
+          <div class="detail-card-body">
+            <ul class="info-list">
+              <li><span class="info-label">Full Name</span><span class="info-value">Yusuf Hassan</span></li>
+              <li><span class="info-label">Beneficiary ID</span><span class="info-value">BEN-001</span></li>
+              <li><span class="info-label">Date of Birth</span><span class="info-value">Mar 15, 2018 (age 8)</span></li>
+              <li><span class="info-label">Gender</span><span class="info-value">Male</span></li>
+              <li><span class="info-label">Nationality</span><span class="info-value">Somali</span></li>
+              <li><span class="info-label">ID Number</span><span class="info-value" style="color: var(--text-secondary); font-weight: 400;">&mdash;</span></li>
+              <li><span class="info-label">Address</span><span class="info-value">Al Quoz, Dubai, UAE</span></li>
+              <li><span class="info-label">Guardian</span><span class="info-value">Halima Hassan (mother)</span></li>
+              <li><span class="info-label">Guardian Phone</span><span class="info-value">+971 50 234 5678</span></li>
+              <li><span class="info-label">Household Size</span><span class="info-value">4 (mother + 3 children)</span></li>
+              <li><span class="info-label">Languages</span><span class="info-value">Arabic, Somali</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="detail-card">
+          <div class="detail-card-header"><i class="fas fa-clipboard-list"></i> Needs Assessment Summary</div>
+          <div class="detail-card-body">
+            <ul class="info-list">
+              <li><span class="info-label">Category</span><span class="info-value">Orphan (father deceased 2022)</span></li>
+              <li><span class="info-label">Education Level</span><span class="info-value">Grade 2 (enrolled)</span></li>
+              <li><span class="info-label">Health Status</span><span class="info-value">Good &mdash; last check-up: Mar 2026</span></li>
+              <li><span class="info-label">Housing</span><span class="info-value">Rented apartment (shared)</span></li>
+              <li><span class="info-label">Income Level</span><span class="info-value">Below poverty line</span></li>
+              <li><span class="info-label">Special Needs</span><span class="info-value">None</span></li>
+              <li><span class="info-label">Priority Level</span><span class="info-value"><span class="priority-badge high">High</span></span></li>
+            </ul>
+            <div style="margin-top: 1rem;">
+              <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem;">TAGS</div>
+              <div class="tag-list">
+                <span class="tag-badge">Orphan</span>
+                <span class="tag-badge">School-age</span>
+                <span class="tag-badge">Sponsored</span>
+                <span class="tag-badge">Dubai</span>
+                <span class="tag-badge">Priority</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== TAB 2: Programs & Services ===================== -->
+  <div class="tab-content" id="tabPrograms">
+    <!-- Enrolled Programs -->
+    <div class="detail-card">
+      <div class="detail-card-header"><i class="fas fa-hand-holding-heart"></i> Enrolled Programs</div>
+      <div class="detail-card-body" style="padding: 0;">
+        <div style="overflow-x: auto;">
+          <table class="mini-table">
+            <thead>
+              <tr>
+                <th>Program</th>
+                <th>Enrolled</th>
+                <th>Status</th>
+                <th>Staff</th>
+                <th>Services</th>
+                <th>Next Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="program-badge orphan">Orphan Sponsorship</span></td>
+                <td>Jan 2024</td>
+                <td><span class="status-badge active">Active</span></td>
+                <td>Fatima Al-Zahra</td>
+                <td>Monthly support, quarterly check</td>
+                <td>Check-in: May 1</td>
+              </tr>
+              <tr>
+                <td><span class="program-badge education">Children's Education</span></td>
+                <td>Mar 2024</td>
+                <td><span class="status-badge active">Active</span></td>
+                <td>Ahmed Salim</td>
+                <td>School fees, books, tutoring</td>
+                <td>Report card: Jun 2026</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Service History -->
+    <div class="detail-card">
+      <div class="detail-card-header"><i class="fas fa-history"></i> Service History (Recent)</div>
+      <div class="detail-card-body" style="padding: 0;">
+        <div style="overflow-x: auto;">
+          <table class="mini-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Program</th>
+                <th>Service</th>
+                <th>Provider</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Apr 5, 2026</td>
+                <td>Orphan</td>
+                <td>Monthly support payment (AED 1,800)</td>
+                <td>Auto</td>
+                <td>Paid to guardian</td>
+              </tr>
+              <tr>
+                <td>Apr 1, 2026</td>
+                <td>Education</td>
+                <td>Tutoring session (2 hours)</td>
+                <td>Ravi Kumar</td>
+                <td>Math & English</td>
+              </tr>
+              <tr>
+                <td>Mar 28, 2026</td>
+                <td>Orphan</td>
+                <td>Quarterly home visit</td>
+                <td>Fatima Al-Zahra</td>
+                <td>Good condition, attendance 95%</td>
+              </tr>
+              <tr>
+                <td>Mar 15, 2026</td>
+                <td>Healthcare</td>
+                <td>Annual health check-up</td>
+                <td>Dr. Sarah</td>
+                <td>Height/weight normal, vaccinations up to date</td>
+              </tr>
+              <tr>
+                <td>Mar 5, 2026</td>
+                <td>Orphan</td>
+                <td>Monthly support payment (AED 1,800)</td>
+                <td>Auto</td>
+                <td>Paid to guardian</td>
+              </tr>
+              <tr>
+                <td>Mar 1, 2026</td>
+                <td>Education</td>
+                <td>School fees Q2 2026 (AED 3,500)</td>
+                <td>Auto</td>
+                <td>Paid to school</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Milestones & Outcomes -->
+    <div class="detail-card">
+      <div class="detail-card-header"><i class="fas fa-trophy"></i> Milestones & Outcomes</div>
+      <div class="detail-card-body" style="padding: 0;">
+        <div style="overflow-x: auto;">
+          <table class="mini-table">
+            <thead>
+              <tr>
+                <th>Milestone</th>
+                <th>Target</th>
+                <th>Achieved</th>
+                <th>Date</th>
+                <th>Evidence</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>School enrollment</td>
+                <td>Grade 2</td>
+                <td><span class="milestone-yes"><i class="fas fa-check-circle"></i> Yes</span></td>
+                <td>Sep 2025</td>
+                <td><a href="#" style="color: var(--cm-accent); text-decoration: none; font-weight: 500;">Enrollment letter</a></td>
+              </tr>
+              <tr>
+                <td>Attendance >90%</td>
+                <td>90%</td>
+                <td><span class="milestone-yes"><i class="fas fa-check-circle"></i> 95%</span></td>
+                <td>Ongoing</td>
+                <td><a href="#" style="color: var(--cm-accent); text-decoration: none; font-weight: 500;">School records</a></td>
+              </tr>
+              <tr>
+                <td>Reading level: Grade 2</td>
+                <td>Grade 2</td>
+                <td><span class="milestone-progress"><i class="fas fa-clock"></i> Grade 1.5</span></td>
+                <td>Mar 2026</td>
+                <td><a href="#" style="color: var(--cm-accent); text-decoration: none; font-weight: 500;">Assessment</a></td>
+              </tr>
+              <tr>
+                <td>Health check-up</td>
+                <td>Annual</td>
+                <td><span class="milestone-yes"><i class="fas fa-check-circle"></i> Done</span></td>
+                <td>Mar 2026</td>
+                <td><a href="#" style="color: var(--cm-accent); text-decoration: none; font-weight: 500;">Medical report</a></td>
+              </tr>
+              <tr>
+                <td>Guardian employment</td>
+                <td>Full-time</td>
+                <td><span class="milestone-no"><i class="fas fa-times-circle"></i> Part-time</span></td>
+                <td>&mdash;</td>
+                <td>In progress</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== TAB 3: Cases ===================== -->
+  <div class="tab-content" id="tabCases">
+    <div class="detail-card">
+      <div class="detail-card-header"><i class="fas fa-folder-open"></i> Cases</div>
+      <div class="detail-card-body" style="padding: 0;">
+        <div style="overflow-x: auto;">
+          <table class="mini-table">
+            <thead>
+              <tr>
+                <th>Case ID</th>
+                <th>Title</th>
+                <th>Program</th>
+                <th>Opened</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Assigned</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="color: var(--cm-accent); font-weight: 600; cursor: pointer;" onclick="parent.loadContent('case-management/case-detail')">CASE-234</td>
+                <td>Education follow-up: reading level below grade</td>
+                <td>Education</td>
+                <td>Mar 2026</td>
+                <td><span class="status-badge open">Open</span></td>
+                <td><span class="priority-badge medium">Medium</span></td>
+                <td>Ahmed Salim</td>
+                <td><button class="btn-outline-accent" style="padding: 0.25rem 0.625rem; font-size: 0.6875rem;" onclick="parent.loadContent('case-management/case-detail')">View</button></td>
+              </tr>
+              <tr>
+                <td style="color: var(--cm-accent); font-weight: 600; cursor: pointer;" onclick="parent.loadContent('case-management/case-detail')">CASE-189</td>
+                <td>Housing assistance referral</td>
+                <td>Orphan</td>
+                <td>Nov 2025</td>
+                <td><span class="status-badge closed">Closed</span></td>
+                <td><span class="priority-badge high">High</span></td>
+                <td>Fatima Al-Zahra</td>
+                <td><button class="btn-outline-accent" style="padding: 0.25rem 0.625rem; font-size: 0.6875rem;" onclick="parent.loadContent('case-management/case-detail')">View</button></td>
+              </tr>
+              <tr>
+                <td style="color: var(--cm-accent); font-weight: 600; cursor: pointer;" onclick="parent.loadContent('case-management/case-detail')">CASE-145</td>
+                <td>Health concern: recurring illness</td>
+                <td>Healthcare</td>
+                <td>Aug 2025</td>
+                <td><span class="status-badge closed">Closed</span></td>
+                <td><span class="priority-badge high">High</span></td>
+                <td>Dr. Sarah</td>
+                <td><button class="btn-outline-accent" style="padding: 0.25rem 0.625rem; font-size: 0.6875rem;" onclick="parent.loadContent('case-management/case-detail')">View</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== TAB 4: Sponsorship ===================== -->
+  <div class="tab-content" id="tabSponsorship">
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <div class="detail-card">
+          <div class="detail-card-header"><i class="fas fa-heart"></i> Sponsorship Details</div>
+          <div class="detail-card-body">
+            <ul class="info-list">
+              <li><span class="info-label">Sponsor</span><span class="info-value"><a class="sponsor-link" onclick="parent.loadContent('contacts/contact-detail')">Khalid Al-Mansouri</a> (CON-1245)</span></li>
+              <li><span class="info-label">Sponsorship Type</span><span class="info-value">Individual (1-to-1)</span></li>
+              <li><span class="info-label">Amount</span><span class="info-value">AED 1,800/month ($490)</span></li>
+              <li><span class="info-label">Since</span><span class="info-value">Jan 2024</span></li>
+              <li><span class="info-label">Status</span><span class="info-value"><span class="status-badge active">Active</span> &mdash; all payments current</span></li>
+              <li><span class="info-label">Communications</span><span class="info-value">Quarterly update letter + photo</span></li>
+              <li><span class="info-label">Last Update Sent</span><span class="info-value">Mar 2026</span></li>
+              <li><span class="info-label">Next Update Due</span><span class="info-value">Jun 2026</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="detail-card">
+          <div class="detail-card-header"><i class="fas fa-credit-card"></i> Payment History</div>
+          <div class="detail-card-body" style="padding: 0;">
+            <div style="overflow-x: auto;">
+              <table class="mini-table">
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Apr 2026</td>
+                    <td>AED 1,800</td>
+                    <td><span class="payment-paid"><i class="fas fa-check-circle me-1"></i>Paid (Apr 5)</span></td>
+                  </tr>
+                  <tr>
+                    <td>Mar 2026</td>
+                    <td>AED 1,800</td>
+                    <td><span class="payment-paid"><i class="fas fa-check-circle me-1"></i>Paid (Mar 5)</span></td>
+                  </tr>
+                  <tr>
+                    <td>Feb 2026</td>
+                    <td>AED 1,800</td>
+                    <td><span class="payment-paid"><i class="fas fa-check-circle me-1"></i>Paid (Feb 5)</span></td>
+                  </tr>
+                  <tr>
+                    <td>Jan 2026</td>
+                    <td>AED 1,800</td>
+                    <td><span class="payment-paid"><i class="fas fa-check-circle me-1"></i>Paid (Jan 5)</span></td>
+                  </tr>
+                  <tr>
+                    <td>Dec 2025</td>
+                    <td>AED 1,800</td>
+                    <td><span class="payment-paid"><i class="fas fa-check-circle me-1"></i>Paid (Dec 5)</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== TAB 5: Documents ===================== -->
+  <div class="tab-content" id="tabDocuments">
+    <div class="detail-card">
+      <div class="detail-card-header">
+        <i class="fas fa-file-alt"></i> Documents
+        <button class="btn-primary-accent ms-auto" style="padding: 0.3125rem 0.75rem; font-size: 0.75rem;">
+          <i class="fas fa-upload me-1"></i> Upload Document
+        </button>
+      </div>
+      <div class="detail-card-body">
+        <div class="doc-grid">
+          <div class="doc-item">
+            <i class="fas fa-image"></i>
+            <div class="doc-name">Q1 2026 Photo</div>
+            <div class="doc-date">Mar 2026</div>
+          </div>
+          <div class="doc-item">
+            <i class="fas fa-image"></i>
+            <div class="doc-name">Q4 2025 Photo</div>
+            <div class="doc-date">Dec 2025</div>
+          </div>
+          <div class="doc-item">
+            <i class="fas fa-file-lines"></i>
+            <div class="doc-name">School Report - Grade 2</div>
+            <div class="doc-date">Mar 2026</div>
+          </div>
+          <div class="doc-item">
+            <i class="fas fa-file-medical"></i>
+            <div class="doc-name">Medical Report</div>
+            <div class="doc-date">Mar 2026</div>
+          </div>
+          <div class="doc-item">
+            <i class="fas fa-clipboard-check"></i>
+            <div class="doc-name">Needs Assessment Form</div>
+            <div class="doc-date">Jan 2024</div>
+          </div>
+          <div class="doc-item">
+            <i class="fas fa-id-card"></i>
+            <div class="doc-name">Guardian ID Copy</div>
+            <div class="doc-date">Jan 2024</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== TAB 6: Timeline ===================== -->
+  <div class="tab-content" id="tabTimeline">
+    <div class="detail-card">
+      <div class="detail-card-header"><i class="fas fa-clock-rotate-left"></i> Activity Timeline</div>
+      <div class="detail-card-body">
+        <div class="timeline-list">
+          <div class="timeline-item">
+            <div class="timeline-dot green"><i class="fas fa-dollar-sign"></i></div>
+            <div class="timeline-date">Apr 5, 2026</div>
+            <div class="timeline-title">Monthly Support Payment</div>
+            <div class="timeline-desc">AED 1,800 paid to guardian (Orphan Sponsorship)</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-dot blue"><i class="fas fa-book"></i></div>
+            <div class="timeline-date">Apr 1, 2026</div>
+            <div class="timeline-title">Tutoring Session</div>
+            <div class="timeline-desc">2 hours Math & English with Ravi Kumar</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-dot teal"><i class="fas fa-home"></i></div>
+            <div class="timeline-date">Mar 28, 2026</div>
+            <div class="timeline-title">Quarterly Home Visit</div>
+            <div class="timeline-desc">Fatima Al-Zahra visited. Good condition, school attendance 95%.</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-dot purple"><i class="fas fa-stethoscope"></i></div>
+            <div class="timeline-date">Mar 15, 2026</div>
+            <div class="timeline-title">Annual Health Check-up</div>
+            <div class="timeline-desc">Dr. Sarah: height/weight normal, vaccinations up to date.</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-dot orange"><i class="fas fa-folder-open"></i></div>
+            <div class="timeline-date">Mar 10, 2026</div>
+            <div class="timeline-title">Case Opened: CASE-234</div>
+            <div class="timeline-desc">Education follow-up: reading level below grade. Assigned to Ahmed Salim.</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-dot green"><i class="fas fa-dollar-sign"></i></div>
+            <div class="timeline-date">Mar 5, 2026</div>
+            <div class="timeline-title">Monthly Support Payment</div>
+            <div class="timeline-desc">AED 1,800 paid to guardian (Orphan Sponsorship)</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-dot blue"><i class="fas fa-graduation-cap"></i></div>
+            <div class="timeline-date">Mar 1, 2026</div>
+            <div class="timeline-title">School Fees Payment</div>
+            <div class="timeline-desc">Q2 2026 fees AED 3,500 paid to school (Education program)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function switchTab(e, tabId) {
+      document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      e.target.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    function toggleDropdown() {
+      document.getElementById('moreMenu').classList.toggle('show');
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.more-dropdown')) {
+        document.getElementById('moreMenu').classList.remove('show');
+      }
+    });
+  </script>
+
+</body>
+
+</html>
