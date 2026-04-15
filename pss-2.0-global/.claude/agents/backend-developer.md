@@ -24,10 +24,10 @@ You receive:
 ## Required Reading
 
 Before generating any code, read the code reference for the screen type being generated:
-- **MASTER_GRID**: Read `.claude/templates/master-grid/code-reference-backend.md`
-- **FLOW**: Read `.claude/templates/flow-grid/code-reference-backend.md` *(add this file when a FLOW reference entity is available)*
+- **MASTER_GRID**: Read `.claude/templates/master-grid/code-reference-backend.md` (canonical: ContactType)
+- **FLOW**: Read `.claude/templates/flow-grid/code-reference-backend.md` (canonical: SavedFilter)
 
-Use ContactType (in the MASTER_GRID reference) as the canonical model. Substitute `ContactType` → `{EntityName}` throughout.
+Use the canonical model for the screen type being generated. Substitute entity names throughout.
 
 ---
 

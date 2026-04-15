@@ -37,5 +37,6 @@ Grid (DataTable) → Click row → View Page
 - Zustand store (if complex state needed)
 
 ## Templates in This Folder
+- `code-reference-backend.md` — SavedFilter backend code reference (canonical FLOW entity)
+- `code-reference-frontend.md` — SavedFilter frontend code reference (canonical FLOW entity)
 - `seed-script.sql` — DB seed with parent FLOW grid + optional child MASTER_GRID
-- More templates will be added as patterns are finalized through testing
