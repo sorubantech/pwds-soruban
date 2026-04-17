@@ -201,6 +201,15 @@ Table: {schema}."{PluralTableName}"
 
 **Form Type**: {RJSF Modal (MASTER_GRID) | React Hook Form View Page (FLOW)}
 
+---
+
+{Use ONE of the two form blocks below based on screen type. Delete the other.}
+
+#### IF MASTER_GRID — RJSF Modal Form
+
+> Simple modal popup form. Fields are driven by GridFormSchema in DB seed.
+> FE developer does NOT build a custom form — RJSF renders it from backend schema.
+
 **Form Sections** (in order):
 | Section | Title | Layout | Fields |
 |---------|-------|--------|--------|
@@ -215,14 +224,126 @@ Table: {schema}."{PluralTableName}"
 | {EntityName}Name | text | "Enter name" | required, max 100 | — |
 | {FKField}Id | ApiSelectV2 | "Select {FKEntity}" | required | Query: {GQLQueryName} |
 | Description | textarea | "Enter description" | max 500 | Optional |
-| StartDate | datepicker | "Select date" | required | — |
-| IsRecurring | checkbox | — | — | — |
 | ... | ... | ... | ... | ... |
 
-**Child Grids in View Page** (if any):
-| Child | Grid Columns | Add/Edit Method | Delete |
-|-------|-------------|----------------|--------|
-| {ChildEntity} | {col1, col2, col3} | Inline row / Modal | Soft delete |
+---
+
+#### IF FLOW — View Page with 3 URL Modes & 2 Distinct UI Layouts
+
+> **This is the most important section for FLOW screens.**
+>
+> FLOW screens have ONE component (`view-page.tsx`) that renders **3 URL modes**
+> with **2 completely different UI layouts**:
+>
+> ```
+> URL MODE                              UI LAYOUT
+> ─────────────────────────────────     ──────────────────────────
+> /entity?mode=new                  →   FORM LAYOUT  (empty form)
+> /entity?mode=edit&id=243          →   FORM LAYOUT  (pre-filled, editable)
+> /entity?mode=read&id=243          →   DETAIL LAYOUT (read-only, different UI)
+> ```
+>
+> **NEW and EDIT share the same form layout** (one is empty, one is pre-filled).
+> **READ has a completely different UI** — typically a 2-column detail page with
+> info cards, history panels, audit trails, etc. — NOT just the form in disabled state.
+>
+> **WARNING**: This is where most FLOW screens fail. If this section is vague,
+> the FE developer will generate a generic flat form instead of the mockup design.
+> Be extremely specific about BOTH layouts — form AND detail.
+
+---
+
+##### LAYOUT 1: FORM (mode=new & mode=edit)
+
+> This is the form that opens when user clicks "+Add" (`?mode=new`) or "Edit" (`?mode=edit&id=243`).
+> Built with React Hook Form. Must match the HTML mockup form design exactly.
+
+**Page Header**: FlowFormPageHeader with Back, Save buttons + unsaved changes dialog
+
+**Section Container Type**: {cards / accordion / tabs — as shown in mockup}
+
+**Form Sections** (in display order from mockup):
+| # | Icon | Section Title | Layout | Collapse | Fields |
+|---|------|--------------|--------|----------|--------|
+| 1 | {fa-icon} | {Section Name} | {2-column / 3-column / full-width} | {expanded / collapsed by default} | {field1, field2, field3...} |
+| 2 | {fa-icon} | {Section Name} | {layout} | {state} | {fields} |
+| ... | ... | ... | ... | ... | ... |
+
+**Field Widget Mapping** (all fields across all sections):
+| Field | Section | Widget | Placeholder | Validation | Notes |
+|-------|---------|--------|-------------|------------|-------|
+| {EntityName}Code | 1 | text | "Enter code" | required, max 50 | Unique |
+| {EntityName}Name | 1 | text | "Enter name" | required, max 100 | — |
+| {FKField}Id | 1 | ApiSelectV2 | "Select {FKEntity}" | required | Query: {GQLQueryName} |
+| {ModeField} | 2 | card-selector | — | required | {N} visual cards: {Card1, Card2, ...} |
+| {DateField} | 2 | datepicker | "Select date" | required | Default: today |
+| {AmountField} | 3 | number (large) | "0.00" | required, > 0 | Monospace font, currency format |
+| {ComputedField} | 3 | readonly | — | — | Auto-calculated from {source fields} |
+| ... | ... | ... | ... | ... | ... |
+
+**Special Form Widgets** (if any — describe each):
+
+- **Card Selector** (if mockup shows visual card options):
+  | Card | Icon | Label | Description | Triggers |
+  |------|------|-------|-------------|----------|
+  | {e.g., "Online"} | {fa-globe} | {Online Payment} | {via payment gateway} | {Shows online payment sub-form} |
+  | {e.g., "Cash"} | {fa-money-bill} | {Cash} | {cash collection} | {Shows cash receipt sub-form} |
+
+- **Conditional Sub-forms** (if fields change based on selection):
+  | Trigger Field | Trigger Value | Sub-form Fields |
+  |--------------|---------------|-----------------|
+  | {e.g., DonationMode} | {Online} | {Gateway, TransactionId, Reference, PaymentMethod} |
+  | {e.g., DonationMode} | {Cheque} | {ChequeNo, ChequeDate, Bank, BranchName, ChequeStatus} |
+
+- **Inline Mini Display** (if mockup shows summary cards within form):
+  | Widget | Trigger | Content |
+  |--------|---------|---------|
+  | {e.g., "Donor Card"} | {When ContactId is selected} | {Avatar, Name, Score, Email, Phone} |
+
+**Child Grids in Form** (if any):
+| Child | Grid Columns | Add/Edit Method | Delete | Notes |
+|-------|-------------|----------------|--------|-------|
+| {ChildEntity} | {col1, col2, col3} | {Inline row / Modal} | {Soft delete / Remove row} | {e.g., "Add button below grid, allocation status bar"} |
+
+---
+
+##### LAYOUT 2: DETAIL (mode=read) — DIFFERENT UI from the form
+
+> This is the read-only detail page shown when user clicks a grid row (`?mode=read&id=243`).
+> This is NOT the form with fields disabled — it's a **completely different layout**.
+> Typically a multi-column page with info cards, summary sections, tables, and history.
+> Must match the HTML mockup detail/view design exactly.
+
+**Page Header**: FlowFormPageHeader with Back, Edit buttons (Edit navigates to `?mode=edit&id=243`)
+
+**Header Actions**: {Edit (→ switches to form), Print, Send (SERVICE_PLACEHOLDER), More dropdown: Duplicate, Refund, Delete}
+
+**Page Layout**:
+| Column | Width | Cards / Sections |
+|--------|-------|-----------------|
+| {Left} | {2fr} | {Card 1 title: fields, Card 2 title: fields, Table section: columns...} |
+| {Right} | {1fr} | {Card 1 title: fields, Card 2 title: fields, Timeline section...} |
+
+**Left Column Cards** (in order):
+| # | Card Title | Content |
+|---|-----------|---------|
+| 1 | {e.g., "Summary"} | {Receipt#, Date, Mode (icon+text), Type, Status (badge)} |
+| 2 | {e.g., "Amount"} | {Large amount display, Exchange Rate, Base Amount, Fee, Net} |
+| 3 | {e.g., "Distribution"} | {Table: Purpose, Amount, Role, Occasion} |
+| 4 | {e.g., "Payment Details"} | {Dynamic fields based on payment mode} |
+| ... | ... | ... |
+
+**Right Column Cards** (in order):
+| # | Card Title | Content |
+|---|-----------|---------|
+| 1 | {e.g., "Contact"} | {Avatar, Name, Code, Type badges, Score, Email, Phone, "View Profile" link} |
+| 2 | {e.g., "History"} | {Table: Date, Amount, Purpose — past records for same FK} |
+| 3 | {e.g., "Audit Trail"} | {Timeline: Created, Updated, Status changes — with timestamps} |
+| ... | ... | ... |
+
+**If mockup does NOT have a separate detail view** (some simpler FLOW screens):
+> Use the form layout in read-only mode: wrap in `<fieldset disabled>` with CSS override.
+> State: "No separate detail layout — use form with disabled fields in read mode."
 
 ### Page Widgets & Summary Cards
 
@@ -265,12 +386,18 @@ Table: {schema}."{PluralTableName}"
 3. Edit: clicks row → modal opens pre-filled → edits → Save
 4. Toggle: clicks toggle icon → confirm dialog → API call → badge updates
 
-{For FLOW}:
-1. User sees FlowDataTable list → clicks "+Add" → navigates to ?mode=new
-2. View page loads with empty form → fills fields → clicks Save → API call
-3. Success → redirects to ?mode=read&id={id} → view page shows read-only data
-4. Edit: clicks Edit button → form becomes editable (?mode=edit&id={id})
-5. Back: clicks back → returns to list with state preserved
+{For FLOW — 3 modes, 2 UI layouts}:
+1. User sees FlowDataTable grid → clicks "+Add" → URL: `/entity?mode=new`
+   → **FORM LAYOUT** loads (empty form with sections/accordions)
+2. User fills form → clicks Save → API creates record
+   → URL redirects to `/entity?mode=read&id={newId}`
+   → **DETAIL LAYOUT** loads (read-only cards, history, audit — DIFFERENT UI from form)
+3. User clicks "Edit" button on detail page → URL: `/entity?mode=edit&id={id}`
+   → **FORM LAYOUT** loads (same form as new, but pre-filled with existing data)
+4. User edits fields → clicks Save → API updates record
+   → URL redirects to `/entity?mode=read&id={id}` → back to detail layout
+5. From grid: user clicks a row → URL: `/entity?mode=read&id={id}` → detail layout
+6. Back: clicks back button → URL: `/entity` (no params) → returns to grid list
 
 ---
 

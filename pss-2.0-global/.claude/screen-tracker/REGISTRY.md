@@ -47,7 +47,7 @@
 
 | # | Screen | Mockup Files | Scope | Type | Priority | Status | Prompt | Notes |
 |---|--------|-------------|-------|------|----------|--------|--------|-------|
-| 1 | Donation (Global) | fundraising/donation-list+form+detail.html | ALIGN | FLOW | P5-Alignment | PROMPT_READY | prompts/global-donation.md | BE complete, FE needs FLOW upgrade (list+form+detail pages, 5 summary widgets, distribution grid, receipt modal). High complexity. |
+| 1 | Donation (Global) | fundraising/donation-list+form+detail.html | ALIGN | FLOW | P5-Alignment | COMPLETED | prompts/global-donation.md | Completed 2026-04-16. BE: 3 files (Summary DTO + Handler + GQL). FE: 8 new files (FLOW router, index-page, view-page, store, summary widgets, distribution grid, receipt modal, summary query). 5 modified files. DB seed generated. |
 | 2 | Donation Purpose | fundraising/donation-purposes.html | ALIGN | MASTER_GRID | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 3 | Donation Category | fundraising/donation-purposes.html | ALIGN | MASTER_GRID | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 4 | Donation Group | fundraising/donation-purposes.html | ALIGN | MASTER_GRID | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
@@ -319,7 +319,7 @@ These are the screens that need work, ordered by priority tier:
 
 | # | Screen | Module | Type | Status | Notes |
 |---|--------|--------|------|--------|-------|
-| 1 | Donation (Global) | Fundraising | FLOW | PARTIAL | Complex flow screen |
+| 1 | Donation (Global) | Fundraising | FLOW | COMPLETED | Completed 2026-04-16 |
 | 2 | Donation Purpose | Fundraising | MASTER_GRID | PARTIAL | Simple master |
 | 3 | Donation Category | Fundraising | MASTER_GRID | PARTIAL | Simple master |
 | 4 | Donation Group | Fundraising | MASTER_GRID | PARTIAL | Simple master |

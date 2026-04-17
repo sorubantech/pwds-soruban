@@ -1,3 +1,8 @@
+---
+name: plan-screens
+description: /plan-screens — Deep Screen Analyst & Prompt Builder
+---
+
 # /plan-screens — Deep Screen Analyst & Prompt Builder
 
 > Reads HTML mockups, analyzes existing code, and produces **rich, execution-ready screen prompts** 
@@ -82,6 +87,31 @@ Read mockup file(s) from `html_mockup_screens/` (path from REGISTRY.md).
 - **Summary cards / count widgets** above the grid (titles, value types, positions)
 - **Grid aggregation columns** (per-row computed values like totals, counts, last-activity)
 - **Service action buttons** (Send SMS, Send WhatsApp, Generate PDF, etc.) — capture the UI element but flag as SERVICE_PLACEHOLDER
+
+**CRITICAL for FLOW screens — Extract the FULL form design:**
+FLOW screens open a form page when "+Add" is clicked (URL → `?mode=new`).
+This form is NOT a simple modal — it's a full page (`view-page.tsx`) that must match the mockup exactly.
+Extract ALL of these from the HTML mockup:
+- Section container type (cards, accordion, tabs) and their order
+- Section icons (fa-icons), titles, column layouts (2-col, 3-col, full-width)
+- Collapsed vs expanded default state for each section
+- **Card selectors** (visual card options like payment modes)
+- **Conditional sub-forms** (fields that appear based on a selection — e.g., payment mode → different fields)
+- **Inline mini displays** (e.g., donor card that appears when a contact is selected)
+- **Child grids within the form** (e.g., distribution rows with add/remove)
+- **Computed/readonly fields** (e.g., net amount = amount - fee)
+- **Detail/View page layout** (if mockup has a separate read-only 2-column view)
+- **Header actions** in read mode (Edit, Print, Send, More dropdown)
+
+**FLOW screens have 2 different UI layouts — extract BOTH from mockup:**
+- **FORM LAYOUT** (`?mode=new` and `?mode=edit&id=X`) — the add/edit form with sections, accordions, cards
+- **DETAIL LAYOUT** (`?mode=read&id=X`) — the read-only view, often a multi-column page with info cards, history, audit trail — this is a DIFFERENT UI from the form, not just the form disabled
+
+Both go into Section ⑥ as "LAYOUT 1: FORM" and "LAYOUT 2: DETAIL".
+If the mockup doesn't have a separate detail view, note: "No separate detail layout — use form with disabled fields."
+
+If this extraction is vague, the FE developer agent WILL generate a generic flat form.
+This is the #1 cause of FLOW screen failures — the form not matching the mockup.
 
 #### 2b. Read Existing Code (by sub-type in Notes column)
 
@@ -262,3 +292,17 @@ Read: HTML mockup only
 Scope: FULL
 Special Note: "No existing code — generate everything from scratch"
 ```
+
+---
+
+## Token Optimization Directives (MANDATORY)
+
+1. **Use Sonnet model for subagents** — when spawning Agent tools for research tasks (reading existing code, resolving FK targets, exploring codebase), use `model: "sonnet"`. This is analysis-heavy work where Sonnet is sufficient and more token-efficient. Reserve Opus for code generation in `/build-screen`.
+
+2. **Role**: Use only `BUSINESSADMIN` in all approval config blocks. Do not enumerate all 7 roles.
+
+3. **Permissions**: Assume standing read/write access. Do NOT prompt the user for permissions when reading project files.
+
+4. **Avoid full builds**: Do not run `dotnet build` or `pnpm build` during planning. Planning is analysis-only.
+
+5. **FLOW form detail is critical** — Section ⑥ (Form Layout) must describe the mockup form with enough detail that the FE developer agent can implement it without re-reading the HTML mockup. Include: section titles, icons, column layouts, field types, conditional sub-forms, child grids, card selectors, computed fields. This section is the PRIMARY input for form generation — if it's vague, the form won't match the mockup.

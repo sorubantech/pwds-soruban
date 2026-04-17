@@ -258,6 +258,134 @@ export function ContactTypeDataTable() {
 ```
 *`gridCode` must match `GridCode` in DB seed exactly (ALLCAPS). Feature flags come from UX Architect's design.*
 
+### File 5 — Variant B: Grid with Widgets/Summary Cards above
+
+Use this when the mockup shows summary cards, KPI widgets, or any custom content ABOVE the data grid.
+In this variant, the header+breadcrumbs are rendered **outside** the grid using `<ScreenHeader>`, 
+and the grid is rendered with `showHeader={false}` to avoid duplicate headers.
+
+**Architecture:**
+```
+┌─────────────────────────────────────────┐
+│  ScreenHeader (title, breadcrumbs)      │ ← Rendered by the page component
+├─────────────────────────────────────────┤
+│  Summary Widgets / KPI Cards            │ ← Custom widget component
+├─────────────────────────────────────────┤
+│  DataTableContainer showHeader={false}  │ ← Grid without its own header
+└─────────────────────────────────────────┘
+```
+
+```tsx
+"use client";
+
+import { useGlobalStore } from "@/application/stores";
+import { IBreadcrumbItem } from "@/application/stores/component-stores/breadcrumb-store";
+import { TDataTableConfigs } from "@/domain/types";
+import {
+  AdvancedDataTableProvider,
+  DataTableContainer,
+  useInitializeAdvancedDataTableColumns,
+  useInitializeAdvancedDataTableData,
+} from "@/presentation/components/custom-components";
+import { ScreenHeader } from "@/presentation/components/custom-components/page-header";
+import { useAdvancedDataTableStoreFromContext } from "@/presentation/components/custom-components/data-tables/advanced/datatable-context";
+import { cn } from "@/presentation/utils";
+import { usePathname } from "next/navigation";
+import * as React from "react";
+import { EntitySummaryWidgets } from "./entity-summary";
+
+const tablePropertyConfig: TDataTableConfigs = {
+  enableAdvanceFilter: true,
+  enablePagination: true,
+  enableAdd: true,
+  enableImport: true,
+  enableExport: true,
+  enablePrint: true,
+  enableFullScreenMode: true,
+};
+
+export function EntityDataTable() {
+  return (
+    <AdvancedDataTableProvider
+      gridCode="ENTITYUPPER"
+      initialPageSize={10}
+      initialPageIndex={0}
+      tableConfig={tablePropertyConfig}
+    >
+      <EntityDataTableContent />
+    </AdvancedDataTableProvider>
+  );
+}
+
+function EntityDataTableContent() {
+  const { error: columnsError } = useInitializeAdvancedDataTableColumns();
+  const { error: dataError } = useInitializeAdvancedDataTableData();
+
+  const gridInfo = useAdvancedDataTableStoreFromContext(state => state.gridInfo);
+  const loading = useAdvancedDataTableStoreFromContext(state => state.loading);
+  const fullScreenMode = useAdvancedDataTableStoreFromContext(state => state.fullScreenMode);
+  const setFullScreenMode = useAdvancedDataTableStoreFromContext(state => state.setFullScreenMode);
+  const tableConfig = useAdvancedDataTableStoreFromContext(state => state.tableConfig);
+
+  const moduleName = useGlobalStore(state => state.moduleName);
+  const moduleUrl = useGlobalStore(state => state.moduleUrl);
+  const menuName = useGlobalStore(state => state.menuName);
+
+  const pathname = usePathname();
+  const lang = pathname.split("/")[1] || "en";
+  const moduleHref = moduleUrl
+    ? `/${lang}${moduleUrl.startsWith("/") ? moduleUrl : `/${moduleUrl}`}`
+    : undefined;
+
+  const breadcrumbs: IBreadcrumbItem[] = [
+    { id: "home", label: "Home", href: `/${lang}/masterdashboard`, icon: "solar:home-line-duotone", tooltip: "Go to master dashboard" },
+    ...(moduleName ? [{ id: "module", label: moduleName, href: moduleHref, tooltip: `Go to ${moduleName} dashboard` }] : []),
+    ...(menuName ? [{ id: "menu", label: menuName, tooltip: `Stay on ${menuName} Screen` }] : []),
+  ];
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && fullScreenMode) setFullScreenMode(false);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [fullScreenMode, setFullScreenMode]);
+
+  return (
+    <div className={cn(
+      "flex flex-col w-full max-w-full h-full transition-all duration-300 ease-in-out overflow-x-hidden",
+      fullScreenMode && "fixed inset-0 z-[100] bg-background overflow-hidden p-2 sm:p-4"
+    )}>
+      {/* Screen Header - separated from grid */}
+      <ScreenHeader
+        title={gridInfo?.gridName}
+        description={gridInfo?.description}
+        breadcrumbs={breadcrumbs}
+        loading={loading}
+        enableFullScreenMode={tableConfig?.enableFullScreenMode}
+        fullScreenMode={fullScreenMode}
+        onFullScreenToggle={() => setFullScreenMode(!fullScreenMode)}
+        headerActions={null}
+      />
+
+      {/* Summary Widgets - between header and grid */}
+      <div className="mb-3">
+        <EntitySummaryWidgets />
+      </div>
+
+      {/* Grid without its own header */}
+      <DataTableContainer showHeader={false} />
+    </div>
+  );
+}
+```
+
+**When to use which variant:**
+| Mockup has... | Use | showHeader |
+|---------------|-----|------------|
+| Grid only (no widgets above) | Variant A: `<AdvancedDataTable>` | `true` (default, handled internally) |
+| Grid + widgets/cards above | Variant B: `<ScreenHeader>` + widgets + `<DataTableContainer showHeader={false}>` | `false` |
+
 ---
 
 ## File 6 — Component Barrel

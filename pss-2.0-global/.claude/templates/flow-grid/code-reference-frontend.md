@@ -379,6 +379,14 @@ export default function SavedFilterPage() {
 ---
 
 ## File 6 — Index Page (Grid) — FLOW-SPECIFIC
+
+There are **two layout variants** for FLOW index pages. Choose based on whether the screen has widgets/summary cards above the grid.
+
+### Variant A: Grid-Only (no widgets above grid) — DEFAULT
+
+Use this when the mockup shows ONLY a data grid with no summary cards/widgets above it.
+The grid handles its own header (title, breadcrumbs, fullscreen toggle) internally.
+
 `src/presentation/components/page-components/crm/communication/savedfilter/index-page.tsx`
 ```tsx
 "use client";
@@ -416,8 +424,174 @@ export function SavedFilterIndexPage() {
 }
 ```
 
+### Variant B: Grid with Widgets/Summary Cards above grid
+
+Use this when the mockup shows summary cards, KPI widgets, or any custom content ABOVE the data grid.
+In this case, the header+breadcrumbs must be rendered **outside** the grid using `<ScreenHeader>`, 
+and the grid is rendered with `showHeader={false}` to avoid duplicate headers.
+
+**Architecture:**
+```
+┌─────────────────────────────────────────┐
+│  ScreenHeader (title, breadcrumbs)      │ ← Rendered by index-page.tsx
+├─────────────────────────────────────────┤
+│  Summary Widgets / KPI Cards            │ ← Custom component (e.g., DonationSummaryWidgets)
+├─────────────────────────────────────────┤
+│  FlowDataTableContainer showHeader={false} │ ← Grid without its own header
+└─────────────────────────────────────────┘
+```
+
+`src/presentation/components/page-components/crm/donation/globaldonation/index-page.tsx`
+```tsx
+"use client";
+
+import { useFlowDataTableStore, useGlobalStore } from "@/application/stores";
+import { IBreadcrumbItem } from "@/application/stores/component-stores/breadcrumb-store";
+import { TDataTableConfigs } from "@/domain/types";
+import {
+  FlowDataTableContainer,
+  FlowDataTableStoreProvider,
+  useFlowInitializeColumns,
+  useFlowInitializeData,
+} from "@/presentation/components/custom-components";
+import { ScreenHeader } from "@/presentation/components/custom-components/page-header";
+import { cn } from "@/presentation/utils";
+import { usePathname } from "next/navigation";
+import * as React from "react";
+import { DonationSummaryWidgets } from "./donation-summary";
+
+const tablePropertyConfig: TDataTableConfigs = {
+  enableAdvanceFilter: true,
+  enablePagination: true,
+  enableAdd: true,
+  enableImport: true,
+  enableExport: true,
+  enablePrint: true,
+  enableFullScreenMode: true,
+  enableActions: {
+    enableView: false,
+    enableEdit: true,
+    enableDelete: true,
+    enableToggle: true,
+  },
+};
+
+export function GlobalDonationIndexPage() {
+  return (
+    <FlowDataTableStoreProvider
+      gridCode="GLOBALDONATION"
+      initialPageSize={10}
+      initialPageIndex={0}
+      tableConfig={tablePropertyConfig}
+    >
+      <GlobalDonationIndexContent />
+    </FlowDataTableStoreProvider>
+  );
+}
+
+function GlobalDonationIndexContent() {
+  // Initialize columns and data
+  const { error: columnsError } = useFlowInitializeColumns();
+  const { error: dataError } = useFlowInitializeData();
+
+  // Read store for header props
+  const gridInfo = useFlowDataTableStore(state => state.gridInfo);
+  const loading = useFlowDataTableStore(state => state.loading);
+  const fullScreenMode = useFlowDataTableStore(state => state.fullScreenMode);
+  const setFullScreenMode = useFlowDataTableStore(state => state.setFullScreenMode);
+  const tableConfig = useFlowDataTableStore(state => state.tableConfig);
+
+  // Get module/menu info from global store for breadcrumb
+  const moduleName = useGlobalStore(state => state.moduleName);
+  const moduleUrl = useGlobalStore(state => state.moduleUrl);
+  const menuName = useGlobalStore(state => state.menuName);
+
+  // Build module href with language prefix
+  const pathname = usePathname();
+  const lang = pathname.split("/")[1] || "en";
+  const moduleHref = moduleUrl
+    ? `/${lang}${moduleUrl.startsWith("/") ? moduleUrl : `/${moduleUrl}`}`
+    : undefined;
+
+  // Build breadcrumbs
+  const breadcrumbs: IBreadcrumbItem[] = [
+    { id: "home", label: "Home", href: `/${lang}/masterdashboard`, icon: "solar:home-line-duotone", tooltip: "Go to master dashboard" },
+    ...(moduleName ? [{ id: "module", label: moduleName, href: moduleHref, tooltip: `Go to ${moduleName} dashboard` }] : []),
+    ...(menuName ? [{ id: "menu", label: menuName, tooltip: `Stay on ${menuName} Screen` }] : []),
+  ];
+
+  // Handle ESC key to exit fullscreen mode
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && fullScreenMode) {
+        setFullScreenMode(false);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [fullScreenMode, setFullScreenMode]);
+
+  const error = dataError || columnsError;
+  if (error) {
+    return (
+      <div className="rounded-md border p-4 bg-red-50">
+        <div className="flex items-center space-x-2">
+          <span className="text-red-600">Error:</span>
+          <span>{error.toString()}</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        "flex flex-col w-full max-w-full h-full transition-all duration-300 ease-in-out overflow-x-hidden",
+        fullScreenMode && "fixed inset-0 z-[100] bg-background overflow-hidden p-2 sm:p-4"
+      )}
+    >
+      {/* Screen Header - separated from grid */}
+      <ScreenHeader
+        title={gridInfo?.gridName}
+        description={gridInfo?.description}
+        breadcrumbs={breadcrumbs}
+        loading={loading}
+        enableFullScreenMode={tableConfig?.enableFullScreenMode}
+        fullScreenMode={fullScreenMode}
+        onFullScreenToggle={() => setFullScreenMode(!fullScreenMode)}
+        headerActions={null}
+      />
+
+      {/* Summary Widgets - between header and grid */}
+      <div className="mb-3">
+        <DonationSummaryWidgets />
+      </div>
+
+      {/* Grid without its own header (showHeader=false) */}
+      <FlowDataTableContainer showHeader={false} />
+    </div>
+  );
+}
+```
+
+**Key imports for Variant B:**
+- `FlowDataTableContainer` — the raw grid card (no header). Pass `showHeader={false}`.
+- `FlowDataTableStoreProvider` — wraps the content with the Flow data table Zustand store.
+- `useFlowInitializeColumns` / `useFlowInitializeData` — hooks that trigger column and data fetching.
+- `ScreenHeader` — from `@/presentation/components/custom-components/page-header`. Renders title, breadcrumbs, fullscreen toggle.
+
+**When to use which variant:**
+| Mockup has... | Use | showHeader |
+|---------------|-----|------------|
+| Grid only (no widgets/cards above) | Variant A: `<FlowDataTable>` | `true` (default, handled internally) |
+| Grid + summary widgets/cards above | Variant B: `<ScreenHeader>` + widgets + `<FlowDataTableContainer showHeader={false}>` | `false` |
+
+**Same pattern applies to MASTER_GRID (AdvancedDataTable):**
+- Grid only: `<AdvancedDataTable>` (header handled internally)
+- Grid + widgets: `<ScreenHeader>` + widgets + `<DataTableContainer showHeader={false}>` (from `data-tables/advanced/data-table-container.tsx`)
+
 **FLOW grid differences from MASTER_GRID:**
-- Uses `FlowDataTable` (NOT `AdvancedDataTable`)
+- Uses `FlowDataTable` / `FlowDataTableContainer` (NOT `AdvancedDataTable` / `DataTableContainer`)
 - `enableActions` controls row-level action buttons (view, edit, delete, toggle)
 - Grid row click navigates to `?mode=read&id=N` (read view)
 - Edit button navigates to `?mode=edit&id=N`

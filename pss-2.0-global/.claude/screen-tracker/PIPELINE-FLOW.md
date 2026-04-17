@@ -330,8 +330,12 @@ Every screen follows one of two patterns:
 ```
 Best for: Settings, reference data, simple entities (e.g., Contact Type, Region)
 
-### Flow Grid (Complex CRUD with View Page)
+### Flow Grid (Complex CRUD — 3 URL Modes, 2 Different UI Layouts)
+
+**The Grid (list page):**
 ```
+URL: /crm/donation/globaldonation
+
 ┌──────────────────────────────────────────┐
 │  [+ Add]  [Search: ________]  [Filter ▼] │
 ├──────────────────────────────────────────┤
@@ -339,26 +343,76 @@ Best for: Settings, reference data, simple entities (e.g., Contact Type, Region)
 │  G001 │  Grant 1 │  $5,000  │  Draft     │
 │  G002 │  Grant 2 │  $12,000 │  Approved  │
 └──────────────────────────────────────────┘
+```
 
-  Click "+Add" → Navigates to a full view/edit page:
+**Click "+Add" → FORM LAYOUT (mode=new):**
+```
+URL: /crm/donation/globaldonation?mode=new
 
 ┌──────────────────────────────────────────┐
-│  ← Back to List       [Edit] [Save]      │
+│  ← Back                        [Save]    │
 ├──────────────────────────────────────────┤
-│  Basic Info            Details            │
-│  ┌──────────────┐    ┌──────────────┐   │
-│  │ Code: G003   │    │ Amount: ___  │   │
-│  │ Name: ____   │    │ Status: ___  │   │
-│  │ Contact: [▼] │    │ Start: 📅   │   │
-│  └──────────────┘    └──────────────┘   │
+│  ▼ Section 1: Basic Info                 │
+│  ┌──────────────┐  ┌──────────────┐     │
+│  │ Code: ____   │  │ Name: ____   │     │
+│  │ Contact: [▼] │  │ Date: 📅     │     │
+│  └──────────────┘  └──────────────┘     │
 │                                          │
-│  Child Records                           │
+│  ▼ Section 2: Amount & Currency          │
+│  ┌──────────┐ ┌──────────┐ ┌────────┐  │
+│  │ Currency  │ │ Amount   │ │ Net    │  │
+│  └──────────┘ └──────────┘ └────────┘  │
+│                                          │
+│  ▼ Section 3: Distribution (child grid)  │
 │  ┌──────────────────────────────────┐   │
-│  │  Item 1  │  $500   │  Edit  Del  │   │
-│  │  Item 2  │  $1,000 │  Edit  Del  │   │
+│  │  Purpose  │  Amount  │  [Remove] │   │
+│  │  Purpose  │  Amount  │  [Remove] │   │
+│  │        [+ Add Distribution]       │   │
 │  └──────────────────────────────────┘   │
+│                                          │
+│  ► Section 4: Payment Details (collapsed)│
+│  ► Section 5: Notes (collapsed)          │
 └──────────────────────────────────────────┘
 ```
+
+**Click a grid row → DETAIL LAYOUT (mode=read) — DIFFERENT UI from the form:**
+```
+URL: /crm/donation/globaldonation?mode=read&id=243
+
+┌──────────────────────────────────────────────────────────┐
+│  ← Back              [Edit] [Print] [Send] [More ▼]     │
+├──────────────────────────────┬───────────────────────────┤
+│  LEFT COLUMN (2fr)           │  RIGHT COLUMN (1fr)       │
+│                              │                           │
+│  ┌────────────────────────┐  │  ┌─────────────────────┐ │
+│  │ Summary                │  │  │ Donor               │ │
+│  │ Receipt: R-2024-001    │  │  │ [Avatar] John Doe   │ │
+│  │ Date: 2024-03-15       │  │  │ Score: ★★★★         │ │
+│  │ Mode: 💳 Online        │  │  │ john@example.com    │ │
+│  │ Status: ✅ Completed   │  │  │ [View Profile]      │ │
+│  └────────────────────────┘  │  └─────────────────────┘ │
+│                              │                           │
+│  ┌────────────────────────┐  │  ┌─────────────────────┐ │
+│  │ Amount                 │  │  │ Donation History     │ │
+│  │    $12,500.00          │  │  │ Mar: $500            │ │
+│  │ Fee: $125  Net: $12,375│  │  │ Feb: $1,000          │ │
+│  └────────────────────────┘  │  │ Jan: $750            │ │
+│                              │  └─────────────────────┘ │
+│  ┌────────────────────────┐  │                           │
+│  │ Distribution           │  │  ┌─────────────────────┐ │
+│  │ Education  │  $8,000   │  │  │ Audit Trail         │ │
+│  │ Health     │  $4,500   │  │  │ ● Created 10:30 AM  │ │
+│  └────────────────────────┘  │  │ ● Receipt sent 11am │ │
+│                              │  └─────────────────────┘ │
+└──────────────────────────────┴───────────────────────────┘
+```
+
+**Click "Edit" on detail page → FORM LAYOUT again (mode=edit):**
+```
+URL: /crm/donation/globaldonation?mode=edit&id=243
+→ Same form as mode=new, but pre-filled with existing data
+```
+
 Best for: Complex entities with child records, workflows, multiple sections
 (e.g., Grant Application, Case, Donation, Membership)
 

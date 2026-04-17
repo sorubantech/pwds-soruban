@@ -1,3 +1,8 @@
+---
+name: build-screen
+description: /build-screen — Screen Builder (Executor)
+---
+
 # /build-screen — Screen Builder (Executor)
 
 > Takes a cached prompt file (rich analysis from `/plan-screens`) and feeds it into 
@@ -223,17 +228,47 @@ Every screen MUST be tested end-to-end, not just backend compilation:
 
 ---
 
-## Session Optimization
+## Token Optimization & Directives (MANDATORY)
 
-Each `/build-screen` session should:
+### Model & Permission Rules
+- **Role**: Use only `BUSINESSADMIN` for all approval configs and testing scenarios. Do not enumerate all 7 roles.
+- **Permissions**: Assume standing read/write access for all files under `Pss2.0_Backend/` and `Pss2.0_Frontend/`. Only prompt for destructive operations (git push, file deletion). Do NOT re-ask permissions during a build session.
+- **Builds**: Avoid full `dotnet build` or `pnpm build` unless absolutely necessary. Prefer targeted type-checking of specific projects/files. Full builds waste tokens.
+
+### Form Fidelity Rule (CRITICAL)
+**FLOW screens have 3 URL modes and 2 distinct UI layouts — both MUST match the HTML mockup exactly.**
+
+```
+URL MODE                              UI LAYOUT
+─────────────────────────────────     ──────────────────────────
+/entity?mode=new                  →   FORM LAYOUT  (empty form)
+/entity?mode=edit&id=243          →   FORM LAYOUT  (pre-filled, editable)
+/entity?mode=read&id=243          →   DETAIL LAYOUT (read-only — DIFFERENT UI)
+```
+
+The prompt's Section ⑥ describes BOTH layouts:
+- **LAYOUT 1: FORM** (for `mode=new` and `mode=edit`) — the add/edit form
+- **LAYOUT 2: DETAIL** (for `mode=read`) — the read-only detail page (different from the form)
+
+**FORM LAYOUT must match the mockup exactly:**
+- **Form sections**: Match the accordion/card sections from the mockup (number, titles, icons, collapse state)
+- **Field groupings**: Match column layout (2-col, 3-col, full-width) per section
+- **Card selectors**: If mockup shows card-style selection (e.g., donation mode cards), implement card selectors — NOT dropdown selects
+- **Conditional sub-forms**: If mockup shows different fields per mode/type, implement conditional rendering — NOT showing all fields at once
+- **Child grids**: If mockup shows inline child rows (e.g., distribution rows), implement repeating row components with add/remove — NOT a separate page
+- **Computed fields**: If mockup shows auto-calculated values (e.g., BaseCurrencyAmount = Amount × Rate), implement real-time calculation with readonly display fields
+
+**DETAIL LAYOUT must match the mockup exactly:**
+- **Multi-column layout**: If mockup shows 2-column detail (e.g., left 2fr + right 1fr), implement that — NOT just the form in disabled state
+- **Info cards**: Each card section (Summary, Amount, Payment, etc.) with correct fields and display formatting
+- **Related data panels**: History tables, audit trail timelines, linked records
+- **Header actions**: Edit button (→ `?mode=edit`), Print, Send, More dropdown
+
+**Why this matters**: GlobalDonation #1 was marked COMPLETED but its form didn't match the mockup. The prompt had all the detail (6 accordion sections, mode card selector, distribution grid, payment sub-forms) but the FE dev agent produced a generic form. This MUST NOT recur.
+
+### Session Optimization
 1. **Load minimal context** — only read: REGISTRY.md + prompt file
 2. **Don't re-read HTML mockups** — the prompt already contains all extracted information
 3. **Don't re-read all agent files upfront** — the generation pipeline loads them as needed
 4. **Target ~30-50K tokens** per screen build — if a screen is complex, split into BE + FE sessions
-
-For splitting complex screens:
-```
-/build-screen #49 --scope BE_ONLY    → Generate backend only
-/build-screen #49 --scope FE_ONLY    → Generate frontend only (after BE is done)
-/build-screen #49 --scope DB_SEED_ONLY → Generate seed script only
-```
+5. **Use subagents with `model: "sonnet"` for research/analysis tasks** (FK verification, file existence checks). Reserve the primary model for code generation.
