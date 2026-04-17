@@ -16,7 +16,13 @@ description: /plan-screens — Deep Screen Analyst & Prompt Builder
 - `.claude/screen-tracker/REGISTRY.md` — Master tracking file
 - `.claude/screen-tracker/DEPENDENCY-ORDER.md` — Build sequence (wave order, FK deps)
 - `.claude/screen-tracker/MODULE_MENU_REFERENCE.md` — Real module/menu codes and FE routes
-- `.claude/screen-tracker/prompts/_TEMPLATE.md` — **Output format** (12-section structure)
+- `.claude/screen-tracker/prompts/_TEMPLATE.md` — Router / index explaining template selection
+- `.claude/screen-tracker/prompts/_COMMON.md` — Shared section conventions (for consistency)
+- **Type-specific template** (load ONE based on detected `screen_type`):
+  - `_MASTER_GRID.md` — grid + modal RJSF form
+  - `_FLOW.md` — grid + 3-mode view-page (new/edit/read) with 2 UI layouts
+  - `_DASHBOARD.md` — widget grid + KPI cards + charts (stub)
+  - `_REPORT.md` — filter panel + result view + export (stub)
 - `.claude/business.md` — Application business context (NGO SaaS platform)
 
 ---
@@ -85,6 +91,7 @@ Read mockup file(s) from `html_mockup_screens/` (path from REGISTRY.md).
 - Action buttons, tabs, status badges, workflow indicators
 - Search/filter fields, child grids, file uploads, conditional visibility
 - **Summary cards / count widgets** above the grid (titles, value types, positions)
+- **Layout Variant** — stamp in Section ⑥ as `grid-only` | `widgets-above-grid` | `side-panel` | `widgets-above-grid+side-panel`. If the mockup shows any widget/card/panel ABOVE or BESIDE the grid, it is NOT `grid-only`. This drives FE Dev's Variant A vs Variant B decision (ScreenHeader + showHeader=false). Missing stamp → double-header UI bug (ContactType #19 precedent).
 - **Grid aggregation columns** (per-row computed values like totals, counts, last-activity)
 - **Service action buttons** (Send SMS, Send WhatsApp, Generate PDF, etc.) — capture the UI element but flag as SERVICE_PLACEHOLDER
 
@@ -112,6 +119,28 @@ If the mockup doesn't have a separate detail view, note: "No separate detail lay
 
 If this extraction is vague, the FE developer agent WILL generate a generic flat form.
 This is the #1 cause of FLOW screen failures — the form not matching the mockup.
+
+#### 2a-bis. Detect Screen Type & Select Template
+
+Based on what the mockup shows, classify the screen and load the matching template file. Each template is standalone and complete — load only the one you need.
+
+| Mockup Pattern | `screen_type` | Template to Load |
+|----------------|---------------|------------------|
+| Grid list + **modal popup form** for add/edit | `MASTER_GRID` | `.claude/screen-tracker/prompts/_MASTER_GRID.md` |
+| Grid list + **full-page view** with `?mode=new/edit/read` (URL changes on +Add) | `FLOW` | `.claude/screen-tracker/prompts/_FLOW.md` |
+| **Widget grid** with KPI cards, charts, drill-downs, no CRUD | `DASHBOARD` | `.claude/screen-tracker/prompts/_DASHBOARD.md` |
+| **Filter panel** + result table/chart + **export** actions | `REPORT` | `.claude/screen-tracker/prompts/_REPORT.md` |
+
+**Detection cues:**
+- If "+Add" opens a modal/dialog in the mockup → `MASTER_GRID`
+- If "+Add" navigates to a new page or URL changes to `?mode=new` → `FLOW`
+- If the primary UI is KPI cards + charts (no dominant grid) → `DASHBOARD`
+- If the primary UI is a filter panel with a "Generate" button and export → `REPORT`
+- When in doubt between MASTER_GRID and FLOW: workflow/transactional entities (Donations, Grants, Cases) → FLOW; setup/config entities (ContactType, Branch, Role) → MASTER_GRID.
+
+Load only the selected template. Do NOT load the other three — this is the primary token optimization of the split template design.
+
+If you detect a pattern that doesn't fit the four types, use `_COMMON.md` as reference and write the prompt with the closest-fit template, noting the divergence in Section ⑫.
 
 #### 2b. Read Existing Code (by sub-type in Notes column)
 
@@ -176,19 +205,31 @@ Pre-define:
 
 This fills **Section ⑩ (BE→FE Contract)**.
 
-#### 2h. Identify Service Placeholders
+#### 2h. Scope Discipline — Build Everything in the Mockup
 
-For screens that have action buttons tied to external services (Send SMS, Send WhatsApp, Generate PDF, etc.):
-- Capture the UI element (button name, position, trigger context)
-- Flag as `SERVICE_PLACEHOLDER` — UI must be implemented, but handler should use a placeholder/mock
-- DO NOT plan backend service implementation — that's a separate phase
-- List all placeholders in **Section ⑫ (Special Notes)**
+**GOLDEN RULE**: Every UI element shown in the HTML mockup is in scope. Build it.
+
+For each interactive element, reason about what its implementation needs:
+
+- If it only needs **UI components + database reads/writes + client-side navigation** → it's regular scope. Build the full feature (UI + backend query/mutation + wiring).
+- If it needs an **external service or integration that isn't already in the codebase** (check before deciding — don't assume) → mark as `SERVICE_PLACEHOLDER`. Build the full UI, but wire the handler to a mock/toast. Note the missing service in **Section ⑫**.
+
+How to decide if something is a SERVICE_PLACEHOLDER:
+1. Identify what the action actually does at the backend boundary (send a message? generate a file? call a third-party API? persist a record? fetch related data?).
+2. Check whether the required service/infrastructure already exists in the codebase.
+3. If yes → build it end-to-end. If no → UI-only with placeholder handler.
+
+Default stance: **assume it's buildable**. Only mark as placeholder when you can name the specific missing service layer.
+
+**ALIGN scope**: ALIGN means "match the mockup." If the mockup shows a feature the existing code lacks, it's in scope. ALIGN only avoids recreating files that already exist correctly — it does NOT mean deferring features.
+
+List only genuine service-dependency items in **Section ⑫**. Everything else in the mockup goes into Sections ⑥ and ⑧.
 
 ---
 
 ### Step 3: Generate Prompt File (12-section structure)
 
-For each screen, generate the prompt file following `_TEMPLATE.md` exactly:
+For each screen, generate the prompt file by filling in the **type-specific template** selected in Step 2a-bis (`_MASTER_GRID.md`, `_FLOW.md`, `_DASHBOARD.md`, or `_REPORT.md`). All four templates share the same 12-section skeleton — sections ⑤ and ⑥ differ per type.
 
 | Section | What /plan-screens fills in |
 |---------|---------------------------|
@@ -254,6 +295,8 @@ Save to: `.claude/screen-tracker/prompts/{entity-lower}.md`
 10. **Skip audit columns** — CreatedBy, CreatedDate, etc. are inherited
 11. **CODE_EXISTS screens = gap analysis** — describe changes needed, not full regeneration
 12. **Every section must be actionable** — if a sub-session reads it, they should be able to code immediately
+13. **Build everything in the mockup (GOLDEN RULE)** — Info panels, side panels, click-through navigation, drag-reorder UI, tabs, accordions, related-data panels are ALL in scope. The ONLY exception is SERVICE_PLACEHOLDER for external services (SMS/WhatsApp/PDF/payment gateway). Never mark legitimate UI as "out of scope for this phase."
+14. **ALIGN ≠ do less** — ALIGN means "match the mockup." If the mockup shows something the existing code doesn't have, that goes into the build scope. ALIGN only skips recreating files that already exist correctly.
 
 ---
 
@@ -297,12 +340,34 @@ Special Note: "No existing code — generate everything from scratch"
 
 ## Token Optimization Directives (MANDATORY)
 
-1. **Use Sonnet model for subagents** — when spawning Agent tools for research tasks (reading existing code, resolving FK targets, exploring codebase), use `model: "sonnet"`. This is analysis-heavy work where Sonnet is sufficient and more token-efficient. Reserve Opus for code generation in `/build-screen`.
+### Model selection — 3 tiers per task class
 
-2. **Role**: Use only `BUSINESSADMIN` in all approval config blocks. Do not enumerate all 7 roles.
+`/plan-screens` is research-heavy, not code-generation. Use the lightest model that does the job:
 
-3. **Permissions**: Assume standing read/write access. Do NOT prompt the user for permissions when reading project files.
+| Subagent task | Model | `Agent({ model: "..." })` |
+|--------------|-------|---------------------------|
+| FK target lookup (glob + single grep per FK) | **Haiku** | `"haiku"` |
+| File-existence / path-resolution checks | **Haiku** | `"haiku"` |
+| HTML mockup analysis / field extraction | **Sonnet** | `"sonnet"` |
+| Existing-code reading for ALIGN screens (diff mockup vs code) | **Sonnet** | `"sonnet"` |
+| Module/menu code lookup in MODULE_MENU_REFERENCE.md | **Haiku** | `"haiku"` |
+| Multi-source research combining 3+ files | **Sonnet** | `"sonnet"` |
 
-4. **Avoid full builds**: Do not run `dotnet build` or `pnpm build` during planning. Planning is analysis-only.
+**Main session**: run on **Sonnet** for planning. Before starting a `/plan-screens` session, the user (or Claude Code) should set `/model sonnet`. Opus is overkill for reading mockups, filling template values, and computing file manifests.
 
-5. **FLOW form detail is critical** — Section ⑥ (Form Layout) must describe the mockup form with enough detail that the FE developer agent can implement it without re-reading the HTML mockup. Include: section titles, icons, column layouts, field types, conditional sub-forms, child grids, card selectors, computed fields. This section is the PRIMARY input for form generation — if it's vague, the form won't match the mockup.
+**Rule**: never spawn an Opus-tier subagent inside `/plan-screens`. If a task feels like it needs Opus judgment, that work belongs in `/build-screen`, not here.
+
+**Anti-waste tactics**:
+- Don't spawn a subagent for a single grep — main context can do it faster and cheaper.
+- Batch related file reads in ONE Explore agent call, not N separate Agent calls.
+- Pass only the section the subagent needs, not the entire prompt file.
+
+### Other directives
+
+1. **Role**: Use only `BUSINESSADMIN` in all approval config blocks. Do not enumerate all 7 roles.
+
+2. **Permissions**: Assume standing read/write access. Do NOT prompt the user for permissions when reading project files.
+
+3. **Avoid full builds**: Do not run `dotnet build` or `pnpm build` during planning. Planning is analysis-only.
+
+4. **FLOW form detail is critical** — Section ⑥ (Form Layout) must describe the mockup form with enough detail that the FE developer agent can implement it without re-reading the HTML mockup. Include: section titles, icons, column layouts, field types, conditional sub-forms, child grids, card selectors, computed fields. This section is the PRIMARY input for form generation — if it's vague, the form won't match the mockup.

@@ -1,7 +1,18 @@
 ---
 name: backend-developer
 description: Senior Backend Developer agent. Generates all .NET 8 backend code — domain entities, EF configurations, DTOs, CQRS commands/queries, validators, GraphQL endpoints, and performs all wiring updates. Works in Pss2.0_Backend only. Fourth agent in the pipeline.
+model: sonnet
 ---
+
+<!--
+Model policy: Sonnet default. CRUD scaffolding is template-heavy (11 files per entity,
+each derived from the canonical reference). Sonnet handles it correctly when the prompt
+template (§2, §3, §7, §8) is well-filled.
+Escalate to Opus ONLY when: workflow state machine + multi-FK validators + nested child
+creation all combine (typical FLOW screens with complex business rules). /build-screen
+passes Agent({ model: "opus" }) for FLOW screens marked complexity=High.
+-->
+
 
 # Role: Senior Backend Developer
 

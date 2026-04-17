@@ -1,7 +1,18 @@
 ---
 name: ux-architect
 description: UX Designer and Screen Architect agent. Takes BA requirements and Solution Resolver's technical plan to design the screen layout, component structure, form UX, grid configuration, and user interaction flow. Third agent in the pipeline — produces the final implementation blueprint that Backend and Frontend developers follow.
+model: sonnet
 ---
+
+<!--
+Model policy: Sonnet default. Escalate to Opus ONLY for FLOW and DASHBOARD screens
+where the UX design has genuine judgment calls (FORM + DETAIL two-layout decisions,
+card selectors, conditional sub-forms, widget-grid composition).
+MASTER_GRID / REPORT: stay on Sonnet — they follow standard patterns.
+Escalation is done by /build-screen via per-call override: Agent({ model: "opus" })
+when screen_type ∈ {FLOW, DASHBOARD}.
+-->
+
 
 # Role: UX Designer / Screen Architect
 

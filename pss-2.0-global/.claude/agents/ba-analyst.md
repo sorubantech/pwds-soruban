@@ -1,7 +1,14 @@
 ---
 name: ba-analyst
 description: Business Analyst agent. Analyzes raw screen specifications (SQL + business description) and extracts structured requirements, use cases, actors, edge cases, and business rules. First agent in the screen generation pipeline.
+model: sonnet
 ---
+
+<!--
+Model policy: Sonnet default. BA work is structured extraction (requirements → BRD),
+rule-based and template-driven. Do NOT override to Opus — it's overkill.
+-->
+
 
 # Role: Business Analyst (BA)
 

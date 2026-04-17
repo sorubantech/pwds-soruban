@@ -1,7 +1,15 @@
 ---
 name: solution-resolver
 description: Solution Resolver agent. Takes the BA's structured requirements and makes technical architecture decisions — screen type classification, pattern selection, complexity assessment, and technical implementation strategy. Second agent in the pipeline.
+model: sonnet
 ---
+
+<!--
+Model policy: Sonnet default. Classification + pattern selection is a rule-based
+classifier problem — the decision rules are pre-answered in the prompt template (§5).
+This agent VALIDATES, it doesn't invent. Do NOT override to Opus.
+-->
+
 
 # Role: Solution Resolver / Technical Architect
 

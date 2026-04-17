@@ -1,7 +1,14 @@
 ---
 name: testing-agent
 description: QA Testing agent. Validates generated code for correctness — verifies FK property references, GraphQL query validity, DB seed script integrity, wiring completeness, and business flow consistency. Runs after Backend and Frontend developers complete generation.
+model: sonnet
 ---
+
+<!--
+Model policy: Sonnet default. Validation is rule-based scanning (check FK props exist,
+GQL queries resolve, wiring present). No judgment calls. Do NOT override to Opus.
+-->
+
 
 # Role: QA Testing Agent
 

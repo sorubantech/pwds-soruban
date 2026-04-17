@@ -1,7 +1,18 @@
 ---
 name: frontend-developer
 description: Senior Frontend Developer agent. Generates all Next.js/React/TypeScript frontend code — DTOs, GraphQL queries/mutations, page configs, data table components, route pages, and performs all wiring updates. Works in Pss2.0_Frontend only. Fifth agent in the pipeline.
+model: sonnet
 ---
+
+<!--
+Model policy: Sonnet default. MASTER_GRID screens (grid + RJSF modal form) are
+config-driven — Sonnet handles them correctly given the split template (_MASTER_GRID.md).
+Escalate to Opus when: screen_type ∈ {FLOW, DASHBOARD}. FLOW requires 3-mode view-page
+generation (new/edit/read) with 2 distinct UI layouts, card selectors, conditional
+sub-forms, inline mini-displays, and child grids — historic failure point (GlobalDonation).
+/build-screen passes Agent({ model: "opus" }) for FLOW/DASHBOARD.
+-->
+
 
 # Role: Senior Frontend Developer
 
@@ -238,6 +249,27 @@ export function {EntityName}PageConfig() {
   return <{EntityName}DataTable />;
 }
 ```
+
+#### Layout Variant Decision (REQUIRED — read BEFORE generating File 5)
+
+The prompt's Section ⑥ stamps `Layout Variant`. You MUST honor it.
+
+| Layout Variant | Use | Why |
+|----------------|-----|-----|
+| `grid-only` | **Variant A** — `<AdvancedDataTable>` (or `<FlowDataTable>`) with internal header | No widgets above grid; internal header is sufficient |
+| `widgets-above-grid` | **Variant B** — `<ScreenHeader>` + widgets + `<DataTableContainer showHeader={false}>` | If you use Variant A here you get DOUBLE HEADERS (internal grid header + widgets without page title). Variant B pushes header out, hides grid's internal header |
+| `side-panel` / `widgets-above-grid+side-panel` | **Variant B** + bootstrap row split (col-lg-8 grid + col-lg-4 panel) | Same reasoning + side-by-side layout |
+
+**For Variant B** read [.claude/templates/master-grid/code-reference-frontend.md](.claude/templates/master-grid/code-reference-frontend.md) "File 5 — Variant B: Grid with Widgets/Summary Cards above" (around line 261). Flow equivalent at [.claude/templates/flow-grid/code-reference-frontend.md](.claude/templates/flow-grid/code-reference-frontend.md) "Variant B: Grid with Widgets/Summary Cards above grid" (around line 427).
+
+**Anti-pattern (from ContactType #19)**: Stacking `<SummaryBar>` + `<AdvancedDataTable>` inside a card — the grid still renders its own internal header, producing duplicate headers and no page title. This fails Variant B.
+
+**Checklist before File 5:**
+- [ ] Read `Layout Variant` from prompt Section ⑥.
+- [ ] If variant ≠ `grid-only` → use Variant B recipe and pass `showHeader={false}` to the grid container.
+- [ ] If variant = `grid-only` → use Variant A (standard recipe below).
+
+---
 
 #### File 5: DataTable Component
 **Path**: `{PAGE_CMP}/{entityLower}-data-table.tsx`
@@ -584,6 +616,218 @@ Before modifying any existing screen:
 5. Update save logic for new data shape
 6. Test: read mode (display), edit mode (interaction), add mode (defaults)
 ```
+
+### UI Uniformity & Polish (MANDATORY — ALL screens)
+
+Every generated screen must visually feel like it belongs in the same product family. Inconsistent spacing, hardcoded colors, missing skeletons, and bootstrap/tailwind mixing are the top cosmetic defects in shipped builds. Follow these rules **globally** — never inline screen-specific styling.
+
+#### Rule 1 — Design tokens only, NO hardcoded values
+
+| DON'T | DO |
+|-------|-----|
+| `style={{ background: "#f9fafb" }}` | `className="bg-muted/50"` |
+| `style={{ color: "#0e7490" }}` | `className="text-primary"` |
+| `style={{ borderColor: "#e5e7eb" }}` | `className="border border-border"` |
+| `style={{ padding: 16 }}` | `className="p-4"` |
+| `style={{ fontSize: "0.875rem" }}` | `className="text-sm"` |
+| `style={{ borderRadius: 8 }}` | `className="rounded-lg"` |
+
+**Allowed inline styles**: computed dimensions only (dynamic widths/heights for charts, drag offsets, truncation widths that depend on props). Never for color, spacing, typography, borders, radii.
+
+**Token catalog** (Tailwind + design-token names already present in the codebase):
+- Backgrounds: `bg-background`, `bg-card`, `bg-muted`, `bg-muted/50`, `bg-accent`, `bg-primary/5`, `bg-primary/10`
+- Text: `text-foreground`, `text-muted-foreground`, `text-primary`, `text-destructive`
+- Borders: `border`, `border-border`, `border-input`, `border-primary/20`
+- Radii: `rounded-sm`, `rounded-md`, `rounded-lg`, `rounded-full`
+- Shadows: `shadow-sm`, `shadow-md`
+
+#### Rule 2 — Consistent spacing scale
+
+Use the 4px-based Tailwind spacing scale. Pick one value per hierarchy level and stay consistent within the screen:
+
+| Hierarchy | Recommended |
+|-----------|-------------|
+| Between page sections (card → widget → grid) | `space-y-4` or bootstrap `g-3`/`g-4` |
+| Inside a card (header ↔ body ↔ footer) | `space-y-3` |
+| Between related fields in a form | `gap-3` (grid) or `space-y-3` (stack) |
+| Between inline elements (icon + label, badge + text) | `gap-1.5` or `gap-2` |
+| Card inner padding | `p-3` (compact) or `p-4` (default) or `p-6` (spacious) — pick ONE per screen |
+| Section margin | `mb-3` or `mb-4` — consistent |
+
+**Rule**: within one screen, all cards use the same inner padding; all vertical stacks use the same `space-y-*`. Mixing `p-3` with `p-4` on sibling cards is a defect.
+
+#### Rule 3 — Card framing
+
+Use the shared `<Card>` primitive from common-components when available. If the mockup requires a bootstrap-style card wrapper, apply the same token set:
+
+```tsx
+<div className="rounded-lg border border-border bg-card">
+  <div className="flex items-center gap-2 border-b border-border bg-muted/50 px-4 py-3">
+    {/* header */}
+  </div>
+  <div className="p-4">
+    {/* body */}
+  </div>
+</div>
+```
+
+Never use raw `.card` / `.card-header` / `.card-body` bootstrap classes (they don't honor the design system).
+
+#### Rule 4 — Skeleton loaders are MANDATORY for every async surface
+
+Every `useQuery`/`useMutation`-backed view MUST render a skeleton that **visually mimics** the real content's shape while loading — NOT a generic spinner, NOT an empty div, NOT text "Loading...".
+
+**Skeleton imports:**
+```tsx
+// Generic bar/box
+import { Skeleton } from "@/presentation/components/common-components";
+
+// Page-level full-screen loader (use only inside PageConfig while capabilities load)
+import { LayoutLoader } from "@/presentation/components/layout-components/layout-loader";
+
+// Table skeleton (grids while data loads — often handled internally by AdvancedDataTable)
+import { DefaultTableWithCellSkeletons } from "@/presentation/components/custom-components/atoms/skeleton";
+```
+
+**Skeleton shape rules:**
+- A skeleton block's height/width should approximate the real element it replaces (e.g., avatar → `<Skeleton className="h-9 w-9 rounded-full" />`, title line → `<Skeleton className="h-4 w-40" />`, paragraph → two or three `<Skeleton>` lines at varied widths).
+- Count of skeleton rows should match the expected content count (lists: 3–5 rows; not 1).
+- Use the same card/border framing as the real content so the loading → loaded transition doesn't shift layout.
+
+**Pattern for a panel with header + list:**
+```tsx
+{loading ? (
+  <div className="space-y-3">
+    <Skeleton className="h-14 w-full rounded-lg" />   {/* info card placeholder */}
+    <Skeleton className="h-3 w-24" />                 {/* section heading */}
+    {Array.from({ length: 3 }).map((_, i) => (
+      <div key={i} className="flex items-center gap-2.5">
+        <Skeleton className="h-9 w-9 rounded-full" />
+        <div className="flex-1 space-y-1.5">
+          <Skeleton className="h-3.5 w-3/5" />
+          <Skeleton className="h-3 w-2/5" />
+        </div>
+      </div>
+    ))}
+  </div>
+) : (
+  /* real content */
+)}
+```
+
+**Never** hand-build skeleton `<div style={{ height: 36, background: "#e5e7eb" }}/>`. Always use `<Skeleton>`.
+
+#### Rule 5 — Equal-spacing multi-panel layouts
+
+For MASTER_GRID side-panel layouts or FLOW view-page multi-card layouts:
+- Use bootstrap grid with uniform gutter: `<div className="row g-3">` (all sibling cards equal gutter).
+- Inside each column, stack with uniform `space-y-3` or `space-y-4`.
+- All stacked cards share the same inner padding (`p-4`) and same border/radius class.
+- All section headers share the same typography: `text-sm font-semibold` + `bg-muted/50` background + `border-b border-border` divider.
+
+If two sibling panels look unevenly padded or aligned, the screen fails review.
+
+#### Rule 6 — Empty, error, and disabled states
+
+Every list/grid/panel needs three designed states, not just "loaded":
+
+| State | Pattern |
+|-------|---------|
+| Empty | Centered icon (muted color) + short primary text + shorter muted subtext. Same card framing as loaded. |
+| Error | Warning icon + muted text "Could not load {thing}". Same card framing. |
+| Disabled/No selection | Muted icon + short prompt (e.g., "Select a row to view details"). Same card framing. |
+
+Don't render raw `<p>No data</p>` — always use the muted-foreground text token and consistent icon sizing.
+
+#### Anti-patterns flagged during review
+
+- Inline `style={{...}}` objects with hex colors, pixel paddings, or hardcoded typography → **reject**.
+- Mixing bootstrap `.card` with tailwind `bg-card` in the same screen → **reject**, pick one.
+- Skeleton built as a plain colored div → **reject**, use `<Skeleton>`.
+- Single skeleton row when the real list shows 3+ rows → **reject**, match count.
+- Different card paddings on sibling panels (`p-3` left, `p-4` right) → **reject**, make uniform.
+- Loading state = empty `<div>` or spinner over the whole page when only a sub-section is fetching → **reject**, scope the skeleton to the fetching surface.
+
+#### Why this exists
+
+Generated screens sometimes shipped with inline hex colors, uneven padding between cards, and bare "loading..." text instead of shaped skeletons — polish regressed from the mockup and the product felt inconsistent. This rule set puts the FE agent on the same design tokens the rest of the app uses, so new screens feel native the moment they render.
+
+---
+
+### Component Reuse-or-Create Protocol (MANDATORY — MASTER_GRID + FLOW)
+
+Before writing code that references ANY shared/custom component (cell renderer, display chip, status badge, link-count, truncated text, etc.), you MUST search first, then decide: **reuse, create, or escalate**.
+
+**Why this exists**: Past failures — ContactType #19 crashed at runtime with "Element type is invalid" because the DB seed invented `GridComponentName` values (`badge-code`, `text-bold`, `link-count`, `status-badge`, `badge-system`, `badge-circle`, `text-truncate`) that didn't exist in the frontend `elementMapping` registry. GlobalDonation #1 shipped a generic form because the FE agent didn't stop to build the mockup's specific cards.
+
+#### Step 1 — Search before referencing
+
+For every non-primitive component you're about to use:
+
+| Component type | Where to search | How |
+|----------------|-----------------|-----|
+| Grid cell renderer (from `sett.GridFields.GridComponentName`) | `custom-components/data-tables/*/data-table-column-types/component-column.tsx` | Grep `elementMapping` and the switch statement |
+| RJSF form widget | `custom-components/forms/` + schema widget registry | Grep widget key |
+| Shared UI atom (badge, chip, pill, avatar, card) | `custom-components/atoms/` + `custom-components/` | Glob by name, grep by className keyword |
+| Layout wrapper (panel, tab, accordion) | `custom-components/` | Glob + grep |
+
+**Rule**: If the name exists in a registry/export/switch case → use it. No duplicates.
+
+#### Step 2 — If missing, classify "simple static" vs "complex"
+
+**Simple static** (you CREATE it inline with the build, no pause):
+- Pure `props → JSX` — no GraphQL, no mutations, no Zustand, no routing
+- Only `useState`/`useMemo` allowed for display transforms (formatting, initials, truncation)
+- ~< 100 LoC
+- CSS/styles pulled verbatim from the HTML mockup
+- Examples: `badge-code` (monospace pill), `text-bold`, `text-truncate` (ellipsis), `link-count` (teal numeric link), `status-badge` (dot + label), `badge-system` (lock-icon chip), `badge-circle` (icon circle), count pills, initials avatars, status dots, formatted date chips
+
+**Complex** (you STOP and flag to the user — do NOT silently skip, do NOT silently build):
+- Fetches data (`useQuery`/`useMutation`)
+- Owns state beyond local UI toggle
+- Requires a modal/flow/dialog
+- Navigates routes
+- Touches auth/capability checks
+- Examples: inline-create modals, approval-flow visualizers, multi-step wizards, audit-timeline with API, drag-to-reorder controllers, file-upload widgets
+
+Flag format: "Missing component `{name}` is complex (uses {reason}). Recommend a focused prompt. Proceed without it or pause?"
+
+#### Step 3 — Create a simple static component (the standard recipe)
+
+**Cell renderer** (MASTER_GRID + FLOW grids):
+1. Folder: `PSS_2.0_Frontend/src/presentation/components/custom-components/data-tables/shared-cell-renderers/`
+2. One file per renderer: `{kebab-name}.tsx` (matches DB seed `GridComponentName` exactly)
+3. Barrel `index.ts`
+4. Register in ALL 3 column builders: `advanced/`, `basic/`, `flow/` — each has its own `component-column.tsx`
+5. **Critical refactor**: place the specific-component switch **ABOVE** the boolean short-circuit so renderers that handle their own boolean display (`status-badge`, `badge-system`) own the code path. Otherwise the boolean short-circuit crashes when `Element = undefined`.
+6. CSS: pull from the HTML mockup's `<style>` block — match pixel values, borders, radii, colors, typography.
+
+**Form/view-page display chip** (FLOW view-page only):
+1. Folder: `custom-components/atoms/{kebab-name}.tsx` (or a screen-local `_components/` folder if truly screen-specific)
+2. Barrel export
+3. Import where used — no registry needed (imported by component reference)
+
+#### Step 4 — Verification before marking the screen COMPLETED
+
+- For every `GridComponentName` value in the screen's DB seed, grep the frontend registry. **Every value must resolve**. If not, either create the renderer or fix the seed.
+- For every chip/badge in the view-page JSX, grep that it either imports from a shared path OR is defined in the same file. No bare JSX elements that depend on uninitialized variables.
+- Dev server must load the page with no "Element type is invalid" console error.
+
+#### Scope
+
+- **MASTER_GRID**: grid cell renderers (DB seed `GridComponentName` → registry). RJSF modal form is schema-driven and rarely needs new components.
+- **FLOW**: grid cell renderers + view-page display chips/badges/status cards. The view-page typically has more mockup-specific display atoms than the grid.
+- **DASHBOARD/REPORT**: out of scope for this protocol (different rendering layers).
+
+#### Anti-patterns (do NOT do)
+
+- Invent `GridComponentName` values in DB seed without creating the renderer.
+- Duplicate a component because you didn't grep first.
+- Silently swap `status-badge` for a generic `Badge` because "it's close enough" — the mockup is the contract.
+- Build a complex component (with API calls) inside a cell renderer or form chip without escalating.
+- Skip the `basic/` and `flow/` column builders when registering a new renderer — three registries, three updates.
+
+---
 
 ### Shared Component Extension (Registry Pattern)
 

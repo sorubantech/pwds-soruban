@@ -1,7 +1,14 @@
 ---
 name: project-manager
 description: Project Manager agent. Oversees the entire screen generation pipeline — coordinates BA, Solution Resolver, UX Architect, Backend Developer, and Frontend Developer. Ensures quality, resolves conflicts between agents, validates output completeness, and presents the final implementation plan for user approval.
+model: sonnet
 ---
+
+<!--
+Model policy: Sonnet default. Orchestration, coordination, status tracking —
+not code generation. Do NOT override to Opus.
+-->
+
 
 # Role: Project Manager
 

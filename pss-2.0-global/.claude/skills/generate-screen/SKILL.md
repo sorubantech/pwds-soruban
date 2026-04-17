@@ -214,3 +214,50 @@ Present final output:
 8. **Never generate migration scripts** — team handles migrations separately
 9. **DB seed is last** — depends on GridCode and field decisions from backend
 10. **If anything is unclear, ASK** — better to ask than generate wrong code
+
+---
+
+## Model Selection (MANDATORY)
+
+Each agent has a default model in its frontmatter (`.claude/agents/*.md`) — **Sonnet for all 5 agents**. Escalate to Opus **only for FLOW/DASHBOARD screens**, per the table below. Override at spawn time via `Agent({ model: "..." })`.
+
+| Agent | MASTER_GRID | FLOW | DASHBOARD | REPORT |
+|-------|-------------|------|-----------|--------|
+| BA Analyst | sonnet | sonnet | sonnet | sonnet |
+| Solution Resolver | sonnet | sonnet | sonnet | sonnet |
+| UX Architect | sonnet | **opus** | **opus** | sonnet |
+| Backend Developer | sonnet | **opus** if complexity=High, else sonnet | sonnet | sonnet |
+| Frontend Developer | sonnet | **opus** | **opus** | sonnet |
+| Testing Agent | sonnet | sonnet | sonnet | sonnet |
+
+**Rules**:
+- Read `screen_type` from the prompt file frontmatter — use it to choose the column.
+- Read `complexity` for Backend Developer escalation on FLOW (workflow + multi-FK + nested children = High).
+- Never escalate BA / Solution Resolver / Testing to Opus. Their work is structured extraction or rule-based scanning.
+- Orchestration inside this skill (reading prompt, validating config, presenting plan) stays on the main session — do not spawn Opus agents for orchestration work.
+- Main session should run on Sonnet. Set `/model sonnet` before starting if needed.
+
+**Haiku for verification subtasks**:
+- FK property existence checks in generated code
+- Wiring marker lookup in target files
+- Single grep lookups — `Agent({ model: "haiku", ... })`
+
+**Example invocation (FLOW screen, complexity High)**:
+```
+Agent({ subagent_type: "ba-analyst", model: "sonnet", prompt: "..." })
+Agent({ subagent_type: "solution-resolver", model: "sonnet", prompt: "..." })
+Agent({ subagent_type: "ux-architect", model: "opus", prompt: "..." })
+Agent({ subagent_type: "backend-developer", model: "opus", prompt: "..." })
+Agent({ subagent_type: "frontend-developer", model: "opus", prompt: "..." })
+Agent({ subagent_type: "testing-agent", model: "sonnet", prompt: "..." })
+```
+
+**Example invocation (MASTER_GRID screen)**:
+```
+Agent({ subagent_type: "ba-analyst", model: "sonnet", prompt: "..." })
+Agent({ subagent_type: "solution-resolver", model: "sonnet", prompt: "..." })
+Agent({ subagent_type: "ux-architect", model: "sonnet", prompt: "..." })
+Agent({ subagent_type: "backend-developer", model: "sonnet", prompt: "..." })
+Agent({ subagent_type: "frontend-developer", model: "sonnet", prompt: "..." })
+Agent({ subagent_type: "testing-agent", model: "sonnet", prompt: "..." })
+```

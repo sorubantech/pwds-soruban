@@ -266,9 +266,113 @@ The prompt's Section ⑥ describes BOTH layouts:
 
 **Why this matters**: GlobalDonation #1 was marked COMPLETED but its form didn't match the mockup. The prompt had all the detail (6 accordion sections, mode card selector, distribution grid, payment sub-forms) but the FE dev agent produced a generic form. This MUST NOT recur.
 
+### Layout Variant Enforcement (MASTER_GRID + FLOW)
+
+Every prompt Section ⑥ stamps a `Layout Variant`: `grid-only`, `widgets-above-grid`, `side-panel`, or a combination. The FE agent uses this to pick Variant A (`<AdvancedDataTable>`/`<FlowDataTable>` with internal header) vs Variant B (`<ScreenHeader>` + widgets + `<DataTableContainer showHeader={false}>`).
+
+**Orchestrator duties:**
+
+1. **Pre-build brief** — read `Layout Variant` from prompt Section ⑥. Pass it explicitly to the FE Developer agent's prompt: "Layout Variant: `{variant}`. Honor the Layout Variant Decision table in your instructions. If not `grid-only`, use Variant B."
+
+2. **If `Layout Variant` is missing or NONE on a screen whose Section ⑥ lists widgets or a side panel** — STOP and fix the prompt first. Ship Section ⑥ with a correct stamp before spawning FE Developer.
+
+3. **Post-build validation** — before marking COMPLETED, open the generated `*-data-table.tsx` (or `index-page.tsx` for FLOW) and check:
+   - If variant ≠ `grid-only` → file MUST import `ScreenHeader` from `@/presentation/components/custom-components/page-header` AND the data-table container MUST receive `showHeader={false}`.
+   - If variant = `grid-only` → file renders `<AdvancedDataTable>` / `<FlowDataTable>` directly.
+   - Fail mode (both present or both absent) = double header or missing header. Block COMPLETED until fixed.
+
+**Precedent (why this is enforced)**: ContactType #19 had a summary bar above the grid but the FE agent produced Variant A (plain `<AdvancedDataTable>` stacked with `<SummaryBar>` in a card) — no `<ScreenHeader>`, internal grid header still rendered, double-header UI hierarchy. The Variant B pattern was documented in the reference template but never surfaced as a per-screen signal, per-agent directive, or post-build check.
+
+---
+
+### UI Uniformity Check (ALL screens, post-build)
+
+Before marking COMPLETED, sample-scan the generated FE files for design-token compliance. Full spec in `.claude/agents/frontend-developer.md` section "UI Uniformity & Polish".
+
+**Grep checks** (each should return ZERO matches in generated files):
+
+| Anti-pattern | Grep |
+|--------------|------|
+| Inline hex colors | `style=\{\{[^}]*#[0-9a-fA-F]{3,6}` |
+| Inline pixel padding/margins | `style=\{\{[^}]*(padding\|margin):\s*\d+` |
+| Bootstrap card mixed with tailwind tokens | `className="card[^"]*"` (in new files) |
+| Hand-rolled skeleton div | `background:\s*["']#e[0-9a-f]` (commonly `#e5e7eb`) |
+| Raw "Loading..." text | `>Loading\.\.\.</` |
+
+**Visual checks** (FE agent self-reviews or Testing Agent runs):
+- All sibling cards in a layout share the same inner padding class.
+- Every `useQuery`-backed surface has a `<Skeleton>` placeholder sized to match real content.
+- Empty / error / disabled states present with consistent framing.
+
+If any of these fail, the screen is NOT COMPLETED — send back to FE Developer with the specific line(s) flagged.
+
+---
+
+### Component Reuse-or-Create Protocol (MASTER_GRID + FLOW)
+
+The FE Developer agent follows a strict **search → reuse → create-if-simple → escalate-if-complex** discipline. Full spec lives in `.claude/agents/frontend-developer.md` (section "Component Reuse-or-Create Protocol").
+
+**At build time, the orchestrator MUST:**
+
+1. **Pre-build** (before spawning FE Developer): scan the prompt's Section ⑥ + DB seed for cell renderer names (`GridComponentName`) and mockup chips/badges. Include them in the FE agent's brief with an instruction: "Search registries first — reuse if found; create as simple static component if missing; flag to user if complex."
+
+2. **Post-build validation** (before marking COMPLETED): for every `GridComponentName` value emitted by the backend's DB seed, grep `custom-components/data-tables/*/data-table-column-types/component-column.tsx` — every value must resolve in `elementMapping` or a switch case. If any value is missing, the build is NOT complete. Either:
+   - Create the missing renderer(s), OR
+   - Correct the DB seed to use an existing renderer.
+
+3. **Never accept** a screen where the DB seed references a renderer name that doesn't exist in the FE registry — that's a guaranteed runtime crash ("Element type is invalid").
+
+**Precedent**: ContactType #19 shipped with 7 invented `GridComponentName` values (`badge-code`, `text-bold`, `text-truncate`, `link-count`, `badge-system`, `badge-circle`, `status-badge`) that had no frontend counterpart → runtime crash on page load. This check blocks that class of bug.
+
 ### Session Optimization
 1. **Load minimal context** — only read: REGISTRY.md + prompt file
 2. **Don't re-read HTML mockups** — the prompt already contains all extracted information
 3. **Don't re-read all agent files upfront** — the generation pipeline loads them as needed
 4. **Target ~30-50K tokens** per screen build — if a screen is complex, split into BE + FE sessions
-5. **Use subagents with `model: "sonnet"` for research/analysis tasks** (FK verification, file existence checks). Reserve the primary model for code generation.
+
+### Model Selection — Screen-Type-Based Escalation (MANDATORY)
+
+`/build-screen` orchestrates 5 AI agents via `/generate-screen`. Each agent has a default model set in its frontmatter (`.claude/agents/*.md`). Default is Sonnet for every agent. Escalate to Opus **only when the screen type actually needs judgment**.
+
+**Default main session model**: Sonnet. Orchestration is not code generation. If the user's session is on Opus, the subagent defaults from frontmatter still apply — but the orchestrator's own reasoning (selecting files, reading prompt, coordinating) should not use Opus.
+
+**Per-call model override when spawning agents** — pass `model:` explicitly based on `screen_type` read from prompt file frontmatter:
+
+| Agent | MASTER_GRID | FLOW | DASHBOARD | REPORT |
+|-------|-------------|------|-----------|--------|
+| BA Analyst | sonnet | sonnet | sonnet | sonnet |
+| Solution Resolver | sonnet | sonnet | sonnet | sonnet |
+| UX Architect | sonnet | **opus** | **opus** | sonnet |
+| Backend Developer | sonnet | **opus** if complexity=High, else sonnet | sonnet | sonnet |
+| Frontend Developer | sonnet | **opus** | **opus** | sonnet |
+| Testing Agent | sonnet | sonnet | sonnet | sonnet |
+
+**Why escalate only for FLOW/DASHBOARD**:
+- FLOW: 3-mode view-page with 2 distinct UI layouts (FORM + DETAIL), card selectors, conditional sub-forms, child grids — historic failure point (GlobalDonation). Opus needed for UX Architect + FE Developer judgment.
+- DASHBOARD: widget composition + chart choice + drill-down routing — design judgment.
+- MASTER_GRID: config-driven grid + RJSF modal form. Sonnet handles correctly.
+- REPORT: filter panel + result view — template-driven. Sonnet handles correctly.
+
+**Example invocation for a FLOW screen**:
+```
+Agent({ subagent_type: "ux-architect", model: "opus", prompt: "..." })
+Agent({ subagent_type: "frontend-developer", model: "opus", prompt: "..." })
+Agent({ subagent_type: "backend-developer", model: "sonnet", prompt: "..." })  // unless complexity=High
+```
+
+**Example invocation for a MASTER_GRID screen**:
+```
+Agent({ subagent_type: "ux-architect", model: "sonnet", prompt: "..." })
+Agent({ subagent_type: "frontend-developer", model: "sonnet", prompt: "..." })
+Agent({ subagent_type: "backend-developer", model: "sonnet", prompt: "..." })
+```
+
+**Haiku opportunities during build**:
+- FK property existence checks in generated code → `Agent({ model: "haiku" })`
+- Single-file grep verification → main context or Haiku
+- Wiring marker lookups in target files → Haiku
+
+**Do NOT**:
+- Escalate BA/Solution Resolver/Testing/PM to Opus — ever.
+- Use Opus main session while waiting between agent calls — run orchestration on Sonnet.
+- Spawn an agent for trivial lookups that main context can do in one tool call.
