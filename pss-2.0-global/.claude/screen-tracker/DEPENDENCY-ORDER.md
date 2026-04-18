@@ -25,12 +25,12 @@ These are master/reference tables that other screens depend on. They have no FK 
 
 | Order | Screen | Module | Type | Key FKs (all must exist) |
 |-------|--------|--------|------|--------------------------|
-| 2.1 | SMS Template | Communication | MASTER_GRID | Company (exists) |
-| 2.2 | WhatsApp Template | Communication | MASTER_GRID | Company (exists) |
+| 2.1 | Tags & Segmentation | Contacts | MASTER_GRID | Contact (exists) |
+| 2.2 | Matching Gift | Fundraising | MASTER_GRID | Donation (exists), Contact (exists) |
 | 2.3 | WhatsApp Setup | Communication | Config | Company (exists) |
-| 2.4 | Notification Templates | Communication | MASTER_GRID | Company (exists) |
-| 2.5 | Tags & Segmentation | Contacts | MASTER_GRID | Contact (exists) |
-| 2.6 | Matching Gift | Fundraising | MASTER_GRID | Donation (exists), Contact (exists) |
+| 2.4 | SMS Template | Communication | FLOW (card-grid / `details`) | Company (exists) — **builds `<CardGrid>` shell + `details` variant** (see `.claude/feature-specs/card-grid.md`) |
+| 2.5 | WhatsApp Template | Communication | FLOW (card-grid / `details`) | Company (exists) — reuses shell + `details` from 2.4 |
+| 2.6 | Notification Templates | Communication | FLOW (card-grid / `details`) | Company (exists) — reuses shell + `details` from 2.4 |
 | 2.7 | Pledge | Fundraising | FLOW | Contact (exists), Campaign (exists) |
 | 2.8 | Beneficiary | Case Mgmt | FLOW | Contact (exists), Program (Wave 1) |
 | 2.9 | Volunteer | Volunteer | FLOW | Contact (exists) |
@@ -39,7 +39,11 @@ These are master/reference tables that other screens depend on. They have no FK 
 | 2.12 | Ambassador | Field Collection | FLOW | Staff (exists), Branch (exists) |
 | 2.13 | User Management | Administration | FLOW | User entity (exists, FE only needed) |
 
-**After Wave 2**: Volunteer, Beneficiary, Grant, MemberEnrolment, Pledge, Ambassador entities available.
+**Build-order note for 2.4 → 2.6 (card-grid infra)**: all three template screens use `displayMode: card-grid` + `cardVariant: details`. The first (SMS Template, 2.4) builds the full `<CardGrid>` shell (`card-grid.tsx`, `card-variant-registry.ts`, `types.ts`) plus the `details` variant (`variants/details-card.tsx`, `skeletons/details-card-skeleton.tsx`) and wires `displayMode`/`cardVariant` into `DataTableContainer`. 2.5 and 2.6 reuse both — they only supply their own `cardConfig` in page config. **Build 2.4 first and sequentially — do NOT parallelize 2.4/2.5/2.6**, or all three sessions will try to create the same shell.
+
+See `.claude/feature-specs/card-grid.md` for the full feature build spec (file manifest, types, implementation order, acceptance criteria). Any screen that needs a new variant (e.g., Email Template #24 in Wave 5 adds `iframe`) adds ONE variant file + ONE registry line — the shell stays untouched.
+
+**After Wave 2**: Volunteer, Beneficiary, Grant, MemberEnrolment, Pledge, Ambassador, SMSTemplate, WhatsAppTemplate, NotificationTemplate entities available. `<CardGrid>` infrastructure + `details` variant available for Wave 3+ screens that opt into it. `profile` variant not built yet — will be created by the first contact/staff-style screen (likely #18 Contact or #42 Staff in Wave 5).
 
 ---
 

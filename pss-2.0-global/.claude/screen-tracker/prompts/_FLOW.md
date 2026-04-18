@@ -197,6 +197,54 @@ Table: {schema}."{PluralTableName}"
 
 ### Grid/List View
 
+**Display Mode** (REQUIRED — stamp one): `{table | card-grid}` (default: `table`)
+
+- `table` → records render as dense table rows via `<AdvancedDataTable>` (default for transactional lists — donations, grants, cases).
+- `card-grid` → records render as cards in a responsive grid. Filter chips, search, pagination, and toolbar actions are UNCHANGED — only the row rendering differs. Use when the mockup shows a gallery/library layout (templates with editors, campaigns with hero imagery, profile-based listings).
+- **Does NOT affect the view-page.** Card-grid is listing-only. Row click navigates to `?mode=read&id={id}` (DETAIL layout) and `?mode=edit` opens the FORM layout — those are unchanged.
+
+**Card Variant** (REQUIRED when `displayMode: card-grid` — stamp one): `{details | profile | iframe}`
+
+| Variant | When to pick | Typical screens |
+|---------|--------------|------------------|
+| `details` | Row has a name, a few meta chips, and a plain-text snippet. | SMS/WhatsApp/Notification Templates, saved filters |
+| `profile` | Row represents a person with avatar + name + role + inline contact actions. | Contacts, Staff, Volunteers, Members, Ambassadors |
+| `iframe` | Row has rich HTML that must be visually previewed. Sandbox + lazy-load + size cap. | Email templates |
+
+**Card Config** (REQUIRED when `displayMode: card-grid` — shape depends on variant):
+
+*For `details`:*
+```yaml
+cardConfig:
+  headerField: "{primary field, e.g., templateName}"
+  metaFields: ["{fieldA}", "{fieldB}"]
+  snippetField: "{body/description field}"
+  footerField: "{modifiedAt | updatedAt}"
+```
+
+*For `profile`:*
+```yaml
+cardConfig:
+  avatarField: "{photoUrl field | null}"
+  nameField: "{full name field}"
+  subtitleField: "{role/title/category}"
+  metaFields: ["email", "phone"]
+  contactActions: ["email", "phone", "whatsapp"]
+```
+
+*For `iframe`:*
+```yaml
+cardConfig:
+  htmlField: "{HTML body field}"
+  headerField: "{template name}"
+  metaFields: ["{channel}", "{category}"]
+  fallbackSnippetField: "{plain-text fallback}"
+```
+
+**Responsive breakpoints (all variants)**: 1 col (`xs`) → 2 col (`sm`) → 3 col (`lg`) → 4 col (`xl`). Card inner padding `p-4`, gap `gap-3`. Card body click → `?mode=read&id={id}`.
+
+**Build dependency**: `card-grid` requires the `<CardGrid>` infrastructure — see `.claude/feature-specs/card-grid.md` for the full build spec. First screen to use it creates the shell + first variant; subsequent screens reuse or add new variants.
+
 **Grid Columns** (in display order):
 | # | Column Header | Field Key | Display Type | Width | Sortable | Notes |
 |---|--------------|-----------|-------------|-------|----------|-------|

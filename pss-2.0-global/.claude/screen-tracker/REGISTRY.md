@@ -116,18 +116,18 @@ The dev must refer to all three to understand the full FLOW screen. (MASTER_GRID
 
 | # | Screen | Mockup Files | Scope | Type | Priority | Status | Prompt | Notes |
 |---|--------|-------------|-------|------|----------|--------|--------|-------|
-| 29 | SMS Template | communication/sms-templates.html | FULL | MASTER_GRID | P2-Core | PARTIAL | — | FE route exists, NO BE entity. New: SMSTemplate |
-| 31 | WhatsApp Template | communication/whatsapp-template-editor.html | FULL | MASTER_GRID | P2-Core | PARTIAL | — | FE route exists, NO BE entity. New: WhatsAppTemplate |
-| 36 | Notification Templates | communication/notification-templates.html | FULL | MASTER_GRID | P2-Core | PARTIAL | — | FE route exists, needs dedicated template management |
-| 24 | Email Template | communication/email-template-editor.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
+| 24 | Email Template | communication/email-template-editor.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | `displayMode: card-grid`, `cardVariant: iframe` (rich HTML preview). Adds `iframe-card` variant to the card-grid registry. BE+FE exist but need mockup alignment review |
 | 25 | Email Campaign/SendJob | communication/email-campaign-list+builder.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 26 | Placeholder Definition | communication/placeholder-management.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 27 | Saved Filter | communication/saved-filters.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 28 | Company Email Provider | communication/email-provider-config.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
+| 29 | SMS Template | communication/sms-templates.html | FULL | FLOW | P2-Core | PARTIAL | — | **Reclassified MASTER_GRID→FLOW 2026-04-18** (editor UI unsuitable for modal). `displayMode: card-grid`, `cardVariant: details`. FE route exists, NO BE entity. New: SMSTemplate. **First screen to build `<CardGrid>` shell + `details` variant** — see `.claude/feature-specs/card-grid.md` |
 | 30 | SMS Campaign | communication/sms-campaigns.html | FULL | FLOW | P3-Business | PARTIAL | — | FE route exists, NO BE entity. FK: SMSTemplate |
+| 31 | WhatsApp Template | communication/whatsapp-template-editor.html | FULL | FLOW | P2-Core | PARTIAL | — | **Reclassified MASTER_GRID→FLOW 2026-04-18** (editor UI unsuitable for modal). `displayMode: card-grid`, `cardVariant: details`. FE route exists, NO BE entity. New: WhatsAppTemplate. Reuses `<CardGrid>` + `details` variant from #29 — only `cardConfig` differs |
 | 32 | WhatsApp Campaign | communication/whatsapp-campaigns.html | FULL | FLOW | P3-Business | PARTIAL | — | FE route exists, NO BE entity. FK: WhatsAppTemplate |
 | 33 | WhatsApp Conversations | communication/whatsapp-conversations.html | FULL | FLOW | P3-Business | PARTIAL | — | FE route exists, NO BE entity |
 | 35 | Notification Center | communication/notification-center.html | FE_ONLY | FLOW | P3-Business | PARTIAL | — | BE Notification entity exists, FE component incomplete |
+| 36 | Notification Templates | communication/notification-templates.html | FULL | FLOW | P2-Core | PARTIAL | — | **Reclassified MASTER_GRID→FLOW 2026-04-18** (body-builder UI unsuitable for modal). `displayMode: card-grid`, `cardVariant: details`. FE route exists, needs dedicated template management. Reuses `<CardGrid>` + `details` variant from #29 — only `cardConfig` differs |
 | 37 | Automation Workflow | communication/automation-workflows.html | FULL | FLOW | P4-Advanced | PARTIAL | — | FE route exists, NO BE entity. Complex workflow builder |
 | 34 | WhatsApp Setup | communication/whatsapp-setup.html | FULL | Config | P2-Core | PARTIAL | — | FE route exists, NO BE entity |
 | 38 | Email Analytics | communication/email-analytics.html | — | Dashboard | P4-Advanced | SKIP_DASHBOARD | — | Custom FE analytics |
@@ -138,8 +138,8 @@ The dev must refer to all three to understand the full FLOW screen. (MASTER_GRID
 
 | # | Screen | Mockup Files | Scope | Type | Priority | Status | Prompt | Notes |
 |---|--------|-------------|-------|------|----------|--------|--------|-------|
-| 41 | Branch | organization/branch-management.html | ALIGN | MASTER_GRID | P5-Alignment | PROMPT_READY | prompts/branch.md | Planned 2026-04-18. Adds 6 fields (CountryId/StateId/CityId/Region/ManagerStaffId/AnnualTarget) + grid aggregations (StaffCount/YtdCollected/PerformancePct) + 4 summary widgets + side panel (Quick Stats, Activity feed stub, Staff mini-list) + Map View toggle. Variant B layout (ScreenHeader + widgets + [grid | side-panel]). 4 OPEN placeholders: ISSUE-1 Staff.BranchId FK missing, ISSUE-2 Activity stream service, ISSUE-3 Map lib, ISSUE-4 Contacts/Campaigns/Events BranchId FKs. ALIGN — MODIFY 12 BE + 6 FE files, CREATE 2 BE + 6 FE files, DELETE 1 duplicate route. |
-| 43 | Staff Category | organization/staff-management.html | ALIGN | MASTER_GRID | P5-Alignment | PROMPT_READY | prompts/staffcategory.md | Planned 2026-04-18. Shared mockup with Staff #42 (Staff Category UI inferred from dropdown values + 6 badge colors). Adds `ColorHex` field + `StaffCount` aggregation + 4 summary widgets (Total / Most Populated / System / Custom) + side panel (Color Preview, Quick Stats, Recent Staff) + drag-to-reorder + system/custom badge. Reuses ContactType #19 template. Also lands ContactType ISSUE-1 (onReorder) + ISSUE-2 (onRowClick) fixes in DataTableContainer. Variant B layout. |
+| 41 | Branch | organization/branch-management.html | ALIGN | MASTER_GRID | P5-Alignment | COMPLETED | prompts/branch.md | Completed 2026-04-18. BE: 13 modified (entity + Staff BranchId FK + configs + schemas + Create/Update + GetBranch/ById/Export + Mapster + endpoint) + 2 created (GetBranchSummary + migration). FE: 9 modified (DTO + query + mutation + page Variant B + data-table showHeader=false + 3 column-type registries + renderers barrel + component barrel) + 5 created (branch-widgets, branch-side-panel, branch-map-placeholder, performance-bar, country-flag) + 1 deleted (duplicate /organizationsetup/branch route). DB seed created (Branch-sqlscripts.sql — menu + grid + GridFormSchema + 4 sample rows). ISSUE-1 RESOLVED (Staff.BranchId FK added). 4 OPEN: ISSUE-2 activity-stream service, ISSUE-3 map lib, ISSUE-4 Contacts/Campaigns/Events BranchId FKs, ISSUE-4-YTD GlobalDonation.BranchId FK. Builds green: BE dotnet build 0 errors, FE tsc no Branch errors (pre-existing #22/overview errors unrelated). |
+| 43 | Staff Category | organization/staff-management.html | ALIGN | MASTER_GRID | P5-Alignment | COMPLETED | prompts/staffcategory.md | Completed 2026-04-18. BE: 10 modified (entity + EF config + schemas + 4 commands + 2 queries + 2 endpoints) + 3 created (Reorder command + Summary query + migration). FE: 8 modified (DTO + GQL Q/M + shared DataTableContainer with new onReorder/onRowClick props + data-table + barrel + page config + dgf-widgets registry) + 4 created (index-page Variant B + widgets + side-panel + color-hex-picker widget). DB seed created with 8 system categories (Management/Program Staff/Field Officer/Administrative/Finance/Fundraising/Communication/IT) + GridFormSchema + color-hex-picker. Orchestrator patched 2 renderer-name mismatches in seed (color-swatch→color-swatch-renderer, color-swatch-picker→color-hex-picker). Landed DataTableContainer onReorder+onRowClick props (closes ContactType #19 ISSUE-1; ContactType ISSUE-2 side-cleanup deferred to ISSUE-5 here). 8 OPEN known issues: ISSUE-1 migration snapshot (user regenerates), ISSUE-2 delete validator pattern, ISSUE-3 new color-hex-picker widget (not color-swatch-picker), ISSUE-4 Recent Staff mini-list deferred, ISSUE-5 ContactType data-table cleanup pending, ISSUE-6 migration timestamp placeholder, ISSUE-7 delete validator runtime fallback risk, ISSUE-8 link-count {lang} prefix (inherited). User must run migration regeneration + seed SQL + full E2E per §⑪. |
 | 39 | Campaign | organization/campaign-list+form+dashboard.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 40 | Event | organization/event-list+form+dashboard.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 42 | Staff | organization/staff-management.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
@@ -303,10 +303,10 @@ These are the screens that need work, ordered by priority tier. Within each tier
 |---|--------|--------|------|--------|---------|
 | 11 | Matching Gift | Fundraising | MASTER_GRID | PARTIAL | Donation, Contact |
 | 22 | Tags & Segmentation | Contacts | MASTER_GRID | COMPLETED | Completed 2026-04-18 |
-| 29 | SMS Template | Communication | MASTER_GRID | PARTIAL | Company |
-| 31 | WhatsApp Template | Communication | MASTER_GRID | PARTIAL | Company |
-| 36 | Notification Templates | Communication | MASTER_GRID | PARTIAL | Company |
 | 12 | Pledge | Fundraising | FLOW | PARTIAL | Contact, Campaign |
+| 29 | SMS Template | Communication | FLOW | PARTIAL | Company — `card-grid` / `details` variant (**builds infra**) |
+| 31 | WhatsApp Template | Communication | FLOW | PARTIAL | Company — `card-grid` / `details` variant (reuses) |
+| 36 | Notification Templates | Communication | FLOW | PARTIAL | Company — `card-grid` / `details` variant (reuses) |
 | 49 | Beneficiary | Case Mgmt | FLOW | PARTIAL | Contact, Program |
 | 53 | Volunteer | Volunteer | FLOW | PARTIAL | Contact |
 | 59 | Member Enrollment | Membership | FLOW | PARTIAL | Contact, MembershipTier |
@@ -355,8 +355,8 @@ These are the screens that need work, ordered by priority tier. Within each tier
 | 3 | Donation Category | Fundraising | MASTER_GRID | COMPLETED | Completed 2026-04-18 |
 | 4 | Donation Group | Fundraising | MASTER_GRID | COMPLETED | Completed 2026-04-18 |
 | 19 | Contact Type | Contacts | MASTER_GRID | NEEDS_FIX | Session 2 (2026-04-18 UI): ScreenHeader moved to page top; 4 prior known issues still open |
-| 41 | Branch | Organization | MASTER_GRID | PROMPT_READY | Planned 2026-04-18 — prompts/branch.md |
-| 43 | Staff Category | Organization | MASTER_GRID | PROMPT_READY | Planned 2026-04-18 — prompts/staffcategory.md |
+| 41 | Branch | Organization | MASTER_GRID | COMPLETED | Completed 2026-04-18 |
+| 43 | Staff Category | Organization | MASTER_GRID | COMPLETED | Completed 2026-04-18 |
 | 66 | Receipt Book | Field Collection | MASTER_GRID | PARTIAL | Receipt books |
 | 70 | Role Management | Administration | MASTER_GRID | PARTIAL | Role setup |
 | 71 | Menu Management | Administration | MASTER_GRID | PARTIAL | Menu setup |
@@ -372,7 +372,7 @@ These are the screens that need work, ordered by priority tier. Within each tier
 | 18 | Contact | Contacts | FLOW | PARTIAL | Complex with tabs |
 | 20 | Family | Contacts | FLOW | PARTIAL | Family grouping |
 | 21 | Duplicate Detection | Contacts | FLOW | PARTIAL | Merge flow |
-| 24 | Email Template | Communication | FLOW | PARTIAL | Template editor |
+| 24 | Email Template | Communication | FLOW | PARTIAL | Template editor — `card-grid` / `iframe` variant (**adds iframe variant to registry**) |
 | 25 | Email Campaign/SendJob | Communication | FLOW | PARTIAL | Campaign builder |
 | 26 | Placeholder Definition | Communication | FLOW | PARTIAL | Config |
 | 27 | Saved Filter | Communication | FLOW | PARTIAL | Filter management |

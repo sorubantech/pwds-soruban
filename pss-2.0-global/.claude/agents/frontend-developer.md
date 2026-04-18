@@ -827,6 +827,106 @@ Generated screens sometimes shipped with inline hex colors, uneven padding betwe
 
 ---
 
+### Display Mode: `card-grid` Rendering Contract (MASTER_GRID + FLOW)
+
+Some screens (templates, contacts, staff, media libraries, catalog lists) render records as **cards** rather than **table rows**. The spec will stamp this via Section ⑥ `Display Mode: card-grid` + `Card Variant: {details | profile | iframe}`.
+
+**This contract is a SUMMARY.** The authoritative build spec lives at `.claude/feature-specs/card-grid.md` — read that file before implementing anything. The summary below is enough to understand *what* to build; the feature spec tells you *how*.
+
+**What stays the same** (never change these between `table` and `card-grid`):
+- `<AdvancedDataTable>` / `DataTableContainer` wrapper — filter chips, search box, pagination, toolbar actions, selection state, sort headers.
+- GraphQL query, paging params, server-side sort/filter.
+- Column definitions in `config.tsx` still drive card field-to-slot mapping.
+- FLOW view-page (`?mode=new|edit|read`) — card-grid is **listing-only**, the view-page layout is unchanged.
+
+**What changes**: only the row-rendering slot. Table body → `<CardGrid>`.
+
+#### Architecture: variant registry (matches `elementMapping` convention)
+
+```
+src/presentation/components/page-components/card-grid/
+  card-grid.tsx              // responsive shell (never changes per screen)
+  card-variant-registry.ts   // maps cardVariant → variant component
+  variants/
+    details-card.tsx         // name + meta chips + plain snippet + footer
+    profile-card.tsx         // avatar + name + role + contact actions
+    iframe-card.tsx          // sandboxed HTML preview + metadata overlay
+  skeletons/
+    details-card-skeleton.tsx
+    profile-card-skeleton.tsx
+    iframe-card-skeleton.tsx
+  types.ts                   // CardVariant, CardConfig unions
+```
+
+Page config stamps `displayMode` + `cardVariant` + per-variant `cardConfig`:
+
+```ts
+// config.tsx
+export const config: PageConfig = {
+  // ...
+  displayMode: "card-grid",        // "table" (default) | "card-grid"
+  cardVariant: "details",          // "details" | "profile" | "iframe"
+  cardConfig: {                    // shape depends on cardVariant
+    headerField: "templateName",
+    metaFields: ["channel", "category"],
+    snippetField: "body",
+    footerField: "modifiedAt",
+  },
+};
+```
+
+`<CardGrid>` reads `cardVariant`, looks up the component from `card-variant-registry.ts`, renders it inside a responsive `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4` shell. Skeleton selection follows the same registry lookup.
+
+#### The three initial variants
+
+| Variant | Use case | Header / primary | Body / middle | Footer | HTML allowed? |
+|---------|----------|-------------------|----------------|--------|---------------|
+| **`details`** | Templates, rules, saved filters, catalog items | Title text, truncate 1 line | Meta chips + plain-text snippet (line-clamp-2) | Modified-ago + row-action menu | NO — strip HTML before rendering |
+| **`profile`** | Contacts, Staff, Volunteers, Members, Beneficiaries, Ambassadors | Avatar (initials fallback) + name + role/subtitle | Meta rows (email, phone, tags) | Inline contact actions (email, phone, message) + overflow menu | NO |
+| **`iframe`** | Email templates, rich HTML previews | Sandboxed `<iframe srcdoc={html} sandbox="allow-same-origin">` fixed aspect `aspect-[4/3]` | — (iframe IS the body) | Overlay: name + channel chip + action menu | YES, but sandboxed + lazy-loaded + size-capped |
+
+**Hard constraints on `iframe` variant:**
+- Lazy-load via `IntersectionObserver` — DO NOT eagerly render all iframes on page load (50 cards × document-load = frozen browser).
+- `sandbox="allow-same-origin"` (NEVER include `allow-scripts`).
+- Size cap: if the HTML body is > 100 KB or empty, fall back to the `details` card's plain-text snippet rendering.
+- Never `dangerouslySetInnerHTML` — always `<iframe srcdoc>`.
+
+#### First screen pays the infra cost, variants added on demand
+
+**None of these components exist yet.** The first screen that needs `displayMode: card-grid` — likely SMS Template (#29) — builds:
+1. `<CardGrid>` shell + `card-variant-registry.ts` + `types.ts`.
+2. The variant it needs (SMS → `details-card.tsx` + `details-card-skeleton.tsx`).
+3. Registry wiring into `DataTableContainer` (conditional render based on `displayMode`).
+4. `PageConfig` typing additions (`displayMode`, `cardVariant`, `cardConfig`).
+
+Subsequent screens:
+- Need an **existing** variant → just set `cardVariant` + `cardConfig` in their page config. No new components.
+- Need a **new** variant (e.g., Email Template #24 needs `iframe`) → add one file to `variants/` + one file to `skeletons/` + one line to the registry. Do NOT touch `<CardGrid>` shell.
+
+**Before building any screen with `displayMode: card-grid`:**
+1. Read `.claude/feature-specs/card-grid.md` — it has the full file-level build plan.
+2. Check which variant components already exist in `card-grid/variants/`.
+3. If your variant is missing, build it as part of this screen's session; log it in Build Log Section ⑬ `Files touched`.
+
+Do NOT try to build `<CardGrid>` + all three variants ahead of time speculatively. Build on demand, validated by real screen data.
+
+#### Anti-patterns flagged during review
+
+- `<CardGrid>` rendered via inline `<div className="grid ...">` scattered across page files instead of a reusable component → **reject**, centralize.
+- A new variant invented inside a page file instead of `card-grid/variants/` → **reject**, register it properly.
+- Two screens with the same variant rendering differently (one `details` card bigger than another) → **reject**, all variants must be config-driven, not per-screen CSS.
+- Snippet rendered via `dangerouslySetInnerHTML` inside `details`/`profile` → **reject**, plain text only.
+- `iframe` variant without `sandbox` attribute, without lazy-loading, or with `allow-scripts` → **reject**, security + perf failure.
+- Fixed pixel widths on cards (`w-[280px]`) → **reject**, let the grid size them.
+- Spinner replacing the variant-specific skeleton → **reject**, skeleton must match card shape.
+- Carousel/slider swapped in for card-grid → **reject**, this is a management surface, not a hero.
+
+#### Why this exists
+
+Template-heavy screens (Email/SMS/WhatsApp/Notification) and profile-heavy screens (Contacts, Staff) can't show meaningful data in dense table rows — users need a scan-friendly card view. At the same time, we refuse to fork a whole new screen type for a rendering variant: filtering, pagination, CRUD, and view-pages are identical. `displayMode` + `cardVariant` is the minimal seam that gives us multiple presentations without doubling the pipeline. The variant registry mirrors `elementMapping` (grid cell renderers) — same pattern, same extension model.
+
+---
+
 ### Component Reuse-or-Create Protocol (MANDATORY — MASTER_GRID + FLOW)
 
 Before writing code that references ANY shared/custom component (cell renderer, display chip, status badge, link-count, truncated text, etc.), you MUST search first, then decide: **reuse, create, or escalate**.
