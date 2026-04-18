@@ -79,9 +79,9 @@ The dev must refer to all three to understand the full FLOW screen. (MASTER_GRID
 
 | # | Screen | Mockup Files | Scope | Type | Priority | Status | Prompt | Notes |
 |---|--------|-------------|-------|------|----------|--------|--------|-------|
-| 2 | Donation Purpose | fundraising/donation-purposes.html | ALIGN | MASTER_GRID | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
-| 3 | Donation Category | fundraising/donation-purposes.html | ALIGN | MASTER_GRID | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
-| 4 | Donation Group | fundraising/donation-purposes.html | ALIGN | MASTER_GRID | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
+| 2 | Donation Purpose | fundraising/donation-purposes.html | ALIGN | MASTER_GRID | P5-Alignment | COMPLETED | prompts/donationpurpose.md | Completed 2026-04-18. BE: 8 modified (entity nullable, OrgUnit nav + RaisedAmount subquery via RecurringDonationScheduleDistributions, validators). FE: 6 modified + 1 renderer created (TargetRaisedProgress, registered in advanced/basic/flow column types) + 2 obsolete routes deleted. DB seed SQL generated. 3 deviations logged as OPEN known issues: ISSUE-1 Category→Group auto-fill removed (data-model gap), ISSUE-2 DB column nullability migration required, ISSUE-3 RaisedAmount aggregation currently limited to one source table. |
+| 3 | Donation Category | fundraising/donation-purposes.html | ALIGN | MASTER_GRID | P5-Alignment | COMPLETED | prompts/donationcategory.md | Completed 2026-04-18. BE: 9 modified (entity + DonationGroup inverse + EF config FK & composite index + Schemas + Create/Update validators + 2 query handlers + Mapster + snapshot) + 1 migration created. FE: 4 modified (DTO + query + mutation + data-table) + 2 obsolete routes deleted + link-count renderer reused. DB seed SQL created. Resolves #2 ISSUE-1 at data-model layer. 5 OPEN known issues: ISSUE-1 `{lang}` prefix in link-count linkTemplate, ISSUE-2 Group color-by-value badge deferred, ISSUE-3 migration backfill edge case if Company has zero DonationGroups, ISSUE-4 link-count inline hex colors (pre-existing), ISSUE-5 follow-up to re-enable Category→Group auto-fill on DonationPurpose #2 modal. |
+| 4 | Donation Group | fundraising/donation-purposes.html | ALIGN | MASTER_GRID | P5-Alignment | COMPLETED | prompts/donationgroup.md | Completed 2026-04-18. BE: 8 modified (entity nullable + EF config + Schemas + Create/Update validator cleanup + 2 query handlers with post-projection CategoriesCount + Mapster + snapshot). FE: 4 modified (DTO + query + mutation + data-table row actions) + 2 obsolete routes deleted + `link-count` renderer reused (not created). DB seed SQL created. 3 OPEN known issues: ISSUE-1 migration file mechanics (name mismatch — does not contain DonationGroup.Description step), ISSUE-2 `{lang}` strip on count-link (inherited from #3 ISSUE-1), ISSUE-3 hex colors in link-count renderer (inherited from #3 ISSUE-4). |
 | 11 | Matching Gift | fundraising/matching-gifts.html | FULL | MASTER_GRID | P2-Core | PARTIAL | — | FE route exists, NO BE entity. Needs: MatchingGift entity + full CRUD |
 | 1 | Donation (Global) | fundraising/donation-list+form+detail.html | ALIGN | FLOW | P5-Alignment | COMPLETED | prompts/global-donation.md | Completed 2026-04-16. BE: 3 files (Summary DTO + Handler + GQL). FE: 8 new files (FLOW router, index-page, view-page, store, summary widgets, distribution grid, receipt modal, summary query). 5 modified files. DB seed generated. |
 | 5 | Bulk Donation | fundraising/bulk-donation-upload.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
@@ -351,9 +351,9 @@ These are the screens that need work, ordered by priority tier. Within each tier
 
 | # | Screen | Module | Type | Status | Notes |
 |---|--------|--------|------|--------|-------|
-| 2 | Donation Purpose | Fundraising | MASTER_GRID | PARTIAL | Simple master |
-| 3 | Donation Category | Fundraising | MASTER_GRID | PARTIAL | Simple master |
-| 4 | Donation Group | Fundraising | MASTER_GRID | PARTIAL | Simple master |
+| 2 | Donation Purpose | Fundraising | MASTER_GRID | COMPLETED | Completed 2026-04-18 |
+| 3 | Donation Category | Fundraising | MASTER_GRID | COMPLETED | Completed 2026-04-18 |
+| 4 | Donation Group | Fundraising | MASTER_GRID | COMPLETED | Completed 2026-04-18 |
 | 19 | Contact Type | Contacts | MASTER_GRID | PARTIAL | Simple master |
 | 41 | Branch | Organization | MASTER_GRID | PARTIAL | Branch setup |
 | 43 | Staff Category | Organization | MASTER_GRID | PARTIAL | Staff category |
