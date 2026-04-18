@@ -62,12 +62,50 @@ complexity: {Low | Medium | High}
 new_module: {YES — schema name | NO}
 planned_date: {YYYY-MM-DD}
 completed_date:
+last_session_date:
 ---
 ```
+
+**Status lifecycle**:
+
+| Status | Meaning | Set by |
+|--------|---------|--------|
+| `PENDING` | Screen registered but prompt not generated yet | registry init |
+| `PROMPT_READY` | Prompt file generated — ready for `/build-screen` | `/plan-screens` |
+| `IN_PROGRESS` | `/build-screen` currently running | `/build-screen` |
+| `PARTIALLY_COMPLETED` | Build interrupted mid-way (context limit, error) — resume with `/build-screen` | `/build-screen` |
+| `COMPLETED` | Build finished, all verification checks passed | `/build-screen` |
+| `NEEDS_FIX` | Build completed previously but bug/UI/enhancement raised — resume with `/continue-screen` | `/continue-screen` (user-triggered) |
+
+Transitions: `PENDING → PROMPT_READY → IN_PROGRESS → (COMPLETED | PARTIALLY_COMPLETED)`. After `COMPLETED`, a new fix session may transition to `NEEDS_FIX` and back to `COMPLETED` when resolved.
 
 ### § Tasks checklist
 
 Three groups: Planning (all `[x]` when file is generated), Generation (all `[ ]`), Verification (all `[ ]` — full E2E required).
+
+### § Section ⑬ — Build Log (appended by `/build-screen` and `/continue-screen`)
+
+An **append-only** history of sessions that worked on this screen. Lives at the bottom of every prompt file. The **Spec** (sections ① — ⑫) is the immutable input; the **Build Log** is the mutable running history. Each session appends one entry.
+
+Entry format:
+
+```markdown
+### Session {N} — {YYYY-MM-DD} — {kind: BUILD | FIX | ENHANCE} — {outcome: COMPLETED | PARTIAL | BLOCKED}
+
+- **Scope**: {what this session set out to do — 1 sentence}
+- **Files touched**:
+  - BE: `path/to/file.cs` (created | modified)
+  - FE: `path/to/file.tsx` (created | modified)
+  - DB: `path/to/seed.sql` (modified)
+- **Deviations from spec**: {anything intentionally built differently from the Spec — or "None"}
+- **Known issues opened**: {new bugs discovered but not fixed this session — or "None"}
+- **Known issues closed**: {which bug IDs from previous sessions were resolved — or "None"}
+- **Next step**: {empty if COMPLETED; what to resume on if PARTIAL/BLOCKED}
+```
+
+Above the entries, each prompt file also maintains a running **Known Issues** list — a short table of open bugs with stable IDs (`ISSUE-1`, `ISSUE-2`, …). When a fix session closes one, mark it `[x]` in place but leave the row for audit.
+
+**Why this exists**: Claude Code sessions don't transfer between systems. The Build Log is the portable, human-readable "where did we leave off" record. Any dev can clone `.claude/` and know exactly what's built, what's broken, and what was intentionally deviated. `/continue-screen` reads it on resume.
 
 ### § Section ① — Identity
 

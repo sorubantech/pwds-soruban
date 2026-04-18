@@ -129,8 +129,10 @@ The prompt file IS the input. It contains everything `/generate-screen` expects:
 1. Update prompt file:
    - Status: `COMPLETED`
    - `completed_date: {YYYY-MM-DD}`
+   - `last_session_date: {YYYY-MM-DD}`
    - All generation tasks checked off
-2. Update REGISTRY.md:
+2. **Append Build Log entry** (Section ⑬ — see below)
+3. Update REGISTRY.md:
    - Change screen status from `PROMPT_READY` to `COMPLETED`
    - Add Notes with date and file count
    - Update Summary counts
@@ -139,11 +141,39 @@ The prompt file IS the input. It contains everything `/generate-screen` expects:
 
 1. Update prompt file:
    - Status: `PARTIALLY_COMPLETED`
+   - `last_session_date: {YYYY-MM-DD}`
    - Check off only completed tasks
    - Add a note about what remains
-2. Update REGISTRY.md:
+2. **Append Build Log entry** with outcome `PARTIAL` and a `Next step:` line describing what to resume on
+3. Update REGISTRY.md:
    - Change status to `PARTIALLY_COMPLETED`
    - Add Notes explaining what was completed and what remains
+
+### Step 5a: Append Build Log Entry (MANDATORY — every session)
+
+Every `/build-screen` session — whether it ends in `COMPLETED` or `PARTIAL` — MUST append one entry to the prompt file's Section ⑬ Build Log before exiting. This is the portable handoff record that `/continue-screen` reads when a new session resumes work.
+
+**Format** (append under `### § Sessions`, after any existing entries):
+
+```markdown
+### Session {N} — {YYYY-MM-DD} — BUILD — {COMPLETED | PARTIAL}
+
+- **Scope**: Initial full build from PROMPT_READY prompt.
+- **Files touched**:
+  - BE: {list paths created/modified, with (created) or (modified) suffix}
+  - FE: {list paths created/modified}
+  - DB: {seed sql path (modified)}
+- **Deviations from spec**: {anything intentionally built differently from the Spec — or "None"}
+- **Known issues opened**: {new bugs/defects visible in the build — or "None"}
+- **Known issues closed**: None
+- **Next step**: {empty for COMPLETED; for PARTIAL: exact step to resume on — e.g., "Frontend wiring: routes/Routes.tsx + sidebar nav still pending"}
+```
+
+**Session number**: start at 1. Read the existing log first — if N prior entries exist, this entry is N+1.
+
+**Known Issues table**: if this session surfaced a real bug (test failure, build break not fixed this session, mockup gap), add a row to the Known Issues table with a stable ID `ISSUE-{N}` and `Status: OPEN`. Never edit prior sessions' entries.
+
+**Placeholder cleanup**: on the first session, delete the `{No sessions recorded yet …}` placeholder line before appending.
 
 ### Step 5b: Full-Flow Testing (MANDATORY)
 

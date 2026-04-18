@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Sources - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0.2rem 0 0 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary-accent:hover {
+      background: #0c6577;
+      border-color: #0c6577;
+      color: white;
+    }
+
+    .btn-outline-accent {
+      background: white;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline-accent:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-outline-accent.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Breadcrumb */
+    .breadcrumb-nav {
+      margin-bottom: 1rem;
+    }
+
+    .breadcrumb-nav a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.8125rem;
+      font-weight: 500;
+    }
+
+    .breadcrumb-nav a:hover {
+      text-decoration: underline;
+    }
+
+    .breadcrumb-nav span {
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+    }
+
+    /* Card */
+    .list-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.875rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .search-input {
+      flex: 1;
+      min-width: 200px;
+      position: relative;
+    }
+
+    .search-input input {
+      width: 100%;
+      padding: 0.45rem 0.75rem 0.45rem 2rem;
+      font-size: 0.8125rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      outline: none;
+    }
+
+    .search-input input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .search-input i {
+      position: absolute;
+      left: 0.7rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+    }
+
+    .filter-group {
+      display: inline-flex;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      overflow: hidden;
+    }
+
+    .filter-btn {
+      background: white;
+      border: none;
+      padding: 0.4rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-right: 1px solid var(--border-color);
+      transition: all 0.15s;
+    }
+
+    .filter-btn:last-child {
+      border-right: none;
+    }
+
+    .filter-btn:hover {
+      background: #f8fafc;
+    }
+
+    .filter-btn.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    .sort-select {
+      font-size: 0.8125rem;
+      padding: 0.45rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      background: white;
+      color: var(--text-primary);
+      cursor: pointer;
+      outline: none;
+    }
+
+    /* Table */
+    .table-responsive {
+      overflow-x: auto;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    .data-table thead th {
+      background: #f8fafc;
+      padding: 0.75rem 1rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      font-size: 0.6875rem;
+      letter-spacing: 0.05em;
+      border-bottom: 2px solid var(--border-color);
+      white-space: nowrap;
+      user-select: none;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    .data-table tbody tr {
+      border-bottom: 1px solid var(--border-color);
+      transition: background 0.15s;
+    }
+
+    .data-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    .data-table tbody td {
+      padding: 0.75rem 1rem;
+      vertical-align: middle;
+      color: var(--text-primary);
+    }
+
+    .data-table tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    .text-right {
+      text-align: right;
+    }
+
+    /* Drag Handle */
+    .drag-handle {
+      color: #cbd5e1;
+      cursor: grab;
+      font-size: 0.875rem;
+      display: none;
+    }
+
+    body.reorder-mode .drag-handle {
+      display: inline-block;
+    }
+
+    body.reorder-mode .drag-handle:hover {
+      color: var(--text-secondary);
+    }
+
+    body.reorder-mode .data-table tbody tr {
+      cursor: grab;
+    }
+
+    /* Code Badge */
+    .type-code {
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: #f1f5f9;
+      color: #334155;
+      padding: 0.2rem 0.5rem;
+      border-radius: 0.25rem;
+      border: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    /* Source Name with Icon */
+    .source-name {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .source-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 0.5rem;
+      background: var(--accent-bg);
+      color: var(--accent);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8125rem;
+    }
+
+    /* Contacts Share Bar */
+    .contacts-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      min-width: 100px;
+    }
+
+    .contacts-count-text {
+      font-weight: 600;
+      color: var(--accent);
+      font-size: 0.8125rem;
+    }
+
+    .share-bar {
+      width: 100%;
+      height: 4px;
+      background: #f1f5f9;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .share-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-light));
+      border-radius: 2px;
+    }
+
+    /* System Badge */
+    .system-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.2rem 0.55rem;
+      border-radius: 9999px;
+    }
+
+    .system-badge.yes {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .system-badge.no {
+      background: #f1f5f9;
+      color: var(--text-secondary);
+    }
+
+    /* Status Badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+    }
+
+    .status-badge.active {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .status-badge.inactive {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .status-dot.active {
+      background: #22c55e;
+    }
+
+    .status-dot.inactive {
+      background: #ef4444;
+    }
+
+    /* Action Buttons */
+    .action-btn {
+      background: none;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 0.3rem 0.5rem;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      font-size: 0.75rem;
+      transition: all 0.15s;
+      margin-right: 0.2rem;
+    }
+
+    .action-btn:hover {
+      background: #f8fafc;
+      color: var(--text-primary);
+      border-color: #cbd5e1;
+    }
+
+    .action-btn.merge:hover {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-color: #93c5fd;
+    }
+
+    .action-btn.delete:hover {
+      background: #fef2f2;
+      color: var(--danger-color);
+      border-color: #fca5a5;
+    }
+
+    .action-btn:disabled,
+    .action-btn.disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    /* Order Number */
+    .order-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #f1f5f9;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    /* Description truncate */
+    .desc-cell {
+      max-width: 240px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text-secondary);
+    }
+
+    /* Modified cell */
+    .modified-cell {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .modified-cell .by {
+      display: block;
+      color: #94a3b8;
+      font-size: 0.6875rem;
+    }
+
+    /* Summary Stats Cards */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .stats-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      padding: 1rem 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.9rem;
+    }
+
+    .stats-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 0.6rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .stats-label {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 600;
+    }
+
+    .stats-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.1;
+    }
+
+    /* Insights Panel */
+    .info-panel {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      padding: 1.25rem;
+    }
+
+    .info-panel-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .info-panel-header h3 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .info-panel-header i {
+      color: var(--accent);
+    }
+
+    /* Mini Bar Chart */
+    .mini-bar-row {
+      display: grid;
+      grid-template-columns: 110px 1fr 48px;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0;
+      font-size: 0.8125rem;
+    }
+
+    .mini-bar-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: var(--text-primary);
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .mini-bar-label i {
+      color: var(--accent);
+      font-size: 0.75rem;
+    }
+
+    .mini-bar-track {
+      height: 8px;
+      background: #f1f5f9;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .mini-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-light));
+      border-radius: 4px;
+    }
+
+    .mini-bar-value {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-align: right;
+      font-weight: 600;
+    }
+
+    .insight-stat {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      background: var(--accent-bg);
+      border-radius: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .insight-stat-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+    }
+
+    .insight-stat-text {
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+    }
+
+    .insight-stat-text strong {
+      color: var(--accent);
+    }
+
+    .analytics-link {
+      display: block;
+      text-align: center;
+      margin-top: 1rem;
+      padding: 0.55rem;
+      background: white;
+      border: 1px dashed var(--accent);
+      border-radius: 0.5rem;
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 0.8125rem;
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+
+    .analytics-link:hover {
+      background: var(--accent-bg);
+      color: var(--accent);
+    }
+
+    /* Modal */
+    .modal-header-accent {
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      color: white;
+      border-radius: var(--card-radius) var(--card-radius) 0 0;
+    }
+
+    .modal-header-accent .btn-close {
+      filter: brightness(0) invert(1);
+    }
+
+    .modal-content {
+      border-radius: var(--card-radius);
+      border: none;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-dialog {
+      max-width: 560px;
+    }
+
+    .form-label {
+      font-weight: 600;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      margin-bottom: 0.35rem;
+    }
+
+    .form-control,
+    .form-select {
+      font-size: 0.8125rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+      padding: 0.5rem 0.75rem;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+    }
+
+    .form-switch .form-check-input:checked {
+      background-color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .required-star {
+      color: var(--danger-color);
+    }
+
+    /* Icon Picker */
+    .icon-input-wrap {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .icon-preview {
+      width: 38px;
+      height: 38px;
+      border-radius: 0.5rem;
+      background: var(--accent-bg);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+      border: 1px solid var(--border-color);
+    }
+
+    .icon-suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+      margin-top: 0.4rem;
+    }
+
+    .icon-suggest-btn {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      padding: 0.3rem 0.55rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .icon-suggest-btn:hover {
+      background: var(--accent-bg);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Merge Modal warning */
+    .merge-warning {
+      background: #fef3c7;
+      border: 1px solid #fcd34d;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      font-size: 0.8125rem;
+      color: #92400e;
+      margin-top: 0.75rem;
+    }
+
+    .merge-warning ul {
+      margin: 0.25rem 0 0 0;
+      padding-left: 1.25rem;
+    }
+
+    .merge-warning li {
+      margin-bottom: 0.2rem;
+    }
+
+    .merge-source-card {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 1rem;
+      }
+
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .stats-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb-nav">
+    <a href="#" onclick="parent.loadContent('contacts/contact-list'); return false;">
+      <i class="fas fa-arrow-left me-1"></i> All Contacts
+    </a>
+    <span class="mx-2">/</span>
+    <span>Contact Sources</span>
+  </div>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-compass me-2" style="color: var(--accent);"></i>Contact Sources</h1>
+      <p class="subtitle">Track where your contacts come from — used in the contact form, import flows, and reports.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline-accent" id="reorderBtn" onclick="toggleReorder()">
+        <i class="fas fa-arrows-up-down me-1"></i> <span id="reorderLabel">Reorder</span>
+      </button>
+      <button class="btn-outline-accent" onclick="alert('Exporting sources to CSV...')">
+        <i class="fas fa-download me-1"></i> Export
+      </button>
+      <button class="btn-primary-accent" data-bs-toggle="modal" data-bs-target="#sourceModal" onclick="openNewSource()">
+        <i class="fas fa-plus me-1"></i> Add Source
+      </button>
+    </div>
+  </div>
+
+  <!-- Summary Stats Cards -->
+  <div class="stats-row">
+    <div class="stats-card">
+      <div class="stats-icon" style="background: var(--accent-bg); color: var(--accent);">
+        <i class="fas fa-compass"></i>
+      </div>
+      <div>
+        <div class="stats-label">Total Sources</div>
+        <div class="stats-value">12</div>
+      </div>
+    </div>
+    <div class="stats-card">
+      <div class="stats-icon" style="background: #dcfce7; color: #15803d;">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div>
+        <div class="stats-label">Active Sources</div>
+        <div class="stats-value">10</div>
+      </div>
+    </div>
+    <div class="stats-card">
+      <div class="stats-icon" style="background: #fef3c7; color: #92400e;">
+        <i class="fas fa-lock"></i>
+      </div>
+      <div>
+        <div class="stats-label">System Sources</div>
+        <div class="stats-value">5</div>
+      </div>
+    </div>
+    <div class="stats-card">
+      <div class="stats-icon" style="background: #dbeafe; color: #1d4ed8;">
+        <i class="fas fa-users"></i>
+      </div>
+      <div>
+        <div class="stats-label">Contacts Assigned</div>
+        <div class="stats-value">8,432</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="row g-3">
+    <!-- Table Column -->
+    <div class="col-lg-9">
+      <div class="list-card">
+        <!-- Filter & Search Bar -->
+        <div class="filter-bar">
+          <div class="search-input">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search by code or name..." oninput="applyFilters()">
+          </div>
+          <div class="filter-group" role="group">
+            <button class="filter-btn active" data-filter="status" data-value="all" onclick="setFilter(this)">All</button>
+            <button class="filter-btn" data-filter="status" data-value="active" onclick="setFilter(this)">Active</button>
+            <button class="filter-btn" data-filter="status" data-value="inactive" onclick="setFilter(this)">Inactive</button>
+          </div>
+          <div class="filter-group" role="group">
+            <button class="filter-btn active" data-filter="system" data-value="all" onclick="setFilter(this)">All</button>
+            <button class="filter-btn" data-filter="system" data-value="system" onclick="setFilter(this)">System</button>
+            <button class="filter-btn" data-filter="system" data-value="custom" onclick="setFilter(this)">Custom</button>
+          </div>
+          <select class="sort-select" id="sortSelect" onchange="applyFilters()">
+            <option value="order">Sort: Order</option>
+            <option value="name">Sort: Name</option>
+            <option value="created">Sort: Created Date</option>
+            <option value="contacts">Sort: Contacts Count</option>
+          </select>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+          <table class="data-table" id="sourcesTable">
+            <thead>
+              <tr>
+                <th style="width: 28px;"></th>
+                <th style="width: 54px;">Order</th>
+                <th>Code</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th class="text-right">Contacts</th>
+                <th>System</th>
+                <th>Status</th>
+                <th>Modified</th>
+                <th style="width: 140px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="sourcesBody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Insights Panel Column -->
+    <div class="col-lg-3">
+      <div class="info-panel">
+        <div class="info-panel-header">
+          <i class="fas fa-chart-simple"></i>
+          <h3>Usage Insights</h3>
+        </div>
+
+        <div style="margin-bottom: 0.5rem;">
+          <span style="font-size: 0.6875rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em;">
+            Top 3 sources · last 30 days
+          </span>
+        </div>
+
+        <div class="mini-bar-row">
+          <span class="mini-bar-label"><i class="fas fa-globe"></i>Website</span>
+          <div class="mini-bar-track"><div class="mini-bar-fill" style="width: 100%;"></div></div>
+          <span class="mini-bar-value">412</span>
+        </div>
+        <div class="mini-bar-row">
+          <span class="mini-bar-label"><i class="fas fa-users"></i>Referral</span>
+          <div class="mini-bar-track"><div class="mini-bar-fill" style="width: 78%;"></div></div>
+          <span class="mini-bar-value">321</span>
+        </div>
+        <div class="mini-bar-row">
+          <span class="mini-bar-label"><i class="fas fa-calendar"></i>Event</span>
+          <div class="mini-bar-track"><div class="mini-bar-fill" style="width: 56%;"></div></div>
+          <span class="mini-bar-value">231</span>
+        </div>
+
+        <div class="insight-stat">
+          <div class="insight-stat-icon">
+            <i class="fas fa-plus"></i>
+          </div>
+          <div class="insight-stat-text">
+            <strong>3</strong> sources added this year
+          </div>
+        </div>
+
+        <a class="analytics-link" href="#" onclick="parent.loadContent('reports/contact-reports'); return false;">
+          See source analytics <i class="fas fa-arrow-right ms-1"></i>
+        </a>
+      </div>
+
+      <!-- Quick Tips -->
+      <div class="info-panel mt-3">
+        <div class="info-panel-header">
+          <i class="fas fa-lightbulb"></i>
+          <h3>Quick Tips</h3>
+        </div>
+        <ul style="font-size: 0.8125rem; color: var(--text-secondary); padding-left: 1.25rem; margin: 0; line-height: 1.8;">
+          <li>Enable <strong>Reorder</strong> to rearrange dropdown display order</li>
+          <li>Use <strong>Merge</strong> to consolidate duplicate sources</li>
+          <li>System sources <strong>cannot be deleted</strong> but can be deactivated</li>
+          <li>Codes must be <strong>unique uppercase</strong> per company</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- New/Edit Source Modal -->
+  <div class="modal fade" id="sourceModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header modal-header-accent">
+          <h5 class="modal-title" id="modalTitle">
+            <i class="fas fa-plus-circle me-2"></i>Add Contact Source
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form id="sourceForm">
+            <div class="row mb-3">
+              <div class="col-6">
+                <label class="form-label">Source Code <span class="required-star">*</span></label>
+                <input type="text" class="form-control" id="sourceCode" maxlength="100"
+                  placeholder="e.g., WEBSITE" style="text-transform: uppercase;"
+                  oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9_]/g, '')">
+                <div class="form-text" style="font-size: 0.7rem;">Uppercase alphanumeric + underscore. Unique per company.</div>
+              </div>
+              <div class="col-6">
+                <label class="form-label">Source Name <span class="required-star">*</span></label>
+                <input type="text" class="form-control" id="sourceName" maxlength="100"
+                  placeholder="e.g., Website">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Icon</label>
+              <div class="icon-input-wrap">
+                <div class="icon-preview" id="iconPreview"><i class="fas fa-compass" id="iconPreviewEl"></i></div>
+                <input type="text" class="form-control" id="sourceIcon" value="compass"
+                  placeholder="Font Awesome icon name (e.g., globe, users, calendar)"
+                  oninput="updateIconPreview()">
+              </div>
+              <div class="icon-suggestions">
+                <button type="button" class="icon-suggest-btn" onclick="pickIcon('globe')"><i class="fas fa-globe"></i>globe</button>
+                <button type="button" class="icon-suggest-btn" onclick="pickIcon('users')"><i class="fas fa-users"></i>users</button>
+                <button type="button" class="icon-suggest-btn" onclick="pickIcon('calendar')"><i class="fas fa-calendar"></i>calendar</button>
+                <button type="button" class="icon-suggest-btn" onclick="pickIcon('person-walking')"><i class="fas fa-person-walking"></i>walk-in</button>
+                <button type="button" class="icon-suggest-btn" onclick="pickIcon('share-nodes')"><i class="fas fa-share-nodes"></i>social</button>
+                <button type="button" class="icon-suggest-btn" onclick="pickIcon('bullseye')"><i class="fas fa-bullseye"></i>campaign</button>
+                <button type="button" class="icon-suggest-btn" onclick="pickIcon('file-import')"><i class="fas fa-file-import"></i>import</button>
+                <button type="button" class="icon-suggest-btn" onclick="pickIcon('handshake')"><i class="fas fa-handshake"></i>partner</button>
+                <button type="button" class="icon-suggest-btn" onclick="pickIcon('building')"><i class="fas fa-building"></i>corporate</button>
+                <button type="button" class="icon-suggest-btn" onclick="pickIcon('medal')"><i class="fas fa-medal"></i>agent</button>
+                <button type="button" class="icon-suggest-btn" onclick="pickIcon('mobile-screen')"><i class="fas fa-mobile-screen"></i>mobile</button>
+                <button type="button" class="icon-suggest-btn" onclick="pickIcon('question')"><i class="fas fa-question"></i>other</button>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Description</label>
+              <textarea class="form-control" id="sourceDesc" rows="2" maxlength="1000"
+                placeholder="Brief description of this source..."></textarea>
+            </div>
+
+            <div class="row mb-2">
+              <div class="col-6">
+                <label class="form-label">Display Order</label>
+                <input type="number" class="form-control" id="sourceOrder" min="1" value="13">
+              </div>
+              <div class="col-6">
+                <label class="form-label">Status</label>
+                <div class="form-check form-switch mt-2">
+                  <input class="form-check-input" type="checkbox" id="sourceActive" checked
+                    style="width: 2.5rem; height: 1.25rem;">
+                  <label class="form-check-label" for="sourceActive" id="sourceActiveLabel"
+                    style="font-size: 0.8125rem; padding-top: 0.1rem;">Active</label>
+                </div>
+              </div>
+            </div>
+
+            <div id="systemLockNotice" style="display: none; margin-top: 0.5rem; padding: 0.5rem 0.75rem; background: #fef3c7; border-radius: 0.4rem; font-size: 0.75rem; color: #92400e;">
+              <i class="fas fa-lock me-1"></i> Code is locked for system sources. You can still edit name, icon, and status.
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="font-size: 0.8125rem;">Cancel</button>
+          <button type="button" class="btn-primary-accent" onclick="saveSource()">
+            <i class="fas fa-check me-1"></i> Save Source
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Merge Modal -->
+  <div class="modal fade" id="mergeModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header modal-header-accent">
+          <h5 class="modal-title">
+            <i class="fas fa-code-merge me-2"></i>Merge Contact Source
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="merge-source-card">
+            <div class="source-icon" id="mergeSourceIcon">
+              <i class="fas fa-compass"></i>
+            </div>
+            <div>
+              <div style="font-weight: 700; color: var(--text-primary);" id="mergeSourceName">Social Media</div>
+              <div style="font-size: 0.75rem; color: var(--text-secondary);"><span id="mergeSourceCount">876</span> contacts will be reassigned</div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Merge into target source <span class="required-star">*</span></label>
+            <select class="form-select" id="mergeTarget">
+              <option value="">Select target source...</option>
+            </select>
+          </div>
+
+          <div class="merge-warning">
+            <strong><i class="fas fa-exclamation-triangle me-1"></i> This action will:</strong>
+            <ul>
+              <li>Reassign all <strong><span id="mergeWarnCount">876</span></strong> contacts to the target source</li>
+              <li>Delete the "<span id="mergeWarnName">Social Media</span>" source</li>
+              <li><strong>Cannot be undone</strong></li>
+            </ul>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="font-size: 0.8125rem;">Cancel</button>
+          <button type="button" class="btn btn-danger" onclick="confirmMerge()" style="font-size: 0.8125rem; font-weight: 600;">
+            <i class="fas fa-code-merge me-1"></i> Confirm Merge
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content">
+        <div class="modal-header" style="background: #fef2f2; border-bottom: 1px solid #fecaca;">
+          <h5 class="modal-title" style="font-size: 0.9375rem; color: var(--danger-color);">
+            <i class="fas fa-exclamation-triangle me-2"></i>Delete Source
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4" style="font-size: 0.8125rem;">
+          <p>Are you sure you want to delete the <strong id="deleteSourceName"></strong> source?</p>
+          <p class="text-muted mb-0">This action cannot be undone. Contacts using this source will need to be reassigned first.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="font-size: 0.8125rem;">Cancel</button>
+          <button type="button" class="btn btn-danger" data-bs-dismiss="modal" onclick="alert('Source deleted successfully')" style="font-size: 0.8125rem;">
+            <i class="fas fa-trash-alt me-1"></i> Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Mock data
+    const sources = [
+      { order: 1, code: 'WEBSITE', name: 'Website', icon: 'globe', desc: 'Contacts captured via public website forms and landing pages', isSystem: true, contacts: 2145, active: true, modified: 'Apr 10, 2026', modifiedBy: 'System', created: '2024-01-15' },
+      { order: 2, code: 'REFERRAL', name: 'Referral', icon: 'users', desc: 'Referred by existing donors, members, or volunteers', isSystem: true, contacts: 1832, active: true, modified: 'Apr 08, 2026', modifiedBy: 'Sarah J.', created: '2024-01-15' },
+      { order: 3, code: 'EVENT', name: 'Event', icon: 'calendar', desc: 'Acquired through fundraising or community events', isSystem: true, contacts: 1204, active: true, modified: 'Apr 05, 2026', modifiedBy: 'System', created: '2024-01-15' },
+      { order: 4, code: 'WALKIN', name: 'Walk-in', icon: 'person-walking', desc: 'Visited the office or branch in person', isSystem: true, contacts: 987, active: true, modified: 'Mar 28, 2026', modifiedBy: 'Michael C.', created: '2024-01-15' },
+      { order: 5, code: 'SOCIAL_MEDIA', name: 'Social Media', icon: 'share-nodes', desc: 'Engagement from Facebook, Instagram, LinkedIn, Twitter', isSystem: false, contacts: 876, active: true, modified: 'Apr 11, 2026', modifiedBy: 'Emily W.', created: '2024-06-10' },
+      { order: 6, code: 'CAMPAIGN', name: 'Campaign', icon: 'bullseye', desc: 'Joined through a specific marketing or outreach campaign', isSystem: false, contacts: 654, active: true, modified: 'Apr 09, 2026', modifiedBy: 'David B.', created: '2024-08-22' },
+      { order: 7, code: 'IMPORT', name: 'Import', icon: 'file-import', desc: 'Added via bulk CSV/Excel import', isSystem: true, contacts: 432, active: true, modified: 'Apr 01, 2026', modifiedBy: 'System', created: '2024-01-15' },
+      { order: 8, code: 'PARTNER_NGO', name: 'Partner NGO', icon: 'handshake', desc: 'Shared contacts from partner non-profit organizations', isSystem: false, contacts: 198, active: true, modified: 'Mar 18, 2026', modifiedBy: 'Lisa A.', created: '2025-02-14' },
+      { order: 9, code: 'CORPORATE', name: 'Corporate Partner', icon: 'building', desc: 'Employees referred through corporate partnership programs', isSystem: false, contacts: 87, active: true, modified: 'Mar 12, 2026', modifiedBy: 'James W.', created: '2025-05-03' },
+      { order: 10, code: 'AMBASSADOR', name: 'Ambassador/Agent', icon: 'medal', desc: 'Acquired by field ambassadors or collection agents', isSystem: false, contacts: 64, active: true, modified: 'Apr 06, 2026', modifiedBy: 'Anna M.', created: '2025-07-20' },
+      { order: 11, code: 'MOBILE_APP', name: 'Mobile App', icon: 'mobile-screen', desc: 'Registered through the donor/beneficiary mobile app', isSystem: false, contacts: 29, active: false, modified: 'Feb 22, 2026', modifiedBy: 'Robert T.', created: '2025-11-08' },
+      { order: 12, code: 'OTHER', name: 'Other', icon: 'question', desc: 'Source not covered by any other category', isSystem: true, contacts: 24, active: false, modified: 'Jan 15, 2026', modifiedBy: 'System', created: '2024-01-15' }
+    ];
+
+    const maxContacts = Math.max(...sources.map(s => s.contacts));
+    let editIndex = null;
+    let mergeIndex = null;
+    let filters = { status: 'all', system: 'all' };
+
+    function formatNumber(n) {
+      return n.toLocaleString('en-US');
+    }
+
+    function renderTable() {
+      const body = document.getElementById('sourcesBody');
+      const searchTerm = (document.getElementById('searchInput').value || '').toLowerCase();
+      const sortKey = document.getElementById('sortSelect').value;
+
+      let rows = sources.slice();
+
+      // Filter
+      rows = rows.filter(s => {
+        if (searchTerm && !s.code.toLowerCase().includes(searchTerm) && !s.name.toLowerCase().includes(searchTerm)) return false;
+        if (filters.status === 'active' && !s.active) return false;
+        if (filters.status === 'inactive' && s.active) return false;
+        if (filters.system === 'system' && !s.isSystem) return false;
+        if (filters.system === 'custom' && s.isSystem) return false;
+        return true;
+      });
+
+      // Sort
+      rows.sort((a, b) => {
+        if (sortKey === 'name') return a.name.localeCompare(b.name);
+        if (sortKey === 'created') return b.created.localeCompare(a.created);
+        if (sortKey === 'contacts') return b.contacts - a.contacts;
+        return a.order - b.order;
+      });
+
+      if (rows.length === 0) {
+        body.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 2.5rem; color: var(--text-secondary);">
+          <i class="fas fa-inbox" style="font-size: 1.5rem; display: block; margin-bottom: 0.5rem; color: #cbd5e1;"></i>
+          No sources match the current filters.
+        </td></tr>`;
+        return;
+      }
+
+      body.innerHTML = rows.map(s => {
+        const idx = sources.indexOf(s);
+        const sharePct = Math.round((s.contacts / maxContacts) * 100);
+        const systemBadge = s.isSystem
+          ? `<span class="system-badge yes"><i class="fas fa-lock" style="font-size:0.6rem;"></i> System</span>`
+          : `<span class="system-badge no">Custom</span>`;
+        const statusBadge = s.active
+          ? `<span class="status-badge active"><span class="status-dot active"></span> Active</span>`
+          : `<span class="status-badge inactive"><span class="status-dot inactive"></span> Inactive</span>`;
+        const deleteBtn = s.isSystem
+          ? `<button class="action-btn delete disabled" title="System sources cannot be deleted" disabled><i class="fas fa-trash-alt"></i></button>`
+          : `<button class="action-btn delete" title="Delete" onclick="confirmDelete('${s.name}')"><i class="fas fa-trash-alt"></i></button>`;
+
+        return `
+          <tr>
+            <td><i class="fas fa-grip-vertical drag-handle"></i></td>
+            <td><span class="order-num">${s.order}</span></td>
+            <td><span class="type-code">${s.code}</span></td>
+            <td>
+              <span class="source-name">
+                <span class="source-icon"><i class="fas fa-${s.icon}"></i></span>
+                <strong>${s.name}</strong>
+              </span>
+            </td>
+            <td><div class="desc-cell" title="${s.desc}">${s.desc}</div></td>
+            <td class="text-right">
+              <div class="contacts-cell">
+                <span class="contacts-count-text">${formatNumber(s.contacts)}</span>
+                <div class="share-bar"><div class="share-bar-fill" style="width: ${sharePct}%;"></div></div>
+              </div>
+            </td>
+            <td>${systemBadge}</td>
+            <td>${statusBadge}</td>
+            <td><div class="modified-cell">${s.modified}<span class="by">by ${s.modifiedBy}</span></div></td>
+            <td>
+              <button class="action-btn" title="Edit" onclick="openEditSource(${idx})"><i class="fas fa-pen"></i></button>
+              <button class="action-btn merge" title="Merge" onclick="openMerge(${idx})"><i class="fas fa-code-merge"></i></button>
+              ${deleteBtn}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function setFilter(btn) {
+      const filter = btn.dataset.filter;
+      const value = btn.dataset.value;
+      filters[filter] = value;
+      document.querySelectorAll(`.filter-btn[data-filter="${filter}"]`).forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderTable();
+    }
+
+    function applyFilters() {
+      renderTable();
+    }
+
+    function toggleReorder() {
+      document.body.classList.toggle('reorder-mode');
+      const isOn = document.body.classList.contains('reorder-mode');
+      document.getElementById('reorderBtn').classList.toggle('active', isOn);
+      document.getElementById('reorderLabel').textContent = isOn ? 'Done' : 'Reorder';
+    }
+
+    function openNewSource() {
+      editIndex = null;
+      document.getElementById('modalTitle').innerHTML = '<i class="fas fa-plus-circle me-2"></i>Add Contact Source';
+      document.getElementById('sourceCode').value = '';
+      document.getElementById('sourceCode').readOnly = false;
+      document.getElementById('sourceName').value = '';
+      document.getElementById('sourceIcon').value = 'compass';
+      document.getElementById('sourceDesc').value = '';
+      document.getElementById('sourceOrder').value = sources.length + 1;
+      document.getElementById('sourceActive').checked = true;
+      document.getElementById('sourceActiveLabel').textContent = 'Active';
+      document.getElementById('systemLockNotice').style.display = 'none';
+      updateIconPreview();
+    }
+
+    function openEditSource(index) {
+      editIndex = index;
+      const s = sources[index];
+      document.getElementById('modalTitle').innerHTML = '<i class="fas fa-pen me-2"></i>Edit Contact Source';
+      document.getElementById('sourceCode').value = s.code;
+      document.getElementById('sourceCode').readOnly = s.isSystem;
+      document.getElementById('sourceName').value = s.name;
+      document.getElementById('sourceIcon').value = s.icon;
+      document.getElementById('sourceDesc').value = s.desc;
+      document.getElementById('sourceOrder').value = s.order;
+      document.getElementById('sourceActive').checked = s.active;
+      document.getElementById('sourceActiveLabel').textContent = s.active ? 'Active' : 'Inactive';
+      document.getElementById('systemLockNotice').style.display = s.isSystem ? 'block' : 'none';
+      updateIconPreview();
+
+      const modal = new bootstrap.Modal(document.getElementById('sourceModal'));
+      modal.show();
+    }
+
+    function updateIconPreview() {
+      const iconName = (document.getElementById('sourceIcon').value || 'compass').trim();
+      const el = document.getElementById('iconPreviewEl');
+      el.className = 'fas fa-' + iconName;
+    }
+
+    function pickIcon(name) {
+      document.getElementById('sourceIcon').value = name;
+      updateIconPreview();
+    }
+
+    function saveSource() {
+      const code = document.getElementById('sourceCode').value.trim();
+      const name = document.getElementById('sourceName').value.trim();
+
+      if (!code || !name) {
+        alert('Please fill in required fields (Source Code and Source Name)');
+        return;
+      }
+
+      const modal = bootstrap.Modal.getInstance(document.getElementById('sourceModal'));
+      modal.hide();
+
+      if (editIndex !== null) {
+        alert('Contact source "' + name + '" updated successfully');
+      } else {
+        alert('Contact source "' + name + '" created successfully');
+      }
+    }
+
+    function openMerge(index) {
+      mergeIndex = index;
+      const s = sources[index];
+      document.getElementById('mergeSourceName').textContent = s.name;
+      document.getElementById('mergeSourceCount').textContent = formatNumber(s.contacts);
+      document.getElementById('mergeSourceIcon').innerHTML = `<i class="fas fa-${s.icon}"></i>`;
+      document.getElementById('mergeWarnCount').textContent = formatNumber(s.contacts);
+      document.getElementById('mergeWarnName').textContent = s.name;
+
+      const target = document.getElementById('mergeTarget');
+      target.innerHTML = '<option value="">Select target source...</option>' +
+        sources.filter((_, i) => i !== index).map(t =>
+          `<option value="${t.code}">${t.name} (${formatNumber(t.contacts)} contacts)</option>`
+        ).join('');
+
+      const modal = new bootstrap.Modal(document.getElementById('mergeModal'));
+      modal.show();
+    }
+
+    function confirmMerge() {
+      const target = document.getElementById('mergeTarget').value;
+      if (!target) {
+        alert('Please select a target source to merge into.');
+        return;
+      }
+      const modal = bootstrap.Modal.getInstance(document.getElementById('mergeModal'));
+      modal.hide();
+      alert('Merge completed successfully. All contacts have been reassigned.');
+    }
+
+    function confirmDelete(name) {
+      document.getElementById('deleteSourceName').textContent = name;
+      const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+      modal.show();
+    }
+
+    // Toggle active label
+    document.getElementById('sourceActive').addEventListener('change', function () {
+      document.getElementById('sourceActiveLabel').textContent = this.checked ? 'Active' : 'Inactive';
+    });
+
+    // Initial render
+    renderTable();
+  </script>
+
+</body>
+
+</html>

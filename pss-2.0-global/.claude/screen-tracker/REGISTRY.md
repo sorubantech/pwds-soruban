@@ -25,6 +25,7 @@
 | `IN_PROGRESS` | Currently being built by `/build-screen`. |
 | `PARTIALLY_COMPLETED` | Some generation tasks done (e.g., BE done, FE pending). Resume with `/build-screen`. |
 | `COMPLETED` | Fully generated, verified, and aligned with HTML mockup. |
+| `NEEDS_FIX` | COMPLETED previously but bug / UI / enhancement raised — resume with `/continue-screen`. |
 | `SKIP_MOBILE` | Mobile app screen — separate pipeline, not this tracker. |
 | `SKIP_DASHBOARD` | Dashboard/analytics — custom FE, no standard CRUD generation. |
 | `SKIP_CONFIG` | Config screen — likely handled by existing settings infrastructure or custom UI. |
@@ -43,21 +44,52 @@
 
 ---
 
+## Row-ordering Convention
+
+> **Within every module section AND within every priority tier, rows are ordered by `Type` in this sequence:**
+> `MASTER_GRID` → `FLOW` → `Config` → `Dashboard` → (other: Mobile / Auth / Layout)
+>
+> This puts master/reference tables (grids with no FK dependencies) above transaction grids (FLOW screens that depend on the masters). Within each Type group, rows are listed in registry-ID (`#`) order. Registry IDs are **stable** — re-sorting never renumbers them (they're referenced by `/build-screen #N` and `/continue-screen #N`).
+
+---
+
+## How to Read the "Mockup Files" Column
+
+> The `Mockup Files` column tells the developer **which HTML file(s) to refer to** before starting work on a screen. Open the file(s) in a browser + in VS Code to understand the target UI.
+
+**Base paths**:
+
+| Where the screen lives | Base folder | Full path example |
+|------------------------|-------------|-------------------|
+| Inside a module | [`html_mockup_screens/screens/<module>/`](../../html_mockup_screens/screens/) | `html_mockup_screens/screens/fundraising/matching-gifts.html` |
+| Root-level (login / layout / dashboard) | [`html_mockup_screens/`](../../html_mockup_screens/) | `html_mockup_screens/login.html` |
+
+**Compound shorthand** — when you see a `+` in the file name (e.g., `contact-list+form+detail.html`), it's shorthand for **three separate files** at the same folder:
+- `contact-list.html` — grid/index view
+- `contact-form.html` — add/edit form
+- `contact-detail.html` — read-only detail view
+
+The dev must refer to all three to understand the full FLOW screen. (MASTER_GRID screens usually map to one mockup file; FLOW screens often split across list+form+detail.)
+
+**Tip**: to open quickly in VS Code from any row, copy the path, prepend `html_mockup_screens/screens/`, and use `Ctrl+P` / `Cmd+P` → paste. Or browse: [html_mockup_screens/screens/](../../html_mockup_screens/screens/).
+
+---
+
 ## FUNDRAISING MODULE
 
 | # | Screen | Mockup Files | Scope | Type | Priority | Status | Prompt | Notes |
 |---|--------|-------------|-------|------|----------|--------|--------|-------|
-| 1 | Donation (Global) | fundraising/donation-list+form+detail.html | ALIGN | FLOW | P5-Alignment | COMPLETED | prompts/global-donation.md | Completed 2026-04-16. BE: 3 files (Summary DTO + Handler + GQL). FE: 8 new files (FLOW router, index-page, view-page, store, summary widgets, distribution grid, receipt modal, summary query). 5 modified files. DB seed generated. |
 | 2 | Donation Purpose | fundraising/donation-purposes.html | ALIGN | MASTER_GRID | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 3 | Donation Category | fundraising/donation-purposes.html | ALIGN | MASTER_GRID | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 4 | Donation Group | fundraising/donation-purposes.html | ALIGN | MASTER_GRID | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
+| 11 | Matching Gift | fundraising/matching-gifts.html | FULL | MASTER_GRID | P2-Core | PARTIAL | — | FE route exists, NO BE entity. Needs: MatchingGift entity + full CRUD |
+| 1 | Donation (Global) | fundraising/donation-list+form+detail.html | ALIGN | FLOW | P5-Alignment | COMPLETED | prompts/global-donation.md | Completed 2026-04-16. BE: 3 files (Summary DTO + Handler + GQL). FE: 8 new files (FLOW router, index-page, view-page, store, summary widgets, distribution grid, receipt modal, summary query). 5 modified files. DB seed generated. |
 | 5 | Bulk Donation | fundraising/bulk-donation-upload.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 6 | Cheque Donation | fundraising/cheque-donations.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 7 | In-Kind Donation | fundraising/inkind-donations.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 8 | Recurring Donation | fundraising/recurring-donations.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 9 | Receipt (GlobalReceipt) | fundraising/receipt-management.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 10 | Online Donation Setup | fundraising/online-donation-setup.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
-| 11 | Matching Gift | fundraising/matching-gifts.html | FULL | MASTER_GRID | P2-Core | PARTIAL | — | FE route exists, NO BE entity. Needs: MatchingGift entity + full CRUD |
 | 12 | Pledge | fundraising/pledge-management.html | FULL | FLOW | P2-Core | PARTIAL | — | FE route exists, NO BE entity. Needs: Pledge + PledgePayment entities |
 | 13 | Refund | fundraising/refund-management.html | FULL | FLOW | P3-Business | PARTIAL | — | FE route exists, NO BE entity. FK: Donation, Contact, PaymentMode |
 | 14 | Payment Reconciliation | fundraising/payment-reconciliation.html | FULL | FLOW | P3-Business | PARTIAL | — | FE route exists, PaymentSettlement exists but not reconciliation screen |
@@ -71,11 +103,11 @@
 
 | # | Screen | Mockup Files | Scope | Type | Priority | Status | Prompt | Notes |
 |---|--------|-------------|-------|------|----------|--------|--------|-------|
-| 18 | Contact | contacts/contact-list+form+detail.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 19 | Contact Type | contacts/contact-types.html | ALIGN | MASTER_GRID | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
+| 22 | Tags & Segmentation | contacts/tags-segmentation.html | FULL | MASTER_GRID | P2-Core | PARTIAL | — | FE route exists, NO Tag/Segment BE entity |
+| 18 | Contact | contacts/contact-list+form+detail.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 20 | Family | contacts/family-management.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 21 | Duplicate Detection | contacts/duplicate-merge.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
-| 22 | Tags & Segmentation | contacts/tags-segmentation.html | FULL | MASTER_GRID | P2-Core | PARTIAL | — | FE route exists, NO Tag/Segment BE entity |
 | 23 | Contact Import | contacts/contact-import.html | FE_ONLY | FLOW | P3-Business | PARTIAL | — | ImportSession BE exists, FE component incomplete |
 
 ---
@@ -84,20 +116,20 @@
 
 | # | Screen | Mockup Files | Scope | Type | Priority | Status | Prompt | Notes |
 |---|--------|-------------|-------|------|----------|--------|--------|-------|
+| 29 | SMS Template | communication/sms-templates.html | FULL | MASTER_GRID | P2-Core | PARTIAL | — | FE route exists, NO BE entity. New: SMSTemplate |
+| 31 | WhatsApp Template | communication/whatsapp-template-editor.html | FULL | MASTER_GRID | P2-Core | PARTIAL | — | FE route exists, NO BE entity. New: WhatsAppTemplate |
+| 36 | Notification Templates | communication/notification-templates.html | FULL | MASTER_GRID | P2-Core | PARTIAL | — | FE route exists, needs dedicated template management |
 | 24 | Email Template | communication/email-template-editor.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 25 | Email Campaign/SendJob | communication/email-campaign-list+builder.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 26 | Placeholder Definition | communication/placeholder-management.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 27 | Saved Filter | communication/saved-filters.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 28 | Company Email Provider | communication/email-provider-config.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
-| 29 | SMS Template | communication/sms-templates.html | FULL | MASTER_GRID | P2-Core | PARTIAL | — | FE route exists, NO BE entity. New: SMSTemplate |
 | 30 | SMS Campaign | communication/sms-campaigns.html | FULL | FLOW | P3-Business | PARTIAL | — | FE route exists, NO BE entity. FK: SMSTemplate |
-| 31 | WhatsApp Template | communication/whatsapp-template-editor.html | FULL | MASTER_GRID | P2-Core | PARTIAL | — | FE route exists, NO BE entity. New: WhatsAppTemplate |
 | 32 | WhatsApp Campaign | communication/whatsapp-campaigns.html | FULL | FLOW | P3-Business | PARTIAL | — | FE route exists, NO BE entity. FK: WhatsAppTemplate |
 | 33 | WhatsApp Conversations | communication/whatsapp-conversations.html | FULL | FLOW | P3-Business | PARTIAL | — | FE route exists, NO BE entity |
-| 34 | WhatsApp Setup | communication/whatsapp-setup.html | FULL | Config | P2-Core | PARTIAL | — | FE route exists, NO BE entity |
 | 35 | Notification Center | communication/notification-center.html | FE_ONLY | FLOW | P3-Business | PARTIAL | — | BE Notification entity exists, FE component incomplete |
-| 36 | Notification Templates | communication/notification-templates.html | FULL | MASTER_GRID | P2-Core | PARTIAL | — | FE route exists, needs dedicated template management |
 | 37 | Automation Workflow | communication/automation-workflows.html | FULL | FLOW | P4-Advanced | PARTIAL | — | FE route exists, NO BE entity. Complex workflow builder |
+| 34 | WhatsApp Setup | communication/whatsapp-setup.html | FULL | Config | P2-Core | PARTIAL | — | FE route exists, NO BE entity |
 | 38 | Email Analytics | communication/email-analytics.html | — | Dashboard | P4-Advanced | SKIP_DASHBOARD | — | Custom FE analytics |
 
 ---
@@ -106,16 +138,16 @@
 
 | # | Screen | Mockup Files | Scope | Type | Priority | Status | Prompt | Notes |
 |---|--------|-------------|-------|------|----------|--------|--------|-------|
+| 41 | Branch | organization/branch-management.html | ALIGN | MASTER_GRID | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
+| 43 | Staff Category | organization/staff-management.html | ALIGN | MASTER_GRID | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 39 | Campaign | organization/campaign-list+form+dashboard.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 40 | Event | organization/event-list+form+dashboard.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
-| 41 | Branch | organization/branch-management.html | ALIGN | MASTER_GRID | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 42 | Staff | organization/staff-management.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
-| 43 | Staff Category | organization/staff-management.html | ALIGN | MASTER_GRID | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 44 | Organizational Unit | organization/org-unit-tree+form.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 45 | Company | organization/branch-management.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 46 | Event Ticketing | organization/event-ticketing.html | FULL | FLOW | P3-Business | PARTIAL | — | FE route exists, NO BE entity for ticketing |
-| 47 | Event Analytics | organization/event-analytics.html | — | Dashboard | P4-Advanced | SKIP_DASHBOARD | — | Custom FE analytics |
 | 48 | Auction Management | organization/auction-management.html | FULL | FLOW | P3-Business | PARTIAL | — | FE route exists, NO BE entity |
+| 47 | Event Analytics | organization/event-analytics.html | — | Dashboard | P4-Advanced | SKIP_DASHBOARD | — | Custom FE analytics |
 
 ---
 
@@ -123,9 +155,9 @@
 
 | # | Screen | Mockup Files | Scope | Type | Priority | Status | Prompt | Notes |
 |---|--------|-------------|-------|------|----------|--------|--------|-------|
+| 51 | Program | case-management/program-management.html | FULL | MASTER_GRID | P1-Setup | PARTIAL | — | FE route exists, NO BE entity. Master table for Case module |
 | 49 | Beneficiary | case-management/beneficiary-list+form+detail.html | FULL | FLOW | P2-Core | PARTIAL | — | FE route exists, NO BE entity. New module: case schema |
 | 50 | Case | case-management/case-list+detail.html | FULL | FLOW | P3-Business | PARTIAL | — | FE route exists, NO BE entity. FK: Beneficiary, Staff |
-| 51 | Program | case-management/program-management.html | FULL | MASTER_GRID | P1-Setup | PARTIAL | — | FE route exists, NO BE entity. Master table for Case module |
 | 52 | Case Dashboard | case-management/case-dashboard.html | — | Dashboard | P4-Advanced | SKIP_DASHBOARD | — | Custom FE analytics |
 
 ---
@@ -167,8 +199,8 @@
 
 | # | Screen | Mockup Files | Scope | Type | Priority | Status | Prompt | Notes |
 |---|--------|-------------|-------|------|----------|--------|--------|-------|
-| 65 | Field Collection | field-collection/collection-list+form.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 66 | Receipt Book | field-collection/receipt-books.html | ALIGN | MASTER_GRID | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
+| 65 | Field Collection | field-collection/collection-list+form.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 67 | Ambassador | field-collection/ambassador-list.html | FULL | FLOW | P2-Core | PARTIAL | — | FE route exists, NO standalone Ambassador BE entity |
 | 68 | Collection Distribution | field-collection/collection-distribution.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 69 | Ambassador Dashboard | field-collection/ambassador-dashboard.html | — | Dashboard | P4-Advanced | SKIP_DASHBOARD | — | Custom FE analytics |
@@ -182,8 +214,8 @@
 | 70 | Role Management | administration/role-management.html | ALIGN | MASTER_GRID | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 71 | Menu Management | administration/menu-management.html | ALIGN | MASTER_GRID | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 72 | User Management | administration/user-management.html | FE_ONLY | FLOW | P2-Core | PARTIAL | — | BE User entity exists, NO dedicated FE management screen |
-| 73 | Role-Capability Matrix | administration/role-capability-matrix.html | ALIGN | Config | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 74 | Audit Trail | administration/audit-trail.html | FULL | FLOW | P3-Business | NEW | — | No BE entity, no FE route. Completely new screen |
+| 73 | Role-Capability Matrix | administration/role-capability-matrix.html | ALIGN | Config | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 75 | Company Settings | administration/company-settings.html | ALIGN | Config | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 
 ---
@@ -193,13 +225,13 @@
 | # | Screen | Mockup Files | Scope | Type | Priority | Status | Prompt | Notes |
 |---|--------|-------------|-------|------|----------|--------|--------|-------|
 | 76 | Master Data | settings/master-data.html | ALIGN | MASTER_GRID | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
+| 79 | Currency Management | settings/currency-management.html | ALIGN | MASTER_GRID | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
+| 81 | Document Types | settings/document-types.html | FE_ONLY | MASTER_GRID | P1-Setup | PARTIAL | — | BE DocumentType exists, NO FE route |
+| 83 | Certificate Templates | settings/certificate-templates.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 77 | Grid Config | settings/grid-configuration.html | ALIGN | Config | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 78 | Dashboard Config | settings/dashboard-config.html | ALIGN | Config | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
-| 79 | Currency Management | settings/currency-management.html | ALIGN | MASTER_GRID | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 80 | Region Hierarchy | settings/region-hierarchy.html | ALIGN | Config | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
-| 81 | Document Types | settings/document-types.html | FE_ONLY | MASTER_GRID | P1-Setup | PARTIAL | — | BE DocumentType exists, NO FE route |
 | 82 | Custom Fields | settings/custom-fields.html | FE_ONLY | Config | P3-Business | PARTIAL | — | BE API exists, FE component incomplete |
-| 83 | Certificate Templates | settings/certificate-templates.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 84 | Email Provider Config | settings/email-provider-config.html | ALIGN | Config | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 85 | Organization Settings | settings/org-settings.html | ALIGN | Config | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 86 | API Management | settings/api-management.html | — | Config | P4-Advanced | SKIP_CONFIG | — | Integration config, custom screen |
@@ -228,10 +260,10 @@
 |---|--------|-------------|-------|------|----------|--------|--------|-------|
 | 96 | Custom Report Builder | reports/custom-report-builder.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 97 | PowerBI Viewer | reports/powerbi-viewer.html | ALIGN | Config | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
-| 98 | Donor Retention Dashboard | reports/retention-dashboard.html | — | Dashboard | P4-Advanced | SKIP_DASHBOARD | — | Custom analytics |
-| 99 | Report Catalog | reports/report-catalog.html | — | Dashboard | P4-Advanced | SKIP_DASHBOARD | — | Custom FE |
 | 100 | HTML Report Viewer | reports/html-report-viewer.html | — | Config | P4-Advanced | SKIP_CONFIG | — | Custom viewer |
 | 101 | Scheduled Reports | reports/scheduled-reports.html | — | Config | P4-Advanced | SKIP_CONFIG | — | Cron-based, custom |
+| 98 | Donor Retention Dashboard | reports/retention-dashboard.html | — | Dashboard | P4-Advanced | SKIP_DASHBOARD | — | Custom analytics |
+| 99 | Report Catalog | reports/report-catalog.html | — | Dashboard | P4-Advanced | SKIP_DASHBOARD | — | Custom FE |
 
 ---
 
@@ -255,7 +287,7 @@
 
 ## ACTIONABLE SCREENS — Execution Queue
 
-These are the screens that need work, ordered by priority tier:
+These are the screens that need work, ordered by priority tier. Within each tier, rows follow the same Type order (MASTER_GRID → FLOW → Config) so masters build before the transaction grids that depend on them.
 
 ### P1-Setup (Master tables — no FK dependencies, build first)
 
@@ -270,18 +302,18 @@ These are the screens that need work, ordered by priority tier:
 | # | Screen | Module | Type | Status | Key FKs |
 |---|--------|--------|------|--------|---------|
 | 11 | Matching Gift | Fundraising | MASTER_GRID | PARTIAL | Donation, Contact |
-| 12 | Pledge | Fundraising | FLOW | PARTIAL | Contact, Campaign |
 | 22 | Tags & Segmentation | Contacts | MASTER_GRID | PARTIAL | Contact |
 | 29 | SMS Template | Communication | MASTER_GRID | PARTIAL | Company |
 | 31 | WhatsApp Template | Communication | MASTER_GRID | PARTIAL | Company |
-| 34 | WhatsApp Setup | Communication | Config | PARTIAL | Company |
 | 36 | Notification Templates | Communication | MASTER_GRID | PARTIAL | Company |
+| 12 | Pledge | Fundraising | FLOW | PARTIAL | Contact, Campaign |
 | 49 | Beneficiary | Case Mgmt | FLOW | PARTIAL | Contact, Program |
 | 53 | Volunteer | Volunteer | FLOW | PARTIAL | Contact |
 | 59 | Member Enrollment | Membership | FLOW | PARTIAL | Contact, MembershipTier |
 | 62 | Grant | Grants | FLOW | PARTIAL | Contact (Funder), Staff |
 | 67 | Ambassador | Field Collection | FLOW | PARTIAL | Staff, Branch |
 | 72 | User Management | Administration | FLOW | PARTIAL | User entity exists |
+| 34 | WhatsApp Setup | Communication | Config | PARTIAL | Company |
 
 ### P3-Business (Complex screens with multiple FKs)
 
@@ -319,10 +351,18 @@ These are the screens that need work, ordered by priority tier:
 
 | # | Screen | Module | Type | Status | Notes |
 |---|--------|--------|------|--------|-------|
-| 1 | Donation (Global) | Fundraising | FLOW | COMPLETED | Completed 2026-04-16 |
 | 2 | Donation Purpose | Fundraising | MASTER_GRID | PARTIAL | Simple master |
 | 3 | Donation Category | Fundraising | MASTER_GRID | PARTIAL | Simple master |
 | 4 | Donation Group | Fundraising | MASTER_GRID | PARTIAL | Simple master |
+| 19 | Contact Type | Contacts | MASTER_GRID | PARTIAL | Simple master |
+| 41 | Branch | Organization | MASTER_GRID | PARTIAL | Branch setup |
+| 43 | Staff Category | Organization | MASTER_GRID | PARTIAL | Staff category |
+| 66 | Receipt Book | Field Collection | MASTER_GRID | PARTIAL | Receipt books |
+| 70 | Role Management | Administration | MASTER_GRID | PARTIAL | Role setup |
+| 71 | Menu Management | Administration | MASTER_GRID | PARTIAL | Menu setup |
+| 76 | Master Data | Settings | MASTER_GRID | PARTIAL | Master data hub |
+| 79 | Currency Management | Settings | MASTER_GRID | PARTIAL | Currency setup |
+| 1 | Donation (Global) | Fundraising | FLOW | COMPLETED | Completed 2026-04-16 |
 | 5 | Bulk Donation | Fundraising | FLOW | PARTIAL | Upload flow |
 | 6 | Cheque Donation | Fundraising | FLOW | PARTIAL | Donation variant |
 | 7 | In-Kind Donation | Fundraising | FLOW | PARTIAL | Donation variant |
@@ -330,7 +370,6 @@ These are the screens that need work, ordered by priority tier:
 | 9 | Receipt (GlobalReceipt) | Fundraising | FLOW | PARTIAL | Receipt management |
 | 10 | Online Donation Setup | Fundraising | FLOW | PARTIAL | Config flow |
 | 18 | Contact | Contacts | FLOW | PARTIAL | Complex with tabs |
-| 19 | Contact Type | Contacts | MASTER_GRID | PARTIAL | Simple master |
 | 20 | Family | Contacts | FLOW | PARTIAL | Family grouping |
 | 21 | Duplicate Detection | Contacts | FLOW | PARTIAL | Merge flow |
 | 24 | Email Template | Communication | FLOW | PARTIAL | Template editor |
@@ -340,27 +379,20 @@ These are the screens that need work, ordered by priority tier:
 | 28 | Company Email Provider | Communication | FLOW | PARTIAL | Provider config |
 | 39 | Campaign | Organization | FLOW | PARTIAL | Campaign management |
 | 40 | Event | Organization | FLOW | PARTIAL | Event management |
-| 41 | Branch | Organization | MASTER_GRID | PARTIAL | Branch setup |
 | 42 | Staff | Organization | FLOW | PARTIAL | Staff management |
-| 43 | Staff Category | Organization | MASTER_GRID | PARTIAL | Staff category |
 | 44 | Organizational Unit | Organization | FLOW | PARTIAL | Org tree |
 | 45 | Company | Organization | FLOW | PARTIAL | Company setup |
 | 65 | Field Collection | Field Collection | FLOW | PARTIAL | Collection flow |
-| 66 | Receipt Book | Field Collection | MASTER_GRID | PARTIAL | Receipt books |
 | 68 | Collection Distribution | Field Collection | FLOW | PARTIAL | Distribution flow |
-| 70 | Role Management | Administration | MASTER_GRID | PARTIAL | Role setup |
-| 71 | Menu Management | Administration | MASTER_GRID | PARTIAL | Menu setup |
+| 83 | Certificate Templates | Settings | FLOW | PARTIAL | Certificate mgmt |
+| 96 | Custom Report Builder | Reports | FLOW | PARTIAL | Report builder |
 | 73 | Role-Capability Matrix | Administration | Config | PARTIAL | Permissions |
 | 75 | Company Settings | Administration | Config | PARTIAL | Settings |
-| 76 | Master Data | Settings | MASTER_GRID | PARTIAL | Master data hub |
 | 77 | Grid Config | Settings | Config | PARTIAL | Grid settings |
 | 78 | Dashboard Config | Settings | Config | PARTIAL | Dashboard setup |
-| 79 | Currency Management | Settings | MASTER_GRID | PARTIAL | Currency setup |
 | 80 | Region Hierarchy | Settings | Config | PARTIAL | Region tree |
-| 83 | Certificate Templates | Settings | FLOW | PARTIAL | Certificate mgmt |
 | 84 | Email Provider Config | Settings | Config | PARTIAL | Provider setup |
 | 85 | Organization Settings | Settings | Config | PARTIAL | Org settings |
-| 96 | Custom Report Builder | Reports | FLOW | PARTIAL | Report builder |
 | 97 | PowerBI Viewer | Reports | Config | PARTIAL | PowerBI embed |
 | 119 | Login | Root | Auth | PARTIAL | Auth page |
 | 120 | Main Dashboard | Root | Dashboard | PARTIAL | Home dashboard |

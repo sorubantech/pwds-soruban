@@ -739,6 +739,76 @@ Every list/grid/panel needs three designed states, not just "loaded":
 
 Don't render raw `<p>No data</p>` — always use the muted-foreground text token and consistent icon sizing.
 
+#### Rule 7 — Mockup layout fidelity (the mockup IS the contract)
+
+The HTML mockup in `html_mockup_screens/` is the **authoritative layout spec**. The implementation must replicate what it shows:
+
+- **Component placement**: same grouping, same reading order, same section boundaries. If the mockup shows `Header ▸ Summary Cards row ▸ Grid ▸ Side Panel`, the implementation renders that exact hierarchy — not Header ▸ Grid ▸ Cards.
+- **Same-row composition**: if the mockup shows a grid and cards on the same row (e.g., a data grid on the left with metric cards stacked to the right), reproduce that horizontally-aligned layout — don't collapse it to a vertical stack because "it's simpler."
+- **Alignment & structure**: column widths, card proportions, divider positions, and inner ordering (title → actions → body → footer) must match. A misaligned toolbar or a reordered card header is a fidelity defect.
+- **Intentional departures**: if the mockup layout is genuinely infeasible (e.g., the component doesn't exist, the data shape doesn't support it), do NOT silently simplify. Flag the departure in the Build Log's `Deviations from spec` line and propose the change upstream.
+
+**Real-world judgment**: fidelity ≠ pixel-perfect clone. Minor spacing differences, shadow tuning, or using shadcn primitives in place of raw bootstrap markup are fine if the resulting visual structure reads the same. What matters is that a user comparing the mockup and the screen side-by-side sees the **same layout language** — same grouping, same row/column arithmetic, same information density.
+
+#### Rule 8 — Responsive support across all breakpoints (xs → xl)
+
+Every screen must degrade gracefully on every device size. Tailwind breakpoints:
+
+| Prefix | Min width | Target |
+|--------|-----------|--------|
+| *(none)* / `xs` | 0px | phone portrait |
+| `sm:` | 640px | phone landscape / small tablet portrait |
+| `md:` | 768px | tablet |
+| `lg:` | 1024px | laptop |
+| `xl:` | 1280px | desktop |
+
+**Patterns:**
+
+```tsx
+{/* 1-col on phone, 2-col on tablet, 4-col on desktop */}
+<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+
+{/* side panel stacks below grid on < lg, sits beside on lg+ */}
+<div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
+
+{/* toolbar actions collapse into a menu on phone, inline on tablet+ */}
+<div className="flex flex-wrap items-center gap-2 md:flex-nowrap">
+```
+
+**Rules:**
+- Default (mobile-first) styles target `xs`. Add `sm:` / `md:` / `lg:` / `xl:` overrides only where the layout needs to change.
+- Never hardcode widths in px for layout containers — use `w-full`, `max-w-*`, or grid fractions so they adapt.
+- Grids of cards: `grid-cols-1` → `sm:grid-cols-2` → `lg:grid-cols-3` (or similar) — a long row that works on desktop must break into rows on narrow screens.
+- Data tables: rely on `AdvancedDataTable`'s built-in horizontal scroll on narrow viewports; don't wrap tables in custom overflow logic.
+- Modals / dialogs: `max-w-md` (sm), `sm:max-w-lg`, `lg:max-w-2xl` — the shadcn Dialog primitive handles most of this; don't fight it with fixed widths.
+- Test at `375px` (phone), `768px` (tablet), `1280px` (desktop) at minimum before marking a screen COMPLETED.
+
+**Real-world judgment**: not every screen needs a full mobile redesign. An admin-only MASTER_GRID is primarily a desktop surface — the expectation is that it remains usable (scrollable, no clipping, no overflow) down to `md`, and readable (text doesn't truncate critical data) on `sm`. A public-facing FLOW form must work from `xs` up. Match the responsive ambition to the screen's actual audience.
+
+#### Rule 9 — Iconography via `@iconify/react` (Phosphor set by default)
+
+The codebase already standardizes on `@iconify/react` with the Phosphor icon set (`ph:` prefix). All mockups use Phosphor icons — match them.
+
+**Import pattern:**
+
+```tsx
+import { Icon } from "@iconify/react";
+// or, for a codebase-aware wrapper:
+import { DynamicIcon } from "@/presentation/components/icons/iconify-icon-list";
+
+<Icon icon="ph:user-circle" className="h-4 w-4 text-muted-foreground" />
+<DynamicIcon icon="ph:envelope-simple" size={16} />
+```
+
+**Rules:**
+- If the mockup shows an icon, use the **same Phosphor glyph** (`ph:<name>`). Inspect the mockup's `<i class="ph-...">` or SVG and pick the matching iconify name.
+- Size icons with Tailwind classes (`h-4 w-4`, `h-5 w-5`) — NOT inline `style={{ fontSize }}`. Keep size consistent across a row of related icons.
+- Color icons with tokens (`text-muted-foreground`, `text-primary`, `text-destructive`) — never hex.
+- Don't mix icon libraries on one screen. If the mockup uses Phosphor, the whole screen uses Phosphor — don't drop in a `lucide-react` icon because it's more convenient.
+- `DynamicIcon` is preferred when the icon name comes from DB config / dynamic content (cell renderers, sidebar nav, status cells); raw `<Icon>` is fine for static layout.
+
+**Real-world judgment**: if the exact mockup glyph doesn't exist in Phosphor (rare — the set is comprehensive), pick the closest Phosphor match rather than importing a second icon library. Consistency across the screen family outweighs a single icon-shape mismatch.
+
 #### Anti-patterns flagged during review
 
 - Inline `style={{...}}` objects with hex colors, pixel paddings, or hardcoded typography → **reject**.
@@ -747,6 +817,9 @@ Don't render raw `<p>No data</p>` — always use the muted-foreground text token
 - Single skeleton row when the real list shows 3+ rows → **reject**, match count.
 - Different card paddings on sibling panels (`p-3` left, `p-4` right) → **reject**, make uniform.
 - Loading state = empty `<div>` or spinner over the whole page when only a sub-section is fetching → **reject**, scope the skeleton to the fetching surface.
+- Mockup shows grid + cards on the same row, implementation stacks them vertically → **reject**, match the row composition.
+- Fixed pixel widths on layout containers that clip or overflow on `md`/`sm` → **reject**, convert to responsive utilities.
+- Icons imported from `lucide-react` (or another library) when the rest of the screen uses `@iconify/react` Phosphor → **reject**, pick one library per screen.
 
 #### Why this exists
 

@@ -25,6 +25,7 @@ complexity: {Low | Medium | High}
 new_module: {YES — schema name | NO}
 planned_date: {YYYY-MM-DD}
 completed_date:
+last_session_date:
 ---
 
 ## Tasks
@@ -280,6 +281,26 @@ GridCode: {ENTITYUPPER}
 - {e.g., "This is the first dashboard — establish patterns for widget component lib"}
 
 **Service Dependencies**: {usually NONE for dashboards, but note if export to Excel/PDF uses external service}
+
+---
+
+## ⑬ Build Log (append-only)
+
+> **Writer**: `/build-screen` on every BUILD session, `/continue-screen` on every FIX/ENHANCE session.
+> **Reader**: `/continue-screen` (to rehydrate context in a new session).
+> See `_COMMON.md` § Section ⑬ for full format.
+
+### § Known Issues
+
+| ID | Raised (session) | Severity | Area | Description | Status |
+|----|------------------|----------|------|-------------|--------|
+| — | — | — | — | (empty — no issues raised yet) | — |
+
+### § Sessions
+
+<!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
+
+{No sessions recorded yet — filled in after /build-screen completes.}
 ```
 
 ---

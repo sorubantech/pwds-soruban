@@ -191,6 +191,17 @@ Map the complete user journey:
 - Labels should be clear for screen readers
 - RTL support for Arabic layout
 
+**Mockup fidelity**: the HTML mockup in `html_mockup_screens/` is the authoritative layout. Your blueprint must preserve the mockup's composition — same grouping, same same-row vs stacked relationships (e.g., grid + metric cards in one row), same section ordering. If you intentionally depart from the mockup, call it out as a UX Decision with rationale — do not silently simplify.
+
+**Responsive plan (xs → xl)**: explicitly state how the layout adapts:
+- What collapses on `sm` / `md` (side panels → stacked, multi-col grids → 1–2 col).
+- What remains desktop-only if the screen is admin-facing.
+- Which toolbar actions move into an overflow menu on narrow widths.
+
+The FE agent uses Tailwind breakpoint prefixes (`sm:`, `md:`, `lg:`, `xl:`); give them a layout plan, not just a desktop snapshot.
+
+**Iconography**: identify which icons the mockup uses (Phosphor via `@iconify/react` — `ph:` prefix is the codebase default). Name the expected icon per action/section so the FE agent doesn't guess.
+
 ---
 
 ## Your Output Format
