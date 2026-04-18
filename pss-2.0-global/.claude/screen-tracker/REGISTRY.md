@@ -103,8 +103,8 @@ The dev must refer to all three to understand the full FLOW screen. (MASTER_GRID
 
 | # | Screen | Mockup Files | Scope | Type | Priority | Status | Prompt | Notes |
 |---|--------|-------------|-------|------|----------|--------|--------|-------|
-| 19 | Contact Type | contacts/contact-types.html | ALIGN | MASTER_GRID | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
-| 22 | Tags & Segmentation | contacts/tags-segmentation.html | FULL | MASTER_GRID | P2-Core | PARTIAL | — | FE route exists, NO Tag/Segment BE entity |
+| 19 | Contact Type | contacts/contact-types.html | ALIGN | MASTER_GRID | P5-Alignment | NEEDS_FIX | prompts/contacttype.md | Completed 2026-04-18. BE: 11 touched (5 modified, 3 created query/command, 2 endpoint modified, 1 deleted singular duplicate). FE: 8 touched (Variant B layout + widgets + side-panel). DB seed created. Session 2 (2026-04-18 UI): moved `<ScreenHeader>` from data-table into page root and lifted `AdvancedDataTableStoreProvider` to the page so layout renders ScreenHeader → widgets → grid+side-panel per spec §⑥; fullscreen now wraps the whole page instead of just the data-table. 4 OPEN known issues remain: ISSUE-1 drag-to-reorder (container lacks `onReorder`), ISSUE-2 row-click DOM-index (container lacks `onRowClick`), ISSUE-3 `{lang}` prefix missing in link-count, ISSUE-4 delete validator moved to handler. |
+| 22 | Tags & Segmentation | contacts/tags-segmentation.html | FULL | MASTER_GRID | P2-Core | COMPLETED | prompts/tagsegmentation.md | Completed 2026-04-18. BE: 34 created (Tag stack 13 + Segment stack 14 + ContactTag junction 2 + wiring 4 + migration 1) + 3 hot-patched for `HotChocolate.Types.Tag` ambiguity (using-alias + fully-qualified DbSet). FE: 17 created (DTOs, queries, mutations, page shell, 2 tabs, tag cloud, 2 data tables, segment-builder modal, ColorSwatchPickerWidget, ColorSwatchRenderer, route stub replaced) + 10 modified (barrels, entity-operations, page barrel, widget registry, 3 column-type registries). DB seed created with hidden TAG+SEGMENT sub-menus (Step 3b) so `AdvancedDataTableStoreProvider` per-grid capability check resolves. `dotnet build` green (0 errors). 6 OPEN known issues: ISSUE-1 legacy ContactTagQuery.ts schema conflict (breaks Contact #18 tabs), ISSUE-2 migration snapshot not regenerated (run `dotnet ef` locally), ISSUE-3 seed field-code verification, ISSUE-4 RunSegment deterministic dummy count pending DynamicQueryBuilder, ISSUE-5 color-swatch inline hex (policy exception — colors ARE data), ISSUE-6 tag-cloud click-filter skipped. |
 | 18 | Contact | contacts/contact-list+form+detail.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 20 | Family | contacts/family-management.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 21 | Duplicate Detection | contacts/duplicate-merge.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
@@ -138,8 +138,8 @@ The dev must refer to all three to understand the full FLOW screen. (MASTER_GRID
 
 | # | Screen | Mockup Files | Scope | Type | Priority | Status | Prompt | Notes |
 |---|--------|-------------|-------|------|----------|--------|--------|-------|
-| 41 | Branch | organization/branch-management.html | ALIGN | MASTER_GRID | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
-| 43 | Staff Category | organization/staff-management.html | ALIGN | MASTER_GRID | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
+| 41 | Branch | organization/branch-management.html | ALIGN | MASTER_GRID | P5-Alignment | PROMPT_READY | prompts/branch.md | Planned 2026-04-18. Adds 6 fields (CountryId/StateId/CityId/Region/ManagerStaffId/AnnualTarget) + grid aggregations (StaffCount/YtdCollected/PerformancePct) + 4 summary widgets + side panel (Quick Stats, Activity feed stub, Staff mini-list) + Map View toggle. Variant B layout (ScreenHeader + widgets + [grid | side-panel]). 4 OPEN placeholders: ISSUE-1 Staff.BranchId FK missing, ISSUE-2 Activity stream service, ISSUE-3 Map lib, ISSUE-4 Contacts/Campaigns/Events BranchId FKs. ALIGN — MODIFY 12 BE + 6 FE files, CREATE 2 BE + 6 FE files, DELETE 1 duplicate route. |
+| 43 | Staff Category | organization/staff-management.html | ALIGN | MASTER_GRID | P5-Alignment | PROMPT_READY | prompts/staffcategory.md | Planned 2026-04-18. Shared mockup with Staff #42 (Staff Category UI inferred from dropdown values + 6 badge colors). Adds `ColorHex` field + `StaffCount` aggregation + 4 summary widgets (Total / Most Populated / System / Custom) + side panel (Color Preview, Quick Stats, Recent Staff) + drag-to-reorder + system/custom badge. Reuses ContactType #19 template. Also lands ContactType ISSUE-1 (onReorder) + ISSUE-2 (onRowClick) fixes in DataTableContainer. Variant B layout. |
 | 39 | Campaign | organization/campaign-list+form+dashboard.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 40 | Event | organization/event-list+form+dashboard.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 42 | Staff | organization/staff-management.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
@@ -302,7 +302,7 @@ These are the screens that need work, ordered by priority tier. Within each tier
 | # | Screen | Module | Type | Status | Key FKs |
 |---|--------|--------|------|--------|---------|
 | 11 | Matching Gift | Fundraising | MASTER_GRID | PARTIAL | Donation, Contact |
-| 22 | Tags & Segmentation | Contacts | MASTER_GRID | PARTIAL | Contact |
+| 22 | Tags & Segmentation | Contacts | MASTER_GRID | COMPLETED | Completed 2026-04-18 |
 | 29 | SMS Template | Communication | MASTER_GRID | PARTIAL | Company |
 | 31 | WhatsApp Template | Communication | MASTER_GRID | PARTIAL | Company |
 | 36 | Notification Templates | Communication | MASTER_GRID | PARTIAL | Company |
@@ -354,9 +354,9 @@ These are the screens that need work, ordered by priority tier. Within each tier
 | 2 | Donation Purpose | Fundraising | MASTER_GRID | COMPLETED | Completed 2026-04-18 |
 | 3 | Donation Category | Fundraising | MASTER_GRID | COMPLETED | Completed 2026-04-18 |
 | 4 | Donation Group | Fundraising | MASTER_GRID | COMPLETED | Completed 2026-04-18 |
-| 19 | Contact Type | Contacts | MASTER_GRID | PARTIAL | Simple master |
-| 41 | Branch | Organization | MASTER_GRID | PARTIAL | Branch setup |
-| 43 | Staff Category | Organization | MASTER_GRID | PARTIAL | Staff category |
+| 19 | Contact Type | Contacts | MASTER_GRID | NEEDS_FIX | Session 2 (2026-04-18 UI): ScreenHeader moved to page top; 4 prior known issues still open |
+| 41 | Branch | Organization | MASTER_GRID | PROMPT_READY | Planned 2026-04-18 — prompts/branch.md |
+| 43 | Staff Category | Organization | MASTER_GRID | PROMPT_READY | Planned 2026-04-18 — prompts/staffcategory.md |
 | 66 | Receipt Book | Field Collection | MASTER_GRID | PARTIAL | Receipt books |
 | 70 | Role Management | Administration | MASTER_GRID | PARTIAL | Role setup |
 | 71 | Menu Management | Administration | MASTER_GRID | PARTIAL | Menu setup |
