@@ -1,10 +1,12 @@
 ---
 name: CardGrid (displayMode: card-grid)
-status: NOT_BUILT
+status: BUILT — details + iframe variants; profile stubbed
 owner: Frontend Developer agent
 first_consumer: Screen #29 SMS Template (Wave 2.4)
 related_screens: [24, 29, 31, 36]
-last_updated: 2026-04-18
+last_updated: 2026-04-19
+first_built_by: "Infrastructure-only session on 2026-04-18"
+iframe_first_consumer: "Screen #24 EmailTemplate on 2026-04-19"
 ---
 
 # Feature Spec — CardGrid (`displayMode: card-grid`)
