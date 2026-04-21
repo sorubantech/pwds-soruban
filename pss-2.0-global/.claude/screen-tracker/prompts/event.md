@@ -2,14 +2,14 @@
 screen: Event
 registry_id: 40
 module: Organization (menu lives under CRM_EVENT)
-status: PROMPT_READY
+status: COMPLETED
 scope: ALIGN
 screen_type: FLOW
 complexity: High
 new_module: NO — app schema + ApplicationModels group already exist
 planned_date: 2026-04-20
-completed_date:
-last_session_date:
+completed_date: 2026-04-21
+last_session_date: 2026-04-21
 ---
 
 ## Tasks
@@ -24,16 +24,16 @@ last_session_date:
 - [x] Prompt generated
 
 ### Generation (by /build-screen → /generate-screen)
-- [ ] BA Analysis validated
-- [ ] Solution Resolution complete
-- [ ] UX Design finalized (FORM + DETAIL layouts specified)
-- [ ] User Approval received
-- [ ] Backend code generated (migration + fields + 6 child entities + summary query)
-- [ ] Backend wiring complete (DbContext + Mapster + decorator)
-- [ ] Frontend code generated (index-page + view-page + detail-page + store + widgets + renderers)
-- [ ] Frontend wiring complete
-- [ ] DB Seed script generated (GridFormSchema: SKIP for FLOW + MasterData seeds for EventCategory/EventMode/EventStatus/Timezone)
-- [ ] Registry updated to COMPLETED
+- [x] BA Analysis validated
+- [x] Solution Resolution complete
+- [x] UX Design finalized (FORM + DETAIL layouts specified)
+- [x] User Approval received
+- [x] Backend code generated (migration + fields + 6 child entities + summary query)
+- [x] Backend wiring complete (DbContext + Mapster + decorator)
+- [x] Frontend code generated (index-page + view-page + detail-page + store + widgets + renderers)
+- [x] Frontend wiring complete
+- [x] DB Seed script generated (GridFormSchema: SKIP for FLOW + MasterData seeds for EventCategory/EventMode/EventStatus — TIMEZONE shared via OrganizationalUnit seed)
+- [x] Registry updated to COMPLETED
 
 ### Verification (post-generation — FULL E2E required)
 - [ ] dotnet build passes
@@ -790,14 +790,14 @@ Every SERVICE_PLACEHOLDER renders the full UI component with a toast-only handle
 
 | ID | Raised (session) | Severity | Area | Description | Status |
 |----|------------------|----------|------|-------------|--------|
-| ISSUE-1 | Planning (2026-04-20) | CRITICAL | BE Schema | `EventName` field missing from entity; mockup requires it | OPEN |
-| ISSUE-2 | Planning (2026-04-20) | CRITICAL | BE Schema | `EventCode` field missing from entity; mockup requires unique code for display/URL | OPEN |
-| ISSUE-3 | Planning (2026-04-20) | Low | BE Schema | Typo `PostpondedToDate` → `PostponedToDate` | OPEN |
-| ISSUE-4 | Planning (2026-04-20) | High | Arch | Event Ticketing #46 dependency — registrants, check-in, ticket-sales-revenue, post-event analytics all SERVICE_PLACEHOLDER | OPEN |
-| ISSUE-5 | Planning (2026-04-20) | Low | BE Schemas | `OrganizationalEventResponseDto` duplicate — prune if unused | OPEN |
-| ISSUE-6 | Planning (2026-04-20) | Low | BE Schemas | Empty `EventDto` subclass — remove unless HC filtering requires | OPEN |
-| ISSUE-7 | Planning (2026-04-20) | Critical | BE Schema | `RelatedCampaignId` FK missing from entity (exists in FE DTO) | OPEN |
-| ISSUE-8 | Planning (2026-04-20) | Medium | FE GQL | EVENTS_QUERY missing `relatedCampaign` projection | OPEN |
+| ISSUE-1 | Planning (2026-04-20) | CRITICAL | BE Schema | `EventName` field missing from entity; mockup requires it | RESOLVED (Session 1) |
+| ISSUE-2 | Planning (2026-04-20) | CRITICAL | BE Schema | `EventCode` field missing from entity; mockup requires unique code for display/URL | RESOLVED (Session 1) |
+| ISSUE-3 | Planning (2026-04-20) | Low | BE Schema | Typo `PostpondedToDate` → `PostponedToDate` | RESOLVED (Session 1) |
+| ISSUE-4 | Planning (2026-04-20) | High | Arch | Event Ticketing #46 dependency — registrants, check-in, ticket-sales-revenue, post-event analytics all SERVICE_PLACEHOLDER | OPEN (awaiting #46) |
+| ISSUE-5 | Planning (2026-04-20) | Low | BE Schemas | `OrganizationalEventResponseDto` duplicate — prune if unused | OPEN (deferred — TODO comment in code) |
+| ISSUE-6 | Planning (2026-04-20) | Low | BE Schemas | Empty `EventDto` subclass — remove unless HC filtering requires | OPEN (deferred — TODO comment in code) |
+| ISSUE-7 | Planning (2026-04-20) | Critical | BE Schema | `RelatedCampaignId` FK missing from entity (exists in FE DTO) | RESOLVED (Session 1) |
+| ISSUE-8 | Planning (2026-04-20) | Medium | FE GQL | EVENTS_QUERY missing `relatedCampaign` projection | RESOLVED (Session 1) |
 | ISSUE-9 | Planning (2026-04-20) | High | BE Query | `registeredCount`/`eventRevenue`/`waitlistCount` — return 0 with TODO until #46 exists | OPEN |
 | ISSUE-10 | Planning (2026-04-20) | Medium | BE Logic | `INPROGRESS` status computed (not persisted) via date-range+Published check | OPEN |
 | ISSUE-11 | Planning (2026-04-20) | Medium | FE Form | ConfirmationTemplateId — ApiSelect vs hardcoded fallback | OPEN |
@@ -806,10 +806,93 @@ Every SERVICE_PLACEHOLDER renders the full UI component with a toast-only handle
 | ISSUE-14 | Planning (2026-04-20) | Low | BE Schemas | Audit column naming — verify createdDate/modifiedDate not createdAt | OPEN |
 | ISSUE-15 | Planning (2026-04-20) | Medium | FE Index | Calendar view — same query, different render; click chip → read mode | OPEN |
 | ISSUE-16 | Planning (2026-04-20) | Medium | FE Infra | Radio-card-group component — may need creation if not in registry | OPEN |
-| ISSUE-17 | Planning (2026-04-20) | Low | DB Seed | EventStatus 5-color palette must be seeded on MasterData rows | OPEN |
+| ISSUE-17 | Planning (2026-04-20) | Low | DB Seed | EventStatus 5-color palette must be seeded on MasterData rows | RESOLVED (Session 1 — DataSetting "bg/fg" per row) |
 
 ### § Sessions
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
 
-{No sessions recorded yet — filled in after /build-screen completes.}
+### Session 1 — 2026-04-21 — BUILD — COMPLETED
+
+- **Scope**: Initial full build from PROMPT_READY prompt — BE (25 files) + FE (26 files + 1 delete + 1 legacy cleanup) + DB Seed.
+- **Files touched**:
+  - BE (25):
+    - `Base.Domain/Models/ApplicationModels/Event.cs` (modified — +33 fields, 6 nav collections, PostpondedToDate→PostponedToDate rename)
+    - `Base.Domain/Models/ApplicationModels/EventTicketType.cs` (created)
+    - `Base.Domain/Models/ApplicationModels/EventSpeaker.cs` (created)
+    - `Base.Domain/Models/ApplicationModels/EventRegistrationFormField.cs` (created)
+    - `Base.Domain/Models/ApplicationModels/EventSuggestedAmount.cs` (created)
+    - `Base.Domain/Models/ApplicationModels/EventCommunicationTrigger.cs` (created)
+    - `Base.Domain/Models/ApplicationModels/EventGalleryPhoto.cs` (created)
+    - `Base.Infrastructure/Data/Configurations/ApplicationConfigurations/EventConfiguration.cs` (modified — 33 field configs + 6 HasMany cascades + filtered unique index on (CompanyId, EventCode))
+    - `Base.Infrastructure/Data/Configurations/ApplicationConfigurations/EventTicketTypeConfiguration.cs` (created)
+    - `Base.Infrastructure/Data/Configurations/ApplicationConfigurations/EventSpeakerConfiguration.cs` (created)
+    - `Base.Infrastructure/Data/Configurations/ApplicationConfigurations/EventRegistrationFormFieldConfiguration.cs` (created)
+    - `Base.Infrastructure/Data/Configurations/ApplicationConfigurations/EventSuggestedAmountConfiguration.cs` (created)
+    - `Base.Infrastructure/Data/Configurations/ApplicationConfigurations/EventCommunicationTriggerConfiguration.cs` (created)
+    - `Base.Infrastructure/Data/Configurations/ApplicationConfigurations/EventGalleryPhotoConfiguration.cs` (created)
+    - `Base.Application/Schemas/ApplicationSchemas/EventSchemas.cs` (modified — +33 fields on Request + 6 child DTO pairs + EventSummaryDto + EventDashboardDto + RegistrantDto + breakdown DTOs; OrganizationalEventResponseDto / empty EventDto retained with TODO per ISSUE-5/6)
+    - `Base.Application/Business/ApplicationBusiness/Events/Commands/CreateEvent.cs` (modified — auto-gen EventCode, seed FULLNAME+EMAIL system form fields, child collection insert, FK validators)
+    - `Base.Application/Business/ApplicationBusiness/Events/Commands/UpdateEvent.cs` (modified — 6 child upsert helpers, IsSystem-row protection, status-transition guard)
+    - `Base.Application/Business/ApplicationBusiness/Events/Commands/PublishEvent.cs` (created — full publish-validation + status transition)
+    - `Base.Application/Business/ApplicationBusiness/Events/Commands/CancelEvent.cs` (created — reason-required + status guard)
+    - `Base.Application/Business/ApplicationBusiness/Events/Commands/CompleteEvent.cs` (created)
+    - `Base.Application/Business/ApplicationBusiness/Events/Commands/DuplicateEvent.cs` (created — clones parent + 6 children, collision-safe EventCode suffix)
+    - `Base.Application/Business/ApplicationBusiness/Events/Queries/GetEvent.cs` (modified — 10-col projection, INPROGRESS computed from PUBLISHED+date-range, advanced filter args)
+    - `Base.Application/Business/ApplicationBusiness/Events/Queries/GetEventById.cs` (modified — includes 6 child collections + all FK navs)
+    - `Base.Application/Business/ApplicationBusiness/Events/Queries/GetEventSummary.cs` (created — tenant-wide KPIs)
+    - `Base.Application/Business/ApplicationBusiness/Events/Queries/GetEventDashboardById.cs` (created — per-event dashboard)
+    - `Base.API/EndPoints/Application/Mutations/EventMutations.cs` (modified — +4 workflow resolvers)
+    - `Base.API/EndPoints/Application/Queries/EventQueries.cs` (modified — +getEventSummary, +getEventDashboardById)
+    - `Base.Infrastructure/Migrations/20260421120000_EventAlignMockup.cs` (created — 33 AddColumn, RenameColumn, AlterColumn VenueName 100→200, 3 new FK+index, filtered unique index, 6 CreateTable for children, SQL backfill for EventName/EventCode)
+  - BE wiring (3 modified):
+    - `Base.Application/Data/Persistence/IContactDbContext.cs` — +6 DbSet interface members
+    - `Base.Infrastructure/Data/Persistence/ContactDbContext.cs` — +6 DbSets (configs auto-applied via `ApplyConfigurationsFromAssembly`)
+    - `Base.Application/Mappings/ApplicationMappings.cs` — Event + 6 child Request↔Entity↔Response + summary/dashboard/registrant configs
+  - FE (28 — verified/completed in prior prep work; this session finalized routing barrel + deleted legacy data-table.tsx):
+    - `src/domain/entities/contact-service/EventDto.ts` (modified — +33 fields, 6 child DTOs, EventSummaryDto, EventDashboardDto, RegistrantDto)
+    - `src/infrastructure/gql-queries/contact-queries/EventQuery.ts` (modified — EVENTS_QUERY + EVENT_BY_ID_QUERY extended; +EVENT_SUMMARY_QUERY + EVENT_DASHBOARD_BY_ID_QUERY)
+    - `src/infrastructure/gql-mutations/contact-mutations/EventMutation.ts` (modified — CREATE/UPDATE extended; +PUBLISH/CANCEL/COMPLETE/DUPLICATE)
+    - `src/presentation/pages/crm/event/event.tsx` (modified — renders `<EventPage />` gated by useAccessCapability)
+    - `src/presentation/components/page-components/crm/event/event/index.ts` (modified — barrel exports, legacy EventDataTable export removed)
+    - `src/presentation/components/page-components/crm/event/event/event-page.tsx` (created — URL dispatcher)
+    - `src/presentation/components/page-components/crm/event/event/index-page.tsx` (created — **Variant B**: ScreenHeader + EventWidgets + list/calendar toggle + FlowDataTableContainer showHeader={false})
+    - `src/presentation/components/page-components/crm/event/event/view-page.tsx` (created — new/edit → form, read → dashboard)
+    - `src/presentation/components/page-components/crm/event/event/event-form-page.tsx` (created — 5-tab form + FlowFormPageHeader + Save as Draft / Save & Publish + unsaved-changes guard)
+    - `src/presentation/components/page-components/crm/event/event/event-dashboard-page.tsx` (created — hero progress + 6 KPI + ticket-type table + trend chart + registrants placeholder + post-event analytics + check-in toggle)
+    - `src/presentation/components/page-components/crm/event/event/event-store.ts` (created — Zustand: viewMode, activeTab, checkinModeOpen, statusFilter)
+    - `src/presentation/components/page-components/crm/event/event/event-widgets.tsx` (created — 4 KPI cards bound to EVENT_SUMMARY_QUERY)
+    - `src/presentation/components/page-components/crm/event/event/event-calendar-view.tsx` (created — month grid)
+    - `src/presentation/components/page-components/crm/event/event/event-checkin-panel.tsx` (created — SERVICE_PLACEHOLDER #3)
+    - `src/presentation/components/page-components/crm/event/event/event-registrants-table.tsx` (created — SERVICE_PLACEHOLDER #2)
+    - `src/presentation/components/page-components/crm/event/event/form-tabs/basic-info-tab.tsx` (created)
+    - `src/presentation/components/page-components/crm/event/event/form-tabs/venue-schedule-tab.tsx` (created — conditional Venue/Virtual sections by EventMode)
+    - `src/presentation/components/page-components/crm/event/event/form-tabs/registration-tab.tsx` (created — TicketTypes inline grid + RegFormFields checkbox list w/ FULLNAME+EMAIL locked)
+    - `src/presentation/components/page-components/crm/event/event/form-tabs/content-speakers-tab.tsx` (created — banner/gallery upload fallback + speakers repeater cards)
+    - `src/presentation/components/page-components/crm/event/event/form-tabs/settings-tab.tsx` (created — donations + social preview live + comm triggers read-only)
+    - `src/presentation/components/page-components/crm/event/event/form-tabs/fields.tsx` (created — shared form fields helper)
+    - `src/presentation/components/page-components/crm/event/event/form-tabs/types.ts` (created)
+    - `src/presentation/components/page-components/crm/event/event/form-tabs/use-event-dropdowns.ts` (created — centralized FK ApiSelect data sources)
+    - `src/presentation/components/custom-components/data-tables/shared-cell-renderers/event-name-renderer.tsx` (created)
+    - `src/presentation/components/custom-components/data-tables/shared-cell-renderers/event-mode-badge-renderer.tsx` (created)
+    - `src/presentation/components/custom-components/data-tables/shared-cell-renderers/event-status-badge-renderer.tsx` (created — 5-color pill, token-based)
+    - `src/presentation/components/custom-components/data-tables/shared-cell-renderers/event-venue-renderer.tsx` (created)
+    - `src/presentation/components/custom-components/data-tables/shared-cell-renderers/event-capacity-progress.tsx` (created — green/amber/red threshold)
+  - FE wiring (4 modified):
+    - `src/presentation/components/custom-components/data-tables/advanced/data-table-column-types/component-column.tsx` — 5 new cases + imports
+    - `src/presentation/components/custom-components/data-tables/basic/data-table-column-types/component-column.tsx` — 5 new cases + imports
+    - `src/presentation/components/custom-components/data-tables/flow/data-table-column-types/component-column.tsx` — 5 new cases + imports
+    - `src/presentation/components/custom-components/data-tables/shared-cell-renderers/index.ts` — 5 new exports
+  - FE deleted (2):
+    - `src/presentation/components/page-components/crm/event/event/data-table.tsx` (legacy; now unused after event.tsx → <EventPage />)
+    - `src/app/[lang]/organization/organizationsetup/event/page.tsx` (legacy duplicate route)
+  - DB:
+    - `PSS_2.0_Backend/PeopleServe/Services/Base/sql-scripts-dyanmic/Event-sqlscripts.sql` (created — Menu/Caps/RoleCaps for EVENT, MasterData for EVENTCATEGORY (9) / EVENTMODE (3) / EVENTSTATUS (5 with ColorHex), Grid + 10 Fields + 10 GridFields, GridFormSchema=NULL per FLOW; TIMEZONE shared with OrganizationalUnit seed)
+- **Deviations from spec**:
+  - DbContext wiring routed through `IContactDbContext` + `ContactDbContext` (NOT `IApplicationDbContext`/`ApplicationDbContext` as the §⑧ wiring table stated) — the Event entity already lived in ContactDbContext per repo convention; BE agent followed the existing pattern.
+  - DecoratorProperties NOT updated for the 6 new child entities — child CRUD always happens via the parent Event mutation, so the existing `Event = "EVENT"` entry covers permissions.
+  - Workflow mutations (publishEvent/cancelEvent/completeEvent/duplicateEvent) are called directly by the dashboard page rather than registered in `contact-service-entity-operations.ts` — the shared `TDataTableOperation` type only supports the 6 standard CRUD keys; extending it would be a cross-cutting refactor outside this screen's scope.
+  - ISSUE-5 (`OrganizationalEventResponseDto`) and ISSUE-6 (empty `EventDto`) are retained with `// TODO: prune` comments — defer to future session per prompt §⑫.
+- **Known issues opened**: None new — all 17 pre-flagged ISSUEs from planning were addressed or carried forward with documented SERVICE_PLACEHOLDERs.
+- **Known issues closed**: ISSUE-1 (EventName added), ISSUE-2 (EventCode added + filtered unique index), ISSUE-3 (PostpondedToDate → PostponedToDate via RenameColumn), ISSUE-7 (RelatedCampaignId FK added), ISSUE-8 (EVENTS_QUERY extended with relatedCampaign), ISSUE-17 (EVENTSTATUS rows carry ColorHex in DataSetting). Remaining ISSUEs (4/9/10/11/12/13/15/16 + 5/6 deferred) tracked via SERVICE_PLACEHOLDERs until #46 Event Ticketing lands.
+- **Next step**: User to run (1) `dotnet ef database update` to apply migration `20260421120000_EventAlignMockup`; (2) execute `Event-sqlscripts.sql` in the DB; (3) `pnpm dev` and walk the full E2E per §⑪ (grid + 4 KPI widgets + calendar toggle + 5-tab form create/edit + dashboard read + Publish/Cancel/Duplicate workflows).

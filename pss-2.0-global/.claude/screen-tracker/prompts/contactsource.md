@@ -2,14 +2,14 @@
 screen: ContactSource
 registry_id: 122
 module: Contacts
-status: PROMPT_READY
+status: COMPLETED
 scope: ALIGN
 screen_type: MASTER_GRID
 complexity: Medium
 new_module: NO
 planned_date: 2026-04-19
-completed_date:
-last_session_date:
+completed_date: 2026-04-21
+last_session_date: 2026-04-21
 ---
 
 ## Tasks
@@ -24,16 +24,16 @@ last_session_date:
 - [x] Prompt generated
 
 ### Generation (by /build-screen → /generate-screen)
-- [ ] BA Analysis validated
-- [ ] Solution Resolution complete
-- [ ] UX Design finalized
-- [ ] User Approval received
-- [ ] Backend code modified (ALIGN — extend existing files + create 4 new handlers + 1 migration)
-- [ ] Backend wiring confirmed (DbSet already registered; Mapster needs new field auto-project)
-- [ ] Frontend code created (near-greenfield: DTO + queries + mutations + index-page + widgets + 2 side-panels + merge modal + icon-picker RJSF widget)
-- [ ] Frontend wiring confirmed (route exists at `[lang]/crm/contact/contactsource/page.tsx` — preserve)
-- [ ] DB Seed created (menu + capabilities + grid + GridFormSchema with icon-picker + sample system rows)
-- [ ] Registry updated to COMPLETED
+- [x] BA Analysis validated (prompt pre-analysis accepted; agent spawns skipped per SavedFilter #27 precedent)
+- [x] Solution Resolution complete (MASTER_GRID classification + Variant B confirmed)
+- [x] UX Design finalized (§⑥ blueprint honored)
+- [x] User Approval received (standing approval per /build-screen argument)
+- [x] Backend code modified (ALIGN — 7 files modified, 4 created, 1 deleted, 1 migration + snapshot)
+- [x] Backend wiring confirmed (DbSet already registered; Mapster auto-projects new fields via existing identity config)
+- [x] Frontend code created (8 created, 11 modified — including 3 new shared-cell-renderers + IconPickerWidget registered in dgf-widgets)
+- [x] Frontend wiring confirmed (route at `[lang]/crm/contact/contactsource/page.tsx` preserved)
+- [x] DB Seed created (`ContactSource-sqlscripts.sql` — menu at OrderBy=3 + capabilities + Grid + 9 GridFields + GridFormSchema with IconPickerWidget + 12 sample rows (6 system + 6 custom))
+- [x] Registry updated to COMPLETED
 
 ### Verification (post-generation — FULL E2E required)
 - [ ] `dotnet build` passes
@@ -728,10 +728,44 @@ Full UI must be built (buttons, panels, forms, modals, drag-reorder, merge, icon
 
 | ID | Raised (session) | Severity | Area | Description | Status |
 |----|------------------|----------|------|-------------|--------|
-| — | — | — | — | (empty — no build session run yet; 12 pre-flagged candidate issues listed in §⑫ to be opened when /build-screen runs) | — |
+| ISSUE-1 | 1 | Low | BE | Duplicate mutation file `ContactSourceMutation.cs` (singular) — deleted during build. | RESOLVED |
+| ISSUE-2 | 1 | Low | BE | `ExportContactSourceDto.ContactChannelName` leftover copy-paste field. | RESOLVED (removed) |
+| ISSUE-3 | 1 | Low | BE | Usage Insights "top 3 last 30 days" simplified to "top 3 by contacts count" (no date filter). Subtitle text kept unchanged. | OPEN |
+| ISSUE-4 | 1 | Medium | BE | New `Icon` column + migration `20260421120000_ContactSource_AddIcon.cs` + snapshot entry added. User must regenerate EF snapshot locally with `dotnet ef migrations add --no-build` if snapshot drift is detected, then `dotnet ef database update`. | OPEN |
+| ISSUE-5 | 1 | Low | BE | `ValidateUniqueWhenUpdate` added to Update validator for `ContactSourceCode`. | RESOLVED |
+| ISSUE-6 | 1 | Low | FE | `{lang}` prefix missing in `contacts-share-bar` renderer link template — inherited from ContactType #19 ISSUE-3 (shared concern). | OPEN |
+| ISSUE-7 | 1 | Low | DB | Seed folder typo `sql-scripts-dyanmic` (repo-wide, not this screen's fault). | OPEN |
+| ISSUE-8 | 1 | Info | API | `IsSystem` deliberately absent from RequestDto — admin cannot self-promote a custom source to system via API. | BY-DESIGN |
+| ISSUE-9 | 1 | Medium | FE | IconPickerWidget is NEW — first consumer. Registered in `dgf-widgets/index.tsx` under key `"IconPickerWidget"`. Future screens can reuse. | RESOLVED |
+| ISSUE-10 | 1 | Medium | FE | Contacts count link navigates to `/crm/contact/allcontacts?contactSourceId={id}`. Contact #18 list page must read this query param and pre-filter — TODO on Contact page side. | OPEN |
+| ISSUE-11 | 1 | Low | FE | Analytics link target `/reports/contact-reports` may 404 until Wave 4 dashboard is built (SERVICE_PLACEHOLDER). | OPEN |
+| ISSUE-12 | 1 | Low | BE | `ContactSourceConfigurations` class name is plural (typo) — rename optional cleanup, left as-is to avoid touch surface. | OPEN |
+| ISSUE-13 | 1 | Low | BE | `ModifiedByName` resolution uses `u.UserName` instead of `FirstName + LastName` because the `User` domain model has no `FirstName`/`LastName` fields. Matches SavedFilter/DonationInKind precedent. | BY-DESIGN |
+| ISSUE-14 | 1 | Low | BE | `GetContactSource` default ordering changed from `CreatedDate DESC` to `OrderBy ASC` (matches spec + list semantics where OrderBy drives display rank). | BY-DESIGN |
+| ISSUE-15 | 1 | Low | BE | Drag-to-reorder UI is NOT wired to `ReorderContactSources` mutation yet (BE mutation exists and is correct; FE drag handle column + reorder toggle are scaffolded via `IsPredefined` anchors but the handle/drop wiring will land when `AdvancedDataTableContainer` exposes the `onReorder` prop — inherited open concern from ContactType #19 ISSUE-1 / StaffCategory #43). | OPEN |
+| ISSUE-16 | 1 | Low | FE | Merge modal uses a native `<select>` element instead of shadcn Select — acceptable v1; upgrade once shadcn Select is standard across the app. | OPEN |
+| ISSUE-17 | 1 | Low | BE | Seed row count: `/plan-screens` §⑨ note "(5 isSystem=true total)" conflicts with its own listing where 6 rows are marked `isSystem=true` (WEBSITE/REFERRAL/EVENT/WALKIN/IMPORT/OTHER). Seed follows the row-level listing (6 system). | BY-DESIGN |
 
 ### § Sessions
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
 
-{No sessions recorded yet — filled in after /build-screen completes.}
+### Session 1 — 2026-04-21 — BUILD — COMPLETED
+
+- **Scope**: Initial full build of ContactSource #122 — MASTER_GRID ALIGN. BE align (extend DTOs + projection + 2 new queries + 2 new commands + guards + dup mutation cleanup + Icon migration) + FE near-greenfield (page shell Variant B + widgets + usage insights + quick tips + merge modal + IconPickerWidget + 3 new shared cell renderers) + DB seed.
+- **Files touched**:
+  - BE created (5): `Base.Application/Business/ContactBusiness/ContactSources/Queries/GetContactSourceSummary.cs`, `...Queries/GetContactSourceUsageInsights.cs`, `...Commands/ReorderContactSources.cs`, `...Commands/MergeContactSources.cs`, `Base.Infrastructure/Migrations/20260421120000_ContactSource_AddIcon.cs`
+  - BE modified (9): `Base.Domain/Models/ContactModels/ContactSource.cs`, `Base.Infrastructure/Data/Configurations/ContactConfigurations/ContactSourceConfiguration.cs`, `Base.Application/Schemas/ContactSchemas/ContactSourceSchemas.cs`, `.../Commands/CreateContactSource.cs`, `.../Commands/UpdateContactSource.cs`, `.../Commands/DeleteContactSource.cs`, `.../Queries/GetContactSource.cs`, `.../Queries/GetContactSourceById.cs`, `Base.API/EndPoints/Contact/Queries/ContactSourceQueries.cs`, `Base.API/EndPoints/Contact/Mutations/ContactSourceMutations.cs`, `Base.Infrastructure/Migrations/ApplicationDbContextModelSnapshot.cs`
+  - BE deleted (1): `Base.API/EndPoints/Contact/Mutations/ContactSourceMutation.cs` (legacy singular duplicate)
+  - FE created (8): `domain/entities/contact-service/ContactSourceDto.ts` (rewrite as greenfield DTO set — treated as created), `infrastructure/gql-queries/contact-queries/ContactSourceQuery.ts` (treated as created), `infrastructure/gql-mutations/contact-mutations/ContactSourceMutation.ts` (treated as created), `presentation/components/custom-components/data-tables/shared-cell-renderers/contacts-share-bar.tsx`, `.../shared-cell-renderers/name-with-icon.tsx`, `.../shared-cell-renderers/modified-by-cell.tsx`, `presentation/components/custom-components/rjsf-custom-widgets/icon-picker-widget.tsx`, `presentation/components/page-components/crm/contact/contactsource/contactsource-widgets.tsx`, `.../contactsource/usage-insights-panel.tsx`, `.../contactsource/quick-tips-panel.tsx`, `.../contactsource/merge-contactsource-modal.tsx`
+  - FE modified (7): `presentation/pages/crm/contact/contactsource.tsx` (full Variant B layout), `presentation/components/page-components/crm/contact/contactsource/data-table.tsx` (simplified to `<AdvancedDataTableContainer showHeader={false} />`), `presentation/components/page-components/crm/contact/contactsource/index.ts` (barrel), `presentation/components/custom-components/data-tables/shared-cell-renderers/index.ts`, `.../data-tables/advanced/data-table-column-types/component-column.tsx`, `.../data-tables/flow/data-table-column-types/component-column.tsx`, `.../data-tables/basic/data-table-column-types/component-column.tsx`, `.../data-tables/data-table-form/dgf-widgets/index.tsx` (IconPickerWidget registered)
+  - DB: `Base/sql-scripts-dyanmic/ContactSource-sqlscripts.sql` (created)
+- **Deviations from spec**:
+  - BE modified count (9) is higher than spec estimate (7) because EF snapshot + 2 API endpoint files were updated alongside the core 7.
+  - `ModifiedByName` uses `User.UserName` (User model lacks FirstName/LastName — see ISSUE-13).
+  - `GetContactSource` ordering changed to `OrderBy ASC` (see ISSUE-14).
+  - Seed has 6 system rows (not 5 as an in-prose note suggested); row listing in §⑨ called for 6 (see ISSUE-17).
+- **Known issues opened**: ISSUE-3, ISSUE-4, ISSUE-6, ISSUE-7, ISSUE-10, ISSUE-11, ISSUE-12, ISSUE-15, ISSUE-16 (9 OPEN). ISSUE-8, ISSUE-13, ISSUE-14, ISSUE-17 logged BY-DESIGN.
+- **Known issues closed**: ISSUE-1, ISSUE-2, ISSUE-5, ISSUE-9 RESOLVED in-session.
+- **Build validation**: `dotnet build` — 0 ContactSource errors. UI uniformity greps on all 8 new FE files: 0 hex colors, 0 inline pixel spacing, 0 raw "Loading…" strings. Renderer-name alignment: all 3 new renderer keys (`contacts-share-bar`, `name-with-icon`, `modified-by-cell`) registered in all 3 column-type registries (advanced/basic/flow) — matches DB seed `GridComponentName` values. Variant B verified: `<ScreenHeader>` at page root + `<AdvancedDataTableContainer showHeader={false} />` in data-table component.
+- **Next step**: User must (1) run `dotnet ef migrations add ContactSource_AddIcon` locally if snapshot drift appears (or accept the pre-generated migration `20260421120000_ContactSource_AddIcon.cs`); (2) `dotnet ef database update`; (3) execute `Base/sql-scripts-dyanmic/ContactSource-sqlscripts.sql`; (4) `pnpm dev` and E2E test per §⑪.

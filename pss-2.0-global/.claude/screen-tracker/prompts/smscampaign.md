@@ -2,14 +2,14 @@
 screen: SMSCampaign
 registry_id: 30
 module: Communication
-status: PROMPT_READY
+status: COMPLETED
 scope: FULL
 screen_type: FLOW
 complexity: High
 new_module: NO
 planned_date: 2026-04-20
-completed_date:
-last_session_date:
+completed_date: 2026-04-21
+last_session_date: 2026-04-21
 ---
 
 ## Tasks
@@ -24,16 +24,16 @@ last_session_date:
 - [x] Prompt generated
 
 ### Generation (by /build-screen → /generate-screen)
-- [ ] BA Analysis validated (prompt-embedded — skip agent spawn per SavedFilter/Family precedent)
-- [ ] Solution Resolution complete (prompt-embedded — FLOW + widgets-above-grid Variant B + 3-step wizard + separate report detail)
-- [ ] UX Design finalized (Section ⑥ pre-analyzed — wizard form + report detail are DIFFERENT UIs)
-- [ ] User Approval received
-- [ ] Backend code generated
-- [ ] Backend wiring complete (INotifyDbContext, NotifyDbContext, NotifyMappings, SMSTemplate inverse nav, DecoratorNotifyModules)
-- [ ] Frontend code generated (index Variant B + view-page 3 modes with wizard FORM and report DETAIL + Zustand store)
-- [ ] Frontend wiring complete (entity-operations, sidebar, barrels, column-type registries)
-- [ ] DB Seed script generated (GridFormSchema: SKIP for FLOW; 5 new MasterData TypeCodes; 3-4 sample campaigns)
-- [ ] Registry updated to COMPLETED
+- [x] BA Analysis validated (prompt-embedded — skip agent spawn per SavedFilter/Family precedent)
+- [x] Solution Resolution complete (prompt-embedded — FLOW + widgets-above-grid Variant B + 3-step wizard + separate report detail)
+- [x] UX Design finalized (Section ⑥ pre-analyzed — wizard form + report detail are DIFFERENT UIs)
+- [x] User Approval received (user granted full permissions + approved plan in session 2026-04-21)
+- [x] Backend code generated
+- [x] Backend wiring complete (INotifyDbContext, NotifyDbContext, NotifyMappings, SMSTemplate inverse nav, DecoratorNotifyModules)
+- [x] Frontend code generated (index Variant B + view-page 3 modes with wizard FORM and report DETAIL + Zustand store)
+- [x] Frontend wiring complete (entity-operations, sidebar, barrels, column-type registries)
+- [x] DB Seed script generated (GridFormSchema: SKIP for FLOW; 5 new MasterData TypeCodes; 3-4 sample campaigns)
+- [x] Registry updated to COMPLETED
 
 ### Verification (post-generation — FULL E2E required)
 - [ ] `dotnet build` — 0 errors
@@ -1087,24 +1087,40 @@ All UI (buttons, forms, modals, panels, toggles, tables) MUST be built. Only the
 | ISSUE-1 | PLAN | MED | BE | DynamicQueryBuilder absent (SavedFilter #27 inheritance) | OPEN |
 | ISSUE-2 | PLAN | MED | BE | EF snapshot regeneration pending | OPEN |
 | ISSUE-3 | PLAN | MED | BE | SMS Dispatch service SERVICE_PLACEHOLDER | OPEN |
-| ISSUE-4 | PLAN | LOW | BE | LastUsedAt hook (closes SMS Template #29 ISSUE-2) | OPEN |
+| ISSUE-4 | PLAN | LOW | BE | LastUsedAt hook (closes SMS Template #29 ISSUE-2) | CLOSED (implemented in SendSMSCampaignNowHandler — updates SMSTemplate.LastUsedAt on Sent transition) |
 | ISSUE-5 | PLAN | LOW | BE | DND registry heuristic SERVICE_PLACEHOLDER | OPEN |
 | ISSUE-6 | PLAN | LOW | BE | Cost per-country flat rate | OPEN |
 | ISSUE-7 | PLAN | LOW | BE | Reply webhook SERVICE_PLACEHOLDER | OPEN |
 | ISSUE-8 | PLAN | LOW | BE | Quiet-hours scheduler SERVICE_PLACEHOLDER | OPEN |
 | ISSUE-9 | PLAN | LOW | BE | Automation trigger hardcoded | OPEN |
-| ISSUE-10 | PLAN | MED | FE | RadioCardGroup reuse-or-create | OPEN |
+| ISSUE-10 | PLAN | MED | FE | RadioCardGroup reuse-or-create | CLOSED (reused — `src/presentation/components/shared/radio-card-group.tsx` already existed) |
 | ISSUE-11 | PLAN | LOW | FE | Country flag derivation | OPEN |
 | ISSUE-12 | PLAN | LOW | FE | Status-aware row actions maintenance | OPEN |
 | ISSUE-13 | PLAN | LOW | FE | Wizard state persistence rules | OPEN |
 | ISSUE-14 | PLAN | LOW | DB | Seed folder typo (inherited) | OPEN |
 | ISSUE-15 | PLAN | LOW | DB | MasterData ON CONFLICT idempotency | OPEN |
 | ISSUE-16 | PLAN | LOW | BE | Tag/Segment group verification + HotChocolate alias | OPEN |
-| ISSUE-17 | PLAN | LOW | FE | PhonePreviewBubble path reuse | OPEN |
+| ISSUE-17 | PLAN | LOW | FE | PhonePreviewBubble path reuse | CLOSED (reused `../smstemplate/phone-preview` — `PhonePreview` export) |
 | ISSUE-18 | PLAN | LOW | BE | BudgetCap nullable semantics | OPEN |
 
 ### § Sessions
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
 
-{No sessions recorded yet — filled in after /build-screen completes.}
+### Session 1 — 2026-04-21 — BUILD — COMPLETED
+
+- **Scope**: Initial full build from PROMPT_READY prompt. Scope=FULL (BE + FE + DB seed). FLOW screen type, High complexity. BA/Solution/UX analysis skipped per SavedFilter/Family precedent (prompt-embedded). User Approval received at session start (user granted full permissions + approved plan 2026-04-21).
+- **Files touched**:
+  - BE (24 + 2 migration = 26 created): `Base.Domain/Models/NotifyModels/SMSCampaign.cs` (created), `SMSCampaignRecipient.cs` (created); `Base.Infrastructure/Data/Configurations/NotifyConfigurations/SMSCampaignConfiguration.cs` + `SMSCampaignRecipientConfiguration.cs` (created); `Base.Application/Schemas/NotifySchemas/SMSCampaignSchemas.cs` (created); `Base.Application/Business/NotifyBusiness/SMSCampaigns/` — 10 commands (Create/Update/Delete/Toggle/SendNow/Schedule/Pause/Resume/Cancel/Duplicate) + 6 queries (GetAll/GetById/GetSummary/GetReport/PreviewAudience/GetChecklist) (all created); `Base.API/EndPoints/Notify/Mutations/SMSCampaignMutations.cs` + `Queries/SMSCampaignQueries.cs` (created); `Base.Infrastructure/Data/Migrations/20260421085803_SMSCampaign_Initial.cs` + `.Designer.cs` (created). Wiring (modified): `INotifyDbContext.cs`, `NotifyDbContext.cs`, `NotifyMappings.cs`, `DecoratorProperties.cs`, `NotifyModels/SMSTemplate.cs` (inverse nav).
+  - FE (~25 created across 2 sub-sessions after network retry): `src/domain/entities/notify-service/SMSCampaignDto.ts`, `src/infrastructure/gql-queries/notify-queries/SMSCampaignQuery.ts`, `src/infrastructure/gql-mutations/notify-mutations/SMSCampaignMutation.ts`, `src/presentation/pages/crm/sms/smscampaign.tsx`, page-components `smscampaign/` directory (index.tsx, index-page.tsx, view-page.tsx, sms-campaign-store.ts, form-wizard-page.tsx, steps/step1-3, send-confirm-modal.tsx, audience-preview-card.tsx, report-detail-page.tsx, report/ subdirectory with 5 cards, smscampaign-widgets.tsx, filter-chips-bar.tsx, smscampaign-row-actions.tsx), `src/app/[lang]/crm/sms/smscampaign/page.tsx` (route — REPLACED prior `"Need to Develop"` stub). Wiring (modified): `src/domain/entities/notify-service/index.ts`, `src/infrastructure/gql-queries/notify-queries/index.ts`, `src/infrastructure/gql-mutations/notify-mutations/index.ts`, `src/presentation/pages/crm/sms/index.ts`, `src/application/configs/data-table-configs/notify-service-entity-operations.ts`. Shared components REUSED: `shared/radio-card-group.tsx`, `page-components/crm/sms/smstemplate/phone-preview.tsx` (PhonePreview export), all 9 cell renderers already registered in advanced/basic/flow column-type registries.
+  - DB (1 created): `PSS_2.0_Backend/PeopleServe/Services/Base/sql-scripts-dyanmic/SMSCampaign_Seed.sql` (menu + capabilities + grid + 11 fields + 5 MasterDataTypes + 23 MasterData values + 4 sample campaigns + 10 sample recipients, all idempotent ON CONFLICT). Note: `sql-scripts-dyanmic/` typo preserved (ISSUE-14 inherited convention).
+- **Deviations from spec**:
+  - Tag/Segment location: prompt flagged "verify CorgModels vs ContactModels" — canonicalized to `ContactModels` (ContactType #19 precedent). HotChocolate `Tag` alias applied where Tag imported alongside HotChocolate.Types.
+  - Migration DbContext: used `ApplicationDbContext` (real context implementing INotifyDbContext) rather than the partial `NotifyDbContext` class for the migration command.
+  - Seed folder path: canonicalized to `Base/sql-scripts-dyanmic/` (one level up from what the spec drafted) — matches every existing seed in repo.
+  - Toggle mutation named `ActivateDeactivateSMSCampaign` per BE convention (SMSTemplate precedent) — prompt had called it `ToggleSMSCampaign`. FE GQL matches the real BE name.
+  - `campaignTypeId` resolution in Step 1: placeholder hardcoded map (BROADCAST=1/AUTOMATED=2) pending a MasterData-by-code resolver (flagged in Step 1 comment).
+  - Sender ID options: hardcoded to mockup values (SERVICE_PLACEHOLDER — awaits Company sender-profile query).
+- **Known issues opened**: None new — all ISSUEs were pre-flagged in the planning session.
+- **Known issues closed**: ISSUE-4 (LastUsedAt hook implemented), ISSUE-10 (RadioCardGroup reused — already existed), ISSUE-17 (PhonePreview reused from SMS Template #29).
+- **Next step**: (COMPLETED — no resume needed). For user: run DB seed `SMSCampaign_Seed.sql` on the target DB, restart API to load the new EF migration (user should regenerate EF snapshot locally per ISSUE-2), then `pnpm dev` and navigate to `/{lang}/crm/sms/smscampaign` to verify full E2E flow (grid with 4 KPIs + Variant B header + create wizard + send-confirm modal + report detail for sent campaigns).

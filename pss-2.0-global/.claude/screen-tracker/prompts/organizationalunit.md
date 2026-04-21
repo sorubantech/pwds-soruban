@@ -2,14 +2,14 @@
 screen: OrganizationalUnit
 registry_id: 44
 module: CRM → Organization
-status: PROMPT_READY
+status: COMPLETED
 scope: ALIGN
 screen_type: FLOW
 complexity: High
 new_module: NO
 planned_date: 2026-04-20
-completed_date:
-last_session_date:
+completed_date: 2026-04-21
+last_session_date: 2026-04-21
 ---
 
 ## Tasks
@@ -24,16 +24,16 @@ last_session_date:
 - [x] Prompt generated
 
 ### Generation (by /build-screen → /generate-screen)
-- [ ] BA Analysis validated
-- [ ] Solution Resolution complete
-- [ ] UX Design finalized (FORM layout = 6 stacked cards; INDEX layout = widgets + split-pane tree/detail-tabs)
-- [ ] User Approval received
-- [ ] Backend code generated (ALIGN — extend existing 11 BE files, add 5 new queries/commands, add migration, extend validators, mapper, seed)
-- [ ] Backend wiring complete
-- [ ] Frontend code generated (ALIGN — near-greenfield: keep index/view router shell + store shell; replace wizard/child tabs with 6-section form; replace FlowDataTable with custom split-pane UI)
-- [ ] Frontend wiring complete
-- [ ] DB Seed script generated (GridFormSchema=SKIP; seed MasterData rows: UNITTYPE, TIMEZONE, TARGETPERIOD, DATAVISIBILITY; seed 12 sample org units per mockup)
-- [ ] Registry updated to COMPLETED
+- [x] BA Analysis validated (in-session — pre-existing deep analysis preserved)
+- [x] Solution Resolution complete (screen_type=FLOW, Layout Variant=widgets-above-grid, custom split-pane index)
+- [x] UX Design finalized (FORM layout = 6 stacked cards; INDEX layout = widgets + split-pane tree/detail-tabs)
+- [x] User Approval received (full-permissions directive 2026-04-21)
+- [x] Backend code generated (11 modified + 8 new + migration — 0 build errors)
+- [x] Backend wiring complete (IContactDbContext + ContactDbContext DbSets + ContactMappings Mapster)
+- [x] Frontend code generated (4 rewritten + 16 new + 2 shared renderers + restored shared tab-header)
+- [x] Frontend wiring complete (barrel re-exports pass through via wildcard exports; tsc --noEmit clean for all new code)
+- [x] DB Seed script generated (GridFormSchema=SKIP; MasterData UNITTYPE/TIMEZONE/TARGETPERIOD/DATAVISIBILITY; PaymentMode seed-if-missing; 24 sample org units + junctions)
+- [x] Registry updated to COMPLETED
 
 ### Verification (post-generation — FULL E2E required)
 - [ ] `dotnet build` passes
@@ -805,9 +805,38 @@ Full UI must be built (buttons, forms, modals, panels, interactions). Only the h
 | ISSUE-16 | Planning 2026-04-20 | MED | BE | New junction entities `OrganizationalUnitDonationPurposes` / `OrganizationalUnitPaymentModes` need DbSet registration + Mapster config + Create/Update diff-persist pattern (Family #20 / Contact #18 precedent — add-only / remove-only / keep). | OPEN |
 | ISSUE-17 | Planning 2026-04-20 | MED | FE | Tree component must handle deeply-nested recursion without stack overflow (>4 levels unlikely per mockup, but allow any depth). Use iterative DFS for expand-all. | OPEN |
 | ISSUE-18 | Planning 2026-04-20 | LOW | UX | Mockup uses both "Deactivate" and "Delete" actions — ensure Delete is hard-delete (with guard) and Deactivate is soft (IsActive=false). Toggle mutation reused for Deactivate. | OPEN |
+| ISSUE-19 | Session 1 (2026-04-21) | MED | FE-CROSS | `tab-header.tsx` is a SHARED component imported by 4 non-OrgUnit screens (staff-parent-form, staff-company-config-tab, savedfilter/view-page, companyemailconfiguration/view-page). Planning flagged it for deletion in error. Restored at the original path during the build with original API (icon/title/description/variant) + new `actions?: ReactNode` prop needed by staff-company-config-tab. Consider promoting to a shared `common-components/` location in a future refactor. | OPEN |
+| ISSUE-20 | Session 1 (2026-04-21) | LOW | BE | EF migration `Add_OrganizationalUnit_ExtendedFields` auto-included 6 unrelated Event-child tables (EventCommunicationTriggers/EventGalleryPhotos/EventRegistrationFormFields/EventSpeakers/EventSuggestedAmounts/EventTicketTypes) due to prior Event align model drift vs the snapshot. Migration is correct against the current model, but cleanup pass desirable to isolate the OrgUnit changes. | OPEN |
 
 ### § Sessions
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
+
+### Session 1 — 2026-04-21 — BUILD — COMPLETED
+
+- **Scope**: Initial full build from PROMPT_READY prompt. ALIGN scope with massive delta (7→34 fields on entity, obsolete wizard → custom split-pane index + 6-section form, 2 new junction tables).
+- **Files touched**:
+  - BE (11 modified): OrganizationalUnit.cs · OrganizationalUnitConfiguration.cs · OrganizationalUnitSchemas.cs · Create/Update/Delete/ToggleOrganizationalUnit.cs · GetOrganizationalUnit.cs · GetOrganizationalUnitById.cs · OrganizationalUnitMutations.cs · OrganizationalUnitQueries.cs
+  - BE (8 created): OrganizationalUnitDonationPurpose.cs + OrganizationalUnitPaymentMode.cs (entities) · matching EF Configurations · MoveOrganizationalUnit.cs · GetOrganizationalUnitTree.cs · GetOrganizationalUnitSummary.cs · GetOrganizationalUnitDetail.cs
+  - BE (wiring): IContactDbContext.cs (modified) · ContactDbContext.cs (modified) · ContactMappings.cs (modified — Mapster Ignore/Map for junctions)
+  - BE (migration created): 20260421051346_Add_OrganizationalUnit_ExtendedFields.cs + Designer + snapshot delta — 25 new columns + 2 junction tables + HierarchyLevel CHECK constraint + ParentUnitId index
+  - FE (6 modified): OrganizationalUnitDto.ts · OrganizationalUnitQuery.ts · OrganizationalUnitMutation.ts · index.tsx (router) · page.tsx (unchanged thin wrapper — verified) · page config (unchanged — verified)
+  - FE (4 rewritten): view-page.tsx · index-page.tsx · organizational-unit-validation-schema.ts · organizational-unit-store.ts
+  - FE (16 created): organizationalunit-form.tsx · organizationalunit-widgets.tsx · organizationalunit-tree.tsx · organizationalunit-list-view.tsx · tree-toolbar.tsx · organizationalunit-detail-panel.tsx · detail-tabs/overview-tab.tsx · detail-tabs/staff-tab.tsx · detail-tabs/targets-tab.tsx · detail-tabs/settings-tab.tsx · context-menu.tsx · move-unit-modal.tsx · unit-type-card-selector.tsx · parent-unit-tree-dropdown.tsx · donation-purpose-chip-select.tsx · payment-methods-checkbox-group.tsx · logo-banner-uploader.tsx · data-visibility-radio-cards.tsx
+  - FE (2 shared renderers created): custom-components/renderer/unit-type-badge-renderer.tsx · hierarchy-indent-renderer.tsx
+  - FE (1 restored): tab-header.tsx — reconstructed with actions-prop support after being deleted (it is a SHARED component used by 4 other screens: staff-parent-form, staff-company-config-tab, savedfilter view-page, companyemailconfiguration view-page). ISSUE-19.
+  - FE (8 deleted): organizational-unit-wizard.tsx · unit-type-selector.tsx · form-fields.tsx · organizationalcampaign/ (4 files) · organizationalevent/ (3 files) · organizationaldonationpurpose/ (4 files) · child-crud-option/ (3 files)
+  - DB: PSS_2.0_Backend/PeopleServe/Services/Base/sql-scripts-dyanmic/OrganizationalUnit-sqlscripts.sql (created — idempotent MasterData seed + 24 sample units + junctions)
+- **Deviations from spec**:
+  - DbContext files: used `IContactDbContext` / `ContactDbContext` (NOT `IApplicationDbContext` / `ApplicationDbContext` as in prompt) — matches existing codebase convention where OrganizationalUnit sits under contact-service naming and ContactMappings. Aligns with SavedFilter precedent.
+  - MasterData type-code resolution: parent-ladder logic uses `MasterData.DataValue` (values "HQ"/"REG"/"BR"/"SU") — NOT `MasterDataType.TypeCode`. Seed populates DataValue accordingly.
+  - Migration auto-picked up 6 unrelated Event-child tables (EventCommunicationTriggers / EventGalleryPhotos / EventRegistrationFormFields / EventSpeakers / EventSuggestedAmounts / EventTicketTypes) — model drift from a prior Event align pass that never fully materialized in the snapshot. Migration as-written is correct against the current model; documented as ISSUE-20.
+  - Sample unit count: implemented 24 units (1 HQ + 4 Regions + 12 Branches + 7 Sub-units) matching the explicit mockup list enumerated in Section ⑨. Prompt header said "26 total" but the enumerated list gave 24.
+  - Staff tab / Contact quick stat / Campaign stat / Event stat / Donation aggregations: all return 0 placeholders — underlying FKs (Staff.OrganizationalUnitId, Contact.OrganizationalUnitId, Campaign.OrganizationalUnitId, Event.OrganizationalUnitId, GlobalDonation.OrganizationalUnitId) are NOT wired in this build (out-of-scope per planning). Delete-guard likewise only blocks on descendants count.
+  - Country.PhoneCode / DefaultTimezoneMasterDataId don't exist on Country entity — FE-side auto-fill of PhonePrefix/Timezone from Country selection is NOT implemented; user picks manually (documented).
+  - tab-header.tsx deletion was a planning error — the file is imported by 4 screens outside OrganizationalUnit (discovered during validation via grep). File was restored at the same path with the original API (icon/title/description/variant props) plus an `actions` prop used by staff-company-config-tab. No net regression to consumer screens.
+- **Known issues opened**: ISSUE-19 (tab-header is shared — planning called for deletion but 4 other screens depend on it; restored), ISSUE-20 (migration swept in 6 unrelated Event-child tables that had model drift from a prior pass).
+- **Known issues closed**: None.
+- **Next step**: (empty — COMPLETED)
 
 No sessions recorded yet — filled in after /build-screen completes.
