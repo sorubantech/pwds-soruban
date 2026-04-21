@@ -2,14 +2,14 @@
 screen: Campaign
 registry_id: 39
 module: Organization
-status: PROMPT_READY
+status: COMPLETED
 scope: ALIGN
 screen_type: FLOW
 complexity: High
 new_module: NO
 planned_date: 2026-04-20
-completed_date:
-last_session_date:
+completed_date: 2026-04-21
+last_session_date: 2026-04-21
 ---
 
 ## Tasks
@@ -25,16 +25,16 @@ last_session_date:
 - [x] Prompt generated
 
 ### Generation (by /build-screen → /generate-screen)
-- [ ] BA Analysis validated
-- [ ] Solution Resolution complete
-- [ ] UX Design finalized (FORM — 4 tabs + DETAIL — dashboard with 8 sections)
-- [ ] User Approval received
-- [ ] Backend code generated (new columns + 5 child entities + 4 new commands + 3 new queries)
-- [ ] Backend wiring complete (DbContext DbSets, Mapster, DecoratorApplicationModules already has `CAMPAIGN`)
-- [ ] Frontend code generated (view-page with 3 modes + 4-tab FORM + dashboard-style DETAIL + Zustand store)
-- [ ] Frontend wiring complete
-- [ ] DB Seed script generated (GridFormSchema: SKIP for FLOW; new MasterData typeCodes)
-- [ ] Registry updated to COMPLETED
+- [x] BA Analysis validated (skipped per Family #20 / ChequeDonation #6 precedent — prompt §①–⑫ deep + fresh 2026-04-20)
+- [x] Solution Resolution complete (skipped — prompt §⑤ pre-resolved FLOW type + pattern selection)
+- [x] UX Design finalized (skipped — prompt §⑥ has pixel-level spec from 3 mockups)
+- [x] User Approval received (upfront blanket permission granted via /build-screen directive)
+- [x] Backend code generated (7 child entities + 7 workflow commands + 2 analytics queries + 19 new columns + migration)
+- [x] Backend wiring complete (IContactDbContext + ContactDbContext + 7 DbSets, ContactMappings + 7 child maps + Summary/Dashboard, Mutations+Queries endpoint registration)
+- [x] Frontend code generated (29 new files: router + index-page Variant B + view-page + campaign-form-page with 4 tabs + campaign-detail-page with 8 dashboard sections + Zustand store + 9 form-widgets + 9 detail components + 3 renderers)
+- [x] Frontend wiring complete (DTO/Query/Mutation extended, 3 renderers registered in 3 column-type registries + barrel, entity-operations verified, legacy routes neutralized)
+- [x] DB Seed script generated (GridFormSchema SKIP for FLOW; 5 new MasterDataTypes seeded; preserves `sql-scripts-dyanmic/` typo per ISSUE-13)
+- [x] Registry updated to COMPLETED
 
 ### Verification (post-generation — FULL E2E required)
 - [ ] `dotnet build` passes
@@ -1171,27 +1171,75 @@ Full UI must be built for ALL items above. Only the handler for the external ser
 
 | ID | Raised (session) | Severity | Area | Description | Status |
 |----|------------------|----------|------|-------------|--------|
-| ISSUE-1 | Planning 2026-04-20 | HIGH | BE | Schema `app` vs migration's `corg` discrepancy — migration must explicitly set schema | OPEN |
-| ISSUE-2 | Planning 2026-04-20 | HIGH | BE | Drop broken composite unique index on {OrgUnit+Category+Type+Currency+Status+IsActive+Company} | OPEN |
-| ISSUE-3 | Planning 2026-04-20 | MED | BE | `GetCampaign.cs` — `ApplyGridFeatures` bug passes `baseQuery` not filtered query | OPEN |
-| ISSUE-4 | Planning 2026-04-20 | MED | BE | MasterData inverse-nav typos (`CompaignCategories`, `CompaignTypes`, `Compaigns`, `CompaignStatuses`) — rename required | OPEN |
-| ISSUE-5 | Planning 2026-04-20 | LOW | BE | CancellationReason column not in scope — add as future enhancement | OPEN |
-| ISSUE-6 | Planning 2026-04-20 | MED | FE | Embedded OU-wizard Campaign form duplicates form logic — flag for future consolidation | OPEN |
-| ISSUE-7 | Planning 2026-04-20 | HIGH | BE/FE | `GlobalDonation.CampaignId` FK NOT YET ADDED — dashboard aggregations stubbed | OPEN |
-| ISSUE-8 | Planning 2026-04-20 | MED | BE | `Event.CampaignId` FK removed in 2025-11 migration — re-add in future PR | OPEN |
-| ISSUE-9 | Planning 2026-04-20 | MED | FE | Rich-text editor library may be absent — confirm during build | OPEN |
-| ISSUE-10 | Planning 2026-04-20 | MED | FE | Image upload service absent — 3 fields use placeholder handlers | OPEN |
-| ISSUE-11 | Planning 2026-04-20 | LOW | BE | Stored counters (TotalDonationCount, TotalDonorCount, ProgressPercentage) lack auto-recompute trigger | OPEN |
-| ISSUE-12 | Planning 2026-04-20 | LOW | FE | Chart library selection pending repo check | OPEN |
-| ISSUE-13 | Planning 2026-04-20 | LOW | BE | Seed folder path `sql-scripts-dyanmic` misspelled — preserve convention | OPEN |
-| ISSUE-14 | Planning 2026-04-20 | MED | FE | Existing `data-table.tsx` stub DELETE required during rewrite | OPEN |
-| ISSUE-15 | Planning 2026-04-20 | LOW | BE | `CampaignDto` empty stub + duplicate Mapster config — cleanup during Mappings update | OPEN |
-| ISSUE-16 | Planning 2026-04-20 | MED | FE | Grid row click destination varies by status — implement conditional onRowClick | OPEN |
-| ISSUE-17 | Planning 2026-04-20 | LOW | BE | `ExportCampaignData` REST-only (not GQL) — align new fields in ExportController | OPEN |
-| ISSUE-18 | Planning 2026-04-20 | MED | Seed | Milestone StatusCode live-computed — seed samples should use NULL | OPEN |
+| ISSUE-1 | Planning 2026-04-20 | HIGH | BE | Schema `app` vs migration's `corg` discrepancy — migration must explicitly set schema | RESOLVED — migration + EF config explicitly use schema `app` (Session 1) |
+| ISSUE-2 | Planning 2026-04-20 | HIGH | BE | Drop broken composite unique index on {OrgUnit+Category+Type+Currency+Status+IsActive+Company} | RESOLVED — migration drops old index, adds 3 filtered unique indexes on Name/Code/CustomUrl (Session 1) |
+| ISSUE-3 | Planning 2026-04-20 | MED | BE | `GetCampaign.cs` — `ApplyGridFeatures` bug passes `baseQuery` not filtered query | RESOLVED — handler now passes filtered `campaignsQuery` (Session 1) |
+| ISSUE-4 | Planning 2026-04-20 | MED | BE | MasterData inverse-nav typos (`CompaignCategories`, `CompaignTypes`, `Compaigns`, `CompaignStatuses`) — rename required | RESOLVED — MasterData.cs + Currency.cs + EF config + LINQ all renamed; `Compaign` typos remain only in ToggleCampaign.cs (KEEP-AS-IS file) + EF snapshot (auto-regen on `dotnet ef migrations add`) (Session 1) |
+| ISSUE-5 | Planning 2026-04-20 | LOW | BE | CancellationReason column not in scope — add as future enhancement | RESOLVED — CancelCampaign accepts optional `reason` param; currently appended to Note field; dedicated column deferred (Session 1) |
+| ISSUE-6 | Planning 2026-04-20 | MED | FE | Embedded OU-wizard Campaign form duplicates form logic — flag for future consolidation | OPEN — kept inline this session per plan; logged for future consolidation |
+| ISSUE-7 | Planning 2026-04-20 | HIGH | BE/FE | `GlobalDonation.CampaignId` FK NOT YET ADDED — dashboard aggregations stubbed | OPEN — SERVICE_PLACEHOLDER: dashboard charts/feed/leaderboard/breakdowns return empty arrays. FE degrades gracefully with empty-states |
+| ISSUE-8 | Planning 2026-04-20 | MED | BE | `Event.CampaignId` FK removed in 2025-11 migration — re-add in future PR | OPEN — same rationale as ISSUE-7 |
+| ISSUE-9 | Planning 2026-04-20 | MED | FE | Rich-text editor library may be absent — confirm during build | RESOLVED — TipTap installed; reused existing `minimal-tiptap-editor` component for Tab 2 Full Story (NO SERVICE_PLACEHOLDER needed) (Session 1) |
+| ISSUE-10 | Planning 2026-04-20 | MED | FE | Image upload service absent — 3 fields use placeholder handlers | OPEN — `image-upload-field.tsx` wraps toast mock for Banner/Testimonial/ShareImage |
+| ISSUE-11 | Planning 2026-04-20 | LOW | BE | Stored counters (TotalDonationCount, TotalDonorCount, ProgressPercentage) lack auto-recompute trigger | OPEN — manual refresh via future `RefreshCampaignCountersCommand` |
+| ISSUE-12 | Planning 2026-04-20 | LOW | FE | Chart library selection pending repo check | RESOLVED — `react-apexcharts` already installed; used for Daily Collection bar chart + Donor Breakdown donut (Session 1) |
+| ISSUE-13 | Planning 2026-04-20 | LOW | BE | Seed folder path `sql-scripts-dyanmic` misspelled — preserve convention | RESOLVED — seed placed in `sql-scripts-dyanmic/` (typo preserved) (Session 1) |
+| ISSUE-14 | Planning 2026-04-20 | MED | FE | Existing `data-table.tsx` stub DELETE required during rewrite | RESOLVED — stub neutralized to `export {};` tombstone (full deletion blocked by sandbox — see ISSUE-19) (Session 1) |
+| ISSUE-15 | Planning 2026-04-20 | LOW | BE | `CampaignDto` empty stub + duplicate Mapster config — cleanup during Mappings update | RESOLVED — stub removed, duplicate Mapster config cleaned in ContactMappings.cs (Session 1) |
+| ISSUE-16 | Planning 2026-04-20 | MED | FE | Grid row click destination varies by status — implement conditional onRowClick | PARTIAL — `decideRowClickMode(statusCode)` helper exported from campaign-store.ts; grid-level onRowClick binding deferred (FlowDataTable hook pattern — see ISSUE-20) |
+| ISSUE-17 | Planning 2026-04-20 | LOW | BE | `ExportCampaignData` REST-only (not GQL) — align new fields in ExportController | OPEN — see ISSUE-21 (new fields flow through reflection; filter args not wired) |
+| ISSUE-18 | Planning 2026-04-20 | MED | Seed | Milestone StatusCode live-computed — seed samples should use NULL | RESOLVED — GetCampaignDashboard computes statusCode at runtime; no stored value (Session 1) |
+| ISSUE-19 | Session 1 2026-04-21 | LOW | BE/FE | Team-handles-migrations: manually-written migration file lacks Designer.cs + snapshot updates. FE: 2 files (`data-table.tsx`, legacy `organization/organizationsetup/campaign/page.tsx`) neutralized in place; physical `git rm` required outside sandbox | OPEN |
+| ISSUE-20 | Session 1 2026-04-21 | LOW | BE | Grid seed uses CAMPAIGN_NAME FieldId as placeholder for Category/Org Unit/Status cells (label resolves via `parentObject`+ValueSource JSON). Future refinement could introduce explicit FK-label Fields if `FieldCode` uniqueness-per-(Grid,OrderBy) is desired | OPEN |
+| ISSUE-21 | Session 1 2026-04-21 | LOW | BE | `ExportCampaign.cs` inherits new projected columns via reflection but does NOT pass new filter args (statusCode/orgUnitId/categoryId/dateFrom/dateTo) — filters on list page are NOT applied to Excel export | OPEN |
+| ISSUE-22 | Session 1 2026-04-21 | LOW | BE | `DuplicateCampaign` calls `CreateCampaignHandler.GenerateCampaignCodeAsync` statically (`internal static`) — unit tests mocking this method will need an alternative (inject code-generator service) | OPEN |
+| ISSUE-23 | Session 1 2026-04-21 | LOW | FE | `campaignOwnerStaffId` carried on Request DTO + mutation but not surfaced as UI field (mockup has no Owner picker) — writes `null` on every save until Owner picker is added to Tab 1 or Tab 4 | OPEN |
+| ISSUE-24 | Session 1 2026-04-21 | LOW | FE | FlowFormPageHeader built-in Save button + sticky-footer "Save as Draft" / "Save & Publish" are intentionally duplicated to match mockup's 2-step workflow — header's generic "Save Changes" aliases "Save as Draft" in edit mode | OPEN |
+| ISSUE-25 | Session 1 2026-04-21 (QA fix) | LOW | FE | Dashboard GQL milestone fields were `milestoneId`/`name` in initial FE gen but BE projects `campaignMilestoneId`/`milestoneName`. Testing Agent patched CampaignQuery.ts + CampaignDto.ts + milestone-tracker.tsx | RESOLVED |
+| ISSUE-26 | Session 1 2026-04-21 (QA fix) | LOW | BE | `RaisedAmount` was missing from `CampaignResponseDto` (only on `CampaignListDto`); FE query requested it via both `getCampaigns` and `getCampaignById`. Testing Agent added `public decimal? RaisedAmount` to CampaignResponseDto | RESOLVED |
+| ISSUE-27 | Session 1 2026-04-21 (QA fix) | LOW | FE | `shared-cell-renderers/index.ts` had 4 pre-existing duplicate exports (ContactsShareBar/ModifiedByCell/NameWithIcon/PrefIcon) causing TS2300 — Testing Agent removed duplicates | RESOLVED |
+| ISSUE-28 | Session 1 2026-04-21 | LOW | Seed | `campaign-name-link` GridComponentName in grid seed ORDER 1 is not registered in any of 3 component-column switches. Cell renders as plain text (row-level click still works via action buttons). Fix: register a text-link/navigate renderer or use existing generic cell | OPEN |
+| ISSUE-29 | Session 1 2026-04-21 | LOW | Seed | CAMPAIGNCATEGORY/CAMPAIGNSTATUS DataSetting stored as raw scalar strings (emoji / hex) rather than JSON `{"icon":"..."}` format used by AuctionManagement. Works correctly at runtime because BE projects flat scalars (`campaignCategoryIcon`, `campaignStatusColorHex`). Inconsistent with JSON convention for future tooling | OPEN |
 
 ### § Sessions
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
 
-{No sessions recorded yet — filled in after /build-screen completes.}
+### Session 1 — 2026-04-21 — BUILD — COMPLETED
+
+- **Scope**: Initial full build from PROMPT_READY prompt (planned 2026-04-20). ALIGN scope with near-greenfield FE rebuild. FLOW + complexity=High. Parallel Opus BE + Opus FE agents per ChequeDonation #6 / RecurringDonationSchedule #8 precedent (BA/Solution Resolver/UX Architect agents SKIPPED — prompt §①–⑫ deep + fresh; Testing Agent ran on Sonnet).
+- **Files touched**:
+  - BE (34 = 22 created + 12 modified):
+    - CREATED: 7 child entities (CampaignDonationPurpose/ImpactMetric/Milestone/SuggestedAmount/TeamMember/TrackingMetric/RecurringFrequency) + 7 EF configs + 7 workflow commands (Duplicate/Publish/Pause/Resume/Complete/Cancel/Archive) + GetCampaignSummary + GetCampaignDashboard + migration `20260421134444_Campaign_AlignWithMockup.cs` + DB seed `sql-scripts-dyanmic/Campaign-sqlscripts.sql`
+    - MODIFIED: Campaign.cs (+19 fields +7 nav collections), MasterData.cs (Compaign*→Campaign* typo fix + new CampaignTaxCategories nav), Currency.cs (Compaigns→Campaigns), CampaignConfiguration.cs (drop broken index, 3 filtered unique indexes, new FK constraints), CampaignSchemas.cs (empty stub removed, +List/Summary/Dashboard DTOs, +7 child DTOs, +RaisedAmount on ResponseDto via QA fix), CreateCampaign.cs (auto-gen code, child persist, HttpContext CompanyId), UpdateCampaign.cs (7 Sync* methods diff-persist), DeleteCampaign.cs (in-use check placeholder), GetCampaign.cs (ISSUE-3 fix + filter params + richer search), GetCampaignById.cs (all child includes), ContactMappings.cs (ISSUE-15 cleanup + scalar projections + child DTO maps), CampaignMutations.cs (+7 workflow mutations), CampaignQueries.cs (+filter args +Summary +Dashboard), IContactDbContext.cs (7 new DbSets), ContactDbContext.cs (7 new DbSet getters)
+  - FE (38 = 29 created + 9 modified; 2 neutralized):
+    - CREATED: 3 renderers (campaign-progress-bar / category-emoji-badge / campaign-status-badge in `data-tables/shared-cell-renderers/`) + campaign-router.tsx + index.tsx (thin re-export) + index-page.tsx (Variant B) + view-page.tsx (dispatcher) + campaign-form-page.tsx + campaign-detail-page.tsx + campaign-store.ts + campaign-widgets.tsx + campaign-filter-chip-bar.tsx + campaign-filter-bar.tsx + 4 form-tabs (basic-info/story-content/goals-tracking/settings) + 10 form-widgets (visibility-card-selector/linked-purposes-multi-select/impact-metrics-grid/milestones-grid/suggested-amounts-input/tracking-metrics-checkboxes/recurring-frequencies-checkboxes/campaign-team-multi-select/social-preview-card/image-upload-field SERVICE_PLACEHOLDER) + 9 detail components (goal-progress-hero/campaign-dashboard-kpi-strip/daily-collection-bar-chart/donor-breakdown-donut/by-orgunit-breakdown-table/by-payment-method-breakdown-table/milestone-tracker/recent-donations-feed/top-donors-leaderboard)
+    - MODIFIED: CampaignDto.ts (+Request/Response extensions +7 child DTOs +ListDto +SummaryDto +DashboardDto +milestone field rename via QA), CampaignQuery.ts (+CAMPAIGN_SUMMARY_QUERY +CAMPAIGN_DASHBOARD_QUERY +extended BY_ID; milestone fields renamed via QA), CampaignMutation.ts (+7 transition mutations + extended Create/Update with children), page config campaign.tsx (CampaignDataTable→CampaignRouter), campaign/index.ts barrel (new exports), shared-cell-renderers/index.ts (+3 Campaign exports; QA removed 4 pre-existing duplicate exports), 3 component-column registries (advanced/basic/flow — imports + 3 switch cases each), milestone-tracker.tsx (campaignMilestoneId/milestoneName field rename via QA)
+    - NEUTRALIZED (sandbox blocked physical deletion — requires `git rm` outside): `campaign/data-table.tsx` (tombstone `export {};`), `[lang]/organization/organizationsetup/campaign/page.tsx` (redirect stub → `/{lang}/crm/organization/campaign`)
+  - DB: `sql-scripts-dyanmic/Campaign-sqlscripts.sql` (modified — menu upsert CRM_ORGANIZATION/OrderBy=2, Grid FLOW, 11 GridFields with GridComponentName values all resolving in FE registries except `campaign-name-link` per ISSUE-28, GridFormSchema=NULL, 6 MasterDataTypes CAMPAIGNCATEGORY×6/CAMPAIGNSTATUS×5 w/ ColorHex/CAMPAIGNTYPE×4/CAMPAIGNTAXCATEGORY×4/CAMPAIGNTRACKINGMETRIC×7/RECURRINGFREQUENCY, idempotent WHERE NOT EXISTS guards, BUSINESSADMIN caps, preserves `dyanmic` typo per ISSUE-13)
+- **Deviations from spec**:
+  - `campaignOwnerStaffId` field carried on DTOs but not surfaced as a UI form field (mockup doesn't include an Owner picker — see ISSUE-23)
+  - Physical file deletion blocked by sandbox — 2 files neutralized in-place instead of deleted (see ISSUE-19)
+  - `Owner picker`, Cancellation Reason dedicated column, in-use-delete check FK-scan — all deferred (out of prompt scope)
+  - Grid row-click destination wiring: `decideRowClickMode(statusCode)` helper exists in store but FlowDataTable onRowClick binding deferred (see ISSUE-20)
+- **Known issues opened**: ISSUE-19, ISSUE-20, ISSUE-21, ISSUE-22, ISSUE-23, ISSUE-24, ISSUE-28, ISSUE-29 (all LOW)
+- **Known issues closed**: ISSUE-1 (schema), ISSUE-2 (broken index), ISSUE-3 (ApplyGridFeatures), ISSUE-4 (Compaign typo in source code), ISSUE-5 (Cancel reason param), ISSUE-9 (TipTap reused), ISSUE-12 (ApexCharts), ISSUE-13 (dyanmic typo preserved), ISSUE-14 (data-table stub neutralized), ISSUE-15 (empty stub cleanup), ISSUE-18 (milestone StatusCode live-computed), ISSUE-25, ISSUE-26, ISSUE-27 (all QA-fix resolved)
+- **Testing Agent fixes** (Sonnet, run post-BE+FE): 3 blocking issues patched:
+  1. Dashboard GQL milestone fields renamed (`milestoneId`→`campaignMilestoneId`, `name`→`milestoneName`) in CampaignQuery.ts + CampaignDto.ts + milestone-tracker.tsx
+  2. Added `RaisedAmount` field to `CampaignResponseDto` (FE queries requested it via getCampaigns + getCampaignById)
+  3. Removed 4 duplicate exports from shared-cell-renderers/index.ts (TS2300 blockers — pre-existing but unblocked by Campaign work)
+- **Build verification**:
+  - `dotnet build Base.Application` — 0 errors
+  - `dotnet build Base.API` — 0 errors
+  - `pnpm tsc --noEmit` — 0 new Campaign errors (12 pre-existing errors in other screens remain, unrelated)
+  - Variant B verified: `<ScreenHeader>` @ index-page.tsx line 158 + `<FlowDataTableContainer showHeader={false}>` @ line 184
+  - Renderer registration: 9/9 (3 renderers × 3 column-type registries) all resolve
+  - UI uniformity 5-check grep: 0 inline hex (except data-driven status/progress + library-required ApexCharts hex), 0 inline px (except computed progress widths), 0 raw "Loading...", 0 non-Phosphor iconify, 0 `className="card"`
+- **Next step**: (empty — COMPLETED). User action required:
+  1. Delete `20260421134444_Campaign_AlignWithMockup.cs` and run `dotnet ef migrations add Campaign_AlignWithMockup --project Base.Infrastructure --startup-project Base.API` to regenerate .Designer.cs + clean snapshot (ISSUE-19 — team-handles-migrations rule)
+  2. `dotnet ef database update`
+  3. Apply `sql-scripts-dyanmic/Campaign-sqlscripts.sql`
+  4. `git rm` the 2 neutralized FE files (ISSUE-19)
+  5. `dotnet build` — verify 0 errors
+  6. `pnpm dev` — verify page loads at `/[lang]/crm/organization/campaign`
+  7. Full E2E per §⑪ (grid + 4 KPI widgets + 6 chips + form 4 tabs + detail 8 sections + 7 workflow actions)
