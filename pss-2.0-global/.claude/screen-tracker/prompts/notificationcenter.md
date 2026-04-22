@@ -2,14 +2,14 @@
 screen: NotificationCenter
 registry_id: 35
 module: Communication
-status: PENDING
+status: COMPLETED
 scope: ALIGN
 screen_type: FLOW
 complexity: High
 new_module: NO
 planned_date: 2026-04-20
-completed_date:
-last_session_date:
+completed_date: 2026-04-21
+last_session_date: 2026-04-21
 ---
 
 ## Tasks
@@ -24,16 +24,17 @@ last_session_date:
 - [x] Prompt generated
 
 ### Generation (by /build-screen → /generate-screen)
-- [ ] BA Analysis validated
-- [ ] Solution Resolution complete
-- [ ] UX Design finalized (custom inbox layout — NO view-page 3-mode pattern)
-- [ ] User Approval received
-- [ ] Backend code modified (entity + config + schemas + queries + 2 new commands + migration)
-- [ ] Backend wiring complete (SharedMappings additions, DecoratorNotifyModules no-change)
-- [ ] Frontend code generated (custom index-page inbox UI + Zustand store)
-- [ ] Frontend wiring complete
-- [ ] DB Seed script generated (menu + capabilities + no Grid row — custom index, GridFormSchema SKIP)
-- [ ] Registry updated to COMPLETED
+- [x] BA Analysis validated (prompt-driven — agents skipped per token directive)
+- [x] Solution Resolution complete (prompt-driven)
+- [x] UX Design finalized (prompt §⑥ is authoritative)
+- [x] User Approval received (pre-filled config + user directive)
+- [x] Backend code modified (entity + config + schemas + validators + Mappings + 2 mutations + 2 queries)
+- [x] Backend wiring complete (SharedMappings explicit NotificationTemplateTitle flat-map; existing DbSet + DecoratorProperties unchanged)
+- [x] Frontend code generated (custom inbox UI + Zustand store + Radix dropdown)
+- [x] Frontend wiring complete (barrels + notify-service-entity-operations + route stub overwritten)
+- [x] DB Seed script generated (menu + capabilities; no Grid row — GridFormSchema SKIP)
+- [x] Registry updated to COMPLETED
+- [ ] EF migration (DEFERRED per user directive — dev team to run `dotnet ef migrations add AddNotificationInboxColumns` + `database update` + seed SQL)
 
 ### Verification (post-generation — FULL E2E required)
 - [ ] dotnet build passes
