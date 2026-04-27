@@ -2,14 +2,14 @@
 screen: Volunteer
 registry_id: 53
 module: Volunteer (CRM)
-status: PROMPT_READY
+status: COMPLETED
 scope: FULL
 screen_type: FLOW
 complexity: High
-new_module: YES — `vol` schema (IVolDbContext, VolDbContext, VolMappings, DecoratorVolModules)
+new_module: NO — entities placed in existing `app` schema (ApplicationModels group); user revised away from a separate `vol` schema during build
 planned_date: 2026-04-21
-completed_date:
-last_session_date:
+completed_date: 2026-04-24
+last_session_date: 2026-04-24
 ---
 
 ## Tasks
@@ -24,17 +24,17 @@ last_session_date:
 - [x] Prompt generated
 
 ### Generation (by /build-screen → /generate-screen)
-- [ ] BA Analysis validated
-- [ ] Solution Resolution complete
-- [ ] UX Design finalized (FORM 6-section accordion + 5-tab DETAIL + 4 KPI widgets specified)
-- [ ] User Approval received
-- [ ] **NEW MODULE bootstrap** — `vol` schema: `IVolDbContext`, `VolDbContext`, `VolMappings`, `DecoratorVolModules` created and wired (IApplicationDbContext inheritance, DependencyInjection × 2, GlobalUsing × 3, AddDbContext registration)
-- [ ] Backend code generated (Volunteer parent + 5 child entities + 4 workflow commands + Summary query + migration)
-- [ ] Backend wiring complete (DbSets, Mappings, Decorator, MasterData seeds)
-- [ ] Frontend code generated (view-page 3 modes + Zustand store + 4 KPI widgets + 5-tab DETAIL + 6-section FORM with contact-link toggle)
-- [ ] Frontend wiring complete (entity-operations, component-columns × 3 registries, shared-cell-renderers barrel, sidebar, route stub overwrite)
-- [ ] DB Seed script generated (menu + Grid FLOW + 10 GridFields; GridFormSchema SKIP; 7 MasterDataType seeds + hide VOLUNTEERFORM menu)
-- [ ] Registry updated to COMPLETED
+- [x] BA Analysis validated (prompt analysis re-used directly — token budget directive)
+- [x] Solution Resolution complete (FLOW + Variant B + diff-children, no new schema)
+- [x] UX Design finalized (FORM 6-section accordion + 5-tab DETAIL + 4 KPI widgets specified)
+- [x] User Approval received (auto-approved per session directive)
+- [x] **Schema decision (REVISED)** — entities placed in existing `app` schema (no `vol` schema bootstrap, per user revision mid-build); 6 DbSets registered directly on `IApplicationDbContext`; new `VolunteerMappings.cs` registered in `DependencyInjection`; 6 consts appended to `DecoratorApplicationModules`
+- [x] Backend code generated (Volunteer parent + 5 child entities + 4 CRUD + 4 workflow commands + 3 queries + endpoints) — migration file SKIPPED per session directive
+- [x] Backend wiring complete (DbSets on IApplicationDbContext + ApplicationDbContext partial, VolunteerMappings registered, DecoratorApplicationModules consts; GraphQL endpoints discovered via reflection)
+- [x] Frontend code generated (view-page 3 modes + Zustand store + 4 KPI widgets + 5-tab DETAIL + 6-section FORM with contact-link toggle)
+- [x] Frontend wiring complete (entity-operations registered in DataTableOperationConfigs, component-columns × 3 registries, shared-cell-renderers barrel, gql index barrels, route stub overwrite, legacy registervolunteer/ deleted)
+- [x] DB Seed script generated (menu + Grid FLOW + 9 GridFields; GridFormSchema SKIP; 7 MasterDataTypes + values seeds; hide VOLUNTEERFORM menu)
+- [x] Registry updated to COMPLETED
 
 ### Verification (post-generation — FULL E2E required)
 - [ ] `dotnet build` passes (new Volunteer + 5 children + `vol` schema registered in EF design snapshot)
@@ -948,9 +948,28 @@ HideLegacyMenu: VOLUNTEERFORM (IsMenuRender=0 — register-volunteer route depre
 | ISSUE-18 | /plan-screens 2026-04-21 | LOW | BE — Volunteer email vs Contact email divergence | After a Volunteer links to a Contact, the user may edit Volunteer.Email directly. BE does NOT sync the edit back to Contact.Email (different entities, different lifecycles). If sync is desired later, add a post-Update hook. MVP: fields diverge silently. | OPEN |
 | ISSUE-19 | /plan-screens 2026-04-21 | LOW | FE — Bulk action permission granularity | Bulk Activate / Deactivate should respect per-row status — a volunteer already Active cannot be "Activated" again. FE client-side skips no-op rows and shows toast "3 activated, 2 skipped". BE workflow mutations are per-row — FE loops. Batch-level mutation is NOT in scope MVP. | OPEN |
 | ISSUE-20 | /plan-screens 2026-04-21 | MED | BE/DB — New MasterData type groups | 7 new MasterDataType rows seeded: VOLUNTEERSTATUS, VOLUNTEERSKILL (20 rows), VOLUNTEERINTEREST (8 rows), VOLUNTEERAVAILABILITYTYPE (4 rows), VOLUNTEERPREFERREDTIME (4 rows), VOLUNTEEREMERGENCYRELATION (6 rows), VOLUNTEERHEARDABOUTSOURCE (5 rows). Ensure MasterDataType entries first, then MasterData entries with correct TypeCode FK. Seed must be idempotent. | OPEN |
+| ISSUE-21 | /build-screen 2026-04-24 | HIGH | BE — EF migration not generated | Per session directive (90% weekly token budget) the EF migration file was NOT created during the build. Before deploy, run `dotnet ef migrations add AddVolunteerModule_Initial` in `Base.Infrastructure` and apply. Tables: `app.Volunteers`, `app.VolunteerSkills`, `app.VolunteerInterests`, `app.VolunteerLanguages`, `app.VolunteerCertifications`, `app.VolunteerBlackouts` — all in existing `app` schema. | OPEN |
+| ISSUE-22 | /build-screen 2026-04-24 | HIGH | BE+FE — Build verification skipped | Per session directive, `dotnet build`, `pnpm dev`, and the full E2E Verification checklist in this prompt's Tasks section were NOT executed. Must be run in a follow-up session before declaring the screen production-ready. | OPEN |
 
 ### § Sessions
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
 
-{No sessions recorded yet — filled in after /build-screen completes.}
+### Session 1 — 2026-04-24 — BUILD — COMPLETED
+
+- **Scope**: Initial full build from PROMPT_READY prompt. User mid-build revision: drop new `vol` schema, place all entities in existing `app` schema (ApplicationModels group, no DbContext bootstrap, DbSets registered directly on IApplicationDbContext).
+- **Files touched**:
+  - BE: 33 created — 6 entities in `Base.Domain/Models/ApplicationModels/Volunteer*.cs` (created); 6 EF configs in `Base.Infrastructure/Data/Configurations/ApplicationConfigurations/Volunteer*Configuration.cs` (created); `Base.Application/Schemas/ApplicationSchemas/VolunteerSchemas.cs` (created); 11 commands/queries in `Base.Application/Business/ApplicationBusiness/Volunteers/{CreateCommand,UpdateCommand,DeleteCommand,ToggleCommand,ApproveCommand,DeactivateCommand,SetOnLeaveCommand,ReactivateCommand,GetAllQuery,GetByIdQuery,GetSummaryQuery}/` (created); `Base.API/EndPoints/Application/Mutations/VolunteerMutations.cs` (created); `Base.API/EndPoints/Application/Queries/VolunteerQueries.cs` (created); `Base.Application/Mappings/VolunteerMappings.cs` (created). Wiring: `Base.Application/Data/Persistence/IApplicationDbContext.cs` (modified — 6 DbSets), `Base.Infrastructure/Data/Persistence/ApplicationDbContext.cs` (modified — 6 Set<T>()), `Base.Application/Extensions/DecoratorProperties.cs` (modified — 6 DecoratorApplicationModules consts), `Base.Application/DependencyInjection.cs` (modified — VolunteerMappings.ConfigureMappings()).
+  - FE: ~30 created — `src/domain/entities/volunteer-service/VolunteerDto.ts`; `src/infrastructure/gql-queries/volunteer-queries/VolunteerQuery.ts`; `src/infrastructure/gql-mutations/volunteer-mutations/VolunteerMutation.ts`; `src/presentation/pages/crm/volunteer/volunteerlist.tsx` + `index.ts`; full `src/presentation/components/page-components/crm/volunteer/volunteerlist/` package (index, index-page Variant B, view-page, volunteer-store, volunteer-create-form, volunteer-form-schemas, volunteer-detail-page, volunteer-widgets, volunteer-advanced-filters, volunteer-deactivate-modal, volunteer-onleave-modal, contact-typeahead-picker, 5 tab files); 5 cell renderers in `src/presentation/components/shared/cell-renderers/`; 3 shared widgets in `src/presentation/components/shared/widgets/`; `src/application/services/volunteer-service-entity-operations.ts`. Wiring: 3 component-column registries (advanced/basic/flow), shared-cell-renderers barrel, gql index barrels, domain entities barrel, DataTableOperationConfigs, route page `src/app/[lang]/crm/volunteer/volunteerlist/page.tsx` (overwritten). Deleted: `src/app/[lang]/crm/volunteer/registervolunteer/page.tsx` + parent directory (ISSUE-16).
+  - DB: `PSS_2.0_Backend/PeopleServe/Services/Base/sql-scripts-dyanmic/Volunteer-sqlscripts.sql` (created — VOLUNTEERLIST menu @ OrderBy=1 under CRM_VOLUNTEER, MenuCapabilities + RoleCapabilities BUSINESSADMIN, Grid VOLUNTEER FLOW + 9 GridFields, 7 MasterDataTypes + all values; hides VOLUNTEERFORM menu).
+- **Deviations from spec**:
+  - Schema decision changed from new `vol` schema to existing `app` schema (user revision mid-session). All path/namespace references in spec mentally substituted: `vol`→`app`, `VolModels`→`ApplicationModels`, `VolSchemas`→`ApplicationSchemas`, `VolBusiness`→`ApplicationBusiness`, `VolConfigurations`→`ApplicationConfigurations`, endpoints under `EndPoints/Application/`. No new DbContext, no new GlobalUsing.
+  - EF migration file SKIPPED per user directive (90% weekly token budget). Schema must be created via separate `dotnet ef migrations add` invocation in next session before deployment.
+  - `dotnet build` and `pnpm dev` SKIPPED per user directive — no build verification this session.
+  - Session summary writing SKIPPED per user directive (this Build Log entry is the only post-build artifact).
+  - Contact typeahead picker built page-local (per ISSUE-15 recommendation; promote to shared when 2nd consumer emerges).
+- **Known issues opened**:
+  - ISSUE-21 NEW (this session): EF migration file not generated per user session directive — `dotnet ef migrations add AddVolunteerModule_Initial` must be run in next session before deploying. Tables: app.Volunteers, app.VolunteerSkills, app.VolunteerInterests, app.VolunteerLanguages, app.VolunteerCertifications, app.VolunteerBlackouts.
+  - ISSUE-22 NEW (this session): Build verification (`dotnet build` + `pnpm dev` + full E2E checklist in Tasks > Verification section) skipped per user directive — must be run before declaring screen production-ready.
+- **Known issues closed**: None (ISSUE-1..ISSUE-20 carried forward as planned MVP placeholders / future-wave deferrals).
+- **Next step**: (none for COMPLETED) — but follow-up session should: (a) run `dotnet ef migrations add AddVolunteerModule_Initial`, (b) `dotnet build` + `pnpm dev`, (c) execute the full Verification checklist in this prompt's Tasks section to confirm all 30+ E2E acceptance criteria pass.
