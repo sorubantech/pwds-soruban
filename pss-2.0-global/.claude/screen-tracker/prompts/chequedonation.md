@@ -2,14 +2,14 @@
 screen: ChequeDonation
 registry_id: 6
 module: Fundraising
-status: COMPLETED
+status: NEEDS_FIX
 scope: ALIGN
 screen_type: FLOW
 complexity: High
 new_module: NO
 planned_date: 2026-04-20
 completed_date: 2026-04-21
-last_session_date: 2026-04-21
+last_session_date: 2026-04-27
 ---
 
 ## Tasks
@@ -919,6 +919,7 @@ Everything in the mockup is buildable from existing infra EXCEPT:
 | ISSUE-26 | 1 | FE-LOW  | Cheque Type widget | chequeTypeId implemented as FormSearchableSelect (MasterData TypeCode=CHEQUETYPE) rather than radio-chip-group — 2 options yield equivalent UX but loses the "pick one of two chips" visual. | OPEN |
 | ISSUE-27 | 1 | FE-LOW  | File upload  | File upload widgets render as URL text inputs — upload infra not wired in this screen. Matches SERVICE_PLACEHOLDER note §⑫. | OPEN |
 | ISSUE-28 | 1 | BE-LOW  | SummaryAmount | `totalAmountBaseCurrency` left NULL in MVP (deferred until currency-conversion service ships). | OPEN |
+| ISSUE-29 | 2 | FE-NOTE | Audit | `presentation/pages/crm/donation/index.ts` re-exports `ChequeDonationPageConfig` from `./chequedonation` (page-config wrapper). Unaffected by Session-2 fix, but noted to ensure future folder-collision audits cover the `pages/` tree as well as `page-components/`. | OPEN |
 
 ### § Sessions
 
@@ -992,4 +993,24 @@ Everything in the mockup is buildable from existing infra EXCEPT:
   2. `dotnet build` at repo root — verify zero compilation errors.
   3. `pnpm dev` in `PSS_2.0_Frontend/` — verify page loads at `/[lang]/crm/donation/chequedonation`.
   4. Full E2E per prompt §⑪ Acceptance Criteria: grid renders, Kanban default, view toggle, `?mode=new` create flow (atomic GD+CD), Deposit modal REC→DEP, Clearance modal DEP→CLR / DEP→BOU, donor-link navigation.
+
+### Session 2 — 2026-04-27 — FIX — COMPLETED
+
+- **Scope**: User reported "lots of issues" in `index.tsx` and `index.ts` of the chequedonation page-components folder. Root cause: dual-extension collision — both `index.ts` (barrel) and `index.tsx` (URL dispatcher) coexisted in the same directory. The consumer `presentation/pages/crm/donation/chequedonation.tsx:10` does `import ChequeDonationPage from "@/presentation/components/page-components/crm/donation/chequedonation"` (default import), but TS module resolution prefers `.ts` over `.tsx` and resolved to `index.ts`, which (a) has no default export, and (b) re-exported `./index` causing ambiguous self/sibling resolution. Canonical FLOW siblings (DonationInKind #7, RecurringDonationSchedule #8, Pledge #12) carry only `index.tsx` — no `index.ts` barrel. Removed the rogue barrel and dropped the duplicate trailing named re-exports from `index.tsx` (no external consumers — verified via repo-wide grep for `ChequeDonationRouter` / `ChequeDonationIndexPage` / `ChequeDonationViewPage`).
+
+- **Files touched**:
+  - BE: None
+  - FE deleted (1):
+    - `PSS_2.0_Frontend/src/presentation/components/page-components/crm/donation/chequedonation/index.ts` (deleted — rogue barrel that broke default-import resolution into the folder)
+  - FE modified (1):
+    - `PSS_2.0_Frontend/src/presentation/components/page-components/crm/donation/chequedonation/index.tsx` (removed dead trailing re-exports of `ChequeDonationIndexPage` / `ChequeDonationViewPage` to match canonical DIK/Pledge pattern)
+  - DB: None
+
+- **Deviations from spec**: None — fix aligns chequedonation directory with canonical FLOW sibling structure documented in §⑤.
+
+- **Known issues opened**: ISSUE-29 LOW — During investigation, observed that `presentation/pages/crm/donation/index.ts` re-exports `ChequeDonationPageConfig` from `./chequedonation` (the page-config wrapper), which is unaffected by this fix but worth noting for future audits — only the page-components folder had the collision.
+
+- **Known issues closed**: None of the existing 6 OPEN issues (ISSUE-18, 21, 25, 26, 27, 28) were addressed in this session — they remain OPEN. The fixed bug was a session-2 surface defect not previously tracked in the Known Issues table.
+
+- **Next step**: 6 OPEN issues remain (ISSUE-18, 21, 25, 26, 27, 28, 29). ISSUE-21 (BE-HIGH FK placeholder) is the highest-priority follow-up. User can run `pnpm dev` to confirm the page-components folder now resolves cleanly via default import.
   5. If ISSUE-21 causes runtime FK error on Create, add default MasterData rows (DonationType=GENERAL, PaymentStatus=PENDING) OR migrate GD columns to nullable.

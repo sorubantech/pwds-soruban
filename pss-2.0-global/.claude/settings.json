@@ -191,7 +191,22 @@
       "Bash(awk -F'\\\\t' '{ print $2 }')",
       "Bash(awk -F'|' '/^\\\\| [0-9]+ \\\\|/ { gsub\\(/^[ \\\\t]+|[ \\\\t]+$/, \"\", $2\\); gsub\\(/^[ \\\\t]+|[ \\\\t]+$/, \"\", $3\\); gsub\\(/^[ \\\\t]+|[ \\\\t]+$/, \"\", $8\\); gsub\\(/^[ \\\\t]+|[ \\\\t]+$/, \"\", $9\\); if \\($8 == \"PROMPT_READY\"\\) print \"#\" $2 \"\\\\t\" $3 \"\\\\t\" $9 }' \"d:/Repos/PWDS/pwds-soruban/pss-2.0-global/.claude/screen-tracker/REGISTRY.md\")",
       "Bash(awk -F'\\\\t' '$1 ~ /^\\(11|12|13|14|25|28|30|32|39|40|42|44|48|50|55|58|60|62|63\\)$/ { print }')",
-      "Bash(awk -F'|' '/^\\\\| [0-9]+ \\\\|/ { gsub\\(/^[ \\\\t]+|[ \\\\t]+$/, \"\", $2\\); gsub\\(/^[ \\\\t]+|[ \\\\t]+$/, \"\", $8\\); if \\($8 == \"PROMPT_READY\"\\) print $2 }' \"d:/Repos/PWDS/pwds-soruban/pss-2.0-global/.claude/screen-tracker/REGISTRY.md\")"
+      "Bash(awk -F'|' '/^\\\\| [0-9]+ \\\\|/ { gsub\\(/^[ \\\\t]+|[ \\\\t]+$/, \"\", $2\\); gsub\\(/^[ \\\\t]+|[ \\\\t]+$/, \"\", $8\\); if \\($8 == \"PROMPT_READY\"\\) print $2 }' \"d:/Repos/PWDS/pwds-soruban/pss-2.0-global/.claude/screen-tracker/REGISTRY.md\")",
+      "Bash(python -)",
+      "Bash(rm \"d:/Repos/PWDS/pwds-soruban/pss-2.0-global/PSS_2.0_Frontend/src/presentation/components/page-components/crm/contact/contact/form-fields/HouseholdFormFields.tsx\")",
+      "Bash(grep -A 2 \"duplicatecontact[\\\\\\\\\\\\\\\\/]view-page\")",
+      "Bash(grep \"duplicatecontact[\\\\\\\\\\\\\\\\/]view-page\")",
+      "Bash(awk ' *)",
+      "Bash(python scripts/generate-status-csv.py)",
+      "Bash(python -c \"import openpyxl; print\\(openpyxl.__version__\\)\")",
+      "Bash(pip install *)",
+      "Bash(python -c \"import openpyxl; print\\('openpyxl', openpyxl.__version__\\)\")",
+      "Bash(powershell.exe -Command 'Get-Process | Where-Object { $_.Modules -match '\\\\''SCREEN-STATUS'\\\\'' } | Select-Object Id, ProcessName')",
+      "PowerShell($path = \"d:\\\\Repos\\\\PWDS\\\\pwds-soruban\\\\pss-2.0-global\\\\.claude\\\\screen-tracker\\\\SCREEN-STATUS-OVERVIEW.csv\"; try { $fs = [System.IO.File]::Open\\($path, 'Open', 'Write', 'None'\\); $fs.Close\\(\\); Write-Output \"Unlocked\" } catch { Write-Output \"LOCKED: $_\" })",
+      "Bash(SUFFIX=-v2 python scripts/generate-status-csv.py)",
+      "Bash(SUFFIX=-v3 python scripts/generate-status-csv.py)",
+      "Bash(SUFFIX=-v4 python scripts/generate-status-csv.py)",
+      "Bash(SUFFIX=-v5 python scripts/generate-status-csv.py)"
     ],
     "ask": [
       "Bash(rm -rf *)",
