@@ -183,7 +183,7 @@ The dev must refer to all three to understand the full FLOW screen. (MASTER_GRID
 
 | # | Screen | Mockup Files | Scope | Type | Priority | Status | Prompt | Notes |
 |---|--------|-------------|-------|------|----------|--------|--------|-------|
-| 58 | Membership Tier | membership/membership-tiers.html | FULL | MASTER_GRID | P1-Setup | PARTIAL | — | FE route exists, NO BE entity. New module: mem schema |
+| 58 | Membership Tier | membership/membership-tiers.html | FULL | MASTER_GRID | P1-Setup | PROMPT_READY | prompts/membershiptier.md | Planned 2026-04-22. NEW mem schema module (first entity). card-grid display + benefits comparison panel. Child entity MembershipTierBenefit. Custom DuplicateMembershipTier mutation. memberCount aggregation (0 placeholder until #59). FE route stub exists. |
 | 59 | Member Enrollment | membership/member-list+enrollment+detail.html | FULL | FLOW | P2-Core | PARTIAL | — | FE route exists, NO BE entity. FK: Contact, MembershipTier |
 | 60 | Membership Renewal | membership/membership-renewals.html | FULL | FLOW | P3-Business | PARTIAL | — | FE route exists, NO BE entity. FK: MemberEnrolment |
 | 61 | Member Portal | membership/member-portal.html | — | FLOW | P4-Advanced | SKIP_CONFIG | — | Public-facing portal, separate pipeline |
@@ -299,7 +299,7 @@ These are the screens that need work, ordered by priority tier. Within each tier
 | # | Screen | Module | Type | Status | New Module? |
 |---|--------|--------|------|--------|-------------|
 | 51 | Program | Case Mgmt | MASTER_GRID | PROMPT_READY | YES (case schema) |
-| 58 | Membership Tier | Membership | MASTER_GRID | PARTIAL | YES (mem schema) |
+| 58 | Membership Tier | Membership | MASTER_GRID | PROMPT_READY | YES (mem schema). card-grid + benefits comparison. Child: MembershipTierBenefit. Custom Duplicate mutation. memberCount aggregation. FE stub exists. Planned 2026-04-22. |
 | 81 | Document Types | Settings | MASTER_GRID | PARTIAL | NO (shared) |
 
 ### P2-Core (Core entities with FKs to P1 or existing entities)
