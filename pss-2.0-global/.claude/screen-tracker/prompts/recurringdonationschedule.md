@@ -9,7 +9,7 @@ complexity: High
 new_module: NO
 planned_date: 2026-04-20
 completed_date: 2026-04-21
-last_session_date: 2026-04-21
+last_session_date: 2026-04-27
 ---
 
 ## Tasks
@@ -853,6 +853,7 @@ The CREATE / UPDATE / DELETE / PAUSE / RESUME / CANCEL / EDIT_AMOUNT mutations a
 | ISSUE-21 | session-1 | LOW | BE-mutation-response | Pause/Resume/Cancel/Retry/EditAmount mutations return `BaseApiResponse<int>` (just the new ID). FE drawer triggers `handleRefetchAll()` after success — UI updates correctly via refetch. Could be optimized in future to return updated entity payload, removing the need for refetch. | OPEN (mitigated) |
 | ISSUE-22 | session-1 | LOW | BE-perf | `GetRecurringDonationSchedule.cs` handler uses double-query pattern (`ApplyGridFeatures` IDs → second `.ToListAsync()` for nav re-load). Avoids N+1 but doubles query count per list load. Performance follow-up if KPI/grid latency degrades. | OPEN |
 | ISSUE-23 | session-1 | LOW | FE-decimal-scalar | FE `editRecurringDonationScheduleAmount` mutation declares `newAmount: Decimal!`. HotChocolate exposes `decimal` as `Decimal` scalar in this repo — confirm on first wire-up. If gateway throws "Unknown type Decimal", change FE to `Float!`. | OPEN |
+| ISSUE-24 | session-2 | LOW | FE-typing | `view-page.tsx:662` uses `control as never` to satisfy `DistributionFieldArray.control: Control<any>` because RHF v7.72 `Control<X>` is not assignable to `Control<any>` due to invariant `ValidateForm` generic under TS strict. Cast is safe (single consumer, identical RHF runtime). If a second consumer is introduced, switch to a generic `<T extends FieldValues>` signature or a strongly-typed `Control<FormValues>` prop (Pledge #12 pattern). | OPEN |
 
 ### § Sessions
 
@@ -942,3 +943,16 @@ The CREATE / UPDATE / DELETE / PAUSE / RESUME / CANCEL / EDIT_AMOUNT mutations a
 - **UI Uniformity**: 5/5 grep checks passed (0 inline hex, 0 inline px padding/margin, 0 hand-rolled skeleton hex, 0 raw "Loading...", 0 fa-* class names).
 - **Component Reuse-or-Create**: 7 new renderer keys all registered in advanced/basic/flow column-type registries + shared-cell-renderers/index.ts exports. BE seed `GridComponentName` values all resolve.
 - **Next step**: User must (1) run `dotnet ef migrations add Add_RecurringDonationScheduleCode` per ISSUE-15 + edit migration to insert backfill SQL between AddColumn and CreateIndex steps; (2) `dotnet ef database update`; (3) apply `RecurringDonationSchedule-sqlscripts.sql`; (4) `dotnet build`; (5) `pnpm dev`; (6) full E2E per §⑪ Acceptance Criteria.
+
+### Session 2 — 2026-04-27 — FIX — COMPLETED
+
+- **Scope**: TS2322 at `view-page.tsx:662` — `Control<FormValues>` not assignable to `Control<any>` on `DistributionFieldArray.control` prop (RHF v7.72 `ValidateForm` generic invariance under TS strict mode).
+- **Files touched**:
+  - BE: none
+  - FE: `PSS_2.0_Frontend/src/presentation/components/page-components/crm/donation/recurringdonors/view-page.tsx` (1-line: `control={control}` → `control={control as never}` at the `<DistributionFieldArray>` call site at line 662)
+  - DB: none
+- **Deviations from spec**: None. The cast is invisible at runtime; alternative was widening `DistributionFieldArray.control` to a generic, but that component is single-use (grep-confirmed only consumer is `view-page.tsx`), so a call-site cast is the minimal-surface fix.
+- **Known issues opened**: ISSUE-24 LOW FE-typing — `view-page.tsx:662` uses `control as never` to bypass RHF v7.72 `Control<X>` → `Control<any>` invariance. If a future refactor introduces a second consumer of `DistributionFieldArray`, switch to either a typed `Control<FormValues>` prop (Pledge #12 pattern) or a generic `<TFieldValues extends FieldValues>` prop signature.
+- **Known issues closed**: None.
+- **Verification**: `pnpm tsc --noEmit` re-run scoped to `recurringdonors/view-page` produced 0 errors (was 1 before the change).
+- **Next step**: None — back to COMPLETED. Other OPEN issues (ISSUE-15 EF migration, ISSUE-8 SERVICE_PLACEHOLDER gateway integration, ISSUE-11 distribution-sum BE validator, etc.) remain unchanged.

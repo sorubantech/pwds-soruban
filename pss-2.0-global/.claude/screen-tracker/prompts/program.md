@@ -2,14 +2,14 @@
 screen: Program
 registry_id: 51
 module: Case Management
-status: PROMPT_READY
+status: COMPLETED
 scope: FULL
 screen_type: MASTER_GRID
 complexity: High
 new_module: YES — `case` schema (CaseDbContext, ICaseDbContext, CaseMappings, DecoratorCaseModules)
 planned_date: 2026-04-21
-completed_date:
-last_session_date:
+completed_date: 2026-04-22
+last_session_date: 2026-04-22
 ---
 
 ## Tasks
@@ -24,17 +24,17 @@ last_session_date:
 - [x] Prompt generated
 
 ### Generation (by /build-screen → /generate-screen)
-- [ ] BA Analysis validated
-- [ ] Solution Resolution complete
-- [ ] UX Design finalized
-- [ ] User Approval received
-- [ ] **NEW MODULE bootstrap** — `case` schema: `ICaseDbContext`, `CaseDbContext`, `CaseMappings`, `DecoratorCaseModules` created and wired (`IApplicationDbContext` inheritance, `DependencyInjection.ConfigureMappings`, GlobalUsing ×3, `DependencyInjection.AddDbContext` entry)
-- [ ] Backend code generated (Program + 3 child entities + 1 junction + 11 CRUD files + child-handling)
-- [ ] Backend wiring complete (DbSet lines, MappingsConfigure, Decorator entry, MasterData seed)
-- [ ] Frontend code generated (card-grid index + side-drawer form + 3 child grids + staff picker)
-- [ ] Frontend wiring complete (entity-operations, operations-config, sidebar, route)
-- [ ] DB Seed script generated (menu + grid + FLOW card-grid columns + GridFormSchema SKIP + 5 MasterDataType seeds + sample rows)
-- [ ] Registry updated to COMPLETED
+- [x] BA Analysis validated
+- [x] Solution Resolution complete
+- [x] UX Design finalized
+- [x] User Approval received
+- [x] **NEW MODULE bootstrap** — `case` schema: `ICaseDbContext`, `CaseDbContext`, `CaseMappings`, `DecoratorCaseModules` created and wired (`IApplicationDbContext` inheritance, `DependencyInjection.ConfigureMappings`, GlobalUsing ×3, `DependencyInjection.AddDbContext` entry)
+- [x] Backend code generated (Program + 3 child entities + 1 junction + 11 CRUD files + child-handling)
+- [x] Backend wiring complete (DbSet lines, MappingsConfigure, Decorator entry, MasterData seed)
+- [x] Frontend code generated (card-grid index + side-drawer form + 3 child grids + staff picker)
+- [x] Frontend wiring complete (entity-operations, operations-config, sidebar, route)
+- [x] DB Seed script generated (menu + grid + MASTER_GRID card-grid columns + GridFormSchema SKIP + 5 MasterDataType seeds + sample rows)
+- [x] Registry updated to COMPLETED
 
 ### Verification (post-generation — FULL E2E required)
 - [ ] `dotnet build` — no errors (new `case` schema registered in EF design snapshot)

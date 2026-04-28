@@ -2,14 +2,14 @@
 screen: CompanyEmailProvider
 registry_id: 28
 module: Settings / Communication Config
-status: PROMPT_READY
+status: COMPLETED
 scope: ALIGN
 screen_type: FLOW
 complexity: High
 new_module: NO
 planned_date: 2026-04-21
-completed_date:
-last_session_date:
+completed_date: 2026-04-24
+last_session_date: 2026-04-24
 ---
 
 ## Tasks
@@ -24,16 +24,16 @@ last_session_date:
 - [x] Prompt generated
 
 ### Generation (by /build-screen → /generate-screen)
-- [ ] BA Analysis validated
-- [ ] Solution Resolution complete
-- [ ] UX Design finalized (6-card stacked config layout)
-- [ ] User Approval received
-- [ ] Backend code generated (entity fields + child entity + upsert/workflow commands)
-- [ ] Backend wiring complete (DbContext/inverse-nav/Mappings/validators)
-- [ ] Frontend code generated (single config page — NO grid, NO view-page 3 modes, NO Zustand grid store)
-- [ ] Frontend wiring complete (relocate from `crm/communication/companyemailprovider` → `setting/communicationconfig/emailproviderconfig`)
-- [ ] DB Seed script generated (Grid SKIP, GridFormSchema SKIP, MasterData EMAILPROVIDER + EMAILPROVIDERTYPE typeCodes, GridCode rename seed)
-- [ ] Registry updated to COMPLETED
+- [x] BA Analysis validated (prompt-driven — analysis phase consolidated)
+- [x] Solution Resolution complete (FLOW custom config classification confirmed)
+- [x] UX Design finalized (6-card stacked config layout + SMTP conditional Card 7)
+- [x] User Approval received (pre-granted via /build-screen args)
+- [x] Backend code generated (entity fields + child entity + upsert/workflow commands)
+- [x] Backend wiring complete (DbContext/inverse-nav/Mappings/validators)
+- [x] Frontend code generated (single config page — NO grid, NO view-page 3 modes, NO Zustand grid store)
+- [x] Frontend wiring complete (relocate from `crm/communication/companyemailprovider` → `setting/communicationconfig/emailproviderconfig`)
+- [x] DB Seed script generated (Grid rename + MasterData EMAILPROVIDER + EMAILPROVIDERTYPE typeCodes)
+- [x] Registry updated to COMPLETED
 
 ### Verification (post-generation — FULL E2E required)
 - [ ] dotnet build passes
@@ -820,4 +820,22 @@ Everything in the mockup is in scope and fully built as UI. Backend handlers for
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
 
-{No sessions recorded yet — filled in after /build-screen completes.}
+### Session 1 — 2026-04-24 — BUILD — COMPLETED
+
+- **Scope**: Initial full build from PROMPT_READY prompt. ALIGN scope — extend existing CompanyEmailProvider entity + relocate FE from `crm/communication/companyemailprovider` (orphan) → `setting/communicationconfig/emailproviderconfig` (canonical). Single-record config page (custom FLOW — no grid, no 3-mode view-page).
+- **Files touched**:
+  - BE (modified, 10): `Base.Domain/Models/NotifyModels/CompanyEmailProvider.cs`; `Base.Infrastructure/Data/Configurations/NotifyConfigurations/CompanyEmailProviderConfiguration.cs`; `Base.Application/Schemas/NotifySchemas/CompanyEmailProviderSchemas.cs`; `Base.Application/Business/NotifyBusiness/CompanyEmailProviders/Commands/{CreateCompanyEmailProvider,UpdateCompanyEmailProvider,DeleteCompanyEmailProvider}.cs`; `.../Queries/{GetCompanyEmailProvider,GetCompanyEmailProviderById}.cs`; `Base.API/EndPoints/Notify/Mutations/CompanyEmailProviderMutations.cs`; `Base.API/EndPoints/Notify/Queries/CompanyEmailProviderQueries.cs`.
+  - BE (created, 5): `Base.Domain/Models/NotifyModels/EmailSendingIdentity.cs`; `Base.Infrastructure/Data/Configurations/NotifyConfigurations/EmailSendingIdentityConfiguration.cs`; `Base.Application/Business/NotifyBusiness/CompanyEmailProviders/Commands/{SaveCompanyEmailProvider,WorkflowCompanyEmailProvider}.cs`; `.../Queries/GetCompanyEmailProviderStats.cs`.
+  - BE wiring (modified, 4): `Base.Application/Data/Persistence/INotifyDbContext.cs`; `Base.Infrastructure/Data/Persistence/NotifyDbContext.cs`; `Base.Application/Extensions/DecoratorProperties.cs`; `Base.Application/Mappings/NotifyMappings.cs`.
+  - FE (deleted, 3): `presentation/components/page-components/crm/communication/companyemailprovider/{data-table.tsx,index.ts}`; `presentation/pages/crm/communication/companyemailprovider.tsx`.
+  - FE (created, 11): `app/[lang]/setting/communicationconfig/emailproviderconfig/page.tsx`; `presentation/pages/setting/communicationconfig/emailproviderconfig.tsx`; `presentation/components/page-components/setting/communicationconfig/emailproviderconfig/{email-provider-config-page,provider-card-selector,sending-identities-table,sending-identity-dialog,dns-records-table,reputation-cards,usage-bars}.tsx`; `.../emailproviderconfig/{provider-registry.ts,index.ts}`.
+  - FE (modified, 7): `domain/entities/notify-service/CompanyEmailProviderDto.ts`; `infrastructure/gql-queries/notify-queries/CompanyEmailProviderQuery.ts`; `infrastructure/gql-mutations/notify-mutations/CompanyEmailProviderMutation.ts`; `application/configs/data-table-configs/notify-service-entity-operations.ts`; `presentation/pages/setting/communicationconfig/index.ts`; `presentation/pages/setting/index.ts`; `presentation/pages/crm/communication/index.ts`.
+  - DB (created): `sql-scripts-dyanmic/CompanyEmailProvider-sqlscripts.sql` — MasterDataTypes EMAILPROVIDER (4 rows) + EMAILPROVIDERTYPE (2 rows), Grid rename COMPANYEMAILPROVIDER → EMAILPROVIDERCONFIG (idempotent), legacy row deprecation.
+- **Deviations from spec**:
+  - `MasterData` entity uses `DataValue` (not `DataCode`) for the provider code. Validators + FE card registry key off `dataValue` — wired consistently on both sides.
+  - `WorkflowCompanyEmailProvider.cs` also contains the 4 EmailSendingIdentity CRUD commands (Create/Update/Delete/SetDefault) in addition to the 3 workflow commands. Consolidated into one file to avoid a 6th new command file; all mutations wired in `CompanyEmailProviderMutations.cs`.
+  - EF migration file intentionally NOT generated this session (per user directive — user will generate separately via `dotnet ef migrations add`).
+  - `dotnet build` / `pnpm build` / full E2E testing intentionally NOT run this session (per user directive — token budget).
+- **Known issues opened**: None (see Known Issues table — no runtime defects surfaced during generation).
+- **Known issues closed**: None.
+- **Next step**: (none — build is COMPLETED. User to run `dotnet ef migrations add ExpandCompanyEmailProviderForConfigPage --project Base.Infrastructure --startup-project Base.API`, execute the seed SQL, then verify `/setting/communicationconfig/emailproviderconfig` loads in `pnpm dev`.)

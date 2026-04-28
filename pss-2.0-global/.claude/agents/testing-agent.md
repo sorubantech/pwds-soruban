@@ -61,7 +61,7 @@ For each seed SQL file:
 - **Menu**: MenuCode is unique, ParentMenuCode exists
 - **MenuCapabilities**: All capability codes exist in auth.Capabilities
 - **RoleCapabilities**: All role codes exist in auth.Roles
-- **Grid**: GridCode is unique, GridTypeCode is valid (MASTER_GRID or FLOW)
+- **Grid**: GridCode is unique, GridTypeCode is valid (MASTER_GRID, FLOW, or DASHBOARD)
 - **Fields**:
   - Own fields: FieldCode unique, FieldKey matches DTO property (camelCase)
   - FK fields: NOT created for individual masters (reuse existing), CREATED for MasterData FKs
@@ -118,6 +118,77 @@ For every `queryKey` used in GridFormSchema:
 
 ---
 
+### 8. DASHBOARD-Specific Validation (only when screen_type=DASHBOARD)
+
+Many of the CRUD-focused checks above (FK property verification, GridFormSchema, ApiSelectV2/V3 registry, BE 4-location wiring, FE 6-location wiring) DO NOT apply to DASHBOARDs. Apply the checks below INSTEAD.
+
+#### 8a. Path-A Function Contract (NON-NEGOTIABLE)
+
+For every Postgres function file delivered for path-A widgets (under `Base.Application/DatabaseScripts/Functions/{schema}/`):
+
+- [ ] Function name is snake_case, schema-qualified, matches the seed value of `Widget.StoredProcedureName` exactly
+- [ ] Signature is `(p_filter_json jsonb DEFAULT NULL, p_page integer DEFAULT 0, p_page_size integer DEFAULT 10, p_user_id integer DEFAULT NULL, [optional extra params with DEFAULTs], p_company_id integer DEFAULT NULL)` — 5 fixed params in this order, optional extras allowed BEFORE p_company_id
+- [ ] Returns `TABLE(data jsonb, metadata jsonb, total_count integer, filtered_count integer)` — exactly 4 columns, types as listed
+- [ ] `LANGUAGE plpgsql` — must be Postgres, not SQL Server. `CREATE PROCEDURE` / `IF OBJECT_ID(...)` / `[bracketed]` identifiers / `BEGIN...END;` blocks → INSTANT FAIL
+- [ ] Filter args extracted from `p_filter_json` via `NULLIF(p_filter_json->>'keyName','')::type` inside body — NEVER as native function parameters
+- [ ] `(p_company_id IS NULL OR x."CompanyId" = p_company_id)` tenant scope present in every count/data query
+- [ ] `DROP FUNCTION IF EXISTS {schema}.{name}(jsonb, int4, int4, int4, int4)` (or matching extended signature) before `CREATE OR REPLACE FUNCTION` — re-runnable
+- [ ] The keys read from `p_filter_json` (`p_filter_json->>'fromDate'`, `'branchId'`, etc.) match EXACTLY the keys present in the corresponding Widget seed's `DefaultParameters` JSON. Mismatch = silent filter ignore = wrong data.
+
+#### 8b. Widget Renderer Resolution (FE registry)
+
+For every widget instance in `DashboardLayout.ConfiguredWidget`:
+
+- [ ] The `widgetId` resolves to a `sett.Widgets` row in the seed
+- [ ] That Widget's `WidgetTypeId` resolves to a `sett.WidgetTypes` row whose `ComponentPath` is a key present in `WIDGET_REGISTRY` in `dashboard-widget-registry.tsx`. Missing key = "Widget component not found in registry" runtime error.
+- [ ] If Path-B/C: `Widget.DefaultQuery` value (string) is registered as a key in `QUERY_REGISTRY` in `dashboard-widget-query-registry.tsx`. Missing key = "Query not found" runtime toast.
+
+#### 8c. ConfiguredWidget ↔ LayoutConfig Consistency
+
+- [ ] Every `instanceId` value in the `ConfiguredWidget` JSON array appears as an `i` value in EVERY breakpoint array of `LayoutConfig` (xs/sm/md/lg/xl as applicable). Missing breakpoint entries cause widget overlap or missing-cell bugs at that responsive size.
+- [ ] No duplicate `instanceId` values within the same dashboard.
+- [ ] Each LayoutConfig entry has `i, x, y, w, h` (and optionally `minW, minH`). No widget overflows the column count for its breakpoint (lg=12, md=8, sm=6, xs=4).
+
+#### 8d. DB Seed — Dashboard variant
+
+- [ ] `sett.Dashboards` row inserted with correct `ModuleId`, `IsSystem=true`
+- [ ] If MENU_DASHBOARD: `IsMenuVisible=true`, `MenuId IS NOT NULL`, `MenuUrl` is kebab-case, `OrderBy` set
+- [ ] If STATIC_DASHBOARD: `IsMenuVisible=false`, `MenuId IS NULL`, `MenuUrl IS NULL`
+- [ ] `sett.DashboardLayouts` row exists with valid JSON in both `LayoutConfig` and `ConfiguredWidget` (parses cleanly — paste into a JSON validator if unsure)
+- [ ] One `sett.Widgets` row per widget instance — with the correct `WidgetTypeId`, and ONE of: `StoredProcedureName` (path A) OR `DefaultQuery` (path B/C)
+- [ ] `auth.WidgetRoles` rows: at least BUSINESSADMIN granted on every widget; per-role grants match the prompt's § ⑨ WidgetGrants block
+- [ ] If MENU_DASHBOARD: `auth.MenuCapabilities` (READ + ISMENURENDER) and `auth.RoleCapabilities` rows seeded for the dashboard's menu
+
+#### 8e. First MENU_DASHBOARD infra (skip for subsequent MENU_DASHBOARDs)
+
+If this is the FIRST MENU_DASHBOARD prompt:
+
+- [ ] Migration adds `MenuId int? FK auth.Menus`, `MenuUrl varchar(250)?`, `OrderBy int default 999`, `IsMenuVisible bool default false` to `sett.Dashboards`
+- [ ] Filtered unique index `(CompanyId, MenuUrl) WHERE MenuUrl IS NOT NULL AND IsDeleted = false` exists
+- [ ] `LinkDashboardToMenu` and `UnlinkDashboardFromMenu` mutations registered in `DashboardMutations.cs`
+- [ ] `getMenuVisibleDashboardsByModuleCode` query registered in `DashboardQueries.cs`
+- [ ] `dashboardByModuleCode` projection extended with new fields + computed `menuName` / `menuParentName` / `effectiveSlug`
+- [ ] FE dynamic route `[lang]/(core)/[module]/dashboards/[slug]/page.tsx` exists
+- [ ] `<DashboardComponent />` reads `slugOverride` prop and skips `IsDefault` auto-pick when slug is present (renders "not found" empty state if slug doesn't resolve — does NOT silently fall back to default)
+- [ ] `<DashboardHeader />` accepts a toolbar slot prop AND has Promote/Hide kebab actions (admin-only)
+- [ ] Sidebar menu-tree composer batches `menuVisibleDashboardsByModuleCode` calls (1 call per render, NOT N+1 per parent)
+- [ ] 6 hardcoded route pages deleted (Contact/Donation/Communication/Ambassador/Volunteer/Case dashboard route pages)
+- [ ] Backfill script `Dashboard-MenuBackfill-sqlscripts.sql` is idempotent and resolves every IsSystem dashboard's MenuId via `DashboardCode = MenuCode` join
+
+#### 8f. DASHBOARD checks that DO NOT apply
+
+When screen_type=DASHBOARD, DO NOT run these CRUD-only checks:
+
+- ❌ Section 1: FK Property Verification on entity GetAll/GetById (no entity)
+- ❌ Section 2: GraphQL Query-DTO Alignment for entity list/detail (no list/detail)
+- ❌ Section 3: GridFormSchema validation (dashboards have no form — `GridFormSchema: SKIP`)
+- ❌ Section 4 BE wiring: IApplicationDbContext / DbSet / DecoratorProperties / Mappings (no new entity)
+- ❌ Section 4 FE wiring: PageConfig barrel / Component barrel / Operations config (no CRUD route or data table)
+- ❌ Section 5: FlowDataTable / Query-param routing / GetById includes (read-only widget grid)
+- ❌ Section 6: ApiSelectV2/V3 registry (no form dropdowns)
+
+---
+
 ## Output Format
 
 ```markdown
@@ -143,7 +214,8 @@ For every `queryKey` used in GridFormSchema:
 ## Important Rules
 
 1. **Always read the actual DTO schema** — don't assume property names
-2. **Check BOTH V2 and V3 registries** — queryKey must exist in the widget's registry
+2. **Check BOTH V2 and V3 registries** — queryKey must exist in the widget's registry (CRUD only — skip for DASHBOARD)
 3. **Verify after every fix** — re-run affected checks after developer fixes issues
 4. **Build is the final gate** — no code ships without 0 errors
 5. **Report clearly** — include file path, line number, what's wrong, and what it should be
+6. **Branch by screen_type** — read frontmatter; for DASHBOARD apply Section 8 INSTEAD of Sections 1, 2, 3 (GridFormSchema), 4, 5, 6. Path-A function contract is non-negotiable.

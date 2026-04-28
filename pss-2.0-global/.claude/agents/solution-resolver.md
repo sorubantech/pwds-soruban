@@ -84,7 +84,21 @@ For each classified type, select the patterns:
 | Has booleans | Checkbox widget |
 | Parent-child | Multi-section form OR tab-based layout |
 | Many-to-many assignment | Dual-list or checkbox matrix (custom component) |
-| Dashboard/analytics | Widget-based layout (not standard DataTable) |
+| **DASHBOARD (STATIC variant)** | Reuse `<DashboardComponent />` — no new page; widget grid + dropdown switcher; `IsMenuVisible=false` |
+| **DASHBOARD (MENU variant)** | Reuse dynamic `[slug]/page.tsx` route + `<DashboardComponent slugOverride={...} />`; widget grid only; `IsMenuVisible=true` linked to a Menu row |
+| New widget type for DASHBOARD | Create simple component in `custom-components/dashboards/widgets/`, register in widget-registry — never invent unregistered widgetCodes in the seed |
+
+### Decision 3b: Dashboard Variant Routing (DASHBOARD only)
+
+When `screen_type=DASHBOARD`, read `dashboard_variant` from prompt frontmatter:
+
+| Variant | Backend shape | Frontend shape | Seed shape |
+|---------|---------------|----------------|------------|
+| STATIC_DASHBOARD | Composite query handler + DashboardDto. NO entity, NO mutations. | NO new page. Existing `/[lang]/{module}/dashboards/page.tsx` renders `<DashboardComponent moduleCode={MODULE} />`. | Dashboard row (`IsMenuVisible=false`, `MenuId=NULL`) + DashboardLayout JSON + Widget rows + WidgetRole grants. NO new menu. |
+| MENU_DASHBOARD | Same backend shape as STATIC. | Same frontend shape — sidebar leaf routes to dynamic `/[lang]/{module}/dashboards/[slug]/page.tsx`. | Dashboard row (`IsMenuVisible=true`, `MenuId=<linked menu>`, `MenuUrl=<slug>`) + DashboardLayout JSON + Widget rows + WidgetRole grants + new Menu row + MenuCapability + RoleCapability. |
+| First MENU_DASHBOARD ever | Above + 4 columns on Dashboard entity + LinkDashboardToMenu/UnlinkDashboardFromMenu mutations + GetMenuVisibleDashboardsByModuleCode query | Above + create dynamic `[slug]/page.tsx` route + delete per-name hardcoded pages + DashboardComponent slug-override prop + sidebar auto-injection | Above + backfill UPDATE for all `IsSystem=true` dashboards |
+
+Read `_DASHBOARD.md` template for the full one-time-infrastructure shape.
 
 ### Decision 4: New Module Check
 

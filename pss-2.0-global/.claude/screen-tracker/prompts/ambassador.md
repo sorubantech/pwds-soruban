@@ -2,7 +2,7 @@
 screen: Ambassador
 registry_id: 67
 module: Field Collection
-status: PROMPT_READY
+status: COMPLETED
 scope: FULL
 screen_type: FLOW
 complexity: High

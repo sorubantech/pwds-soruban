@@ -2,7 +2,7 @@
 screen: VolunteerHourLog
 registry_id: 55
 module: Volunteer (CRM)
-status: PROMPT_READY
+status: COMPLETED
 scope: FULL
 screen_type: FLOW
 complexity: High

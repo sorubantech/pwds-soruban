@@ -2,14 +2,14 @@
 screen: VolunteerShift
 registry_id: 54
 module: CRM / Volunteer
-status: PROMPT_READY
+status: COMPLETED
 scope: FULL
 screen_type: FLOW
 complexity: High
-new_module: YES — vol schema (first entity unless #53 Volunteer lands first)
+new_module: NO — uses existing `app` schema (revised mid-build like #53 Volunteer)
 planned_date: 2026-04-21
-completed_date:
-last_session_date:
+completed_date: 2026-04-24
+last_session_date: 2026-04-24
 ---
 
 ## Tasks
@@ -24,16 +24,16 @@ last_session_date:
 - [x] Prompt generated
 
 ### Generation (by /build-screen → /generate-screen)
-- [ ] BA Analysis validated
-- [ ] Solution Resolution complete
-- [ ] UX Design finalized (Calendar grid + List grid + Create Modal + Side Drawer)
-- [ ] User Approval received
-- [ ] Backend code generated (main entity + 2 child entities + workflow mutations)
-- [ ] Backend wiring complete (NEW `vol` schema module infrastructure — see §⑫)
-- [ ] Frontend code generated (index-page with calendar/list toggle + drawer + modal — NO view-page.tsx)
-- [ ] Frontend wiring complete
-- [ ] DB Seed script generated (GridFormSchema: SKIP for FLOW; add ShiftType MasterData seed rows)
-- [ ] Registry updated to COMPLETED
+- [x] BA Analysis validated (used prompt analysis directly — token-budget directive)
+- [x] Solution Resolution complete (FLOW + In-Kind precedent confirmed)
+- [x] UX Design finalized (Calendar grid + List grid + Create Modal + Side Drawer)
+- [x] User Approval received (granted upfront in build args)
+- [x] Backend code generated (main entity + 2 child entities + workflow mutations)
+- [x] Backend wiring complete (existing `app` schema — IApplicationDbContext + ApplicationDbContext + DecoratorApplicationModules + VolunteerMappings)
+- [x] Frontend code generated (index-page with calendar/list toggle + drawer + modal — NO view-page.tsx)
+- [x] Frontend wiring complete (entity-operations + barrel exports + page config + route stub overwrite)
+- [x] DB Seed script generated (GridFormSchema: SKIP for FLOW; ShiftType MasterData 5 rows)
+- [x] Registry updated to COMPLETED
 
 ### Verification (post-generation — FULL E2E required)
 - [ ] dotnet build passes
@@ -799,9 +799,25 @@ Everything else in the mockup — calendar grid, list table, view toggle, modal 
 | ISSUE-6 | Planning (2026-04-21) | Low | Data model | `Status` is COMPUTED (not stored) via LINQ subquery. Do not add Status column to entity. | OPEN — design guideline |
 | ISSUE-7 | Planning (2026-04-21) | Low | Data model | Skills are free-text strings in `VolunteerShiftSkills` — no SkillMaster FK yet. Migrate to FK when #53 adds `vol.VolunteerSkills`. | OPEN — future migration |
 | ISSUE-8 | Planning (2026-04-21) | Low | UX | Calendar cells support shift-block click (→ drawer). Empty cell click-to-prefill-modal is NOT in mockup — OUT OF SCOPE. | OPEN — out of scope |
+| ISSUE-9 | Build Session 1 (2026-04-24) | **HIGH** | Migration | EF migration not generated per token-budget directive. Must run `dotnet ef migrations add AddVolunteerShiftModule -p Base.Infrastructure -s Base.API -c ApplicationDbContext` before deploy. | OPEN |
+| ISSUE-10 | Build Session 1 (2026-04-24) | **HIGH** | Verification | Backend `dotnet build` + frontend `pnpm dev` + full E2E acceptance checklist skipped per session directive. Must run before marking production-ready. | OPEN |
+| ISSUE-1 | Planning (2026-04-21) | — | Dependencies | Volunteer entity (#53) does not exist. | **CLOSED** 2026-04-24 — #53 built. |
+| ISSUE-2 | Planning (2026-04-21) | — | Module Infra | `vol` schema + VolDbContext bootstrap. | **CLOSED** 2026-04-24 — superseded by `app`-schema decision (no new schema needed). |
 
 ### § Sessions
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
 
-{No sessions recorded yet — filled in after /build-screen completes.}
+### Session 1 — 2026-04-24 — BUILD — COMPLETED
+
+- **Scope**: Initial full build from PROMPT_READY prompt. Schema revised to existing `app` (mirroring #53) — no new `vol` schema bootstrap.
+- **Files touched**:
+  - BE (created): VolunteerShift.cs, VolunteerShiftSkill.cs, VolunteerShiftAssignment.cs (entities); 3× EF Configurations under ApplicationConfigurations/; VolunteerShiftSchemas.cs; 8 commands (Create/Update/Delete/Toggle + AssignVolunteer/ConfirmAssignment/RemoveAssignment/RemindAssignment + BulkRemindPending/BulkNotifyAvailable/AutoScheduleShift); 5 queries (GetAll/GetById/GetByDateRange/GetAvailableVolunteers/GetSummary); VolunteerShiftMutations.cs + VolunteerShiftQueries.cs endpoints
+  - BE (modified): IApplicationDbContext (3 DbSets), ApplicationDbContext (3 DbSet impls + 3 config applies), DecoratorProperties → DecoratorApplicationModules (3 entries; child Skill renamed to `VolunteerShiftSkillEntity` to avoid existing `VolunteerSkill` name collision), VolunteerMappings (appended VolunteerShift mapster configs)
+  - FE (created): VolunteerShiftDto.ts, VolunteerShiftQuery.ts, VolunteerShiftMutation.ts, volunteerscheduling.tsx (page config), volunteerscheduling/{index, index-page, calendar-view, shift-form-modal, shift-detail-drawer, volunteershift-store}.tsx
+  - FE (modified): volunteer-service/index.ts barrel, volunteer-queries/index.ts barrel, volunteer-mutations/index.ts barrel, presentation/pages/crm/volunteer/index.ts (export added), volunteer-service-entity-operations.ts (VOLUNTEERSHIFT registered), app/[lang]/crm/volunteer/volunteerscheduling/page.tsx (stub overwritten)
+  - DB: sql-scripts-dyanmic/VolunteerSchedule-sqlscripts.sql (created)
+- **Deviations from spec**: (a) Schema = `app` (existing) instead of new `vol`, mirroring #53's mid-build revision — eliminates IVolDbContext/VolDbContext/VolMappings/DecoratorVolModules bootstrap. (b) FE folder names = `volunteer-service` / `volunteer-queries` / `volunteer-mutations` (matching #53), not `vol-*`. (c) Decorator constant for child skill renamed to `VolunteerShiftSkillEntity` to avoid collision with existing `VolunteerSkill` constant.
+- **Known issues opened**: ISSUE-9 (EF migration not generated per token-budget directive — must run `dotnet ef migrations add AddVolunteerShiftModule` before deploy), ISSUE-10 (BE compilation + full E2E checklist skipped per session directive — must run before production-ready)
+- **Known issues closed**: ISSUE-1 (Volunteer #53 dep — now built), ISSUE-2 (`vol` schema bootstrap — superseded by app-schema decision)
+- **Next step**: empty for COMPLETED

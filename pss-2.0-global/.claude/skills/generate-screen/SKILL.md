@@ -141,31 +141,63 @@ GridFormSchema: {GENERATE or SKIP}
 
 **Step 4 — Backend Development**
 Spawn the Backend Developer agent (follow `.claude/agents/backend-developer.md`):
-- Generate all backend files in `Pss2.0_Backend/`
-- Perform all 4 wiring updates
-- Output the BE→FE contract (GraphQL endpoints, DTO fields, GridCode)
+- For MASTER_GRID/FLOW: generate the standard 11-file CRUD pipeline + 4 wiring updates
+- For DASHBOARD: SKIP entity/CRUD; generate only `{EntityName}DashboardDto.cs` + `Get{EntityName}DashboardData.cs` (composite query handler) + per-widget query handlers if defined + Mapster config + Queries endpoint registration. NO Mutations endpoint (read-only). See `backend-developer.md` § "DASHBOARD Screen Generation".
+- For REPORT: standard CRUD if the report backs an entity; aggregate query only if pure projection
+- Output the BE→FE contract (GraphQL endpoints, DTO fields, GridCode for non-DASHBOARD)
 
 **Step 5 — Frontend Development**
 Spawn the Frontend Developer agent (follow `.claude/agents/frontend-developer.md`):
 - Use the BE→FE contract from Step 4
-- Generate all frontend files in `Pss2.0_Frontend/`
-- Perform all 6 wiring updates
+- For MASTER_GRID/FLOW: generate the standard 7-file FE pipeline + 6 wiring updates
+- For DASHBOARD: SKIP page-config / view-page / index-page / Zustand store / entity-operations. Generate only `{EntityName}DashboardDto.ts` + `{EntityName}DashboardQuery.ts` + (optional) new widget components in `custom-components/dashboards/widgets/` + register their `widgetCode` in `widget-registry.ts`. STATIC_DASHBOARD reuses the existing module dashboard route; MENU_DASHBOARD reaches the dashboard via the dynamic `[slug]/page.tsx` (built once when the first MENU_DASHBOARD ships). See `frontend-developer.md` § "DASHBOARD Screen Generation".
+- For REPORT: standard FE if backed by entity; report-specific page if pure projection
 
 **Step 6 — DB Seed Script (MANDATORY for every new screen)**
 Generate the PostgreSQL seed script following `.claude/agents/backend-developer.md` DB Seed section.
 Read existing scripts in `Services/Base/sql-scripts-dyanmic/` for exact pattern reference.
 
-**Always generate (Steps 1-5):**
+**Branch by `screen_type` from prompt frontmatter — different seed shapes per type.**
+
+#### MASTER_GRID seed (default — entity CRUD)
+
 1. auth.Menus — navigation menu entry with ParentMenuCode and ModuleCode subqueries
 2. auth.RoleCapabilities — 7 capability rows (CapabilityId 1-7) for RoleId=1 (Admin)
 3. sett.Grids — grid registration with GridCode and ModuleId
 4. sett.Fields — one row per entity field (FieldCode=UPPERCASE, FieldKey=camelCase, DataType lookup)
 5. sett.GridFields — CTE pattern mapping fields to grid (PK hidden, first 3 predefined, ISACTIVE last)
+6. sett.Grids GridFormSchema — **GENERATE** (RJSF JSON Schema + uiSchema for modal form)
 
-**Conditionally generate (Step 6):**
-6. sett.Grids GridFormSchema — JSON Schema + uiSchema for RJSF form rendering
-   - **GENERATE** for master/CRUD tables (Type 1-2) — simple entities with grid modal add/edit
-   - **SKIP** for business screens (Type 3-10) — custom view/edit pages handle their own forms
+#### FLOW seed (entity CRUD with full-page view)
+
+1-5. Same as MASTER_GRID
+6. sett.Grids GridFormSchema — **SKIP** (full-page view-page handles forms; no modal RJSF needed)
+
+#### DASHBOARD seed (read-only widget grid — NO entity CRUD)
+
+> Read `dashboard_variant` from prompt frontmatter. STATIC_DASHBOARD vs MENU_DASHBOARD diverge in steps 1-2 and 5.
+
+1. **auth.Menus** — **MENU_DASHBOARD ONLY**. Insert one menu row under `{MODULECODE}_DASHBOARDS` parent with `MenuCode={ENTITYUPPER}`, `MenuUrl={module}/dashboards/{kebab-slug}`, `OrderBy={N}`. STATIC_DASHBOARD does NOT seed a new menu — the module's existing `*_DASHBOARDS` parent already covers it.
+2. **auth.MenuCapabilities + auth.RoleCapabilities** — **MENU_DASHBOARD ONLY**. Standard READ + EXPORT + ISMENURENDER caps; BUSINESSADMIN role grant. STATIC_DASHBOARD inherits from the parent menu — no new caps.
+3. **sett.Widgets** — one row per widget type used by this dashboard (e.g., `KPI_TOTAL_DONATIONS`, `CHART_REVENUE_BY_MONTH`). Idempotent INSERT … WHERE NOT EXISTS by `WidgetCode`. Reuse if a widget type is already seeded for another dashboard.
+4. **auth.WidgetRoles** — per role allowed to render each widget. At minimum `BUSINESSADMIN: HasAccess=true` for every widget seeded in step 3.
+5. **sett.Dashboards** — the Dashboard row:
+   - `DashboardCode={ENTITYUPPER}`, `DashboardName={Display}`, `DashboardIcon={ph:icon}`, `DashboardColor={hex|null}`
+   - `ModuleId=(subquery on ModuleCode)`, `IsSystem=true`, `IsActive=true`
+   - **STATIC_DASHBOARD**: `MenuId=NULL`, `MenuUrl=NULL`, `IsMenuVisible=false`, `OrderBy=999`
+   - **MENU_DASHBOARD**: `MenuId=(subquery on MenuCode from step 1)`, `MenuUrl='{module}/dashboards/{kebab-slug}'`, `IsMenuVisible=true`, `OrderBy={N}`
+6. **sett.DashboardLayouts** — one row, `DashboardId=(subquery on DashboardCode)`:
+   - `LayoutConfig` = JSON for react-grid-layout breakpoints `{ "lg": [...], "md": [...], "sm": [...], "xs": [...] }`. Each entry: `{ i, x, y, w, h, minW, minH }`.
+   - `ConfiguredWidget` = JSON array `[{ instanceId, widgetCode, title, configOverrides, dataSourceArgs }]`. Every `instanceId` must appear in LayoutConfig at every breakpoint used.
+7. **GridFormSchema** — SKIP. Dashboards have no RJSF form.
+8. **sett.Grids / sett.Fields / sett.GridFields** — SKIP. Dashboards have no entity grid.
+
+**MENU_DASHBOARD first-time setup** — when this is the FIRST MENU_DASHBOARD prompt in the codebase, additionally include the schema/route infrastructure listed in `_DASHBOARD.md` template preamble (4 columns on `sett.Dashboards`, dynamic `[slug]/page.tsx` route, sidebar auto-injection, backfill seed for system dashboards). Subsequent MENU_DASHBOARD prompts skip this.
+
+#### REPORT seed
+
+1-5. Same as MASTER_GRID (filter panel uses Grid + Fields + GridFields for column config)
+6. GridFormSchema — typically SKIP unless the report has a saved-filter modal
 
 Save to: `Pss2.0_Backend/PeopleServe/Services/Base/sql-scripts-dyanmic/{EntityName}-sqlscripts.sql`
 

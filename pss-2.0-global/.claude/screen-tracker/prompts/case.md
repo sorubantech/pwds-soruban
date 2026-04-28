@@ -2,14 +2,14 @@
 screen: Case
 registry_id: 50
 module: Case Management
-status: PENDING
+status: COMPLETED
 scope: FULL
 screen_type: FLOW
 complexity: High
 new_module: YES — `case` schema (first time creation; shares schema with Program #51 and Beneficiary #49)
 planned_date: 2026-04-21
-completed_date:
-last_session_date:
+completed_date: 2026-04-24
+last_session_date: 2026-04-24
 ---
 
 ## Tasks
