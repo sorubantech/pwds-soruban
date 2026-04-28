@@ -565,3 +565,107 @@ When modifying a screen, verify:
 - Does the display label change affect other screens' dropdowns?
 - Does removing a field affect grid display in other screens?
 - Does the change require updating GridFields/GridFormSchema in seed?
+
+---
+
+## DASHBOARD Screen Design
+
+> **Trigger**: prompt frontmatter has `screen_type: DASHBOARD`. SKIP the standard Grid/Form sections (§2 + §3 above) — dashboards have neither.
+
+For DASHBOARD screens, your design output replaces §2 (Grid Design) and §3 (Form Design) with the four sections below.
+
+### D1. Variant Stamp (REQUIRED first decision)
+
+Read `dashboard_variant` from prompt frontmatter:
+- **STATIC_DASHBOARD** → existing `<DashboardComponent />` with dropdown switcher; no new chrome
+- **MENU_DASHBOARD** → dynamic route, no dropdown, lean header
+
+Confirm the variant matches what the mockup shows. If the mockup has a "Switch dashboard" dropdown and lives at `/{module}/dashboards`, it's STATIC. If it's a standalone page reached from a sidebar leaf, it's MENU. Mismatch = redo Solution Resolver.
+
+### D2. react-grid-layout Configuration
+
+Translate the mockup grid to react-grid-layout. Decide the column counts per breakpoint and place every widget:
+
+| Breakpoint | min width | columns |
+|------------|-----------|---------|
+| xs | 0 | 4 |
+| sm | 640 | 6 |
+| md | 768 | 8 |
+| lg | 1024 | 12 |
+| xl | 1280 | 12 |
+
+For each widget, decide:
+
+| Decision | Output |
+|----------|--------|
+| `instanceId` | Stable kebab-case ID (e.g., `kpi-total-donations`, `chart-revenue-monthly`) |
+| `widgetCode` | Maps to a `sett.Widgets` row + a registered renderer in `widget-registry.ts` |
+| `x, y, w, h` per breakpoint | Where it sits and how big at each breakpoint |
+| `minW, minH` | Smallest size that still renders correctly |
+| Title override | Per-instance title if reusing a generic widget renderer |
+
+Output goes into prompt § ⑥ "Grid Layout (react-grid-layout config)" as a placement table per breakpoint (lg required; others optional).
+
+### D3. Widget Catalog
+
+For every widget in the mockup, fill the catalog row:
+
+| Field | Decision |
+|-------|----------|
+| Title | What appears on the widget header |
+| Widget Type | KPI / LineChart / BarChart / PieChart / AreaChart / Table / Tile / Custom |
+| widgetCode | UPPERCASE_SNAKE_CASE — matches `sett.Widgets.WidgetCode` and the widget-registry key |
+| Data Source | Reference to a field in the composite DashboardDto, or a per-widget query name |
+| Filters Honored | Which filter controls (date range, campaign, branch, etc.) cause this widget to refetch |
+| Drill-down | Destination route + prefill query args, or "—" if not interactive |
+| Empty / loading / error | Per-widget messaging + skeleton shape |
+
+For **KPI cards**, additionally specify: format (currency/%/count), subtitle, sparkline (yes/no + source), color cue.
+For **charts**, additionally specify: x/y axis sources, legend visibility, tooltip format, color palette (use design tokens, not hex).
+For **tables (mini)**: column list + click-row drill-down.
+
+### D4. Filter Controls
+
+Decide for each filter:
+
+| Filter | Type | Default | Applies To | Notes |
+|--------|------|---------|-----------|-------|
+| Date Range | date-range picker | per ④ rules | All widgets | Presets list (Today / 7d / 30d / 90d / YTD / Custom) + max custom span |
+| Campaign | multi-select (ApiSelectV2) | All | List which widgets honor | Typeahead, paginated |
+| Branch | single-select | User's branch (or All for admin) | All widgets | Role-scoped default |
+| ... | ... | ... | ... | ... |
+
+### D5. Drill-Down Map
+
+For each clickable widget element, decide:
+
+| From | Click On | Destination | Prefill Args |
+|------|----------|-------------|--------------|
+| KPI card | card click | `/{module}/{group}/{entity}` | `dateFrom`, `dateTo` |
+| Chart bar | bar click | same | `dateFrom=monthStart`, `dateTo=monthEnd` |
+| Top-N row | row click | `/{module}/{group}/{entity}?mode=read&id={id}` | — |
+
+Use the destination screen's accepted query-param names exactly. Don't invent new ones — that breaks the destination's URL handling.
+
+### D6. Variant-Specific Chrome Notes
+
+| Variant | Chrome elements |
+|---------|------------------|
+| STATIC_DASHBOARD | Dashboard name + icon + color | Refresh button | Dashboard switcher dropdown (lists `IsMenuVisible=false` rows) | Settings menu (Edit Layout, Edit Title, Reset Layout — admin/owner only) |
+| MENU_DASHBOARD | Dashboard name + icon | Refresh button (optional) | Date-range + filter chips toolbar | NO dropdown, NO edit-layout chrome |
+
+### D7. Empty / Loading / Error UX
+
+- **Initial load**: each widget's own Skeleton sized to widget shape (not a single page-level spinner).
+- **Empty state**: muted icon + concise "No data in selected range" message inside the widget.
+- **Error state**: red mini banner inside the widget + "Retry" button.
+- **Filter mismatch**: e.g., date range too narrow → empty state with hint "Try a wider range".
+- **Permission gate**: widget hidden OR shown as muted "Restricted" placeholder per ④ rule.
+
+### What NOT to design for DASHBOARD
+
+- ❌ DataTable feature flags (no DataTable)
+- ❌ Form sections (no form)
+- ❌ Field widget mapping (no fields)
+- ❌ Layout Variant stamp (variant is `dashboard_variant`, not `Layout Variant`)
+- ❌ Card variant (cards are widget primitives, not row representations)

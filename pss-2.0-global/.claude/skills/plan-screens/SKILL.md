@@ -95,6 +95,24 @@ Read mockup file(s) from `html_mockup_screens/` (path from REGISTRY.md).
 - **Grid aggregation columns** (per-row computed values like totals, counts, last-activity)
 - **Service action buttons** (Send SMS, Send WhatsApp, Generate PDF, etc.) — capture the UI element but flag as SERVICE_PLACEHOLDER
 
+**CRITICAL for DASHBOARD screens — Extract the FULL widget grid:**
+
+DASHBOARD screens have NO grid + form. Extract instead:
+- **Variant decision** (REQUIRED — stamp `dashboard_variant: STATIC_DASHBOARD | MENU_DASHBOARD` in frontmatter):
+  - STATIC_DASHBOARD → module's main `*/dashboards` page WITH dropdown switcher; user-customizable
+  - MENU_DASHBOARD → own sidebar leaf; no dropdown; pure widget grid via react-grid-layout
+- **Widget catalog** — one row per widget (KPI / Chart / Table / Tile) with: title, widget type, widgetCode, data source aggregate, filters honored, drill-down target
+- **react-grid-layout config** — i (instanceId), x, y, w, h, minW, minH per widget at each breakpoint (xs/sm/md/lg/xl). At minimum the `lg` breakpoint must be filled.
+- **KPI card details per card** — value source (composite-DTO field), format (currency/%/count), subtitle, sparkline?, color cue
+- **Chart details per chart** — type (bar/line/pie/area), x-axis source, y-axis source, source DTO field, filters honored, empty/tooltip text
+- **Filter controls** — date-range picker default + presets, filter chips, multi-select (ApiSelectV2) controls. For each: applies-to-all-widgets OR which specific widgets honor it.
+- **Drill-down map** — for each clickable widget element: from → click target → destination route → prefill args
+- **Source entities** — list every existing entity the widgets aggregate over (with file path) — feeds Section ③ "Source & Aggregate Resolution"
+- **Composite vs per-widget query strategy** — composite (one fat handler) is default; flag widgets that need their own handler (paginated tables, on-demand panels)
+- **NO entity definition** — Dashboard row + DashboardLayout JSON shape replace it (load `_DASHBOARD.md` Section ② for the seed shape)
+
+If this extraction is vague, the BE Developer agent WILL guess the DTO and the FE Developer WILL invent widgetCodes that don't resolve. This is the #1 cause of dashboard build failures.
+
 **CRITICAL for FLOW screens — Extract the FULL form design:**
 FLOW screens open a form page when "+Add" is clicked (URL → `?mode=new`).
 This form is NOT a simple modal — it's a full page (`view-page.tsx`) that must match the mockup exactly.

@@ -20,7 +20,10 @@ Your job is to receive raw screen specifications from the user and produce a **s
 
 ## Your Inputs
 
-You receive raw input in this format:
+You receive raw input in one of two shapes — branch on the prompt's frontmatter `screen_type` field:
+
+### Shape 1 — CRUD prompt (screen_type: MASTER_GRID, FLOW, REPORT)
+
 ```
 Screen: {Name}
 Business: {description paragraph}
@@ -30,6 +33,25 @@ Relationships: bullet points
 Workflow: optional state flow
 Menu: Parent + Module
 ```
+
+### Shape 2 — DASHBOARD prompt (screen_type: DASHBOARD)
+
+DASHBOARD prompts do NOT have a CREATE TABLE — dashboards aggregate over existing source entities and seed `Dashboard` + `DashboardLayout` + `Widget` rows. Inputs look like:
+
+```
+Screen: {Name} (e.g., CaseDashboard, FundraisingDashboard)
+DashboardVariant: STATIC_DASHBOARD | MENU_DASHBOARD
+Business: {description paragraph — decisions supported, audience, why it earned its menu slot}
+Source Entities: {list — e.g., Beneficiary, Case, Program, ProgramOutcomeMetric, Staff, Grant — these ALREADY exist; do NOT extract their fields}
+Widget Catalog: {table of widget instances — title, ComponentPath, path A/B/C, data source (function name or handler), filters honored, drill-down}
+React-Grid-Layout: {breakpoint × widget placement table}
+Filter Controls: {date range / dropdowns / chips}
+Drill-Down Map: {from-where → to-where + prefill args}
+Business Rules: {date defaults, role-scoped data access, KPI formulas, multi-currency rules, widget-level access rules}
+Menu: Parent (e.g., CRM_DASHBOARDS) + Module (e.g., CRM)
+```
+
+**Key rule for DASHBOARD inputs**: there is NO Primary Entity to extract fields from. Skip Step 2 (Extract Table Definition) entirely. Replace it with **Step 2-DASHBOARD** below.
 
 ---
 
@@ -107,6 +129,59 @@ List all user actions this screen must support:
 
 ---
 
+## DASHBOARD Analysis Process (use INSTEAD of Steps 2–6 above when screen_type=DASHBOARD)
+
+DASHBOARDs are read-only widget grids over EXISTING source entities. There is no new table to extract. Your job is to validate the prompt's inputs are coherent and produce a **DASHBOARD-shaped BRD** that downstream agents can consume.
+
+### Step 2-DASHBOARD: Confirm Variant + Source Entities Exist
+
+- Read `dashboard_variant` from frontmatter (`STATIC_DASHBOARD` or `MENU_DASHBOARD`). If absent or invalid → flag `NEEDS CLARIFICATION: dashboard_variant missing`.
+- For each Source Entity listed, verify it exists in the codebase at `Base.Domain/Models/{Group}Models/`. If missing → flag `BLOCKER: source entity {Name} not found`.
+- For MENU_DASHBOARD: verify the parent menu code exists (e.g., `CRM_DASHBOARDS`). For the FIRST MENU_DASHBOARD ever, verify the prompt's scope includes the one-time infra (`_DASHBOARD.md` § A–G) — schema columns, dynamic [slug] route, sidebar injection, backfill. If the prompt is the first MENU_DASHBOARD AND infra is NOT in scope → flag `BLOCKER: first MENU_DASHBOARD must include one-time infra`.
+
+### Step 3-DASHBOARD: Audit the Widget Catalog
+
+For each widget instance in the prompt's catalog:
+
+- **InstanceId** is unique within the dashboard (no duplicates).
+- **WidgetType.ComponentPath** maps to an existing key in `dashboard-widget-registry.tsx` (`MultiChartWidget`, `StatusWidgetType1`, `PieChartWidgetType1`, `BarChartWidgetType1`, `TableWidgetType1`, `HtmlWidgetType1`, `RadialBarChartWidgetType1`, `ColumnChartWidgetType1`, `GeographicHeatmapWidgetType1`, `ProfileWidgetType1`, `MeetingScheduleWidgetType1`, `NormalTableWidget`, `FilterTableWidget`, `NegativeLineChartWidget`). If a new ComponentPath is required (path C) → flag `RISK: new widget renderer required — escalate to user`.
+- **Path declared** for each widget — A (Postgres function), B (named GQL query), or C (composite DTO). Mixed paths within a dashboard are fine.
+- **Path A** widgets reference a Postgres function name (snake_case, schema-qualified, e.g., `case.case_dashboard_open_cases_kpi`). Filter args MUST be enumerated as keys in `Widget.DefaultParameters` JSON, NOT as native function parameters. The function MUST conform to the FIXED 5-arg / 4-column contract (`p_filter_json jsonb, p_page int, p_page_size int, p_user_id int, p_company_id int → TABLE(data jsonb, metadata jsonb, total_count int, filtered_count int)`).
+- **Path B/C** widgets reference a named GQL query that will be registered in `dashboard-widget-query-registry.tsx`. Backend must produce a typed handler + DTO + GQL field.
+- **Filters Honored** column is consistent — every filter listed in the prompt's "Filter Controls" section must appear in the appropriate widgets' Filters Honored column (or be explicitly marked as "applies to all").
+- **Drill-Down** target route exists and the prefill args use the destination's accepted query-param names (don't invent new ones).
+
+### Step 4-DASHBOARD: Aggregation Rules
+
+For each KPI / chart / table, ensure the prompt states:
+- **Calculation rule** (e.g., "Outcome Rate = SUM(Achieved) / SUM(Target)")
+- **Date-range scoping** (which `xxxxDate` column is used as the time axis)
+- **Role-scoped filtering** rules (Branch Manager → branchId pinned, etc.)
+- **Multi-currency normalization** (if amounts are aggregated across currencies)
+
+Flag any unstated rule as `NEEDS CLARIFICATION: aggregation rule for {widget} not specified`.
+
+### Step 5-DASHBOARD: Use Cases (read-only)
+
+Dashboards are READ-ONLY. The only "use cases" are:
+- View dashboard with default filters
+- Change date range / program / branch / segment filters → widgets refetch
+- Drill down from any widget → land on filtered list/detail destination
+- (STATIC_DASHBOARD only) switch dashboard via dropdown
+- (Admin only) Promote-to-menu / Hide-from-menu via chrome kebab
+
+Do NOT list Create/Update/Delete use cases for the dashboard itself.
+
+### Step 6-DASHBOARD: Edge Cases & Risks
+
+- What if a Path-A function is missing or returns a malformed jsonb shape? (renderer shows "Failed to load — Retry")
+- What if a widget's role grants are missing? (renderer shows "Restricted" placeholder)
+- Multi-currency aggregation silently summing mixed currencies?
+- Date-range exceeds the bound (e.g., > 2 years on heavy aggregations)?
+- (MENU_DASHBOARD) slug collision with reserved static paths?
+
+---
+
 ## Your Output Format
 
 Produce a **structured BRD** in exactly this format:
@@ -171,6 +246,69 @@ Produce a **structured BRD** in exactly this format:
 - **GridCode**: {GRIDCODE — derive from entity name, UPPERCASE}
 ```
 
+### Alternative BRD format — DASHBOARD prompts (screen_type: DASHBOARD)
+
+Use this template INSTEAD of the CRUD template above when the prompt frontmatter declares `screen_type: DASHBOARD`. The shape is intentionally different — no Entity Analysis, no CRUD use cases.
+
+```markdown
+# Business Requirements Document: {DashboardName}
+
+## 1. Domain Context
+- **Area**: {NGO domain area}
+- **Primary Users**: {who reads this dashboard — executives / case workers / fundraising directors / etc.}
+- **Variant**: STATIC_DASHBOARD | MENU_DASHBOARD
+- **First MENU_DASHBOARD?**: yes/no — if yes, confirm one-time infra in scope
+- **Purpose**: {one-line decision-support purpose}
+
+## 2. Source Entity Inventory (read-only)
+| Source Entity | Schema | Existing? | Aggregate(s) Used |
+|---------------|--------|-----------|-------------------|
+| Beneficiary | case | ✓ verified | COUNT, GROUP BY age/gender/city |
+| Case | case | ✓ verified | COUNT, GROUP BY status, AVG resolution days |
+| Program | case | ✓ verified | COUNT WHERE Status='Active', JOIN enrollment+budget |
+| ... | ... | ... | ... |
+
+## 3. Widget Inventory (verified against catalog)
+| InstanceId | Title | ComponentPath (registry-resolved?) | Path | Data Source | Filters Honored | Drill-To |
+|-----------|-------|-----------------------------------|------|-------------|-----------------|----------|
+| kpi-... | ... | StatusWidgetType1 (✓) | A | case.case_dashboard_total_beneficiaries_kpi | dateRange, programIds, branchId | /crm/casemanagement/beneficiarylist |
+| ... | ... | ... | ... | ... | ... | ... |
+
+## 4. Aggregation Rules (one row per non-trivial KPI / chart / table)
+- AR-1: {KPI/chart name} = {formula}
+- AR-2: ...
+
+## 5. Filter Controls
+- {Filter}: {type} — default: {value}; applies to: {widget IDs or "all"}; role-scope rule: {if any}
+
+## 6. Drill-Down Map
+- From {Widget} click → /{module}/{route} with prefill {key=value, ...}
+
+## 7. Role-Scoped Data Access Rules
+- {Role}: {scoping rule — e.g., "Branch Manager filters every aggregate by user.branchId"}
+- {Role}: ...
+
+## 8. Path-A Function Contract Audit
+For each Path-A widget — confirm function name is snake_case + schema-qualified, filter args go through p_filter_json (NOT native params), and Widget.DefaultParameters JSON keys match what the function reads from p_filter_json:
+- {function_name}: filter keys = {fromDate, toDate, programId, branchId, ...} ✓
+- {function_name}: ...
+
+## 9. Edge Cases & Constraints
+- EC-1: {edge case description}
+- EC-2: {edge case description}
+
+## 10. Menu Configuration
+- **Variant**: STATIC_DASHBOARD | MENU_DASHBOARD
+- **DashboardCode**: {ENTITYUPPER}
+- **Parent Menu**: {MODULECODE}_DASHBOARDS (MENU_DASHBOARD) or — (STATIC_DASHBOARD)
+- **Module**: {MODULECODE}
+- **MenuUrl** (MENU_DASHBOARD only): {kebab-case slug}
+- **OrderBy** (MENU_DASHBOARD only): {N}
+
+## 11. Blockers / Clarifications
+- {BLOCKER or NEEDS CLARIFICATION items, if any. If none, write "None — proceed to Solution Resolver."}
+```
+
 ---
 
 ## Important Rules
@@ -183,6 +321,7 @@ Produce a **structured BRD** in exactly this format:
 6. **GridCode convention** — UPPERCASE entity name (e.g., DonationPurpose → DONATIONPURPOSE)
 7. **PluralName convention** — add 's' or 'es' as appropriate
 8. **CamelCase convention** — first letter lowercase (e.g., donationPurpose)
+9. **DASHBOARD branch** — when screen_type=DASHBOARD, use the DASHBOARD analysis process AND the DASHBOARD BRD output template. Do NOT extract entity fields, do NOT list CRUD use cases. Verify source entities exist; do NOT redefine them. Path-A function contract is non-negotiable — flag any mismatch as BLOCKER.
 
 ---
 

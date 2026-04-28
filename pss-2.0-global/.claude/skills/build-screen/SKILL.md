@@ -177,8 +177,9 @@ Every `/build-screen` session — whether it ends in `COMPLETED` or `PARTIAL` �
 
 ### Step 5b: Full-Flow Testing (MANDATORY)
 
-Every screen MUST be tested end-to-end, not just backend compilation:
+Every screen MUST be tested end-to-end, not just backend compilation. **Branch by `screen_type` from prompt frontmatter** — DASHBOARD has a different test list (no CRUD).
 
+**MASTER_GRID / FLOW / REPORT (entity-backed):**
 1. **Backend build**: `dotnet build` — verify no compilation errors
 2. **Frontend build**: `pnpm dev` — verify page loads at the correct route
 3. **Full CRUD flow**: Create → Read → Update → Toggle → Delete
@@ -187,6 +188,26 @@ Every screen MUST be tested end-to-end, not just backend compilation:
 6. **Summary widgets** (if applicable): Widget cards display with correct values
 7. **Service placeholder buttons** (if applicable): Buttons render, clicking shows placeholder toast
 8. **DB Seed**: Menu appears in sidebar, grid columns configured correctly
+
+**DASHBOARD (read-only widget grid):**
+1. **Backend build**: `dotnet build` — verify no compilation errors
+2. **Frontend build**: `pnpm dev` — verify page loads at correct route:
+   - STATIC_DASHBOARD → `/[lang]/{module}/dashboards`
+   - MENU_DASHBOARD → `/[lang]/{module}/dashboards/{slug}`
+3. **Widget fetch**: every widget loads its data (no broken queries; check Network tab for green responses)
+4. **Skeleton states**: each widget renders a Skeleton sized to match real content during fetch
+5. **Charts**: render with axes/legend/tooltip; sample-data values look correct vs. seeded rows
+6. **Filter changes**: date range + each filter chip → only the widgets honoring that filter refetch (verify per Section ⑥ filter-honoring map)
+7. **Drill-down clicks**: every drill-down per Section ⑥ navigates to correct destination with correct prefill args
+8. **Empty / error states**: render with consistent framing per widget
+9. **react-grid-layout reflow**: resize browser → widget grid reflows correctly at xs / sm / md / lg / xl
+10. **Role gating**:
+    - WidgetRole(BUSINESSADMIN, HasAccess=true) seed → all widgets render
+    - For unauthorized roles, widgets either hide or show "Restricted" placeholder (per ④ rule)
+11. **Variant-specific**:
+    - **STATIC_DASHBOARD**: dropdown lists ONLY `IsMenuVisible=false` dashboards; this dashboard appears in dropdown
+    - **MENU_DASHBOARD**: sidebar leaf appears under `{MODULECODE}_DASHBOARDS` parent at correct OrderBy; dashboard does NOT appear in dropdown; bookmark `/[lang]/{module}/dashboards/{slug}` survives reload; role-gating via `RoleCapability.MenuId` works
+12. **DB Seed**: Dashboard row + DashboardLayout JSON parses cleanly; Widget rows + WidgetRole grants seeded; (MENU_DASHBOARD: Menu + MenuCapability + RoleCapability seeded)
 
 **IMPORTANT**: Avoid `BE_ONLY` scope unless there is a clear, documented justification (e.g., extremely complex screen that genuinely needs to be split across sessions). Every screen should go through complete development and full-flow testing in a single build session when possible.
 
@@ -353,6 +374,58 @@ The FE Developer agent follows a strict **search → reuse → create-if-simple 
 3. **Never accept** a screen where the DB seed references a renderer name that doesn't exist in the FE registry — that's a guaranteed runtime crash ("Element type is invalid").
 
 **Precedent**: ContactType #19 shipped with 7 invented `GridComponentName` values (`badge-code`, `text-bold`, `text-truncate`, `link-count`, `badge-system`, `badge-circle`, `status-badge`) that had no frontend counterpart → runtime crash on page load. This check blocks that class of bug.
+
+---
+
+### Dashboard Variant Enforcement (DASHBOARD only)
+
+For DASHBOARD screens, read `dashboard_variant` from prompt frontmatter and validate the seeded `Dashboard` row matches:
+
+| Variant | Required column values | Required additional rows |
+|---------|------------------------|--------------------------|
+| STATIC_DASHBOARD | `IsMenuVisible=false`, `MenuId=NULL`, `MenuUrl=NULL` | None — module's `*_DASHBOARDS` parent menu already exists |
+| MENU_DASHBOARD | `IsMenuVisible=true`, `MenuId=(matching Menu row)`, `MenuUrl='{module}/dashboards/{slug}'`, `OrderBy={N}` | New `auth.Menus` row + `MenuCapability(READ, EXPORT, ISMENURENDER)` + `RoleCapability(BUSINESSADMIN, READ, EXPORT)` |
+
+**Pre-build brief to BE Developer**: include the variant stamp explicitly. "Dashboard Variant: `{STATIC_DASHBOARD | MENU_DASHBOARD}`. Honor the seed shape per `generate-screen.md` § DASHBOARD seed."
+
+**Post-build validation** (before marking COMPLETED):
+1. Parse the DB seed SQL — confirm the Dashboard row's column values match the table above for the chosen variant.
+2. **MENU_DASHBOARD**: confirm Menu row + MenuCapabilities + RoleCapabilities seeded; confirm Menu.ModuleId matches Dashboard.ModuleId.
+3. **STATIC_DASHBOARD**: confirm NO new Menu row was seeded (only the Dashboard + DashboardLayout + Widgets rows).
+
+Fail mode (mismatch) — block COMPLETED until corrected.
+
+---
+
+### Widget Renderer Reuse-or-Create Protocol (DASHBOARD only — replaces GridComponentName check)
+
+DASHBOARD seed references widgets by `widgetCode` inside the `ConfiguredWidget` JSON of `sett.DashboardLayouts`. Each `widgetCode` must resolve to a registered renderer. The check parallels the GridComponentName protocol but targets widget registries instead.
+
+**At build time, the orchestrator MUST:**
+
+1. **Pre-build**: scan the prompt's Section ⑥ Widget Catalog and the seed's `ConfiguredWidget` JSON for distinct `widgetCode` values. Pass to FE Developer: "Search `custom-components/dashboards/widget-registry.ts` (and adjacent registries) first — reuse if found; create as a simple component if missing; flag to user if the widget needs custom chart logic / novel UX."
+
+2. **Post-build validation**: for every `widgetCode` value in the seeded `ConfiguredWidget` JSON, grep `custom-components/dashboards/widget-registry.ts` (or the project's actual widget registry path) — every value must resolve to a registered renderer. If any value is missing:
+   - Add the renderer (simple widget), OR
+   - Correct the seed JSON to reference an existing widgetCode.
+   Never accept a DASHBOARD seed that references an unregistered widgetCode — guaranteed runtime "Element type is invalid" crash on dashboard load.
+
+3. **Skip**: GridComponentName check (no Grid is seeded for DASHBOARD).
+
+---
+
+### react-grid-layout Config Validation (DASHBOARD only)
+
+For DASHBOARD seeds, parse `LayoutConfig` JSON and `ConfiguredWidget` JSON from the seed file. Validate:
+
+1. **JSON parses cleanly** in both columns (no trailing commas, no comments).
+2. **At least the `lg` breakpoint** is defined in `LayoutConfig`. Recommend all 5 (xs/sm/md/lg/xl) for full responsive fidelity.
+3. **Every `instanceId` in `ConfiguredWidget`** appears in `LayoutConfig.lg` (and other defined breakpoints).
+4. **No widget overflows the grid** at any breakpoint — for each breakpoint, every widget's `x + w` must be ≤ the column count for that breakpoint (xs=4, sm=6, md=8, lg=12, xl=12).
+5. **`minW` / `minH`** ≤ widget's actual `w` / `h` at every breakpoint (so the user can't shrink it below render-safe size).
+6. **Every widgetCode in `ConfiguredWidget`** has a corresponding `sett.Widgets` row seeded (or pre-existing) — cross-check against the WHERE NOT EXISTS guards in the seed file.
+
+Fail mode (any of the above) — block COMPLETED until corrected.
 
 ### Session Optimization
 1. **Load minimal context** — only read: REGISTRY.md + prompt file

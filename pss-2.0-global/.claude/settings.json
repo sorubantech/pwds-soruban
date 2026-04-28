@@ -206,7 +206,14 @@
       "Bash(SUFFIX=-v2 python scripts/generate-status-csv.py)",
       "Bash(SUFFIX=-v3 python scripts/generate-status-csv.py)",
       "Bash(SUFFIX=-v4 python scripts/generate-status-csv.py)",
-      "Bash(SUFFIX=-v5 python scripts/generate-status-csv.py)"
+      "Bash(SUFFIX=-v5 python scripts/generate-status-csv.py)",
+      "PowerShell($path = \"d:\\\\Repos\\\\PWDS\\\\pwds-soruban\\\\pss-2.0-global\\\\.claude\\\\screen-tracker\\\\SCREEN-STATUS-OVERVIEW.xlsx\"; try { $fs = [System.IO.File]::Open\\($path, 'Open', 'ReadWrite', 'None'\\); $fs.Close\\(\\); Write-Output \"UNLOCKED\" } catch { Write-Output \"LOCKED\" })",
+      "Bash(SUFFIX=-v6 python scripts/generate-status-csv.py)",
+      "Bash(SUFFIX=-v7 python scripts/generate-status-csv.py)",
+      "Bash(python -X utf8 -c ' *)",
+      "Bash(SUFFIX=-v8 python scripts/generate-status-csv.py)",
+      "Bash(SUFFIX=-v9 python scripts/generate-status-csv.py)",
+      "Bash(SUFFIX=-v10 python scripts/generate-status-csv.py)"
     ],
     "ask": [
       "Bash(rm -rf *)",
@@ -228,7 +235,8 @@
       "d:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global\\.claude\\skills",
       "d:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global\\PSS_2.0_Frontend\\src\\app\\[lang]\\organization\\organizationsetup\\branch",
       "d:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global\\PSS_2.0_Frontend\\src\\app\\[lang]\\dev",
-      "d:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global\\PSS_2.0_Frontend\\src\\app\\[lang]\\setting\\communicationconfig"
+      "d:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global\\PSS_2.0_Frontend\\src\\app\\[lang]\\setting\\communicationconfig",
+      "d:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global\\.claude\\screen-tracker\\prompts"
     ]
   }
 }

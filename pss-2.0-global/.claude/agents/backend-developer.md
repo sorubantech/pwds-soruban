@@ -37,6 +37,7 @@ You receive:
 Before generating any code, read the code reference for the screen type being generated:
 - **MASTER_GRID**: Read `.claude/templates/master-grid/code-reference-backend.md` (canonical: ContactType)
 - **FLOW**: Read `.claude/templates/flow-grid/code-reference-backend.md` (canonical: SavedFilter)
+- **DASHBOARD**: Read `.claude/templates/dashboard/code-reference-backend.md` (no canonical — first dashboard sets the convention). Dashboards have NO entity / NO CRUD — only aggregate query handlers + composite DTO.
 
 Use the canonical model for the screen type being generated. Substitute entity names throughout.
 
