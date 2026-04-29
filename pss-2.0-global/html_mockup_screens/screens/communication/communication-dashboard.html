@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Communication Dashboard - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --cm-accent: #7c3aed;
+      --cm-accent-light: #8b5cf6;
+      --cm-accent-bg: #f5f3ff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --email-color: #4f46e5;
+      --sms-color: #f97316;
+      --whatsapp-color: #22c55e;
+      --notification-color: #d97706;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f1f5f9; padding: 1.5rem; font-size: 14px; color: var(--text-primary); }
+
+    .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+    .page-header .subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 0; }
+    .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    .header-actions select { padding: 0.5rem 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 0.8125rem; color: var(--text-primary); background: white; outline: none; cursor: pointer; font-weight: 600; }
+    .header-actions select:focus { border-color: var(--cm-accent); }
+
+    .btn-primary-accent { background: var(--cm-accent); border-color: var(--cm-accent); color: white; font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid var(--cm-accent); cursor: pointer; transition: all 0.15s; }
+    .btn-primary-accent:hover { background: #6d28d9; border-color: #6d28d9; }
+    .btn-outline-accent { background: white; border: 1px solid var(--cm-accent); color: var(--cm-accent); font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.15s; }
+    .btn-outline-accent:hover { background: var(--cm-accent); color: white; }
+
+    .dash-card { background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); }
+    .dash-card-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
+    .dash-card-header h3 { font-size: 0.9375rem; font-weight: 700; margin: 0; color: var(--text-primary); }
+    .dash-card-body { padding: 1.25rem; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.25rem; }
+    .stat-card { background: white; border-radius: var(--card-radius); padding: 1.25rem; box-shadow: var(--card-shadow); border: 1px solid var(--border-color); display: flex; align-items: flex-start; gap: 1rem; transition: transform 0.15s, box-shadow 0.15s; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }
+    .stat-icon { width: 48px; height: 48px; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; }
+    .stat-icon.violet { background: var(--cm-accent-bg); color: var(--cm-accent); }
+    .stat-icon.indigo { background: #eef2ff; color: var(--email-color); }
+    .stat-icon.orange { background: #fff7ed; color: var(--sms-color); }
+    .stat-icon.green { background: #f0fdf4; color: var(--whatsapp-color); }
+    .stat-icon.amber { background: #fffbeb; color: var(--notification-color); }
+    .stat-icon.rose { background: #fff1f2; color: #e11d48; }
+
+    .stat-info { flex: 1; }
+    .stat-value { font-size: 1.625rem; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+    .stat-label { font-size: 0.8125rem; color: var(--text-secondary); font-weight: 500; margin-bottom: 0.125rem; }
+    .stat-subtitle { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; }
+    .stat-subtitle .positive { color: var(--success-color); font-weight: 600; }
+    .stat-subtitle .warning { color: var(--warning-color); font-weight: 600; }
+    .stat-subtitle .danger { color: var(--danger-color); font-weight: 600; }
+    .stat-subtitle .neutral { color: var(--text-secondary); }
+
+    .section-gap { margin-bottom: 1.25rem; }
+
+    /* Channel Performance Table */
+    .perf-table { width: 100%; font-size: 0.8125rem; }
+    .perf-table th { background: #f8fafc; font-weight: 600; color: var(--text-secondary); font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.625rem 0.75rem; border-bottom: 1px solid var(--border-color); white-space: nowrap; }
+    .perf-table td { padding: 0.625rem 0.75rem; border-bottom: 1px solid #f1f5f9; color: var(--text-primary); vertical-align: middle; }
+    .perf-table tr:last-child td { border-bottom: none; }
+    .perf-table tbody tr { cursor: pointer; transition: background 0.15s; }
+    .perf-table tbody tr:hover { background: var(--cm-accent-bg); }
+
+    .channel-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.2rem 0.55rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; white-space: nowrap; }
+    .channel-pill.email { background: #eef2ff; color: var(--email-color); }
+    .channel-pill.sms { background: #fff7ed; color: var(--sms-color); }
+    .channel-pill.whatsapp { background: #f0fdf4; color: var(--whatsapp-color); }
+    .channel-pill.notification { background: #fffbeb; color: var(--notification-color); }
+
+    /* Rate progress bar */
+    .rate-bar { display: inline-flex; align-items: center; gap: 0.5rem; min-width: 100px; }
+    .rate-bar-track { flex: 1; height: 6px; background: #f1f5f9; border-radius: 9999px; overflow: hidden; min-width: 50px; }
+    .rate-bar-fill { height: 100%; border-radius: 9999px; transition: width 0.5s ease; }
+    .rate-bar-fill.green { background: var(--success-color); }
+    .rate-bar-fill.amber { background: var(--warning-color); }
+    .rate-bar-fill.red { background: var(--danger-color); }
+    .rate-pct { font-size: 0.75rem; font-weight: 700; min-width: 38px; text-align: right; }
+
+    /* Chart Placeholders */
+    .chart-placeholder { background: #f8fafc; border: 2px dashed var(--border-color); border-radius: 0.75rem; padding: 2rem 1.5rem; text-align: center; color: var(--text-secondary); font-size: 0.8125rem; }
+    .chart-placeholder i { font-size: 2rem; margin-bottom: 0.75rem; display: block; color: var(--cm-accent); opacity: 0.5; }
+
+    /* Donut Chart Placeholder */
+    .donut-placeholder { width: 160px; height: 160px; border-radius: 50%; margin: 0 auto 1rem; position: relative; }
+    .donut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1rem; font-weight: 700; color: var(--text-primary); text-align: center; }
+    .donut-center small { display: block; font-size: 0.6875rem; color: var(--text-secondary); font-weight: 500; }
+
+    .legend-list { list-style: none; padding: 0; margin: 0; }
+    .legend-list li { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: var(--text-primary); padding: 0.25rem 0; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    /* Funnel — engagement (Sent → Delivered → Opened → Clicked → Replied) */
+    .funnel-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem; }
+    .funnel-step { background: #f8fafc; border-radius: 0.625rem; padding: 0.875rem; text-align: center; border: 1px solid var(--border-color); }
+    .funnel-step .step-label { font-size: 0.6875rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.25rem; }
+    .funnel-step .step-value { font-size: 1.375rem; font-weight: 700; color: var(--text-primary); }
+    .funnel-step .step-pct { font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.125rem; }
+    .funnel-step.sent { border-top: 3px solid var(--cm-accent); }
+    .funnel-step.delivered { border-top: 3px solid #3b82f6; }
+    .funnel-step.opened { border-top: 3px solid #06b6d4; }
+    .funnel-step.clicked { border-top: 3px solid var(--success-color); }
+    .funnel-step.replied { border-top: 3px solid var(--warning-color); }
+
+    /* Mini-stat grid */
+    .mini-stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; }
+    .mini-stat { background: #f8fafc; border-radius: 0.625rem; padding: 0.875rem; text-align: center; border: 1px solid var(--border-color); }
+    .mini-stat .ms-label { font-size: 0.6875rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.25rem; }
+    .mini-stat .ms-value { font-size: 1.25rem; font-weight: 700; }
+    .mini-stat .ms-amount { font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.125rem; }
+    .mini-stat.violet .ms-value { color: var(--cm-accent); }
+    .mini-stat.success .ms-value { color: var(--success-color); }
+    .mini-stat.warn .ms-value { color: var(--warning-color); }
+    .mini-stat.danger .ms-value { color: var(--danger-color); }
+
+    /* Provider health row */
+    .provider-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #f8fafc; border-radius: 0.625rem; border: 1px solid var(--border-color); margin-bottom: 0.5rem; }
+    .provider-row:last-child { margin-bottom: 0; }
+    .provider-icon { width: 36px; height: 36px; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; background: white; border: 1px solid var(--border-color); }
+    .provider-info { flex: 1; min-width: 0; }
+    .provider-name { font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); }
+    .provider-meta { font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.125rem; }
+    .provider-status { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.6875rem; font-weight: 700; padding: 0.2rem 0.55rem; border-radius: 9999px; white-space: nowrap; }
+    .provider-status.up { background: #f0fdf4; color: var(--success-color); }
+    .provider-status.degraded { background: #fefce8; color: var(--warning-color); }
+    .provider-status.down { background: #fef2f2; color: var(--danger-color); }
+    .provider-status .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+    /* Activity feed */
+    .activity-feed { max-height: 280px; overflow-y: auto; }
+    .activity-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 0; border-bottom: 1px solid #f1f5f9; }
+    .activity-row:last-child { border-bottom: none; }
+    .activity-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.875rem; }
+    .activity-icon.email { background: #eef2ff; color: var(--email-color); }
+    .activity-icon.sms { background: #fff7ed; color: var(--sms-color); }
+    .activity-icon.whatsapp { background: #f0fdf4; color: var(--whatsapp-color); }
+    .activity-icon.notification { background: #fffbeb; color: var(--notification-color); }
+    .activity-content { flex: 1; min-width: 0; }
+    .activity-line1 { font-size: 0.8125rem; font-weight: 500; color: var(--text-primary); }
+    .activity-line2 { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.125rem; }
+    .activity-status { font-size: 0.6875rem; font-weight: 700; padding: 0.2rem 0.55rem; border-radius: 9999px; white-space: nowrap; }
+    .activity-status.scheduled { background: #eef2ff; color: var(--cm-accent); }
+    .activity-status.sending { background: #fffbeb; color: var(--warning-color); }
+    .activity-status.sent { background: #f0fdf4; color: var(--success-color); }
+    .activity-status.failed { background: #fef2f2; color: var(--danger-color); }
+
+    /* Alerts */
+    .alert-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.625rem; margin-bottom: 0.5rem; font-size: 0.8125rem; transition: background 0.15s; }
+    .alert-item:last-child { margin-bottom: 0; }
+    .alert-item.warning { background: #fefce8; border: 1px solid #fef08a; }
+    .alert-item.danger  { background: #fef2f2; border: 1px solid #fecaca; }
+    .alert-item.info    { background: #eff6ff; border: 1px solid #bfdbfe; }
+    .alert-item.success { background: #f0fdf4; border: 1px solid #bbf7d0; }
+    .alert-item .alert-icon { font-size: 1rem; flex-shrink: 0; }
+    .alert-item.warning .alert-icon { color: var(--warning-color); }
+    .alert-item.danger  .alert-icon { color: var(--danger-color); }
+    .alert-item.info    .alert-icon { color: #3b82f6; }
+    .alert-item.success .alert-icon { color: var(--success-color); }
+    .alert-item .alert-text { flex: 1; color: var(--text-primary); }
+    .alert-item .alert-text strong { font-weight: 700; }
+    .alert-link { font-size: 0.75rem; color: var(--cm-accent); font-weight: 600; text-decoration: none; white-space: nowrap; cursor: pointer; }
+    .alert-link:hover { text-decoration: underline; }
+
+    /* Cost-by-channel bar */
+    .h-bar-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.625rem; }
+    .h-bar-row:last-child { margin-bottom: 0; }
+    .h-bar-label { font-size: 0.8125rem; font-weight: 500; width: 130px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .h-bar-track { flex: 1; height: 24px; background: #f1f5f9; border-radius: 6px; overflow: hidden; position: relative; }
+    .h-bar-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; padding-left: 0.5rem; font-size: 0.6875rem; font-weight: 600; color: white; transition: width 0.5s ease; }
+
+    /* Active Campaigns table (collapsible) */
+    .campaign-table { width: 100%; font-size: 0.8125rem; }
+    .campaign-table th { background: #f8fafc; font-weight: 600; color: var(--text-secondary); font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.625rem 0.75rem; border-bottom: 1px solid var(--border-color); }
+    .campaign-table td { padding: 0.625rem 0.75rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .campaign-table tr:last-child td { border-bottom: none; }
+    .campaign-table tbody tr { cursor: pointer; transition: background 0.15s; }
+    .campaign-table tbody tr:hover { background: var(--cm-accent-bg); }
+
+    .collapse-toggle { cursor: pointer; user-select: none; }
+    .collapse-toggle i.chevron { transition: transform 0.2s; font-size: 0.75rem; margin-left: 0.5rem; }
+    .collapse-toggle.collapsed i.chevron { transform: rotate(-90deg); }
+
+    @media (max-width: 992px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } .funnel-grid { grid-template-columns: repeat(3, 1fr); } .mini-stat-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 576px) { body { padding: 1rem; } .stats-grid { grid-template-columns: 1fr; } .funnel-grid { grid-template-columns: 1fr; } .mini-stat-grid { grid-template-columns: 1fr; } .page-header { flex-direction: column; } }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-tower-broadcast me-2" style="color: var(--cm-accent);"></i>Communication Dashboard</h1>
+      <p class="subtitle">Cross-channel outreach: Email, SMS, WhatsApp, Notifications &mdash; one view</p>
+    </div>
+    <div class="header-actions">
+      <select>
+        <option selected>This Month</option>
+        <option>Last Month</option>
+        <option>This Quarter</option>
+        <option>This Year</option>
+        <option>Custom Range</option>
+      </select>
+      <select>
+        <option selected>All Channels</option>
+        <option>Email Only</option>
+        <option>SMS Only</option>
+        <option>WhatsApp Only</option>
+        <option>Notification Only</option>
+      </select>
+      <select>
+        <option selected>All Branches</option>
+        <option>Dubai, UAE</option>
+        <option>Mumbai, India</option>
+        <option>Nairobi, Kenya</option>
+      </select>
+      <button class="btn-primary-accent" onclick="alert('Generating channel report...')">
+        <i class="fas fa-file-export me-1"></i> Export Report
+      </button>
+      <button class="btn-outline-accent" onclick="window.print()">
+        <i class="fas fa-print me-1"></i> Print
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Hero Cards -->
+  <div class="stats-grid section-gap">
+    <div class="stat-card">
+      <div class="stat-icon violet"><i class="fas fa-paper-plane"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Total Messages Sent</div>
+        <div class="stat-value">186,420</div>
+        <div class="stat-subtitle"><span class="positive">↑ 12% vs last month</span> &middot; all channels</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green"><i class="fas fa-circle-check"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Avg Delivery Rate</div>
+        <div class="stat-value">96.4%</div>
+        <div class="stat-subtitle"><span class="positive">↑ 0.8% MoM</span> &middot; 179,750 delivered</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon indigo"><i class="fas fa-envelope-open"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Avg Open Rate (Email)</div>
+        <div class="stat-value">42.8%</div>
+        <div class="stat-subtitle"><span class="positive">↑ 3.2% MoM</span> &middot; industry avg 28%</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon orange"><i class="fas fa-bullhorn"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Active Campaigns</div>
+        <div class="stat-value">14</div>
+        <div class="stat-subtitle">8 sending &middot; 6 scheduled</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon amber"><i class="fas fa-coins"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Cost (this month)</div>
+        <div class="stat-value">$1,847</div>
+        <div class="stat-subtitle"><span class="warning">↑ 18% vs last month</span> &middot; SMS dominant</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon rose"><i class="fas fa-user-slash"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Opt-Out Rate</div>
+        <div class="stat-value">0.42%</div>
+        <div class="stat-subtitle"><span class="positive">↓ 0.08% MoM</span> &middot; 78 unsubscribes</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Performing Templates -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-trophy me-2" style="color: var(--cm-accent);"></i>Top Performing Templates</h3>
+      <span style="font-size: 0.75rem; color: var(--text-secondary);">Click row to view template detail</span>
+    </div>
+    <div class="dash-card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="perf-table">
+          <thead>
+            <tr>
+              <th>Template</th>
+              <th style="text-align: center;">Channel</th>
+              <th style="text-align: center;">Sent</th>
+              <th style="width: 140px;">Delivery</th>
+              <th style="width: 140px;">Open</th>
+              <th style="width: 140px;">Click / Reply</th>
+              <th style="text-align: center;">Last Used</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr onclick="parent.loadContent('crm/communication/emailtemplate')">
+              <td><strong>Donor Thank You — Major Gift</strong></td>
+              <td style="text-align: center;"><span class="channel-pill email"><i class="fas fa-envelope"></i> Email</span></td>
+              <td style="text-align: center;">1,245</td>
+              <td><div class="rate-bar"><div class="rate-bar-track"><div class="rate-bar-fill green" style="width: 99%;"></div></div><span class="rate-pct" style="color: var(--success-color);">99%</span></div></td>
+              <td><div class="rate-bar"><div class="rate-bar-track"><div class="rate-bar-fill green" style="width: 78%;"></div></div><span class="rate-pct" style="color: var(--success-color);">78%</span></div></td>
+              <td><div class="rate-bar"><div class="rate-bar-track"><div class="rate-bar-fill green" style="width: 32%;"></div></div><span class="rate-pct" style="color: var(--success-color);">32%</span></div></td>
+              <td style="text-align: center;">today</td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/communication/smstemplate')">
+              <td><strong>Pledge Reminder — 7d</strong></td>
+              <td style="text-align: center;"><span class="channel-pill sms"><i class="fas fa-mobile-screen"></i> SMS</span></td>
+              <td style="text-align: center;">487</td>
+              <td><div class="rate-bar"><div class="rate-bar-track"><div class="rate-bar-fill green" style="width: 98%;"></div></div><span class="rate-pct" style="color: var(--success-color);">98%</span></div></td>
+              <td style="text-align: center; color: var(--text-secondary); font-size: 0.75rem;">—</td>
+              <td><div class="rate-bar"><div class="rate-bar-track"><div class="rate-bar-fill amber" style="width: 28%;"></div></div><span class="rate-pct" style="color: var(--warning-color);">28%</span></div></td>
+              <td style="text-align: center;">2 hours ago</td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/communication/whatsapptemplate')">
+              <td><strong>Receipt Delivery</strong></td>
+              <td style="text-align: center;"><span class="channel-pill whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</span></td>
+              <td style="text-align: center;">3,124</td>
+              <td><div class="rate-bar"><div class="rate-bar-track"><div class="rate-bar-fill green" style="width: 97%;"></div></div><span class="rate-pct" style="color: var(--success-color);">97%</span></div></td>
+              <td><div class="rate-bar"><div class="rate-bar-track"><div class="rate-bar-fill green" style="width: 88%;"></div></div><span class="rate-pct" style="color: var(--success-color);">88%</span></div></td>
+              <td><div class="rate-bar"><div class="rate-bar-track"><div class="rate-bar-fill green" style="width: 42%;"></div></div><span class="rate-pct" style="color: var(--success-color);">42%</span></div></td>
+              <td style="text-align: center;">just now</td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/communication/emailtemplate')">
+              <td><strong>Ramadan Campaign — Day 1</strong></td>
+              <td style="text-align: center;"><span class="channel-pill email"><i class="fas fa-envelope"></i> Email</span></td>
+              <td style="text-align: center;">8,420</td>
+              <td><div class="rate-bar"><div class="rate-bar-track"><div class="rate-bar-fill green" style="width: 96%;"></div></div><span class="rate-pct" style="color: var(--success-color);">96%</span></div></td>
+              <td><div class="rate-bar"><div class="rate-bar-track"><div class="rate-bar-fill amber" style="width: 51%;"></div></div><span class="rate-pct" style="color: var(--warning-color);">51%</span></div></td>
+              <td><div class="rate-bar"><div class="rate-bar-track"><div class="rate-bar-fill green" style="width: 18%;"></div></div><span class="rate-pct" style="color: var(--success-color);">18%</span></div></td>
+              <td style="text-align: center;">5 days ago</td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/communication/notificationtemplate')">
+              <td><strong>Monthly Recurring Charged</strong></td>
+              <td style="text-align: center;"><span class="channel-pill notification"><i class="fas fa-bell"></i> In-App</span></td>
+              <td style="text-align: center;">2,156</td>
+              <td><div class="rate-bar"><div class="rate-bar-track"><div class="rate-bar-fill green" style="width: 100%;"></div></div><span class="rate-pct" style="color: var(--success-color);">100%</span></div></td>
+              <td><div class="rate-bar"><div class="rate-bar-track"><div class="rate-bar-fill green" style="width: 64%;"></div></div><span class="rate-pct" style="color: var(--success-color);">64%</span></div></td>
+              <td><div class="rate-bar"><div class="rate-bar-track"><div class="rate-bar-fill amber" style="width: 22%;"></div></div><span class="rate-pct" style="color: var(--warning-color);">22%</span></div></td>
+              <td style="text-align: center;">1 hour ago</td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/communication/smstemplate')">
+              <td><strong>Event Reminder — 24h</strong></td>
+              <td style="text-align: center;"><span class="channel-pill sms"><i class="fas fa-mobile-screen"></i> SMS</span></td>
+              <td style="text-align: center;">689</td>
+              <td><div class="rate-bar"><div class="rate-bar-track"><div class="rate-bar-fill green" style="width: 95%;"></div></div><span class="rate-pct" style="color: var(--success-color);">95%</span></div></td>
+              <td style="text-align: center; color: var(--text-secondary); font-size: 0.75rem;">—</td>
+              <td><div class="rate-bar"><div class="rate-bar-track"><div class="rate-bar-fill amber" style="width: 35%;"></div></div><span class="rate-pct" style="color: var(--warning-color);">35%</span></div></td>
+              <td style="text-align: center;">1 week ago</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row 1: Volume Trend (full width) -->
+  <div class="row g-3 section-gap">
+    <div class="col-12">
+      <div class="dash-card">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-chart-area me-2" style="color: var(--cm-accent);"></i>Send Volume Trend</h3>
+          <span style="font-size: 0.75rem; color: var(--text-secondary);">Last 12 months &middot; stacked by channel</span>
+        </div>
+        <div class="dash-card-body">
+          <div class="chart-placeholder">
+            <i class="fas fa-chart-area"></i>
+            <div><strong>Stacked Area Chart</strong> &mdash; Messages sent per month over 12 months</div>
+            <div style="margin-top: 0.5rem;">Stacked by channel: Email (indigo), SMS (orange), WhatsApp (green), In-App Notification (amber)</div>
+            <div style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--cm-accent);">
+              <i class="fas fa-map-pin me-1"></i> Annotations: "Ramadan campaign launch" (Mar) &bull; "Year-end giving push" (Dec)
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Channel Mix donut + Cost-by-channel -->
+  <div class="row g-3 section-gap">
+    <div class="col-lg-5">
+      <div class="dash-card" style="height: 100%;">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-chart-pie me-2" style="color: var(--cm-accent);"></i>Messages by Channel</h3>
+        </div>
+        <div class="dash-card-body">
+          <div class="donut-placeholder" style="background: conic-gradient(#4f46e5 0deg 230deg, #f97316 230deg 295deg, #22c55e 295deg 340deg, #d97706 340deg 360deg);">
+            <div class="donut-center" style="width: 90px; height: 90px; border-radius: 50%; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+              186K
+              <small>messages</small>
+            </div>
+          </div>
+          <ul class="legend-list">
+            <li><span class="legend-dot" style="background: var(--email-color);"></span> Email: 119K (64%)</li>
+            <li><span class="legend-dot" style="background: var(--sms-color);"></span> SMS: 33K (18%)</li>
+            <li><span class="legend-dot" style="background: var(--whatsapp-color);"></span> WhatsApp: 23K (12%)</li>
+            <li><span class="legend-dot" style="background: var(--notification-color);"></span> In-App: 11K (6%)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <div class="dash-card" style="height: 100%;">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-coins me-2" style="color: var(--cm-accent);"></i>Cost by Channel (this month)</h3>
+          <span style="font-size: 0.75rem; color: var(--text-secondary);">Total: $1,847</span>
+        </div>
+        <div class="dash-card-body">
+          <div class="h-bar-row">
+            <span class="h-bar-label"><i class="fas fa-mobile-screen me-1" style="color: var(--sms-color);"></i> SMS</span>
+            <div class="h-bar-track"><div class="h-bar-fill" style="width: 100%; background: var(--sms-color);">$1,124</div></div>
+          </div>
+          <div class="h-bar-row">
+            <span class="h-bar-label"><i class="fab fa-whatsapp me-1" style="color: var(--whatsapp-color);"></i> WhatsApp</span>
+            <div class="h-bar-track"><div class="h-bar-fill" style="width: 38%; background: var(--whatsapp-color);">$425</div></div>
+          </div>
+          <div class="h-bar-row">
+            <span class="h-bar-label"><i class="fas fa-envelope me-1" style="color: var(--email-color);"></i> Email</span>
+            <div class="h-bar-track"><div class="h-bar-fill" style="width: 24%; background: var(--email-color);">$268</div></div>
+          </div>
+          <div class="h-bar-row">
+            <span class="h-bar-label"><i class="fas fa-bell me-1" style="color: var(--notification-color);"></i> In-App</span>
+            <div class="h-bar-track"><div class="h-bar-fill" style="width: 3%; background: var(--notification-color);">$30</div></div>
+          </div>
+          <div style="margin-top: 0.875rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color); font-size: 0.75rem; color: var(--text-secondary);">
+            <strong style="color: var(--text-primary);">Cost / 1K msgs:</strong> Email $2.25 &middot; SMS $34.10 &middot; WhatsApp $18.50 &middot; In-App $2.70
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Engagement Funnel (Email + WhatsApp) -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-filter me-2" style="color: var(--cm-accent);"></i>Engagement Funnel (Email — this month)</h3>
+      <span style="font-size: 0.75rem; color: var(--text-secondary);">Replied applies to reply-tracking templates only</span>
+    </div>
+    <div class="dash-card-body">
+      <div class="funnel-grid">
+        <div class="funnel-step sent">
+          <div class="step-label">Sent</div>
+          <div class="step-value">119,420</div>
+          <div class="step-pct">100%</div>
+        </div>
+        <div class="funnel-step delivered">
+          <div class="step-label">Delivered</div>
+          <div class="step-value">115,250</div>
+          <div class="step-pct">96.5%</div>
+        </div>
+        <div class="funnel-step opened">
+          <div class="step-label">Opened</div>
+          <div class="step-value">49,327</div>
+          <div class="step-pct">42.8%</div>
+        </div>
+        <div class="funnel-step clicked">
+          <div class="step-label">Clicked</div>
+          <div class="step-value">8,924</div>
+          <div class="step-pct">18.1% of opens</div>
+        </div>
+        <div class="funnel-step replied">
+          <div class="step-label">Replied</div>
+          <div class="step-value">412</div>
+          <div class="step-pct">0.4%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Provider Health + Recent Sends Row -->
+  <div class="row g-3 section-gap">
+    <div class="col-lg-6">
+      <div class="dash-card" style="height: 100%;">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-heart-pulse me-2" style="color: var(--cm-accent);"></i>Provider Health</h3>
+          <a class="alert-link" onclick="parent.loadContent('setting/communicationconfig/emailproviderconfig')">Configure <i class="fas fa-arrow-right ms-1"></i></a>
+        </div>
+        <div class="dash-card-body">
+          <div class="provider-row">
+            <div class="provider-icon" style="color: #1d4ed8;"><i class="fas fa-envelope"></i></div>
+            <div class="provider-info">
+              <div class="provider-name">SendGrid (Email)</div>
+              <div class="provider-meta">119,420 sent · 0.8% bounce · last sync: 2 min ago</div>
+            </div>
+            <span class="provider-status up"><span class="status-dot"></span>UP</span>
+          </div>
+          <div class="provider-row">
+            <div class="provider-icon" style="color: var(--sms-color);"><i class="fas fa-mobile-screen"></i></div>
+            <div class="provider-info">
+              <div class="provider-name">Twilio (SMS)</div>
+              <div class="provider-meta">33,124 sent · 1.2% failed · last sync: 5 min ago</div>
+            </div>
+            <span class="provider-status up"><span class="status-dot"></span>UP</span>
+          </div>
+          <div class="provider-row">
+            <div class="provider-icon" style="color: var(--whatsapp-color);"><i class="fab fa-whatsapp"></i></div>
+            <div class="provider-info">
+              <div class="provider-name">Meta WhatsApp Business</div>
+              <div class="provider-meta">22,890 sent · template approval rate 92% · degraded since 1 PM</div>
+            </div>
+            <span class="provider-status degraded"><span class="status-dot"></span>DEGRADED</span>
+          </div>
+          <div class="provider-row">
+            <div class="provider-icon" style="color: var(--notification-color);"><i class="fas fa-bell"></i></div>
+            <div class="provider-info">
+              <div class="provider-name">In-App Notifications (internal)</div>
+              <div class="provider-meta">10,986 sent · realtime · queue depth 0</div>
+            </div>
+            <span class="provider-status up"><span class="status-dot"></span>UP</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="dash-card" style="height: 100%;">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-clock-rotate-left me-2" style="color: var(--cm-accent);"></i>Recent Sends &amp; Queue</h3>
+          <a class="alert-link" onclick="parent.loadContent('crm/communication/emailcampaign')">View All <i class="fas fa-arrow-right ms-1"></i></a>
+        </div>
+        <div class="dash-card-body">
+          <div class="activity-feed">
+            <div class="activity-row">
+              <div class="activity-icon email"><i class="fas fa-envelope"></i></div>
+              <div class="activity-content">
+                <div class="activity-line1">Year-End Giving — Day 3</div>
+                <div class="activity-line2">Email · 8,420 recipients · started 2h ago</div>
+              </div>
+              <span class="activity-status sending">SENDING</span>
+            </div>
+            <div class="activity-row">
+              <div class="activity-icon whatsapp"><i class="fab fa-whatsapp"></i></div>
+              <div class="activity-content">
+                <div class="activity-line1">Receipt Delivery — Auto</div>
+                <div class="activity-line2">WhatsApp · 124 in last hour · 97% delivered</div>
+              </div>
+              <span class="activity-status sent">SENT</span>
+            </div>
+            <div class="activity-row">
+              <div class="activity-icon sms"><i class="fas fa-mobile-screen"></i></div>
+              <div class="activity-content">
+                <div class="activity-line1">Pledge Reminder — Weekly Batch</div>
+                <div class="activity-line2">SMS · 487 recipients · scheduled tomorrow 9 AM</div>
+              </div>
+              <span class="activity-status scheduled">SCHEDULED</span>
+            </div>
+            <div class="activity-row">
+              <div class="activity-icon notification"><i class="fas fa-bell"></i></div>
+              <div class="activity-content">
+                <div class="activity-line1">Monthly Recurring Charged</div>
+                <div class="activity-line2">In-App · 412 sent · auto-trigger</div>
+              </div>
+              <span class="activity-status sent">SENT</span>
+            </div>
+            <div class="activity-row">
+              <div class="activity-icon email"><i class="fas fa-envelope"></i></div>
+              <div class="activity-content">
+                <div class="activity-line1">Donor Thank You — Major Gift</div>
+                <div class="activity-line2">Email · 12 sent · auto-trigger on donation</div>
+              </div>
+              <span class="activity-status sent">SENT</span>
+            </div>
+            <div class="activity-row">
+              <div class="activity-icon sms"><i class="fas fa-mobile-screen"></i></div>
+              <div class="activity-content">
+                <div class="activity-line1">Bulk SMS — Lapsed Donors</div>
+                <div class="activity-line2">SMS · 1,124 recipients · failed: provider quota</div>
+              </div>
+              <span class="activity-status failed">FAILED</span>
+            </div>
+            <div class="activity-row">
+              <div class="activity-icon whatsapp"><i class="fab fa-whatsapp"></i></div>
+              <div class="activity-content">
+                <div class="activity-line1">Eid Greetings 2025</div>
+                <div class="activity-line2">WhatsApp · 3,800 recipients · scheduled Apr 30</div>
+              </div>
+              <span class="activity-status scheduled">SCHEDULED</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Center + Bounce/Spam Watch Row -->
+  <div class="row g-3 section-gap">
+    <div class="col-lg-6">
+      <div class="dash-card" style="height: 100%;">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-inbox me-2" style="color: var(--cm-accent);"></i>Notification Center Health</h3>
+          <a class="alert-link" onclick="parent.loadContent('crm/notification/notificationcenter')">Open Inbox <i class="fas fa-arrow-right ms-1"></i></a>
+        </div>
+        <div class="dash-card-body">
+          <div class="mini-stat-grid">
+            <div class="mini-stat violet">
+              <div class="ms-label">Sent (30d)</div>
+              <div class="ms-value">10,986</div>
+              <div class="ms-amount">internal feed</div>
+            </div>
+            <div class="mini-stat success">
+              <div class="ms-label">Read Rate</div>
+              <div class="ms-value">64%</div>
+              <div class="ms-amount">7,031 read</div>
+            </div>
+            <div class="mini-stat warn">
+              <div class="ms-label">Unread</div>
+              <div class="ms-value">3,955</div>
+              <div class="ms-amount">36% of total</div>
+            </div>
+            <div class="mini-stat danger">
+              <div class="ms-label">Urgent</div>
+              <div class="ms-value">42</div>
+              <div class="ms-amount">unread &gt; 24h</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="dash-card" style="height: 100%;">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-shield-halved me-2" style="color: var(--cm-accent);"></i>Bounce &amp; Spam Watch</h3>
+          <a class="alert-link" onclick="parent.loadContent('setting/communicationconfig/emailproviderconfig')">Configure <i class="fas fa-arrow-right ms-1"></i></a>
+        </div>
+        <div class="dash-card-body">
+          <div class="mini-stat-grid">
+            <div class="mini-stat warn">
+              <div class="ms-label">Email Bounces</div>
+              <div class="ms-value">956</div>
+              <div class="ms-amount">0.8% rate (low)</div>
+            </div>
+            <div class="mini-stat danger">
+              <div class="ms-label">SMS Failures</div>
+              <div class="ms-value">412</div>
+              <div class="ms-amount">1.2% rate</div>
+            </div>
+            <div class="mini-stat success">
+              <div class="ms-label">Spam Reports</div>
+              <div class="ms-value">8</div>
+              <div class="ms-amount">0.007% (excellent)</div>
+            </div>
+            <div class="mini-stat warn">
+              <div class="ms-label">Reputation</div>
+              <div class="ms-value">94</div>
+              <div class="ms-amount">/100 SendGrid</div>
+            </div>
+          </div>
+          <div style="margin-top: 1rem; padding: 0.75rem; background: #fef2f2; border: 1px solid #fecaca; border-radius: 0.5rem; font-size: 0.8125rem;">
+            <i class="fas fa-exclamation-triangle me-1" style="color: var(--danger-color);"></i> <strong>4 expired SMS sender registrations</strong> — re-verify before next campaign.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alerts & Actions -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-bell me-2" style="color: var(--cm-accent);"></i>Alerts &amp; Actions</h3>
+    </div>
+    <div class="dash-card-body">
+      <div class="alert-item danger">
+        <span class="alert-icon"><i class="fas fa-circle-exclamation"></i></span>
+        <span class="alert-text"><strong>Bulk SMS to Lapsed Donors failed</strong> — Twilio quota exceeded; 1,124 recipients un-sent</span>
+        <a class="alert-link" onclick="parent.loadContent('crm/communication/smscampaign')">Investigate <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+      <div class="alert-item warning">
+        <span class="alert-icon"><i class="fas fa-triangle-exclamation"></i></span>
+        <span class="alert-text"><strong>WhatsApp provider degraded</strong> since 1 PM — 38 messages stuck in queue; check Meta status page</span>
+        <a class="alert-link" onclick="parent.loadContent('setting/communicationconfig/emailproviderconfig')">Status <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+      <div class="alert-item warning">
+        <span class="alert-icon"><i class="fas fa-cake-candles"></i></span>
+        <span class="alert-text"><strong>4 SMS sender IDs expired</strong> — campaigns scheduled for tomorrow may fail to send</span>
+        <a class="alert-link" onclick="parent.loadContent('setting/communicationconfig/emailproviderconfig')">Re-verify <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+      <div class="alert-item info">
+        <span class="alert-icon"><i class="fas fa-clock"></i></span>
+        <span class="alert-text"><strong>6 campaigns scheduled to send</strong> in next 24 hours — total recipients: 14,287</span>
+        <a class="alert-link" onclick="parent.loadContent('crm/communication/emailcampaign')">Review <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+      <div class="alert-item info">
+        <span class="alert-icon"><i class="fas fa-arrow-trend-up"></i></span>
+        <span class="alert-text"><strong>Open rate up 3.2% MoM</strong> — Year-End Giving subject lines performing above baseline</span>
+        <a class="alert-link" onclick="parent.loadContent('crm/communication/emailtemplate')">View Templates <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+      <div class="alert-item success">
+        <span class="alert-icon"><i class="fas fa-circle-check"></i></span>
+        <span class="alert-text"><strong>Spam-report rate at 0.007%</strong> — well below the 0.1% provider threshold; sender reputation healthy</span>
+        <a class="alert-link" onclick="parent.loadContent('setting/communicationconfig/emailproviderconfig')">Reputation <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active Campaigns (Collapsible) -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header collapse-toggle" onclick="toggleSection(this)">
+      <h3><i class="fas fa-bullhorn me-2" style="color: var(--cm-accent);"></i>Active Campaigns <i class="fas fa-chevron-down chevron"></i></h3>
+      <span style="font-size: 0.75rem; color: var(--text-secondary);">Click row to view campaign report</span>
+    </div>
+    <div class="dash-card-body section-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="campaign-table">
+          <thead>
+            <tr>
+              <th>Campaign</th>
+              <th style="text-align: center;">Channel</th>
+              <th style="text-align: center;">Recipients</th>
+              <th style="text-align: center;">Status</th>
+              <th style="width: 140px;">Delivery</th>
+              <th style="text-align: center;">Cost</th>
+              <th style="text-align: center;">Schedule</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr onclick="parent.loadContent('crm/communication/emailcampaign')">
+              <td><strong>Year-End Giving — Day 3</strong></td>
+              <td style="text-align: center;"><span class="channel-pill email">Email</span></td>
+              <td style="text-align: center;">8,420</td>
+              <td style="text-align: center;"><span class="activity-status sending">SENDING</span></td>
+              <td><div class="rate-bar"><div class="rate-bar-track"><div class="rate-bar-fill green" style="width: 96%;"></div></div><span class="rate-pct" style="color: var(--success-color);">96%</span></div></td>
+              <td style="text-align: center; font-family: ui-monospace, monospace; font-weight: 600;">$19</td>
+              <td style="text-align: center;">started 2h ago</td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/communication/whatsappcampaign')">
+              <td><strong>Eid Greetings 2025</strong></td>
+              <td style="text-align: center;"><span class="channel-pill whatsapp">WhatsApp</span></td>
+              <td style="text-align: center;">3,800</td>
+              <td style="text-align: center;"><span class="activity-status scheduled">SCHEDULED</span></td>
+              <td style="text-align: center; color: var(--text-secondary); font-size: 0.75rem;">—</td>
+              <td style="text-align: center; font-family: ui-monospace, monospace; font-weight: 600;">$70</td>
+              <td style="text-align: center;">Apr 30, 8 AM</td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/communication/smscampaign')">
+              <td><strong>Pledge Reminder — Weekly</strong></td>
+              <td style="text-align: center;"><span class="channel-pill sms">SMS</span></td>
+              <td style="text-align: center;">487</td>
+              <td style="text-align: center;"><span class="activity-status scheduled">SCHEDULED</span></td>
+              <td style="text-align: center; color: var(--text-secondary); font-size: 0.75rem;">—</td>
+              <td style="text-align: center; font-family: ui-monospace, monospace; font-weight: 600;">$17</td>
+              <td style="text-align: center;">tomorrow 9 AM</td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/communication/emailcampaign')">
+              <td><strong>Newsletter — May Edition</strong></td>
+              <td style="text-align: center;"><span class="channel-pill email">Email</span></td>
+              <td style="text-align: center;">11,240</td>
+              <td style="text-align: center;"><span class="activity-status scheduled">SCHEDULED</span></td>
+              <td style="text-align: center; color: var(--text-secondary); font-size: 0.75rem;">—</td>
+              <td style="text-align: center; font-family: ui-monospace, monospace; font-weight: 600;">$25</td>
+              <td style="text-align: center;">May 1, 10 AM</td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/communication/smscampaign')">
+              <td><strong>Bulk SMS — Lapsed Donors</strong></td>
+              <td style="text-align: center;"><span class="channel-pill sms">SMS</span></td>
+              <td style="text-align: center;">1,124</td>
+              <td style="text-align: center;"><span class="activity-status failed">FAILED</span></td>
+              <td><div class="rate-bar"><div class="rate-bar-track"><div class="rate-bar-fill red" style="width: 0%;"></div></div><span class="rate-pct" style="color: var(--danger-color);">0%</span></div></td>
+              <td style="text-align: center; font-family: ui-monospace, monospace; font-weight: 600;">—</td>
+              <td style="text-align: center;">quota exceeded</td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/communication/whatsappcampaign')">
+              <td><strong>Receipt Delivery (Auto)</strong></td>
+              <td style="text-align: center;"><span class="channel-pill whatsapp">WhatsApp</span></td>
+              <td style="text-align: center;">~120/day</td>
+              <td style="text-align: center;"><span class="activity-status sent">RECURRING</span></td>
+              <td><div class="rate-bar"><div class="rate-bar-track"><div class="rate-bar-fill green" style="width: 97%;"></div></div><span class="rate-pct" style="color: var(--success-color);">97%</span></div></td>
+              <td style="text-align: center; font-family: ui-monospace, monospace; font-weight: 600;">$67/mo</td>
+              <td style="text-align: center;">always-on</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="padding: 0.875rem 1.25rem; text-align: right; border-top: 1px solid var(--border-color);">
+        <button class="btn-primary-accent" onclick="parent.loadContent('crm/communication/emailcampaign')">
+          <i class="fas fa-plus me-1"></i> Create Campaign
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleSection(el) {
+      el.classList.toggle('collapsed');
+      const body = el.closest('.dash-card').querySelector('.section-body');
+      body.style.display = body.style.display === 'none' ? 'block' : 'none';
+    }
+  </script>
+
+</body>
+
+</html>

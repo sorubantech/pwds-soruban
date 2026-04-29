@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Dashboard - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --ct-accent: #4f46e5;
+      --ct-accent-light: #6366f1;
+      --ct-accent-bg: #eef2ff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f1f5f9; padding: 1.5rem; font-size: 14px; color: var(--text-primary); }
+
+    .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+    .page-header .subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 0; }
+    .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    .header-actions select { padding: 0.5rem 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 0.8125rem; color: var(--text-primary); background: white; outline: none; cursor: pointer; font-weight: 600; }
+    .header-actions select:focus { border-color: var(--ct-accent); }
+
+    .btn-primary-accent { background: var(--ct-accent); border-color: var(--ct-accent); color: white; font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid var(--ct-accent); cursor: pointer; transition: all 0.15s; }
+    .btn-primary-accent:hover { background: #4338ca; border-color: #4338ca; }
+    .btn-outline-accent { background: white; border: 1px solid var(--ct-accent); color: var(--ct-accent); font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.15s; }
+    .btn-outline-accent:hover { background: var(--ct-accent); color: white; }
+
+    .dash-card { background: white; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); }
+    .dash-card-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
+    .dash-card-header h3 { font-size: 0.9375rem; font-weight: 700; margin: 0; color: var(--text-primary); }
+    .dash-card-body { padding: 1.25rem; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.25rem; }
+    .stat-card { background: white; border-radius: var(--card-radius); padding: 1.25rem; box-shadow: var(--card-shadow); border: 1px solid var(--border-color); display: flex; align-items: flex-start; gap: 1rem; transition: transform 0.15s, box-shadow 0.15s; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }
+    .stat-icon { width: 48px; height: 48px; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; }
+    .stat-icon.indigo { background: var(--ct-accent-bg); color: var(--ct-accent); }
+    .stat-icon.emerald { background: #ecfdf5; color: #059669; }
+    .stat-icon.blue { background: #eff6ff; color: #3b82f6; }
+    .stat-icon.amber { background: #fffbeb; color: #d97706; }
+    .stat-icon.rose { background: #fff1f2; color: #e11d48; }
+    .stat-icon.purple { background: #faf5ff; color: #a855f7; }
+
+    .stat-info { flex: 1; }
+    .stat-value { font-size: 1.625rem; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+    .stat-label { font-size: 0.8125rem; color: var(--text-secondary); font-weight: 500; margin-bottom: 0.125rem; }
+    .stat-subtitle { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; }
+    .stat-subtitle .positive { color: var(--success-color); font-weight: 600; }
+    .stat-subtitle .warning { color: var(--warning-color); font-weight: 600; }
+    .stat-subtitle .danger { color: var(--danger-color); font-weight: 600; }
+    .stat-subtitle .neutral { color: var(--text-secondary); }
+
+    .section-gap { margin-bottom: 1.25rem; }
+
+    /* Contact table */
+    .contact-table { width: 100%; font-size: 0.8125rem; }
+    .contact-table th { background: #f8fafc; font-weight: 600; color: var(--text-secondary); font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.625rem 0.75rem; border-bottom: 1px solid var(--border-color); white-space: nowrap; }
+    .contact-table td { padding: 0.625rem 0.75rem; border-bottom: 1px solid #f1f5f9; color: var(--text-primary); vertical-align: middle; }
+    .contact-table tr:last-child td { border-bottom: none; }
+    .contact-table tbody tr { cursor: pointer; transition: background 0.15s; }
+    .contact-table tbody tr:hover { background: var(--ct-accent-bg); }
+
+    .contact-avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--ct-accent), var(--ct-accent-light)); color: white; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.6875rem; margin-right: 0.5rem; }
+
+    .badge-type { font-size: 0.6875rem; padding: 0.2rem 0.5rem; border-radius: 9999px; font-weight: 600; white-space: nowrap; }
+    .badge-type.individual { background: var(--ct-accent-bg); color: var(--ct-accent); }
+    .badge-type.corporate { background: #eff6ff; color: #3b82f6; }
+    .badge-type.foundation { background: #faf5ff; color: #a855f7; }
+    .badge-type.family { background: #fff7ed; color: #f97316; }
+
+    /* Engagement score chip */
+    .score-chip { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; font-weight: 700; }
+    .score-chip .score-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .score-chip.high { color: var(--success-color); }
+    .score-chip.high .score-dot { background: var(--success-color); }
+    .score-chip.med  { color: var(--warning-color); }
+    .score-chip.med  .score-dot { background: var(--warning-color); }
+    .score-chip.low  { color: var(--danger-color); }
+    .score-chip.low  .score-dot { background: var(--danger-color); }
+
+    .mini-bar { display: inline-flex; align-items: center; gap: 0.5rem; min-width: 100px; }
+    .mini-bar-track { flex: 1; height: 6px; background: #f1f5f9; border-radius: 9999px; overflow: hidden; min-width: 50px; }
+    .mini-bar-fill { height: 100%; border-radius: 9999px; background: linear-gradient(90deg, var(--ct-accent), var(--ct-accent-light)); }
+
+    /* Chart Placeholders */
+    .chart-placeholder { background: #f8fafc; border: 2px dashed var(--border-color); border-radius: 0.75rem; padding: 2rem 1.5rem; text-align: center; color: var(--text-secondary); font-size: 0.8125rem; }
+    .chart-placeholder i { font-size: 2rem; margin-bottom: 0.75rem; display: block; color: var(--ct-accent); opacity: 0.5; }
+
+    /* Donut Chart Placeholder */
+    .donut-placeholder { width: 160px; height: 160px; border-radius: 50%; margin: 0 auto 1rem; position: relative; }
+    .donut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1rem; font-weight: 700; color: var(--text-primary); text-align: center; }
+    .donut-center small { display: block; font-size: 0.6875rem; color: var(--text-secondary); font-weight: 500; }
+
+    .legend-list { list-style: none; padding: 0; margin: 0; }
+    .legend-list li { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: var(--text-primary); padding: 0.25rem 0; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    /* Horizontal Bar Chart */
+    .h-bar-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.625rem; }
+    .h-bar-row:last-child { margin-bottom: 0; }
+    .h-bar-label { font-size: 0.8125rem; font-weight: 500; width: 140px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .h-bar-track { flex: 1; height: 24px; background: #f1f5f9; border-radius: 6px; overflow: hidden; position: relative; }
+    .h-bar-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; padding-left: 0.5rem; font-size: 0.6875rem; font-weight: 600; color: white; transition: width 0.5s ease; }
+
+    /* Histogram bars (vertical) */
+    .histogram { display: flex; align-items: flex-end; gap: 0.5rem; height: 180px; padding: 0 0.5rem; }
+    .hist-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+    .hist-bar { width: 100%; border-radius: 4px 4px 0 0; transition: height 0.5s ease; }
+    .hist-label { font-size: 0.6875rem; color: var(--text-secondary); font-weight: 500; white-space: nowrap; }
+    .hist-value { font-size: 0.6875rem; font-weight: 700; color: var(--text-primary); }
+
+    /* Tag Cloud */
+    .tag-cloud { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+    .tag-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.75rem; border-radius: 9999px; background: #f8fafc; border: 1px solid var(--border-color); cursor: pointer; transition: background 0.15s; }
+    .tag-pill:hover { background: var(--ct-accent-bg); border-color: var(--ct-accent); }
+    .tag-pill .tag-name { font-size: 0.75rem; font-weight: 600; color: var(--text-primary); }
+    .tag-pill .tag-count { font-size: 0.6875rem; color: var(--text-secondary); background: white; padding: 0.1rem 0.4rem; border-radius: 9999px; }
+    .tag-pill.lg .tag-name { font-size: 0.9375rem; }
+    .tag-pill.md .tag-name { font-size: 0.8125rem; }
+
+    /* Mini-stat grid */
+    .mini-stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; }
+    .mini-stat { background: #f8fafc; border-radius: 0.625rem; padding: 0.875rem; text-align: center; border: 1px solid var(--border-color); }
+    .mini-stat .ms-label { font-size: 0.6875rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.25rem; }
+    .mini-stat .ms-value { font-size: 1.25rem; font-weight: 700; }
+    .mini-stat .ms-amount { font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.125rem; }
+    .mini-stat.indigo .ms-value { color: var(--ct-accent); }
+    .mini-stat.success .ms-value { color: var(--success-color); }
+    .mini-stat.warn .ms-value { color: var(--warning-color); }
+    .mini-stat.neutral .ms-value { color: var(--text-secondary); }
+
+    /* Alert items */
+    .alert-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.625rem; margin-bottom: 0.5rem; font-size: 0.8125rem; transition: background 0.15s; }
+    .alert-item:last-child { margin-bottom: 0; }
+    .alert-item.warning { background: #fefce8; border: 1px solid #fef08a; }
+    .alert-item.danger  { background: #fef2f2; border: 1px solid #fecaca; }
+    .alert-item.info    { background: #eff6ff; border: 1px solid #bfdbfe; }
+    .alert-item.success { background: #f0fdf4; border: 1px solid #bbf7d0; }
+    .alert-item .alert-icon { font-size: 1rem; flex-shrink: 0; }
+    .alert-item.warning .alert-icon { color: var(--warning-color); }
+    .alert-item.danger  .alert-icon { color: var(--danger-color); }
+    .alert-item.info    .alert-icon { color: #3b82f6; }
+    .alert-item.success .alert-icon { color: var(--success-color); }
+    .alert-item .alert-text { flex: 1; color: var(--text-primary); }
+    .alert-item .alert-text strong { font-weight: 700; }
+    .alert-link { font-size: 0.75rem; color: var(--ct-accent); font-weight: 600; text-decoration: none; white-space: nowrap; cursor: pointer; }
+    .alert-link:hover { text-decoration: underline; }
+
+    /* Segment table (collapsible) */
+    .segment-table { width: 100%; font-size: 0.8125rem; }
+    .segment-table th { background: #f8fafc; font-weight: 600; color: var(--text-secondary); font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.625rem 0.75rem; border-bottom: 1px solid var(--border-color); }
+    .segment-table td { padding: 0.625rem 0.75rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .segment-table tr:last-child td { border-bottom: none; }
+    .segment-table tbody tr { cursor: pointer; transition: background 0.15s; }
+    .segment-table tbody tr:hover { background: var(--ct-accent-bg); }
+
+    .collapse-toggle { cursor: pointer; user-select: none; }
+    .collapse-toggle i.chevron { transition: transform 0.2s; font-size: 0.75rem; margin-left: 0.5rem; }
+    .collapse-toggle.collapsed i.chevron { transform: rotate(-90deg); }
+
+    @media (max-width: 992px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } .mini-stat-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 576px) { body { padding: 1rem; } .stats-grid { grid-template-columns: 1fr; } .mini-stat-grid { grid-template-columns: 1fr; } .page-header { flex-direction: column; } }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-people-group me-2" style="color: var(--ct-accent);"></i>Contact Dashboard</h1>
+      <p class="subtitle">Donor 360°: engagement health, segments, churn risk, and acquisition</p>
+    </div>
+    <div class="header-actions">
+      <select>
+        <option selected>This Year</option>
+        <option>Last Year</option>
+        <option>This Quarter</option>
+        <option>Last Quarter</option>
+        <option>This Month</option>
+        <option>Custom Range</option>
+      </select>
+      <select>
+        <option selected>All Contact Types</option>
+        <option>Individual</option>
+        <option>Corporate</option>
+        <option>Foundation</option>
+        <option>Family</option>
+      </select>
+      <select>
+        <option selected>All Branches</option>
+        <option>Dubai, UAE</option>
+        <option>Mumbai, India</option>
+        <option>Nairobi, Kenya</option>
+        <option>Delhi, India</option>
+        <option>Dhaka, Bangladesh</option>
+      </select>
+      <select>
+        <option selected>All Sources</option>
+        <option>Website</option>
+        <option>Referral</option>
+        <option>Event</option>
+        <option>Walk-In</option>
+        <option>Import</option>
+        <option>Social Media</option>
+      </select>
+      <button class="btn-primary-accent" onclick="alert('Generating contact report...')">
+        <i class="fas fa-file-export me-1"></i> Export Report
+      </button>
+      <button class="btn-outline-accent" onclick="window.print()">
+        <i class="fas fa-print me-1"></i> Print
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Hero Cards -->
+  <div class="stats-grid section-gap">
+    <div class="stat-card">
+      <div class="stat-icon indigo"><i class="fas fa-users"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Total Contacts</div>
+        <div class="stat-value">12,456</div>
+        <div class="stat-subtitle"><span class="positive">↑ 312 new this month</span> &middot; 8,234 active</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon emerald"><i class="fas fa-heart-pulse"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Active Donors (12 mo)</div>
+        <div class="stat-value">4,378</div>
+        <div class="stat-subtitle"><span class="positive">↑ 18% vs last year</span> &middot; 35% of base</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="fas fa-user-plus"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">New Contacts (this month)</div>
+        <div class="stat-value">312</div>
+        <div class="stat-subtitle"><span class="positive">↑ 22% vs last month</span> &middot; top src: Website (118)</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon purple"><i class="fas fa-chart-line"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Avg Engagement Score</div>
+        <div class="stat-value">62 / 100</div>
+        <div class="stat-subtitle"><span class="positive">↑ 4 pts QoQ</span> &middot; 28% in High band</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon rose"><i class="fas fa-user-clock"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Churn Risk</div>
+        <div class="stat-value">487</div>
+        <div class="stat-subtitle"><span class="danger">↑ 38 high-risk</span> &middot; no gift in 18+ mo</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon amber"><i class="fas fa-clone"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Pending Duplicates</div>
+        <div class="stat-value">42</div>
+        <div class="stat-subtitle"><span class="warning">28 high-confidence</span> &middot; need review</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Engaged Contacts Table -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-star me-2" style="color: var(--ct-accent);"></i>Top 10 Engaged Contacts</h3>
+      <span style="font-size: 0.75rem; color: var(--text-secondary);">Click row to view contact profile</span>
+    </div>
+    <div class="dash-card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="contact-table">
+          <thead>
+            <tr>
+              <th>Contact</th>
+              <th style="text-align: center;">Type</th>
+              <th style="text-align: center;">Engagement</th>
+              <th style="text-align: center;">Last Activity</th>
+              <th style="text-align: right;">Lifetime $</th>
+              <th style="text-align: center;">Tags</th>
+              <th style="width: 140px;">Activity (90d)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr onclick="parent.loadContent('crm/contact/contact?mode=read&id=1')">
+              <td><span class="contact-avatar">SM</span> Sarah McAllister</td>
+              <td style="text-align: center;"><span class="badge-type individual">Individual</span></td>
+              <td style="text-align: center;"><span class="score-chip high"><span class="score-dot"></span>92</span></td>
+              <td style="text-align: center;">today</td>
+              <td style="text-align: right; font-family: ui-monospace, monospace; font-weight: 600;">$118,400</td>
+              <td style="text-align: center;">Major Donor, Recurring</td>
+              <td><div class="mini-bar"><div class="mini-bar-track"><div class="mini-bar-fill" style="width: 95%;"></div></div></div></td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/contact/contact?mode=read&id=2')">
+              <td><span class="contact-avatar">AR</span> Al Rashid Foundation</td>
+              <td style="text-align: center;"><span class="badge-type foundation">Foundation</span></td>
+              <td style="text-align: center;"><span class="score-chip high"><span class="score-dot"></span>89</span></td>
+              <td style="text-align: center;">3 days ago</td>
+              <td style="text-align: right; font-family: ui-monospace, monospace; font-weight: 600;">$420,000</td>
+              <td style="text-align: center;">Foundation, Major</td>
+              <td><div class="mini-bar"><div class="mini-bar-track"><div class="mini-bar-fill" style="width: 88%;"></div></div></div></td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/contact/contact?mode=read&id=3')">
+              <td><span class="contact-avatar">PJ</span> Priya Joshi</td>
+              <td style="text-align: center;"><span class="badge-type individual">Individual</span></td>
+              <td style="text-align: center;"><span class="score-chip high"><span class="score-dot"></span>85</span></td>
+              <td style="text-align: center;">today</td>
+              <td style="text-align: right; font-family: ui-monospace, monospace; font-weight: 600;">$32,400</td>
+              <td style="text-align: center;">Recurring, Volunteer</td>
+              <td><div class="mini-bar"><div class="mini-bar-track"><div class="mini-bar-fill" style="width: 90%;"></div></div></div></td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/contact/contact?mode=read&id=4')">
+              <td><span class="contact-avatar">UN</span> UNICEF Partners</td>
+              <td style="text-align: center;"><span class="badge-type corporate">Corporate</span></td>
+              <td style="text-align: center;"><span class="score-chip high"><span class="score-dot"></span>83</span></td>
+              <td style="text-align: center;">12 days ago</td>
+              <td style="text-align: right; font-family: ui-monospace, monospace; font-weight: 600;">$330,000</td>
+              <td style="text-align: center;">Corporate Partner, Grant</td>
+              <td><div class="mini-bar"><div class="mini-bar-track"><div class="mini-bar-fill" style="width: 65%;"></div></div></div></td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/contact/contact?mode=read&id=5')">
+              <td><span class="contact-avatar">AK</span> Ahmed Khan</td>
+              <td style="text-align: center;"><span class="badge-type individual">Individual</span></td>
+              <td style="text-align: center;"><span class="score-chip high"><span class="score-dot"></span>78</span></td>
+              <td style="text-align: center;">5 days ago</td>
+              <td style="text-align: right; font-family: ui-monospace, monospace; font-weight: 600;">$76,200</td>
+              <td style="text-align: center;">Major Donor</td>
+              <td><div class="mini-bar"><div class="mini-bar-track"><div class="mini-bar-fill" style="width: 78%;"></div></div></div></td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/contact/contact?mode=read&id=6')">
+              <td><span class="contact-avatar">DC</span> Dubai Cares</td>
+              <td style="text-align: center;"><span class="badge-type foundation">Foundation</span></td>
+              <td style="text-align: center;"><span class="score-chip high"><span class="score-dot"></span>76</span></td>
+              <td style="text-align: center;">1 month ago</td>
+              <td style="text-align: right; font-family: ui-monospace, monospace; font-weight: 600;">$250,000</td>
+              <td style="text-align: center;">Foundation, Annual</td>
+              <td><div class="mini-bar"><div class="mini-bar-track"><div class="mini-bar-fill" style="width: 55%;"></div></div></div></td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/contact/contact?mode=read&id=7')">
+              <td><span class="contact-avatar">FA</span> Family — Al Mansouri</td>
+              <td style="text-align: center;"><span class="badge-type family">Family</span></td>
+              <td style="text-align: center;"><span class="score-chip med"><span class="score-dot"></span>68</span></td>
+              <td style="text-align: center;">2 weeks ago</td>
+              <td style="text-align: right; font-family: ui-monospace, monospace; font-weight: 600;">$54,000</td>
+              <td style="text-align: center;">Family, 6 members</td>
+              <td><div class="mini-bar"><div class="mini-bar-track"><div class="mini-bar-fill" style="width: 60%;"></div></div></div></td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/contact/contact?mode=read&id=8')">
+              <td><span class="contact-avatar">RC</span> Reliance Charitable Trust</td>
+              <td style="text-align: center;"><span class="badge-type corporate">Corporate</span></td>
+              <td style="text-align: center;"><span class="score-chip med"><span class="score-dot"></span>64</span></td>
+              <td style="text-align: center;">2 weeks ago</td>
+              <td style="text-align: right; font-family: ui-monospace, monospace; font-weight: 600;">$210,000</td>
+              <td style="text-align: center;">Corporate Match</td>
+              <td><div class="mini-bar"><div class="mini-bar-track"><div class="mini-bar-fill" style="width: 50%;"></div></div></div></td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/contact/contact?mode=read&id=9')">
+              <td><span class="contact-avatar">JO</span> James Okonkwo</td>
+              <td style="text-align: center;"><span class="badge-type individual">Individual</span></td>
+              <td style="text-align: center;"><span class="score-chip med"><span class="score-dot"></span>59</span></td>
+              <td style="text-align: center;">1 week ago</td>
+              <td style="text-align: right; font-family: ui-monospace, monospace; font-weight: 600;">$12,500</td>
+              <td style="text-align: center;">New Donor</td>
+              <td><div class="mini-bar"><div class="mini-bar-track"><div class="mini-bar-fill" style="width: 45%;"></div></div></div></td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/contact/contact?mode=read&id=10')">
+              <td><span class="contact-avatar">FZ</span> Fatima Al-Zahra</td>
+              <td style="text-align: center;"><span class="badge-type individual">Individual</span></td>
+              <td style="text-align: center;"><span class="score-chip med"><span class="score-dot"></span>56</span></td>
+              <td style="text-align: center;">4 days ago</td>
+              <td style="text-align: right; font-family: ui-monospace, monospace; font-weight: 600;">$58,400</td>
+              <td style="text-align: center;">Volunteer, Recurring</td>
+              <td><div class="mini-bar"><div class="mini-bar-track"><div class="mini-bar-fill" style="width: 52%;"></div></div></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row 1: Type donut + Engagement Histogram -->
+  <div class="row g-3 section-gap">
+    <div class="col-lg-5">
+      <div class="dash-card" style="height: 100%;">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-id-badge me-2" style="color: var(--ct-accent);"></i>Contacts by Type</h3>
+        </div>
+        <div class="dash-card-body">
+          <div class="donut-placeholder" style="background: conic-gradient(#4f46e5 0deg 230deg, #3b82f6 230deg 295deg, #a855f7 295deg 332deg, #f97316 332deg 360deg);">
+            <div class="donut-center" style="width: 90px; height: 90px; border-radius: 50%; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+              12,456
+              <small>contacts</small>
+            </div>
+          </div>
+          <ul class="legend-list">
+            <li><span class="legend-dot" style="background: #4f46e5;"></span> Individual: 7,968 (64%)</li>
+            <li><span class="legend-dot" style="background: #3b82f6;"></span> Corporate: 2,242 (18%)</li>
+            <li><span class="legend-dot" style="background: #a855f7;"></span> Foundation: 1,308 (10%)</li>
+            <li><span class="legend-dot" style="background: #f97316;"></span> Family: 938 (8%)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <div class="dash-card" style="height: 100%;">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-chart-column me-2" style="color: var(--ct-accent);"></i>Engagement Score Distribution</h3>
+          <span style="font-size: 0.75rem; color: var(--text-secondary);">Active donors only</span>
+        </div>
+        <div class="dash-card-body">
+          <div class="histogram">
+            <div class="hist-col">
+              <div class="hist-value">412</div>
+              <div class="hist-bar" style="height: 24%; background: #ef4444;"></div>
+              <div class="hist-label">0-20</div>
+            </div>
+            <div class="hist-col">
+              <div class="hist-value">685</div>
+              <div class="hist-bar" style="height: 40%; background: #f97316;"></div>
+              <div class="hist-label">21-40</div>
+            </div>
+            <div class="hist-col">
+              <div class="hist-value">1,124</div>
+              <div class="hist-bar" style="height: 65%; background: #f59e0b;"></div>
+              <div class="hist-label">41-60</div>
+            </div>
+            <div class="hist-col">
+              <div class="hist-value">1,427</div>
+              <div class="hist-bar" style="height: 82%; background: #84cc16;"></div>
+              <div class="hist-label">61-80</div>
+            </div>
+            <div class="hist-col">
+              <div class="hist-value">730</div>
+              <div class="hist-bar" style="height: 42%; background: var(--ct-accent);"></div>
+              <div class="hist-label">81-100</div>
+            </div>
+          </div>
+          <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color); font-size: 0.75rem; color: var(--text-secondary); display: flex; justify-content: space-around;">
+            <div><strong style="color: var(--danger-color);">25%</strong> Low (re-engage)</div>
+            <div><strong style="color: var(--warning-color);">26%</strong> Medium</div>
+            <div><strong style="color: var(--ct-accent);">49%</strong> High</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row 2: Acquisition trend + Geo distribution -->
+  <div class="row g-3 section-gap">
+    <div class="col-12">
+      <div class="dash-card">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-chart-area me-2" style="color: var(--ct-accent);"></i>Contact Acquisition Trend</h3>
+          <span style="font-size: 0.75rem; color: var(--text-secondary);">Last 12 months &middot; stacked by source</span>
+        </div>
+        <div class="dash-card-body">
+          <div class="chart-placeholder">
+            <i class="fas fa-chart-area"></i>
+            <div><strong>Stacked Area Chart</strong> &mdash; New contacts per month over 12 months</div>
+            <div style="margin-top: 0.5rem;">Stacked by source: Website, Referral, Event, Walk-In, Import, Social Media</div>
+            <div style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--ct-accent);">
+              <i class="fas fa-map-pin me-1"></i> Annotations: "Email campaign launched" (Mar) &bull; "Annual gala event" (Sep)
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="dash-card" style="height: 100%;">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-globe me-2" style="color: var(--ct-accent);"></i>By Geography (Top 6)</h3>
+        </div>
+        <div class="dash-card-body">
+          <div class="h-bar-row">
+            <span class="h-bar-label">Dubai, UAE</span>
+            <div class="h-bar-track"><div class="h-bar-fill" style="width: 100%; background: var(--ct-accent);">3,245</div></div>
+          </div>
+          <div class="h-bar-row">
+            <span class="h-bar-label">Mumbai, India</span>
+            <div class="h-bar-track"><div class="h-bar-fill" style="width: 78%; background: var(--ct-accent-light);">2,534</div></div>
+          </div>
+          <div class="h-bar-row">
+            <span class="h-bar-label">Delhi, India</span>
+            <div class="h-bar-track"><div class="h-bar-fill" style="width: 56%; background: #3b82f6;">1,824</div></div>
+          </div>
+          <div class="h-bar-row">
+            <span class="h-bar-label">Nairobi, Kenya</span>
+            <div class="h-bar-track"><div class="h-bar-fill" style="width: 42%; background: #06b6d4;">1,367</div></div>
+          </div>
+          <div class="h-bar-row">
+            <span class="h-bar-label">Dhaka, Bangladesh</span>
+            <div class="h-bar-track"><div class="h-bar-fill" style="width: 32%; background: #8b5cf6;">1,047</div></div>
+          </div>
+          <div class="h-bar-row">
+            <span class="h-bar-label">Others</span>
+            <div class="h-bar-track"><div class="h-bar-fill" style="width: 75%; background: #94a3b8;">2,439</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="dash-card" style="height: 100%;">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-tags me-2" style="color: var(--ct-accent);"></i>Top Tags</h3>
+          <a class="alert-link" onclick="parent.loadContent('crm/contact/tagsegmentation')">Manage Tags <i class="fas fa-arrow-right ms-1"></i></a>
+        </div>
+        <div class="dash-card-body">
+          <div class="tag-cloud">
+            <span class="tag-pill lg" style="border-color: var(--ct-accent); background: var(--ct-accent-bg);"><span class="tag-name" style="color: var(--ct-accent);">Major Donor</span><span class="tag-count">487</span></span>
+            <span class="tag-pill lg"><span class="tag-name">Recurring</span><span class="tag-count">412</span></span>
+            <span class="tag-pill md"><span class="tag-name">VIP</span><span class="tag-count">298</span></span>
+            <span class="tag-pill md"><span class="tag-name">Volunteer</span><span class="tag-count">256</span></span>
+            <span class="tag-pill md"><span class="tag-name">Newsletter</span><span class="tag-count">1,124</span></span>
+            <span class="tag-pill"><span class="tag-name">Event Attendee</span><span class="tag-count">189</span></span>
+            <span class="tag-pill"><span class="tag-name">Lapsed</span><span class="tag-count">142</span></span>
+            <span class="tag-pill"><span class="tag-name">Corporate Match</span><span class="tag-count">98</span></span>
+            <span class="tag-pill"><span class="tag-name">High-Risk</span><span class="tag-count">87</span></span>
+            <span class="tag-pill"><span class="tag-name">Sponsor</span><span class="tag-count">76</span></span>
+            <span class="tag-pill"><span class="tag-name">Board Member</span><span class="tag-count">42</span></span>
+            <span class="tag-pill"><span class="tag-name">Anonymous</span><span class="tag-count">38</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Family + Duplicate Health Row -->
+  <div class="row g-3 section-gap">
+    <div class="col-lg-6">
+      <div class="dash-card" style="height: 100%;">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-house-user me-2" style="color: var(--ct-accent);"></i>Family Health</h3>
+          <a class="alert-link" onclick="parent.loadContent('crm/contact/family')">View Families <i class="fas fa-arrow-right ms-1"></i></a>
+        </div>
+        <div class="dash-card-body">
+          <div class="mini-stat-grid">
+            <div class="mini-stat indigo">
+              <div class="ms-label">Total Families</div>
+              <div class="ms-value">938</div>
+              <div class="ms-amount">3,742 members</div>
+            </div>
+            <div class="mini-stat success">
+              <div class="ms-label">With Head</div>
+              <div class="ms-value">872</div>
+              <div class="ms-amount">93%</div>
+            </div>
+            <div class="mini-stat warn">
+              <div class="ms-label">Headless</div>
+              <div class="ms-value">66</div>
+              <div class="ms-amount">need head set</div>
+            </div>
+            <div class="mini-stat neutral">
+              <div class="ms-label">Avg Members</div>
+              <div class="ms-value">4.0</div>
+              <div class="ms-amount">per family</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="dash-card" style="height: 100%;">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-clone me-2" style="color: var(--ct-accent);"></i>Duplicate Detection</h3>
+          <a class="alert-link" onclick="parent.loadContent('crm/maintenance/duplicatecontact')">Review Queue <i class="fas fa-arrow-right ms-1"></i></a>
+        </div>
+        <div class="dash-card-body">
+          <div class="mini-stat-grid">
+            <div class="mini-stat warn">
+              <div class="ms-label">Pending</div>
+              <div class="ms-value">42</div>
+              <div class="ms-amount">avg confidence 78%</div>
+            </div>
+            <div class="mini-stat indigo">
+              <div class="ms-label">High-Confidence</div>
+              <div class="ms-value">28</div>
+              <div class="ms-amount">≥ 90% match</div>
+            </div>
+            <div class="mini-stat success">
+              <div class="ms-label">Merged (YTD)</div>
+              <div class="ms-value">186</div>
+              <div class="ms-amount">automatic + manual</div>
+            </div>
+            <div class="mini-stat neutral">
+              <div class="ms-label">Not-Duplicate</div>
+              <div class="ms-value">47</div>
+              <div class="ms-amount">marked NDP</div>
+            </div>
+          </div>
+          <div style="margin-top: 1rem; padding: 0.75rem; background: #fffbeb; border: 1px solid #fed7aa; border-radius: 0.5rem; font-size: 0.8125rem;">
+            <i class="fas fa-exclamation-triangle me-1" style="color: var(--warning-color);"></i> <strong>28 high-confidence duplicates</strong> waiting for review.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alerts & Actions -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-bell me-2" style="color: var(--ct-accent);"></i>Alerts &amp; Actions</h3>
+    </div>
+    <div class="dash-card-body">
+      <div class="alert-item danger">
+        <span class="alert-icon"><i class="fas fa-user-clock"></i></span>
+        <span class="alert-text"><strong>38 high-value donors at churn risk</strong> &mdash; no gift in 18+ months, lifetime $&gt;5K</span>
+        <a class="alert-link" onclick="parent.loadContent('crm/contact/contact?segment=churn-risk-major')">Re-engage <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+      <div class="alert-item warning">
+        <span class="alert-icon"><i class="fas fa-clone"></i></span>
+        <span class="alert-text"><strong>28 high-confidence duplicates pending</strong> &mdash; oldest 14 days; impacts donor reporting accuracy</span>
+        <a class="alert-link" onclick="parent.loadContent('crm/maintenance/duplicatecontact')">Resolve <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+      <div class="alert-item info">
+        <span class="alert-icon"><i class="fas fa-arrow-trend-up"></i></span>
+        <span class="alert-text"><strong>Website source up 22%</strong> this month &mdash; 118 new contacts; consider conversion follow-up</span>
+        <a class="alert-link" onclick="parent.loadContent('crm/contact/contact?source=website&newThisMonth=true')">View New <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+      <div class="alert-item warning">
+        <span class="alert-icon"><i class="fas fa-house-circle-exclamation"></i></span>
+        <span class="alert-text"><strong>66 families have no Head set</strong> &mdash; impacts family-summary roll-ups</span>
+        <a class="alert-link" onclick="parent.loadContent('crm/contact/family?hasHead=false')">Fix <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+      <div class="alert-item info">
+        <span class="alert-icon"><i class="fas fa-tag"></i></span>
+        <span class="alert-text"><strong>"Lapsed" segment grew by 23</strong> this quarter &mdash; potential win-back targets</span>
+        <a class="alert-link" onclick="parent.loadContent('crm/contact/contact?tag=lapsed')">View Segment <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+      <div class="alert-item success">
+        <span class="alert-icon"><i class="fas fa-circle-check"></i></span>
+        <span class="alert-text"><strong>Engagement score up 4 points QoQ</strong> &mdash; activation campaign appears to be working</span>
+        <a class="alert-link" onclick="parent.loadContent('crm/contact/contact')">Browse <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Segments (Collapsible) -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header collapse-toggle" onclick="toggleSection(this)">
+      <h3><i class="fas fa-layer-group me-2" style="color: var(--ct-accent);"></i>Top Segments &amp; Saved Filters <i class="fas fa-chevron-down chevron"></i></h3>
+      <span style="font-size: 0.75rem; color: var(--text-secondary);">Click row to view segment members</span>
+    </div>
+    <div class="dash-card-body section-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="segment-table">
+          <thead>
+            <tr>
+              <th>Segment</th>
+              <th>Owner</th>
+              <th style="text-align: center;">Members</th>
+              <th style="text-align: center;">Δ 30d</th>
+              <th style="text-align: center;">Last Refreshed</th>
+              <th style="text-align: center;">Visibility</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr onclick="parent.loadContent('crm/contact/tagsegmentation')">
+              <td><strong>Major Donors (≥$10K LTV)</strong></td>
+              <td>Sarah Director</td>
+              <td style="text-align: center;">487</td>
+              <td style="text-align: center;"><span style="color: var(--success-color); font-weight: 600;">+12</span></td>
+              <td style="text-align: center;">2 hours ago</td>
+              <td style="text-align: center;"><span class="badge-type individual">Public</span></td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/contact/tagsegmentation')">
+              <td><strong>Recurring Donors (Active)</strong></td>
+              <td>Marketing Team</td>
+              <td style="text-align: center;">412</td>
+              <td style="text-align: center;"><span style="color: var(--success-color); font-weight: 600;">+8</span></td>
+              <td style="text-align: center;">today</td>
+              <td style="text-align: center;"><span class="badge-type individual">Public</span></td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/contact/tagsegmentation')">
+              <td><strong>Lapsed (no gift 12-24 mo)</strong></td>
+              <td>Marketing Team</td>
+              <td style="text-align: center;">142</td>
+              <td style="text-align: center;"><span style="color: var(--warning-color); font-weight: 600;">+23</span></td>
+              <td style="text-align: center;">1 day ago</td>
+              <td style="text-align: center;"><span class="badge-type individual">Public</span></td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/contact/tagsegmentation')">
+              <td><strong>High-Risk Churn</strong></td>
+              <td>System (computed)</td>
+              <td style="text-align: center;">487</td>
+              <td style="text-align: center;"><span style="color: var(--danger-color); font-weight: 600;">+38</span></td>
+              <td style="text-align: center;">today</td>
+              <td style="text-align: center;"><span class="badge-type corporate">Auto</span></td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/contact/tagsegmentation')">
+              <td><strong>Newsletter Subscribers</strong></td>
+              <td>Marketing Team</td>
+              <td style="text-align: center;">1,124</td>
+              <td style="text-align: center;"><span style="color: var(--success-color); font-weight: 600;">+47</span></td>
+              <td style="text-align: center;">today</td>
+              <td style="text-align: center;"><span class="badge-type individual">Public</span></td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/contact/tagsegmentation')">
+              <td><strong>Corporate Match Eligible</strong></td>
+              <td>Sarah Director</td>
+              <td style="text-align: center;">98</td>
+              <td style="text-align: center;"><span style="color: var(--text-secondary); font-weight: 600;">0</span></td>
+              <td style="text-align: center;">3 days ago</td>
+              <td style="text-align: center;"><span class="badge-type foundation">Private</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="padding: 0.875rem 1.25rem; text-align: right; border-top: 1px solid var(--border-color);">
+        <button class="btn-primary-accent" onclick="parent.loadContent('crm/contact/tagsegmentation')">
+          <i class="fas fa-plus me-1"></i> Create Segment
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleSection(el) {
+      el.classList.toggle('collapsed');
+      const body = el.closest('.dash-card').querySelector('.section-body');
+      body.style.display = body.style.display === 'none' ? 'block' : 'none';
+    }
+  </script>
+
+</body>
+
+</html>

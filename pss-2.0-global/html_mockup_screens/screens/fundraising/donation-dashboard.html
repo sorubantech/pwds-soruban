@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Donation Dashboard - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --dn-accent: #059669;
+      --dn-accent-light: #10b981;
+      --dn-accent-bg: #ecfdf5;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --card-radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 1.5rem;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+    .page-header .subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 0; }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .header-actions select {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      background: white;
+      outline: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .header-actions select:focus { border-color: var(--dn-accent); }
+
+    .btn-primary-accent { background: var(--dn-accent); border-color: var(--dn-accent); color: white; font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid var(--dn-accent); cursor: pointer; transition: all 0.15s; }
+    .btn-primary-accent:hover { background: #047857; border-color: #047857; color: white; }
+    .btn-outline-accent { background: white; border: 1px solid var(--dn-accent); color: var(--dn-accent); font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.15s; }
+    .btn-outline-accent:hover { background: var(--dn-accent); color: white; }
+
+    /* Dash Card */
+    .dash-card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+    }
+
+    .dash-card-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .dash-card-header h3 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      margin: 0;
+      color: var(--text-primary);
+    }
+
+    .dash-card-body { padding: 1.25rem; }
+
+    /* KPI Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1.25rem;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .stat-icon.emerald { background: var(--dn-accent-bg); color: var(--dn-accent); }
+    .stat-icon.blue { background: #eff6ff; color: #3b82f6; }
+    .stat-icon.indigo { background: #eef2ff; color: #4f46e5; }
+    .stat-icon.orange { background: #fff7ed; color: #f97316; }
+    .stat-icon.purple { background: #faf5ff; color: #a855f7; }
+    .stat-icon.amber { background: #fffbeb; color: #d97706; }
+
+    .stat-info { flex: 1; }
+    .stat-value { font-size: 1.625rem; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+    .stat-label { font-size: 0.8125rem; color: var(--text-secondary); font-weight: 500; margin-bottom: 0.125rem; }
+    .stat-subtitle { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; }
+    .stat-subtitle .positive { color: var(--success-color); font-weight: 600; }
+    .stat-subtitle .warning { color: var(--warning-color); font-weight: 600; }
+    .stat-subtitle .neutral { color: var(--text-secondary); }
+
+    /* Section gap */
+    .section-gap { margin-bottom: 1.25rem; }
+
+    /* Donor Table */
+    .donor-table { width: 100%; font-size: 0.8125rem; }
+    .donor-table th { background: #f8fafc; font-weight: 600; color: var(--text-secondary); font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.625rem 0.75rem; border-bottom: 1px solid var(--border-color); white-space: nowrap; }
+    .donor-table td { padding: 0.625rem 0.75rem; border-bottom: 1px solid #f1f5f9; color: var(--text-primary); vertical-align: middle; }
+    .donor-table tr:last-child td { border-bottom: none; }
+    .donor-table tbody tr { cursor: pointer; transition: background 0.15s; }
+    .donor-table tbody tr:hover { background: var(--dn-accent-bg); }
+
+    .donor-avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--dn-accent), var(--dn-accent-light));
+      color: white; display: inline-flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.6875rem; margin-right: 0.5rem;
+    }
+
+    .badge-tier {
+      font-size: 0.6875rem; padding: 0.2rem 0.5rem; border-radius: 9999px; font-weight: 600;
+      white-space: nowrap;
+    }
+    .badge-tier.major { background: #faf5ff; color: #a855f7; }
+    .badge-tier.regular { background: var(--dn-accent-bg); color: var(--dn-accent); }
+    .badge-tier.new { background: #fffbeb; color: #d97706; }
+    .badge-tier.recurring { background: #eff6ff; color: #3b82f6; }
+
+    .currency-amount { font-family: ui-monospace, SFMono-Regular, monospace; font-weight: 600; text-align: right; }
+
+    /* Mini progress bar (for donor table) */
+    .mini-bar { display: inline-flex; align-items: center; gap: 0.5rem; min-width: 100px; }
+    .mini-bar-track { flex: 1; height: 6px; background: #f1f5f9; border-radius: 9999px; overflow: hidden; min-width: 50px; }
+    .mini-bar-fill { height: 100%; border-radius: 9999px; background: linear-gradient(90deg, var(--dn-accent), var(--dn-accent-light)); }
+
+    /* Chart Placeholders */
+    .chart-placeholder {
+      background: #f8fafc;
+      border: 2px dashed var(--border-color);
+      border-radius: 0.75rem;
+      padding: 2rem 1.5rem;
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+    }
+    .chart-placeholder i { font-size: 2rem; margin-bottom: 0.75rem; display: block; color: var(--dn-accent); opacity: 0.5; }
+
+    /* Donut Chart Placeholder */
+    .donut-placeholder { width: 160px; height: 160px; border-radius: 50%; margin: 0 auto 1rem; position: relative; }
+    .donut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1rem; font-weight: 700; color: var(--text-primary); text-align: center; }
+    .donut-center small { display: block; font-size: 0.6875rem; color: var(--text-secondary); font-weight: 500; }
+
+    .legend-list { list-style: none; padding: 0; margin: 0; }
+    .legend-list li { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: var(--text-primary); padding: 0.25rem 0; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    /* Horizontal Bar Chart */
+    .h-bar-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.625rem; }
+    .h-bar-row:last-child { margin-bottom: 0; }
+    .h-bar-label { font-size: 0.8125rem; font-weight: 500; width: 140px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .h-bar-track { flex: 1; height: 24px; background: #f1f5f9; border-radius: 6px; overflow: hidden; position: relative; }
+    .h-bar-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; padding-left: 0.5rem; font-size: 0.6875rem; font-weight: 600; color: white; transition: width 0.5s ease; }
+
+    /* Cheque Pipeline (Funnel) */
+    .funnel-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; }
+    .funnel-step { background: #f8fafc; border-radius: 0.625rem; padding: 1rem; text-align: center; border: 1px solid var(--border-color); position: relative; }
+    .funnel-step .step-label { font-size: 0.75rem; color: var(--text-secondary); font-weight: 500; margin-bottom: 0.25rem; }
+    .funnel-step .step-value { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
+    .funnel-step .step-amount { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.125rem; font-family: ui-monospace, monospace; }
+    .funnel-step.received { border-top: 3px solid #f59e0b; }
+    .funnel-step.deposited { border-top: 3px solid #3b82f6; }
+    .funnel-step.cleared { border-top: 3px solid var(--success-color); }
+    .funnel-step.bounced { border-top: 3px solid var(--danger-color); }
+
+    /* Recurring Health Mini-Cards */
+    .mini-stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; }
+    .mini-stat { background: #f8fafc; border-radius: 0.625rem; padding: 0.875rem; text-align: center; border: 1px solid var(--border-color); }
+    .mini-stat .ms-label { font-size: 0.6875rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.25rem; }
+    .mini-stat .ms-value { font-size: 1.25rem; font-weight: 700; }
+    .mini-stat .ms-amount { font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.125rem; }
+    .mini-stat.healthy .ms-value { color: var(--success-color); }
+    .mini-stat.behind .ms-value { color: var(--warning-color); }
+    .mini-stat.failed .ms-value { color: var(--danger-color); }
+    .mini-stat.cancelled .ms-value { color: var(--text-secondary); }
+
+    /* Activity Feed */
+    .activity-feed { max-height: 320px; overflow-y: auto; }
+    .activity-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 0; border-bottom: 1px solid #f1f5f9; }
+    .activity-row:last-child { border-bottom: none; }
+    .activity-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.875rem; }
+    .activity-icon.online { background: #eff6ff; color: #3b82f6; }
+    .activity-icon.cheque { background: #fffbeb; color: #d97706; }
+    .activity-icon.cash { background: var(--dn-accent-bg); color: var(--dn-accent); }
+    .activity-icon.inkind { background: #faf5ff; color: #a855f7; }
+    .activity-icon.recurring { background: #eef2ff; color: #4f46e5; }
+    .activity-content { flex: 1; min-width: 0; }
+    .activity-line1 { font-size: 0.8125rem; font-weight: 500; color: var(--text-primary); }
+    .activity-line2 { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.125rem; }
+    .activity-amount { font-family: ui-monospace, monospace; font-weight: 700; color: var(--dn-accent); white-space: nowrap; }
+
+    /* Alert Cards */
+    .alert-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.625rem; margin-bottom: 0.5rem; font-size: 0.8125rem; transition: background 0.15s; }
+    .alert-item:last-child { margin-bottom: 0; }
+    .alert-item.warning { background: #fefce8; border: 1px solid #fef08a; }
+    .alert-item.danger { background: #fef2f2; border: 1px solid #fecaca; }
+    .alert-item.info { background: #eff6ff; border: 1px solid #bfdbfe; }
+    .alert-item.success { background: #f0fdf4; border: 1px solid #bbf7d0; }
+    .alert-item .alert-icon { font-size: 1rem; flex-shrink: 0; }
+    .alert-item.warning .alert-icon { color: var(--warning-color); }
+    .alert-item.danger  .alert-icon { color: var(--danger-color); }
+    .alert-item.info    .alert-icon { color: #3b82f6; }
+    .alert-item.success .alert-icon { color: var(--success-color); }
+    .alert-item .alert-text { flex: 1; color: var(--text-primary); }
+    .alert-item .alert-text strong { font-weight: 700; }
+    .alert-link { font-size: 0.75rem; color: var(--dn-accent); font-weight: 600; text-decoration: none; white-space: nowrap; cursor: pointer; }
+    .alert-link:hover { text-decoration: underline; }
+
+    /* Campaign Goal Progress Table (Collapsible) */
+    .campaign-table { width: 100%; font-size: 0.8125rem; }
+    .campaign-table th { background: #f8fafc; font-weight: 600; color: var(--text-secondary); font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.625rem 0.75rem; border-bottom: 1px solid var(--border-color); }
+    .campaign-table td { padding: 0.625rem 0.75rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .campaign-table tr:last-child td { border-bottom: none; }
+    .campaign-table tbody tr { cursor: pointer; transition: background 0.15s; }
+    .campaign-table tbody tr:hover { background: var(--dn-accent-bg); }
+
+    .goal-bar { display: inline-flex; align-items: center; gap: 0.5rem; width: 100%; }
+    .goal-bar-track { flex: 1; height: 8px; background: #f1f5f9; border-radius: 9999px; overflow: hidden; min-width: 80px; }
+    .goal-bar-fill { height: 100%; border-radius: 9999px; transition: width 0.5s ease; }
+    .goal-bar-fill.green { background: linear-gradient(90deg, var(--dn-accent), var(--dn-accent-light)); }
+    .goal-bar-fill.amber { background: linear-gradient(90deg, #d97706, #f59e0b); }
+    .goal-bar-fill.red { background: linear-gradient(90deg, var(--danger-color), #f87171); }
+    .goal-pct { font-size: 0.75rem; font-weight: 700; min-width: 40px; text-align: right; }
+
+    /* Collapsible */
+    .collapse-toggle { cursor: pointer; user-select: none; }
+    .collapse-toggle i.chevron { transition: transform 0.2s; font-size: 0.75rem; margin-left: 0.5rem; }
+    .collapse-toggle.collapsed i.chevron { transform: rotate(-90deg); }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .funnel-grid { grid-template-columns: repeat(2, 1fr); }
+      .mini-stat-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 576px) {
+      body { padding: 1rem; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .funnel-grid { grid-template-columns: 1fr; }
+      .mini-stat-grid { grid-template-columns: 1fr; }
+      .page-header { flex-direction: column; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-hand-holding-dollar me-2" style="color: var(--dn-accent);"></i>Donation Dashboard</h1>
+      <p class="subtitle">Donations, donors, recurring health, and cheque pipeline at a glance</p>
+    </div>
+    <div class="header-actions">
+      <select>
+        <option selected>This Year</option>
+        <option>Last Year</option>
+        <option>This Quarter</option>
+        <option>Last Quarter</option>
+        <option>This Month</option>
+        <option>Last Month</option>
+        <option>Custom Range</option>
+      </select>
+      <select>
+        <option selected>All Campaigns</option>
+        <option>Ramadan 2025</option>
+        <option>Education Drive</option>
+        <option>Emergency Relief</option>
+        <option>Year-End Giving</option>
+        <option>Sponsor a Child</option>
+      </select>
+      <select>
+        <option selected>All Branches</option>
+        <option>Dubai, UAE</option>
+        <option>Mumbai, India</option>
+        <option>Nairobi, Kenya</option>
+        <option>Delhi, India</option>
+        <option>Dhaka, Bangladesh</option>
+      </select>
+      <select>
+        <option selected>USD (Base)</option>
+        <option>Native Currency</option>
+        <option>EUR</option>
+        <option>GBP</option>
+        <option>AED</option>
+      </select>
+      <button class="btn-primary-accent" onclick="alert('Generating donor report...')">
+        <i class="fas fa-file-export me-1"></i> Export Report
+      </button>
+      <button class="btn-outline-accent" onclick="window.print()">
+        <i class="fas fa-print me-1"></i> Print
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Hero Cards (2 rows of 3) -->
+  <div class="stats-grid section-gap">
+    <div class="stat-card">
+      <div class="stat-icon emerald"><i class="fas fa-sack-dollar"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Total Donations YTD</div>
+        <div class="stat-value">$1,245,890</div>
+        <div class="stat-subtitle"><span class="positive">↑ 23% vs last year</span> &middot; 4,378 gifts</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="fas fa-coins"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Average Gift</div>
+        <div class="stat-value">$285</div>
+        <div class="stat-subtitle"><span class="positive">↑ 8% vs last year</span> &middot; median $120</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon indigo"><i class="fas fa-users"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Active Donors</div>
+        <div class="stat-value">2,456</div>
+        <div class="stat-subtitle"><span class="positive">↑ 312 new this year</span></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon purple"><i class="fas fa-handshake"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Donor Retention Rate</div>
+        <div class="stat-value">68%</div>
+        <div class="stat-subtitle"><span class="positive">↑ 5% vs last year</span> &middot; 1,672 retained</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon orange"><i class="fas fa-rotate"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Recurring MRR</div>
+        <div class="stat-value">$45,200/mo</div>
+        <div class="stat-subtitle"><span class="positive">↑ 15%</span> &middot; 487 active schedules</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon amber"><i class="fas fa-file-signature"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Outstanding Pledges</div>
+        <div class="stat-value">$185,400</div>
+        <div class="stat-subtitle"><span class="warning">185 active</span> &middot; 12 overdue</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Donors Table -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-crown me-2" style="color: var(--dn-accent);"></i>Top 10 Donors (This Year)</h3>
+      <span style="font-size: 0.75rem; color: var(--text-secondary);">Click row to view donor profile</span>
+    </div>
+    <div class="dash-card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="donor-table">
+          <thead>
+            <tr>
+              <th>Donor</th>
+              <th style="text-align: center;">Tier</th>
+              <th style="text-align: right;">YTD Given</th>
+              <th style="text-align: center;">Gifts</th>
+              <th style="text-align: center;">Last Gift</th>
+              <th style="width: 160px;">Lifetime Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr onclick="parent.loadContent('crm/contact/contact?mode=read&id=1')">
+              <td><span class="donor-avatar">AR</span> Al Rashid Foundation</td>
+              <td style="text-align: center;"><span class="badge-tier major">Major</span></td>
+              <td class="currency-amount">$125,000</td>
+              <td style="text-align: center;">8</td>
+              <td style="text-align: center;">3 days ago</td>
+              <td>
+                <div class="mini-bar">
+                  <div class="mini-bar-track"><div class="mini-bar-fill" style="width: 100%;"></div></div>
+                  <span style="font-size: 0.75rem; font-weight: 600;">$420K</span>
+                </div>
+              </td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/contact/contact?mode=read&id=2')">
+              <td><span class="donor-avatar">UN</span> UNICEF Partners</td>
+              <td style="text-align: center;"><span class="badge-tier major">Major</span></td>
+              <td class="currency-amount">$85,000</td>
+              <td style="text-align: center;">4</td>
+              <td style="text-align: center;">12 days ago</td>
+              <td>
+                <div class="mini-bar">
+                  <div class="mini-bar-track"><div class="mini-bar-fill" style="width: 78%;"></div></div>
+                  <span style="font-size: 0.75rem; font-weight: 600;">$330K</span>
+                </div>
+              </td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/contact/contact?mode=read&id=3')">
+              <td><span class="donor-avatar">SM</span> Sarah McAllister</td>
+              <td style="text-align: center;"><span class="badge-tier recurring">Recurring</span></td>
+              <td class="currency-amount">$24,000</td>
+              <td style="text-align: center;">12</td>
+              <td style="text-align: center;">2 days ago</td>
+              <td>
+                <div class="mini-bar">
+                  <div class="mini-bar-track"><div class="mini-bar-fill" style="width: 28%;"></div></div>
+                  <span style="font-size: 0.75rem; font-weight: 600;">$118K</span>
+                </div>
+              </td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/contact/contact?mode=read&id=4')">
+              <td><span class="donor-avatar">DC</span> Dubai Cares</td>
+              <td style="text-align: center;"><span class="badge-tier major">Major</span></td>
+              <td class="currency-amount">$50,000</td>
+              <td style="text-align: center;">2</td>
+              <td style="text-align: center;">1 month ago</td>
+              <td>
+                <div class="mini-bar">
+                  <div class="mini-bar-track"><div class="mini-bar-fill" style="width: 60%;"></div></div>
+                  <span style="font-size: 0.75rem; font-weight: 600;">$250K</span>
+                </div>
+              </td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/contact/contact?mode=read&id=5')">
+              <td><span class="donor-avatar">AK</span> Ahmed Khan</td>
+              <td style="text-align: center;"><span class="badge-tier regular">Regular</span></td>
+              <td class="currency-amount">$8,400</td>
+              <td style="text-align: center;">7</td>
+              <td style="text-align: center;">5 days ago</td>
+              <td>
+                <div class="mini-bar">
+                  <div class="mini-bar-track"><div class="mini-bar-fill" style="width: 18%;"></div></div>
+                  <span style="font-size: 0.75rem; font-weight: 600;">$76K</span>
+                </div>
+              </td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/contact/contact?mode=read&id=6')">
+              <td><span class="donor-avatar">RC</span> Reliance Charitable Trust</td>
+              <td style="text-align: center;"><span class="badge-tier major">Major</span></td>
+              <td class="currency-amount">$40,000</td>
+              <td style="text-align: center;">3</td>
+              <td style="text-align: center;">2 weeks ago</td>
+              <td>
+                <div class="mini-bar">
+                  <div class="mini-bar-track"><div class="mini-bar-fill" style="width: 50%;"></div></div>
+                  <span style="font-size: 0.75rem; font-weight: 600;">$210K</span>
+                </div>
+              </td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/contact/contact?mode=read&id=7')">
+              <td><span class="donor-avatar">PJ</span> Priya Joshi</td>
+              <td style="text-align: center;"><span class="badge-tier recurring">Recurring</span></td>
+              <td class="currency-amount">$3,600</td>
+              <td style="text-align: center;">12</td>
+              <td style="text-align: center;">today</td>
+              <td>
+                <div class="mini-bar">
+                  <div class="mini-bar-track"><div class="mini-bar-fill" style="width: 8%;"></div></div>
+                  <span style="font-size: 0.75rem; font-weight: 600;">$32K</span>
+                </div>
+              </td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/contact/contact?mode=read&id=8')">
+              <td><span class="donor-avatar">JO</span> James Okonkwo</td>
+              <td style="text-align: center;"><span class="badge-tier new">New</span></td>
+              <td class="currency-amount">$12,500</td>
+              <td style="text-align: center;">2</td>
+              <td style="text-align: center;">1 week ago</td>
+              <td>
+                <div class="mini-bar">
+                  <div class="mini-bar-track"><div class="mini-bar-fill" style="width: 25%;"></div></div>
+                  <span style="font-size: 0.75rem; font-weight: 600;">$12.5K</span>
+                </div>
+              </td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/contact/contact?mode=read&id=9')">
+              <td><span class="donor-avatar">FZ</span> Fatima Al-Zahra</td>
+              <td style="text-align: center;"><span class="badge-tier regular">Regular</span></td>
+              <td class="currency-amount">$5,200</td>
+              <td style="text-align: center;">9</td>
+              <td style="text-align: center;">4 days ago</td>
+              <td>
+                <div class="mini-bar">
+                  <div class="mini-bar-track"><div class="mini-bar-fill" style="width: 14%;"></div></div>
+                  <span style="font-size: 0.75rem; font-weight: 600;">$58K</span>
+                </div>
+              </td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/contact/contact?mode=read&id=10')">
+              <td><span class="donor-avatar">RV</span> Ravi Venkat</td>
+              <td style="text-align: center;"><span class="badge-tier regular">Regular</span></td>
+              <td class="currency-amount">$4,800</td>
+              <td style="text-align: center;">6</td>
+              <td style="text-align: center;">3 weeks ago</td>
+              <td>
+                <div class="mini-bar">
+                  <div class="mini-bar-track"><div class="mini-bar-fill" style="width: 11%;"></div></div>
+                  <span style="font-size: 0.75rem; font-weight: 600;">$45K</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row 1: Revenue Trend (full width) -->
+  <div class="row g-3 section-gap">
+    <div class="col-12">
+      <div class="dash-card">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-chart-area me-2" style="color: var(--dn-accent);"></i>Donation Revenue Trend</h3>
+          <span style="font-size: 0.75rem; color: var(--text-secondary);">Last 12 months &middot; stacked by payment method</span>
+        </div>
+        <div class="dash-card-body">
+          <div class="chart-placeholder">
+            <i class="fas fa-chart-area"></i>
+            <div><strong>Stacked Area Chart</strong> &mdash; Monthly revenue $ over 12 months</div>
+            <div style="margin-top: 0.5rem;">Stacked by payment method: Online, Cheque, Cash, In-Kind, Recurring (auto-charge)</div>
+            <div style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--dn-accent);">
+              <i class="fas fa-map-pin me-1"></i> Annotations: "Ramadan campaign launched" (Mar spike) &bull; "Year-end giving" (Dec peak)
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row 2: Payment Method donut + Campaign bar -->
+  <div class="row g-3 section-gap">
+    <div class="col-lg-5">
+      <div class="dash-card" style="height: 100%;">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-credit-card me-2" style="color: var(--dn-accent);"></i>By Payment Method</h3>
+        </div>
+        <div class="dash-card-body">
+          <div class="donut-placeholder" style="background: conic-gradient(#3b82f6 0deg 162deg, #d97706 162deg 234deg, #059669 234deg 270deg, #a855f7 270deg 295deg, #4f46e5 295deg 360deg);">
+            <div class="donut-center" style="width: 90px; height: 90px; border-radius: 50%; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+              $1.25M
+              <small>4,378 gifts</small>
+            </div>
+          </div>
+          <ul class="legend-list">
+            <li><span class="legend-dot" style="background: #3b82f6;"></span> Online: $562K (45%)</li>
+            <li><span class="legend-dot" style="background: #d97706;"></span> Cheque: $250K (20%)</li>
+            <li><span class="legend-dot" style="background: #059669;"></span> Cash: $125K (10%)</li>
+            <li><span class="legend-dot" style="background: #a855f7;"></span> In-Kind: $87K (7%)</li>
+            <li><span class="legend-dot" style="background: #4f46e5;"></span> Recurring: $221K (18%)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <div class="dash-card" style="height: 100%;">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-bullhorn me-2" style="color: var(--dn-accent);"></i>Donations by Campaign</h3>
+          <span style="font-size: 0.75rem; color: var(--text-secondary);">Top 6 active campaigns</span>
+        </div>
+        <div class="dash-card-body">
+          <div class="h-bar-row">
+            <span class="h-bar-label">Ramadan 2025</span>
+            <div class="h-bar-track"><div class="h-bar-fill" style="width: 100%; background: var(--dn-accent);">$385K</div></div>
+          </div>
+          <div class="h-bar-row">
+            <span class="h-bar-label">Year-End Giving</span>
+            <div class="h-bar-track"><div class="h-bar-fill" style="width: 78%; background: var(--dn-accent-light);">$298K</div></div>
+          </div>
+          <div class="h-bar-row">
+            <span class="h-bar-label">Sponsor a Child</span>
+            <div class="h-bar-track"><div class="h-bar-fill" style="width: 56%; background: #3b82f6;">$215K</div></div>
+          </div>
+          <div class="h-bar-row">
+            <span class="h-bar-label">Education Drive</span>
+            <div class="h-bar-track"><div class="h-bar-fill" style="width: 42%; background: #4f46e5;">$165K</div></div>
+          </div>
+          <div class="h-bar-row">
+            <span class="h-bar-label">Emergency Relief</span>
+            <div class="h-bar-track"><div class="h-bar-fill" style="width: 28%; background: #d97706;">$108K</div></div>
+          </div>
+          <div class="h-bar-row">
+            <span class="h-bar-label">Clean Water</span>
+            <div class="h-bar-track"><div class="h-bar-fill" style="width: 19%; background: #06b6d4;">$74K</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cheque Pipeline Funnel -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-money-check-dollar me-2" style="color: var(--dn-accent);"></i>Cheque Pipeline</h3>
+      <a class="alert-link" onclick="parent.loadContent('crm/donation/chequedonation')">View All Cheques <i class="fas fa-arrow-right ms-1"></i></a>
+    </div>
+    <div class="dash-card-body">
+      <div class="funnel-grid">
+        <div class="funnel-step received">
+          <div class="step-label">Received</div>
+          <div class="step-value">42</div>
+          <div class="step-amount">$285,400</div>
+        </div>
+        <div class="funnel-step deposited">
+          <div class="step-label">Deposited</div>
+          <div class="step-value">28</div>
+          <div class="step-amount">$192,300</div>
+        </div>
+        <div class="funnel-step cleared">
+          <div class="step-label">Cleared</div>
+          <div class="step-value">156</div>
+          <div class="step-amount">$1,245,600</div>
+        </div>
+        <div class="funnel-step bounced">
+          <div class="step-label">Bounced</div>
+          <div class="step-value">3</div>
+          <div class="step-amount">$8,400</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recurring Health + Recent Activity Row -->
+  <div class="row g-3 section-gap">
+    <!-- Recurring Donation Health -->
+    <div class="col-lg-6">
+      <div class="dash-card" style="height: 100%;">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-rotate me-2" style="color: var(--dn-accent);"></i>Recurring Donation Health</h3>
+          <a class="alert-link" onclick="parent.loadContent('crm/donation/recurringdonationschedule')">View Schedules <i class="fas fa-arrow-right ms-1"></i></a>
+        </div>
+        <div class="dash-card-body">
+          <div class="mini-stat-grid">
+            <div class="mini-stat healthy">
+              <div class="ms-label">On Track</div>
+              <div class="ms-value">425</div>
+              <div class="ms-amount">$38,200/mo</div>
+            </div>
+            <div class="mini-stat behind">
+              <div class="ms-label">Behind</div>
+              <div class="ms-value">38</div>
+              <div class="ms-amount">$4,100/mo</div>
+            </div>
+            <div class="mini-stat failed">
+              <div class="ms-label">Failed</div>
+              <div class="ms-value">14</div>
+              <div class="ms-amount">$1,800/mo</div>
+            </div>
+            <div class="mini-stat cancelled">
+              <div class="ms-label">Cancelled (30d)</div>
+              <div class="ms-value">10</div>
+              <div class="ms-amount">$1,100/mo lost</div>
+            </div>
+          </div>
+          <div style="margin-top: 1rem; padding: 0.75rem; background: #f8fafc; border-radius: 0.5rem; font-size: 0.8125rem; color: var(--text-secondary);">
+            <i class="fas fa-info-circle me-1" style="color: #3b82f6;"></i> <strong style="color: var(--text-primary);">Retry queue:</strong> 14 failed charges scheduled for retry within 24 hours.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Donations Feed -->
+    <div class="col-lg-6">
+      <div class="dash-card" style="height: 100%;">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-clock-rotate-left me-2" style="color: var(--dn-accent);"></i>Recent Donations</h3>
+          <a class="alert-link" onclick="parent.loadContent('crm/donation/globaldonation')">View All <i class="fas fa-arrow-right ms-1"></i></a>
+        </div>
+        <div class="dash-card-body">
+          <div class="activity-feed">
+            <div class="activity-row">
+              <div class="activity-icon online"><i class="fas fa-globe"></i></div>
+              <div class="activity-content">
+                <div class="activity-line1">Sarah McAllister &middot; <span style="color: var(--text-secondary);">Ramadan 2025</span></div>
+                <div class="activity-line2">Online &middot; just now</div>
+              </div>
+              <div class="activity-amount">$200</div>
+            </div>
+            <div class="activity-row">
+              <div class="activity-icon recurring"><i class="fas fa-rotate"></i></div>
+              <div class="activity-content">
+                <div class="activity-line1">Priya Joshi &middot; <span style="color: var(--text-secondary);">Sponsor a Child</span></div>
+                <div class="activity-line2">Recurring (auto) &middot; 2 hours ago</div>
+              </div>
+              <div class="activity-amount">$50</div>
+            </div>
+            <div class="activity-row">
+              <div class="activity-icon cheque"><i class="fas fa-money-check"></i></div>
+              <div class="activity-content">
+                <div class="activity-line1">Al Rashid Foundation &middot; <span style="color: var(--text-secondary);">Year-End Giving</span></div>
+                <div class="activity-line2">Cheque (deposited) &middot; 3 hours ago</div>
+              </div>
+              <div class="activity-amount">$25,000</div>
+            </div>
+            <div class="activity-row">
+              <div class="activity-icon online"><i class="fas fa-globe"></i></div>
+              <div class="activity-content">
+                <div class="activity-line1">Ahmed Khan &middot; <span style="color: var(--text-secondary);">Education Drive</span></div>
+                <div class="activity-line2">Online (Stripe) &middot; 5 hours ago</div>
+              </div>
+              <div class="activity-amount">$120</div>
+            </div>
+            <div class="activity-row">
+              <div class="activity-icon cash"><i class="fas fa-money-bill"></i></div>
+              <div class="activity-content">
+                <div class="activity-line1">Anonymous &middot; <span style="color: var(--text-secondary);">General</span></div>
+                <div class="activity-line2">Cash &middot; 6 hours ago</div>
+              </div>
+              <div class="activity-amount">$75</div>
+            </div>
+            <div class="activity-row">
+              <div class="activity-icon inkind"><i class="fas fa-gift"></i></div>
+              <div class="activity-content">
+                <div class="activity-line1">Reliance Charitable Trust &middot; <span style="color: var(--text-secondary);">Emergency Relief</span></div>
+                <div class="activity-line2">In-Kind (medical supplies) &middot; 1 day ago</div>
+              </div>
+              <div class="activity-amount">$8,500</div>
+            </div>
+            <div class="activity-row">
+              <div class="activity-icon online"><i class="fas fa-globe"></i></div>
+              <div class="activity-content">
+                <div class="activity-line1">James Okonkwo &middot; <span style="color: var(--text-secondary);">Clean Water</span></div>
+                <div class="activity-line2">Online (PayPal) &middot; 1 day ago</div>
+              </div>
+              <div class="activity-amount">$500</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pledge Health + Refund Watchlist Row -->
+  <div class="row g-3 section-gap">
+    <!-- Pledge Fulfillment Health -->
+    <div class="col-lg-6">
+      <div class="dash-card" style="height: 100%;">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-file-signature me-2" style="color: var(--dn-accent);"></i>Pledge Fulfillment Health</h3>
+          <a class="alert-link" onclick="parent.loadContent('crm/donation/pledge')">View Pledges <i class="fas fa-arrow-right ms-1"></i></a>
+        </div>
+        <div class="dash-card-body">
+          <div class="mini-stat-grid">
+            <div class="mini-stat healthy">
+              <div class="ms-label">On Track</div>
+              <div class="ms-value">142</div>
+              <div class="ms-amount">$98,500 due</div>
+            </div>
+            <div class="mini-stat behind">
+              <div class="ms-label">Behind</div>
+              <div class="ms-value">31</div>
+              <div class="ms-amount">$48,200 outstanding</div>
+            </div>
+            <div class="mini-stat failed">
+              <div class="ms-label">Overdue</div>
+              <div class="ms-value">12</div>
+              <div class="ms-amount">$38,700 overdue</div>
+            </div>
+            <div class="mini-stat cancelled">
+              <div class="ms-label">Fulfilled (YTD)</div>
+              <div class="ms-value" style="color: var(--success-color);">87</div>
+              <div class="ms-amount">$215,400 collected</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Refund / Risk Watchlist -->
+    <div class="col-lg-6">
+      <div class="dash-card" style="height: 100%;">
+        <div class="dash-card-header">
+          <h3><i class="fas fa-arrows-rotate me-2" style="color: var(--dn-accent);"></i>Refund &amp; Risk Watchlist</h3>
+          <a class="alert-link" onclick="parent.loadContent('crm/donation/refund')">View Refunds <i class="fas fa-arrow-right ms-1"></i></a>
+        </div>
+        <div class="dash-card-body">
+          <div class="mini-stat-grid">
+            <div class="mini-stat behind">
+              <div class="ms-label">Pending Approval</div>
+              <div class="ms-value">5</div>
+              <div class="ms-amount">$3,200</div>
+            </div>
+            <div class="mini-stat failed">
+              <div class="ms-label">In Progress</div>
+              <div class="ms-value">2</div>
+              <div class="ms-amount">$1,800</div>
+            </div>
+            <div class="mini-stat healthy">
+              <div class="ms-label">Refunded (YTD)</div>
+              <div class="ms-value">23</div>
+              <div class="ms-amount">$8,450</div>
+            </div>
+            <div class="mini-stat cancelled">
+              <div class="ms-label">Disputes Open</div>
+              <div class="ms-value" style="color: var(--danger-color);">3</div>
+              <div class="ms-amount">Reconciliation</div>
+            </div>
+          </div>
+          <div style="margin-top: 1rem; padding: 0.75rem; background: #fef2f2; border: 1px solid #fecaca; border-radius: 0.5rem; font-size: 0.8125rem;">
+            <i class="fas fa-exclamation-triangle me-1" style="color: var(--danger-color);"></i> <strong>3 unmatched gateway transactions</strong> need reconciliation review.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alerts & Actions -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header">
+      <h3><i class="fas fa-bell me-2" style="color: var(--dn-accent);"></i>Alerts &amp; Actions</h3>
+    </div>
+    <div class="dash-card-body">
+      <div class="alert-item warning">
+        <span class="alert-icon"><i class="fas fa-exclamation-triangle"></i></span>
+        <span class="alert-text"><strong>14 recurring charges failed</strong> &mdash; queued for retry; 4 require manual update (expired cards)</span>
+        <a class="alert-link" onclick="parent.loadContent('crm/donation/recurringdonationschedule')">Resolve <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+      <div class="alert-item danger">
+        <span class="alert-icon"><i class="fas fa-circle-exclamation"></i></span>
+        <span class="alert-text"><strong>12 pledges overdue</strong> totaling <strong>$38,700</strong> &mdash; oldest 45 days past due</span>
+        <a class="alert-link" onclick="parent.loadContent('crm/donation/pledge')">Send Reminders <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+      <div class="alert-item warning">
+        <span class="alert-icon"><i class="fas fa-money-check-dollar"></i></span>
+        <span class="alert-text"><strong>3 cheques bounced</strong> &mdash; oldest CHQ-0421 (7 days ago, $4,500)</span>
+        <a class="alert-link" onclick="parent.loadContent('crm/donation/chequedonation')">Investigate <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+      <div class="alert-item info">
+        <span class="alert-icon"><i class="fas fa-info-circle"></i></span>
+        <span class="alert-text"><strong>3 unmatched gateway transactions</strong> need manual reconciliation &mdash; total $1,250</span>
+        <a class="alert-link" onclick="parent.loadContent('crm/donation/paymentreconciliation')">Reconcile <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+      <div class="alert-item info">
+        <span class="alert-icon"><i class="fas fa-circle-up"></i></span>
+        <span class="alert-text"><strong>Anonymous donations spiked 18%</strong> this month &mdash; consider follow-up campaign</span>
+        <a class="alert-link" onclick="parent.loadContent('crm/donation/globaldonation?isAnonymous=true')">View <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+      <div class="alert-item success">
+        <span class="alert-icon"><i class="fas fa-circle-check"></i></span>
+        <span class="alert-text"><strong>Year-End Giving campaign at 78% of goal</strong> &mdash; on track to exceed target by Dec 31</span>
+        <a class="alert-link" onclick="parent.loadContent('crm/organization/campaign')">View Campaign <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Campaign Goal Progress (Collapsible) -->
+  <div class="dash-card section-gap">
+    <div class="dash-card-header collapse-toggle" onclick="toggleSection(this)">
+      <h3><i class="fas fa-bullseye me-2" style="color: var(--dn-accent);"></i>Campaign Goal Progress <i class="fas fa-chevron-down chevron"></i></h3>
+      <span style="font-size: 0.75rem; color: var(--text-secondary);">Click row to view campaign detail</span>
+    </div>
+    <div class="dash-card-body section-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="campaign-table">
+          <thead>
+            <tr>
+              <th>Campaign</th>
+              <th style="text-align: right;">Goal</th>
+              <th style="text-align: right;">Raised</th>
+              <th style="text-align: center;">Donors</th>
+              <th style="width: 220px;">Progress</th>
+              <th style="text-align: center;">End Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr onclick="parent.loadContent('crm/organization/campaign')">
+              <td><strong>Ramadan 2025</strong></td>
+              <td class="currency-amount">$500,000</td>
+              <td class="currency-amount">$385,200</td>
+              <td style="text-align: center;">1,245</td>
+              <td>
+                <div class="goal-bar">
+                  <div class="goal-bar-track"><div class="goal-bar-fill green" style="width: 77%;"></div></div>
+                  <span class="goal-pct" style="color: var(--success-color);">77%</span>
+                </div>
+              </td>
+              <td style="text-align: center;">Apr 30, 2025</td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/organization/campaign')">
+              <td><strong>Year-End Giving</strong></td>
+              <td class="currency-amount">$380,000</td>
+              <td class="currency-amount">$298,400</td>
+              <td style="text-align: center;">892</td>
+              <td>
+                <div class="goal-bar">
+                  <div class="goal-bar-track"><div class="goal-bar-fill green" style="width: 78%;"></div></div>
+                  <span class="goal-pct" style="color: var(--success-color);">78%</span>
+                </div>
+              </td>
+              <td style="text-align: center;">Dec 31, 2025</td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/organization/campaign')">
+              <td><strong>Sponsor a Child</strong></td>
+              <td class="currency-amount">$300,000</td>
+              <td class="currency-amount">$215,000</td>
+              <td style="text-align: center;">487</td>
+              <td>
+                <div class="goal-bar">
+                  <div class="goal-bar-track"><div class="goal-bar-fill green" style="width: 72%;"></div></div>
+                  <span class="goal-pct" style="color: var(--success-color);">72%</span>
+                </div>
+              </td>
+              <td style="text-align: center;">Ongoing</td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/organization/campaign')">
+              <td><strong>Education Drive</strong></td>
+              <td class="currency-amount">$250,000</td>
+              <td class="currency-amount">$165,400</td>
+              <td style="text-align: center;">623</td>
+              <td>
+                <div class="goal-bar">
+                  <div class="goal-bar-track"><div class="goal-bar-fill amber" style="width: 66%;"></div></div>
+                  <span class="goal-pct" style="color: var(--warning-color);">66%</span>
+                </div>
+              </td>
+              <td style="text-align: center;">Aug 31, 2025</td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/organization/campaign')">
+              <td><strong>Emergency Relief</strong></td>
+              <td class="currency-amount">$150,000</td>
+              <td class="currency-amount">$108,200</td>
+              <td style="text-align: center;">412</td>
+              <td>
+                <div class="goal-bar">
+                  <div class="goal-bar-track"><div class="goal-bar-fill green" style="width: 72%;"></div></div>
+                  <span class="goal-pct" style="color: var(--success-color);">72%</span>
+                </div>
+              </td>
+              <td style="text-align: center;">As needed</td>
+            </tr>
+            <tr onclick="parent.loadContent('crm/organization/campaign')">
+              <td><strong>Clean Water Phase 2</strong></td>
+              <td class="currency-amount">$200,000</td>
+              <td class="currency-amount">$74,300</td>
+              <td style="text-align: center;">189</td>
+              <td>
+                <div class="goal-bar">
+                  <div class="goal-bar-track"><div class="goal-bar-fill red" style="width: 37%;"></div></div>
+                  <span class="goal-pct" style="color: var(--danger-color);">37%</span>
+                </div>
+              </td>
+              <td style="text-align: center;">Sep 30, 2025</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="padding: 0.875rem 1.25rem; text-align: right; border-top: 1px solid var(--border-color);">
+        <button class="btn-primary-accent" onclick="parent.loadContent('reports/html-report-viewer')">
+          <i class="fas fa-file-pdf me-1"></i> Generate Donor Impact Report
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleSection(el) {
+      el.classList.toggle('collapsed');
+      const body = el.closest('.dash-card').querySelector('.section-body');
+      body.style.display = body.style.display === 'none' ? 'block' : 'none';
+    }
+  </script>
+
+</body>
+
+</html>

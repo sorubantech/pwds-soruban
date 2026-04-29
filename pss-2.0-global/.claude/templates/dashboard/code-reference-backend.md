@@ -88,7 +88,7 @@ Functions MAY declare additional optional parameters with DEFAULTs (the handler 
 
 | Table | Key columns | Purpose |
 |-------|-------------|---------|
-| `sett.Dashboards` | DashboardId, DashboardCode, DashboardName, ModuleId, IsSystem, IsActive, CompanyId | One row per dashboard. **First MENU_DASHBOARD adds**: MenuId, MenuUrl, OrderBy, IsMenuVisible |
+| `sett.Dashboards` | DashboardId, DashboardCode, DashboardName, ModuleId, IsSystem, IsActive, CompanyId, MenuId | One row per dashboard. `MenuId` (FK → `auth.Menus`, nullable) — NULL = STATIC_DASHBOARD; NOT NULL = MENU_DASHBOARD. Slug, sort, visibility all live on the linked Menu row + RoleCapability. NO MenuUrl/OrderBy/IsMenuVisible columns on Dashboard. |
 | `sett.DashboardLayouts` | DashboardLayoutId, DashboardId, LayoutConfig (JSON), ConfiguredWidget (JSON) | One row per dashboard. `LayoutConfig` is react-grid-layout breakpoints; `ConfiguredWidget` is per-instance config (instanceId → widgetId/title/params) |
 | `sett.Widgets` | WidgetId, WidgetName, WidgetTypeId, **DefaultQuery**, **DefaultParameters** (JSON string), **StoredProcedureName**, MinHeight, MinWidth, ModuleId, OrderBy, IsSystem | One row per logical widget. The 3 driver columns choose path A/B/C |
 | `sett.WidgetTypes` | WidgetTypeId, WidgetTypeName, **WidgetTypeCode**, **ComponentPath**, Description | Catalog of available renderers — `ComponentPath` is the FE registry key. New types are rare |
@@ -221,6 +221,343 @@ The corresponding Widget seed sets `StoredProcedureName='case.case_dashboard_ope
 
 ---
 
+## Path-A Recipe Library — copy-paste templates per widget kind
+
+> Distilled from the 17-function Case Management Dashboard (`DatabaseScripts/Functions/case/fn_case_dashboard_*.sql`). Every recipe conforms to the 5-arg / 4-return contract. Adapt names + columns; keep the structural patterns verbatim.
+
+### Filter extraction (top-of-function — same for every recipe)
+
+```sql
+DECLARE
+    v_date_from        DATE    := NULLIF(p_filter_json ->> 'dateFrom', '')::DATE;
+    v_date_to          DATE    := NULLIF(p_filter_json ->> 'dateTo',   '')::DATE;
+    v_program_id       INTEGER := NULLIF(p_filter_json ->> 'programId', '')::INT;
+    v_branch_id        INTEGER := NULLIF(p_filter_json ->> 'branchId',  '')::INT;
+    v_assigned_staff_id INTEGER := NULLIF(p_filter_json ->> 'assignedStaffId', '')::INT;
+    result_json jsonb;
+    meta_json   jsonb;
+BEGIN
+    -- Defaults applied AFTER declarations
+    IF v_date_from IS NULL THEN v_date_from := DATE_TRUNC('year', CURRENT_DATE)::DATE; END IF;
+    IF v_date_to   IS NULL THEN v_date_to   := CURRENT_DATE; END IF;
+```
+
+**Why `NULLIF(... , '')`:** prevents empty-string filter values from casting to `0` (which would silently include `programId=0`, etc.). Always use this idiom — never bare `(p_filter_json->>'key')::int`.
+
+### Tenant scoping (every query — never omit)
+
+```sql
+WHERE x."IsDeleted" = false
+  AND (p_company_id IS NULL OR x."CompanyId" = p_company_id)   -- ← MANDATORY
+  AND (v_branch_id  IS NULL OR x."BranchId"   = v_branch_id)
+  AND (v_program_id IS NULL OR x."ProgramId"  = v_program_id)
+```
+
+`p_company_id IS NULL` allows super-admins (no tenant) to see all companies; otherwise the row's `CompanyId` must match. Apply on EVERY tenant-scoped table touched, including transitive joins.
+
+### Recipe 1 — KPI function (single-number aggregate)
+
+```sql
+-- Compute the headline value
+SELECT COUNT(DISTINCT b."BeneficiaryId")::INTEGER INTO v_total_count
+FROM "case"."Beneficiaries" b
+WHERE b."IsDeleted" = false
+  AND b."EnrollmentDate" BETWEEN v_date_from AND v_date_to
+  AND (p_company_id IS NULL OR b."CompanyId" = p_company_id)
+  AND (v_branch_id  IS NULL OR b."BranchId"  = v_branch_id);
+
+-- Compute the delta on its OWN date window (typically YTD), not the filter window
+SELECT COUNT(DISTINCT b."BeneficiaryId")::INTEGER INTO v_delta_this_year
+FROM "case"."Beneficiaries" b
+WHERE b."IsDeleted" = false
+  AND b."EnrollmentDate" >= DATE_TRUNC('year', CURRENT_DATE)::DATE
+  AND b."EnrollmentDate" <= CURRENT_DATE
+  AND (p_company_id IS NULL OR b."CompanyId" = p_company_id);
+
+-- Build the FE payload — keys MUST match StatusWidgetType1 contract
+SELECT json_build_object(
+    'value',      v_total_count,
+    'formatted',  TO_CHAR(v_total_count, 'FM999,999,999'),
+    'subtitle',   '↑ ' || v_delta_this_year || ' new this year',
+    'deltaLabel', v_delta_this_year::text || ' new this year',
+    'deltaColor', 'positive',                    -- 'positive' | 'warning' | 'neutral'
+    'icon',       'users-light',                 -- bare Phosphor name (no ph: prefix)
+    'color',      'teal'                         -- Tailwind color name
+) INTO result_json;
+
+IF result_json IS NULL THEN result_json := '{}'::json; END IF;
+
+meta_json := jsonb_build_object('generatedAt', NOW(), 'filtersApplied', p_filter_json);
+
+-- KPIs do NOT paginate — return -1 for total/filtered counts
+RETURN QUERY SELECT result_json::text, meta_json::text, -1, -1;
+```
+
+**Rules:**
+- Two SELECTs (value + delta) — delta uses its OWN date window (e.g., YTD), not `v_date_from..v_date_to`.
+- Format with `TO_CHAR(..., 'FM999,999,999')` for thousands separators (the `FM` modifier strips leading whitespace).
+- Use `deltaColor: 'positive'` for upward improvement, `'warning'` for trends going the wrong way, `'neutral'` for flat. Flip direction for KPIs where lower = better (fewer overdue cases = `positive`).
+- Always end with `RETURN QUERY SELECT ..., -1, -1;` for KPIs (signals "not paginated").
+
+### Recipe 2 — Donut/Pie chart function (bucketed segments)
+
+```sql
+WITH age_calc AS (
+    SELECT CASE WHEN b."DateOfBirth" IS NOT NULL
+                THEN EXTRACT(YEAR FROM AGE(CURRENT_DATE, b."DateOfBirth"))::INTEGER
+                ELSE b."ApproximateAge" END AS age
+    FROM "case"."Beneficiaries" b
+    WHERE b."IsDeleted" = false
+      AND (p_company_id IS NULL OR b."CompanyId" = p_company_id)
+      AND b."EnrollmentDate" BETWEEN v_date_from AND v_date_to
+),
+bucketed AS (
+    SELECT
+        CASE
+            WHEN age BETWEEN 0 AND 5   THEN '0-5'
+            WHEN age BETWEEN 6 AND 12  THEN '6-12'
+            WHEN age BETWEEN 13 AND 17 THEN '13-17'
+            WHEN age BETWEEN 18 AND 25 THEN '18-25'
+            WHEN age BETWEEN 26 AND 35 THEN '26-35'
+            ELSE '35+'
+        END AS bucket,
+        CASE
+            WHEN age BETWEEN 0 AND 5   THEN 1
+            WHEN age BETWEEN 6 AND 12  THEN 2
+            WHEN age BETWEEN 13 AND 17 THEN 3
+            WHEN age BETWEEN 18 AND 25 THEN 4
+            WHEN age BETWEEN 26 AND 35 THEN 5
+            ELSE 6
+        END AS sort_ord,
+        CASE
+            WHEN age BETWEEN 0 AND 5   THEN '#06b6d4'   -- Cyan-500
+            WHEN age BETWEEN 6 AND 12  THEN '#3b82f6'   -- Blue-500
+            WHEN age BETWEEN 13 AND 17 THEN '#8b5cf6'   -- Purple-500
+            WHEN age BETWEEN 18 AND 25 THEN '#10b981'   -- Emerald-500
+            WHEN age BETWEEN 26 AND 35 THEN '#f59e0b'   -- Amber-500
+            ELSE '#ef4444'                              -- Red-500
+        END AS color
+    FROM age_calc WHERE age IS NOT NULL
+),
+agg AS (
+    SELECT bucket, sort_ord, color, COUNT(*) AS cnt
+    FROM bucketed GROUP BY bucket, sort_ord, color
+)
+SELECT json_build_object(
+    'total', (SELECT SUM(cnt)::int FROM agg),
+    'segments', COALESCE(
+        json_agg(json_build_object(
+            'label', a.bucket,
+            'value', a.cnt,
+            'pct',   CASE WHEN (SELECT SUM(cnt) FROM agg) > 0
+                          THEN ROUND(a.cnt::NUMERIC / (SELECT SUM(cnt) FROM agg)::NUMERIC * 100, 1)
+                          ELSE 0 END,
+            'color', a.color
+        ) ORDER BY a.sort_ord),       -- ← order by sort_ord, NOT by count
+        '[]'::json
+    )
+) INTO result_json
+FROM agg a;
+```
+
+**Rules:**
+- 3-CTE stack: `compute → bucket+order+color → aggregate`. Keeps each layer single-purpose; easier to debug than a monolithic query.
+- Hex colors are inline in the SQL (the FE consumes them verbatim — no Tailwind translation server-side).
+- Order segments by a dedicated `sort_ord` column, NEVER by `cnt`. Bucket order must be stable across filter changes.
+- Wrap `json_agg(...)` with `COALESCE(..., '[]'::json)` — empty result sets must yield `[]`, not `null`.
+
+### Recipe 3 — Multi-row table function (FilterTableWidget / NormalTableWidget)
+
+```sql
+WITH enrolled_counts AS (
+    SELECT e."ProgramId", COUNT(DISTINCT e."BeneficiaryId") AS enrolled_count
+    FROM "case"."BeneficiaryProgramEnrollments" e
+    INNER JOIN "case"."Beneficiaries" b ON b."BeneficiaryId" = e."BeneficiaryId"
+    WHERE e."IsDeleted" = false AND b."IsDeleted" = false
+      AND e."EnrolledOn" BETWEEN v_date_from AND v_date_to
+      AND (v_branch_id IS NULL OR b."BranchId" = v_branch_id)
+    GROUP BY e."ProgramId"
+),
+case_counts AS (...),       -- one CTE per aggregate dimension
+outcome_rates AS (...),
+program_rows AS (
+    SELECT
+        p."ProgramId" AS program_id,
+        p."ProgramName" AS program_name,
+        COALESCE(p."IconEmoji", '📋') AS icon,
+        COALESCE(ec.enrolled_count, 0) AS beneficiaries,
+        COALESCE(p."MaximumCapacity", 0) AS capacity,
+        COALESCE(cc.open_cases, 0) AS cases_open,
+        COALESCE(ors.outcome_rate, 0) AS outcome_rate,
+        -- Status badge logic (keep CASE blocks here, NOT in the final SELECT)
+        CASE
+            WHEN COALESCE(ors.outcome_rate, 0) >= 85 THEN 'green'
+            WHEN COALESCE(ors.outcome_rate, 0) >= 70 THEN 'yellow'
+            ELSE 'red'
+        END AS outcome_color,
+        CASE
+            WHEN COALESCE(ors.outcome_rate, 0) >= 80 THEN 'On Track'
+            WHEN COALESCE(ors.outcome_rate, 0) BETWEEN 70 AND 79.9 THEN 'Needs Attention'
+            ELSE 'Below Target'
+        END AS status_label
+    FROM "case"."Programs" p
+    LEFT JOIN enrolled_counts ec  ON ec.ProgramId  = p."ProgramId"
+    LEFT JOIN case_counts     cc  ON cc.ProgramId  = p."ProgramId"
+    LEFT JOIN outcome_rates   ors ON ors.ProgramId = p."ProgramId"
+    WHERE p."IsDeleted" = false
+      AND (p_company_id IS NULL OR p."CompanyId" = p_company_id)
+)
+SELECT json_build_object(
+    'rows', COALESCE(
+        json_agg(json_build_object(
+            'programId',     pr.program_id,
+            'programName',   pr.program_name,
+            'icon',          pr.icon,
+            'beneficiaries', pr.beneficiaries,
+            'capacity',      pr.capacity,
+            'casesOpen',     pr.cases_open,
+            'outcomeRate',   pr.outcome_rate,
+            'outcomeColor',  pr.outcome_color,
+            'status',        pr.status_label
+        ) ORDER BY pr.program_name),    -- ← stable column, NOT a computed measure
+        '[]'::json
+    )
+) INTO result_json
+FROM program_rows pr;
+```
+
+**Rules:**
+- CTE order: aggregates first (`enrolled_counts`, `case_counts`, `outcome_rates`), then the join (`program_rows`), then the final JSON SELECT. Each layer is single-responsibility.
+- Use `FILTER (WHERE ...)` clauses for conditional aggregation: `COUNT(*) FILTER (WHERE m."MeasurementText" IS NOT NULL)` instead of `SUM(CASE ... END)`. Cleaner Postgres idiom.
+- All status-badge / color / label CASE expressions live INSIDE `program_rows`, not in the outer SELECT. Easier to read and reuse.
+- `COALESCE` every dimension lookup to a sensible default (`COALESCE(p."IconEmoji", '📋')`, `COALESCE(ec.enrolled_count, 0)`).
+- Order by a stable column (`program_name`), not by a computed measure — measures jump on filter change and confuse users.
+
+### Recipe 4 — Alert/Rules-Engine function (multi-rule list)
+
+```sql
+DECLARE
+    v_alerts        jsonb := '[]'::jsonb;
+    v_overdue_count int   := 0;
+    v_oldest_case   text  := NULL;
+BEGIN
+    -- ============ Rule 1 — overdue follow-ups ============
+    SELECT COUNT(*), MAX(c."CaseCode")
+      INTO v_overdue_count, v_oldest_case
+    FROM "case"."Cases" c
+    WHERE c."IsDeleted" = false
+      AND c."FollowUpDate" < CURRENT_DATE
+      AND (p_company_id IS NULL OR c."CompanyId" = p_company_id);
+
+    IF v_overdue_count > 0 THEN
+        v_alerts := v_alerts || jsonb_build_array(
+            jsonb_build_object(
+                'severity', 'warning',                              -- warning | info | success
+                'iconCode', 'clock-countdown-light',                -- bare Phosphor name
+                'message',  '<strong>' || v_overdue_count || '</strong> overdue follow-up(s) — Oldest: '
+                            || COALESCE(v_oldest_case, 'N/A'),
+                'link', jsonb_build_object(
+                    'label', 'View Overdue Cases',
+                    'route', '/crm/casemanagement/caselist',
+                    'args',  jsonb_build_object('overdue', 'true')
+                )
+            )
+        );
+    END IF;
+
+    -- ============ Rule 2, 3, 4... follow same shape ============
+    -- (declare counters, run the check, IF triggered → append jsonb_build_object)
+
+    -- Hard cap to 10 (UI-side scrolling beyond this is noise)
+    SELECT json_build_object(
+        'alerts', COALESCE(
+            (SELECT json_agg(elem)
+             FROM (SELECT elem FROM jsonb_array_elements(v_alerts) AS elem LIMIT 10) sub),
+            '[]'::json)
+    ) INTO result_json;
+
+    IF result_json IS NULL THEN result_json := '{"alerts":[]}'::json; END IF;
+
+    meta_json := jsonb_build_object(
+        'generatedAt', NOW(),
+        'alertCount', jsonb_array_length(v_alerts),     -- handy for UI badge counts
+        'filtersApplied', p_filter_json
+    );
+
+    RETURN QUERY SELECT result_json::text, meta_json::text, -1, -1;
+```
+
+**Rules:**
+- Initialize `v_alerts JSONB := '[]'::jsonb` — never `NULL`; concatenation must always succeed.
+- Append with `v_alerts := v_alerts || jsonb_build_array(jsonb_build_object(...))`. Each rule independently decides whether to append.
+- Severity is a closed enum: `warning | info | success`. The FE has style maps for these three only — invent new ones at your peril.
+- Allow `<strong>` and `<em>` in messages (sanitized FE-side); everything else is HTML-escaped. Use `<strong>` to draw the eye to numbers.
+- Hard-cap output to 10 alerts (LIMIT in the final aggregation). More is noise — surface a summary alert instead.
+- Include `alertCount` in metadata so the UI can show a badge without re-counting.
+
+---
+
+## Anti-patterns — these WILL fail review
+
+### SQL anti-patterns
+
+```sql
+-- ❌ Missing tenant scope
+SELECT COUNT(*) FROM "case"."Cases" WHERE "IsDeleted" = false;
+-- ✅ Always include
+... AND (p_company_id IS NULL OR "CompanyId" = p_company_id);
+
+-- ❌ SQL Server syntax (will fail to compile in Postgres)
+CREATE PROCEDURE dbo.myproc @param INT AS SELECT * FROM [Table];
+-- ✅ Postgres
+CREATE OR REPLACE FUNCTION "schema".myfunc(p_param int) RETURNS TABLE(...) LANGUAGE plpgsql AS $$ ... $$;
+
+-- ❌ Bare cast without NULLIF (empty string → 0 → wrong scope)
+v_program_id INTEGER := (p_filter_json ->> 'programId')::INT;
+-- ✅ NULLIF guards empty string
+v_program_id INTEGER := NULLIF(p_filter_json ->> 'programId', '')::INT;
+
+-- ❌ Hardcoded "demo" values in SQL
+SELECT json_build_object('outcomeRate', 85);
+-- ✅ Computed from real data
+SELECT ROUND(...) INTO v_outcome_rate; ... json_build_object('outcomeRate', v_outcome_rate);
+
+-- ❌ Using p_page/p_page_size in a KPI (KPIs are single-row aggregates)
+LIMIT p_page_size OFFSET p_page * p_page_size;
+-- ✅ KPIs return -1, -1 for total/filtered counts
+RETURN QUERY SELECT result_json::text, meta_json::text, -1, -1;
+
+-- ❌ Ordering chart segments by count (jumps on filter change)
+... ORDER BY a.cnt DESC
+-- ✅ Stable sort by an explicit sort_ord column
+... ORDER BY a.sort_ord
+```
+
+### Seed-script anti-patterns
+
+```sql
+-- ❌ Non-idempotent INSERT (re-run fails with unique-constraint violation)
+INSERT INTO sett."Widgets" (...) VALUES (...);
+-- ✅ Guard with NOT EXISTS
+INSERT INTO sett."Widgets" (...)
+SELECT ... WHERE NOT EXISTS (
+    SELECT 1 FROM sett."Widgets" WHERE "Description" = 'KPI_OPEN_CASES' AND COALESCE("IsDeleted", false) = false
+);
+
+-- ❌ Hardcoded ID (different DB → wrong row)
+INSERT INTO sett."Widgets" (..., "ModuleId", ...) VALUES (..., 12, ...);
+-- ✅ Resolve at seed time
+INSERT INTO sett."Widgets" (..., "ModuleId", ...)
+VALUES (..., (SELECT "ModuleId" FROM auth."Modules" WHERE "ModuleCode" = 'CRM'), ...);
+
+-- ❌ Unqualified DROP (Postgres needs schema + signature for exact match)
+DROP FUNCTION IF EXISTS fn_case_dashboard_kpi_open_cases;
+-- ✅ Qualified + full signature
+DROP FUNCTION IF EXISTS "case".fn_case_dashboard_kpi_open_cases(jsonb, int4, int4, int4, int4);
+```
+
+---
+
 ## MUST DOs
 
 1. **Tenant scope on every aggregate** — `WHERE CompanyId = @CompanyId` in SPs and `.Where(x => x.CompanyId == companyId)` in handlers. Non-negotiable. Easy to forget on a new query.
@@ -238,9 +575,9 @@ The corresponding Widget seed sets `StoredProcedureName='case.case_dashboard_ope
 ## MENU_DASHBOARD First-Time Infrastructure (read-only context here — orchestrator handles)
 
 If the prompt is the FIRST MENU_DASHBOARD ever built, additional one-time BE work is in scope (per `_DASHBOARD.md` template preamble). You may need to:
-- Add 4 columns to `Dashboard` entity (`MenuId int? FK auth.Menus`, `MenuUrl varchar(250)?`, `OrderBy int default 999`, `IsMenuVisible bool default false`) + `DashboardConfiguration.cs` updates + EF migration with the filtered unique index `(CompanyId, MenuUrl) WHERE MenuUrl IS NOT NULL AND IsDeleted = 0`
-- Add `LinkDashboardToMenu` / `UnlinkDashboardFromMenu` mutations
-- Add `GetMenuVisibleDashboardsByModuleCode` query
-- Extend the existing `dashboardByModuleCode` projection to include the 4 new fields + computed `menuName`, `menuParentName`, `effectiveSlug`
+- Add **1 column** to `Dashboard` entity: `MenuId int? FK auth.Menus` (Restrict). NULL ⇒ STATIC; NOT NULL ⇒ MENU-linked. **Do NOT add `MenuUrl`, `OrderBy`, or `IsMenuVisible`** — those duplicate fields already on `auth.Menus`/`auth.RoleCapabilities`. Update `DashboardConfiguration.cs` + generate EF migration; no new unique index needed (uniqueness lives on `auth.Menus.MenuUrl`).
+- Add `LinkDashboardToMenu` / `UnlinkDashboardFromMenu` mutations (link sets `Dashboard.MenuId`; validates `Menu.ModuleId == Dashboard.ModuleId`).
+- Add `GetMenuLinkedDashboardsByModuleCode` query — joins to `auth.Menus`, lean projection (no widget data), batched per render.
+- Add a NEW `GetDashboardByModuleAndCode(moduleCode, dashboardCode)` query — single row, **no UserDashboard join**, validates `MenuId IS NOT NULL`. The existing `dashboardByModuleCode` handler is left UNTOUCHED (it joins `UserDashboard` and serves STATIC mode).
 
 The orchestrator will spell this out explicitly in the prompt's Tasks list. If it's NOT spelled out, this work is already done.

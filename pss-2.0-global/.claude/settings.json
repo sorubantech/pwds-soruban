@@ -218,7 +218,22 @@
       "Bash(git -C \"d:/Repos/PWDS/pwds-soruban - Copy/pss-2.0-global\" diff HEAD -- \".claude/screen-tracker/prompts/casedashboard.md\")",
       "Read(//d/Repos/PWDS/pwds-soruban - Copy/pss-2.0-global/.claude/screen-tracker/**)",
       "Read(//d/Repos/PWDS/pwds-soruban - Copy/pss-2.0-global/**)",
-      "Bash(git -C \"d:/Repos/PWDS/pwds-soruban - Copy/pss-2.0-global\" diff --name-only -- PSS_2.0_Frontend/src/presentation/components/custom-components/dashboards/)"
+      "Bash(git -C \"d:/Repos/PWDS/pwds-soruban - Copy/pss-2.0-global\" diff --name-only -- PSS_2.0_Frontend/src/presentation/components/custom-components/dashboards/)",
+      "Bash(python3 -c ' *)",
+      "Bash(awk -F'|' '$5 != \"NULL\" && $7 == \"true\" && $8 == \"false\" {print}' /tmp/menus_parsed.txt)",
+      "Read(//tmp/**)",
+      "Bash(sort -t'|' -k5 /tmp/menus_active_leaves.txt)",
+      "Bash(cp /tmp/menus_active_leaves.txt /tmp/menus_sorted.txt)",
+      "Bash(awk '-F|' '{ *)",
+      "Bash(awk -F'|||' '{print $2 \"\\\\t\" $3 \"\\\\t\" $4}' /tmp/registry_compact.txt)",
+      "Bash(awk -F'\\\\\\\\|\\\\\\\\|\\\\\\\\|' '{print $2 \"\\\\t\" $3 \"\\\\t\" $4}' /tmp/registry_compact.txt)",
+      "Bash(awk -F'\\\\t' '{print $2\"\\\\t\"$3\"\\\\t\"$4}')",
+      "Bash(awk -F'\\\\t' '$1 ~ /MODULE/ || $1 ~ /LAYOUT/ {print $1\"\\\\t\"$2\"\\\\t\"$3\"\\\\t\"$4}')",
+      "Read(//d/Repos/PWDS/pwds-soruban/pss-2.0-global/.claude/screen-tracker/**)",
+      "Bash(python)",
+      "PowerShell($excel = New-Object -ComObject Excel.Application -ErrorAction SilentlyContinue; if \\($excel\\) { Write-Host \"Excel COM available v$\\($excel.Version\\)\"; $excel.Quit\\(\\) | Out-Null; [System.Runtime.Interopservices.Marshal]::ReleaseComObject\\($excel\\) | Out-Null } else { Write-Host \"No Excel COM\" })",
+      "PowerShell(Get-Process EXCEL -ErrorAction SilentlyContinue)",
+      "PowerShell(Stop-Process -Force -ErrorAction SilentlyContinue)"
     ],
     "ask": [
       "Bash(rm -rf *)",
@@ -242,7 +257,9 @@
       "d:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global\\PSS_2.0_Frontend\\src\\app\\[lang]\\dev",
       "d:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global\\PSS_2.0_Frontend\\src\\app\\[lang]\\setting\\communicationconfig",
       "d:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global\\.claude\\screen-tracker\\prompts",
-      "d:\\Repos\\PWDS\\pwds-soruban - Copy\\pss-2.0-global"
+      "d:\\Repos\\PWDS\\pwds-soruban - Copy\\pss-2.0-global",
+      "\\tmp",
+      "D:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global\\.claude\\screen-tracker"
     ]
   }
 }

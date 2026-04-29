@@ -22,6 +22,24 @@
 >
 > ---
 >
+> ## Design Quality Standards — non-negotiable for every dashboard
+>
+> The Case Management Dashboard (#52, 17 widgets) is the canonical reference for "professional dashboard quality." Every new dashboard MUST match or exceed this bar — uniform spacing, shape-matching skeletons, semantic colors, sanitized alert HTML, and Path-A-conformant SQL. The two **code reference files** ([`code-reference-backend.md`](../../templates/dashboard/code-reference-backend.md) and [`code-reference-frontend.md`](../../templates/dashboard/code-reference-frontend.md)) are loaded automatically by the BE/FE developer agents when `screen_type: DASHBOARD` and contain copy-paste-ready recipes:
+>
+> | Reference file | Pattern library |
+> |----------------|-----------------|
+> | **BE — `code-reference-backend.md`** § Path-A Recipe Library | KPI function template (delta + format + deltaColor), Donut/Pie 3-CTE recipe, Multi-row table CTE-stack recipe, Alert/Rules-Engine recipe (severity enum + `<strong>` allowed), filter NULLIF idiom, tenant-scoping pattern, full anti-pattern catalog |
+> | **FE — `code-reference-frontend.md`** § Widget Design Quality Standards | react-grid-layout breakpoint matrix (xs→xl), KPI card visual spec + skeleton, Table row density + status-pill color map, Chart palette/tooltip/legend rules, Alert severity color map + sanitization helper, universal Empty/Error templates, Phosphor icon catalog by purpose, anti-patterns |
+>
+> **What this means when authoring a new dashboard prompt:**
+> 1. Specify each widget's `WidgetType.ComponentPath` (matches a key in `WIDGET_REGISTRY`) AND its `Path` (A/B/C) AND its `data jsonb` shape — never describe a widget in prose alone.
+> 2. Give the `LayoutConfig` as a table (i, x, y, w, h, minW, minH per breakpoint), not as prose.
+> 3. Specify drill-downs as a table (FROM widget → CLICK target → route + prefill args).
+> 4. Pre-flag deferred / degraded widgets with explicit ISSUE-N entries — manage scope upfront.
+> 5. Trust the references — the BE/FE agents will follow the design recipes verbatim. Don't restate them inline.
+>
+> ---
+>
 > ## First-time MENU_DASHBOARD setup (one-time infra — bundled with the FIRST MENU_DASHBOARD prompt)
 >
 > The MENU_DASHBOARD variant depends on schema + route + sidebar infrastructure that does not exist yet. The **first** MENU_DASHBOARD prompt that ships MUST include all of the items below in its scope. **Every subsequent** MENU_DASHBOARD prompt is then a pure seed-only task and can omit this section.
