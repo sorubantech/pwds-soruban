@@ -15,10 +15,10 @@
 >
 > | Variant | When to pick | How user reaches it | Dashboard switcher? | Build cost |
 > |---------|--------------|---------------------|---------------------|-----------|
-> | **STATIC_DASHBOARD** | Module-level overview screen with a **dashboard dropdown** that lets the user switch between system + user-created dashboards for that module. The page lives at the module's main `*/dashboards` route. | Click `<Module> → Dashboards` parent menu → DashboardComponent auto-loads `UserDashboard.IsDefault=true`. Dropdown lists all `IsMenuVisible=false` dashboards (system + user-created). | YES — dropdown + Edit Layout / Add Widget / Reset chrome | Mostly seed + alignment work. Single shared `<DashboardComponent />` already exists. |
-> | **MENU_DASHBOARD** | A specific dashboard that should be its own sidebar menu item (e.g., "Donor Retention", "Event Analytics", "Predictive Analytics"). Appears as a leaf under `<Module> → Dashboards`. **EXCLUDED from the dropdown** — only reached by clicking its menu item. | Click sidebar leaf → URL becomes `/[lang]/{module}/dashboards/{slug}` → dynamic route resolves slug → renders the bound Dashboard. | NO — no dropdown, no edit chrome by default; pure widget grid via `react-grid-layout`. | Just seed a Dashboard row + DashboardLayout JSON + Menu link. No new FE page (the dynamic route covers all menu dashboards). |
+> | **STATIC_DASHBOARD** | Module-level overview screen with a **dashboard dropdown** that lets the user switch between system + user-created dashboards for that module. The page lives at the module's main `*/dashboards` route. | Click `<Module> → Dashboards` parent menu → DashboardComponent auto-loads `UserDashboard.IsDefault=true`. Dropdown lists all dashboards where `MenuId IS NULL` (system + user-created, not promoted to sidebar). | YES — dropdown + Edit Layout / Add Widget / Reset chrome | Mostly seed + alignment work. Single shared `<DashboardComponent />` already exists. |
+> | **MENU_DASHBOARD** | A specific dashboard that should be its own sidebar menu item (e.g., "Donor Retention", "Event Analytics", "Predictive Analytics"). Appears as a leaf under `<Module> → Dashboards`. **EXCLUDED from the dropdown** — only reached by clicking its menu item. | Click sidebar leaf → URL becomes `/[lang]/{module}/dashboards/{Menu.MenuUrl}` → dynamic route resolves slug → renders the bound Dashboard. | NO — no dropdown, no edit chrome by default; pure widget grid via `react-grid-layout`. | Just seed a Dashboard row + DashboardLayout JSON + Menu link. No new FE page (the dynamic route covers all menu dashboards). |
 >
-> **Mutually exclusive at the row level**: a single `Dashboard` row is either dropdown-listed (`IsMenuVisible=false`) or menu-rendered (`IsMenuVisible=true`). Never both.
+> **Mutually exclusive at the row level**: a single `Dashboard` row is either dropdown-listed (`MenuId IS NULL`) or menu-rendered (`MenuId IS NOT NULL`). Never both.
 >
 > ---
 >
@@ -26,53 +26,70 @@
 >
 > The MENU_DASHBOARD variant depends on schema + route + sidebar infrastructure that does not exist yet. The **first** MENU_DASHBOARD prompt that ships MUST include all of the items below in its scope. **Every subsequent** MENU_DASHBOARD prompt is then a pure seed-only task and can omit this section.
 >
-> ### A. Schema extension — `sett.Dashboards` (4 new columns + 1 filtered unique index)
+> ### A. Schema extension — `sett.Dashboards` (1 new column, FK only)
 >
 > | Column | Type | Default | Notes |
 > |--------|------|---------|-------|
-> | `MenuId` | `int?` FK → `auth.Menus` (Restrict) | NULL | Links Dashboard to a sidebar menu item |
-> | `MenuUrl` | `varchar(250)?` | NULL | kebab-case slug; auto-gen from `DashboardName` if blank |
-> | `OrderBy` | `int` | 999 | Sidebar sort order under the `*_DASHBOARDS` parent |
-> | `IsMenuVisible` | `bool` | `false` | `true` ⇒ MENU_DASHBOARD; `false` ⇒ STATIC dropdown candidate |
+> | `MenuId` | `int?` FK → `auth.Menus` (Restrict) | NULL | NULL ⇒ STATIC_DASHBOARD; NOT NULL ⇒ MENU_DASHBOARD. Slug, sort, and visibility all flow through the linked Menu row. |
 >
-> Filtered unique index: `(CompanyId, MenuUrl) WHERE MenuUrl IS NOT NULL AND IsDeleted = false`
+> **What we deliberately do NOT add — and why:**
+> - ❌ `Dashboard.MenuUrl` — duplicate. `Menu.MenuUrl` already exists, validated, and unique-indexed `(MenuUrl, ModuleId, IsActive)` (see `MenuConfiguration.cs`).
+> - ❌ `Dashboard.OrderBy` — duplicate. `Menu.OrderBy` already exists with unique index per module.
+> - ❌ `Dashboard.IsMenuVisible` — redundant. `MenuId IS NULL` already encodes "not a sidebar leaf." Per-role hide via `RoleCapability(MenuId, READ, HasAccess=false)`. Temporary global hide via `Menu.IsActive=false`.
 >
 > Validator rules:
-> - `IsMenuVisible=true` ⇒ `MenuId IS NOT NULL` AND `MenuUrl IS NOT NULL`
-> - `MenuUrl` matches `^[a-z0-9]+(-[a-z0-9]+)*$`
-> - `Menu.ModuleId` MUST equal `Dashboard.ModuleId` (no cross-module orphans)
-> - Reserved-slug list blocked: `config`, `new`, `edit`, `read`, `overview` (+ any other static path collision)
+> - `Menu.ModuleId` MUST equal `Dashboard.ModuleId` (no cross-module orphans) — enforce in `linkDashboardToMenu` mutation
+> - Slug regex (`^[a-z0-9]+(-[a-z0-9]+)*$`) and reserved-slug list (`config`, `new`, `edit`, `read`, `overview`) — enforce on `Menu.MenuUrl` write path (Menu CRUD), NOT on Dashboard
+> - No new filtered unique index on Dashboard — uniqueness lives on `auth.Menus.MenuUrl`
 >
 > ### B. Dynamic route — single FE page replaces per-dashboard hardcoded pages
 >
 > - Create: `Pss2.0_Frontend/src/app/[lang]/(core)/[module]/dashboards/[slug]/page.tsx`
-> - Resolves `slug` → fetches `Dashboard` where `effectiveSlug === slug` → renders `<DashboardComponent slugOverride={slug} />`
-> - When `slugOverride` is present, DashboardComponent skips the `IsDefault` auto-pick and selects by slug. Slug-not-found → render existing "not found" empty state (do NOT silently fall back to default).
-> - DELETE per-dashboard hardcoded route pages (`crm/dashboards/contactdashboard/page.tsx`, `donationdashboard/page.tsx`, `overview/page.tsx`, etc.) once the dynamic route is verified — pre-flight grep for any imports first.
+> - Server component receives `params.module` and `params.slug` and renders a **NEW `<MenuDashboardComponent />`** (see § E) — NOT the existing `<DashboardComponent />`. The two are intentionally separate. See § H "Why a separate component" below.
+> - **Slug → Dashboard resolution rule**:
+>   - The FIRST MENU_DASHBOARD set is system-seeded with a strict convention: `Menu.MenuUrl == lower-kebab(Dashboard.DashboardCode)` and `Menu.MenuCode == Dashboard.DashboardCode`. The route page converts slug → DashboardCode by uppercasing and stripping hyphens: `'case-dashboard'.replace(/-/g, '').toUpperCase() === 'CASEDASHBOARD'`.
+>   - The page passes BOTH props to the component: `<MenuDashboardComponent moduleCode={params.module.toUpperCase()} dashboardCode={slugToCode(params.slug)} />`.
+>   - The component fires the new `dashboardByModuleAndCode(moduleCode, dashboardCode)` query (see § C). 1 row or null. No UserDashboard join, no module-wide list, no FE filter.
+>   - If admin-Promote ever introduces custom slugs that diverge from this convention, the route page can be extended to a slug-by-MenuUrl lookup at that time. Out of scope for the first ship.
+>   - Slug-not-found / dashboardCode-not-found → render explicit "dashboard not found" empty state. Do NOT silently fall back to anything.
+> - DELETE per-dashboard hardcoded route pages (`crm/dashboards/contactdashboard/page.tsx`, `donationdashboard/page.tsx`, `overview/page.tsx`, etc.) once the dynamic route + new component are verified — pre-flight grep for any imports first.
 >
-> ### C. New BE query + 2 mutations
+> ### C. New BE queries + 2 mutations
 >
 > | Endpoint | Type | Args | Purpose |
 > |----------|------|------|---------|
-> | `menuVisibleDashboardsByModuleCode` | Query | `moduleCode` | Sidebar consumption — returns `IsMenuVisible=true` rows ordered by `OrderBy` |
-> | `linkDashboardToMenu` | Mutation | `dashboardId, menuId, menuUrl, orderBy` | Sets MenuId + MenuUrl + OrderBy + IsMenuVisible=true. Validates ModuleId match, slug regex, slug uniqueness. Auto-seeds `MenuCapability(MenuId, READ)` if missing. |
-> | `unlinkDashboardFromMenu` | Mutation | `dashboardId` | Clears MenuId, sets IsMenuVisible=false. Preserves MenuUrl for revert. Admin-only. |
+> | **`dashboardByModuleAndCode`** | Query | `moduleCode, dashboardCode` | **NEW — Single-row fetch for MENU_DASHBOARD slug page.** Returns one Dashboard with `DashboardLayouts` + `Module` includes. **Does NOT join `UserDashboard`** — MENU_DASHBOARD rows are system-pinned and have no per-user state. Validates `Dashboard.MenuId IS NOT NULL` (returns null otherwise — STATIC dashboards must NOT be served on the slug route). |
+> | `menuLinkedDashboardsByModuleCode` | Query | `moduleCode` | Sidebar consumption — returns Dashboards joined to `Menu` where `Dashboard.MenuId IS NOT NULL AND Menu.IsActive=true`, ordered by `Menu.OrderBy`. Lean projection: `dashboardId, dashboardName, dashboardIcon, menuName, menuUrl, menuOrderBy`. No widget data. |
+> | `linkDashboardToMenu` | Mutation | `dashboardId, menuId` | Sets `Dashboard.MenuId`. Validates `Menu.ModuleId = Dashboard.ModuleId`. Auto-seeds `MenuCapability(MenuId, READ)` if missing. (The Menu row — including its MenuUrl, OrderBy, MenuName, MenuIcon — is created/edited via the existing Menu CRUD path; this mutation only attaches the link.) |
+> | `unlinkDashboardFromMenu` | Mutation | `dashboardId` | Clears `Dashboard.MenuId`. Admin-only. The Menu row itself is left intact (delete via Menu CRUD if also unwanted). |
 >
-> Also extend the existing `dashboardByModuleCode` projection to include the 4 new fields + computed `menuName`, `menuParentName`, `effectiveSlug`.
+> **Existing `dashboardByModuleCode` is UNTOUCHED** — keeps its `FROM UserDashboard ud INNER JOIN Dashboard d` shape; STATIC mode behavior preserved. No projection extension needed for menu fields (the slug page doesn't consume this query). The dropdown filter rule (`MenuId IS NULL`) lives in the existing handler's WHERE clause OR on the FE — pick whichever is the smaller delta during build.
 >
 > ### D. Sidebar auto-injection
 >
-> When the menu-tree composer renders a parent whose `MenuCode` matches `\w+_DASHBOARDS$`, fetch `menuVisibleDashboardsByModuleCode(parent.moduleCode)` and inject results as leaf items, sorted by `Dashboard.OrderBy`. Each leaf: `MenuName=Dashboard.MenuName ?? Dashboard.DashboardName`, `MenuUrl=/{module}/dashboards/{effectiveSlug}`, `Icon=Dashboard.DashboardIcon`. Batch the queries (one call per render covering all `*_DASHBOARDS` parents) to avoid N+1.
+> When the menu-tree composer renders a parent whose `MenuCode` matches `\w+_DASHBOARDS$`, fetch `menuLinkedDashboardsByModuleCode(parent.moduleCode)` and inject results as leaf items, sorted by `Menu.OrderBy`. Each leaf reads from the linked Menu row: `MenuName=Menu.MenuName`, `MenuUrl=/{module}/dashboards/{Menu.MenuUrl}`, `Icon=Menu.MenuIcon ?? Dashboard.DashboardIcon`. Batch the queries (one call per render covering all `*_DASHBOARDS` parents) to avoid N+1.
 >
 > ### E. DashboardComponent chrome additions (STATIC view only)
 >
 > Add 2 kebab actions on the existing chrome (admin-only):
-> - **Promote to menu** (visible when `IsSystem=false AND IsMenuVisible=false`) → modal with MenuParent (read-only), Display Order, Slug (auto-filled from name) → calls `linkDashboardToMenu`. Sidebar refetches.
-> - **Hide from menu** (visible when `IsMenuVisible=true`) → confirm → calls `unlinkDashboardFromMenu`. Dashboard returns to dropdown.
+> - **Promote to menu** (visible when `IsSystem=false AND Dashboard.MenuId IS NULL`) → modal with MenuParent (read-only, auto-resolved to `{MODULE}_DASHBOARDS`), Display Order, Slug (auto-filled from name; admin-editable). On submit:
+>   1. Create `auth.Menus` row via existing Menu create path (MenuName=DashboardName, MenuCode=DashboardCode, MenuUrl=slug, OrderBy=order, ParentMenuId=resolved, ModuleId=Dashboard.ModuleId, MenuIcon=Dashboard.DashboardIcon)
+>   2. Call `linkDashboardToMenu(dashboardId, newMenuId)` — sets `Dashboard.MenuId` + auto-seeds `MenuCapability(MenuId, READ)`
+>   3. Sidebar refetches.
+> - **Hide from menu** (visible when `Dashboard.MenuId IS NOT NULL`) → confirm → calls `unlinkDashboardFromMenu`. Dashboard returns to dropdown. (Menu row is preserved — admin can re-link or delete via Menu CRUD.)
 >
 > ### F. Backfill seed (idempotent — runs once)
 >
-> `UPDATE sett.Dashboards SET MenuId = m.MenuId, MenuUrl = LOWER(REPLACE(d.DashboardCode, '_', '-')), IsMenuVisible = true FROM auth.Menus m WHERE d.IsSystem = true AND m.MenuCode = d.DashboardCode AND d.MenuId IS NULL` — links every existing system-seeded module dashboard to its matching `Menu` row by `DashboardCode` ↔ `MenuCode`. Place in `sql-scripts-dyanmic/Dashboard-MenuBackfill-sqlscripts.sql` (preserve repo's `dyanmic` typo). Re-running is safe.
+> ```sql
+> UPDATE sett."Dashboards" d
+>    SET "MenuId" = m."MenuId"
+>   FROM auth."Menus" m
+>  WHERE d."IsSystem" = true
+>    AND m."MenuCode" = d."DashboardCode"
+>    AND d."MenuId" IS NULL;
+> ```
+>
+> Links every existing system-seeded module dashboard to its matching `Menu` row by `DashboardCode` ↔ `MenuCode`. **No `MenuUrl` write needed** — `Menu.MenuUrl` is already set on each existing menu row (verify with a pre-flight `SELECT MenuCode, MenuUrl FROM auth.Menus WHERE MenuCode IN (...)` and ensure none are NULL/blank — fix in the menu seed if any are). Place in `sql-scripts-dyanmic/Dashboard-MenuBackfill-sqlscripts.sql` (preserve repo's `dyanmic` typo). Re-running is safe.
 >
 > ### G. Pre-flagged ISSUEs to copy into the first MENU_DASHBOARD prompt's ⑫
 >
@@ -81,17 +98,55 @@
 > | HIGH | Backfill leaves `MenuId=null` for any system dashboard whose `DashboardCode` does not match a `Menu.MenuCode` — pre-flight check must abort cleanup if any rows remain |
 > | HIGH | Hardcoded route deletion is destructive — grep imports first; defer if any references found |
 > | MED | External bookmarks to old URLs will 404 — decide release-note vs `next.config.js` redirects for one cycle |
-> | MED | Slug collisions with reserved static paths — validator must enforce reserved list |
-> | MED | Sidebar performance — batch the menu-visible-dashboards query (single call covering all `*_DASHBOARDS` parents), not N+1 |
-> | MED | Slug-vs-default precedence — when `slugOverride` is present, do NOT fall back to `IsDefault` if slug is not found; render "not found" instead |
-> | LOW | OrderBy collisions — auto-default to `MAX(OrderBy in module-parent) + 10` on Promote |
+> | MED | Slug collisions with reserved static paths — enforce reserved list on `Menu.MenuUrl` write path (Menu CRUD), NOT on Dashboard |
+> | MED | Sidebar performance — batch the menu-linked-dashboards query (single call covering all `*_DASHBOARDS` parents), not N+1 |
+> | MED | Slug-vs-default precedence — when the slug page renders `<MenuDashboardComponent />`, slug-not-found / dashboardCode-not-found / `Dashboard.MenuId IS NULL` MUST render "not found" empty state. The new component never has access to STATIC's `IsDefault` resolution path — separation by component eliminates this risk by construction. |
+> | LOW | OrderBy collisions — Menu.OrderBy uniqueness is already enforced by `MenuConfiguration.cs:55`; auto-default to `MAX(OrderBy in module-parent) + 10` on Promote |
 > | LOW | FK Restrict on Menu delete — surface friendly error in menu-delete handler listing affected dashboards |
-> | LOW | `IsRoleDashboard` flag is independent of `IsMenuVisible`; both can be true |
+> | LOW | `IsRoleDashboard` flag is independent of menu linkage; a Dashboard can be both role-restricted AND menu-linked |
 > | LOW | `MenuCapability(Read)` auto-seed on Link; `RoleCapability` grants left to admin via existing role screens |
 > | MED | FE registry filenames are `dashboard-widget-registry.tsx` (NOT `widget-registry.ts`) and `dashboard-widget-query-registry.tsx` — do NOT invent new registry filenames; extend the existing two |
 > | MED | Path-A widgets seed `Widget.StoredProcedureName` (column name is misleading — it stores a Postgres FUNCTION name) and reuse the generic `generateWidgets` GraphQL handler. NO new C# code; the deliverable is a Postgres function file at `DatabaseScripts/Functions/{schema}/{function_name}.sql` matching the `rep/donation_summary_report.sql` precedent |
 > | HIGH | Path-A functions MUST conform to the fixed 5-arg / 4-column contract (`p_filter_json jsonb, p_page int, p_page_size int, p_user_id int, p_company_id int` → `TABLE(data jsonb, metadata jsonb, total_count int, filtered_count int)`). Filter args go through `p_filter_json`, NEVER as native function parameters. Functions written with SQL Server syntax (`CREATE PROCEDURE`, `IF OBJECT_ID`, `[brackets]`) will fail — this is Postgres |
-> | LOW | `<DashboardHeader />` toolbar slot — confirm it accepts custom toolbar children; if not, the first MENU_DASHBOARD that needs Export / Print / extra-filter chrome must include a one-time chrome enhancement to add the slot |
+> | LOW | `<MenuDashboardComponent />` is a NEW lean component (see § H) — it does NOT consume `<DashboardHeader />`. The toolbar live inside the new component's own header (`<MenuDashboardHeader />` or inline), so existing chrome stays untouched |
+> | HIGH | Existing `dashboardByModuleCode` handler joins `UserDashboard` (verified at `GetDashboardByModuleCode.cs:25-33`) — MENU_DASHBOARD rows have NO UserDashboard, so reusing this handler returns zero rows. The first MENU_DASHBOARD prompt MUST add a separate `dashboardByModuleAndCode(moduleCode, dashboardCode)` query that does NOT join UserDashboard |
+>
+> ### H. MenuDashboardComponent — the new FE component (separate from `<DashboardComponent />`)
+>
+> Why this exists: see § I below. Lean by design.
+>
+> **Path**: `Pss2.0_Frontend/src/presentation/components/custom-components/menu-dashboards/index.tsx` (new folder; keep separate from the `dashboards/` folder used by STATIC).
+>
+> **Props**:
+> ```ts
+> interface MenuDashboardComponentProps {
+>   moduleCode: string;     // from URL params.module (uppercased)
+>   dashboardCode: string;  // derived from URL params.slug (uppercase, hyphens stripped)
+> }
+> ```
+>
+> **Responsibilities**:
+> 1. Single Apollo query: `dashboardByModuleAndCode(moduleCode, dashboardCode)` (defined in § C). One round trip. No UserDashboard join, no module-wide list fetch, no `IsDefault` resolution.
+> 2. Null result → render "Dashboard not found" empty state. Do NOT silently fall back to anything.
+> 3. Lean header (inline or `<MenuDashboardHeader />`) — renders ONLY: dashboard name + icon + Refresh icon + optional toolbar slot for date-range / filter chips / Export / Print as the mockup demands.
+> 4. Body: parses `DashboardLayout.LayoutConfig` (react-grid-layout JSON) + `DashboardLayout.ConfiguredWidget` (instance JSON) and renders the widget grid using the EXISTING widget renderer registries (`WIDGET_REGISTRY` from `dashboard-widget-registry.tsx`, `QUERY_REGISTRY` from `dashboard-widget-query-registry.tsx`). The grid-rendering loop is small enough to inline; do NOT refactor `<DashboardComponent />` to share grid code on this first ship — keep blast radius zero.
+>
+> **What this component deliberately does NOT have**:
+> - No dashboard switcher dropdown
+> - No "New Dashboard" / "Edit Layout" / "Edit Title" / "Reset Layout" chrome
+> - No `UserDashboard` interactions (no IsDefault, no max-3-per-user, no per-user pin)
+> - No module switching loading overlay
+> - No drag/resize editing
+>
+> ### I. Why a separate component (`<MenuDashboardComponent />` vs reusing `<DashboardComponent />`)
+>
+> 1. **Data path mismatch**: existing `<DashboardComponent />` calls `dashboardByModuleCode` which inner-joins `UserDashboard`. MENU_DASHBOARD has no UserDashboard, so the row never reaches the FE. Reusing the path requires rewriting the BE handler with a LEFT JOIN — risk to STATIC behavior.
+> 2. **State mismatch**: STATIC owns `useDashboardStore`, dashboard switcher cache, max-3-user-created counter, edit-layout mode toggle, IsDefault resolution. MENU has none of these. Forcing them into one component means every render path branches on `menuUrl`/`mode` — bug-prone.
+> 3. **Chrome leakage**: `<DashboardHeader />` renders Create / Switcher / Edit chrome unconditionally today (`dashboard-header.tsx:61-66, 104-122, 197-203`). Gating each site by mode is fragile and easy to miss in future edits.
+> 4. **API hygiene**: STATIC fetches the entire module's dashboard list and filters; MENU only needs the one row. Sharing the query path means MENU pulls more than it needs.
+> 5. **Test surface**: two components, one mode each → test the lean component without UserDashboard fixtures, test the existing component without MENU_DASHBOARD fixtures.
+>
+> Trade-off accepted: small duplication of the widget-grid render loop (~30-50 lines). Preferable to the gating risk. If the duplication grows over time, extract a shared `<DashboardWidgetGrid />` later — separate refactor task, not on this prompt's scope.
 >
 > ### Why role gating needs no new code
 >
@@ -145,7 +200,7 @@ last_session_date:
 - [ ] DB Seed script generated:
       • Dashboard row (DashboardCode, DashboardName, ModuleId, IsSystem, IsActive)
       • DashboardLayout row (LayoutConfig JSON, ConfiguredWidget JSON)
-      • If MENU_DASHBOARD: Menu row + MenuCapability + RoleCapability + Dashboard.MenuId/MenuUrl/OrderBy/IsMenuVisible=true backfill
+      • If MENU_DASHBOARD: Menu row (with MenuName, MenuCode, MenuUrl, OrderBy, ParentMenuId=`{MODULE}_DASHBOARDS`, ModuleId, MenuIcon) + MenuCapability + RoleCapability + UPDATE Dashboard SET MenuId = (SELECT MenuId FROM the seeded Menu row)
       • Widget rows (one per widget type if not already seeded) + WidgetRole grants
 - [ ] Registry updated to COMPLETED
 
@@ -159,10 +214,10 @@ last_session_date:
 - [ ] Empty / loading / error states render (Skeleton shapes match widget shapes)
 - [ ] role-based widget gating: WidgetRole(HasAccess=false) → widget hidden / replaced with "no access" placeholder
 - [ ] role-based menu gating (MENU_DASHBOARD only): RoleCapability(HasAccess=false) on this Dashboard's menu → sidebar leaf hidden
-- [ ] If STATIC_DASHBOARD: dropdown lists all dashboards for module EXCEPT IsMenuVisible=true; switching dropdown updates widget grid in place
-- [ ] If MENU_DASHBOARD: NO dropdown rendered; URL is `/{lang}/{module}/dashboards/{slug}`; bookmark survives reload
+- [ ] If STATIC_DASHBOARD: dropdown lists all dashboards for module where `MenuId IS NULL`; switching dropdown updates widget grid in place
+- [ ] If MENU_DASHBOARD: NO dropdown rendered; URL is `/{lang}/{module}/dashboards/{Menu.MenuUrl}`; bookmark survives reload
 - [ ] react-grid-layout grid renders responsively (widget reflow at xs / sm / md / lg / xl)
-- [ ] DB Seed — Dashboard row + DashboardLayout JSON visible in DB; widgets resolve from registry; (MENU_DASHBOARD: menu visible in sidebar at correct OrderBy)
+- [ ] DB Seed — Dashboard row + DashboardLayout JSON visible in DB; widgets resolve from registry; (MENU_DASHBOARD: menu visible in sidebar at correct `Menu.OrderBy`)
 
 ---
 
@@ -199,17 +254,14 @@ Business: {Rich description — 4-6 sentences covering:
 
 | Field | Value | Notes |
 |-------|-------|-------|
-| DashboardCode | {ENTITYUPPER} | Unique within Company; used as default slug if MenuUrl not set |
-| DashboardName | {Display Name} | Shown in sidebar (MENU_DASHBOARD) or in dropdown (STATIC_DASHBOARD context) |
-| DashboardIcon | {phosphor-icon-name} | e.g., `ph:chart-line`, `ph:users-three` |
+| DashboardCode | {ENTITYUPPER} | Unique within Company; commonly mirrored as the Menu's MenuCode for MENU_DASHBOARD |
+| DashboardName | {Display Name} | Shown in dropdown (STATIC_DASHBOARD) or as a fallback when `Menu.MenuName` is not yet seeded |
+| DashboardIcon | {phosphor-icon-name} | e.g., `ph:chart-line`, `ph:users-three` — used as the leaf icon if `Menu.MenuIcon` is null |
 | DashboardColor | {hex or null} | Optional accent |
-| ModuleId | (resolve from {MODULECODE}) | Determines which module owns it |
+| ModuleId | (resolve from {MODULECODE}) | Determines which module owns it; MUST equal `Menu.ModuleId` when MenuId is set |
 | IsSystem | true | All dashboards seeded by this prompt are system dashboards |
 | IsActive | true | — |
-| MenuId | (only MENU_DASHBOARD) FK to seeded Menu row | NULL for STATIC_DASHBOARD |
-| MenuUrl | (only MENU_DASHBOARD) kebab-case slug | NULL for STATIC_DASHBOARD |
-| OrderBy | (only MENU_DASHBOARD) sidebar sort | 999 default |
-| IsMenuVisible | MENU_DASHBOARD → true; STATIC_DASHBOARD → false | Drives variant routing |
+| MenuId | (only MENU_DASHBOARD) FK to seeded Menu row | NULL for STATIC_DASHBOARD. ALL slug / sort / visibility data lives on the linked `Menu` row — Dashboard does NOT carry MenuUrl / OrderBy / IsMenuVisible columns. |
 
 ### B. DashboardLayout Row (`sett.DashboardLayouts`)
 
@@ -349,7 +401,7 @@ The widget runtime always calls `SELECT * FROM {schema}."{functionName}"(@p_filt
 - [ ] STATIC_DASHBOARD ONLY:
       • Dashboard dropdown switcher (existing in `<DashboardComponent />`)
       • Edit Layout / Add Widget / Reset Layout chrome (existing)
-      • Filter: dropdown lists `IsMenuVisible=false` rows only — system + user-created
+      • Filter: dropdown lists Dashboards where `MenuId IS NULL` — system + user-created (menu-promoted dashboards excluded)
 - [ ] MENU_DASHBOARD ONLY:
       • NO dropdown, NO edit chrome (read-only menu dashboard by default)
       • Renders via dynamic route `[lang]/(core)/[module]/dashboards/[slug]/page.tsx` (created on first MENU_DASHBOARD per template preamble § B)
@@ -367,15 +419,14 @@ The widget runtime always calls `SELECT * FROM {schema}."{functionName}"(@p_filt
 
 **STATIC_DASHBOARD chrome** (existing — render via `<DashboardComponent />`):
 - Header row: dashboard name + icon + color | Refresh | Dashboard Switcher (dropdown) | Settings (Edit Layout / Edit Title / Reset Layout)
-- Dropdown content rule: `dashboards.filter(d => d.isMenuVisible === false)` — includes ALL system + user-created dashboards EXCEPT menu-promoted ones
+- Dropdown content rule: `dashboards.filter(d => d.menuId == null)` — includes ALL system + user-created dashboards EXCEPT menu-promoted ones
 - Max 3 user-created dashboards per user per module rule applies
 
-**MENU_DASHBOARD chrome** (lean by default; the mockup may demand more):
-- Header row: dashboard name + icon (no dropdown, no edit chrome)
-- Optional refresh button
-- Optional toolbar with date-range + filter chips
-- **Toolbar overrides** — when mockup shows extra controls (filter dropdowns, Export, Print, "Generate Report"), enumerate them in this section as `Toolbar Action: {Label} → {handler/intent/SERVICE_PLACEHOLDER}`. The slug page surfaces them via `<DashboardHeader />` props (toolbar slot). If `<DashboardHeader />` does not yet support a toolbar slot, this prompt's scope MUST include a one-time chrome enhancement (call out in ⑫ ISSUE).
-- Body: pure widget grid via `react-grid-layout`
+**MENU_DASHBOARD chrome** (lean by design — rendered by the **new** `<MenuDashboardComponent />`, NOT the existing `<DashboardComponent />` — see template § H/I for rationale):
+- Lean header (inline or `<MenuDashboardHeader />`): dashboard name + icon + Refresh icon + optional toolbar slot.
+- Body: pure widget grid via `react-grid-layout`, rendered using the existing `WIDGET_REGISTRY` / `QUERY_REGISTRY` registries (no registry changes).
+- The component **does not** import or render `<DashboardHeader />`, so the Create / Switcher / Edit chrome cannot leak into this route. Existing `dashboard-header.tsx` is **untouched** by this prompt.
+- **Toolbar contents** — when the mockup shows extra controls (filter dropdowns, Export, Print, "Generate Report"), enumerate them in this section as `Toolbar Action: {Label} → {handler/intent/SERVICE_PLACEHOLDER}`. They render directly inside the new component's header — no slot/prop plumbing through unrelated components needed.
 
 ### Grid Layout (react-grid-layout config)
 
@@ -451,8 +502,8 @@ The widget runtime always calls `SELECT * FROM {schema}."{functionName}"(@p_filt
 ### User Interaction Flow
 
 1. **Initial load**:
-   - STATIC_DASHBOARD: user lands on `/{module}/dashboards` → DashboardComponent fetches dashboards (`IsMenuVisible=false`) → picks `UserDashboard.IsDefault=true` → loads layout JSON → renders widget grid → all widgets parallel-fetch with default filters.
-   - MENU_DASHBOARD: user clicks sidebar leaf → URL becomes `/{module}/dashboards/{slug}` → dynamic route fetches Dashboard by slug → renders widget grid → widgets parallel-fetch.
+   - STATIC_DASHBOARD: user lands on `/{module}/dashboards` → DashboardComponent fetches dashboards where `MenuId IS NULL` → picks `UserDashboard.IsDefault=true` → loads layout JSON → renders widget grid → all widgets parallel-fetch with default filters.
+   - MENU_DASHBOARD: user clicks sidebar leaf → URL becomes `/{module}/dashboards/{Menu.MenuUrl}` → dynamic route resolves slug → fetches Dashboard via `Menu.MenuId` → renders widget grid → widgets parallel-fetch.
 2. **Filter change** (date range or filter chip): widgets honoring that filter refetch in parallel; widgets not honoring it stay cached.
 3. **Switch dashboard** (STATIC_DASHBOARD only): dropdown → DashboardComponent reloads layout JSON for chosen dashboard → grid recomposes → widgets refetch.
 4. **Drill-down click**: navigate per Drill-Down Map → destination screen receives prefill args → user lands on filtered list.
@@ -473,7 +524,7 @@ The widget runtime always calls `SELECT * FROM {schema}."{functionName}"(@p_filt
 |-----------|------------------|---------|
 | MainDashboard | {EntityName} | Dashboard class/code name |
 | MAIN_DASHBOARD | {ENTITYUPPER} | DashboardCode + GridCode |
-| main-dashboard | {kebab-case slug} | MenuUrl (MENU_DASHBOARD only) |
+| main-dashboard | {kebab-case slug} | `Menu.MenuUrl` (MENU_DASHBOARD only — written on the linked auth.Menus row, NOT on Dashboard) |
 | /crm/dashboards/overview | /{module}/dashboards/{slug or "overview"} | route path |
 | corg | {schema reused for source data} | source schema |
 | CRM | {MODULECODE} | parent module code |
@@ -533,7 +584,7 @@ The widget runtime always calls `SELECT * FROM {schema}."{functionName}"(@p_filt
 | 4 | WidgetRole grants in `auth.WidgetRoles` | always — at minimum BUSINESSADMIN |
 | 5 | Menu row in `auth.Menus` (under {MODULECODE}_DASHBOARDS) | MENU_DASHBOARD only |
 | 6 | MenuCapability + RoleCapability rows | MENU_DASHBOARD only |
-| 7 | UPDATE Dashboard SET MenuId, MenuUrl, OrderBy, IsMenuVisible=true | MENU_DASHBOARD only |
+| 7 | UPDATE Dashboard SET MenuId = (MenuId of the row seeded in step 5) | MENU_DASHBOARD only — the only Dashboard column written on link |
 
 ---
 
@@ -547,11 +598,11 @@ DashboardVariant: {STATIC_DASHBOARD | MENU_DASHBOARD}
 # STATIC_DASHBOARD: usually NO new menu (the parent module already has its *_DASHBOARDS menu).
 # MENU_DASHBOARD: a NEW menu row is created under the module's *_DASHBOARDS parent.
 
-MenuName: {Display Name | — for STATIC_DASHBOARD}
-MenuCode: {ENTITYUPPER | — for STATIC_DASHBOARD}
+MenuName: {Display Name | — for STATIC_DASHBOARD}        # written to auth.Menus.MenuName
+MenuCode: {ENTITYUPPER | — for STATIC_DASHBOARD}         # written to auth.Menus.MenuCode
 ParentMenu: {MODULECODE_DASHBOARDS | — for STATIC_DASHBOARD}
 Module: {MODULECODE}
-MenuUrl: {module/dashboards/{kebab-slug} | — for STATIC_DASHBOARD}
+MenuUrl: {kebab-slug | — for STATIC_DASHBOARD}           # written to auth.Menus.MenuUrl (NOT to Dashboard)
 GridType: DASHBOARD
 
 MenuCapabilities: READ, EXPORT, ISMENURENDER
@@ -562,14 +613,14 @@ RoleCapabilities:
 GridFormSchema: SKIP    # never SKIP_DASHBOARD; SKIP because dashboards have no RJSF form
 GridCode: {ENTITYUPPER}
 
-# Dashboard-specific seed inputs
+# Dashboard-specific seed inputs (only Dashboard.MenuId is written on link; no MenuUrl/OrderBy/IsMenuVisible columns exist)
 DashboardCode: {ENTITYUPPER}
 DashboardName: {Display Name}
 DashboardIcon: {ph:icon-name}
 DashboardColor: {hex or null}
 IsSystem: true
-IsMenuVisible: {true if MENU_DASHBOARD; false if STATIC_DASHBOARD}
-OrderBy: {N}    # MENU_DASHBOARD only — sort within the *_DASHBOARDS parent
+DashboardKind: {STATIC_DASHBOARD | MENU_DASHBOARD}    # encoded by presence of Dashboard.MenuId at seed time, not by a column
+OrderBy: {N}    # MENU_DASHBOARD only — written to auth.Menus.OrderBy (NOT Dashboard)
 WidgetGrants:    # at minimum BUSINESSADMIN; expand per ④
   - {WIDGET_CODE_1}: BUSINESSADMIN
   - {WIDGET_CODE_2}: BUSINESSADMIN, FUNDRAISING_DIRECTOR
@@ -589,7 +640,7 @@ WidgetGrants:    # at minimum BUSINESSADMIN; expand per ④
 | get{EntityName}DashboardData | {EntityName}DashboardDto | dateFrom, dateTo, filters... | composite — the bulk of widgets |
 | get{EntityName}TopDonors (or similar per-widget) | [{EntityName}TopDonorDto] | dateFrom, dateTo, limit | per-widget |
 | dashboardByModuleCode (existing) | [DashboardDto] | moduleCode | STATIC_DASHBOARD dropdown source |
-| menuVisibleDashboardsByModuleCode (from `dashboard-menu-system.md`) | [DashboardDto] | moduleCode | sidebar injection — not consumed by this prompt directly |
+| menuLinkedDashboardsByModuleCode (from `dashboard-menu-system.md`) | [DashboardDto] | moduleCode | sidebar injection — not consumed by this prompt directly |
 
 **Composite Dashboard DTO** (one row per field — what the FE consumes):
 
@@ -626,17 +677,17 @@ WidgetGrants:    # at minimum BUSINESSADMIN; expand per ④
 - [ ] Role-based data scoping enforced — BE query filters by user's role/branch/etc.
 - [ ] Role-based widget visibility — widgets without WidgetRole grant are hidden / show "Restricted"
 - [ ] react-grid-layout reflows correctly across breakpoints (xs/sm/md/lg/xl)
-- [ ] STATIC_DASHBOARD: dropdown lists all `IsMenuVisible=false` dashboards for module; switching dropdown reloads layout + widgets
-- [ ] STATIC_DASHBOARD: this Dashboard row's `IsMenuVisible` is `false` and it appears in the dropdown
-- [ ] MENU_DASHBOARD: this Dashboard row's `IsMenuVisible` is `true` and it appears as a sidebar leaf (NOT in any dropdown)
-- [ ] MENU_DASHBOARD: bookmarked URL `/{lang}/{module}/dashboards/{slug}` survives reload
+- [ ] STATIC_DASHBOARD: dropdown lists all dashboards for module where `MenuId IS NULL`; switching dropdown reloads layout + widgets
+- [ ] STATIC_DASHBOARD: this Dashboard row has `MenuId = NULL` and appears in the dropdown
+- [ ] MENU_DASHBOARD: this Dashboard row has `MenuId IS NOT NULL` and appears as a sidebar leaf (NOT in any dropdown)
+- [ ] MENU_DASHBOARD: bookmarked URL `/{lang}/{module}/dashboards/{Menu.MenuUrl}` survives reload
 - [ ] MENU_DASHBOARD: role-gating via `RoleCapability(MenuId)` hides the sidebar leaf for unauthorized roles
 
 **DB Seed Verification:**
 - [ ] Dashboard row inserted with correct ModuleId, IsSystem=true
 - [ ] DashboardLayout row inserted with valid LayoutConfig JSON (parses cleanly) and ConfiguredWidget JSON
 - [ ] Widget rows + WidgetRole grants inserted (at least BUSINESSADMIN)
-- [ ] MENU_DASHBOARD: Menu + MenuCapability + RoleCapability seeded; Dashboard.MenuId/MenuUrl/IsMenuVisible=true correctly set
+- [ ] MENU_DASHBOARD: Menu (with MenuName, MenuCode, MenuUrl, OrderBy, ParentMenuId, ModuleId, MenuIcon) + MenuCapability + RoleCapability seeded; Dashboard.MenuId correctly set; Menu.ModuleId equals Dashboard.ModuleId
 - [ ] Re-running seed is idempotent (NOT EXISTS guards on every INSERT/UPDATE)
 
 ---
@@ -657,15 +708,15 @@ WidgetGrants:    # at minimum BUSINESSADMIN; expand per ④
 - Drill-down args must use the destination screen's accepted query-param names exactly. Don't invent new ones.
 
 **MENU_DASHBOARD-only warnings:**
-- If this is the FIRST MENU_DASHBOARD prompt: the one-time infra (schema columns + dynamic route + sidebar injection + backfill seed) listed in the template preamble's "First-time MENU_DASHBOARD setup" section MUST be included in this prompt's scope. Subsequent prompts can omit it.
-- Slug must be kebab-case, unique within (CompanyId, ModuleId), and not collide with reserved static paths (`config`, `new`, `edit`, `read`, `overview`).
-- Menu row's `ModuleId` MUST match `Dashboard.ModuleId`. Validator enforces this.
+- If this is the FIRST MENU_DASHBOARD prompt: the one-time infra (1 schema column on `sett.Dashboards` + dynamic route + sidebar injection + backfill seed) listed in the template preamble's "First-time MENU_DASHBOARD setup" section MUST be included in this prompt's scope. Subsequent prompts can omit it.
+- Slug lives on `auth.Menus.MenuUrl` (NOT on Dashboard). Must be kebab-case, unique within `(MenuUrl, ModuleId, IsActive)` (existing index), and not collide with reserved static paths (`config`, `new`, `edit`, `read`, `overview`). Validation belongs on the Menu CRUD path.
+- Menu row's `ModuleId` MUST match `Dashboard.ModuleId`. `linkDashboardToMenu` enforces this.
 - Per-dashboard FE page files do NOT exist — single dynamic route `[slug]/page.tsx` covers all menu dashboards. If you find yourself creating `dashboards/myname/page.tsx` for a MENU_DASHBOARD, stop — that's the STATIC pattern.
-- Sidebar auto-injection happens via `menuVisibleDashboardsByModuleCode` query — no manual sidebar config edits needed.
+- Sidebar auto-injection happens via `menuLinkedDashboardsByModuleCode` query — no manual sidebar config edits needed.
 
 **STATIC_DASHBOARD-only warnings:**
 - Do NOT introduce a sidebar menu item for the dashboard itself — STATIC_DASHBOARD lives at the module's `*_DASHBOARDS` parent route.
-- Dropdown filter rule: `dashboards.filter(d => d.isMenuVisible === false)` — must not show menu-promoted dashboards.
+- Dropdown filter rule: `dashboards.filter(d => d.menuId == null)` — must not show menu-promoted dashboards.
 - Per-user max-3-custom-dashboards rule still applies; system dashboards do not count.
 - DashboardComponent's "Edit Layout" / "Add Widget" / "Reset Layout" chrome is reused as-is. Do not reinvent.
 
@@ -708,7 +759,7 @@ WidgetGrants:    # at minimum BUSINESSADMIN; expand per ④
 | ⑥ | UI/UX Blueprint | UX Architect → FE Dev | "Page chrome (variant-specific), react-grid-layout config, widget catalog, KPI cards, charts, filters, drill-downs" |
 | ⑦ | Substitution Guide | BE Dev + FE Dev | "How to map the canonical dashboard → this dashboard?" |
 | ⑧ | File Manifest | BE Dev + FE Dev | "Few BE files, ~0–4 FE files, mostly DB seed work" |
-| ⑨ | Approval Config | User | "Confirm seed inputs incl. variant, slug, OrderBy, widget grants" |
+| ⑨ | Approval Config | User | "Confirm seed inputs incl. variant, slug (Menu.MenuUrl), OrderBy (Menu.OrderBy), widget grants" |
 | ⑩ | BE→FE Contract | FE Dev | "Composite DTO shape + per-widget query signatures" |
 | ⑪ | Acceptance Criteria | Verification | "Variant-specific E2E checks (dropdown vs sidebar leaf), drill-down, role gating, react-grid-layout reflow" |
 | ⑫ | Special Notes | All agents | "Variant pitfalls, dashboard-menu-system prerequisite, multi-currency, N+1, slug rules" |
@@ -719,9 +770,9 @@ WidgetGrants:    # at minimum BUSINESSADMIN; expand per ④
 
 ```
 Is the dashboard reached via the module's main *_DASHBOARDS route + a dropdown switcher?
-  YES → STATIC_DASHBOARD. IsMenuVisible=false. No new menu row. Dashboard appears in dropdown.
+  YES → STATIC_DASHBOARD. Dashboard.MenuId = NULL. No new menu row. Dashboard appears in dropdown.
   NO  → does the dashboard have its own sidebar menu item under *_DASHBOARDS?
-        YES → MENU_DASHBOARD. IsMenuVisible=true. New menu row. NOT in dropdown.
+        YES → MENU_DASHBOARD. New auth.Menus row + Dashboard.MenuId set to it. NOT in dropdown.
               Prereq: dashboard-menu-system.md must be COMPLETED.
         NO  → re-check the mockup. Dashboards must be reachable somehow.
 ```

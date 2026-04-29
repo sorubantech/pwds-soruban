@@ -213,7 +213,12 @@
       "Bash(python -X utf8 -c ' *)",
       "Bash(SUFFIX=-v8 python scripts/generate-status-csv.py)",
       "Bash(SUFFIX=-v9 python scripts/generate-status-csv.py)",
-      "Bash(SUFFIX=-v10 python scripts/generate-status-csv.py)"
+      "Bash(SUFFIX=-v10 python scripts/generate-status-csv.py)",
+      "Bash(git -C \"d:/Repos/PWDS/pwds-soruban - Copy/pss-2.0-global\" log --oneline -20 -- \".claude/screen-tracker/prompts/casedashboard.md\")",
+      "Bash(git -C \"d:/Repos/PWDS/pwds-soruban - Copy/pss-2.0-global\" diff HEAD -- \".claude/screen-tracker/prompts/casedashboard.md\")",
+      "Read(//d/Repos/PWDS/pwds-soruban - Copy/pss-2.0-global/.claude/screen-tracker/**)",
+      "Read(//d/Repos/PWDS/pwds-soruban - Copy/pss-2.0-global/**)",
+      "Bash(git -C \"d:/Repos/PWDS/pwds-soruban - Copy/pss-2.0-global\" diff --name-only -- PSS_2.0_Frontend/src/presentation/components/custom-components/dashboards/)"
     ],
     "ask": [
       "Bash(rm -rf *)",
@@ -236,7 +241,8 @@
       "d:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global\\PSS_2.0_Frontend\\src\\app\\[lang]\\organization\\organizationsetup\\branch",
       "d:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global\\PSS_2.0_Frontend\\src\\app\\[lang]\\dev",
       "d:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global\\PSS_2.0_Frontend\\src\\app\\[lang]\\setting\\communicationconfig",
-      "d:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global\\.claude\\screen-tracker\\prompts"
+      "d:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global\\.claude\\screen-tracker\\prompts",
+      "d:\\Repos\\PWDS\\pwds-soruban - Copy\\pss-2.0-global"
     ]
   }
 }
