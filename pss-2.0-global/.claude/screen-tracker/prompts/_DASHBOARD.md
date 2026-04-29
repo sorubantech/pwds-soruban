@@ -31,12 +31,41 @@
 > | **BE — `code-reference-backend.md`** § Path-A Recipe Library | KPI function template (delta + format + deltaColor), Donut/Pie 3-CTE recipe, Multi-row table CTE-stack recipe, Alert/Rules-Engine recipe (severity enum + `<strong>` allowed), filter NULLIF idiom, tenant-scoping pattern, full anti-pattern catalog |
 > | **FE — `code-reference-frontend.md`** § Widget Design Quality Standards | react-grid-layout breakpoint matrix (xs→xl), KPI card visual spec + skeleton, Table row density + status-pill color map, Chart palette/tooltip/legend rules, Alert severity color map + sanitization helper, universal Empty/Error templates, Phosphor icon catalog by purpose, anti-patterns |
 >
+> ### 🆕 NEW widget renderers are the DEFAULT — DO NOT reuse legacy `WIDGET_REGISTRY` entries
+>
+> **Why**: the original `WIDGET_REGISTRY` entries (`StatusWidgetType1/2`, `MultiChartWidget`, `PieChartWidgetType1`, `TableWidgetType1`, `NormalTableWidget`, `FilterTableWidget`, `RadialBarWidget`, `HtmlWidgetType1/2`, `GeographicHeatmapWidgetType1`) were built for the legacy Main Dashboards (`#120`) and **fail the case-dashboard quality bar** — outdated typography, inconsistent spacing, weak skeletons, off-palette colors, and chart styling that does not match the new design language.
+>
+> **The Case Dashboard precedent** (#52) registered a NEW renderer `AlertListWidget` precisely because no legacy entry rendered at the required quality. This was correct — and is now the **default expectation** for every new dashboard. (Contact Dashboard, Donation Dashboard, Communication Dashboard, Volunteer Dashboard, Fundraising Dashboard, Membership Dashboard, etc. — all of these MUST ship with NEW widget renderers, not reused legacy ones.)
+>
+> **Rules:**
+> 1. **EVERY** widget on a new dashboard gets its own NEW renderer registered in `WIDGET_REGISTRY` (`dashboard-widget-registry.tsx`). The renderer files live under `dashboards/widgets/{dashboard-name}-widgets/` (e.g., `contact-dashboard-widgets/`, `donation-dashboard-widgets/`, `communication-dashboard-widgets/`) — one folder per dashboard so renderers stay scoped and don't collide.
+> 2. **Naming convention**: `{Dashboard}{Purpose}Widget` — e.g., `ContactKpiWidget`, `ContactPipelineChartWidget`, `ContactTopDonorsTableWidget`, `DonationFunnelChartWidget`. NO reusing names like `StatusWidgetType1` or `TableWidgetType1`.
+> 3. **WidgetType seed rows**: every new renderer needs a corresponding `sett.WidgetTypes` row with a stable `WidgetTypeCode` (e.g., `CONTACT_KPI`, `CONTACT_PIPELINE_CHART`) and `ComponentPath` matching the registered key.
+> 4. **Reuse is allowed ONLY across instances of the SAME new dashboard** (e.g., `ContactKpiWidget` reused for the 4 contact KPI tiles). NEVER reach across dashboards to reuse another dashboard's widget — each dashboard's widget set is intentionally bespoke.
+> 5. **Legacy exceptions**: only the existing Main Dashboards (`#120`) keep their legacy renderers. Do not modify them.
+> 6. **Path classification**: this directive does not change Path A/B/C selection — it only governs the **renderer** (FE component). Path A widgets still ship a Postgres function + the new renderer; Path B/C widgets still ship a typed handler + the new renderer.
+>
+> ### 🧠 Developer-decided widgets — understand the business, then design the widget set
+>
+> The widget catalog in this prompt is a **starting point**, not a contract. The BE/FE developer agents are expected to:
+>
+> 1. **Read the business context first** — the module's existing entities (e.g., `Contact`, `GlobalDonation`, `Communication`, `Pledge`, `Case`, `Volunteer`), the workflows around them, the role personas who will use this dashboard, and the existing module pages the dashboard sits next to.
+> 2. **Decide what business questions this dashboard MUST answer** — e.g., for Contact Dashboard: "Who are our top donors? Which contacts are lapsing? What is the new-donor acquisition rate? Which segments are growing?" For Donation Dashboard: "What is YTD revenue? Where are donations stalling? Which campaigns are converting?" For Communication Dashboard: "Which campaigns drove the most engagement? What is the open/click rate trend? Which segments are unsubscribing?"
+> 3. **Design widgets that answer those questions** — KPI tiles, charts, tables, alerts — pick shapes appropriate to the data, not what other dashboards happened to use. A dashboard that doesn't surface the actual business signal is worthless even if every widget is pixel-perfect.
+> 4. **Add, drop, or reshape widgets from the prompt's catalog** when the business context demands it. The prompt author may not have known every nuance — the developer is closer to the entities and the user. Document any deviation in §⑫ ISSUE entries with a one-line "why."
+> 5. **Cross-reference the existing list/grid screens** for that module — if `Contact List` already shows "active vs. lapsed," the Contact Dashboard should aggregate that signal, not duplicate the list. Drill-downs link from dashboard widgets back to those existing screens.
+> 6. **Ask before inventing entirely new metrics** that require new schema or business definitions — those belong on the BA/PM track, not the developer track.
+>
+> The deliverable bar: a dashboard whose widgets a domain user (Fundraising Director, Case Manager, Marketing Lead) would call **useful at a glance** — not a generic widget grid that "ticks the boxes."
+>
 > **What this means when authoring a new dashboard prompt:**
-> 1. Specify each widget's `WidgetType.ComponentPath` (matches a key in `WIDGET_REGISTRY`) AND its `Path` (A/B/C) AND its `data jsonb` shape — never describe a widget in prose alone.
+> 1. Specify each widget's `WidgetType.ComponentPath` as a **NEW** name registered in `WIDGET_REGISTRY` (NOT a legacy `StatusWidgetType1`-style key) AND its `Path` (A/B/C) AND its `data jsonb` shape — never describe a widget in prose alone.
 > 2. Give the `LayoutConfig` as a table (i, x, y, w, h, minW, minH per breakpoint), not as prose.
 > 3. Specify drill-downs as a table (FROM widget → CLICK target → route + prefill args).
 > 4. Pre-flag deferred / degraded widgets with explicit ISSUE-N entries — manage scope upfront.
-> 5. Trust the references — the BE/FE agents will follow the design recipes verbatim. Don't restate them inline.
+> 5. List all new renderer files + folder + WidgetType seed rows in §⑦ Files Index — the FE deliverable is non-trivial (typically 5–15 new component files per dashboard).
+> 6. Treat the catalog as a draft the developer can refine based on business context (see "Developer-decided widgets" above) — not a frozen spec.
+> 7. Trust the references — the BE/FE agents will follow the design recipes verbatim. Don't restate them inline.
 >
 > ---
 >
@@ -293,15 +322,15 @@ Business: {Rich description — 4-6 sentences covering:
 
 ### C. Widget Definitions (`sett.Widgets` + `sett.WidgetTypes`)
 
-> Per-widget metadata. Reuse if already seeded; only create rows for genuinely new shapes.
+> **Per-widget metadata. NEW WidgetType rows are the DEFAULT for every new dashboard** — see "🆕 NEW widget renderers are the DEFAULT" in the preamble. Reuse legacy `WidgetTypes` rows ONLY for the legacy Main Dashboards (#120). Within a single new dashboard, the same NEW WidgetType row may be referenced by multiple `Widget` rows (e.g., one `ContactKpiWidget` type used by 4 KPI tiles).
 
-`sett.WidgetTypes` (catalog of renderers — rarely extended):
+`sett.WidgetTypes` (catalog of renderers — extended for every new dashboard):
 
 | Field | Notes |
 |-------|-------|
-| WidgetTypeName | Human label (e.g., "Multi Chart") |
-| WidgetTypeCode | Stable code (e.g., `MULTI_CHART`) — used to match via the `WidgetType` lookup |
-| ComponentPath | **Exact key in FE `dashboard-widget-registry.tsx` `WIDGET_REGISTRY`** (e.g., `MultiChartWidget`, `StatusWidgetType1`, `PieChartWidgetType1`). New value here ⇒ FE must register a new renderer (path C). |
+| WidgetTypeName | Human label scoped to this dashboard (e.g., "Contact KPI", "Donation Funnel Chart") |
+| WidgetTypeCode | Stable code scoped to this dashboard (e.g., `CONTACT_KPI`, `DONATION_FUNNEL_CHART`) — used to match via the `WidgetType` lookup |
+| ComponentPath | **Exact key in FE `dashboard-widget-registry.tsx` `WIDGET_REGISTRY`** (e.g., `ContactKpiWidget`, `DonationFunnelChartWidget`). NEW value per widget ⇒ FE registers a new renderer under `dashboards/widgets/{dashboard-name}-widgets/`. Do NOT use legacy keys (`StatusWidgetType1`, `MultiChartWidget`, etc.) — those are reserved for #120. |
 | Description | Optional |
 
 `sett.Widgets` (one per logical widget — pick a data path):
@@ -410,12 +439,12 @@ The widget runtime always calls `SELECT * FROM {schema}."{functionName}"(@p_filt
 - [ ] Drill-down arg handler (e.g., GlobalDonation `prefill_pt={id}`) — {if drill-downs prefill the destination}
 
 **Frontend Patterns Required:**
-- [x] Widget grid via `react-grid-layout` (responsive breakpoints) — already in `<DashboardComponent />`
-- [x] Reuse renderers already present in `dashboard-widget-registry.tsx` `WIDGET_REGISTRY` (StatusWidgetType1/2 for KPI, MultiChartWidget / Pie / Bar / Column / RadialBar variants for charts, TableWidgetType1 / NormalTableWidget / FilterTableWidget for tables, GeographicHeatmapWidgetType1 for geo, HtmlWidgetType1/2 for raw HTML)
-- [ ] New renderer (path C only) — escalate; create under `dashboards/widgets/{type}/` and register
+- [x] Widget grid via `react-grid-layout` (responsive breakpoints) — already in `<DashboardComponent />` / `<MenuDashboardComponent />`
+- [x] **NEW renderers per widget** — create under `dashboards/widgets/{dashboard-name}-widgets/{NewName}.tsx` and register each in `WIDGET_REGISTRY` (`dashboard-widget-registry.tsx`). One renderer per widget shape on this dashboard. NO reuse of legacy `WIDGET_REGISTRY` entries (`StatusWidgetType1/2`, `MultiChartWidget`, `PieChartWidgetType1`, `TableWidgetType1`, `NormalTableWidget`, `FilterTableWidget`, `RadialBarWidget`, `HtmlWidgetType1/2`, `GeographicHeatmapWidgetType1`) — those are frozen for #120 only.
+- [ ] Reuse legacy `WIDGET_REGISTRY` renderer — **DISALLOWED** for any new dashboard (Contact, Donation, Communication, Volunteer, Fundraising, Membership, Case, etc.). Only #120 keeps the legacy renderers.
 - [x] Query registry registration (path B/C only) — extend `QUERY_REGISTRY` in `dashboard-widget-query-registry.tsx` with the new gql doc whose name matches `Widget.DefaultQuery`
 - [x] Date-range picker / filter chips / drill-down handlers — page-level filter context already wires these to widgets
-- [x] Skeleton states matching widget shapes
+- [x] Skeleton states matching widget shapes — **shape-matched per NEW renderer** (KPI tile skeleton, chart skeleton, table skeleton, alert-list skeleton — match the renderer's actual layout, not a generic rectangle)
 - [ ] STATIC_DASHBOARD ONLY:
       • Dashboard dropdown switcher (existing in `<DashboardComponent />`)
       • Edit Layout / Add Widget / Reset Layout chrome (existing)
@@ -574,22 +603,23 @@ The widget runtime always calls `SELECT * FROM {schema}."{functionName}"(@p_filt
 | 1 | DashboardQueries / {Group}Queries endpoint | register new GQL fields (path B/C) |
 | 2 | {Group}Mappings.cs | TypeAdapterConfig for new DTOs (path B/C) |
 
-### Frontend Files (typical 0–3 — most widgets reuse existing primitives)
+### Frontend Files (typical 5–15 NEW widget renderer files per dashboard + the items below)
 
 | # | File | Path | Required When |
 |---|------|------|---------------|
 | 1 | Dashboard DTO Types | PSS_2.0_Frontend/src/domain/entities/{group}-service/{EntityName}DashboardDto.ts | path B/C |
 | 2 | GQL Query | PSS_2.0_Frontend/src/infrastructure/gql-queries/{group}-queries/{EntityName}DashboardQuery.ts | path B/C |
-| 3 | New Widget renderer | PSS_2.0_Frontend/src/presentation/components/custom-components/dashboards/widgets/{type}/{NewName}.tsx | path C only (escalate first) |
-| 4 | STATIC_DASHBOARD route page (existing — verify only) | PSS_2.0_Frontend/src/app/[lang]/(core)/{module}/dashboards/page.tsx (or specific name) | if STATIC_DASHBOARD; usually no change |
-| 5 | MENU_DASHBOARD page | NONE — covered by dynamic `[slug]/page.tsx` (created on first MENU_DASHBOARD per template preamble § B) | NEVER — do not create per-dashboard pages for MENU_DASHBOARD |
+| 3 | **NEW Widget renderers (one per widget shape on this dashboard)** | PSS_2.0_Frontend/src/presentation/components/custom-components/dashboards/widgets/{dashboard-name}-widgets/{NewName}.tsx | **ALWAYS** — every new dashboard ships its own widget renderer set. NO reuse of legacy renderers. |
+| 4 | Widget folder barrel | PSS_2.0_Frontend/src/presentation/components/custom-components/dashboards/widgets/{dashboard-name}-widgets/index.ts | always — re-export every new renderer in this folder |
+| 5 | STATIC_DASHBOARD route page (existing — verify only) | PSS_2.0_Frontend/src/app/[lang]/(core)/{module}/dashboards/page.tsx (or specific name) | if STATIC_DASHBOARD; usually no change |
+| 6 | MENU_DASHBOARD page | NONE — covered by dynamic `[slug]/page.tsx` (created on first MENU_DASHBOARD per template preamble § B) | NEVER — do not create per-dashboard pages for MENU_DASHBOARD |
 
 ### Frontend Wiring Updates
 
 | # | File | Change |
 |---|------|--------|
 | 1 | `dashboard-widget-query-registry.tsx` (existing) | extend `QUERY_REGISTRY` with new query name → gql doc (path B/C) |
-| 2 | `dashboard-widget-registry.tsx` (existing) | extend `WIDGET_REGISTRY` with new ComponentPath → React component (path C only) |
+| 2 | `dashboard-widget-registry.tsx` (existing) | extend `WIDGET_REGISTRY` with **one entry per NEW renderer** — `ComponentPath` → React component. **ALWAYS** for every new dashboard (Contact, Donation, Communication, etc.). NEVER reuse legacy entries. |
 | 3 | sidebar / menu config | NONE — sidebar auto-injects MENU_DASHBOARD entries from DB seed |
 
 ### DB Seed (the bulk of MENU_DASHBOARD work)
@@ -598,7 +628,7 @@ The widget runtime always calls `SELECT * FROM {schema}."{functionName}"(@p_filt
 |---|------|------|
 | 1 | Dashboard row in `sett.Dashboards` | always |
 | 2 | DashboardLayout row in `sett.DashboardLayouts` (LayoutConfig + ConfiguredWidget JSON) | always |
-| 3 | Widget rows in `sett.Widgets` + WidgetType values | only if new widget types |
+| 3 | Widget rows in `sett.Widgets` + **NEW WidgetType rows in `sett.WidgetTypes`** | always — every new dashboard ships its own bespoke WidgetTypes (one per renderer registered in `WIDGET_REGISTRY`) plus one Widget row per dashboard tile |
 | 4 | WidgetRole grants in `auth.WidgetRoles` | always — at minimum BUSINESSADMIN |
 | 5 | Menu row in `auth.Menus` (under {MODULECODE}_DASHBOARDS) | MENU_DASHBOARD only |
 | 6 | MenuCapability + RoleCapability rows | MENU_DASHBOARD only |
