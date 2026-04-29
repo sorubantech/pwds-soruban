@@ -7,11 +7,11 @@
 
 | Metric | Count |
 |--------|-------|
-| Total Logical Screens | 147 |
+| Total Logical Screens | 142 |
 | PARTIAL (all screens needing work — stubs, BE-only, mockup alignment) | 72 |
-| NEW (build from scratch) | 51 |
+| NEW (build from scratch) | 46 |
 | SKIP (dashboards/mobile/config — separate pipeline) | 18 |
-| **Actionable screens** | **128** |
+| **Actionable screens** | **123** |
 
 ---
 
@@ -263,26 +263,21 @@ The dev must refer to all three to understand the full FLOW screen. (MASTER_GRID
 
 | # | Screen | Mockup Files | Scope | Type | Priority | Status | Prompt | Notes |
 |---|--------|-------------|-------|------|----------|--------|--------|-------|
-| 76 | Master Data | settings/master-data.html | ALIGN | MASTER_GRID | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
+| 76 | Master Data | settings/master-data.html | ALIGN | MASTER_GRID | P5-Alignment | PARTIAL | — | **Combined screen** — single tabbed UI managing **Master Data + Master Data Type** (2 menus point here: MASTERDATA / MASTERDATATYPE under `setting/dataconfig/`). BE+FE exist but need mockup alignment review. |
 | 79 | Currency Management | settings/currency-management.html | ALIGN | MASTER_GRID | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 81 | Document Types | settings/document-types.html | FE_ONLY | MASTER_GRID | P1-Setup | PARTIAL | — | BE DocumentType exists, NO FE route |
-| 160 | Widget Type | settings/widget-type.html (TBD) | FULL | MASTER_GRID | P1-Setup | NEW | — | Widget type master (dashboard widget catalog). MenuCode=WIDGETTYPE, URL=`setting/dashboardwidget/widgettype`. Mockup TBD. |
-| 162 | Master Data Type | settings/master-data-type.html (TBD) | FULL | MASTER_GRID | P1-Setup | NEW | — | Master data type definitions (the type registry that #76 Master Data instances reference). MenuCode=MASTERDATATYPE, URL=`setting/dataconfig/masterdatatype`. Mockup TBD. |
-| 165 | Setting Group | settings/setting-group.html (TBD) | FULL | MASTER_GRID | P1-Setup | NEW | — | Setting category master (groups #85 Organization Settings rows). MenuCode=SETTINGGROUP, URL=`setting/orgsettings/settinggroup`. Mockup TBD. |
 | 168 | Payment Gateway Master | settings/payment-gateway-master.html (TBD) | FULL | MASTER_GRID | P1-Setup | NEW | — | Gateway provider master (Stripe/PayPal/Razorpay catalog). MenuCode=PAYMENTGATEWAY, URL=`setting/paymentconfig/paymentgateway`. Mockup TBD. |
-| 159 | Widget | settings/widget.html (TBD) | FULL | MASTER_GRID | P2-Core | NEW | — | Widget instance master (per-widget metadata). MenuCode=WIDGET, URL=`setting/dashboardwidget/widget`. Mockup TBD. |
-| 161 | Widget Property | settings/widget-property.html (TBD) | FULL | MASTER_GRID | P2-Core | NEW | — | Widget property config (key-value props per widget instance). MenuCode=WIDGETPROPERTY, URL=`setting/dashboardwidget/widgetproperty`. Mockup TBD. |
+| 159 | Widget | settings/widget.html (TBD) | FULL | MASTER_GRID | P2-Core | NEW | — | **Combined screen** — single tabbed UI managing **Widget + Widget Type + Widget Property** (3 menus point here: WIDGET / WIDGETTYPE / WIDGETPROPERTY under `setting/dashboardwidget/`). Mockup TBD. |
 | 163 | Donation Verse | settings/donation-verse.html (TBD) | FULL | MASTER_GRID | P2-Core | NEW | — | Receipt verse/scripture master (printed on receipts). MenuCode=DONATIONVERSE, URL=`setting/donationconfig/donationverse`. Mockup TBD. |
 | 164 | Field | settings/field.html (TBD) | FULL | MASTER_GRID | P2-Core | NEW | — | Grid field master (#77 Grid Config field-definition catalog; distinct from #82 Custom Fields which is per-entity custom field UI). MenuCode=FIELD_SETTING, URL=`setting/gridmanagement/field`. Mockup TBD. |
 | 83 | Certificate Templates | settings/certificate-templates.html | ALIGN | FLOW | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
-| 166 | User Setting | settings/user-setting.html (TBD) | FULL | FLOW | P3-Business | NEW | — | User-level preference management (individual user settings overlay). MenuCode=USERSETTING, URL=`setting/orgsettings/usersetting`. Mockup TBD. |
 | 167 | Payment Gateways (Per-Company) | settings/company-payment-gateway.html (TBD) | FULL | FLOW | P3-Business | NEW | — | Per-company gateway configuration (which gateways are enabled, credentials, default). Distinct from #168 Payment Gateway Master. MenuCode=COMPANYPAYMENTGATEWAY, URL=`setting/paymentconfig/companypaymentgateway`. Mockup TBD. |
 | 77 | Grid Config | settings/grid-configuration.html | ALIGN | Config | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 78 | Dashboard Config | settings/dashboard-config.html | ALIGN | Config | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 80 | Region Hierarchy | settings/region-hierarchy.html | ALIGN | Config | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
 | 82 | Custom Fields | settings/custom-fields.html | FE_ONLY | Config | P3-Business | PARTIAL | — | BE API exists, FE component incomplete |
 | 84 | Email Provider Config | settings/email-provider-config.html | ALIGN | Config | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
-| 85 | Organization Settings | settings/org-settings.html | ALIGN | Config | P5-Alignment | PARTIAL | — | BE+FE exist but need mockup alignment review |
+| 85 | Organization Settings | settings/org-settings.html | ALIGN | Config | P5-Alignment | PARTIAL | — | **Combined screen** — single tabbed UI managing **Organization Setting + Setting Group + User Setting** (3 menus point here: ORGANIZATIONSETTING / SETTINGGROUP / USERSETTING under `setting/orgsettings/`). BE+FE exist but need mockup alignment review. |
 | 157 | SMS Setup | settings/sms-setup.html (TBD) | FULL | Config | P3-Business | NEW | — | SMS provider config (sibling of #34 WhatsApp Setup). MenuCode=SMSSETUP, URL=`setting/communicationconfig/smssetup`. Mockup TBD. |
 | 158 | Dashboard Layout | settings/dashboard-layout.html (TBD) | FULL | Config | P3-Business | NEW | — | Dashboard grid layout designer (drag/drop widget placement). MenuCode=DASHBOARDLAYOUT, URL=`setting/dashboardwidget/dashboardlayout`. Mockup TBD. |
 | 86 | API Management | settings/api-management.html | — | Config | P4-Advanced | SKIP_CONFIG | — | Integration config, custom screen |
@@ -511,9 +506,6 @@ These are the screens that need work, ordered by priority tier. Within each tier
 | 151 | Locality | General | MASTER_GRID | NEW | TBD |
 | 152 | Pincode | General | MASTER_GRID | NEW | TBD |
 | 153 | State | General | MASTER_GRID | NEW | TBD |
-| 160 | Widget Type | Settings | MASTER_GRID | NEW | TBD |
-| 162 | Master Data Type | Settings | MASTER_GRID | NEW | TBD |
-| 165 | Setting Group | Settings | MASTER_GRID | NEW | TBD |
 | 168 | Payment Gateway Master | Settings | MASTER_GRID | NEW | TBD |
 
 #### P2-Core (core entities with FKs to P1 / existing entities)
@@ -525,8 +517,7 @@ These are the screens that need work, ordered by priority tier. Within each tier
 | 132 | Email Keywords | Communication | MASTER_GRID | NEW | EmailTemplate (optional) |
 | 136 | Prayer Request Entry | Prayer Request | FLOW | NEW | Contact, MasterData |
 | 155 | PowerBI Report Master | Reports | MASTER_GRID | NEW | — |
-| 159 | Widget | Settings | MASTER_GRID | NEW | WidgetType (#160) |
-| 161 | Widget Property | Settings | MASTER_GRID | NEW | Widget (#159) |
+| 159 | Widget (combined) | Settings | MASTER_GRID | NEW | Combined screen — Widget + Widget Type + Widget Property |
 | 163 | Donation Verse | Settings | MASTER_GRID | NEW | Language (#143) |
 | 164 | Field | Settings | MASTER_GRID | NEW | Grid (#77) |
 
@@ -544,7 +535,6 @@ These are the screens that need work, ordered by priority tier. Within each tier
 | 156 | PowerBI User Mapping | Reports | FLOW | NEW | User, PowerBIReportMaster (#155) |
 | 157 | SMS Setup | Settings | Config | NEW | — |
 | 158 | Dashboard Layout | Settings | Config | NEW | Widget (#159), DashboardConfig (#78) |
-| 166 | User Setting | Settings | FLOW | NEW | User, SettingGroup (#165) |
 | 167 | Payment Gateways (Per-Company) | Settings | FLOW | NEW | PaymentGatewayMaster (#168), Company |
 
 #### P4-Advanced (analytics + public-facing pages — last)
