@@ -233,7 +233,10 @@
       "Bash(python)",
       "PowerShell($excel = New-Object -ComObject Excel.Application -ErrorAction SilentlyContinue; if \\($excel\\) { Write-Host \"Excel COM available v$\\($excel.Version\\)\"; $excel.Quit\\(\\) | Out-Null; [System.Runtime.Interopservices.Marshal]::ReleaseComObject\\($excel\\) | Out-Null } else { Write-Host \"No Excel COM\" })",
       "PowerShell(Get-Process EXCEL -ErrorAction SilentlyContinue)",
-      "PowerShell(Stop-Process -Force -ErrorAction SilentlyContinue)"
+      "PowerShell(Stop-Process -Force -ErrorAction SilentlyContinue)",
+      "Bash(awk -F, '$1 != \"160\" && $1 != \"161\" && $1 != \"162\" && $1 != \"165\" && $1 != \"166\"' .claude/screen-tracker/SCREEN-STATUS-OVERVIEW.csv)",
+      "Bash(mv \".claude/screen-tracker/SCREEN-STATUS-OVERVIEW.csv.new\" \".claude/screen-tracker/SCREEN-STATUS-OVERVIEW.csv\")",
+      "Bash(grep -i \"numbered\\\\|~\\\\$\")"
     ],
     "ask": [
       "Bash(rm -rf *)",
