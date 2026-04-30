@@ -1,9 +1,9 @@
 # Screen Prompt — Shared Conventions
 
 > Reference doc describing sections that are **common across all screen types**
-> (MASTER_GRID, FLOW, DASHBOARD, REPORT). The four type-specific templates
-> (`_MASTER_GRID.md`, `_FLOW.md`, `_DASHBOARD.md`, `_REPORT.md`) follow these
-> conventions — this file is the single source of truth for the shared parts.
+> (MASTER_GRID, FLOW, DASHBOARD, REPORT, CONFIG, EXTERNAL_PAGE). The six type-specific templates
+> (`_MASTER_GRID.md`, `_FLOW.md`, `_DASHBOARD.md`, `_REPORT.md`, `_CONFIG.md`, `_EXTERNAL_PAGE.md`)
+> follow these conventions — this file is the single source of truth for the shared parts.
 >
 > **Not loaded by `/plan-screens` directly** — it's a reference for humans and
 > for keeping the type-specific templates consistent.
@@ -18,27 +18,33 @@
 | Grid list + **full-page view** with `?mode=new / edit / read` | `_FLOW.md` |
 | **Widget grid** with KPIs, charts, drill-downs, no CRUD | `_DASHBOARD.md` |
 | **Parameterized query** with filter panel + result view + export | `_REPORT.md` |
+| **Single config record** (no list-of-N) — multi-section settings page, designer canvas, or N×M matrix | `_CONFIG.md` |
+| Admin **setup screen that publishes a public-facing page** consumed by anonymous visitors (donation page, P2P fundraiser, crowdfunding) | `_EXTERNAL_PAGE.md` |
 
-Pick by what the mockup **shows**, not by the entity name. Some modules mix types — a single "Donations" module can have a FLOW screen (GlobalDonation), a DASHBOARD (Donation Overview), and a REPORT (Monthly Donation Report).
+Pick by what the mockup **shows**, not by the entity name. Some modules mix types — a single "Donations" module can have a FLOW screen (GlobalDonation), a DASHBOARD (Donation Overview), a REPORT (Monthly Donation Report), a CONFIG (Receipt Numbering Setup), and an EXTERNAL_PAGE (Online Donation Page).
+
+**CONFIG vs MASTER_GRID/FLOW (common confusion)**: MASTER_GRID and FLOW manage **lists of N records** with per-row CRUD. CONFIG operates on **a single config record** (singleton-per-tenant), a **schema** (designer), or a **matrix** (axis × axis). If the mockup has "+Add" producing rows of a list, it's MASTER_GRID or FLOW — not CONFIG.
+
+**EXTERNAL_PAGE vs FLOW vs CONFIG**: EXTERNAL_PAGE has TWO surfaces — admin setup AND a public anonymous page. FLOW transacts on internal records (no public face). CONFIG configures internal behavior (no public face). The strongest tells for EXTERNAL_PAGE: a Publish/Unpublish action, a slug/URL field, a public preview pane, and OG meta-tag fields in the setup mockup.
 
 ---
 
 ## Section structure (same across all templates)
 
-All four type-specific templates follow the 12-section structure:
+All six type-specific templates follow the 12-section structure:
 
 | # | Section | Shared / Type-specific |
 |---|---------|-----------------------|
-| ① | Screen Identity & Context | **Shared** format |
-| ② | Entity Definition | **Shared** format (Dashboards/Reports often "no entity") |
-| ③ | FK Resolution Table | **Shared** format |
-| ④ | Business Rules & Validation | **Shared** format |
-| ⑤ | Screen Classification & Pattern Selection | **Type-specific** (CRUD vs widgets vs report) |
-| ⑥ | UI/UX Blueprint | **Type-specific** (the main differentiator) |
+| ① | Screen Identity & Context | **Shared** format (CONFIG and EXTERNAL_PAGE §① are intentionally heavier — drives developer-led design) |
+| ② | Entity Definition | **Shared** format (Dashboards/Reports often "no entity"; CONFIG calls it "Storage Model" with 4 patterns; EXTERNAL_PAGE calls it "Storage & Source Model" with single-page or parent-with-children) |
+| ③ | FK Resolution Table | **Shared** format (CONFIG also lists matrix axis sources; EXTERNAL_PAGE lists aggregation sources for public rollups) |
+| ④ | Business Rules & Validation | **Shared** format (CONFIG adds singleton/sensitive/dangerous-action gates; EXTERNAL_PAGE adds slug rules, lifecycle states, public-route hardening, anonymous-route concerns) |
+| ⑤ | Screen Classification & Pattern Selection | **Type-specific** (CRUD vs widgets vs report vs config sub-type vs external-page sub-type + lifecycle + slug strategy + save-model) |
+| ⑥ | UI/UX Blueprint | **Type-specific** (the main differentiator — CONFIG has 3 sub-type blocks; EXTERNAL_PAGE has 3 sub-type blocks AND each block describes BOTH admin setup + public page surfaces) |
 | ⑦ | Substitution Guide | **Shared** format — canonical ref differs per type |
-| ⑧ | File Manifest | **Shared** format — file list differs per type |
-| ⑨ | Pre-Filled Approval Config | **Shared** format |
-| ⑩ | Expected BE→FE Contract | **Shared** format |
+| ⑧ | File Manifest | **Shared** format — file list differs per type (CONFIG diverges by sub-type; EXTERNAL_PAGE always has admin setup + public route files for both BE and FE) |
+| ⑨ | Pre-Filled Approval Config | **Shared** format (CONFIG / EXTERNAL_PAGE capabilities differ by sub-type; GridFormSchema always SKIP) |
+| ⑩ | Expected BE→FE Contract | **Shared** format (EXTERNAL_PAGE splits Admin queries/mutations from Public queries/mutations with strict DTO privacy) |
 | ⑪ | Acceptance Criteria | **Shared** format — verification steps differ per type |
 | ⑫ | Special Notes & Warnings | **Shared** format |
 
@@ -57,7 +63,10 @@ registry_id: {#}
 module: {Module Name}
 status: PENDING
 scope: {FULL | BE_ONLY | FE_ONLY | ALIGN}
-screen_type: {MASTER_GRID | FLOW | DASHBOARD | REPORT}
+screen_type: {MASTER_GRID | FLOW | DASHBOARD | REPORT | CONFIG | EXTERNAL_PAGE}
+report_subtype: {TABULAR | PIVOT_CHART | DOCUMENT}                          # only when screen_type == REPORT
+config_subtype: {SETTINGS_PAGE | DESIGNER_CANVAS | MATRIX_CONFIG}           # only when screen_type == CONFIG
+external_page_subtype: {DONATION_PAGE | P2P_FUNDRAISER | CROWDFUND}         # only when screen_type == EXTERNAL_PAGE
 complexity: {Low | Medium | High}
 new_module: {YES — schema name | NO}
 planned_date: {YYYY-MM-DD}
@@ -130,7 +139,9 @@ Maps the canonical reference entity to the new entity across name casings, schem
 - MASTER_GRID → `ContactType`
 - FLOW → `SavedFilter`
 - DASHBOARD → TBD (first dashboard sets the convention)
-- REPORT → TBD (first report sets the convention)
+- REPORT → TBD per sub-type — first TABULAR / PIVOT_CHART / DOCUMENT sets the convention for its sub-type
+- CONFIG → TBD per sub-type — first SETTINGS_PAGE / DESIGNER_CANVAS / MATRIX_CONFIG sets the convention for its sub-type
+- EXTERNAL_PAGE → TBD per sub-type — first DONATION_PAGE / P2P_FUNDRAISER / CROWDFUND sets the convention for its sub-type
 
 ### § Section ⑧ — File Manifest
 
@@ -141,7 +152,15 @@ File counts differ per type:
 | MASTER_GRID | 11 CRUD files | 6 FE files | No view-page, no Zustand store |
 | FLOW | 11 CRUD files + workflow | 9 FE files | view-page (3 modes) + Zustand store |
 | DASHBOARD | 2-3 (DTO + aggregate query) | 4-5 (dashboard page + widget components) | No CRUD |
-| REPORT | 2-4 (DTO + query + exporters) | 4-6 (filter panel + result view) | No CRUD |
+| REPORT (TABULAR) | 4-7 (Report DTO + Report Query + Excel/PDF/CSV exporters + endpoint) | 7-9 (filter panel + result table + export menu + print-CSS + report page + page config + route) | No CRUD; max-row guard required |
+| REPORT (PIVOT_CHART) | 4-6 (Pivot DTO + Pivot Query + Drill-down query + chart query + Excel pivot exporter + endpoint) | 6-9 (filter panel + pivot table + N chart components + export menu + report page) | No CRUD; cell drill-down required |
+| REPORT (DOCUMENT) | 7-11 (Document DTO + Get/Bulk queries + optional report-row entity + PDF generator + email handler + reissue command + endpoints) | 6-8 (recipient picker + document component + print styles + bulk progress + report page) | One PDF per recipient; tenant branding from settings |
+| CONFIG (SETTINGS_PAGE) | 8-10 (entity + EF + DTOs + Get/Update settings + Reset + Test + default seeder + endpoints) | 6-8 (DTOs + GQL + settings-page + 1 component per section) | No Create/Delete (singleton) |
+| CONFIG (DESIGNER_CANVAS) | 13-15 (CRUD + GetSchema + BulkUpdate + Reorder + SchemaValidator + endpoints) | 9-11 (designer-page + palette + canvas + properties + preview + Zustand store) | Designer adds palette/canvas/properties |
+| CONFIG (MATRIX_CONFIG) | 6-8 (matrix entity with composite key + GetMatrix + BulkUpdate diff + cell validator + endpoints) | 7-9 (matrix-page + matrix-grid + cell renderers + bulk toolbar) | Diff-update only (no full grid POST) |
+| EXTERNAL_PAGE (DONATION_PAGE) | 12-14 (entity + EF + DTOs + admin queries + GetBySlug + GetStats + ValidateForPublish + lifecycle commands + slug validator + admin + public endpoints) | 13-14 (DTOs + admin GQL + public GQL + setup list + setup editor + section components + live preview + public donation page + donation form + thank-you + admin route + public route) | Admin setup + anonymous public route in `(public)` group; rate-limit + CSRF on public POST |
+| EXTERNAL_PAGE (P2P_FUNDRAISER) | 18-22 (parent + fundraiser child entity/EF/DTOs + leaderboard query + approve/reject + public StartFundraiser + communication template handlers) | 13-15 (parent setup tabs + active fundraiser grid + approval queue + public parent + public child + Start-Fundraiser wizard + leaderboard + 2 public routes) | Parent + child page records; child slug nested route |
+| EXTERNAL_PAGE (CROWDFUND) | 16-22 (campaign + reward tier entity/CRUD + update post entity/CRUD + atomic BackRewardTier + GetBackers + admin + public endpoints) | 14-15 (setup tabs + reward tier editor + update composer + public campaign + reward tier list + Back modal + updates feed + backers list) | Atomic inventory decrement on Back; sold-out tier disabled but rendered |
 
 ### § Section ⑨ — Approval Config
 
@@ -153,6 +172,8 @@ Pre-filled CONFIG block. Use BUSINESSADMIN role only (see feedback memory). Grid
 | FLOW | FLOW | SKIP |
 | DASHBOARD | DASHBOARD | SKIP |
 | REPORT | REPORT | SKIP |
+| CONFIG | CONFIG | SKIP (custom UI, not RJSF — for all 3 sub-types) |
+| EXTERNAL_PAGE | EXTERNAL_PAGE | SKIP (custom UI, not RJSF — for all 3 sub-types) |
 
 ### § Section ⑩ — BE→FE Contract
 
@@ -161,6 +182,13 @@ Pre-defines GQL query/mutation names, argument shapes, response DTO fields. Shar
 - `Get{Entity}Summary` (MASTER_GRID / FLOW with widgets)
 - `Get{Entity}Dashboard` (DASHBOARD)
 - `Get{Entity}Report`, `Export{Entity}Report` (REPORT)
+- `Get{Entity}Settings`, `Update{Entity}Settings`, `Reset{Entity}ToDefaults`, `Test{Entity}…`, `Regenerate{Field}` (CONFIG / SETTINGS_PAGE)
+- `Get{Entity}Schema`, `BulkUpdate{Entity}Schema`, `Reorder{Entity}` (CONFIG / DESIGNER_CANVAS)
+- `Get{Matrix}`, `BulkUpdate{Matrix}` (diff-only payload) (CONFIG / MATRIX_CONFIG)
+- `Get{Entity}BySlug` (public, anonymous), `Get{Entity}Stats`, `Validate{Entity}ForPublish`, `Publish{Entity}`, `Unpublish{Entity}`, `Close{Entity}`, `Archive{Entity}` (EXTERNAL_PAGE — all sub-types)
+- `InitiateDonation`, `ConfirmDonation` (EXTERNAL_PAGE / DONATION_PAGE — public, anonymous, rate-limited, csrf-protected)
+- `GetAllFundraisersBy{Entity}`, `Get{Entity}Leaderboard`, `ApproveFundraiser`, `RejectFundraiser`, `StartFundraiser` (public) (EXTERNAL_PAGE / P2P_FUNDRAISER)
+- `GetAllRewardTiersBy{Entity}`, `GetAllUpdatesBy{Entity}`, `Get{Entity}Backers`, `Reorder{Entity}RewardTiers`, `BackCampaign` (public, atomic inventory decrement) (EXTERNAL_PAGE / CROWDFUND)
 
 ### § Section ⑪ — Acceptance Criteria
 

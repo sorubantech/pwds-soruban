@@ -21,8 +21,10 @@ description: /plan-screens — Deep Screen Analyst & Prompt Builder
 - **Type-specific template** (load ONE based on detected `screen_type`):
   - `_MASTER_GRID.md` — grid + modal RJSF form
   - `_FLOW.md` — grid + 3-mode view-page (new/edit/read) with 2 UI layouts
-  - `_DASHBOARD.md` — widget grid + KPI cards + charts (stub)
-  - `_REPORT.md` — filter panel + result view + export (stub)
+  - `_DASHBOARD.md` — widget grid + KPI cards + charts
+  - `_REPORT.md` — filter panel + result view + export. Sub-types: `TABULAR` / `PIVOT_CHART` / `DOCUMENT`
+  - `_CONFIG.md` — system configuration (NOT list-of-N). Sub-types: `SETTINGS_PAGE` / `DESIGNER_CANVAS` / `MATRIX_CONFIG`
+  - `_EXTERNAL_PAGE.md` — admin setup screen that publishes a public-facing page. Sub-types: `DONATION_PAGE` / `P2P_FUNDRAISER` / `CROWDFUND`
 - `.claude/business.md` — Application business context (NGO SaaS platform)
 
 ---
@@ -147,18 +149,45 @@ Based on what the mockup shows, classify the screen and load the matching templa
 | Grid list + **modal popup form** for add/edit | `MASTER_GRID` | `.claude/screen-tracker/prompts/_MASTER_GRID.md` |
 | Grid list + **full-page view** with `?mode=new/edit/read` (URL changes on +Add) | `FLOW` | `.claude/screen-tracker/prompts/_FLOW.md` |
 | **Widget grid** with KPI cards, charts, drill-downs, no CRUD | `DASHBOARD` | `.claude/screen-tracker/prompts/_DASHBOARD.md` |
-| **Filter panel** + result table/chart + **export** actions | `REPORT` | `.claude/screen-tracker/prompts/_REPORT.md` |
+| **Filter panel** + result table/chart/document + **export** actions | `REPORT` | `.claude/screen-tracker/prompts/_REPORT.md` |
+| **Single config record** — multi-section settings page, designer canvas, OR N×M matrix grid | `CONFIG` | `.claude/screen-tracker/prompts/_CONFIG.md` |
+| **Admin setup + public anonymous page** (slug, OG meta, Publish, payment hand-off) | `EXTERNAL_PAGE` | `.claude/screen-tracker/prompts/_EXTERNAL_PAGE.md` |
 
 **Detection cues:**
 - If "+Add" opens a modal/dialog in the mockup → `MASTER_GRID`
 - If "+Add" navigates to a new page or URL changes to `?mode=new` → `FLOW`
 - If the primary UI is KPI cards + charts (no dominant grid) → `DASHBOARD`
-- If the primary UI is a filter panel with a "Generate" button and export → `REPORT`
+- If the primary UI is a filter panel with a "Generate" button leading to a result view (table / pivot / chart / document) and an export menu → `REPORT`
+- If the screen has **no list of N records** and is one of: a multi-section settings page, a palette+canvas+properties designer, or an N×M matrix editor → `CONFIG`
+- If the mockup shows TWO distinct surfaces — admin setup UI (tabs/sections + Publish action + slug field + OG meta + live preview pane) AND a public-facing page (hero / donate-form / share buttons / shareable URL) — → `EXTERNAL_PAGE`
 - When in doubt between MASTER_GRID and FLOW: workflow/transactional entities (Donations, Grants, Cases) → FLOW; setup/config entities (ContactType, Branch, Role) → MASTER_GRID.
+- When in doubt between FLOW and REPORT: if the user transacts on the record (submit / approve / revise) → FLOW; if the user consumes the record as output (read / export / print / email) → REPORT. (Example: `grantreport` is FLOW because it has submit/accept lifecycle, despite the name.)
+- When in doubt between MASTER_GRID and CONFIG: a list of N records with per-row CRUD → MASTER_GRID; a single config record (or schema, or matrix) → CONFIG. (Example: `contacttype` is MASTER_GRID because it's a list of types; "Tenant Settings" is CONFIG because it's one record per tenant.)
+- When in doubt between FLOW and EXTERNAL_PAGE: FLOW transacts on internal records (admin enters a donation, approves a grant) — never publishes a public page. EXTERNAL_PAGE configures a record AND publishes a public anonymous-accessible page that visitors transact through. The strongest tells for EXTERNAL_PAGE: a Publish/Unpublish lifecycle, a slug/URL display in the setup mockup, share buttons, OG meta-tag fields, an anonymous-public-route preview pane.
+- When in doubt between CONFIG and EXTERNAL_PAGE: CONFIG configures internal behavior (no public face). EXTERNAL_PAGE produces a public page anyone on the internet can visit. (Example: "SMTP Setup" is CONFIG; "Online Donation Page" is EXTERNAL_PAGE.)
 
-Load only the selected template. Do NOT load the other three — this is the primary token optimization of the split template design.
+**Sub-type stamping** (REQUIRED for REPORT, CONFIG, and EXTERNAL_PAGE):
 
-If you detect a pattern that doesn't fit the four types, use `_COMMON.md` as reference and write the prompt with the closest-fit template, noting the divergence in Section ⑫.
+For REPORT, also stamp `report_subtype` based on the result view:
+- Sortable / paginated columnar with optional grouping/footer totals → `TABULAR`
+- Cross-tab matrix (row × column dimensions) and/or chart-primary view → `PIVOT_CHART`
+- Per-record fixed-layout printable (statements / receipts / certificates / compliance forms) → `DOCUMENT`
+
+For CONFIG, also stamp `config_subtype` based on the screen shape:
+- Multi-section settings (tabs / sidebar / accordion / vertical-stack) operating on one record → `SETTINGS_PAGE`
+- Palette + canvas + properties pane (designer/builder) → `DESIGNER_CANVAS`
+- N×M matrix grid editor (rows × columns of cells) → `MATRIX_CONFIG`
+
+For EXTERNAL_PAGE, also stamp `external_page_subtype` based on the public-page shape:
+- Single online donation page (amount chips / recurring / payment hand-off / donor-field config / public URL) → `DONATION_PAGE`
+- Parent campaign with supporters creating their own child fundraiser pages (registration / approval / personal goals / leaderboard) → `P2P_FUNDRAISER`
+- Goal-based campaign with deadline + tiered rewards + story + updates posts + backer count + share buttons → `CROWDFUND`
+
+Stamp the sub-type in frontmatter alongside `screen_type`. Templates use the stamp to drive sub-type-specific blocks in §⑤/§⑥/§⑧/§⑪.
+
+Load only the selected template. Do NOT load the other five — this is the primary token optimization of the split template design.
+
+If you detect a pattern that doesn't fit any of the six types, use `_COMMON.md` as reference and write the prompt with the closest-fit template, noting the divergence in Section ⑫.
 
 #### 2b. Read Existing Code (by sub-type in Notes column)
 
@@ -247,7 +276,7 @@ List only genuine service-dependency items in **Section ⑫**. Everything else i
 
 ### Step 3: Generate Prompt File (12-section structure)
 
-For each screen, generate the prompt file by filling in the **type-specific template** selected in Step 2a-bis (`_MASTER_GRID.md`, `_FLOW.md`, `_DASHBOARD.md`, or `_REPORT.md`). All four templates share the same 12-section skeleton — sections ⑤ and ⑥ differ per type.
+For each screen, generate the prompt file by filling in the **type-specific template** selected in Step 2a-bis (`_MASTER_GRID.md`, `_FLOW.md`, `_DASHBOARD.md`, `_REPORT.md`, `_CONFIG.md`, or `_EXTERNAL_PAGE.md`). All six templates share the same 12-section skeleton — sections ⑤ and ⑥ differ per type.
 
 | Section | What /plan-screens fills in |
 |---------|---------------------------|

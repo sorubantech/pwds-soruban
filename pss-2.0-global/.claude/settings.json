@@ -236,7 +236,12 @@
       "PowerShell(Stop-Process -Force -ErrorAction SilentlyContinue)",
       "Bash(awk -F, '$1 != \"160\" && $1 != \"161\" && $1 != \"162\" && $1 != \"165\" && $1 != \"166\"' .claude/screen-tracker/SCREEN-STATUS-OVERVIEW.csv)",
       "Bash(mv \".claude/screen-tracker/SCREEN-STATUS-OVERVIEW.csv.new\" \".claude/screen-tracker/SCREEN-STATUS-OVERVIEW.csv\")",
-      "Bash(grep -i \"numbered\\\\|~\\\\$\")"
+      "Bash(grep -i \"numbered\\\\|~\\\\$\")",
+      "Bash(rm \"d:/Repos/PWDS/pwds-soruban/pss-2.0-global/PSS_2.0_Frontend/src/presentation/components/page-components/crm/donation/globaldonation/index.ts\")",
+      "Bash(rm \"d:/Repos/PWDS/pwds-soruban/pss-2.0-global/PSS_2.0_Frontend/src/presentation/components/page-components/crm/donation/globaldonation/data-table.tsx\")",
+      "Bash(npx --prefer-offline tsc --noEmit)",
+      "Bash(./node_modules/.bin/tsc --noEmit)",
+      "Bash(rm \"d:/Repos/PWDS/pwds-soruban/pss-2.0-global/PSS_2.0_Frontend/ts-out.txt\")"
     ],
     "ask": [
       "Bash(rm -rf *)",
