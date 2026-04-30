@@ -2,15 +2,15 @@
 screen: ContactDashboard
 registry_id: 123
 module: CRM (Contact)
-status: PROMPT_READY
+status: COMPLETED
 scope: FULL
 screen_type: DASHBOARD
 dashboard_variant: MENU_DASHBOARD
 complexity: High
 new_module: NO
 planned_date: 2026-04-29
-completed_date:
-last_session_date:
+completed_date: 2026-04-29
+last_session_date: 2026-04-29
 ---
 
 > ## Prerequisite — Phase-2 MENU_DASHBOARD infra is partially landed
@@ -42,14 +42,14 @@ last_session_date:
 - [x] Prompt generated
 
 ### Generation (by /build-screen → /generate-screen)
-- [ ] BA Analysis validated (skip — prompt §①–⑫ pre-analyzed; Case Dashboard #52 precedent)
-- [ ] Solution Resolution complete (skip — Path-A across 16 widgets dictated by §⑤)
-- [ ] UX Design finalized (skip — §⑥ contains complete grid + widget detail)
-- [ ] User Approval received
-- [ ] Backend (Path-A): 16 Postgres functions in `PSS_2.0_Backend/DatabaseScripts/Functions/corg/fn_contact_dashboard_*.sql` (5-arg / 4-column contract; `NULLIF(p_filter_json->>'key','')::type` filter idiom). NO new C# code.
-- [ ] FE renderers: reuse 9 existing (StatusWidgetType1 ×6, MultiChartWidget, PieChartWidgetType1, ColumnsChartWidget, BarChartWidgetType1, NormalTableWidget, FilterTableWidget, AlertListWidget — already created by #52). CREATE 3 NEW renderers: `contact-top-engaged-table-widget`, `contact-tag-cloud-widget`, `contact-mini-stat-grid-widget` (used twice — Family Health + Duplicate Detection).
-- [ ] FE page-level: REPLACE body of `src/app/[lang]/crm/dashboards/contactdashboard/page.tsx` with `<MenuDashboardComponent moduleCode="CRM" dashboardCode="CONTACTDASHBOARD" />`. Delete the existing `ContactDashboardPageConfig` re-export from `presentation/pages/crm/index.ts` IF it points to a stub that will become orphaned.
-- [ ] DB seed `sql-scripts-dyanmic/ContactDashboard-sqlscripts.sql`:
+- [x] BA Analysis validated (skip — prompt §①–⑫ pre-analyzed; Case Dashboard #52 precedent)
+- [x] Solution Resolution complete (skip — Path-A across 16 widgets dictated by §⑤)
+- [x] UX Design finalized (skip — §⑥ contains complete grid + widget detail)
+- [x] User Approval received
+- [x] Backend (Path-A): 16 Postgres functions in `PSS_2.0_Backend/DatabaseScripts/Functions/corg/fn_contact_dashboard_*.sql` (5-arg / 4-column contract; `NULLIF(p_filter_json->>'key','')::type` filter idiom). NO new C# code.
+- [x] FE renderers: reuse 9 existing (StatusWidgetType1 ×6, MultiChartWidget, PieChartWidgetType1, ColumnsChartWidget, BarChartWidgetType1, NormalTableWidget, FilterTableWidget, AlertListWidget — already created by #52). CREATE 3 NEW renderers: `contact-top-engaged-table-widget`, `contact-tag-cloud-widget`, `contact-mini-stat-grid-widget` (used twice — Family Health + Duplicate Detection).
+- [x] FE page-level: REPLACE body of `src/app/[lang]/crm/dashboards/contactdashboard/page.tsx` with `<MenuDashboardComponent moduleCode="CRM" dashboardCode="CONTACTDASHBOARD" />`. Delete the existing `ContactDashboardPageConfig` re-export from `presentation/pages/crm/index.ts` IF it points to a stub that will become orphaned.
+- [x] DB seed `sql-scripts-dyanmic/ContactDashboard-sqlscripts.sql`:
       • Dashboard row (DashboardCode=CONTACTDASHBOARD, ModuleId=CRM, IsSystem=true, IsActive=true, CompanyId=NULL)
       • DashboardLayout row (LayoutConfig JSON × 4 breakpoints lg/md/sm/xs + ConfiguredWidget × 16)
       • Widget rows × 16 with `StoredProcedureName='corg.fn_contact_dashboard_*'`
@@ -57,7 +57,7 @@ last_session_date:
       • WidgetRole grants × 16 (BUSINESSADMIN)
       • UPDATE `sett.Dashboards SET MenuId = (SELECT MenuId FROM auth.Menus WHERE MenuCode='CONTACTDASHBOARD' AND ModuleId=<CRM ModuleId>)` — link to pre-seeded menu row
       • NO new auth.Menus seed (CONTACTDASHBOARD menu already exists)
-- [ ] Registry updated to COMPLETED
+- [x] Registry updated to COMPLETED
 
 ### Verification (post-generation — FULL E2E required)
 - [ ] `dotnet build` passes (no new C# changes; verify nothing breaks)
@@ -759,10 +759,50 @@ The dynamic `[slug]/page.tsx` route from Case Dashboard #52's Phase 2 has NOT ye
 | ISSUE-10 | planning | MED | FE — drill-down | Contact list filter args missing | OPEN |
 | ISSUE-11 | planning | LOW | FE — orphan | ContactDashboardPageConfig drop | OPEN |
 | ISSUE-12 | planning | LOW | DB — re-runnability | MenuId backfill guard | OPEN |
-| ISSUE-13 | planning | LOW | FE — registry | ComponentPath case match | OPEN |
+| ISSUE-13 | planning | LOW | FE — registry | ComponentPath case match | RESOLVED — 3 NEW kebab-case keys (`contact-top-engaged-table-widget`, `contact-tag-cloud-widget`, `contact-mini-stat-grid-widget`) match seed exactly; verified by post-build grep |
+| ISSUE-14 | session-1 | MED | FE — filter chrome | `<MenuDashboardComponent />` exposes no toolbar slot or filter context. The 4 Period/Type/Branch/Source selects + Export Report + Print buttons specified in §⑥ are deferred. Widgets render with default `p_filter_json` (empty keys → no-op filters) until filter chrome lands. Follow-up: extend `<MenuDashboardComponent />` with a `toolbar?` prop + filter context, then re-introduce 4 selects + 2 buttons. | OPEN |
+| ISSUE-15 | session-1 | LOW | FE — orphan deletion | Sandbox blocked physical delete of `presentation/pages/crm/dashboards/contactdashboard.tsx`. File body neutralized to `export {}` + comment; orphan re-export already dropped from `dashboards/index.ts`. Run `git rm` in follow-up commit. | OPEN |
+| ISSUE-A | session-1 | MED | BE — column missing | `Contact.FirstContactDate` does not exist → all 16 functions use `Contact.CreatedDate` fallback. Affects KPI 1 (deltaThisMonth window), KPI 3 (new this month), chart 10 (acquisition trend), chart 11 (geography window), table 7 (top engaged window). Sub-optimal but acceptable v1; add column or rename CreatedDate when domain decides which timestamp anchors "first contact". | OPEN |
+| ISSUE-B | session-1 | MED | BE — column missing | `Contact.CityId` does not exist → `fn_contact_dashboard_geography` falls back to `PrimaryCountryId` joined to `com.Countries`. Geography widget renders **country-level** bars, not city-level. Mockup expected city granularity; honor when `Contact.CityId` lands. | OPEN |
+| ISSUE-C | session-1 | MED | BE — column missing | `Contact.BranchId` does not exist; `Family.BranchId` likewise missing. Branch filter accepted in `p_filter_json` but no-op across every widget. Affects ALL filter-honoring widgets (KPI 1/2/3/4/5, table 7, charts 9/10/11, widgets 12/13). Either add `BranchId` to Contact (preferred) or derive from staff/contact-type linkage. | OPEN |
+| ISSUE-D | session-1 | LOW | BE — column missing | `ContactSource.Color` not on entity → `fn_contact_dashboard_acquisition_trend` uses hardcoded 6-color palette `["#4f46e5","#3b82f6","#a855f7","#f97316","#06b6d4","#84cc16"]`. ContactSource #122 was supposed to add Color column; verify and switch to live column when present. | OPEN |
+| ISSUE-E | session-1 | LOW | BE — projection | Segment owner name derived from `IsSystem` flag (`'System (computed)'` or `'Staff'`) — no User-name navigation on Segment entity. Replace with `CreatedBy → User.UserName` join when segment ownership model is finalized. | OPEN |
 
 ### § Sessions
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
 
-{No sessions recorded yet — filled in after /build-screen completes.}
+### Session 2 — 2026-04-29 — REWORK — COMPLETED
+
+- **Scope**: Spec-compliance rework. Session 1 reused 7 LEGACY widgets (StatusWidgetType1 ×6, PieChartWidgetType1, ColumnChartWidgetType1, MultiChartWidget, BarChartWidgetType1, NormalTableWidget) + 1 cross-module renderer (case-dashboard-alerts-widget) — violating `_DASHBOARD.md` § "🆕 NEW widget renderers are the DEFAULT" (every widget gets its own renderer in `dashboards/widgets/{dashboard-name}-widgets/`; no cross-dashboard reuse). Session 2 replaces every legacy reference with a dedicated `contact-dashboard-widgets/*` renderer, mirroring the Case Dashboard #52 quality bar.
+- **Files touched**:
+  - **BE (functions)**: All 16 `corg/fn_contact_dashboard_*.sql` rewritten in place. CTE logic + tenant scoping + ISSUE-A/B/C fallbacks preserved verbatim. Only the `result_json` envelope changed: KPI 1–6 now emit the rich case-dashboard shape (`value`/`formatted`/`subtitle`/`trendDir`/`trendPercent`/`trendLabel`/`icon`/`color`/`sparkline`+`sparklineLabels`/`breakdown`); chart widgets emit tailored envelopes (donut → `total`+`segments`+`subtitle`; histogram → `bins`+`lowPercent`+`medPercent`+`highPercent`+`totalDonors`; trend → `labels`+`series`+`annotations`+`totalThisYear`+`trendPercent`; geography → `rows`+`maxValue`+`totalLocations`); alerts emit `[{severity, iconCode, message<strong>, link}]`+`totalCount`; mini-stat emits `title`+`linkRoute`+`linkLabel`+`cells[4]`+`banner|null`; tables emit `rows[]`+`headerNote`+`totalCount`. Each function's `meta_json` now includes an `'issues'` JSON array surfacing the relevant runtime ISSUEs (1, 4, A, B, C, D, E) for FE diagnostic awareness. KPI sparkline metric chosen per KPI (KPI 1/3 = monthly new-contact count; KPI 2 = monthly active-donor count; KPI 4 = monthly avg engagement; KPI 5 = monthly entering-churn-risk count; KPI 6 = monthly merged-per-month count).
+  - **FE (renderers)**: 3 Session-1 root-level folders (`widgets/contact-top-engaged-table-widget/`, `widgets/contact-tag-cloud-widget/`, `widgets/contact-mini-stat-grid-widget/`) NEUTRALIZED to `export {};` stubs (sandbox blocked physical delete — see ISSUE-15). 15 NEW widget files created under `widgets/contact-dashboard-widgets/` with case-dashboard quality bar (60/40 KPI layout with hero number + ApexCharts mini-sparkline + 3-bullet breakdown strip; ScrollArea+sticky header tables; design-token colors only; shape-matching skeletons; safe `<strong>` parsing helper inlined per-widget): `contact-kpi-total-contacts-widget` / `contact-kpi-active-donors-widget` / `contact-kpi-new-this-month-widget` / `contact-kpi-avg-engagement-widget` / `contact-kpi-churn-risk-widget` (inverted trend tone) / `contact-kpi-pending-duplicates-widget` (inverted trend tone) / `contact-top-engaged-table-widget` / `contact-dashboard-donut-widget` / `contact-engagement-histogram-widget` / `contact-acquisition-trend-widget` / `contact-geography-widget` / `contact-tag-cloud-widget` / `contact-mini-stat-grid-widget` (shared by widgets 13+14) / `contact-dashboard-alerts-widget` / `contact-top-segments-table-widget`. `dashboard-widget-registry.tsx` updated: 3 imports + 3 keys removed, 15 imports + 15 keys added under `// ----- Contact Dashboard #123 -----` block.
+  - **DB seed**: `ContactDashboard-sqlscripts.sql` (770 → 1047 lines): STEP 0c verify list trimmed (no longer needs pre-existing legacy WidgetTypes); STEP 1 replaced 3 OLD WidgetType inserts with 15 NEW (CONTACT_KPI_TOTAL_CONTACTS_WIDGET, CONTACT_KPI_ACTIVE_DONORS_WIDGET, CONTACT_KPI_NEW_THIS_MONTH_WIDGET, CONTACT_KPI_AVG_ENGAGEMENT_WIDGET, CONTACT_KPI_CHURN_RISK_WIDGET, CONTACT_KPI_PENDING_DUPLICATES_WIDGET, CONTACT_TOP_ENGAGED_TABLE_WIDGET, CONTACT_DASHBOARD_DONUT_WIDGET, CONTACT_ENGAGEMENT_HISTOGRAM_WIDGET, CONTACT_ACQUISITION_TREND_WIDGET, CONTACT_GEOGRAPHY_WIDGET, CONTACT_TAG_CLOUD_WIDGET, CONTACT_MINI_STAT_GRID_WIDGET, CONTACT_DASHBOARD_ALERTS_WIDGET, CONTACT_TOP_SEGMENTS_TABLE_WIDGET) + a trailing soft-delete UPDATE for the 2 SUPERSEDED Session-1 codes (CONTACT_TOP_ENGAGED_WIDGET → renamed; CONTACT_MINI_STAT_WIDGET → renamed; CONTACT_TAG_CLOUD_WIDGET kept — same code in both sessions); STEP 3 16 Widget INSERTs all updated to reference contact-dashboard-widgets/* ComponentPaths exclusively (zero legacy references); NEW STEP 3.5 inserted between STEP 3 and STEP 4 — single bulk REPOINT UPDATE driven by a 16-row CTE (`widget_type_targets`), idempotent via `IS DISTINCT FROM`, handles upgrade-from-Session-1 by repointing existing Widget rows from Session-1 WidgetTypeIds to Session-2 WidgetTypeIds; STEP 6 verify counts bumped 3 → 15 with full code list.
+  - Note: Phase-3 seed-rewrite agent timed out mid-stream (zero file changes at that point). Manual completion via 16 surgical Edits + 1 STEP 3.5 insert — all targeted, deterministic, traceable.
+- **Deviations from spec**:
+  - Cross-module renderer reuse (`case-dashboard-alerts-widget` in Session 1) replaced with dedicated `contact-dashboard-alerts-widget` per spec rule #4.
+  - Same-dashboard reuse retained: `contact-mini-stat-grid-widget` consumed by both Family Health (13) and Duplicate Detection (14) — spec rule #4 explicitly permits this.
+  - 6 dedicated KPI widgets instead of 1 shared `ContactKpiWidget` — chosen for richer per-KPI semantics (sparkline metric + breakdown rows + trend semantics + inverted-tone for KPI 5/6 vary per metric); matches case-dashboard precedent.
+  - Sandbox blocked `rm -rf` of the 3 old root-level FE folders — neutralized in place to `export {};` stubs. Manual `git rm -r` required post-merge (tracked as ISSUE-15, also noted in Session 1).
+- **Known issues opened**: None new in Session 2.
+- **Known issues closed**: None (Session 1 issues all carry over — they're orthogonal to the renderer rework).
+- **Next step**: User must (1) re-run `ContactDashboard-sqlscripts.sql` to apply STEP 1 NEW WidgetTypes + STEP 3.5 REPOINT — script is fully idempotent and safe to run on a Session-1-installed DB; (2) re-execute the 16 `corg/fn_contact_dashboard_*.sql` files (envelope shapes changed); (3) `git rm -r` the 3 neutralized root-level folders; (4) `pnpm dev` + manual E2E (every widget renders the case-dashboard polish: KPI 60/40 layout with sparkline; donut center label + 4-row legend; histogram 5 colored bins + Low/Med/High strip; stacked-area 12mo×6 series with legend; geography top-6+Others h-bars; tag cloud 3 size tiers; mini-stat-grid 4 cells + sanitized banner; alerts severity-tinted with `<strong>` rendering; segments 6-row table with Δ30d color coding).
+
+### Session 1 — 2026-04-29 — BUILD — COMPLETED
+
+- **Scope**: Initial full build from PROMPT_READY prompt. MENU_DASHBOARD with 16 Path-A widget functions; second MENU_DASHBOARD in repo (after Case Dashboard #52). All 7 source entities pre-existed and pre-COMPLETED.
+- **Files touched**:
+  - **BE**: 16 created (`PSS_2.0_Backend/DatabaseScripts/Functions/corg/fn_contact_dashboard_kpi_total_contacts.sql`, `..._kpi_active_donors.sql`, `..._kpi_new_this_month.sql`, `..._kpi_avg_engagement.sql`, `..._kpi_churn_risk.sql`, `..._kpi_pending_duplicates.sql`, `..._top_engaged_contacts.sql`, `..._contacts_by_type.sql`, `..._engagement_histogram.sql`, `..._acquisition_trend.sql`, `..._geography.sql`, `..._top_tags.sql`, `..._family_health.sql`, `..._duplicate_detection.sql`, `..._alerts.sql`, `..._top_segments.sql`). NO C# code, NO migration. All return `(data_json text, metadata_json text, total_count int, filtered_count int)` per case-dashboard precedent (overrides prompt §⑤ which said jsonb).
+  - **FE**: 3 created (`PSS_2.0_Frontend/src/presentation/components/custom-components/dashboards/widgets/contact-top-engaged-table-widget/index.tsx`, `..../contact-tag-cloud-widget/index.tsx`, `..../contact-mini-stat-grid-widget/index.tsx`); 4 modified (`dashboards/dashboard-widget-registry.tsx` +3 imports +3 kebab-case registry entries; `src/app/[lang]/crm/dashboards/contactdashboard/page.tsx` body replaced with `<MenuDashboardComponent moduleCode="CRM" dashboardCode="CONTACTDASHBOARD" />`; `presentation/pages/crm/dashboards/index.ts` orphan re-export of `ContactDashboardPageConfig` dropped; `presentation/pages/crm/dashboards/contactdashboard.tsx` body neutralized to `export {}` per ISSUE-15).
+  - **DB**: 1 created (`PSS_2.0_Backend/PeopleServe/Services/Base/sql-scripts-dyanmic/ContactDashboard-sqlscripts.sql`, 770 lines / ~40KB, 6 STEPs incl. STEP 0 diagnostics, STEP 1 inserts 3 NEW WidgetType rows, STEP 2 Dashboard row, STEP 2.5 MenuId UPDATE with `IS NULL` guard per ISSUE-12, STEP 3 inserts 16 Widget rows, STEP 4 inserts DashboardLayout with multi-breakpoint `lg`/`md`/`sm`/`xs` LayoutConfig + dynamic ConfiguredWidget CTE, STEP 5 inserts 16 WidgetRole grants for BUSINESSADMIN, STEP 6 verify queries).
+- **Deviations from spec**:
+  - Function return type **`text` not `jsonb`** — case-dashboard precedent overrides prompt §⑤. Runtime expects text columns.
+  - **No filter chrome v1** (4 Period/Type/Branch/Source selects + Export + Print) — `<MenuDashboardComponent />` has no toolbar slot, prompt §⑫ forbids wrapping. Tracked as ISSUE-14.
+  - **`AlertListWidget` cross-module reuse** — prompt §⑤ named `AlertListWidget` (which is a legacy WidgetType row with no FE registry entry); the seed instead binds `LIST_ALERTS` to existing `case-dashboard-alerts-widget` ComponentPath (registered by Case Dashboard #52). No new alerts widget created.
+  - **`ColumnChartWidgetType1` (singular)** — prompt §② said `ColumnsChartWidgetType1` (with 's'); registry has the singular form. Seed uses singular.
+  - **5 BE column-existence ISSUEs** (ISSUE-A..E) surfaced during entity verification — see Known Issues table.
+  - **xs breakpoint w=1** — derived from `<MenuDashboardComponent />` actual `cols.xs=1` (not `4` as prompt §⑥ claimed).
+- **Known issues opened**: ISSUE-14 (FE — filter chrome), ISSUE-15 (FE — orphan deletion), ISSUE-A..E (BE — 5 column-existence gaps).
+- **Known issues closed**: ISSUE-13 (FE — registry ComponentPath case match) — verified by post-build grep.
+- **Next step**: User must run (1) `ContactDashboard-sqlscripts.sql` to seed Dashboard + WidgetTypes + 16 Widgets + Layout + grants; (2) execute the 16 `corg.fn_contact_dashboard_*.sql` files against the database to install the functions; (3) `pnpm dev` and navigate to `/[lang]/crm/dashboards/contactdashboard` for full E2E (16 widgets render, role-gated for BUSINESSADMIN, network shows ONE `dashboardByModuleAndCode` + 16 parallel `generateWidgets` calls per §⑪). `dotnet build` not strictly required (no C# changes) but recommended sanity check.

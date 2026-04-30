@@ -236,7 +236,9 @@
       "PowerShell(Stop-Process -Force -ErrorAction SilentlyContinue)",
       "Bash(awk -F, '$1 != \"160\" && $1 != \"161\" && $1 != \"162\" && $1 != \"165\" && $1 != \"166\"' .claude/screen-tracker/SCREEN-STATUS-OVERVIEW.csv)",
       "Bash(mv \".claude/screen-tracker/SCREEN-STATUS-OVERVIEW.csv.new\" \".claude/screen-tracker/SCREEN-STATUS-OVERVIEW.csv\")",
-      "Bash(grep -i \"numbered\\\\|~\\\\$\")"
+      "Bash(grep -i \"numbered\\\\|~\\\\$\")",
+      "Bash(python \".claude/screen-tracker/_layout_check.py\")",
+      "Bash(python \"d:/Repos/PWDS/pwds-soruban - Copy/pss-2.0-global/.claude/screen-tracker/_layout_check.py\")"
     ],
     "ask": [
       "Bash(rm -rf *)",
@@ -262,7 +264,8 @@
       "d:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global\\.claude\\screen-tracker\\prompts",
       "d:\\Repos\\PWDS\\pwds-soruban - Copy\\pss-2.0-global",
       "\\tmp",
-      "D:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global\\.claude\\screen-tracker"
+      "D:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global\\.claude\\screen-tracker",
+      "d:\\Repos\\PWDS\\pwds-soruban - Copy\\pss-2.0-global\\.claude\\screen-tracker"
     ]
   }
 }
