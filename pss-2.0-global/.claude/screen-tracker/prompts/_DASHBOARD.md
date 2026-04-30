@@ -41,9 +41,34 @@
 > 1. **EVERY** widget on a new dashboard gets its own NEW renderer registered in `WIDGET_REGISTRY` (`dashboard-widget-registry.tsx`). The renderer files live under `dashboards/widgets/{dashboard-name}-widgets/` (e.g., `contact-dashboard-widgets/`, `donation-dashboard-widgets/`, `communication-dashboard-widgets/`) — one folder per dashboard so renderers stay scoped and don't collide.
 > 2. **Naming convention**: `{Dashboard}{Purpose}Widget` — e.g., `ContactKpiWidget`, `ContactPipelineChartWidget`, `ContactTopDonorsTableWidget`, `DonationFunnelChartWidget`. NO reusing names like `StatusWidgetType1` or `TableWidgetType1`.
 > 3. **WidgetType seed rows**: every new renderer needs a corresponding `sett.WidgetTypes` row with a stable `WidgetTypeCode` (e.g., `CONTACT_KPI`, `CONTACT_PIPELINE_CHART`) and `ComponentPath` matching the registered key.
-> 4. **Reuse is allowed ONLY across instances of the SAME new dashboard** (e.g., `ContactKpiWidget` reused for the 4 contact KPI tiles). NEVER reach across dashboards to reuse another dashboard's widget — each dashboard's widget set is intentionally bespoke.
-> 5. **Legacy exceptions**: only the existing Main Dashboards (`#120`) keep their legacy renderers. Do not modify them.
-> 6. **Path classification**: this directive does not change Path A/B/C selection — it only governs the **renderer** (FE component). Path A widgets still ship a Postgres function + the new renderer; Path B/C widgets still ship a typed handler + the new renderer.
+> 4. **Reuse across instances is the EXCEPTION, not the default** — collapse two widgets onto a single renderer ONLY when their visual treatment is GENUINELY identical (same card chrome, same color, same typography, same icon style, same trend indicator). If any visual differs (size, accent color, icon, density, chart type), they MUST be separate renderers. See the "🎨 Each widget must be VISUALLY UNIQUE" section below — uniform-clone widget grids are a bug, not a feature.
+> 5. **Cross-dashboard reuse is forbidden** — never reach across dashboards to reuse another dashboard's widget. Each dashboard's widget set is intentionally bespoke.
+> 6. **Legacy exceptions**: only the existing Main Dashboards (`#120`) keep their legacy renderers. Do not modify them.
+> 7. **Path classification**: this directive does not change Path A/B/C selection — it only governs the **renderer** (FE component). Path A widgets still ship a Postgres function + the new renderer; Path B/C widgets still ship a typed handler + the new renderer.
+>
+> ### 🎨 Each widget must be VISUALLY UNIQUE — not a uniform tile grid
+>
+> **The problem this prevents**: developer agents currently generate widget sets where every KPI tile looks identical, every chart uses the same color/legend treatment, and every table has the same row density — a uniform grid of clones that reads as "generic dashboard." This is the opposite of "professional dashboard quality."
+>
+> **The bar**: each widget on a dashboard must have its **own distinctive visual treatment** appropriate to its data and importance. A glance at the dashboard should let the user see the visual hierarchy — primary KPIs > secondary KPIs > supporting charts > drill-in tables — without reading any text.
+>
+> **Rules:**
+> 1. **No two widgets should look identical** within a dashboard. Vary at least one of: card size, accent color, icon, typography weight, background treatment (solid vs. gradient vs. tinted vs. pattern), trend indicator style, badge/pill style, or chart type/orientation.
+> 2. **KPI tiles**: don't ship 4 clones. Differentiate the primary KPI (larger, accented, more prominent metric, hero color) from supporting KPIs (smaller, neutral, secondary information). Use different icons, different delta-indicator styles (arrow vs. spark vs. ring vs. badge), different background tints per metric category.
+> 3. **Charts**: pick chart TYPES that match the data — don't use bar charts for everything. Trends → line/area, parts-of-whole → donut/stacked-bar, distributions → histogram/violin, comparisons → grouped-bar, geographic → map. Vary color palettes per chart's semantic (revenue=green family, expenses=red family, mixed=neutral palette).
+> 4. **Tables**: vary row density (compact for quick-scan lists, comfortable for detail tables), column treatments (status pills, avatar+name, currency-aligned right, sparkline columns), and headers (with-filter vs. plain) per table's role.
+> 5. **Alert/feed widgets**: ship a distinctive layout — severity-color left border, icon column, multi-line content, action-link footer — clearly different from KPI/chart/table shapes.
+> 6. **Spacing & emphasis**: vary widget heights/widths in `LayoutConfig` — a flat grid where every cell is the same size signals "I didn't think about importance." Hero widgets get more space; supporting widgets get less.
+> 7. **Skeleton states**: each renderer's skeleton must MATCH that renderer's specific layout — not a generic shimmer rectangle. Different renderers ⇒ different skeletons.
+> 8. **Colors as semantic, not decorative**: use the design language's semantic palette (success/warning/error/info/neutral) tied to the metric's meaning, not random brand colors.
+>
+> **Anti-patterns** (do NOT do this):
+> - All 4 KPIs use the same `ContactKpiWidget` renderer with only the metric value/label changed.
+> - All charts use the same `ContactChartWidget` with only `chartType` toggled.
+> - Every widget card has the same border, padding, header, and footer treatment.
+> - Skeleton is a single grey rectangle for every widget.
+>
+> **Do this instead**: design **N renderers for N widgets** when their visual treatment differs, and only collapse to one renderer when the widgets are GENUINELY identical in shape (e.g., a row of 3 status pills that all show "X / Y / Z" — same layout, different data → same renderer is fine). When in doubt, split into separate renderers.
 >
 > ### 🧠 Developer-decided widgets — understand the business, then design the widget set
 >
