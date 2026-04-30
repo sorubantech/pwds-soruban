@@ -238,7 +238,8 @@
       "Bash(mv \".claude/screen-tracker/SCREEN-STATUS-OVERVIEW.csv.new\" \".claude/screen-tracker/SCREEN-STATUS-OVERVIEW.csv\")",
       "Bash(grep -i \"numbered\\\\|~\\\\$\")",
       "Bash(python \".claude/screen-tracker/_layout_check.py\")",
-      "Bash(python \"d:/Repos/PWDS/pwds-soruban - Copy/pss-2.0-global/.claude/screen-tracker/_layout_check.py\")"
+      "Bash(python \"d:/Repos/PWDS/pwds-soruban - Copy/pss-2.0-global/.claude/screen-tracker/_layout_check.py\")",
+      "Read(//d/d/Repos/PWDS/pwds-soruban - Copy/pss-2.0-global/PSS_2.0_Frontend/src/presentation/components/custom-components/dashboards/widgets/**)"
     ],
     "ask": [
       "Bash(rm -rf *)",

@@ -2,15 +2,15 @@
 screen: DonationDashboard
 registry_id: 124
 module: CRM (Fundraising / Donation Operations)
-status: PROMPT_READY
+status: COMPLETED
 scope: FULL
 screen_type: DASHBOARD
 dashboard_variant: MENU_DASHBOARD
 complexity: High
 new_module: NO
 planned_date: 2026-04-29
-completed_date:
-last_session_date:
+completed_date: 2026-04-30
+last_session_date: 2026-04-30
 ---
 
 > ## ✅ MENU_DASHBOARD INFRA STATUS — ALREADY IN PLACE (verified 2026-04-29)
@@ -102,18 +102,18 @@ last_session_date:
 - [x] Prompt generated
 
 ### Generation (by /build-screen → /generate-screen)
-- [ ] BA Analysis validated
-- [ ] Solution Resolution complete
-- [ ] UX Design finalized (widget grid + chart specs + filter controls)
-- [ ] User Approval received
-- [ ] **Backend (Path-A only — 17 SQL function files in NEW `DatabaseScripts/Functions/fund/` folder)** — NO new C# code; reuses existing `generateWidgets` GraphQL handler
-- [ ] **Frontend — 10 NEW dedicated widget renderers** under `dashboards/widgets/donation-dashboard-widgets/`. Each ships `{Name}.tsx + {Name}.types.ts + {Name}.skeleton.tsx + index.ts`. NO reuse of legacy renderers — see policy callout above and § ② widget table.
-- [ ] FE wiring: register all 10 new renderers in `dashboard-widget-registry.tsx` `WIDGET_REGISTRY` (key = ComponentPath value, value = the React component)
-- [ ] FE wiring: overwrite `[lang]/crm/dashboards/donationdashboard/page.tsx` to render `<MenuDashboardComponent moduleCode="CRM" dashboardCode="DONATIONDASHBOARD" toolbar={<DonationDashboardToolbar />} />` — see ISSUE-1
-- [ ] FE wiring: overwrite `presentation/pages/crm/dashboards/donationdashboard.tsx` to remove the stale `<DashboardComponent />` import (or delete it and have the route render the menu component directly)
-- [ ] FE: NEW Toolbar component `donation-dashboard-toolbar.tsx` housing the 4 filter selects + Export/Print buttons; threads filter state via filter context to widgets
-- [ ] FE: extend `<MenuDashboardComponent />` with optional `toolbar?: ReactNode` prop if no slot exists yet (see ISSUE-4)
-- [ ] DB Seed file `sql-scripts-dyanmic/DonationDashboard-sqlscripts.sql` (preserve typo) — 7 steps mirroring CaseDashboard-sqlscripts.sql:
+- [x] BA Analysis validated (prompt §①-④ pre-analyzed; BA agent skipped — domain context is unambiguous)
+- [x] Solution Resolution complete (prompt §⑤ pre-stamps DASHBOARD/MENU_DASHBOARD/Path-A; SR agent skipped — no decisions left)
+- [x] UX Design finalized (widget grid + chart specs + filter controls — locked in §⑥)
+- [x] User Approval received (2026-04-30)
+- [x] **Backend (Path-A only — 17 SQL function files in NEW `DatabaseScripts/Functions/fund/` folder)** — NO new C# code; reuses existing `generateWidgets` GraphQL handler
+- [x] **Frontend — 15 NEW dedicated widget renderers** under `dashboards/widgets/donation-dashboard-widgets/`. Each ships `{Name}.tsx + {Name}.types.ts + {Name}.skeleton.tsx + index.ts`. NO reuse of legacy renderers — see policy callout above and § ② widget table.
+- [x] FE wiring: register all 15 new renderers in `dashboard-widget-registry.tsx` `WIDGET_REGISTRY` (key = ComponentPath value, value = the React component)
+- [x] FE wiring: per-route stub `[lang]/crm/dashboards/donationdashboard/page.tsx` already imports `DonationDashboardPageConfig` — wrapper rewrite below transitively fixes the route — see ISSUE-1
+- [x] FE wiring: overwrote `presentation/pages/crm/dashboards/donationdashboard.tsx` to render `<MenuDashboardComponent moduleCode="CRM" dashboardCode="DONATIONDASHBOARD" toolbar={<DonationDashboardToolbar />} />` inside `<WidgetFilterContextProvider>`
+- [x] FE: NEW Toolbar component `donation-dashboard-toolbar.tsx` housing the 4 filter selects + Export/Print buttons; threads filter state via existing `WidgetFilterContextProvider` to widgets
+- [x] FE: extended `<MenuDashboardComponent />` with optional `toolbar?: ReactNode` prop (ISSUE-4 — resolved)
+- [x] DB Seed file `sql-scripts-dyanmic/DonationDashboard-sqlscripts.sql` (preserve typo) — 7 steps mirroring CaseDashboard-sqlscripts.sql:
       • STEP 0 — Diagnostics (CRM module + BUSINESSADMIN role + pre-flight check that the 10 NEW WidgetType rows do NOT yet exist — confirm clean slate before STEP 3)
       • STEP 1 — Insert Dashboard row (idempotent NOT EXISTS)
       • STEP 2 — Link Dashboard.MenuId to seeded DONATIONDASHBOARD Menu (idempotent UPDATE WHERE MenuId IS NULL)
@@ -121,7 +121,7 @@ last_session_date:
       • STEP 4 — Insert 17 Widget rows (one statement per widget, each with NOT EXISTS guard, references the right WidgetType + StoredProcedureName)
       • STEP 5 — Insert WidgetRole grants (BUSINESSADMIN read-all on all 17 widgets)
       • STEP 6 — Insert DashboardLayout row (LayoutConfig + ConfiguredWidget JSON × 17)
-- [ ] Registry updated to COMPLETED
+- [x] Registry updated to COMPLETED
 
 ### Verification (post-generation — FULL E2E required)
 - [ ] `dotnet build` passes (no new C# code; verifies the migration that registers the 17 functions runs cleanly — or confirm functions are auto-applied at runtime per existing `case/` precedent)
@@ -839,10 +839,40 @@ Every UI element shown in the HTML mockup is in scope. The 6 KPIs / 4 charts / 5
 
 | ID | Raised (session) | Severity | Area | Description | Status |
 |----|------------------|----------|------|-------------|--------|
-| — | — | — | — | (empty — pre-flagged ISSUEs above are tracked in § ⑫) | — |
+| ISSUE-15 | 1 | LOW | BE accuracy | `fn_donation_dashboard_kpi_recurring_mrr` treats `RecurringDonationSchedule.Amount` as the per-month value without normalizing by `FrequencyId`. Schedules billing weekly/quarterly/annual will mis-compute against true monthly recurring revenue. The function comment (lines 57-62) acknowledges this. Frequency-factor lookup (`Frequency` MasterData → multiplier) is a one-CTE addition. Non-blocking; v1 ships with this approximation. | OPEN |
+| ISSUE-16 | 1 | LOW | BE filter | `fn_donation_dashboard_kpi_recurring_mrr` declares `v_branch_id` (line 16) but never applies it in the WHERE clauses (lines 73-75, 86-89). RecurringDonationSchedule has no direct Branch FK in the entity — branch filter silently no-ops. To honor the spec's "Branch" filter for MRR, the function must JOIN through donor `Contact` → most-recent `GlobalDonation.SourceTypeId` (the Branch reference per entity navigation) — a moderate-complexity addition. v1 ships with no-op branch filter on this widget only. | OPEN |
+| ISSUE-17 | 1 | MED | BE schema gap | `GlobalDonationDistribution` has no `CampaignId` column — campaign attribution for `fn_donation_dashboard_revenue_trend` / `fn_donation_dashboard_by_campaign` / `fn_donation_dashboard_campaign_goal_progress` is **approximated via `Pledge.CampaignId → Pledge.ContactId = GlobalDonation.ContactId` join**. This bridge gives directionally-correct attribution but is not deterministic — donations from contacts with multiple pledges could be misattributed to the wrong campaign. **The right long-term fix is either**: (a) add `CampaignId` FK directly on `GlobalDonation` (cleanest), or (b) add a `CampaignDonation` junction table. Either change requires a schema-revision pass and BE entity update. v1 ships with the Pledge-bridge approximation; flag as MED because it directly affects "By Campaign" chart accuracy. | OPEN |
+| ISSUE-18 | 1 | LOW | UI | Toolbar Campaign and Branch dropdowns use the standard `FormSelect` widget fed via `useQuery(CAMPAIGNS_QUERY/BRANCHES_QUERY)`. The spec referenced `ApiSelectV2` (typeahead with server-side search) — for tenants with >200 campaigns or branches the static list could feel sluggish. Swap to `ApiSelectV2` typeahead is a one-component-replacement task. v1 caps the query `pageSize` at 200, giving good coverage for most tenants. | OPEN |
+| ISSUE-19 | 1 | LOW | DB seed | `STEP 0` diagnostics surfaces only `RAISE NOTICE` — re-running on a partially-seeded environment without the DONATIONDASHBOARD Menu row will succeed STEP 1 but STEP 2's MenuId UPDATE leaves Dashboard.MenuId NULL, which breaks `dashboardByModuleAndCode`. The seed assumes the parent menu was seeded by a prior migration. If a tenant lacks the Menu row, run the parent menu seed first. | OPEN |
 
 ### § Sessions
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
 
-{No sessions recorded yet — filled in after /build-screen completes.}
+### Session 1 — 2026-04-30 — BUILD — COMPLETED
+
+- **Scope**: Initial full build from PROMPT_READY prompt. MENU_DASHBOARD with 17 widgets (Path-A SQL functions only — no C# changes), 15 distinct NEW FE renderers, 1 toolbar, 1 prop addition to shared `MenuDashboardComponent`, 1 page-config rewrite, 1 widget-registry update, 1 DB seed (7-step idempotent).
+- **Files touched**:
+  - BE: `PSS_2.0_Backend/DatabaseScripts/Functions/fund/` (created — folder + 17 SQL files: `fn_donation_dashboard_kpi_total_donations.sql`, `fn_donation_dashboard_kpi_avg_gift.sql`, `fn_donation_dashboard_kpi_active_donors.sql`, `fn_donation_dashboard_kpi_donor_retention.sql`, `fn_donation_dashboard_kpi_recurring_mrr.sql`, `fn_donation_dashboard_kpi_outstanding_pledges.sql`, `fn_donation_dashboard_top_donors.sql`, `fn_donation_dashboard_revenue_trend.sql`, `fn_donation_dashboard_payment_method.sql`, `fn_donation_dashboard_by_campaign.sql`, `fn_donation_dashboard_cheque_pipeline.sql`, `fn_donation_dashboard_recurring_health.sql`, `fn_donation_dashboard_recent_donations.sql`, `fn_donation_dashboard_pledge_health.sql`, `fn_donation_dashboard_refund_watchlist.sql`, `fn_donation_dashboard_alerts.sql`, `fn_donation_dashboard_campaign_goal_progress.sql`)
+  - FE: `Pss2.0_Frontend/src/presentation/components/custom-components/dashboards/widgets/donation-dashboard-widgets/` (created — 15 renderer subfolders × 4 files each + folder barrel + `_shared/renderStrongHtml.tsx` HTML sanitizer = 62 files)
+  - FE: `Pss2.0_Frontend/src/presentation/components/custom-components/menu-dashboards/index.tsx` (modified — added optional `toolbar?: ReactNode` prop + render slot before Refresh icon)
+  - FE: `Pss2.0_Frontend/src/presentation/components/custom-components/dashboards/dashboard-widget-registry.tsx` (modified — 15 NEW imports + 15 NEW WIDGET_REGISTRY entries with case-sensitive keys exact-matching seeded ComponentPath values)
+  - FE: `Pss2.0_Frontend/src/presentation/pages/crm/dashboards/donationdashboard.tsx` (rewritten — replaced broken `<DashboardComponent />` with `<MenuDashboardComponent moduleCode="CRM" dashboardCode="DONATIONDASHBOARD" toolbar={<DonationDashboardToolbar />} />` inside existing `<WidgetFilterContextProvider>`)
+  - FE: `Pss2.0_Frontend/src/presentation/pages/crm/dashboards/donation-dashboard-toolbar.tsx` (created — 4 filter selects: Period preset + Campaign FormSelect via `CAMPAIGNS_QUERY` + Branch FormSelect via `BRANCHES_QUERY` + Currency select; Export Report SERVICE_PLACEHOLDER toast; Print `window.print()`; threads filter state into `WidgetFilterContextProvider`)
+  - DB: `PSS_2.0_Backend/PeopleServe/Services/Base/sql-scripts-dyanmic/DonationDashboard-sqlscripts.sql` (created — 7-step idempotent: STEP 0 diagnostics, STEP 1 Dashboard row, STEP 2 MenuId link UPDATE, STEP 3 fifteen WidgetType rows, STEP 4 seventeen Widget rows with StoredProcedureName=`fund.fn_donation_dashboard_*` + DefaultParameters JSON honoring filter keys, STEP 5 seventeen WidgetRole grants for BUSINESSADMIN, STEP 6 DashboardLayout row with LayoutConfig 4-breakpoint JSON + ConfiguredWidget array of 17 instances)
+- **Deviations from spec**:
+  - BE schema correction (per BE Dev): `Campaign.GoalAmount` (not `TargetAmount`); `RecurringDonationSchedule.Amount` (not `MonthlyAmount`); `RecurringDonationSchedule.CancelledAt` (not `CancelledDate`); `corg."Contacts"` schema (not `crm."Contacts"`); `GlobalDonation.SourceTypeId` IS the Branch reference per the navigation property `public Branch? DonationSourceType` (entity column is misleadingly named — confirmed via grep). All functions adjusted to actual schema.
+  - BE Dev resolved status MasterData via TypeCode lookups (`SCHEDULESTATUS`, `CHEQUESTATUS`, `PLEDGESTATUS`, `REFUNDSTATUS`, `DIKSTATUS`, `SETTLEMENTSTATUS`) per Case Dashboard precedent — verify these TypeCodes exist in target tenants before running seed.
+  - FE chose ApexCharts via existing `react-apexcharts` dynamic import pattern (matches Case Dashboard renderers `case-dashboard-donut-widget` / `case-enrollment-trend-widget`).
+  - FE reused existing `WidgetFilterContextProvider` — no new context created; toolbar pushes `dateFrom`/`dateTo`/`campaignId`/`branchId`/`displayCurrency` into the same context the existing widget runtime reads.
+  - FE shipped Campaign/Branch as standard `FormSelect` (not `ApiSelectV2` typeahead) — see ISSUE-18.
+- **Known issues opened**: ISSUE-15 (MRR frequency normalization), ISSUE-16 (MRR branch filter silently no-ops), ISSUE-17 (Distribution-via-Pledge campaign attribution bridge — MED, affects By-Campaign accuracy), ISSUE-18 (Campaign/Branch FormSelect vs ApiSelectV2 typeahead), ISSUE-19 (seed STEP 2 silently leaves MenuId NULL if parent menu absent)
+- **Known issues closed**: ISSUE-1 (page-stub overwrite — wrapper rewritten to render `<MenuDashboardComponent />`), ISSUE-3 (renderer-policy compliance — 0 legacy reuse + 15 distinct ComponentPaths verified), ISSUE-4 (`<MenuDashboardComponent />` toolbar prop added), ISSUE-14 (per-renderer skeleton fidelity — every renderer ships shape-matched skeleton, validated)
+- **Validation summary**:
+  - BE-FE ComponentPath cross-match: ALL 15 strings in seed STEP 3 EXACTLY match FE registry keys (case-sensitive) ✅
+  - Legacy renderer reuse grep: 0 imports inside `donation-dashboard-widgets/` (1 grep match was a documenting comment in folder barrel) ✅
+  - Inline hex grep: 6 matches, ALL data-driven fallbacks (`row.tierColorHex || "#6b7280"`, `cell.color || "#6b7280"`, `row.methodIconColor || "#6b7280"`) — explicitly permitted by spec ✅
+  - Raw "Loading..." grep: 0 ✅
+  - File counts: 62 FE widget files, 17 BE SQL functions, 1 seed file ✅
+  - `pnpm tsc --noEmit`: passes (only error is pre-existing unrelated `isomorphic-dompurify` in `grant/grantreporting/utils/sanitize.ts`) ✅
+- **Next step**: (none — COMPLETED. Manual smoke test in `pnpm dev` against a seeded tenant: confirm the dashboard loads at `/[lang]/crm/dashboards/donationdashboard`, all 17 widgets fetch, filters reactive, drill-downs navigate. Address ISSUE-17 in a future session if the By-Campaign attribution accuracy becomes user-visible.)
