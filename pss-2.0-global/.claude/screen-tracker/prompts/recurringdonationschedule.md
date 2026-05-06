@@ -9,7 +9,7 @@ complexity: High
 new_module: NO
 planned_date: 2026-04-20
 completed_date: 2026-04-21
-last_session_date: 2026-04-27
+last_session_date: 2026-05-05
 ---
 
 ## Tasks
@@ -849,11 +849,13 @@ The CREATE / UPDATE / DELETE / PAUSE / RESUME / CANCEL / EDIT_AMOUNT mutations a
 | ISSUE-17 | session-1 | LOW | BE-summary | `RetriedThisMonth` and `RecoveredThisMonth` are approximations — codebase has no `PaymentTransactions` audit history table linked to schedule retries. Once webhook pipeline populates `PaymentTransaction.RecurringScheduleId`, swap to filter on transaction rows for precision. | OPEN |
 | ISSUE-18 | session-1 | LOW | BE-distributions | `RecurringDonationScheduleResponseDto.Distributions` is `new`-shadowed (different generic type than inherited Request collection). Mapster has explicit `.Map(...)` config to disambiguate; if a future Mapster version stops honoring shadowed properties, redesign Response DTO without inheritance. | OPEN |
 | ISSUE-19 | session-1 | LOW | FE-config | Two gridCodes coexist for this entity in `donation-service-entity-operations.ts`: `RECURRINGDONATIONSCHEDULE` (legacy) + `RECURRINGDONOR` (actual GridCode used by `FlowDataTableStoreProvider`). FE works either way; BE seed uses RECURRINGDONOR. Future cleanup: remove legacy entry once confirmed no other consumer references it. | OPEN |
-| ISSUE-20 | session-1 | LOW | FE-summary | FE GQL summary query requests `pausedCount`, `cancelledCount`, `expiringSoonCount`, `hasMixedCurrencies` — these are absent from BE `RecurringDonationScheduleSummaryDto`. HotChocolate returns null silently; FE TS types mark them optional → no crash. KPI widgets using these fields will render zero/null. If UX requires non-zero counts on Paused/Cancelled/ExpiringSoon chips, BE SummaryDto + handler need these 4 fields added. | OPEN |
+| ISSUE-20 | session-1 | LOW | FE-summary | FE GQL summary query requests `pausedCount`, `cancelledCount`, `expiringSoonCount`, `hasMixedCurrencies` — these are absent from BE `RecurringDonationScheduleSummaryDto`. HotChocolate returns null silently; FE TS types mark them optional → no crash. KPI widgets using these fields will render zero/null. If UX requires non-zero counts on Paused/Cancelled/ExpiringSoon chips, BE SummaryDto + handler need these 4 fields added. | RESOLVED (session 4 — GetRecurringDonationScheduleSummaryHandler now populates pausedCount/cancelledCount/expiringSoonCount/hasMixedCurrencies) |
 | ISSUE-21 | session-1 | LOW | BE-mutation-response | Pause/Resume/Cancel/Retry/EditAmount mutations return `BaseApiResponse<int>` (just the new ID). FE drawer triggers `handleRefetchAll()` after success — UI updates correctly via refetch. Could be optimized in future to return updated entity payload, removing the need for refetch. | OPEN (mitigated) |
 | ISSUE-22 | session-1 | LOW | BE-perf | `GetRecurringDonationSchedule.cs` handler uses double-query pattern (`ApplyGridFeatures` IDs → second `.ToListAsync()` for nav re-load). Avoids N+1 but doubles query count per list load. Performance follow-up if KPI/grid latency degrades. | OPEN |
 | ISSUE-23 | session-1 | LOW | FE-decimal-scalar | FE `editRecurringDonationScheduleAmount` mutation declares `newAmount: Decimal!`. HotChocolate exposes `decimal` as `Decimal` scalar in this repo — confirm on first wire-up. If gateway throws "Unknown type Decimal", change FE to `Float!`. | OPEN |
-| ISSUE-24 | session-2 | LOW | FE-typing | `view-page.tsx:662` uses `control as never` to satisfy `DistributionFieldArray.control: Control<any>` because RHF v7.72 `Control<X>` is not assignable to `Control<any>` due to invariant `ValidateForm` generic under TS strict. Cast is safe (single consumer, identical RHF runtime). If a second consumer is introduced, switch to a generic `<T extends FieldValues>` signature or a strongly-typed `Control<FormValues>` prop (Pledge #12 pattern). | OPEN |
+| ISSUE-24 | session-2 | LOW | FE-typing | `view-page.tsx:662` uses `control as never` to satisfy `DistributionFieldArray.control: Control<any>` because RHF v7.72 `Control<X>` is not assignable to `Control<any>` due to invariant `ValidateForm` generic under TS strict. Cast is safe (single consumer, identical RHF runtime). If a second consumer is introduced, switch to a generic `<T extends FieldValues>` signature or a strongly-typed `Control<FormValues>` prop (Pledge #12 pattern). | RESOLVED (session 3 — view-page.tsx + distribution-field-array.tsx both deleted as part of no-CRUD removal; the file referenced no longer exists) |
+| ISSUE-25 | session-3 | LOW | FE-spec-deviation | EditAmountModal "[Open Edit]" deep-link removed because the FORM view-page no longer exists. When new amount ≠ distribution sum, modal now blocks Submit and shows guidance text only ("Set the amount to match the existing sum, or cancel and re-create"). If a future business decision restores per-distribution editing, the redesign should provide an inline distribution editor inside the modal rather than re-introducing a full-page FORM. | OPEN |
+| ISSUE-26 | session-3 | LOW | FE-config | `donation-service-entity-operations.ts` blocks for `RECURRINGDONATIONSCHEDULE` and `RECURRINGDONOR` still register `create`/`update`/`delete`/`toggle` mutations — left intact (BE mutations remain for webhook ingestion + audit). Wiring is dormant because `enableAdd: false` + `enableEdit/Delete/Toggle: false` in `index-page.tsx`. Future cleanup: drop the dormant entries once it’s confirmed no other path resolves them. | OPEN |
 
 ### § Sessions
 
@@ -956,3 +958,153 @@ The CREATE / UPDATE / DELETE / PAUSE / RESUME / CANCEL / EDIT_AMOUNT mutations a
 - **Known issues closed**: None.
 - **Verification**: `pnpm tsc --noEmit` re-run scoped to `recurringdonors/view-page` produced 0 errors (was 1 before the change).
 - **Next step**: None — back to COMPLETED. Other OPEN issues (ISSUE-15 EF migration, ISSUE-8 SERVICE_PLACEHOLDER gateway integration, ISSUE-11 distribution-sum BE validator, etc.) remain unchanged.
+
+### Session 3 — 2026-05-04 — ENHANCE — COMPLETED
+
+- **Scope**: Remove all CRUD UI surfaces from the screen per business directive ("no CRUD options for recurring donations and remove that form. only view options and filters"). Recurring schedules are gateway-webhook-created; admin role on this screen is now strictly view + filter + state-machine transitions on existing schedules. BE mutations (Create/Update/Delete) remain for webhook ingestion + audit — they’re simply unreachable from the UI.
+- **Files touched**:
+  - BE: none
+  - FE deleted (2):
+    - `PSS_2.0_Frontend/src/presentation/components/page-components/crm/donation/recurringdonors/view-page.tsx` (FORM — entire 4-section RHF FORM removed; was the only `?mode=new|edit` consumer)
+    - `PSS_2.0_Frontend/src/presentation/components/page-components/crm/donation/recurringdonors/distribution-field-array.tsx` (sole consumer was view-page.tsx; grep-confirmed no other importer)
+  - FE modified (4):
+    - `index.tsx` (URL dispatcher) — collapsed `?mode=new|edit` branches into a single `index` mode; removed `RecurringDonationScheduleViewPage` import + `crudMode/recordId` early return; default render is `RecurringDonationScheduleIndexPage` (drawer reads URL inside).
+    - `index-page.tsx` — flipped `enableAdd / enableEdit / enableDelete / enableToggle` to `false` in `tablePropertyConfig`; deleted `handleCreate` callback + "New Schedule" header `Button`; removed unused `Button`, `Icon`, `useRouter` imports + `headerActions` prop.
+    - `recurring-schedule-detail-drawer.tsx` — removed header Edit button + `handleEdit` callback (deep-linked to the now-deleted FORM); removed footer Delete button + `handleDelete` + `confirmDelete` state + AlertDialog confirm block; removed `DELETE_RECURRINGDONATIONSCHEDULE_MUTATION` import + `deleteMut`/`deleting` hook; removed unused AlertDialog* named imports + `lang` derivation; kept all 6 state-machine actions (Pause / Resume / Cancel / Retry / Edit Amount / Update Payment) + Contact Donor.
+    - `schedule-action-modals.tsx` — removed EditAmountModal [Open Edit] deep-link button + `handleOpenEdit` callback; replaced its prompt text with a guidance message ("Distributions can no longer be edited from this screen. Set the amount to match the existing distribution sum, or cancel and re-create"); removed unused `useRouter`/`usePathname` imports.
+  - DB: none
+- **Deviations from spec**: Spec change — not deviation-from-build. Section ⑥ (UI/UX Blueprint) originally specifies a 4-section FORM (`?mode=new` and `?mode=edit`) for create/update; that surface is now removed. Future planning passes (`/plan-screens`) on this screen should reflect the no-CRUD posture. The drawer (read mode) + KPI widgets + Failed Alert Banner + filter chips + advanced filters + state-transition modals are unchanged.
+- **Known issues opened**: ISSUE-25 (LOW, FE-spec-deviation — EditAmountModal mismatch fallback now blocks-only with no escape hatch); ISSUE-26 (LOW, FE-config — `donation-service-entity-operations.ts` keeps two dormant CRUD blocks for `RECURRINGDONATIONSCHEDULE` + `RECURRINGDONOR`).
+- **Known issues closed**: ISSUE-24 (RESOLVED — the file referenced [`view-page.tsx:662`] no longer exists; `distribution-field-array.tsx` was deleted alongside view-page).
+- **Verification**: `pnpm tsc --noEmit` produces 0 errors in any of the 4 modified `recurringdonors/*.tsx` files. The 2 pre-existing repo-wide TS errors (in `data-tables/basic/data-table-column-types/component-column.tsx:366` and `flow/data-table-column-types/component-column.tsx:392`) are unrelated to this session — both stem from `DikStatusBadge` `cellValue: unknown` mismatch left from screen #7 work. Confirmed via `git status` that those files are untouched in this session.
+- **Next step**: None — back to COMPLETED. Other OPEN issues (ISSUE-15 EF migration, ISSUE-8 SERVICE_PLACEHOLDER gateway integration, ISSUE-11 distribution-sum BE validator, ISSUE-25/26 from this session) remain unchanged.
+
+### Session 4 — 2026-05-04 — ENHANCE+FIX — COMPLETED
+
+- **Scope**: Four follow-on changes after the Session 3 no-CRUD pass. (1) Sample seed rows so the empty grid actually has data. (2) Summary handler populates the 4 chip-count fields the FE has wanted since Session 1. (3) Remove the advanced-filter section from the page. (4) Wire the chips to actually filter the grid — they were repainting URL+Zustand only and never pushed the chip value into the GraphQL request, so clicking them changed nothing.
+- **Files touched**:
+  - BE modified (1):
+    - `Base.Application/Business/DonationBusiness/RecurringDonationSchedules/Queries/GetRecurringDonationScheduleSummary.cs` — added 4 server-side counts in the existing baseQuery: `PausedCount`/`CancelledCount` (status code = PAU/CAN), `ExpiringSoonCount` (EndDate within today…today+30d), `HasMixedCurrencies` (>1 distinct CurrencyId among Active schedules). Closes ISSUE-20.
+  - DB modified (1):
+    - `sql-scripts-dyanmic/RecurringDonationSchedule-sqlscripts.sql` — added STEP 8 inside a single PL/pgSQL DO block: looks up Company/Contacts (top 7 rotated)/PaymentGateway/Currency (USD primary + EUR/alt for multi-currency caption)/DonationPurpose/RECURRINGFREQUENCY{30,90,365}/RECURRINGSCHEDULESTATUS{ACT,PAU,CAN,FAIL}; auto-creates one PaymentMethodToken if the company has none; inserts 10 sample schedules (REC-S001..REC-S010) covering 4 ACT (incl. 1 EUR + 1 expiringSoon EndDate=today+15d), 1 PAU, 2 CAN, 2 FAIL (3-4 consecutive failures + LastChargeStatus=FAILED), plus 1 Distribution per schedule with ParticipantTypeId/DonationPurposeId from lookups. All inserts gated on ScheduleCode uniqueness; the whole block emits a NOTICE and returns cleanly when prerequisites are missing on a fresh DB.
+  - FE modified (4):
+    - `src/infrastructure/gql-queries/donation-queries/RecurringDonationScheduleQuery.ts` — added `$chip: String` variable + `chip: $chip` arg on the `recurringDonationSchedules` resolver. BE GraphQL surface (RecurringDonationScheduleQueries.cs:18 + GetRecurringDonationSchedulesQuery.Chip) was already wired — only the FE side was missing.
+    - `src/presentation/components/page-components/crm/donation/recurringdonors/recurring-filter-chips.tsx` — chip click + URL→Zustand sync now both call `pushChipToGrid(key)` which pushes `{ chip: <key> }` into `FlowDataTableStore.extraVariables` (or `null` for "all"). The data-table fetch effect already splices `extraVariables` into the GraphQL variables, so the BE handler's switch on `request.Chip` (active/paused/cancelled/failed/expiringsoon) actually receives the value. Also resets `pageIndex` to 0 on chip change so we don't land past totalPages of the filtered set. Special-case: `expiringSoon` (FE camel) → `expiringsoon` (BE switch arm).
+    - `src/presentation/components/page-components/crm/donation/recurringdonors/index-page.tsx` — dropped `<RecurringAdvancedFilters />` import + render block; flipped `tablePropertyConfig.enableAdvanceFilter` to `false`; updated header docblock for the new layout.
+  - FE deleted (1):
+    - `src/presentation/components/page-components/crm/donation/recurringdonors/recurring-advanced-filters.tsx` — single consumer was index-page.tsx (grep-confirmed); deleted alongside.
+- **Deviations from spec**: The advanced-filter strip (Section ⑥ mockup mentioned a 9-field panel) is removed. The chip strip is now the sole filter UI. The 9 BE-side advanced-filter args (frequencyId/paymentGatewayId/amountMin/Max/currencyId/createdFrom/To/nextBillingFrom/To) remain on the resolver — dormant, available for future surfaces (e.g. saved-filter views) without a re-build.
+- **Known issues opened**: ISSUE-27 (LOW, FE-fk-fragility — STEP 8 sample seed picks ParticipantTypeId from "any first MasterData row" because no canonical TypeCode exists for the FK; the inserted distributions reference whatever MasterData has the lowest ID. Cosmetic concern only — if a screen later filters distributions by ParticipantType, the seed rows may render with an unexpected participant label. Fix when the canonical TypeCode is decided.) ISSUE-28 (LOW, FE-decimal-scalar carry-over — ISSUE-23 still pending real wire-up confirmation; not exercised by Session 4 changes since EditAmount path is unchanged).
+- **Known issues closed**: ISSUE-20 (RESOLVED — SummaryDto fields PausedCount/CancelledCount/ExpiringSoonCount/HasMixedCurrencies are now populated by the handler).
+- **Verification**:
+  - FE: `pnpm tsc --noEmit` produces 0 errors in any of the 3 modified `recurringdonors/*` files (filtered grep on the type-check output came back empty). The same 2 pre-existing repo-wide TS errors from sessions 2-3 (DikStatusBadge cellValue mismatch in basic+flow component-column registries) remain — unrelated.
+  - BE: `dotnet build Base.Application` → 0 Error(s), 390 pre-existing warnings (CS86xx nullability across many unrelated schemas/handlers — baseline noise; none added by this session).
+  - DB seed: not executed in this session (developer machine). Block is gated, idempotent, and emits NOTICE on missing prerequisites; safe to apply on dev/staging.
+- **Next step**: User to (1) apply the updated `RecurringDonationSchedule-sqlscripts.sql` to load the 10 sample rows (idempotent — re-runs are no-ops); (2) `pnpm dev` and verify chips actually filter the grid + 4 KPI widgets show non-zero counts + Failed banner lists REC-S008/REC-S009; (3) other long-standing OPEN issues (ISSUE-15 EF migration, ISSUE-8 SERVICE_PLACEHOLDER gateway integration, ISSUE-25/26 from session 3) remain unchanged.
+
+### Session 5 — 2026-05-04 — FIX — COMPLETED
+
+- **Scope**: Hot-fix for the Session 4 sample-data bail-out the user hit at runtime ("STEP 8 (sample data) skipped — missing prerequisites"). Root cause: the canonical PaymentGateway-MasterData-seed.sql ships RECURRINGFREQUENCY + RECURRINGSCHEDULESTATUS rows with VERBOSE DataValue codes (MONTHLY/QUARTERLY/ANNUALLY, ACTIVE/PASTDUE/PAUSED/CANCELLED/EXPIRED) but every BE consumer for screen #8 (handlers + commands + summary) was written against ABBREVIATED codes (30/90/180/365 for frequency, ACT/PAU/CAN/FAIL/EXP/PDU for status). Result — chip filter has been silently broken since day 1 (every chip click matched zero rows), summary counts under-reported, MapFrequencySuffix always returned "", and the Session 4 STEP 8 lookups all came back NULL because the seed never matched the DataValue codes the SQL was hunting for.
+- **Files touched**:
+  - DB modified (1):
+    - `sql-scripts-dyanmic/RecurringDonationSchedule-sqlscripts.sql` — STEP 7 rewritten to canonicalize. (a) UPDATEs all RECURRINGFREQUENCY rows by DataName ILIKE → sets DataValue to 30/90/180/365; INSERTs Monthly/Quarterly/Semi-Annual/Annually if any are missing. (b) UPDATEs all RECURRINGSCHEDULESTATUS rows by DataName ILIKE → sets DataValue to ACT/PAU/CAN/EXP/PDU; INSERTs Active/Past Due/Paused/Cancelled/Failed/Expired if any are missing. (c) Inserts the parent MasterDataTypes (RECURRINGFREQUENCY + RECURRINGSCHEDULESTATUS) when missing on a fresh DB. (d) Auto-creates a sample PaymentGateway "SAMPLE_GATEWAY" if none exist. (e) Auto-creates a USD Currency if none exist (with the 3 required columns CurrencyCode/Name/Symbol — confirmed via Currency.cs that DecimalPlaces/DisplayOrder do NOT exist on this codebase, dropped them from the auto-seed). (f) DonationPurpose intentionally NOT auto-seeded (FK chain DonationCategoryId+DonationGroupId both NOT NULL makes safe auto-create non-trivial). STEP 8 also gained a per-dep diagnostic NOTICE block that lists EXACTLY which prerequisite is missing instead of one opaque message — the next time bail-out fires, the developer sees specifically (e.g.) "fund.DonationPurposes: no row. Seed at least one DonationPurpose first." Also fixed a small INSERT ordering bug in the new STEP 7a/7b inserts — was setting DataSetting=DataValue (e.g. '30'); now sets DataSetting=DataName ('Monthly') matching the canonical convention from PaymentGateway-MasterData-seed.sql line 81.
+  - BE: untouched. Per-TypeCode convention is locked-in: RECURRINGSCHEDULESTATUS uses ACT/PAU/CAN/FAIL/EXP/PDU (per BE handler grep), RECURRINGFREQUENCY uses 30/90/180/365 (per MapFrequencySuffix + MonthlyFactor). Other TypeCodes (CAMPAIGNSTATUS / EVENTSTATUS / CHARGESTATUS) keep verbose codes — grep on .DataValue == "ACTIVE" / "PAUSED" / "CANCELLED" confirmed no other consumer reads our two TypeCodes verbose-style, so the canonicalization is safe.
+  - FE: untouched. The chip key → BE-arg mapping in recurring-filter-chips.tsx already uses the BE-canonical strings ("active"/"paused"/"cancelled"/"failed"/"expiringsoon") which the BE switch matches case-insensitively before doing the DataValue lookup.
+- **Deviations from spec**: None. Everything aligns with what the original Session 1 build assumed.
+- **Known issues opened**: ISSUE-29 (LOW, BE-handler convention — the abbreviated DataValue convention for RECURRINGSCHEDULESTATUS/RECURRINGFREQUENCY is now load-bearing seed-side too. If a future canonical PaymentGateway-MasterData-seed.sql refresh re-introduces the verbose codes, this screen seed must run AFTER it to canonicalize. Document this ordering in the deploy runbook.) ISSUE-30 (LOW, DB-seed-coupling — the canonical PaymentGateway-MasterData-seed.sql lacks idempotency guards — plain INSERT...VALUES — so re-running it after the screen seed has canonicalized DataValues will create duplicate rows. Out of scope for screen #8, but worth flagging for whoever owns that seed.)
+- **Known issues closed**: None new. ISSUE-2 (RECURRINGSCHEDULESTATUS missing Failed) and ISSUE-3 (RECURRINGFREQUENCY missing Semi-Annual) effectively close because the rewritten STEP 7 covers both — leaving them OPEN in the table for audit (their text refers to a state of the world that no longer exists, but the spec marker is preserved).
+- **Verification**: SQL syntax-only review (no BE/FE code changed this session). User to re-run the updated `RecurringDonationSchedule-sqlscripts.sql` on the same DB — STEP 7 will canonicalize the existing RECURRINGFREQUENCY/RECURRINGSCHEDULESTATUS rows, STEP 7d/7e will auto-create PaymentGateway/Currency if missing, then STEP 8 should either succeed (if Company+Contact+DonationPurpose exist) or print a precise per-dep NOTICE saying which one is missing.
+- **Next step**: User: (1) re-apply `RecurringDonationSchedule-sqlscripts.sql`; (2) read the NOTICE output — if STEP 8 still bails, the diagnostic now names the exact missing dep so it can be fixed (most likely candidate on a partially-seeded dev DB: fund.DonationPurposes is empty); (3) verify chips actually filter (was broken before, fixed by the canonicalization); (4) verify summary counts now > 0 across Active/Paused/Cancelled/Failed/ExpiringSoon.
+
+### Session 6 — 2026-05-04 — FIX — COMPLETED
+
+- **Scope**: Second STEP 8 bail-out hot-fix. The Session 5 diagnostic now reported back exactly which prereqs are missing: `freq_monthly=<NULL>` and `status_active=<NULL>`. All other prereqs resolved cleanly (company=1, contacts=7, gateway=1, currency_usd=19, currency_eur=14, token=10, purpose=4066, participant=3). Root cause: the user's DB has RECURRINGFREQUENCY/RECURRINGSCHEDULESTATUS rows but with DataNames that don't match my Session 5 `ILIKE 'Monthly'` / `ILIKE 'Active'` patterns — the patterns were too rigid (only "Monthly" exactly, not "Monthly Subscription" or "Every Month").
+- **Files touched**:
+  - DB modified (1):
+    - `sql-scripts-dyanmic/RecurringDonationSchedule-sqlscripts.sql` — STEP 7 hardened with three changes. (1) Hoisted the parent-MasterDataType seed (was 7c) to run FIRST, so RECURRINGFREQUENCY + RECURRINGSCHEDULESTATUS types exist before any 7a/7b lookup. (2) Wrapped 7a/7b inside a DO block that emits BEFORE+AFTER NOTICE dumps of every row in both TypeCodes (id/DataName/DataValue/IsDeleted), plus a row-count NOTICE per UPDATE statement. So when STEP 8 still bails, the developer can scroll up and see EXACTLY what’s in the table and why no row matched DataValue=30 / DataValue=ACT. (3) Replaced rigid `ILIKE 'Monthly'` style matchers with permissive substring matchers via `lower("DataName") LIKE '%month%'` — catches "Monthly", "Monthly Subscription", "Every Month", "Monthly Donation" all in one shot. Same widening for quarter/annual/year/semi/active/paus/cancel/expir/fail/past+due+overdue. Order matters: more-specific patterns (Semi-Annual / Past Due) run before general ones (Annual / Active) so e.g. "Active Past Due" doesn’t get caught by the Active matcher.
+    - Also added a TypeCode-spelling fallback: if RECURRINGFREQUENCY or RECURRINGSCHEDULESTATUS isn't found by exact name, the script grep-aggregates and prints every TypeCode containing "recur" (case-insensitive). So if the user's DB has it as `RECURRING_FREQUENCY` (underscore) or `RecurringFrequency` (mixed case), the NOTICE names it explicitly.
+  - BE: untouched.
+  - FE: untouched.
+- **Deviations from spec**: None.
+- **Known issues opened**: None new — ISSUE-29/ISSUE-30 from Session 5 still apply.
+- **Known issues closed**: None.
+- **Verification**: SQL structural sanity — confirmed two clean `DO $$` / `END $$;` pairs (lines 494→716 = STEP 7, lines 754→1188 = STEP 8). No BE/FE code changed. User to re-apply seed and read the BEFORE/AFTER NOTICE dump.
+- **Next step**: User: (1) re-apply `RecurringDonationSchedule-sqlscripts.sql`; (2) scroll the NOTICE output — the BEFORE dump shows what's in the user's DB right now, the per-UPDATE row-count tells which substring matchers fired, the AFTER dump shows post-canonicalization state. If freq_monthly / status_active are STILL NULL after this, the AFTER dump names the offending row (e.g. "id=42 | DataName=Recurring | DataValue=R | IsDeleted=false") and the user can paste that back so I can add a more specific matcher. (3) Once STEP 8 succeeds, sample rows + chip filters + summary counts all light up.
+
+### Session 7 — 2026-05-05 — FIX — COMPLETED
+
+- **Scope**: Fix Npgsql crash on summary widget query — "Cannot write DateTime with Kind=Unspecified to PostgreSQL type ‘timestamp with time zone’". Pinned every DB-bound DateTime parameter on the screen to Kind=Utc.
+- **Files touched**:
+  - BE:
+    - `Base.Application/Business/DonationBusiness/RecurringDonationSchedules/Queries/GetRecurringDonationScheduleSummary.cs` — `thisMonthStart` now built with `DateTimeKind.Utc`; `today` now `DateTime.SpecifyKind(now.Date, DateTimeKind.Utc)`.
+    - `Base.Application/Business/DonationBusiness/RecurringDonationSchedules/Queries/GetRecurringDonationScheduleFailedAlert.cs` — same fix on `thisMonthStart`.
+    - `Base.Application/Business/DonationBusiness/RecurringDonationSchedules/Queries/GetRecurringDonationSchedule.cs` — added `AsUtc(...)` boundary normaliser for the four optional wire-DateTime filters (`CreatedFrom`/`CreatedTo`/`NextBillingFrom`/`NextBillingTo`); EF `Where` clauses now use the normalised locals.
+  - FE: none.
+  - DB: none.
+- **Deviations from spec**: None.
+- **Known issues opened**: None.
+- **Known issues closed**: None (runtime defect introduced in Session 1; not previously logged).
+- **Verification**: `dotnet build Base.Application` → 0 errors.
+- **Next step**: User to refresh the screen and confirm the summary KPI strip renders without server error.
+
+### Session 7b — 2026-05-05 — FIX — COMPLETED
+
+- **Scope**: Failed-this-month query returned 0 rows even though FAIL records existed. Root cause: STEP 8 seed used `v_today date := current_date`; date arithmetic against `timestamptz` columns inherited the session timezone (+0530) and shifted `LastChargedDate` from May 1 IST to Apr 30 18:30 UTC, which is one calendar day below the UTC `thisMonthStart` the BE handler uses.
+- **Files touched**:
+  - DB: `PSS_2.0_Backend/PeopleServe/Services/Base/sql-scripts-dyanmic/RecurringDonationSchedule-sqlscripts.sql` — changed `v_today` from `date := current_date` to `timestamptz := date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'`. All `v_today ± INTERVAL` arithmetic in REC-S001…S010 inserts now lands on UTC midnight.
+- **Deviations from spec**: None.
+- **Action required by user**: existing 10 sample rows have shifted timestamps. To re-seed cleanly, run `DELETE FROM fund."RecurringDonationSchedules" WHERE "RecurringDonationScheduleCode" LIKE 'REC-S0%';` once, then re-apply the script. The INSERTs are NOT-EXISTS-gated so without the DELETE the corrupted timestamps remain.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: User to re-seed and confirm the failed-payments alert banner + Failed chip filter pick up the FAIL rows.
+
+### Session 8 — 2026-05-05 — FIX/UI — COMPLETED
+
+- **Scope**: Five post-build defects reported on the index page after Session 7/7b unblocked the data path:
+  1. Grid showed only an IsActive-style badge — `scheduleStatusName` ("Active"/"Paused"/"Cancelled"/"Failed"/"Expired") was wired to the boolean `status-badge` renderer, which coerces strings to `true` and always renders "Active".
+  2. Widgets displayed the most-frequent active currency (BE fallback) rather than the company's canonical currency.
+  3. Widget icon containers + freq column badge + failed-records grid used light tints (`bg-X-50/100`, `text-destructive` on `bg-destructive/5`) instead of the codebase's solid `bg-X-600 + text-white` rule.
+  4. `paymentTransactions` query inside the drawer's Charge History fired with an `advancedFilter` missing the required `id` field on both group + rule (server-side QueryBuilder rejects).
+  5. `recurringDonationScheduleById` failed with three GraphQL field errors:
+     - `createdBy` / `modifiedBy` not on `RecurringDonationScheduleResponseDto`.
+     - `isActive` not on `PaymentMethodTokenRequestDto` (nav property used Request shape).
+- **Files touched**:
+  - BE:
+    - `Base.Application/Schemas/DonationSchemas/RecurringDonationScheduleSchemas.cs` — added `int? CreatedBy` + `int? ModifiedBy` to the response DTO; switched the `PaymentMethodToken` nav property type from `PaymentMethodTokenRequestDto?` to `PaymentMethodTokenResponseDto?` (the Mapster config + `.Include(...).ThenInclude(...)` path were already in place — issue 5 fixed without changing handler/include code).
+  - DB:
+    - `sql-scripts-dyanmic/RecurringDonationSchedule-sqlscripts.sql` — STEP 6 GridField for `RDS_STATUSNAME`: `GridComponentName` switched from `'status-badge'` to `'recurring-status-badge'`. Idempotent on fresh installs.
+    - `sql-scripts-dyanmic/RecurringDonationSchedule-fix-status-renderer.sql` — NEW one-shot UPDATE for already-seeded environments (NOT-EXISTS gate prevents the seed itself from rewriting the row).
+  - FE:
+    - `presentation/components/custom-components/data-tables/shared-cell-renderers/recurring-status-badge-cell.tsx` — NEW renderer mapping schedule-status strings to solid pills (Active=emerald-600, Paused=amber-600, Cancelled=slate-600, Failed=red-600, Expired=slate-500, Past Due=orange-600).
+    - `presentation/components/custom-components/data-tables/shared-cell-renderers/index.ts` — exports `RecurringStatusBadgeCell`.
+    - `presentation/components/custom-components/data-tables/{flow,advanced,basic}/data-table-column-types/component-column.tsx` — registered `case "recurring-status-badge"` mapping (3 files; existing `case "status-badge"` left intact for boolean callers).
+    - `presentation/components/custom-components/data-tables/shared-cell-renderers/freq-badge-cell.tsx` — switched FREQ_TONE entries from `bg-X-50/100 + border-X-200 + text-X-700` to solid `bg-X-600 + text-white` (Monthly=blue, Quarterly=purple, Annual=emerald, Semi-Annual=amber).
+    - `presentation/components/page-components/crm/donation/recurringdonors/recurring-widgets.tsx` — MRR currency now sourced from `useCompanySettingsSession((s) => s.settings?.baseCurrencyCode)` with summary.currencyCode as fallback; ACCENT_CLASSES converted to solid `bg-X-600 + text-white`.
+    - `presentation/components/page-components/crm/donation/recurringdonors/failed-payments-alert-banner.tsx` — header warning icon wrapped in `bg-red-600 + text-white` circle; consecutive-failures count rendered as a solid `bg-red-600 + text-white` chip.
+    - `presentation/components/page-components/crm/donation/recurringdonors/recurring-schedule-detail-drawer.tsx` — `chargeHistoryFilter` now includes `id: "0"` at group level + per-rule `id: "0"`, matching the canonical QueryBuilder shape used everywhere else (e.g. seed `ValueSourceParams`).
+- **Deviations from spec**: None. All changes are ALIGN-shaped (no new entities/fields/screens; only wiring + styling corrections to honor the existing Spec).
+- **Known issues opened**: None.
+- **Known issues closed**: None (these defects were not previously logged in the Known Issues table — they surfaced only after Sessions 7/7b restored the underlying data path).
+- **Verification**:
+  - `dotnet build Base.Application` → 0 errors (390 pre-existing warnings, none new on changed files).
+  - Static check: Mapster config `PaymentMethodToken → PaymentMethodTokenResponseDto` already registered (DonationMappings.cs line 201); EF Includes on by-id query unchanged; the type swap is binary-compatible with the existing GraphQL serializer because the Response DTO inherits Request.
+- **Action required by user**:
+  1. Run `RecurringDonationSchedule-fix-status-renderer.sql` against the database to retrofit the existing `RDS_STATUSNAME` GridField (the seed's NOT-EXISTS gate keeps the old `status-badge` value otherwise). Fresh DBs that haven't seeded yet can skip this — the updated seed already encodes `recurring-status-badge`.
+  2. Hard-refresh the FE so the new `RecurringStatusBadgeCell` renderer ships in the bundle before the GridField update lands. Order matters in production: deploy FE first, THEN run the SQL repair.
+  3. Confirm the company-settings session store is hydrated for the logged-in user — if `baseCurrencyCode` is null, the MRR card silently falls back to the BE summary currency (graceful degrade, no crash).
+- **Next step**: User to verify on the index page: (a) ScheduleStatus column shows Failed/Paused/Cancelled pills with solid red/amber/slate, (b) MRR card label uses company currency, (c) drawer "Charge History" populates without server error, (d) drawer Audit Trail "Created By" / "Modified By" rows render real user IDs (currently shown as raw int — future enhancement could resolve to display name via Users join).
+
+### Session 8a — 2026-05-05 — FIX — COMPLETED
+
+- **Scope**: Drawer view-page surfaced one more GraphQL field error after Session 8: *"The field `paymentMethodTypeCode` does not exist on the type `PaymentMethodTokenResponseDto`."* Both the by-id drawer query and the Update-Payment cascade query (`PAYMENTMETHODTOKENS_BY_CONTACT_QUERY`) request a top-level `paymentMethodTypeCode` ("CARD" / "PAYPAL" / "UPI" / "BANK") for icon mapping inside `schedule-action-modals.tsx` (UpdatePaymentModal at lines 500–504).
+- **Files touched**:
+  - BE:
+    - `Base.Application/Schemas/DonationSchemas/PaymentMethodTokenSchemas.cs` — added `string? PaymentMethodTypeCode` projected field to `PaymentMethodTokenResponseDto`.
+    - `Base.Application/Mappings/DonationMappings.cs` — `PaymentMethodToken → PaymentMethodTokenResponseDto` Mapster config now `.Map`s `PaymentMethodTypeCode` from `src.PaymentMethodType.DataValue`. Both consumer queries (`GetRecurringDonationScheduleByIdHandler`, `GetPaymentMethodTokensByContactHandler`) already `.Include(p => p.PaymentMethodType)` so no handler-level changes were needed.
+  - FE: none.
+  - DB: none.
+- **Deviations from spec**: None.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Verification**: `dotnet build Base.Application` → 0 errors.
+- **Next step**: User to refresh the drawer and confirm the Update-Payment cascade renders the correct method icon (Visa/Mastercard for CARD, etc.) and no longer throws the field-existence error.

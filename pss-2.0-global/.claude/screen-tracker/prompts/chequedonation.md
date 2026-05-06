@@ -9,7 +9,7 @@ complexity: High
 new_module: NO
 planned_date: 2026-04-20
 completed_date: 2026-04-21
-last_session_date: 2026-04-27
+last_session_date: 2026-05-05
 ---
 
 ## Tasks
@@ -911,7 +911,7 @@ Everything in the mockup is buildable from existing infra EXCEPT:
 | ISSUE-18 | 1 | FE-LOW  | ChequeNo auto-gen | Deferred — form requires user-input ChequeNo (safer default per prompt). BE auto-gen helper NOT implemented. | OPEN |
 | ISSUE-19 | 1 | BE-LOW  | Donor-link   | `contactId` projected in both GetAll + GQL query; donor-link renderer reads from `row.contactId`. | RESOLVED |
 | ISSUE-20 | 1 | UI-LOW  | Color palette| `cheque-status-badge.tsx` uses Tailwind semantic tone classes (not inline hex); MasterData DataSetting carries hex pair for future themes. | RESOLVED |
-| ISSUE-21 | 1 | BE-MED  | Data model   | `GlobalDonation.DonationTypeId` and `PaymentStatusId` are non-nullable `int`; inline-create path sets placeholder `0`. Needs either nullable migration OR handler lookup of default MasterData rows (DonationType=GENERAL, PaymentStatus=PENDING). Currently will fail FK restrict at runtime unless MasterData id=0 rows exist. | OPEN |
+| ISSUE-21 | 1 | BE-MED  | Data model   | `GlobalDonation.DonationTypeId` and `PaymentStatusId` are non-nullable `int`; inline-create path sets placeholder `0`. Needs either nullable migration OR handler lookup of default MasterData rows (DonationType=GENERAL, PaymentStatus=PENDING). Currently will fail FK restrict at runtime unless MasterData id=0 rows exist. | CLOSED (session 3) |
 | ISSUE-22 | 1 | BE-LOW  | Data model   | `GlobalDonation.OrganizationalUnitId` used (no `BranchId` column); DTO mapped to both aliases for FE convenience. No action required; noted for consistency with future audits. | RESOLVED |
 | ISSUE-23 | 1 | BE-LOW  | Transaction  | Create handler uses EF single-SaveChanges atomicity via GD nav-property (IApplicationDbContext does not expose Database.BeginTransactionAsync). Atomic, but not explicit TX. | RESOLVED |
 | ISSUE-24 | 1 | BE-LOW  | Delete cascade | `DonationInKind` has no direct FK to GlobalDonation in current schema; Delete-cascade check covers GlobalReceiptDonation + GlobalOnlineDonation + MatchingGift + ContactPrayerRequest + GlobalDonationDistribution only. | RESOLVED |
@@ -920,6 +920,7 @@ Everything in the mockup is buildable from existing infra EXCEPT:
 | ISSUE-27 | 1 | FE-LOW  | File upload  | File upload widgets render as URL text inputs — upload infra not wired in this screen. Matches SERVICE_PLACEHOLDER note §⑫. | OPEN |
 | ISSUE-28 | 1 | BE-LOW  | SummaryAmount | `totalAmountBaseCurrency` left NULL in MVP (deferred until currency-conversion service ships). | OPEN |
 | ISSUE-29 | 2 | FE-NOTE | Audit | `presentation/pages/crm/donation/index.ts` re-exports `ChequeDonationPageConfig` from `./chequedonation` (page-config wrapper). Unaffected by Session-2 fix, but noted to ensure future folder-collision audits cover the `pages/` tree as well as `page-components/`. | OPEN |
+| ISSUE-30 | 3 | FE-HIGH | Pagination off-by-one | `chequedonation-kanban-view.tsx` initially called `CHEQUEDONATIONS_QUERY` with `pageIndex: 1`, but BE pagination is 0-based (`CommonExtension.cs` `Skip(pageSize * pageIndex)`). With `pageSize: 200` the kanban skipped the first 200 rows and returned an empty board for any tenant with fewer than 200 cheque donations — even though the table view (which uses `useFlowInitializeData` and clamps via `Math.max(0, pageIndex)`) showed data correctly via the same GQL endpoint. Fixed by sending `pageIndex: 0`. | CLOSED (session 3) |
 
 ### § Sessions
 
@@ -1014,3 +1015,216 @@ Everything in the mockup is buildable from existing infra EXCEPT:
 
 - **Next step**: 6 OPEN issues remain (ISSUE-18, 21, 25, 26, 27, 28, 29). ISSUE-21 (BE-HIGH FK placeholder) is the highest-priority follow-up. User can run `pnpm dev` to confirm the page-components folder now resolves cleanly via default import.
   5. If ISSUE-21 causes runtime FK error on Create, add default MasterData rows (DonationType=GENERAL, PaymentStatus=PENDING) OR migrate GD columns to nullable.
+
+### Session 3 — 2026-05-05 — FIX — COMPLETED
+
+- **Scope**: Two-part fix. (1) **ISSUE-21 (BE-HIGH FK placeholder)** — `CreateChequeDonation` inline GD-create path was writing literal `0` to non-nullable `DonationTypeId` and `PaymentStatusId`, risking an FK restrict at runtime. Resolved by looking up sensible defaults from MasterData (`DONATIONTYPE` and `PAYMENTSTATUS` typecodes) before the transaction. (2) **NEW BUG — Kanban returned empty data despite using the same GQL endpoint as the Table.** Root cause: `chequedonation-kanban-view.tsx` sent `pageIndex: 1` while the BE pagination is 0-based (`CommonExtension.cs` line 93: `Skip(pageSize * pageIndex)`). With `pageSize: 200` the kanban skipped rows 0-199 and returned 200-399, which is empty for small datasets. The Table view works because `useFlowInitializeData` clamps via `Math.max(0, pageIndex)` and Zustand's `initialPageIndex={0}`. Tracked as new ISSUE-30. Both fixes scoped to screen-owned files only — no shared wiring touched.
+
+- **Files touched**:
+  - BE modified (1):
+    - `PSS_2.0_Backend/PeopleServe/Services/Base/Base.Application/Business/DonationBusiness/ChequeDonations/Commands/CreateChequeDonation.cs` (inline-create branch: added `DONATIONTYPE` + `PAYMENTSTATUS` MasterData lookups before the transaction; replaced `DonationTypeId = 0` and `PaymentStatusId = 0` literals with the resolved IDs; preference order GENERAL→ONE_TIME→ONETIME→first non-recurring for type, PENDING→PEN→first row for status; throws `BadRequestException` with seed instructions if either typecode has no rows at all)
+  - FE modified (1):
+    - `PSS_2.0_Frontend/src/presentation/components/page-components/crm/donation/chequedonation/chequedonation-kanban-view.tsx` (one-line fix — `pageIndex: 1` → `pageIndex: 0`; comment added explaining the 0-based BE convention)
+  - DB: None
+
+- **Verification**:
+  - BE: `dotnet build` on `Base.Application` → **0 errors, 390 warnings** (all pre-existing; none in `CreateChequeDonation.cs`).
+  - FE: `npx tsc --noEmit` → 2 pre-existing errors in `data-tables/{basic,flow}/data-table-column-types/component-column.tsx` at the `dik-status-badge` case (Screen #7, unrelated to this session). The ChequeDonation files typecheck cleanly.
+  - Manual E2E deferred to user — apply the Kanban fix by reloading; the BE fix activates only when the user creates a Cheque via the inline GD-create path.
+
+- **Deviations from spec**: None. ISSUE-21 fix follows the spirit of the §⑬ Known Issue's recommended path (handler MasterData lookup) without forcing a nullable migration. Avoided hardcoding a single DataValue for `PAYMENTSTATUS` because Screen #1 GlobalDonation summary handler explicitly notes that "PAYMENTSTATUS isn't seeded with a canonical convention — different tenants seed different codes" (`GetGlobalDonationSummary.cs` § CompletedDataValues comment).
+
+- **Known issues opened**: ISSUE-30 HIGH (kanban pageIndex off-by-one) — discovered AND fixed within this session, marked CLOSED in the Known Issues table.
+
+- **Known issues closed**: ISSUE-21 (BE-HIGH FK placeholder) and ISSUE-30 (FE-HIGH kanban pagination) — both CLOSED in session 3.
+
+- **Next step**: 6 OPEN issues remain (ISSUE-18, 25, 26, 27, 28, 29). All are LOW or NOTE severity — none block the screen's golden-path. User next:
+  1. Reload the Cheque Donation page; switch to Kanban view → verify all 4 columns now populate from the same dataset that the Table view shows.
+  2. Click "+ New Cheque Donation"; complete the form with a cheque + donor + amount → verify Create succeeds without an FK error and the resulting GlobalDonation row carries a real `DonationTypeId` and `PaymentStatusId` (no literal `0`).
+  3. Confirm via DB query: `SELECT "DonationTypeId", "PaymentStatusId" FROM fund."GlobalDonations" WHERE "GlobalDonationId" = (latest) ;` — values should be the seeded MasterData IDs.
+
+### Session 4 — 2026-05-05 — UI + ENHANCE — COMPLETED
+
+- **Scope**: Three user-driven changes. (1) **UI uniformity** — every colored container (KPI tile icons, status badges, kanban column headers, kanban-card bounce chip) refactored to SOLID `bg-X-600` + `text-white` per the `feedback_widget_icon_badge_styling` memory rule (no more `bg-X-50/100` + `text-X-700/800` low-contrast pairs). (2) **Add-button dedup** — table's built-in "+ New" hidden via `enableAdd: false`; the top ScreenHeader "+ New Cheque Donation" is now the single source-of-truth across both kanban and table views. (3) **Unified Create + Edit form** — Cheque/Pledge/InKind share the same GlobalDonation form for Create/Edit (only the read-only View remains page-local, since "view has no fields"). Cheque dispatcher now intercepts `?mode=new` and `?mode=edit` URL hits and redirects to `/[lang]/crm/donation/globaldonation` with the appropriate parent `globalDonationId` + `?modeCode=CHEQUEDD` pre-fill. The `donation-form.tsx` (Screen #1) was extended to honor the optional `?modeCode=…` param.
+
+- **Files touched**:
+  - BE: None
+  - FE modified (8):
+    - `chequedonation/index-page.tsx` — `enableAdd: false` (dedup); `handleCreate` now routes to `/globaldonation?mode=new&modeCode=CHEQUEDD`.
+    - `chequedonation/index.tsx` (URL dispatcher) — intercepts `?mode=new` and `?mode=edit&id=X`; resolves the parent `globalDonationId` from Zustand `rowData` (populated by the shared Edit-row-action) or via cache-first `CHEQUEDONATION_BY_ID_QUERY` for direct URL hits; `router.replace` to the GlobalDonation form. `?mode=read&id=X` still renders the page-local `ChequeDonationViewPage`.
+    - `chequedonation/chequedonation-widgets.tsx` — `TONE_STYLES` rewritten: solid `bg-{slate|blue|amber|red}-600` + `text-white` for all 4 KPI tiles.
+    - `chequedonation/chequedonation-kanban-view.tsx` — `COLUMNS` rewritten: solid `bg-X-600` + `text-white` headers; count pill switched to `bg-white/20 text-white` for high-contrast overlay on the colored header.
+    - `chequedonation/cheque-kanban-card.tsx` — bounce-reason chip switched to solid `bg-red-600 text-white` (was `bg-red-50 + text-red-700 + border`).
+    - `shared-cell-renderers/cheque-status-badge.tsx` — `STATUS_VISUALS` and `NEUTRAL_VISUAL` rewritten to solid `bg-X-600 text-white border-transparent`. Used by the grid status column AND the kanban card status badge — single source-of-truth for status pills.
+    - `globaldonation/donation-form.tsx` (Screen #1) — added `useSearchParams` + a `useRef`-guarded one-shot effect that pre-selects the cheque mode card on add when `?modeCode=CHEQUEDD` is passed. Resolves the URL code through the existing `resolveModeCode()` so all canonical aliases work (CHEQUEDD/CHEQUE/CHQ/DD all map to `CHEQUEDD`). Effect short-circuits on edit mode and after the user has manually chosen a mode.
+  - DB: None
+
+- **Verification**:
+  - FE: `npx tsc --noEmit` → 2 pre-existing errors in `data-tables/{basic,flow}/data-table-column-types/component-column.tsx` (`dik-status-badge` Screen #7 — same as Session 3, unrelated). All Session 4 files typecheck cleanly.
+  - BE: No backend changes — skipped rebuild.
+  - Manual E2E deferred to user.
+
+- **Cross-screen impact note**: `donation-form.tsx` (Screen #1) was extended. The change is additive and gated on `mode === "new"` AND a non-null `?modeCode` param — existing GD form flows (no param) are unchanged. Side-screens that may benefit from the same hook: InKind #7 (`?modeCode=DIK`), Pledge #12 (downstream — currently writes via PledgeCommands, not the unified form). Recurring #8 deliberately blocked from this path by the existing `CreateGlobalDonationWithChildren` recurring-type guard.
+
+- **Deviations from spec**: The `cheque-status-badge` styling change touches a SHARED renderer (`shared-cell-renderers/cheque-status-badge.tsx`) used by all 3 column-type registries. Risk is contained because no other screen consumes `cheque-status-badge` today (verified via repo-wide grep — only ChequeDonation pages reference it).
+
+- **Known issues opened**: None new — UI uniformity is now in spec.
+
+- **Known issues closed**: None of the prior 6 OPEN (ISSUE-18, 25, 26, 27, 28, 29) — those remain follow-ups.
+
+- **Next step**: 6 OPEN issues remain (ISSUE-18, 25, 26, 27, 28, 29). All LOW/NOTE — none block golden-path. User next:
+  1. Reload page → confirm KPI tile icons render with solid bg + white icon, kanban column headers are solid colored bands with white text, status badges (grid + kanban card) are solid pills with white text.
+  2. In table view → verify only ONE "+ New Cheque Donation" button is visible (top ScreenHeader); the grid's internal "+ New" should be gone.
+  3. Click "+ New Cheque Donation" (top button) → verify the URL navigates to `/crm/donation/globaldonation?mode=new&modeCode=CHEQUEDD` AND the GD form lands with the **Cheque / DD** mode card already selected.
+  4. From the cheque grid, click the row Edit pencil → verify the URL redirects to `/crm/donation/globaldonation?mode=edit&id={GD_ID}&modeCode=CHEQUEDD` AND the GD form pre-fills with the parent GlobalDonation's data.
+  5. From the cheque grid, click the row View eye → verify the page-local `ChequeDonationViewPage` still renders read-only.
+
+### Session 5 — 2026-05-05 — UI — COMPLETED
+
+- **Scope**: Replaced the legacy full-page `ChequeDonationViewPage` with a **520px right-side Sheet drawer** (canonical pattern lifted from Recurring Donation Schedule #8 — `recurring-schedule-detail-drawer.tsx`). The grid background stays visible while the user inspects a cheque. Aligns with the user directive: "view option not good — show in sidebar sheet to display all the cheque details — refer recurring donation screen view option".
+
+- **Files touched**:
+  - BE: None
+  - FE created (1):
+    - `chequedonation/cheque-detail-drawer.tsx` — 520px right-side `<Sheet>`, URL-driven via `?mode=read&id=X`, mounted ONCE in IndexPage. Body has 7 sections: **Identity** (cheque no / type / donation date / receipt # / amount), **Donor** (avatar initials + clickable contact link + branch), **Drawer Bank** (bank / branch / account holder / `••••last4` / cheque date), **Collection** (collected by / date / location), **Deposit** (deposit date / slip no / deposited by — visible once status ≥ DEP), **Clearance** (CLR only) OR **Bounce** (BOU only with the solid red bounce-reason card from Session 4), **Audit Trail** (created/modified by + dates). Footer renders status-conditional actions: **Open Edit** (deep-link to unified GlobalDonation form `/globaldonation?mode=edit&id={gdId}&modeCode=CHEQUEDD`), **Deposit** (REC only — opens DepositModal via Zustand store), **Mark Cleared** (DEP only — opens ClearanceModal), **Contact Donor** (BOU only — links to `/crm/contact/contact?mode=read&id={contactId}`), and a Close button. Drawer refetches its by-id query when `chequedonation-store.refreshToken` bumps so the body updates immediately after Deposit/Clearance modals commit.
+  - FE modified (2):
+    - `chequedonation/index-page.tsx` — added `<ChequeDetailDrawer />` mount alongside the existing Deposit/Clearance modals.
+    - `chequedonation/index.tsx` (URL dispatcher) — removed the `mode === "read"` → page-local ViewPage branch and the `ChequeDonationViewPage` import. Always renders `<ChequeDonationIndexPage />`; the drawer mounted there listens to the URL itself. `crudMode` is now permanently `"index"` for read/no-params; `recordId` is set to the URL id only when `mode === "read"` (drawer reads it directly from useSearchParams, but kept in the store for any consumer that observes it).
+  - FE deleted (2):
+    - `chequedonation/view-page.tsx` (533 lines) — replaced by the drawer. Was the only consumer of `cheque-form.tsx`.
+    - `chequedonation/cheque-form.tsx` — orphaned after Sessions 4 + 5 (Create + Edit moved to GlobalDonation form; Read moved to drawer). Deleted to avoid stale exports.
+
+- **Verification**:
+  - FE: `npx tsc --noEmit` → only the 2 pre-existing `dik-status-badge` errors from Screen #7 (unrelated, same as Sessions 3 + 4). Session 5 files typecheck cleanly.
+  - No BE changes — no rebuild.
+
+- **Deviations from spec**: The original prompt §⑥ described the Read surface as a full FORM page with action bar. Replaced with a drawer per the user's explicit Session 5 directive. The drawer footer preserves all the same status-conditional actions the old action bar had (Deposit / Mark Cleared / Contact Donor) plus the new "Open Edit" deep-link.
+
+- **Known issues opened**: None new.
+
+- **Known issues closed**: None of the prior 6 OPEN (ISSUE-18, 25, 26, 27, 28, 29) — those remain follow-ups.
+
+- **Next step**: 6 OPEN issues remain. User next:
+  1. Reload page → click any row View (eye) icon → drawer slides in from the right at 520px, body shows 7 sections with the cheque's data.
+  2. Status REC → drawer footer shows "Deposit" button → click → DepositModal opens; on submit the drawer body refetches and shows the new DEP status + deposit fields.
+  3. Status DEP → drawer footer shows "Mark Cleared" → click → ClearanceModal; choose Cleared OR Bounced; on submit the drawer body refetches and shows the new section.
+  4. Click "Open Edit" in the drawer footer → routes to `/globaldonation?mode=edit&id={gdId}&modeCode=CHEQUEDD`.
+  5. Close drawer (X / overlay / Close button) → URL strips `mode` + `id`; grid stays visible behind the closing animation.
+
+### Session 6 — 2026-05-05 — UI — COMPLETED
+
+- **Scope**: Made the **Bounce** state-transition discoverable from the kanban + drawer. User reported confusion: only the REC→DEP "Deposit" button was visible at the card level, with no obvious way to move a DEP card to CLR or BOU. The dual-path (clear/bounce) ClearanceModal was already wired, but the bounce branch was hidden behind an in-modal "Mark as Bounced" sub-step. Adopted enterprise pattern (Salesforce Lightning / Linear / GitHub) — primary `[Mark Cleared]` button + `⋮` kebab containing "Mark Bounced". Happy path stays one-click; destructive path is reachable in one extra click but doesn't sit at equal visual weight.
+
+- **Files touched**:
+  - BE: None
+  - FE modified (4):
+    - `chequedonation/chequedonation-store.ts` — added `ClearanceStep = "choose" | "bounce"` type and `clearanceInitialStep` slot. `openClearanceModal(row, initialStep?)` now accepts an optional initial step (defaults to `"choose"` for backwards-compat with any future caller). Reset to `"choose"` on close.
+    - `chequedonation/cheque-clearance-modal.tsx` — local `step` state initializes from `clearanceInitialStep` instead of hardcoded `"choose"`. Effect deps updated to include `clearanceInitialStep` so re-opens with a different step are honored. The in-modal "Mark as Bounced" toggle button still works as a fallback path; opening directly into the bounce step is purely additive.
+    - `chequedonation/cheque-kanban-card.tsx` — DEP cards now render a 2-element action row: primary `[Mark Cleared]` + outline `⋮` kebab trigger. Kebab menu has a single destructive `Mark Bounced` item (red text, red focus bg). REC / CLR / BOU cards keep their original single full-width button. New `handleMarkBounced` callback opens the clearance modal with `"bounce"` step. `e.stopPropagation()` on the trigger keeps the card-body click from firing the navigate-to-read handler. Added `DropdownMenu*` imports from common-components.
+    - `chequedonation/cheque-detail-drawer.tsx` — DEP-state drawer footer mirrors the kanban pattern: primary `[Mark Cleared]` + `⋮` kebab → `Mark Bounced`. New `handleBounce` callback symmetric to `handleClearance` but passes `"bounce"` step. Added `DropdownMenu*` imports.
+  - DB: None
+
+- **Verification**:
+  - FE: `pnpm exec tsc --noEmit` → only the 2 pre-existing `dik-status-badge` errors from Screen #7 (unrelated, same as Sessions 3 / 4 / 5). Session 6 files typecheck cleanly.
+  - No BE changes — no rebuild.
+
+- **Deviations from spec**: None. The original prompt §⑥ described two transition modals (Deposit + Clearance) and a kanban with contextual actions. Session 6 is a UX-discoverability refinement of the existing wiring — no new mutations, no new entities, no schema change. The dropdown component (`@/presentation/components/common-components/atoms/DropdownMenu`) is already used elsewhere in the project.
+
+- **Known issues opened**: None new.
+
+- **Known issues closed**: None of the prior 6 OPEN (ISSUE-18, 25, 26, 27, 28, 29) — those remain LOW/NOTE follow-ups.
+
+- **Next step**: 6 OPEN issues remain. User next:
+  1. Open the Cheque Donation page → switch to **Kanban** view.
+  2. Find a card in the **Deposited** column → confirm the action row now shows **two controls**: a wide `[Mark Cleared]` primary button and a small `⋮` outline button to its right.
+  3. Click the primary `[Mark Cleared]` → ClearanceModal opens on the **clearance form** (date input). Confirm it still works exactly as before — submit, kanban refreshes, card moves to **Cleared** column.
+  4. Find another DEP card → click the `⋮` kebab → menu appears with one red **Mark Bounced** item. Click it → ClearanceModal opens **directly on the bounce form** (date + reason — no extra click). Submit → card moves to **Bounced** column.
+  5. Open any DEP card's detail drawer (eye icon) → the drawer footer should show the same primary + kebab pattern. Test both paths from there.
+  6. Verify the in-modal "Mark as Bounced" sub-step still works (open clearance modal via the primary button → click the secondary "Mark as Bounced" button inside it → form switches to bounce). This fallback is preserved on purpose.
+
+### Session 7 — 2026-05-05 — FIX — COMPLETED
+
+- **Scope**: Fixed runtime error on the Deposit + Clearance/Bounce modals: HotChocolate's `DateTime` scalar threw `DateTime cannot parse the given literal of type 'StringValueNode'` because the FE was sending date-only `"YYYY-MM-DD"` strings (FormDatePicker's native shape), but the BE input types declare `DateTime DepositDate / ChequeClearanceDate / ChequeBouncedDate` which require full ISO 8601. Same root-cause that `globaldonation/donation-form.tsx:560` and `globaldonation/realize-modal.tsx:43` already document — copied the canonical `toIsoDateTime` helper into both cheque transition modals and converted at the wire boundary.
+
+- **Files touched**:
+  - BE: None
+  - FE modified (2):
+    - `chequedonation/cheque-deposit-modal.tsx` — added `toIsoDateTime` helper; `onConfirm` now promotes `data.depositDate` → ISO 8601 (`YYYY-MM-DDT00:00:00.000Z`) before sending. Bails with toast if the conversion produces null.
+    - `chequedonation/cheque-clearance-modal.tsx` — added the same helper; `handleConfirmCleared` promotes `chequeClearanceDate`; `handleConfirmBounced` promotes `chequeBouncedDate`. Both bail with toast on conversion failure.
+  - DB: None
+
+- **Verification**:
+  - FE: `pnpm exec tsc --noEmit` → only the 2 pre-existing `dik-status-badge` errors from Screen #7 (unrelated, same as Sessions 3/4/5/6). Session 7 files typecheck cleanly.
+  - No BE changes — no rebuild.
+
+- **Deviations from spec**: None. The wire format was always meant to be ISO 8601 (BE accepts `DateTime`); the FE was just emitting the FormDatePicker's native date-only string. Helper is local to each modal (rather than shared) because the same micro-helper already lives in 2 other places — extracting now would be premature.
+
+- **Why not normalize at handler entry (BE)**: The error is raised at the GraphQL parse layer by HotChocolate's scalar before the handler ever runs, so a handler-side normalisation can't catch it. The wire boundary fix is the only path.
+
+- **Known issues opened**: None new.
+
+- **Known issues closed**: None of the prior 6 OPEN — those remain LOW/NOTE follow-ups. (The DateTime parse bug was a runtime error, not a tracked issue.)
+
+- **Next step**: 6 OPEN issues remain (ISSUE-18, 25, 26, 27, 28, 29). User next:
+  1. Reload the Cheque Donation page → Kanban view → REC card → Deposit button → fill bank + date → Confirm Deposit. **Expected**: success toast "Cheque … deposited", card moves to Deposited column. **No** "DateTime cannot parse" error.
+  2. DEP card → primary `[Mark Cleared]` → confirm clearance date → Confirm Cleared. Card moves to Cleared column.
+  3. DEP card → `⋮` kebab → Mark Bounced → fill date + reason → Confirm Bounced. Card moves to Bounced column.
+  4. (Spot-check) DB row: confirm `DepositDate`, `ChequeClearanceDate`, `ChequeBouncedDate` columns now hold valid `timestamp with time zone` values (UTC midnight on the chosen day).
+
+### Session 8 — 2026-05-05 — UI — COMPLETED
+
+- **Scope**: Fixed modal padding on the Deposit + Clearance modals — the form fields (and summary card) were touching the dialog border on all four sides because the project's `DialogContent` primitive has no internal padding (only `DialogHeader` / `DialogBody` / `DialogFooter` provide their own). User flagged this and pointed at `contact-create-modal/index.tsx` as the canonical spacing reference. First attempt used `<DialogBody>` which resolves to `p-4 sm:p-6` (16/24px) — user reported "over spaces". Adjusted down to a plain `<div className="p-4 space-y-4">` wrapper to exactly match the contact-create-modal pattern (16px on all sides, no responsive scale-up).
+
+- **Files touched**:
+  - BE: None
+  - FE modified (2):
+    - `chequedonation/cheque-deposit-modal.tsx` — wrapped summary card + form in `<div className="p-4 space-y-4">` between DialogHeader and DialogFooter.
+    - `chequedonation/cheque-clearance-modal.tsx` — same wrapper. Both `step === "choose"` (clearance date) and `step === "bounce"` (bounce date + reason) sub-forms inherit the inset.
+  - DB: None
+
+- **Verification**:
+  - FE: `pnpm exec tsc --noEmit` → only the 2 pre-existing `dik-status-badge` errors from Screen #7 (unrelated, same as Sessions 3/4/5/6/7). Session 8 files typecheck cleanly.
+  - No BE changes — no rebuild.
+
+- **Deviations from spec**: None. Spacing fix only — no functional change. Did NOT use the `<DialogBody>` primitive even though it exists, because `DialogBody` resolves to `p-4 sm:p-6` which the user explicitly judged "over spaces". The reference modal (contact-create-modal) also bypasses `DialogBody` for the same reason — it uses bare `<div className="p-4">` inside its own scrollable wrapper. Our small modals don't need the scrollable wrapper because they're single-screen forms (5 fields max).
+
+- **Why not use DialogBody primitive**: `DialogBody` adds `flex-1 overflow-y-auto p-4 sm:p-6`. The `flex-1` is fine for tall modals that need to fill available space, but the `p-4 sm:p-6` (24px on sm+) felt too airy here. The `p-4` (16px) inset matches the rest of the project's compact-modal convention and the user's spacing preference.
+
+- **Known issues opened**: None new.
+
+- **Known issues closed**: None of the prior 6 OPEN — those remain LOW/NOTE follow-ups.
+
+- **Next step**: 6 OPEN issues remain (ISSUE-18, 25, 26, 27, 28, 29). User next:
+  1. Reload page → Kanban view → REC card → click Deposit → confirm the modal body has 16px breathing room on all four sides; the "Deposited To Bank" select no longer butts against the modal's left/right edges; spacing matches `contact-create-modal`.
+  2. DEP card → click `[Mark Cleared]` → same visual check on the clearance form; switch to bounce step → bounce date + textarea also have proper inset.
+
+### Session 9 — 2026-05-05 — FIX — COMPLETED
+
+- **Scope**: Fixed broken contact-detail navigation. The Cheque Donation screen (kanban card donor link, kanban card "Contact Donor" button on bounced cards, drawer donor link, drawer "Contact Donor" button) routed to `/[lang]/crm/contact/contact?mode=read&id=X`, but that route does NOT exist in the project — the correct slug is `/[lang]/crm/contact/allcontacts?mode=read&id=X`. All 5 occurrences fixed in one pass.
+
+- **Files touched**:
+  - BE: None
+  - FE modified (2):
+    - `chequedonation/cheque-kanban-card.tsx` — 2 occurrences (donor name `<Link>` on every card + `router.push` on the "Contact Donor" action button for BOU rows).
+    - `chequedonation/cheque-detail-drawer.tsx` — 3 occurrences (header docstring comment + donor section `<Link>` + footer "Contact Donor" `<Link>` for BOU records).
+  - DB: None
+
+- **Verification**:
+  - FE: `pnpm exec tsc --noEmit` → only the 2 pre-existing `dik-status-badge` errors from Screen #7 (unrelated, same as Sessions 3/4/5/6/7/8). Session 9 files typecheck cleanly.
+  - Verified the target route exists: `src/app/[lang]/crm/contact/allcontacts/page.tsx`. Verified the old route does NOT exist (no `app/[lang]/crm/contact/contact/` folder).
+
+- **Deviations from spec**: None. Pure routing fix.
+
+- **Cross-screen impact note (NOT touched, flagged for follow-up)**: The same wrong path `/crm/contact/contact?mode=read` appears in **14 other files** across the project — the canonical donor-link renderer (`shared-cell-renderers/donor-link.tsx`), 2 contact dashboard widgets, 2 duplicate-contact pair cards, 4 event ticketing/auction screens, 4 other donation screens (refund / reconciliation / reconciliation-details / pledge / pledge-overdue). These were NOT fixed in this session because they are owned by other screens and out of scope per the build directives ("don't add features beyond what the task requires"). However, since one of them is the SHARED renderer `donor-link.tsx`, the project-wide fix is a one-shot search-and-replace and should probably be scheduled as a separate cross-cutting maintenance task. Surfacing now so it isn't lost.
+
+- **Known issues opened**:
+  - **ISSUE-31** (PROJECT-MEDIUM, NOT cheque-specific): 14 other files still navigate to the stale `/crm/contact/contact?mode=read` path — most importantly the shared `donor-link.tsx` renderer that's used by every donation grid. Recommended fix: project-wide search-and-replace + verify no other call sites use the old slug.
+
+- **Known issues closed**: None of the prior 6 cheque-OPEN — those remain LOW/NOTE follow-ups.
+
+- **Next step**: 6 OPEN cheque issues remain (ISSUE-18, 25, 26, 27, 28, 29) + 1 new project-wide ISSUE-31. User next:
+  1. Reload page → Kanban view → click any card's donor name link (top-of-card teal text) → navigates to `/crm/contact/allcontacts?mode=read&id={contactId}`. Contact detail loads.
+  2. Bounced (BOU) card → click "Contact Donor" full-width button → same destination.
+  3. Open drawer (eye icon) → click donor name in Donor section → same destination.
+  4. BOU record drawer → footer "Contact Donor" button → same destination.
+  5. (Optional) Decide whether to clear ISSUE-31 (project-wide path fix) as a cross-cutting maintenance pass.

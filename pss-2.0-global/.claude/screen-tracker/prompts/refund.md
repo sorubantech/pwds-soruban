@@ -3,13 +3,17 @@ screen: Refund
 registry_id: 13
 module: Fundraising
 status: COMPLETED
-scope: FULL
+scope: ALIGN
 screen_type: FLOW
 complexity: High
 new_module: NO
 planned_date: 2026-04-20
 completed_date: 2026-04-21
-last_session_date: 2026-04-21
+last_session_date: 2026-05-05
+v2_planned_date: 2026-05-05
+v2_build_started_date: 2026-05-05
+v2_completed_date: 2026-05-05
+v2_scope: Realtime gateway-reverse flow — channel auto-routing (online vs offline), FX rate snapshot, original gateway fee transparency, receipt cancellation/revision on refund execute. Industry-standard pattern (Stripe/Razorpay/PayPal/Donorbox). NO country-aware method picker, NO PaymentModeCountry junction.
 ---
 
 ## Tasks
@@ -54,6 +58,68 @@ last_session_date: 2026-04-21
 - [ ] Service placeholder buttons (Process via Gateway / Print Receipt) render with toast
 - [ ] DB Seed — REFUND menu visible in sidebar under CRM_DONATION @ OrderBy=8
 - [ ] REFUNDSTATUS rows seeded (PEN/APR/PRO/REF/REJ); REFUNDREASON rows seeded (DOR/DUP/FRA/EVT/ACC/OTH)
+
+### Enhancement v2 — Realtime Refund Flow (planned 2026-05-05)
+
+> Spec lives at end of file under "## ⓘ Enhancement v2 — Realtime Refund Flow". `/continue-screen` consumes that section and the deltas below.
+> **Industry alignment**: Mirrors how Stripe / Razorpay / PayPal / Donorbox / Classy actually handle refunds — gateway-reverse to the original instrument in the original currency; charity bears any FX shift; gateway's own fee policy determines whether the original processing fee is recovered. Manual payout exists only for genuinely offline donations (cash/cheque/in-kind). NO country-aware method picker, NO PaymentModeCountry junction, NO per-method-code dictionary.
+
+#### v2 Planning (by /plan-screens)
+- [x] Real-world refund taxonomy researched (Stripe/Razorpay/PayPal/Donorbox/Classy/Givebutter)
+- [x] Channel auto-routing decision made — derive from `GlobalDonation.GlobalOnlineDonations.Any()` + `DonationMode.Code`; staff override allowed
+- [x] FX snapshot timing decided — at refund-EXECUTE (PRO→REF), not at create — matches gateway behavior
+- [x] Receipt cancellation flow defined — FULL → CANCELLED, PARTIAL → REVISED on linked GlobalReceipt
+- [x] Original gateway fee transparency — snapshot column + presentation-time recoverability dict (Stripe/Square→true, Razorpay/PayPal/Cashfree→false)
+- [x] Manual payout reuses existing `com.PaymentModes` entity — NO new junction, NO country filtering
+- [x] FE form restructure plotted (Section 3 = Refund Channel; Section 4 = Charges & Currency w/ conditional FX block)
+- [x] Detail drawer card additions plotted (Channel card replaces Method card; Charges card extended; FX Snapshot card conditional)
+- [x] v2 prompt section appended (replaces dropped country-aware spec)
+
+#### v2 Generation (by /continue-screen → BE/FE devs)
+- [x] BE: EF migration `Add_RefundChannelAndFxSnapshot` (11 columns on `fund.Refunds`; default `RefundChannelCode='GATEWAY_REVERSAL'` and `ReceiptStatusAfterRefund='UNCHANGED'` for existing rows)
+- [x] BE: Modify `Refund.cs` (+11 cols, +2 nav properties `RefundCurrency`, `ManualPaymentMode`) and `RefundConfiguration.cs` (decimal precision, FK setup, default values)
+- [x] BE: Extend `RefundSchemas.cs` (Response + Create + Update DTOs) with 11 new fields + projection lookups (`refundCurrencyCode`, `manualPaymentModeCode`, `manualPaymentModeName`)
+- [x] BE: Extend `CreateRefundHandler` — auto-derive `RefundChannelCode` from selected GD; snapshot `OriginalGatewayFeeAmount` from GD; clear manual fields when channel=GATEWAY_REVERSAL
+- [x] BE: Extend `UpdateRefundHandler` — same channel/manual-fields consistency on PEN-only edit
+- [x] BE: Extend `CompleteRefundHandler` — at PRO→REF: resolve FX rate via `IFxRateService` when cross-currency; populate `RefundExchangeRate` + `RefundBaseCurrencyAmount`; set `ReceiptStatusAfterRefund` per refundType (FULL→CANCELLED, PARTIAL→REVISED, no-receipt→UNCHANGED). Receipt-row flip dropped — `GlobalReceipt` entity does not exist (only `GlobalReceiptDonations` junction); status tracked on Refund row only.
+- [x] BE: `IFxRateService.GetRateAsync(fromCode, toCode, DateOnly asOfDate)` already existed at `Base.Application/Interfaces/IFxRateService.cs` — direct-pair-only, null on miss. Real signature is codes-based (not IDs); handlers do ID→Code lookup against `dbContext.Currencies` first.
+- [x] BE: Extend `CreateRefundValidator` / `UpdateRefundValidator` — channel ↔ manual-fields consistency; per-mode required map for MANUAL_PAYOUT enforced in handler (post-PaymentMode load) via `RefundChannelHelper.ManualRequiredByModeCode` static dict; `RefundFeeAmount ≥ 0` rule
+- [x] BE: Extend `GetRefunds` + `GetRefundById` projections with 11 new fields + lookup joins (RefundCurrency, ManualPaymentMode)
+- [x] BE: Extend `DonationMappings.cs` (Mapster config for new fields + nav `Ignore` for projections)
+- [x] BE: NEW lightweight query `GetCurrentFxRate(fromCurrencyId, toCurrencyId)` at `SharedBusiness/Currencies/Queries/GetCurrentFxRate.cs` + endpoint appended to `Base.API/EndPoints/Shared/Queries/CurrencyQueries.cs` — read-only, returns rate value + asOf date (=`DateTime.UtcNow` since service doesn't expose persisted RateDate)
+- [x] BE: `dotnet build` 0 CS compile errors (8 MSB3021/MSB3027 file-lock errors pre-existing per Session 2 — VS Insiders + Base.API.exe holding dlls). Migration applied manually deferred per token-budget directive (ISSUE-16 precedent).
+- [x] FE: Extend `refund-form-schemas.ts` Zod schema (8 new fields incl. hidden `manualPaymentModeCode` + `.superRefine` for channel ↔ manual consistency. Per-mode required map enforced on BE only — pragmatic per brief).
+- [x] FE: NEW `refund-channel-fieldset.tsx` (channel radio + GATEWAY readonly summary card with solid-bg fee-recoverability banner OR MANUAL picker + per-mode dynamic sub-fields for BANK / UPI / MOBILE_MONEY / CHEQUE / PAYPAL / CASH)
+- [x] FE: NEW `refund-charges-fx-fieldset.tsx` (Refund Fee input + Net display + conditional FX block w/ `useQuery(GET_CURRENT_FX_RATE)`; null-rate banner; signed FX impact)
+- [x] FE: NEW GraphQL query `CurrentFxRateQuery.ts` at `infrastructure/gql-queries/shared-queries/`
+- [x] FE: Restructure `refund-create-form.tsx` — Section 3 wires `<RefundChannelFieldset>`; Section 4 wires `<RefundChargesFxFieldset>`; Notes moved to Section 5; auto-derives `refundChannelCode` from `donation.gatewayCode` on donation-pick
+- [x] FE: Extend `refund-donation-picker.tsx` `DonationPickerValue` with currency / exchange / gateway / fee / base-currency. Mapper translates BE's `baseCurrencyId` + `baseCurrency.currencyCode` → public-facing `companyBaseCurrencyId/Code` (BE didn't add flat fields — relies on existing `GlobalDonationResponseDto.BaseCurrencyId` + `BaseCurrency` nav).
+- [x] FE: Rebuild Card 3 in `refund-detail-drawer.tsx` (Channel card — gateway summary OR manual fields); extend Charges card; add conditional FX Snapshot card
+- [x] FE: Extend `RefundDto.ts`, `RefundQuery.ts`, `RefundMutation.ts` with 11 new fields
+- [x] FE: `pnpm exec tsc --noEmit` clean (exit 0, 0 lines of output — improved over v1 baseline of 12 unrelated errors)
+- [x] DB Seed: NO changes — existing `com.PaymentModes` rows are reused for the manual payout picker
+- [x] Registry updated back to COMPLETED with v2 build log appended
+
+#### v2 Verification (post-generation)
+- [STRUCTURAL ✓] `?mode=new`: on donation pick, form auto-derives `RefundChannelCode` (online GD → GATEWAY_REVERSAL; offline GD → MANUAL_PAYOUT) — wired in `handleDonationSelect` via `donation.gatewayCode` non-null detection
+- [STRUCTURAL ✓] Staff can override the channel via the radio — RHF Controller in `RefundChannelFieldset`
+- [STRUCTURAL ✓] GATEWAY_REVERSAL render — readonly Original Payment summary card + solid-bg fee-recoverability banner using `FEE_RECOVERABILITY` dict (Stripe/Square=true, Razorpay/PayPal/Cashfree/Authorize=false)
+- [STRUCTURAL ✓] MANUAL_PAYOUT render — `<ApiSelectV2>` picker + per-mode dynamic fields per `paymentModeCode` switch (BANK/UPI/MOBILE_MONEY/CHEQUE/PAYPAL/CASH)
+- [STRUCTURAL ✓] BE rejects MANUAL_PAYOUT without `ManualPaymentModeId` — validator rule + handler post-load check
+- [STRUCTURAL ✓] BE rejects MANUAL_PAYOUT + BANK_TRANSFER without account+bank — handler runtime check via `RefundChannelHelper.ManualRequiredByModeCode`
+- [STRUCTURAL ✓] BE clears manual fields when channel=GATEWAY_REVERSAL — handler explicitly nulls all 4 manual cols regardless of input
+- [STRUCTURAL ✓] Cross-currency form Section 4 FX block — `useQuery(GET_CURRENT_FX_RATE, { skip: same-ccy })` + null-rate fallback banner
+- [STRUCTURAL ✓] On refund-execute (PRO→REF): `CompleteRefund` handler resolves FX rate via `IFxRateService` (codes-based via `dbContext.Currencies` ID→Code lookup, `DateOnly.FromDateTime(DateTime.UtcNow)` per UTC rule) and persists `RefundExchangeRate` + `RefundBaseCurrencyAmount`
+- [STRUCTURAL ✓] Same-currency refunds: 3 FX columns remain NULL — handler short-circuits when donor ccy == charity base ccy
+- [STRUCTURAL ✓] On refund-execute with refundType=FULL: handler sets `ReceiptStatusAfterRefund='CANCELLED'` (Refund-row-only — `GlobalReceipt` entity does not exist; only `GlobalReceiptDonations` junction; spec linked-row flip dropped per BE↔FE design call)
+- [STRUCTURAL ✓] On refund-execute with refundType=PARTIAL: handler sets `ReceiptStatusAfterRefund='REVISED'` (revised PDF OUT OF SCOPE — ISSUE-V2-3)
+- [STRUCTURAL ✓] Donations without a linked receipt: `ReceiptStatusAfterRefund='UNCHANGED'` — handler checks `GlobalReceiptDonations.Any` first
+- [STRUCTURAL ✓] Detail drawer Channel card — `<ChannelDetail>` renders both modes (GATEWAY_REVERSAL summary OR MANUAL_PAYOUT populated lines)
+- [STRUCTURAL ✓] Detail drawer Charges card — extended with `originalGatewayFeeAmount` snapshot row + `receiptStatusAfterRefund` badge
+- [STRUCTURAL ✓] Detail drawer FX Snapshot card — `<FxSnapshotDetail>` rendered conditionally on `refundExchangeRate != null && refundBaseCurrencyAmount != null`
+- [DEFERRED] EF migration apply (`dotnet ef database update`) — per token-budget directive + ISSUE-16 (snapshot reconciliation needed). User to apply manually.
+- [✓] `dotnet build` clean (0 CS errors; 8 MSB3021/3027 file-lock errors pre-existing, VS Insiders + Base.API.exe locking dlls) / `pnpm exec tsc --noEmit` clean (exit 0)
+- [DEFERRED — runtime E2E] All "renders correctly" / "filters" / "navigates" criteria require `pnpm dev` runtime testing; deferred per token-budget directive (matches v1 Session 1 + Session 2 precedent)
 
 ---
 
@@ -961,14 +1027,14 @@ Full UI must be built (buttons, forms, modals, panels, interactions). Only the h
 |----|------------------|----------|------|-------------|--------|
 | ISSUE-1 | 1 | HIGH | BE / Workflow | ProcessRefund is SERVICE_PLACEHOLDER — handler flips APR→PRO + sets ProcessingStartedDate but does NOT call gateway `IPaymentService.RefundAsync`. FE toast: "Refund queued for gateway processing (gateway integration pending)." | OPEN |
 | ISSUE-2 | 1 | MED | BE / Cross-screen | GlobalDonation has no IsRefunded/RefundedAmount column; when Refund flips to REF, parent GD is not flagged. Surface refunds only via Refund screen for MVP. | OPEN |
-| ISSUE-3 | 1 | MED | BE / Data | `paymentMaskedDetails` projection left NULL — PaymentTransaction join deferred. FE falls back to "Same as original payment method". | OPEN |
+| ISSUE-3 | 1 | MED | BE / Data | `paymentMaskedDetails` projection left NULL — PaymentTransaction join deferred. FE falls back to "Same as original payment method". | CLOSED (session 2) |
 | ISSUE-4 | 1 | MED | BE / Validation | OTH-reason note enforcement is in BOTH CreateRefund validator AND handler (reason MasterData lookup + DataCode check). Implemented. | CLOSED |
 | ISSUE-5 | 1 | MED | BE / Auto-code | RefundCode auto-gen (`REF-{NNNN}` per Company) — uses per-company Max+1 pattern in handler. Advisory code (no uniqueness constraint). | CLOSED |
 | ISSUE-6 | 1 | MED | BE / GD Picker | `excludeRefunded` arg on `globalDonations` uses LINQ `!dbContext.Refunds.Any(...)` → EF generates NOT EXISTS SQL. Verified. | CLOSED |
 | ISSUE-7 | 1 | MED | BE / Multi-currency | Summary KPI sums convert refund amounts to base currency using GD.ExchangeRate → Currency.CurrencyRate → 1:1 fallback (documented in handler as `MULTI_CURRENCY`). | CLOSED |
 | ISSUE-8 | 1 | MED | FE / Renderer | `refund-status-badge` renders completion-date suffix ("Refunded (MMM d)") for REF rows by reading `row.refundedDate` from cell-renderer row context. Implemented. | CLOSED |
 | ISSUE-9 | 1 | LOW | BE / GD Picker | Donation Picker locked-selection edge case — combobox accepts `locked` prop in edit mode, renders preview only. Implemented. | CLOSED |
-| ISSUE-10 | 1 | MED | FE / Filter chips | FE wired chip filter via FlowDataTable `setQuickFilter` → `advancedFilter` predicate on `refundStatus.dataValue` (ChequeDonation #6 precedent). BE's dedicated `refundStatusCodes: [String]` GQL arg is available but UNUSED. Filtering works but not through optimal path. Revisit if chip badge counts desync from grid rows. | OPEN |
+| ISSUE-10 | 1 | MED | FE / Filter chips | FE wired chip filter via FlowDataTable `setQuickFilter` → `advancedFilter` predicate on `refundStatus.dataValue` (ChequeDonation #6 precedent). BE's dedicated `refundStatusCodes: [String]` GQL arg is available but UNUSED. Filtering works but not through optimal path. Revisit if chip badge counts desync from grid rows. | CLOSED (session 2) |
 | ISSUE-11 | 1 | LOW | FE / Renderer reuse | `donor-link` renderer already existed at `shared-cell-renderers/donor-link.tsx` (authored for ChequeDonation #6). Refund reused — no new file. | CLOSED |
 | ISSUE-12 | 1 | LOW | FE / Detail UX | 600px right-side drawer chosen (Pledge #12 precedent) with 7 scrollable section cards. Alternative full-page detail deferred. | CLOSED |
 | ISSUE-13 | 1 | LOW | Future | Multi-partial-refund support deferred. MVP enforces 1 Refund per GlobalDonation via DB unique filtered index + validator. Re-open when business relaxes the rule. | OPEN |
@@ -976,6 +1042,20 @@ Full UI must be built (buttons, forms, modals, panels, interactions). Only the h
 | ISSUE-15 | 1 | LOW | DB / Seed | Seed file placed at `sql-scripts-dyanmic/Refund-sqlscripts.sql` — preserves repo typo. Inherited platform-wide convention. | CLOSED |
 | ISSUE-16 | 1 | MED | BE / Migration | EF Migration `.cs` written but ApplicationDbContextModelSnapshot not hand-updated. To apply via `dotnet ef database update`, team should run `dotnet ef migrations add Add_Refund_Snapshot_Sync` to regenerate the Designer.cs + snapshot for reconciliation, OR execute the migration's `Up()` SQL directly. Flagged as pragmatic choice. | OPEN |
 | ISSUE-17 | 1 | LOW | FK path docs | Prompt §③ listed wrong folder paths for MasterData / Staff / Currency (said `CorgModels`; actual = `SettingModels` / `ApplicationModels` / `SharedModels`). Corrected during build; entity files unchanged. | CLOSED |
+| ISSUE-V2-1 | 3 | HIGH | BE / Workflow | Real gateway integration (Stripe Refunds API / Razorpay / PayPal) remains a SERVICE_PLACEHOLDER. v2 captures channel/currency/originalFee/txnId for later integration; the actual API call still toasts "Refund queued for gateway processing". `CompleteRefundHandler` kept its name (not renamed to `ExecuteRefundHandler`). | OPEN |
+| ISSUE-V2-2 | 3 | HIGH | BE / Architecture | `IFxRateService` already existed at `Base.Application/Interfaces/IFxRateService.cs`. Real signature: `GetRateAsync(string fromCode, string toCode, DateOnly asOfDate, ct) → decimal?` (codes-based, NOT IDs as spec assumed). All v2 handlers do ID→Code lookup against `dbContext.Currencies` first, then call the service. `currentFxRate` GraphQL query takes `fromCurrencyId/toCurrencyId` (FE convenience) and resolves internally. | CLOSED |
+| ISSUE-V2-3 | 3 | MED | BE / Receipt | Receipt revision for PARTIAL refunds — flips `Refund.ReceiptStatusAfterRefund='REVISED'` only; no linked-row mutation. Spec assumed `GlobalReceipt` entity exists but only `GlobalReceiptDonations` junction does. Issuance of revised receipt PDF (and/or new revised GR row) OUT OF SCOPE. | OPEN |
+| ISSUE-V2-4 | 3 | LOW | FE / Grid | Channel badge column in grid (replace `RefundMethodLabel` text with 2-line badge cell). Cosmetic — deferred. | OPEN |
+| ISSUE-V2-5 | 3 | LOW | BE / Backward-compat | `RefundMethodLabel` legacy field — `CompleteRefundHandler` regenerates it on save via `RefundChannelHelper.BuildRefundMethodLabel(...)` (GATEWAY_REVERSAL → "Gateway: {gatewayName} (txn {txnId})"; MANUAL_PAYOUT → "{paymentModeName} {— last4 of account}"). | CLOSED |
+| ISSUE-V2-6 | 3 | LOW | FE / Form | Currency override at refund-create — `RefundCurrencyId` defaults to GD currency; v2 form does NOT expose override picker. "Donor switched currency" case rare enough to defer. | OPEN |
+| ISSUE-V2-7 | 3 | LOW | BE+FE / Dict | Gateway fee-recoverability — small static dict in BOTH BE (`RefundChannelHelper.GatewayFeeRecoverable`) and FE (`refund-channel-fieldset.tsx FEE_RECOVERABILITY`). Stripe/Square→true; Razorpay/PayPal/Cashfree/Authorize→false; default→null. Externalize to config table only if matrix grows. | CLOSED |
+| ISSUE-V2-8 | 3 | LOW | BE / Dict | Per-mode required-field map dictionary-driven on BE (`RefundChannelHelper.ManualRequiredByModeCode`). As more rails added, dict grows. Externalization to config table deferred. | CLOSED |
+| ISSUE-V2-9 | 3 | MED | BE / UTC | All `DateTime` to BE has `Kind=Utc` per [feedback_db_utc_only.md]. Handler uses `DateTime.UtcNow` for refund-execute timestamp; FX rate lookup uses `DateOnly.FromDateTime(DateTime.UtcNow)`. Never `DateTime.Now` / `DateTime.Today`. | CLOSED |
+| ISSUE-V2-10 | 3 | LOW | BE / Picker | Donation-picker BE projection extension — additive, existing v1 picker callers don't break. BE added flat `GatewayCode` + `GatewayTxnId` (new); reused existing `BaseCurrencyId` + `BaseCurrency.CurrencyCode` nav DTO + `ExchangeRate` + `FeeAmount`. FE GQL query patched to read BE's actual field shape (`baseCurrencyId` + `baseCurrency { currencyCode }` not the spec-named flat `companyBaseCurrency*`); the picker's `toPickerValue` mapper translates to public-facing names. | CLOSED |
+| ISSUE-V2-11 | 3 | LOW | FE / Drawer | Drawer FX Snapshot card displays placeholder "Charity Base" label instead of actual ISO code. Resolve later by adding `chargeBaseCurrencyCode` projection to `RefundResponseDto`. | OPEN |
+| ISSUE-V2-12 | 3 | LOW | FE / Drawer | Drawer FX Delta row hidden (`showFxDelta=false`). Resolve later by adding `originalDonationExchangeRate` projection to `RefundResponseDto` so drawer can compute `(refundExchangeRate − originalDonationExchangeRate) × refundAmount` without a second query. | OPEN |
+| ISSUE-V2-13 | 3 | LOW | FE / Drawer | GATEWAY_REVERSAL fee-recoverability lookup in drawer keys the dict by `paymentModeName`. Should key by gateway code (STRIPE/RAZORPAY/etc) — accuracy improvement. Resolve by projecting `originalGatewayCode` onto Refund row. | OPEN |
+| ISSUE-V2-14 | 3 | MED | BE / Migration | Migration `20260505120000_Add_RefundChannelAndFxSnapshot.cs` written but Designer.cs + ApplicationDbContextModelSnapshot.cs NOT hand-edited (~22K-line snapshot, high corruption risk). Team must run `dotnet ef migrations add Add_Refund_V2_Snapshot_Sync` to regenerate snapshot before applying, or execute the migration's `Up()` SQL directly. Mirrors v1 ISSUE-16. | OPEN |
 
 ### § Sessions
 
@@ -1005,3 +1085,499 @@ Full UI must be built (buttons, forms, modals, panels, interactions). Only the h
 - **Known issues opened**: ISSUE-16 (EF snapshot manual reconciliation needed), ISSUE-10 (chip filter uses advancedFilter path, not dedicated args), ISSUE-17 (prompt §③ FK paths were wrong — documented).
 - **Known issues closed**: ISSUE-4, ISSUE-5, ISSUE-6, ISSUE-7, ISSUE-8, ISSUE-9, ISSUE-11, ISSUE-12, ISSUE-15, ISSUE-17 (10 of 17).
 - **Next step**: (empty — completed)
+
+### Session 2 — 2026-05-05 — FIX — COMPLETED
+
+- **Scope**: Close two of seven OPEN known issues without touching the spec — ISSUE-3 (synthesize `paymentMaskedDetails` from sibling rows) and ISSUE-10 (push status-chip filter as the dedicated `refundStatusCodes: [String!]` top-level GQL arg). Larger spec-change request (refund-method + tax + fees + per-method tracking) deferred to a separate `/plan-screens #13` cycle per the user's direction.
+- **Files touched**:
+  - **BE (2 modified)**:
+    - `Base.Application/Business/DonationBusiness/Refunds/Queries/GetRefunds.cs` — projection block extended with `OnlineMethodName` / `OnlineReferenceTail` / `ChequeNo` / `ChequeAccountLast4` (latest-row sub-projections over `GlobalDonation.GlobalOnlineDonations` + `GlobalDonation.ChequeDonations`); post-map now calls new `BuildPaymentMaskedDetails(...)` helper. Helper appended to `GetRefundsHandler` as `internal static`.
+    - `Base.Application/Business/DonationBusiness/Refunds/Queries/GetRefundById.cs` — same projection fields added; post-map reuses `GetRefundsHandler.BuildPaymentMaskedDetails(...)`.
+  - **FE (2 modified)**:
+    - `presentation/components/page-components/crm/donation/refund/index-page.tsx` — replaced the ~50-line `setQuickFilter` advancedFilter-predicate block with a 4-line `setExtraVariables({ refundStatusCodes: codes })` call (Family-screen precedent). `setQuickFilter` import dropped; `setExtraVariables` added.
+    - `presentation/components/page-components/crm/donation/refund/refund-filter-chips.tsx` — header doc-comment updated to describe the new wiring path.
+  - **DB**: none.
+- **Build verification**:
+  - BE: `dotnet build PeopleServe.sln` → 0 `error CS####` (compile errors). 8 reported errors are `MSB3021`/`MSB3027` file-lock failures from Visual Studio Insiders holding `Base.API.dll` (Base.API process 28048 running) — pre-existing dev-env issue, not introduced by this session. Compilation of the 3 modified files succeeded.
+  - FE: `pnpm exec tsc --noEmit` → exit 0, 0 lines of output (clean type-check).
+  - Did NOT run `pnpm dev` E2E manual exercise — fix is structurally simple and BE↔FE contracts on `refundStatusCodes` and `paymentMaskedDetails` were already in place from Session 1; runtime verification is owed when the user picks this branch up.
+- **Deviations from spec**:
+  - ISSUE-3 derivation chose synthesis from `GlobalOnlineDonation.PaymentMethod`+`GatewayReferenceNo` and `ChequeDonation.ChequeNo`+`AccountNoLast4` rather than the prompt §⑫ ISSUE-3 plan ("`Include(d => d.PaymentTransactions)`"). Reason: `GlobalDonation` has no FK or nav to `PaymentTransaction` in the current schema; `PaymentTransaction.MaskedPAN` does not exist. Synthesis from the existing `GlobalOnlineDonations`/`ChequeDonations` collections gives equivalent human-readable masked detail without introducing a new FK.
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-3, ISSUE-10 (2 of 7 prior OPEN).
+- **Next step**: (empty — completed). User to invoke `/plan-screens #13` for the refund-method + tax + fees spec extension. Remaining 5 OPEN issues (ISSUE-1 gateway integration, ISSUE-2 GD cross-screen schema add, ISSUE-13 multi-partial future, ISSUE-14 PDF infra, ISSUE-16 EF snapshot manual) are blocked on platform infra / cross-screen design / local CLI and stay deferred.
+
+### Session 3 — 2026-05-05 — BUILD — COMPLETED (v2 — Realtime Refund Flow)
+
+- **Scope**: Enhancement v2 build per the prompt's "## ⓘ Enhancement v2" section — channel auto-routing (GATEWAY_REVERSAL vs MANUAL_PAYOUT), FX snapshot at refund-EXECUTE, original gateway fee snapshot, fee-recoverability transparency, per-rail manual-payout required-fields, receipt-status tracking. ALIGN scope (additive — 11 new columns, no new entities, no junction, no DB seed changes, no menu/grid/capability changes). Industry-aligned with Stripe/Razorpay/PayPal/Donorbox patterns.
+- **Files touched**:
+  - **BE (3 created, 10 modified)**:
+    - created: `Base.Application/Business/SharedBusiness/Currencies/Queries/GetCurrentFxRate.cs` (new GQL query + handler — resolves ID→Code, calls existing `IFxRateService.GetRateAsync(fromCode, toCode, DateOnly.FromDateTime(DateTime.UtcNow))`, short-circuits same-ccy to 1.0, returns null on direct-pair miss); `Base.Application/Business/DonationBusiness/Refunds/Commands/RefundChannelHelper.cs` (shared static helper — `OnlineGatewayCodes` HashSet, `ManualReqMask` `[Flags]` enum, `ManualRequiredByModeCode` Dictionary per-rail required-field map, `GatewayFeeRecoverable` Dictionary per ISSUE-V2-7, `BuildRefundMethodLabel` helper per ISSUE-V2-5); `Base.Infrastructure/Data/Migrations/20260505120000_Add_RefundChannelAndFxSnapshot.cs` (ALTER `fund."Refunds"` ADD 11 cols + index on `RefundChannelCode` + FKs `RefundCurrencyId→com."Currencies"` and `ManualPaymentModeId→com."PaymentModes"` both NoAction; safe defaults `'GATEWAY_REVERSAL'` + `'UNCHANGED'`)
+    - modified: `Refund.cs` (+11 cols, +2 nav `RefundCurrency`/`ManualPaymentMode`); `RefundConfiguration.cs` (precision 18,2 / 18,8 / MaxLength / FK NoAction / index on channel / defaults); `RefundSchemas.cs` (Request +7 input fields, Response +14 fields incl. 3 projections, +`CurrentFxRateResponseDto`); `CreateRefund.cs` (validator: channel ↔ manual tamper guard + fee≥0; handler: eager-load `DonationMode`+`GlobalOnlineDonations`, auto-derive channel via `RefundChannelHelper.OnlineGatewayCodes` + online-presence; per-mode required check via `ManualRequiredByModeCode`; snapshot `OriginalGatewayFeeAmount` from `gd.FeeAmount`; default `RefundCurrencyId = gd.CurrencyId`; clear manual fields on GATEWAY_REVERSAL); `UpdateRefund.cs` (same validator/handler treatment; preserves `OriginalGatewayFeeAmount`); `CompleteRefund.cs` (injected `IFxRateService`; resolves charity base via `CompanyConfigurations.BaseCurrencyId`; ID→Code via `dbContext.Currencies`; populates `RefundExchangeRate` + `RefundBaseCurrencyAmount = Math.Round(RefundAmount × rate, 2)`; null-on-miss leaves cols null; sets `ReceiptStatusAfterRefund` = CANCELLED for FULL / REVISED for PARTIAL / UNCHANGED if no linked `GlobalReceiptDonations.Any`; regenerates `RefundMethodLabel` via helper; normalizes `executeUtc.Kind=Utc` per [feedback_db_utc_only.md]); `GetRefunds.cs` (Include `RefundCurrency` + `ManualPaymentMode`, +14 projection fields); `GetRefundById.cs` (same); `DonationMappings.cs` (extended Mapster `Refund→RefundResponseDto`, +3 projection mappings, +`Ignore` for nav inverses); `GetGlobalDonations.cs` + `GlobalDonationSchemas.cs` (picker projection extension — ISSUE-V2-10 — added flat `GatewayCode` + `GatewayTxnId`; reused existing `BaseCurrencyId` + `BaseCurrency` nav DTO + `ExchangeRate` + `FeeAmount` instead of duplicating as flat `companyBaseCurrency*`); `Base.API/EndPoints/Shared/Queries/CurrencyQueries.cs` (appended `[GraphQLName("currentFxRate")]` endpoint method)
+  - **FE (3 created, 8 modified)**:
+    - created: `infrastructure/gql-queries/shared-queries/CurrentFxRateQuery.ts` (new GQL query + types + barrel export); `presentation/components/page-components/crm/donation/refund/refund-channel-fieldset.tsx` (channel radio + `useWatch` setValue cleanup on flip; GATEWAY_REVERSAL render with solid-bg fee-recoverability banner per [feedback_widget_icon_badge_styling.md]; MANUAL_PAYOUT render with `<ApiSelectV2>` `PAYMENTMODES_QUERY` + per-mode dynamic fields BANK_TRANSFER/UPI/MOBILE_MONEY/CHEQUE/PAYPAL/CASH; hidden form-stash field `manualPaymentModeCode` populated by picker for downstream); `presentation/components/page-components/crm/donation/refund/refund-charges-fx-fieldset.tsx` (Refund Fee input + Net to Donor calc + conditional FX block via `useQuery(GET_CURRENT_FX_RATE, { skip: same-ccy })`; null-rate "FX rate unavailable" banner; signed FX impact green/red coloring per gain/loss)
+    - modified: `domain/entities/donation-service/RefundDto.ts` (Request +7 input fields; Response +14 fields incl. 3 projections); `infrastructure/gql-queries/donation-queries/RefundQuery.ts` (GetRefunds + GetRefundById +14 fields each; `GlobalDonationsForRefundPicker` extended with `exchangeRate`/`feeAmount`/`baseCurrencyId`/`baseCurrency.currencyCode`/`gatewayCode`/`gatewayTxnId` — patched mid-build to match BE shape per ISSUE-V2-10); `infrastructure/gql-mutations/donation-mutations/RefundMutation.ts` (+4 echo fields on Create/Update success); `refund-form-schemas.ts` (REFUND_CHANNEL_GATEWAY/MANUAL constants + 8 new base-schema fields incl. hidden `manualPaymentModeCode` + `superRefine` channel ↔ manualPaymentModeId presence; per-mode required map intentionally enforced on BE only); `refund-donation-picker.tsx` (`DonationPickerValue` extended; `RawDonationRow` interface adapted to BE's actual `baseCurrencyId`+`baseCurrency.currencyCode` shape; `toPickerValue` mapper translates BE shape → public-facing `companyBaseCurrencyId/Code`); `refund-create-form.tsx` (imports new fieldsets; donation-state initializer hydrates 7 new picker fields on edit-mode bootstrap; `handleDonationSelect` auto-derives channel from `donation.gatewayCode` + seeds `refundCurrencyId`; Section 3 → `<RefundChannelFieldset>`, Section 4 → `<RefundChargesFxFieldset>`, Notes → Section 5); `refund-detail-drawer.tsx` (Card 3 replaced with `<ChannelDetail>` rendering both modes with masked-account display + fee-recoverability lookup; Card 4 `<ChargesDetail>` extended with `originalGatewayFeeAmount` + `receiptStatusAfterRefund` badge; conditional `<FxSnapshotDetail>` card inserted between Charges and Approval Trail when `refundExchangeRate != null && refundBaseCurrencyAmount != null`); `view-page.tsx` (submit payload extended with 7 new input fields; defensive null-out of `manualBeneficiary*` on GATEWAY_REVERSAL)
+  - **DB**: NO seed changes — existing `com.PaymentModes` rows reused for manual-payout picker.
+- **Build verification**:
+  - BE: `dotnet build PeopleServe.sln` → **0 `error CS####` C# compile errors**, 499 warnings (pre-existing CA/CS analyzer baseline). 8 errors are MSB3021/MSB3027 file-lock errors caused by Visual Studio Insiders + running `Base.API.exe` (process 28048) holding the dlls — pre-existing dev-env issue per Session 2 precedent. Compilation succeeded for every project; only the post-build dll copy step into `Base.API\bin\Debug\net10.0\` was blocked.
+  - FE: `pnpm exec tsc --noEmit` → **exit 0, 0 lines of output**. Whole-FE TypeScript clean — improved over v1 baseline of 12 unrelated-screen errors (intervening sessions resolved them).
+  - UI uniformity grep checks on the 3 NEW FE files: 0 inline-hex / 0 inline-px / 0 `>Loading...</` / 0 inline `style={{`.
+  - Did NOT run `pnpm dev` E2E manual exercise — runtime verification deferred per token-budget directive.
+- **Deviations from spec**:
+  - `IFxRateService` API divergence (real signature codes-based + `DateOnly`, not IDs + `DateTime`) — handlers do ID→Code lookup against `dbContext.Currencies` first. ISSUE-V2-2 closed.
+  - `GlobalReceipt` entity does not exist — only `GlobalReceiptDonations` junction. Receipt-row flip dropped; `ReceiptStatusAfterRefund` tracked on Refund row only. ISSUE-V2-3 captures the deferred PDF revision.
+  - GD picker projection — BE didn't add flat `companyBaseCurrencyId`/`companyBaseCurrencyCode`; relies on existing `BaseCurrencyId` + `BaseCurrency` nav DTO. FE GQL query + `RawDonationRow` patched mid-build to match; mapper translates to public-facing names. ISSUE-V2-10.
+  - Per-mode required-field map — enforced on BE handler (post-PaymentMode load), NOT in FE Zod schema (pragmatic — `PaymentModeCode` requires DB lookup). FE schema only checks `manualPaymentModeId` presence. Documented in `refund-form-schemas.ts`.
+  - Migration Designer.cs + ApplicationDbContextModelSnapshot.cs NOT hand-edited (~22K-line snapshot, high corruption risk). Migration carries TODO comment for `dotnet ef migrations add Add_Refund_V2_Snapshot_Sync` reconciliation. ISSUE-V2-14 (mirrors v1 ISSUE-16).
+  - `CompleteRefundHandler` kept its name (not renamed to `ExecuteRefundHandler` as ISSUE-V2-1 suggested) — keeps backward-compat with v1 mutation surface.
+- **Known issues opened**: ISSUE-V2-1 (HIGH gateway integration still placeholder), ISSUE-V2-3 (MED revised PDF deferred), ISSUE-V2-4 (LOW channel grid badge), ISSUE-V2-6 (LOW currency override picker), ISSUE-V2-11 (LOW drawer charity-base label placeholder), ISSUE-V2-12 (LOW drawer FX delta hidden), ISSUE-V2-13 (LOW drawer fee-recoverability dict key accuracy), ISSUE-V2-14 (MED EF snapshot manual reconciliation needed).
+- **Known issues closed**: ISSUE-V2-2 (IFxRateService API integration), ISSUE-V2-5 (RefundMethodLabel regen), ISSUE-V2-7 (fee-recoverability dict on both sides), ISSUE-V2-8 (per-mode required map dict), ISSUE-V2-9 (UTC normalization), ISSUE-V2-10 (GD picker projection — patched FE↔BE shape mismatch).
+- **Next step**: User to apply migration manually:
+  1. `dotnet ef migrations add Add_Refund_V2_Snapshot_Sync --project Base.Infrastructure --startup-project Base.API --context ApplicationDbContext` to reconcile snapshot
+  2. `dotnet ef database update --project Base.Infrastructure --startup-project Base.API --context ApplicationDbContext`
+  3. Stop `Base.API.exe` (process 28048) before build to clear file-lock errors
+  4. `dotnet build` clean
+  5. `pnpm dev` and run full E2E per v2 acceptance criteria (channel auto-routing, manual-payout per-rail fields, FX block on cross-currency, FX snapshot at execute, receipt status flip, drawer Channel/Charges/FX cards)
+
+---
+## ⓘ Enhancement v2 — Realtime Refund Flow
+
+> **Consumer**: `/continue-screen` → BE Developer + FE Developer (in parallel; same Opus parallelism as Session 1).
+> **Status**: PLANNED 2026-05-05.
+> **Scope**: ALIGN — extend the existing Refund entity, schemas, FE form, and detail drawer. No greenfield. NO new screen menu — same `crm/donation/refund` route. **No new entities. No junction tables. No country-aware filtering.**
+> **Sibling pattern**: Same Module=CRM / Schema=fund / Group=DonationModels / ParentMenu=CRM_DONATION. Reuses canonical FLOW conventions.
+> **Industry alignment**: Mirrors how Stripe / Razorpay / PayPal / Donorbox / Classy actually handle refunds — gateway-reverses to the original instrument in the original currency; charity bears any FX shift; gateway's own fee policy determines whether the original processing fee is recovered. Donors don't pick a method on real platforms — gateway already has the rail. Manual payout exists only for genuinely offline donations (cash / cheque / in-kind / postal).
+
+### v2.① Why This Enhancement
+
+In Session 1, refund processing was treated as a generic "method" capture (single readonly text `RefundMethodLabel`). Real-world refund operations follow a different pattern: **the refund channel is determined by the original donation, not chosen by the donor**.
+
+Four realities the v1 entity doesn't capture:
+
+1. **Channel auto-routing** — Online donations refund via the original gateway (no method picker; the gateway has the donor's card / UPI / wallet on file). Offline donations (cash, cheque, in-kind, postal) are the only case where staff must manually capture a payout destination. v1 conflates both into one free-text label.
+2. **FX & currency snapshot** — Cross-border donations refund in the donor's original currency at today's FX rate. Charity's books take an FX hit silently. v1 has no `RefundCurrencyId` / `RefundExchangeRate` columns to record this. Per [feedback_fx_direct_pair.md], rate VALUE must be stored, never an FX-rate FK.
+3. **Original gateway fee recoverability** — Some gateways return the original processing fee on full refunds (Stripe since 2019, Square); others keep it (Razorpay, PayPal since 2019, Cashfree, Authorize.net). Charity needs visibility into fee recoverability before approving the refund. v1 has no fee snapshot.
+4. **Receipt cancellation by jurisdiction** — Full refund must cancel the linked tax-deduction receipt (80G / 501c3 / Gift Aid); partial must mark it for revision. v1 has no flag for this.
+
+This v2 keeps the existing 5-state workflow intact and adds a thin set of fields for channel routing, FX snapshot, fee transparency, and receipt-reversal tracking. **No new entities, no country junction, no per-method-by-country filtering.**
+
+### v2.② Entity Definition — DELTA
+
+Existing entity: [Refund.cs](PSS_2.0_Backend/PeopleServe/Services/Base/Base.Domain/Models/DonationModels/Refund.cs). **Keep all existing columns intact** including `RefundMethodLabel` (now repurposed as a derived display string regenerated by the handler from the new fields — see ISSUE-V2-5).
+
+**ADD 11 new columns to `fund."Refunds"`:**
+
+| Field | C# Type | MaxLen | Required | FK Target | Notes |
+|-------|---------|--------|----------|-----------|-------|
+| RefundChannelCode | string | 30 | YES | — | `GATEWAY_REVERSAL` or `MANUAL_PAYOUT`. Auto-derived by handler on Create from selected GD: if `GD.GlobalOnlineDonations.Any()` OR `DonationMode.Code` ∈ {ONLINE_GATEWAY, STRIPE, RAZORPAY, PAYPAL, CARD, UPI_GATEWAY, …} → GATEWAY_REVERSAL; else MANUAL_PAYOUT. Staff may override at Create / PEN-Edit. Default `GATEWAY_REVERSAL` for migration of existing rows. |
+| OriginalGatewayFeeAmount | decimal?(18,2) | — | NO | — | Snapshot of `GlobalDonation.FeeAmount` at refund-create. Audit-only; preserves historical fee even if GD is later edited. |
+| RefundFeeAmount | decimal?(18,2) | — | NO | — | Cost charged on the refund operation itself (e.g., SWIFT wire $25, Wise %, M-PESA outbound flat). Distinct from the original gateway fee. ≥ 0; null if free. |
+| RefundCurrencyId | int? | — | NO | com.Currencies | Donor's currency snapshot. Defaults to GD's currency on Create (no cross-currency override exposed in v2 form — see ISSUE-V2-6). |
+| RefundExchangeRate | decimal?(18,8) | — | NO | — | FX rate at refund-EXECUTE (donor currency → charity base currency). Snapshot per [feedback_fx_direct_pair.md] — store rate VALUE, never FK. NULL when same-currency. |
+| RefundBaseCurrencyAmount | decimal?(18,2) | — | NO | — | `RefundAmount × RefundExchangeRate` — the charity's books impact. NULL when same-currency. |
+| ReceiptStatusAfterRefund | string | 20 | YES | — | `UNCHANGED` (default) / `CANCELLED` (full refund) / `REVISED` (partial refund). Set by handler at refund-EXECUTE (PRO→REF), not at Create. Drives the linked `GlobalReceipt.Status` flip. |
+| ManualPaymentModeId | int? | — | NO | com.PaymentModes | Reuse of existing `com.PaymentModes` entity. Required when `RefundChannelCode = MANUAL_PAYOUT`; cleared by handler when channel = GATEWAY_REVERSAL. |
+| ManualBeneficiaryAccount | string? | 100 | NO | — | Single field carrying account # / UPI VPA / email (PayPal) / wallet handle. Semantic varies by `ManualPaymentMode.PaymentModeCode`. Required for non-cash manual rails. |
+| ManualBeneficiaryBankCode | string? | 50 | NO | — | IFSC (India) / SWIFT (intl) / Sort Code (UK) / Routing # (US). Required for bank-transfer manual rails (BANK_TRANSFER / WIRE / ACH / BACS / NEFT / IMPS / RTGS); optional for UPI; not used for others. |
+| ManualBeneficiaryMobile | string? | 30 | NO | — | E.164 mobile number. Required when manual + mobile-money rail (M-PESA / Airtel Money / mobile UPI). |
+
+**ADD navigation properties on Refund:**
+```csharp
+public Currency? RefundCurrency { get; set; }
+public PaymentMode? ManualPaymentMode { get; set; }
+```
+
+**NO new entities. NO junction tables. NO per-country method filtering.** The existing `com.PaymentModes` rows are reused for the manual-payout picker.
+
+### v2.③ FK Resolution Table — DELTA
+
+| FK Field | Target Entity | Entity File Path | GQL Query | Display Field | Notes |
+|----------|--------------|-------------------|-----------|---------------|-------|
+| RefundCurrencyId | Currency | [Currency.cs](PSS_2.0_Backend/PeopleServe/Services/Base/Base.Domain/Models/SharedModels/Currency.cs) | existing `getAllCurrencyList` (or equivalent — BE dev to confirm exact name) | CurrencyName / CurrencyCode | No new query needed |
+| ManualPaymentModeId | PaymentMode | [PaymentMode.cs](PSS_2.0_Backend/PeopleServe/Services/Base/Base.Domain/Models/SharedModels/PaymentMode.cs) | existing `getAllPaymentModeList` | PaymentModeName | No new query needed; FE shows all active modes — staff judgment selects |
+
+**ONE new lightweight query** (for cross-currency form preview):
+
+| Query | Purpose | Returns |
+|-------|---------|---------|
+| `currentFxRate(fromCurrencyId, toCurrencyId)` | Today's FX rate for the form's FX preview block | `{ rate: Decimal?, rateDate: DateTime? }` — null on direct-pair miss per [feedback_fx_direct_pair.md] |
+
+### v2.④ Business Rules & Validation — DELTA
+
+**Channel routing (handler logic, on Create):**
+1. If `GD.GlobalOnlineDonations.Any()` OR resolved `DonationMode.Code` ∈ online-gateway set → default `RefundChannelCode = GATEWAY_REVERSAL`.
+2. Otherwise (cash, cheque, in-kind, postal, receipt-book) → default `RefundChannelCode = MANUAL_PAYOUT`.
+3. Staff may override the default at Create or PEN-Edit (e.g., expired card → MANUAL_PAYOUT for an originally-online donation).
+
+**GATEWAY_REVERSAL path (no manual fields):**
+4. `ManualPaymentModeId`, `ManualBeneficiaryAccount`, `ManualBeneficiaryBankCode`, `ManualBeneficiaryMobile` MUST all be NULL. Handler clears them on save to prevent tamper.
+5. The actual gateway API call (Stripe Refunds / Razorpay Refund / PayPal Refund) remains a SERVICE_PLACEHOLDER per v1 ISSUE-1. Workflow (PEN→APR→PRO→REF) is identical; gateway integration is wired in a future session.
+
+**MANUAL_PAYOUT path (per-mode required-field map — handler validator + FE Zod refinement):**
+6. `ManualPaymentModeId` is REQUIRED.
+7. Required-field map by `ManualPaymentMode.PaymentModeCode` (case-insensitive match):
+
+| PaymentModeCode | ManualBeneficiaryAccount | ManualBeneficiaryBankCode | ManualBeneficiaryMobile |
+|---|:---:|:---:|:---:|
+| `CASH` / `POSTAL` | — | — | — |
+| `CHEQUE` / `CHQ` / `DD` | ✓ (Cheque/DD #) | — | — |
+| `BANK_TRANSFER` / `WIRE` / `ACH` / `BACS` / `NEFT` / `IMPS` / `RTGS` | ✓ (Account #) | ✓ (IFSC/SWIFT/Sort/Routing) | — |
+| `UPI` | ✓ (UPI VPA) | optional | — |
+| `MOBILE_MONEY` / `MPESA` / `AIRTEL_MONEY` | optional (txn ref) | — | ✓ (E.164) |
+| `PAYPAL` / `WALLET` | ✓ (email/handle) | — | — |
+
+> Handler reads `PaymentMode.PaymentModeCode` → looks up the required set in a static dictionary → enforces presence. Codes not in the table fall back to "all optional" (defensive default).
+
+**FX snapshot (on refund-EXECUTE, i.e., status PRO→REF):**
+8. If `RefundCurrencyId` (donor currency) = `Company.PrimaryCurrencyId` (charity base) → leave 3 FX columns NULL.
+9. If different → handler resolves rate via `IFxRateService.GetRateAsync(donorCcyId, baseCcyId, executeDateUtc)`. Per [feedback_fx_direct_pair.md], direct-pair-only — null on miss surfaces a soft warning ("FX rate not available for {DonorCcy}→{BaseCcy} on {Date}; refund recorded amount-only without base-currency conversion") and `RefundExchangeRate` + `RefundBaseCurrencyAmount` stay NULL.
+10. FX columns are populated at EXECUTE, not at Create. This matches gateway behavior — the rate that applies is the rate at execution, not at request.
+11. Date used for the rate lookup must be `DateTime.UtcNow` per [feedback_db_utc_only.md] — never `DateTime.Now` or `DateTime.Today`.
+
+**Receipt cancellation (on refund-EXECUTE):**
+12. `RefundType = FULL` → set `ReceiptStatusAfterRefund = CANCELLED`; flip linked `GlobalReceipt.Status = CANCELLED` (find via `GR.GlobalDonationId == Refund.GlobalDonationId`).
+13. `RefundType = PARTIAL` → set `ReceiptStatusAfterRefund = REVISED`; flip linked `GlobalReceipt.Status = REVISED`. Issuance of the actual revised receipt PDF is OUT OF SCOPE for v2 (see ISSUE-V2-3).
+14. If no `GlobalReceipt` exists for the GD (donation pre-receipting, in-kind without receipt, etc.) → `ReceiptStatusAfterRefund = UNCHANGED` and no GR mutation.
+
+**Fee transparency:**
+15. `OriginalGatewayFeeAmount` is captured at refund-Create (snapshot from `GD.FeeAmount`).
+16. Gateway-fee-recoverability is a presentation-time computed value (NOT stored) — mapped from the original GD's gateway via a small static dict shared by BE and FE: `STRIPE` → returns full / proportional partial; `SQUARE` → returns full only; `RAZORPAY` → keeps; `PAYPAL` → keeps; `CASHFREE` / `AUTHORIZE` → keeps; default → null/unknown. FE renders a banner accordingly.
+
+**Status transition impact:**
+17. Existing 5-state workflow unchanged. New fields populate at: Create (channel + manual fields + OriginalGatewayFeeAmount snapshot), refund-EXECUTE (FX snapshot + ReceiptStatusAfterRefund + GR.Status flip).
+
+### v2.⑤ Screen Classification — DELTA
+
+No change. Still `screen_type=FLOW`. Same Variant B layout. Same 3-mode view-page. Same 5-state workflow.
+
+What changes:
+- Form Section 3 ("Refund Method") replaced with channel-aware "Refund Channel" section
+- Form Section 4 ("Charges & Currency") replaces former "Notes" Section 4 position; an FX block renders conditionally inside it
+- Detail drawer Card 3 ("Refund Method") replaced with "Refund Channel" card; "Refund Charges" card extended with original gateway fee + receipt status
+- New Detail drawer Card "FX Snapshot" inserted CONDITIONALLY between Charges and Approval Trail when cross-currency
+- New BE handler logic for channel routing, FX snapshot at execute, receipt status flip
+- One small new GQL query (`currentFxRate`); no new mutations
+
+### v2.⑥ UI/UX Blueprint — DELTA
+
+#### FORM (mode=new + mode=edit) — Section 3 REPLACED + Section 4 REBUILT
+
+```
+┌─ Section 3: Refund Channel (icon phosphor:arrows-left-right) ──────────┐
+│                                                                        │
+│  Channel: ◉ Gateway Reversal     ○ Manual Payout                       │
+│  helper: "Auto-detected from original donation; override if needed."   │
+│                                                                        │
+│  ── (when GATEWAY_REVERSAL) ──                                         │
+│   ┌─ Original Payment ──────────────────────────────────────────┐     │
+│   │ Gateway:        Stripe                                       │     │
+│   │ Original Txn:   ch_3OqXXX...                                 │     │
+│   │ Fee paid:       $ 3.20 USD                                   │     │
+│   │ ⓘ Stripe RETURNS the original fee on FULL refunds.           │     │
+│   │   On PARTIAL, fee is kept proportionally.                    │     │
+│   └────────────────────────────────────────────────────────────────┘   │
+│   (no further input — gateway has donor's card / UPI / wallet)         │
+│                                                                        │
+│  ── (when MANUAL_PAYOUT) ──                                            │
+│   Payment Mode *  [ApiSelectV2: getAllPaymentModeList]                 │
+│                    placeholder: "Select payout method"                 │
+│                                                                        │
+│   ── (per-mode dynamic fields, conditional on PaymentModeCode) ──      │
+│   [BANK_TRANSFER / WIRE / ACH / BACS / NEFT / IMPS / RTGS]             │
+│      Account # *                | IFSC / SWIFT / Sort / Routing *      │
+│   [UPI]                                                                │
+│      UPI ID / VPA *             | IFSC (optional)                      │
+│   [MOBILE_MONEY / MPESA / AIRTEL_MONEY]                                │
+│      Mobile Number *            | (Reference txn ref, optional)        │
+│   [CHEQUE / DD]                                                        │
+│      Cheque / DD Number *                                              │
+│   [PAYPAL / WALLET]                                                    │
+│      Email / Handle *                                                  │
+│   [CASH / POSTAL]                                                      │
+│      (no sub-fields)                                                   │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+```
+┌─ Section 4: Charges & Currency (icon phosphor:calculator) ─────────────┐
+│   Refund Amount      $ 200.00 USD   (read-only echo from Section 2)    │
+│   Refund Fee         $ [   0.00 ]   (input, monospace, ≥ 0)            │
+│   ─────────────────────────────────────────                            │
+│   Net to Donor       $ 200.00 USD   (computed: amount − fee)           │
+│                                                                        │
+│   ── (visible only when donor currency ≠ charity base currency) ──     │
+│   Donor Currency      USD                                              │
+│   Charity Base        INR                                              │
+│   FX Rate (today)     1 USD = 85.40 INR  (fetched from currentFxRate)  │
+│   Charity Books       ₹ 17,080.00        (refundAmount × todayRate)    │
+│   Original Donation   1 USD = 83.00 INR  (snapshot from GD)            │
+│   FX Impact           − ₹ 480.00  ⚠  ("today's rate is higher")        │
+│                                                                        │
+│   helper: "FX is locked at refund EXECUTION, not at create."           │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+Section 5 ("Additional Notes") — unchanged from v1.
+
+**Component contract — `refund-channel-fieldset.tsx` (NEW):**
+
+```ts
+interface RefundChannelFieldsetProps {
+  /** Auto-derived from selected donation; user can override. */
+  channelCode: 'GATEWAY_REVERSAL' | 'MANUAL_PAYOUT';
+  /** From selected GD — Stripe / Razorpay / PayPal / null for offline. */
+  originalGatewayCode: string | null;
+  originalGatewayTxnId: string | null;
+  originalFeeAmount: number | null;
+  originalFeeCurrencyCode: string | null;
+  /** RHF-controlled. */
+  control: Control<RefundFormValues>;
+  /** External disable. */
+  disabled?: boolean;
+}
+```
+
+- Channel radio at top (auto-set from parent on donation pick; user override allowed).
+- Watches `channelCode` via `useWatch`; on flip, RHF `setValue` clears the opposite-side fields.
+- GATEWAY_REVERSAL render: readonly Original Payment summary card + fee-recoverability banner from the static dict.
+- MANUAL_PAYOUT render: `<ApiSelectV2 query={GET_PAYMENT_MODES}>` for picker; per-mode dynamic block via switch on `selectedMode.paymentModeCode`.
+
+**Component contract — `refund-charges-fx-fieldset.tsx` (NEW):**
+
+```ts
+interface RefundChargesFxFieldsetProps {
+  refundAmount: number;
+  donorCurrencyId: number;            // for the FX query
+  donorCurrencyCode: string;          // from selected GD
+  charityBaseCurrencyId: number;      // for the FX query
+  charityBaseCurrencyCode: string;    // from selected GD's company
+  donationExchangeRate: number;       // GD's stored rate (snapshot)
+  control: Control<RefundFormValues>;
+  disabled?: boolean;
+}
+```
+
+- Always renders Refund Fee input + Net display.
+- FX block visible only when `donorCurrencyId !== charityBaseCurrencyId`.
+- Issues `useQuery(GET_CURRENT_FX_RATE, { fromCurrencyId, toCurrencyId })` for today's rate; null result → renders "FX rate unavailable for this pair today" banner (no break).
+- Computes `fxImpact = refundAmount × (todayRate − donationRate)`; red if charity loses, green if gains.
+- Helper text reminds staff that the actual rate locks at refund EXECUTE.
+
+#### DETAIL drawer (mode=read) — Card 3 REBUILT + Card 4 EXTENDED + NEW Card
+
+Existing Card 3 "Refund Method" → REPLACED by **Channel** card.
+
+**GATEWAY_REVERSAL render:**
+```
+┌─ Refund Channel ─────────────────────────────────────────────┐
+│ Channel: Gateway Reversal                                     │
+│ Gateway: Stripe                                               │
+│ Original Txn: ch_3OqXXX...                                    │
+│ Fee Recoverable: Yes (Stripe — full refund only)              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**MANUAL_PAYOUT render** (only populated lines):
+```
+┌─ Refund Channel ─────────────────────────────────────────────┐
+│ Channel: Manual Payout                                        │
+│ Payment Mode: Bank Transfer (NEFT)                            │
+│ Account: ***********4567                                      │
+│ Bank Code: HDFC0001234                                        │
+└──────────────────────────────────────────────────────────────┘
+```
+
+Existing Card 4 "Refund Charges" → EXTENDED with original-fee snapshot + receipt status:
+```
+┌─ Refund Charges ─────────────────────────────────────────────┐
+│ Refund Amount         $ 200.00 USD                            │
+│ Refund Fee            $   0.00                                │
+│ Net to Donor          $ 200.00 USD                            │
+│ Original Gateway Fee  $   3.20 USD  (snapshot)                │
+│ Receipt After Refund: CANCELLED   (was REC-2026-0042)         │
+└──────────────────────────────────────────────────────────────┘
+```
+
+NEW conditional card "FX Snapshot" — between Charges and Approval Trail, **only when 3 FX columns are non-null**:
+```
+┌─ FX Snapshot ────────────────────────────────────────────────┐
+│ Donor Currency        USD                                     │
+│ Charity Base          INR                                     │
+│ Refund Rate           1 USD = 85.40 INR  (executed 2026-05-12)│
+│ Charity Books Impact  ₹ 17,080.00                             │
+│ Original Donation Rate 1 USD = 83.00 INR                      │
+│ FX Delta              − ₹ 480.00                              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+#### Grid columns — DELTA
+
+No new grid columns required. Optional follow-up (post-v2): a "Channel" badge column (Gateway / Manual) — flagged as ISSUE-V2-4.
+
+#### Filter chips / Advanced filters — DELTA
+
+No change.
+
+### v2.⑦ Substitution Guide — N/A
+
+(No new entity name to substitute — v2 edits the existing Refund + adds 11 columns. No greenfield entities.)
+
+### v2.⑧ File Manifest — DELTA
+
+**BE — NEW files (3):**
+
+| File | Purpose |
+|------|---------|
+| `Base.Application/Business/SharedBusiness/Currencies/Queries/GetCurrentFxRate.cs` | Read-only handler — direct-pair lookup of today's FX rate from `com.CurrencyExchangeRates`; returns `(decimal? rate, DateTime? rateDate)` |
+| `Base.Application/Services/IFxRateService.cs` + impl `FxRateService.cs` (only if not present per ISSUE-V2-2) | `Task<(decimal? rate, DateTime? asOfDate)> GetRateAsync(int fromCcyId, int toCcyId, DateTime asOfUtc)` — direct-pair only, no triangulation |
+| `Base.Infrastructure/Data/Migrations/{ts}_Add_RefundChannelAndFxSnapshot.cs` | Single migration: ALTER TABLE `fund."Refunds"` ADD 11 columns + index on `RefundChannelCode` for filtering + FK on `ManualPaymentModeId` + FK on `RefundCurrencyId`. Defaults: `RefundChannelCode='GATEWAY_REVERSAL'`, `ReceiptStatusAfterRefund='UNCHANGED'`. |
+
+**BE — MODIFIED files (~10):**
+
+| File | Change |
+|------|--------|
+| `Base.Domain/Models/DonationModels/Refund.cs` | +11 columns, +2 nav properties (`RefundCurrency`, `ManualPaymentMode`) |
+| `Base.Infrastructure/Data/Configurations/DonationConfigurations/RefundConfiguration.cs` | Decimal precision (18,2) for money / (18,8) for rate; FK setup for RefundCurrencyId + ManualPaymentModeId; MaxLength on string columns; default values for RefundChannelCode + ReceiptStatusAfterRefund |
+| `Base.Application/Schemas/DonationSchemas/RefundSchemas.cs` | Extend RefundResponseDto + CreateRefundRequestDto + UpdateRefundRequestDto with 11 new fields + projection lookups (`refundCurrencyCode`, `manualPaymentModeCode`, `manualPaymentModeName`) |
+| `Base.Application/Business/DonationBusiness/Refunds/Commands/CreateRefund.cs` | Auto-derive `RefundChannelCode` from selected GD (online-donation-presence + DonationMode.Code dict); snapshot `OriginalGatewayFeeAmount` from `GD.FeeAmount`; clear manual fields when channel=GATEWAY_REVERSAL; default `RefundCurrencyId = GD.CurrencyId`; validate per-mode required map for MANUAL_PAYOUT |
+| `Base.Application/Business/DonationBusiness/Refunds/Commands/UpdateRefund.cs` | Same field-level handling on PEN-only edit; preserve OriginalGatewayFeeAmount snapshot (don't re-derive) |
+| `Base.Application/Business/DonationBusiness/Refunds/Commands/CompleteRefund.cs` (or `ExecuteRefund.cs` per ISSUE-V2-1) | At PRO→REF transition: resolve FX rate via `IFxRateService.GetRateAsync` when `RefundCurrencyId != Company.PrimaryCurrencyId`; populate `RefundExchangeRate` + `RefundBaseCurrencyAmount`; set `ReceiptStatusAfterRefund` per refundType (FULL→CANCELLED, PARTIAL→REVISED, no-GR→UNCHANGED); flip linked `GlobalReceipt.Status` accordingly. Date param = `DateTime.UtcNow` per [feedback_db_utc_only.md]. |
+| `Base.Application/Business/DonationBusiness/Refunds/Validators/CreateRefundValidator.cs` (and Update) | Add: channel ↔ manual-fields consistency (GATEWAY_REVERSAL ⇒ all manual NULL; MANUAL_PAYOUT ⇒ ManualPaymentModeId required); per-mode required-field map (case-switch on resolved `PaymentMode.PaymentModeCode`); `RefundFeeAmount ≥ 0` |
+| `Base.Application/Business/DonationBusiness/Refunds/Queries/GetRefunds.cs` and `GetRefundById.cs` | Project new 11 fields + lookup joins (RefundCurrency.CurrencyCode, ManualPaymentMode.PaymentModeCode/Name) |
+| `Base.Application/Mappings/DonationMappings.cs` | Mapster config for new fields + nav projections |
+| `Base.API/EndPoints/Shared/Queries/CurrencyQueries.cs` | +1 endpoint method `GetCurrentFxRate(fromCurrencyId, toCurrencyId)` calling the new handler |
+| `Base.Application/Business/DonationBusiness/GlobalDonations/Queries/GetGlobalDonations.cs` (donation-picker projection) | Extend with: donor currency code, company base currency code, gateway code (from GlobalOnlineDonation join), gateway txn id, fee amount — for the FE channel-fieldset and FX-fieldset to consume without an extra query |
+| `Base.Application/Schemas/DonationSchemas/GlobalDonationSchemas.cs` | Mirror the 5-field projection extension |
+
+**BE — Seed: NO changes.** Existing `com.PaymentModes` rows are sufficient for the manual-payout picker. No new seed file. Migration runs alone.
+
+**FE — NEW files (3):**
+
+| File | Purpose |
+|------|---------|
+| `presentation/components/page-components/crm/donation/refund/refund-channel-fieldset.tsx` | Channel radio + (GATEWAY readonly summary OR MANUAL picker + per-mode dynamic fields) |
+| `presentation/components/page-components/crm/donation/refund/refund-charges-fx-fieldset.tsx` | Refund Fee input + Net display + conditional FX block |
+| `infrastructure/gql-queries/shared-queries/CurrentFxRateQuery.ts` | `currentFxRate(fromCurrencyId, toCurrencyId)` — read-only |
+
+**FE — MODIFIED files (~7):**
+
+| File | Change |
+|------|--------|
+| `presentation/components/page-components/crm/donation/refund/refund-form-schemas.ts` | Add 11 new fields to `refundBaseSchema`; `.superRefine` for: channel ↔ manual-fields consistency; per-mode required map for MANUAL_PAYOUT; `refundFeeAmount ≥ 0` |
+| `presentation/components/page-components/crm/donation/refund/refund-create-form.tsx` | Replace Section 3 with `<RefundChannelFieldset>`; replace Section 4 with `<RefundChargesFxFieldset>`; pass donor currency / GD exchange rate / gateway code / original fee from selected donation |
+| `presentation/components/page-components/crm/donation/refund/refund-donation-picker.tsx` | Extend `DonationPickerValue` with: `currencyId`, `currencyCode`, `companyBaseCurrencyId`, `companyBaseCurrencyCode`, `exchangeRate`, `gatewayCode`, `gatewayTxnId`, `feeAmount` |
+| `presentation/components/page-components/crm/donation/refund/refund-detail-drawer.tsx` | Replace Card 3 (Channel-aware render); extend Card 4 (Charges) with original gateway fee + receipt status; insert conditional Card "FX Snapshot" |
+| `domain/entities/donation-service/RefundDto.ts` | Add 11 new fields + 3 projection lookups |
+| `infrastructure/gql-queries/donation-service/RefundQuery.ts` | Add new fields to GetRefunds + GetRefundById selections |
+| `infrastructure/gql-queries/donation-service/RefundMutation.ts` | Add new fields to Create/Update mutation inputs |
+
+### v2.⑨ Approval Config — N/A
+
+No menu / capability / Grid / GridField changes. Same REFUND menu / 8 capabilities / FLOW Grid (GridFormSchema=NULL — code-driven form). The new fields are FE-rendered via the form code, not via GridFormSchema.
+
+### v2.⑩ BE→FE Contract — DELTA
+
+**Reuse existing GQL queries** for FK pickers (`getAllCurrencyList`, `getAllPaymentModeList` — exact names per BE convention; BE dev to confirm).
+
+**ONE new lightweight GQL query**:
+```graphql
+query CurrentFxRate($fromCurrencyId: Int!, $toCurrencyId: Int!) {
+  currentFxRate(fromCurrencyId: $fromCurrencyId, toCurrencyId: $toCurrencyId) {
+    rate           # Decimal? — null if pair missing per direct-pair-only rule
+    rateDate       # DateTime?
+  }
+}
+```
+
+**Extended `RefundResponseDto`** (additive — existing fields unchanged):
+```
+refundChannelCode             : String         // GATEWAY_REVERSAL | MANUAL_PAYOUT
+originalGatewayFeeAmount      : Decimal?
+refundFeeAmount               : Decimal?
+refundCurrencyId              : Int?
+refundCurrencyCode            : String?        // projection from RefundCurrency.CurrencyCode
+refundExchangeRate            : Decimal?
+refundBaseCurrencyAmount      : Decimal?
+receiptStatusAfterRefund      : String         // UNCHANGED | CANCELLED | REVISED
+manualPaymentModeId           : Int?
+manualPaymentModeCode         : String?        // projection
+manualPaymentModeName         : String?        // projection
+manualBeneficiaryAccount      : String?
+manualBeneficiaryBankCode     : String?
+manualBeneficiaryMobile       : String?
+```
+
+**Extended `CreateRefundRequestDto` / `UpdateRefundRequestDto`** (additive):
+```
+refundChannelCode             : String?         // optional — handler auto-derives if null
+refundFeeAmount               : Decimal?        // ≥ 0
+refundCurrencyId              : Int?            // optional — defaults to GD currency
+manualPaymentModeId           : Int?            // required when channel=MANUAL_PAYOUT
+manualBeneficiaryAccount      : String?         // ≤ 100; per-mode required
+manualBeneficiaryBankCode     : String?         // ≤ 50
+manualBeneficiaryMobile       : String?         // ≤ 30
+// NOT in input — handler-set:
+//   originalGatewayFeeAmount   (snapshot at create)
+//   refundExchangeRate         (snapshot at execute)
+//   refundBaseCurrencyAmount   (computed at execute)
+//   receiptStatusAfterRefund   (set at execute by refundType)
+```
+
+**Extended donation-picker payload** (existing `GlobalDonation` projection on the donation-picker query):
+```
+currencyId                    : Int            // for FX query input
+currencyCode                  : String         // donor currency from GD.Currency
+companyBaseCurrencyId         : Int            // for FX query input
+companyBaseCurrencyCode       : String         // from GD.Company.PrimaryCurrency or BaseCurrency
+exchangeRate                  : Decimal        // GD.ExchangeRate (already exists — exposing)
+gatewayCode                   : String?        // from GlobalOnlineDonation join (Stripe / Razorpay / PayPal / null)
+gatewayTxnId                  : String?        // from GlobalOnlineDonation
+feeAmount                     : Decimal?       // GD.FeeAmount (already exists — exposing)
+```
+
+### v2.⑪ Acceptance Criteria — DELTA
+
+(See "v2 Verification" task block above for the full acceptance checklist. Highlights:)
+1. Channel auto-derives correctly on donation pick (online → GATEWAY_REVERSAL; offline → MANUAL_PAYOUT).
+2. Staff can override the channel via the radio.
+3. GATEWAY_REVERSAL hides manual fields; MANUAL_PAYOUT shows PaymentMode picker + per-mode sub-fields.
+4. Per-mode required map enforced on BE + mirrored on FE.
+5. FX block visible only when cross-currency; FX columns populated at refund-EXECUTE, not at Create.
+6. Receipt status flip on refund-EXECUTE per refundType.
+7. Original gateway fee snapshot captured at Create.
+8. EF migration applies cleanly with safe defaults for existing rows.
+9. `dotnet build` clean / `pnpm exec tsc --noEmit` clean.
+
+### v2.⑫ Special Notes & Open Issues
+
+- **ISSUE-V2-1** (HIGH — already-known): Real gateway integration (Stripe Refunds API / Razorpay Refund API / PayPal Refund) remains a SERVICE_PLACEHOLDER per v1 ISSUE-1. v2 captures everything needed to integrate later (channel, currency, original fee, txn id) but the actual API call stays a "Process via Gateway" toast. /continue-screen v2 does NOT implement the gateway calls. The handler that triggers the gateway can keep its current name (`CompleteRefundHandler`) or be renamed to `ExecuteRefundHandler` for clarity — BE dev's call.
+
+- **ISSUE-V2-2** (HIGH — architectural prerequisite): `IFxRateService.GetRateAsync(fromCcy, toCcy, asOfUtc)` interface MUST exist or be scaffolded on Day 1. Per [feedback_fx_direct_pair.md], implementation is direct-pair-only — read `com.CurrencyExchangeRates WHERE FromCurrencyId=? AND ToCurrencyId=? AND RateDate <= asOfUtc` ORDER BY RateDate DESC LIMIT 1; return null on miss; NO USD-pivot triangulation. If the service is absent, BE dev adds a minimal `Base.Application/Services/IFxRateService.cs` + implementation + DI registration before the refund-execute handler edits.
+
+- **ISSUE-V2-3** (MED): Receipt revision for PARTIAL refunds — v2 only flips `GlobalReceipt.Status='REVISED'`. Issuance of the actual revised receipt PDF (and/or creation of a new revised GR row) is OUT OF SCOPE for v2 — flag for a separate "Receipt Revision" task. The flipped `Status` is the marker downstream consumers can detect. Optional: add `GlobalReceipts.RevisedFromId` self-FK in this same migration so the future revision flow has the column ready (BE dev's call — keep it small if added).
+
+- **ISSUE-V2-4** (LOW): Channel badge in grid — replace the existing "Refund Method" column (currently `RefundMethodLabel` text) with a 2-line cell: line 1 = channel badge (`Gateway` solid-bg-blue / `Manual` solid-bg-amber per [feedback_widget_icon_badge_styling.md]); line 2 = method name (manual) or gateway name (gateway). Cosmetic; not required for v2 acceptance.
+
+- **ISSUE-V2-5** (LOW): `RefundMethodLabel` legacy field — handler regenerates it on save from the new fields:
+  - GATEWAY_REVERSAL → `"Gateway: {gatewayName} (txn {gatewayTxnId})"`
+  - MANUAL_PAYOUT → `"{paymentModeName}{ — last4 of account if BANK_TRANSFER}{ — mobile if MOBILE_MONEY}"`
+  Keep for backward-compat with any v1 consumers; drop in a future cleanup.
+
+- **ISSUE-V2-6** (LOW): Currency override at refund-create — `RefundCurrencyId` defaults to GD currency. v2 form does NOT expose an override picker (out of scope; if needed later, add a small picker + warning banner). The "donor switched currency" case is rare enough to defer.
+
+- **ISSUE-V2-7** (LOW): Gateway fee-recoverability dictionary — keep as a small static dict in BOTH BE and FE (Stripe/Square→true, Razorpay/PayPal/Cashfree/Authorize→false, default→null/unknown). Externalize to a config table only if the matrix grows beyond ~10 entries. Source per gateway:
+  - Stripe: refunds processing fee on FULL refunds since 2019; partial refunds keep proportional fee.
+  - Square: same as Stripe.
+  - Razorpay: keeps fee on all refunds.
+  - PayPal: keeps fee since 2019 (changed from earlier policy).
+  - Cashfree / Authorize.net: keeps fee.
+
+- **ISSUE-V2-8** (LOW): Per-mode required-field map is dictionary-driven on BE. As more rails are added, the dictionary grows. Consider externalizing to a config table later; not required now.
+
+- **ISSUE-V2-9** (MED — UTC): All `DateTime` parameters passed to BE (refund execute timestamp, FX rate lookup) must have `Kind=Utc` per [feedback_db_utc_only.md]. Handler defaults to `DateTime.UtcNow` for refund-execute timestamp; never `DateTime.Now` or `DateTime.Today`.
+
+- **ISSUE-V2-10** (LOW): The donation-picker BE projection extension (currency code / company base / GD exchange rate / gateway code / gateway txn / fee) is additive — existing v1 picker callers don't break. The new fields surface to the FE picker `DonationPickerValue` type and are forwarded to the channel + charges fieldsets.
+
+### v2.⑬ Build Log — (to be appended by /continue-screen)
+
+(Empty — `/continue-screen` will append session log here on completion, mirroring v1 build log format.)

@@ -2,14 +2,14 @@
 screen: GlobalDonation
 registry_id: 1
 module: Fundraising
-status: COMPLETED
+status: NEEDS_FIX
 scope: ALIGN
 screen_type: FLOW
 complexity: High
 new_module: NO
 planned_date: 2026-04-16
 completed_date: 2026-04-30
-last_session_date: 2026-04-30
+last_session_date: 2026-05-02
 ---
 
 ## Tasks
@@ -685,6 +685,20 @@ GridCode: GLOBALDONATION
 | KI-10 | Session 2 | OPEN | Med | FE | **Receipt delivery method `modeMap` mis-keyed.** The receipt delivery card-selector currently shares the `modeMap` loaded for `MasterDataType=DONATIONMODE`. It will only resolve `EMAIL/WHATSAPP/PRINT/NONE` if those `dataValue`s exist under `DONATIONMODE` (they belong under `RECEIPTSENDMETHOD`). If unresolved, the cards render disabled. **Fix**: add a second `MASTERDATAS_QUERY` keyed by `RECEIPTSENDMETHOD` (or a unified `useMasterDataByTypeCode` hook); otherwise the form may save with `receiptSendMethodId: null` silently. |
 | KI-11 | Session 2 | OPEN | Low | FE | **`baseCurrencyId` fallback to `currencyId`.** If user doesn't pick a base currency on the form, save uses the same id as `currencyId`. Mockup expects org base currency from a tenant-scoped lookup (not yet exposed via FE config). Fallback keeps the form submittable. |
 | KI-12 | Session 2 | OPEN | Low | FE/BE | **Distribution readonly-mode display fields show "—".** `view-page.tsx` Distribution table (and `<DistributionGrid mode="readonly">`) shows "—" for ParticipantRole / Occasion / PurposeName because the BE distribution DTO doesn't surface joined display-name fields. Shape is ready; once BE projection lands, the read view picks them up automatically. |
+| KI-13 | Session 3 | OPEN | Low | BE | **Advisory lock substituted for `SELECT ... FOR UPDATE`** in `GlobalDonationReceiptNumberer.GenerateAsync`. Spec ⑮.3 step 5 specified `FromSqlInterpolated` row-lock; that extension lives on `Microsoft.EntityFrameworkCore.Relational` which `Base.Application` does not reference. Implemented `pg_advisory_xact_lock(key)` via `IApplicationDbContext.ExecuteRawSqlAsync` instead — exclusive, transaction-scoped, per-company (key = `(0x52455054 << 20) ^ companyId`). Semantics equivalent and arguably superior (works even before the config row exists). **How to apply**: if a future refactor exposes `FromSqlInterpolated` to Application layer or moves the helper down to Infrastructure, switch back to row-lock for closer fidelity to spec. |
+| KI-14 | Session 3 | OPEN | Med | BE | **`CreateGlobalOnlineDonation` inline-parent-create path NOT wired to generator.** Spec ⑮.4 row #5 asks to wire when `globalDonationId == 0`. Inspection showed the handler has no inline parent-create branch at all — only updates an existing parent or creates the child against a pre-existing parent. The composite path `CreateGlobalDonationWithChildren` IS wired (handles all online donations created from the new FLOW form). Comment block placed at the natural insertion point documenting the intent. **How to apply**: if/when an inline-parent-create branch is added to `CreateGlobalOnlineDonation`, drop in `await GlobalDonationReceiptNumberer.GenerateAsync(dbContext, companyId, "OD", gd.DonationDate, ct)` before `Add(gd)`. |
+| KI-15 | Session 3 | OPEN | Low | BE | **Cheque mode code passed as `"CHQ"`** in `CreateChequeDonation.cs` invocation. The spec ⑮.3 algorithm only short-circuits on `"RECEIPTBOOK"`, so the exact value passed for non-receipt-book modes is functionally irrelevant for *this* helper. But the constant is now load-bearing for any future mode-aware logic in the helper (e.g. mode-specific patterns). **How to apply**: when MasterData seed for `PAYMENTMODE` is finalized, audit that the actual `DataValue` for cheque is in fact `'CHQ'` (vs `'CHEQUEDD'` referenced in some places); adjust the constant centrally if wrong. |
+| KI-16 | Session 3 | SUPERSEDED (Session 4) | Low | BE | **`CreateGlobalReceiptDonation` is comment-only** — no `GenerateAsync` call placed. Per ⑮.3 step 1, RECEIPTBOOK mode short-circuits to `null`, so calling the generator would be a no-op. Existing logic mirrors `ReceiptBookSerialNo` into `ReceiptNumber` — that path is preserved. **Session 4 redesign**: behavior unchanged — `CreateGlobalReceiptDonation` and `CreateGlobalOnlineDonation` remain unwired (no inline parent-create branch); composite path covers actual creation. |
+| KI-17 | Session 4 | CLOSED (Session 4) | High | BE | **Multi-tenant FY-key regression introduced and fixed during the same session.** The agent's first-pass `NumberSequenceGenerator.BuildFyKey` dropped the `WHERE CompanyId = companyId` filter from the `CompanyConfigurations` lookup — would have picked any tenant's `FinancialYearStartMonth` in a multi-company DB. Caught during review by comparing against last session's helper. Fixed in [NumberSequenceGenerator.cs:185](PSS_2.0_Backend/PeopleServe/Services/Base/Base.Application/Services/NumberSequence/NumberSequenceGenerator.cs#L185) by threading `companyId` through `ComputePeriodKey → BuildFyKey`. Build re-verified clean. **Why logged**: catches a class of regression worth watching for on any future helper refactor — multi-tenant filter dropouts are silent until a second tenant's data exists. |
+| KI-18 | Session 4 | OPEN | Low | BE | **`BuildFyKey` does a synchronous DB read inside an async helper** ([NumberSequenceGenerator.cs:185](PSS_2.0_Backend/PeopleServe/Services/Base/Base.Application/Services/NumberSequence/NumberSequenceGenerator.cs#L185)). The agent kept `ComputePeriodKey` non-async to avoid making the period-key computation async-only (it's a small set of pure transformations). The sync EF call momentarily blocks the calling thread. For the FY-policy code path (rare, runs once per donation create) this is acceptable. **How to apply**: if a connection-pool starvation issue ever surfaces under load, convert `ComputePeriodKey` + `BuildFyKey` to async and propagate. |
+| KI-19 | Session 4 | OPEN | Low | BE | **Two indexes on `(CompanyId, NumberSequenceEntityTypeId)`**: EF's fluent `HasIndex` auto-generated the non-unique `IX_NumberSequenceConfigs_CompanyId_NumberSequenceEntityTypeId`, while the migration adds a partial unique index `UX_NumberSequenceConfigs_Company_Kind_NotDeleted` via raw SQL. Both coexist. The non-unique one is functionally redundant (the partial unique one already serves lookup queries that hit `WHERE IsDeleted = false`). **How to apply**: optionally drop the auto-generated index in a follow-up migration if Postgres EXPLAIN shows it's unused; otherwise leave — the storage cost is trivial. |
+| KI-20 | Session 5 | CLOSED (Session 5) | High | BE | **`createGlobalDonationWithChildren` violated `FK_ChequeDonations_MasterDatas_ChequeStatusId`** for CHQ/CHEQUEDD mode. Mapster `.Adapt<>()` into `ChequeDonation` left `ChequeStatusId = 0` because FE never sends it (per ISSUE-8 server-default contract). Standalone `CreateChequeDonation` resolved it but the composite handler did not. **Fix**: resolve `recChequeStatusId = MasterData(REC, CHEQUESTATUS)` once before the transaction and override `cd.ChequeStatusId` after `.Adapt`. |
+| KI-21 | Session 5 | CLOSED (Session 5) | Med | BE | **`createGlobalDonationWithChildren` skipped ChequeNo uniqueness validation** — DB unique constraint surfaced as a generic Postgres error rather than a friendly FluentValidation message. **Fix**: added `When(x.Payload.ChequeDonation != null)` block mirroring the standalone `CreateChequeDonation` validator (required ChequeTypeId/ChequeNo/ChequeDate + `MustAsync` uniqueness rule). |
+| KI-22 | Session 5 | CLOSED (Session 5) | High | BE | **NRE during composite-create response building** — `GlobalDonationDistributionResponseDto` declares 5 non-nullable nav DTOs (`default!`) including a `GlobalDonation` back-reference. After SaveChanges EF wires `dist.GlobalDonation = gd`; Mapster's recursive nested-DTO mapping then cycled / NPE'd on unloaded child navs. Same root cause hit `ChequeDonationResponseDto` because its mapping config walks `src.GlobalDonation.Contact.DisplayName`, `src.ChequeStatus.DataValue`, etc. **Fix**: (a) scalar-only manual projection for `Distributions` and `ChequeDonation` in the response; (b) `DetachGlobalDonationBackRefs(gd)` helper called once before adapting; (c) `SafeAdapt<T>(adapt, label)` wrapper around the remaining `.Adapt<>` calls so any future NRE surfaces with the destination DTO name. |
+| KI-23 | Session 5 | CLOSED (Session 5) | Med | BE/FE | **In-Kind Donation valuation lifecycle introduced.** Locked design: DIK donations have unknown monetary value at receipt; staff records `IntendedUse` + optional `EstimatedAmount` on Create; valuation status is server-derived (PENDING / ESTIMATED / NON_MONETARY / REALIZED); a new `realizeInKindDonation` command transitions PENDING/ESTIMATED → REALIZED with the actual sale proceeds and rescales the parent `GlobalDonation.DonationAmount` + the single distribution. Added 6 columns to `DonationInKind`, 2 new MasterDataTypes (INTENDEDUSE, VALUATIONSTATUS), 1 new command + GraphQL mutation, 8 FE file changes (form + distribution-grid + new realize-modal + view-page). **FE rules**: DIK mode locks DonationAmount + AllocatedAmount to read-only, hides "Add Distribution" button, single distribution row only. |
+| KI-24 | Session 5 | OPEN | High | DB | **EF migration for DIK valuation lifecycle columns deferred** — running API at the time of generation locked Base.Domain/Infrastructure/Application binaries; `dotnet ef migrations add` produced an empty migration. Entity + EF config + snapshot are NOT regenerated. **How to apply**: stop the API process, run `cd PSS_2.0_Backend/PeopleServe/Services/Base/Base.Infrastructure && dotnet ef migrations add Add_DonationInKind_ValuationLifecycle_Columns --startup-project ../Base.API/Base.API.csproj`. Verify the generated `.cs` has 6 `AddColumn` operations + 2 new FK indexes; then `dotnet ef database update`. After the schema is applied, run `Base/sql-scripts-dyanmic/DonationInKind-ValuationLifecycle-sqlscripts.sql` to seed the INTENDEDUSE + VALUATIONSTATUS master data. |
+| KI-25 | Session 5 | OPEN | Low | BE | **`GlobalDonation.DonationAmount` is `0` for non-monetary DIK** rather than NULL. Reporting queries that `SUM(DonationAmount)` will include `0` from internal-use items — semantically correct but semantically distinct rows must filter on `DonationInKind.ValuationStatus.DataValue = 'NON_MONETARY'` to exclude or report separately. Documented decision in [feedback memory] — not switching to nullable to avoid the `COALESCE` blast radius across ~50+ queries. |
+| KI-26 | Session 7 | CLOSED (Session 7 — Path A) | High | BE/FE/DB | **Pledge Donation flow now implemented (Path A — schema-aligned).** §⑯ original design assumed a new `PledgeDonations` mapping table + `Pledge.GivenAmount/BalanceAmount` columns + new PLEDGESTATUS values (`OPEN/PARTIALLY_FULFILLED`). Verified during Session 7 that this contradicted the live schema: `Pledge` is the header, `PledgePayment` is the existing 1:N installment ledger that **already** has `GlobalDonationId` / `PaidDate` / `PaidAmount` / `PaymentStatusId` — the row that §⑯ wanted to add. Existing PLEDGESTATUS values are `ONTRACK / FULFILLED / OVERDUE / BEHIND / CANCELLED`; PLEDGEPAYMENTSTATUS is `PAID / UPCOMING / SCHEDULED / OVERDUE`. **Path A** (user-confirmed): no new entity, no migration, no MasterData seed; donor with `DonationType=PLEDGE` picks one or more open scheduled installments (PledgePayment rows where `PaidDate IS NULL` AND `GlobalDonationId IS NULL` AND `IsCancelled = false`); strict-pay rule (`PaidAmount == DueAmount`); on save, BE stamps the rows + recomputes `Pledge.PledgeStatusId` (all paid → FULFILLED, any past-due unpaid → OVERDUE, else ONTRACK). §⑯ is now marked HISTORICAL — see Session 7 Build Log entry for the actual shipped contract. |
 
 ### § Sessions
 
@@ -772,4 +786,665 @@ GridCode: GLOBALDONATION
   2. Stop Visual Studio Insiders if running the API, then `dotnet build` from `PeopleServe/` for a clean full-sln build (only required to refresh `Base.API/bin` artifacts; code compiles fine).
   3. `pnpm dev` from `PSS_2.0_Frontend/` and visit `/en/crm/donation/globaldonation`.
   4. **Golden path E2E**: list loads → 5 KPI widgets render → "+ New" navigates to form → fill 6 sections → save → redirects to `?mode=read&id=X` → detail page renders 2-column layout → "Edit" returns to form pre-filled → "Back" returns to list. Note KI-6: distribution rows captured but parent-only persistence in MVP — toast confirms.
-  5. Verify menu visible in sidebar at CRM > Donations > All Donations.
+
+#### Session 3 — 2026-05-02 — ENHANCE — SUPERSEDED (Session 4)
+
+> **⚠ SUPERSEDED**: After this session shipped, the user requested generalizing the design so that future entities (ReceiptBook, Contact, etc.) can share the number-generation infrastructure rather than each spawning its own bespoke table. Session 3's entire BE delta was **reverted by the user before Session 4 started**. The Session 3 entry is preserved below as audit history; the live architecture is the generic 2-table design from Session 4.
+
+- **Scope**: Implemented Section ⑮ pre-planned **Receipt Number Auto-Generation** feature (Option A settings model, BE only per ⑮.5). New `sett.ReceiptNumberConfigs` 1-row-per-tenant entity + bootstrap-on-first-call generator helper + wired into Create handlers + EF migration with partial unique index on `fund.GlobalDonations(CompanyId, ReceiptNumber)`. NO FE changes (form already passes through BE-generated value via response). User-confirmed decisions: Option A schema; BE-only scope; no settings-management UI this session.
+- **Files touched**:
+  - **BE created (4)**:
+    - `PSS_2.0_Backend/PeopleServe/Services/Base/Base.Domain/Models/SettingModels/ReceiptNumberConfig.cs` — entity per ⑮.2 Option A (Prefix / Pattern / SequenceResetPolicy / LastSequence / LastResetPeriodKey / IsEnabled + audit fields).
+    - `PSS_2.0_Backend/PeopleServe/Services/Base/Base.Infrastructure/Data/Configurations/SettingConfigurations/ReceiptNumberConfigConfiguration.cs` — EF config: explicit `sett.ReceiptNumberConfigs` table, FK to `app.Companies`, unique index on `CompanyId`, server-side defaults for `Prefix='RCPT'` / `Pattern='{PREFIX}-{YYYY}-{SEQ:000000}'` / `SequenceResetPolicy='YEARLY'` / `LastSequence=0` / `IsEnabled=true`.
+    - `PSS_2.0_Backend/PeopleServe/Services/Base/Base.Application/Business/DonationBusiness/GlobalDonations/Services/GlobalDonationReceiptNumberer.cs` — `public static async Task<string?> GenerateAsync(IApplicationDbContext db, int companyId, string modeCode, DateTime donationDate, CancellationToken ct)`. Algorithm per ⑮.3: RECEIPTBOOK short-circuit → null; bootstrap missing config row idempotently; skip if `IsEnabled=false`; period key per `SequenceResetPolicy` (NEVER/YEARLY/FY/MONTHLY); FY derived from `CompanyConfiguration.FinancialYearStartMonth.DataValue` with YEARLY fallback; advisory-lock + counter increment + period rollover; template render with tokens `{PREFIX} {YYYY} {YY} {MM} {DD} {FY} {COMPANYID} {SEQ:N}`; uniqueness retry up to 3 times. Side-effect-only on tracked entity — no `SaveChangesAsync` so outer `BeginTransactionAsync` commits atomically with parent insert.
+    - `PSS_2.0_Backend/PeopleServe/Services/Base/Base.Infrastructure/Migrations/20260502040318_Add_ReceiptNumberConfig_And_GlobalDonation_ReceiptNumber_UniqueIndex.cs` (+ `.Designer.cs`) — migration creates `sett.ReceiptNumberConfigs` + adds partial unique index `IX_GlobalDonations_CompanyId_ReceiptNumber UNIQUE (CompanyId, ReceiptNumber) WHERE ReceiptNumber IS NOT NULL AND IsDeleted = false` via `migrationBuilder.Sql`.
+  - **BE modified (7)**:
+    - `Base.Application/Data/Persistence/ISettingDbContext.cs` — added `DbSet<ReceiptNumberConfig> ReceiptNumberConfigs { get; }`.
+    - `Base.Infrastructure/Data/Persistence/SettingDbContext.cs` — added `public DbSet<ReceiptNumberConfig> ReceiptNumberConfigs => Set<ReceiptNumberConfig>();`.
+    - `Base.Application/Extensions/DecoratorProperties.cs` — added `, ReceiptNumberConfig = "RECEIPTNUMBERCONFIG"` to `DecoratorSettingModules`.
+    - `Base.Application/Business/DonationBusiness/GlobalDonations/Commands/CreateGlobalDonationWithChildren.cs` — `GenerateAsync` invoked inside `strategy.ExecuteAsync` block, BEFORE `dbContext.GlobalDonations.Add(gd)` (around line 217). Existing RECEIPTBOOK serial-mirroring path stays.
+    - `Base.Application/Business/DonationBusiness/GlobalDonations/Commands/CreateGlobalDonation.cs` — added `MasterData.DataValue` mode lookup; `GenerateAsync` invoked BEFORE `Add(globalDonation)`.
+    - `Base.Application/Business/DonationBusiness/ChequeDonations/Commands/CreateChequeDonation.cs` — `GenerateAsync` called with `modeCode = "CHQ"` inside `if (req.GlobalDonationId <= 0)` inline-create block; result assigned to `gd.ReceiptNumber` and surfaced on response DTO (see KI-15 for mode-code constant audit).
+    - `Base.Application/Business/DonationBusiness/GlobalReceiptDonations/Commands/CreateGlobalReceiptDonation.cs` + `GlobalOnlineDonations/Commands/CreateGlobalOnlineDonation.cs` — comment-only (KI-14 / KI-16 explain why no active wire is needed).
+- **Build verification**:
+  - `Base.Application` targeted build: **0 errors / 0 warnings** (binding signal per build directive memory).
+  - Full `PeopleServe.sln` build: **0 errors / 1 warning** (pre-existing NPOI EULA warning, unrelated). NOTE: full-sln cleanly built this session unlike Session 2 where `Base.API/bin` MSB30xx file-locks blocked publish — VS Insiders not running this session.
+- **Renderer keys (Component Reuse-or-Create check)**: N/A — BE-only session, no FE renderers touched.
+- **Variant B compliance**: N/A — no FE changes.
+- **UI uniformity**: N/A — no FE changes.
+- **Deviations from spec**:
+  - Advisory lock (`pg_advisory_xact_lock`) substituted for spec's `SELECT ... FOR UPDATE` row-lock (KI-13). `FromSqlInterpolated` not available to Application layer; advisory-lock path is equivalent and works even pre-bootstrap.
+  - `CreateGlobalOnlineDonation` is comment-only — has no inline parent-create path to wire (KI-14). Composite handler covers actual OD creation flow.
+  - `CreateGlobalReceiptDonation` is comment-only — RECEIPTBOOK mode short-circuits to `null` so the call would be a no-op (KI-16). Existing serial-mirror logic preserved.
+  - Cheque mode constant passed as `"CHQ"` — pending audit against final `PAYMENTMODE` MasterData seed (KI-15). No functional impact today since helper only special-cases `"RECEIPTBOOK"`.
+- **Known issues opened**: KI-13, KI-14, KI-15, KI-16.
+- **Known issues closed**: None this session (Section ⑮ acceptance checklist items are now all met — see ⑮.6).
+- **Next step**: User-side verification:
+  1. **Apply migration** — `dotnet ef database update` (the team-owned step — migration files are committed). The migration is non-blocking since the partial unique index excludes existing NULL `ReceiptNumber` rows.
+  2. **Smoke E2E** per ⑮.6 final checklist item: create one donation per mode (CASH, CHEQUEDD, OD, BANKTRANSFER, DIK, RECEIPTBOOK). First five should auto-generate `RCPT-2026-000001` style numbers; RECEIPTBOOK should retain its book serial.
+  3. Verify `sett.ReceiptNumberConfigs` row was bootstrapped on first donation create for the tenant (single row, defaults).
+  4. (Optional) Audit cheque mode constant per KI-15 against the actual seed.
+- **Notes**:
+  - All 9 acceptance checklist items in ⑮.6 are met (see Tasks below — added `[x]` markers).
+  - Pre-existing 8 OPEN KIs (KI-5..KI-12) remain intentionally deferred, untouched this session.
+  - Registry hygiene: `REGISTRY.md` has a stale duplicate row for screen #1 at line 447 (status `PARTIALLY_COMPLETED`). The authoritative row at line 85 is correct (`COMPLETED`). Worth a follow-up cleanup pass — not modified this session to keep `/continue-screen` scope tight.
+
+#### Session 4 — 2026-05-02 — ENHANCE — COMPLETED
+
+- **Scope**: **Architectural redesign** of the Receipt Number feature into a **generic, globally reusable NumberSequence system** that any business entity (donations today; ReceiptBook, Contact, etc. tomorrow) can plug into. User reverted Session 3's bespoke `sett.ReceiptNumberConfigs` schema and asked for a model where the generator is entity-agnostic. New 2-table design: a global eligibility catalog (`sett.NumberSequenceEntityTypes`) FK'd to existing `public.EntityTypes`, plus a per-tenant override table (`sett.NumberSequenceConfigs`) with one row per `(CompanyId, NumberSequenceEntityTypeId)`. Tenant overrides inherit from defaults via NULL-coalesce. Initial seed scopes only `GLOBALDONATION` (per user choice — Option A: ship only what's wired today; ReceiptBook/Contact rows added when their consuming features land).
+- **Files touched**:
+  - **BE created (5)**:
+    - `PSS_2.0_Backend/PeopleServe/Services/Base/Base.Domain/Models/SettingModels/NumberSequenceEntityType.cs` — eligibility entity. FK to `public.EntityTypes` (UNIQUE — one row per eligible entity globally). Holds `DefaultPrefix / DefaultSuffix / DefaultPattern / DefaultSequenceResetPolicy / IsEnabled` + audit. Added `Suffix` support (new `{SUFFIX}` token in renderer).
+    - `PSS_2.0_Backend/PeopleServe/Services/Base/Base.Domain/Models/SettingModels/NumberSequenceConfig.cs` — per-tenant override entity. FKs to `app.Companies` + `sett.NumberSequenceEntityTypes`. All format columns nullable (NULL = inherit defaults). Counter columns: `LastSequence`, `LastResetPeriodKey`. Per-tenant `IsEnabled` kill-switch.
+    - `PSS_2.0_Backend/PeopleServe/Services/Base/Base.Infrastructure/Data/Configurations/SettingConfigurations/NumberSequenceEntityTypeConfiguration.cs` — EF fluent config: identity column, server-side defaults (`Prefix='RCPT'`, `Pattern='{PREFIX}-{YYYY}-{SEQ:000000}'`, `SequenceResetPolicy='YEARLY'`, `IsEnabled=true`), unique index on `EntityTypeId`, `OnDelete(Restrict)` to `public.EntityTypes`.
+    - `PSS_2.0_Backend/PeopleServe/Services/Base/Base.Infrastructure/Data/Configurations/SettingConfigurations/NumberSequenceConfigConfiguration.cs` — EF fluent config: nullable override columns, `LastSequence` default 0, `IsEnabled` default true, indexes for FK navigation, `OnDelete(Restrict)` on both FKs. The partial unique index `UX_NumberSequenceConfigs_Company_Kind_NotDeleted` is added in the migration via `migrationBuilder.Sql()` because EF Core fluent API doesn't support partial indexes natively.
+    - `PSS_2.0_Backend/PeopleServe/Services/Base/Base.Application/Services/NumberSequence/NumberSequenceGenerator.cs` — generic `public static Task<string?> GenerateAsync(IApplicationDbContext db, int companyId, string entityTypeCode, DateTime contextDate, CancellationToken ct)`. Algorithm: (1) resolve eligibility row by `EntityTypes.EntityTypeCode` join — throws `InvalidOperationException` if not registered (loud failure, not silent skip); (2) global kill-switch returns null; (3) per-(entityType, company) advisory lock via `pg_advisory_xact_lock` — different entities and tenants never block each other (lock-key formula `((long)0x4E554D53L << 24) ^ ((long)numberSequenceEntityTypeId << 24) ^ (long)companyId`); (4) load-or-bootstrap tenant config row (one `SaveChangesAsync` during bootstrap only, advisory lock makes it race-free); (5) per-tenant kill-switch; (6) effective-value resolution via `config.Field ?? eligibility.DefaultField`; (7) period-key computation (NEVER/YEARLY/FY/MONTHLY) — FY scoped to caller's `companyId` (see KI-17); (8) increment counter with rollover detection; (9) render pattern with `{PREFIX} {SUFFIX} {YYYY} {YY} {MM} {DD} {FY} {COMPANYID} {SEQ:N}`. Counter update is left tracked-but-unflushed so the caller's outer transaction commits the sequence increment + parent insert atomically. **`RECEIPTBOOK` short-circuit moved OUT of the helper INTO callers** — donation-mode logic is not the generic helper's concern.
+  - **BE modified (6)**:
+    - `Base.Application/Data/Persistence/ISettingDbContext.cs` — added `DbSet<NumberSequenceEntityType> NumberSequenceEntityTypes { get; }` and `DbSet<NumberSequenceConfig> NumberSequenceConfigs { get; }`.
+    - `Base.Infrastructure/Data/Persistence/SettingDbContext.cs` — implemented both DbSets with `=> Set<...>()`.
+    - `Base.Application/Extensions/DecoratorProperties.cs` — added `, NumberSequenceEntityType = "NUMBERSEQUENCEENTITYTYPE", NumberSequenceConfig = "NUMBERSEQUENCECONFIG"` to `DecoratorSettingModules`.
+    - `Base.Application/Business/DonationBusiness/GlobalDonations/Commands/CreateGlobalDonation.cs` — added `MasterData.DataValue` mode lookup (line 56–60); wrapped existing `Add` in `strategy.ExecuteAsync` + `BeginTransactionAsync` (line 70–86) so `pg_advisory_xact_lock` has a transaction to attach to; injected RECEIPTBOOK skip + `NumberSequenceGenerator.GenerateAsync(_, companyId, "GLOBALDONATION", DonationDate, ct)` BEFORE `Add(globalDonation)` (line 75–82).
+    - `Base.Application/Business/DonationBusiness/GlobalDonations/Commands/CreateGlobalDonationWithChildren.cs` — composite handler already wraps in `strategy.ExecuteAsync` + `BeginTransactionAsync`; injected RECEIPTBOOK skip + `NumberSequenceGenerator.GenerateAsync(_, gd.CompanyId, "GLOBALDONATION", gd.DonationDate, ct)` BEFORE `dbContext.GlobalDonations.Add(gd)` (line 200–207).
+    - `Base.Application/Business/DonationBusiness/ChequeDonations/Commands/CreateChequeDonation.cs` — wrapped the `if (req.GlobalDonationId <= 0)` inline-parent-create branch in a new `strategy.ExecuteAsync` + `BeginTransactionAsync` (line 187–190); injected RECEIPTBOOK skip + generator call inside that branch.
+  - **BE migration (1)**: `PSS_2.0_Backend/PeopleServe/Services/Base/Base.Infrastructure/Migrations/20260502044341_Add_NumberSequence_Generic_Tables_And_GlobalDonation_Receipt_UniqueIndex.cs` (+ Designer + ModelSnapshot deltas). Operations:
+    1. `CreateTable("NumberSequenceEntityTypes", schema: "sett")` with FK to `public.EntityTypes`.
+    2. `CreateTable("NumberSequenceConfigs", schema: "sett")` with FKs to `app.Companies` + `sett.NumberSequenceEntityTypes`.
+    3. EF auto-generated indexes: `IX_NumberSequenceConfigs_CompanyId_NumberSequenceEntityTypeId` (non-unique), `IX_NumberSequenceConfigs_NumberSequenceEntityTypeId`, `IX_NumberSequenceEntityTypes_EntityTypeId` (unique).
+    4. Raw SQL: `CREATE UNIQUE INDEX UX_NumberSequenceConfigs_Company_Kind_NotDeleted ON sett."NumberSequenceConfigs" (CompanyId, NumberSequenceEntityTypeId) WHERE IsDeleted = false`.
+    5. Idempotent UPSERT into `public.EntityTypes` for `EntityTypeCode='GLOBALDONATION'` — uses `ON CONFLICT ON CONSTRAINT "IX_EntityTypes_EntityTypeCode_IsActive" DO NOTHING` so it's safe whether the row pre-exists.
+    6. Idempotent INSERT-SELECT into `sett.NumberSequenceEntityTypes` seeding the `GLOBALDONATION` eligibility row (defaults: `'RCPT'` / `'{PREFIX}-{YYYY}-{SEQ:000000}'` / `'YEARLY'` / enabled). Wrapped in `WHERE NOT EXISTS` for re-run safety.
+    7. Raw SQL: `CREATE UNIQUE INDEX IF NOT EXISTS UX_GlobalDonations_Company_ReceiptNumber_NotNull ON fund."GlobalDonations" (CompanyId, ReceiptNumber) WHERE ReceiptNumber IS NOT NULL` (recreates the partial unique index that the reverted Session 3 migration also added).
+    Down migration is fully symmetric except it preserves the `public.EntityTypes` GLOBALDONATION row (other features may reference it via `SearchableEntities`).
+- **Build verification**:
+  - `Base.Application` direct build: **0 errors / 0 warnings** (binding signal). After the KI-17 fix → re-verified 0/0.
+  - `Base.Infrastructure` direct build: **0 errors / 1 pre-existing warning** (NPOI EULA, unrelated). Solution-wide build: 0 errors, 373 pre-existing warnings (none in our created/edited files). Per build directive memory ("avoid full builds unless necessary"), targeted project builds are the binding signal.
+- **Renderer keys (Component Reuse-or-Create check)**: N/A — BE-only session, no FE renderers touched.
+- **Variant B compliance**: N/A — no FE changes.
+- **UI uniformity**: N/A — no FE changes.
+- **Deviations from spec (Session 4 brief)**:
+  - **Transaction wrapping added to two handlers** that previously had no explicit transaction. `CreateGlobalDonation` and `CreateChequeDonation` did not wrap their `Add + SaveChanges` in `strategy.ExecuteAsync + BeginTransactionAsync`. The advisory lock requires an open transaction (`pg_advisory_xact_lock` is transaction-scoped). I wrapped both — minimal-surface change, mirrors the composite handler's pattern. Documented as part of this session's intentional broadening.
+  - **Multi-tenant FY-key regression (caught + fixed inside this session)** — see KI-17. The first-pass agent output dropped the `WHERE CompanyId = companyId` filter from `BuildFyKey`. Caught during review, fixed, build re-verified.
+  - **Synchronous DB read inside async helper** — `BuildFyKey` does a sync EF lookup to keep `ComputePeriodKey` non-async. See KI-18 for trade-off.
+  - **Two indexes on the same column pair** — EF auto-generated a non-unique index alongside the manually-added partial unique index. See KI-19. Functionally redundant but not harmful.
+  - **`RECEIPTBOOK` short-circuit moved into callers** — by design (generic helper has no donation-mode awareness).
+- **Architecture decisions (durable — write into ⑮ for future readers)**:
+  - **Eligibility table over flag-on-EntityTypes**: A `SupportsNumberSequence` boolean on `public.EntityTypes` would have polluted a generic registry shared with search/audit. Dedicated eligibility table keeps EntityTypes clean and makes the admin UI's eligibility-list query trivial.
+  - **FK from Configs → Eligibility (not Configs → EntityTypes directly)**: The Configs table can ONLY reference an entity that's been explicitly registered for numbering. No rogue config rows for arbitrary entities. Eligibility is enforced at the database, not the application.
+  - **Override-via-NULL-coalesce, not full-row-copy**: When a tenant configures a sequence, only the override columns they actually changed get filled. Defaults are read from the eligibility row at generation time. Means changing the global default (e.g., updating `DefaultPattern` for `GLOBALDONATION`) automatically applies to all tenants who haven't overridden the pattern column.
+  - **Loud failure on missing eligibility**: `GenerateAsync` throws if `entityTypeCode` isn't registered, rather than silently returning null. A typoed entity-type code is a programmer bug, not a runtime "no number please" signal.
+  - **Lock key mixes entity + company**: `pg_advisory_xact_lock` key derives from both `numberSequenceEntityTypeId` and `companyId`, so contention is scoped tightly — donations of company A do NOT serialize with contacts of company A, nor with donations of company B.
+- **Known issues opened**: KI-17 (closed same session), KI-18, KI-19.
+- **Known issues closed**: KI-17 (multi-tenant FY-key regression — caught + fixed within Session 4).
+- **Known issues superseded**: KI-13 (advisory lock substitution — preserved in new design), KI-14 (CreateGlobalOnlineDonation comment-only — behavior unchanged), KI-15 (cheque mode constant — moot since RECEIPTBOOK is the only special-cased value), KI-16 (CreateGlobalReceiptDonation comment-only — behavior unchanged).
+- **Next step**: User-side verification (unchanged from Session 3, just retargeted at the new schema):
+  1. **Apply migration** — `dotnet ef database update` (team-owned step). Migration is idempotent for the seed/upsert blocks.
+  2. **Smoke E2E**: create one donation per mode (CASH, CHEQUEDD, OD, BANKTRANSFER, DIK, RECEIPTBOOK). First five should auto-generate `RCPT-2026-000001`-style numbers (eligibility row's defaults); RECEIPTBOOK should retain its book serial (caller-side short-circuit).
+  3. Verify a `sett.NumberSequenceConfigs` row gets bootstrapped on first donation create per tenant (one row, all override columns NULL, `LastSequence=1`, `LastResetPeriodKey='2026'`).
+  4. Verify `public.EntityTypes` has a `GLOBALDONATION` row (either pre-existing or seeded by this migration).
+  5. (Future) When ReceiptBook auto-numbering is wired: add a row to `public.EntityTypes` for `RECEIPTBOOK` (if not present) + a row to `sett.NumberSequenceEntityTypes` with desired defaults (e.g., `'BOOK'` / `'{PREFIX}-{YYYY}-{SEQ:0000}'` / `'YEARLY'`) — no helper code changes required.
+
+---
+
+## ⑮ Receipt Number Auto-Generation — IMPLEMENTED (Session 4 architecture)
+
+> **Status (2026-05-02 post-Session-4)**: ✅ **Implemented as a generic 2-table NumberSequence system** that any business entity can plug into. Live architecture details are in §⑮.0 below; the original Session 3 single-table plan (§⑮.1–⑮.5) is preserved as historical reference but **does not match the shipped code** — Session 3 was reverted by the user and replaced. The Session 4 architecture is the source of truth.
+>
+> **Goal (unchanged)**: When a GlobalDonation is created in any mode *except* RECEIPTBOOK, the BE auto-generates a unique, human-readable receipt number using a tenant-configurable pattern (prefix + sequence + optional date/year/suffix tokens). RECEIPTBOOK donations continue to derive their receipt number from the physical book serial (`ReceiptBookSerialNo`) — that path is preserved.
+
+### ⑮.0 Live architecture (Session 4) — generic NumberSequence
+
+Two tables under schema `sett`, both FK'd into existing `public.EntityTypes` so the generator is entity-agnostic:
+
+```
+sett.NumberSequenceEntityTypes  (global eligibility catalog + defaults — one row per kind)
+  NumberSequenceEntityTypeId    PK
+  EntityTypeId                  FK → public.EntityTypes (UNIQUE)
+  DefaultPrefix                 varchar(20)   default 'RCPT'
+  DefaultSuffix                 varchar(20)   nullable
+  DefaultPattern                varchar(100)  default '{PREFIX}-{YYYY}-{SEQ:000000}'
+  DefaultSequenceResetPolicy    varchar(20)   default 'YEARLY'
+  IsEnabled                     bool          default true
+  + standard audit columns
+
+sett.NumberSequenceConfigs      (per-tenant override + counter — one row per (CompanyId, kind))
+  NumberSequenceConfigId        PK
+  CompanyId                     FK → app.Companies
+  NumberSequenceEntityTypeId    FK → sett.NumberSequenceEntityTypes
+  Prefix, Suffix, Pattern, SequenceResetPolicy   nullable (NULL = inherit defaults)
+  LastSequence                  int           default 0
+  LastResetPeriodKey            varchar(20)   nullable
+  IsEnabled                     bool          default true   (per-tenant kill-switch)
+  + standard audit columns
+  Partial UNIQUE (CompanyId, NumberSequenceEntityTypeId) WHERE NOT IsDeleted
+```
+
+**Initial seed** (per migration `20260502044341`): only `GLOBALDONATION` is registered as an eligible entity (Option A — "ship only what's wired today"). Adding `RECEIPTBOOK` / `CONTACT` later is a one-row INSERT into `NumberSequenceEntityTypes` plus the consuming feature's caller-side wiring — no helper code changes.
+
+**Helper**: `Base.Application/Services/NumberSequence/NumberSequenceGenerator.cs`
+
+```csharp
+public static Task<string?> GenerateAsync(
+    IApplicationDbContext db,
+    int companyId,
+    string entityTypeCode,    // matches public.EntityTypes.EntityTypeCode, e.g. "GLOBALDONATION"
+    DateTime contextDate,
+    CancellationToken ct);
+```
+
+Behavior:
+- Throws `InvalidOperationException` if `entityTypeCode` is not in `NumberSequenceEntityTypes` (loud failure on misconfig — programmer bugs surface immediately, not silently).
+- Returns `null` if either kill-switch (eligibility-level or tenant-level) is off.
+- Acquires `pg_advisory_xact_lock` keyed on `(numberSequenceEntityTypeId, companyId)` so different entities and tenants never block each other.
+- Bootstraps a tenant config row idempotently on first call (advisory lock makes it race-free).
+- Effective values resolve via `config.Field ?? eligibility.DefaultField` — global default changes automatically reach tenants who never overrode.
+- Tokens supported: `{PREFIX} {SUFFIX} {YYYY} {YY} {MM} {DD} {FY} {COMPANYID} {SEQ:N}`.
+- Counter increment is left tracked-but-unflushed; the caller's outer transaction commits it atomically with the parent insert.
+
+**Caller wiring** — RECEIPTBOOK short-circuit lives in callers, not the helper:
+- `CreateGlobalDonationWithChildren.cs:200` (composite path)
+- `CreateGlobalDonation.cs:75` (standalone path)
+- `CreateChequeDonation.cs:187` (inline-parent-create branch)
+
+**Why this design** (durable rationale — see Session 4 entry for full discussion):
+- Eligibility table over flag-on-EntityTypes — keeps the generic `public.EntityTypes` registry clean.
+- FK Configs → Eligibility — eligibility enforced at the database, not the application.
+- Override-via-NULL-coalesce — global default changes propagate to non-overriding tenants automatically.
+- Loud failure on missing eligibility — typo'd codes are programmer bugs, not silent runtime no-ops.
+
+---
+
+### ⑮ HISTORICAL — original Session 3 plan (single-table, RECEIPT-only)
+
+> The sections below were the carry-over plan written between Session 2 and Session 3. Session 3 implemented this design, the user reverted it, and Session 4 replaced it with the generic system above. The text is preserved for audit. **DO NOT use it as a coding guide.**
+
+### ⑮.1 Current state (verified 2026-05-02)
+
+- **Entity**: `fund.GlobalDonations.ReceiptNumber` — `string`, max 100, **nullable** today. The prompt line 90 already declares it "Auto-generated receipt code"; line 148 already declares the uniqueness rule per Company. Both are aspirational — neither is enforced anywhere in code.
+- **FE submit** (`donation-form.tsx:1847`): `receiptNumber: loaded?.receiptNumber ?? null` — Create always NULL, Edit preserves existing.
+- **BE create handler** (`CreateGlobalDonationWithChildren.cs`): no generation step; persists whatever FE sends.
+- **BE create handler** (`CreateGlobalDonation.cs` standalone receipt-only path): same — no generation.
+- **CompanyConfiguration entity** (`Base.Domain.Models.SettingModels.CompanyConfiguration`): explicit comment at top says "Receipt / Tax fields removed (moved to future 'Receipt & Tax Configuration' screen)" — meaning the receipt prefix/pattern fields **do not exist** in the domain today. They were intentionally deferred.
+- **Existing prefix precedent**: `GenerateReceiptBooksHandler` uses a hard-coded `YY + CompanyId + 000001` pattern for receipt-book serial seeds (no settings-driven config). Don't reuse this — it's physical-book inventory, separate concern.
+
+### ⑮.2 Settings model — what to add
+
+A net-new singleton-like entity is the cleanest fit. Two options, with a clear recommendation:
+
+**Option A (RECOMMENDED) — Add a `ReceiptNumberConfig` 1-row-per-company table under schema `sett`:**
+```
+sett.ReceiptNumberConfigs
+  ReceiptNumberConfigId    int PK
+  CompanyId                int FK → app.Companies (UNIQUE — one row per tenant)
+  Prefix                   varchar(20)   default 'RCPT'      -- e.g. 'RCPT', 'DON', 'GFT'
+  Pattern                  varchar(100)  default '{PREFIX}-{YYYY}-{SEQ:000000}'
+                                          -- supported tokens:
+                                          -- {PREFIX}      → Prefix column
+                                          -- {YYYY}/{YY}   → 4- or 2-digit calendar year of donation
+                                          -- {MM}/{DD}     → calendar month / day
+                                          -- {FY}          → financial-year tag (uses CompanyConfiguration.FinancialYearStartMonth)
+                                          -- {SEQ:NNNN}    → zero-padded sequence width = N
+                                          -- {COMPANYID}   → tenant id (rarely needed; mostly for multi-co reports)
+  SequenceResetPolicy      varchar(20)   default 'YEARLY'    -- NEVER | YEARLY | FY | MONTHLY
+  LastSequence             int           default 0           -- monotonic counter (resets per policy)
+  LastResetPeriodKey       varchar(20)   nullable            -- e.g. '2026', 'FY2026', '2026-04' — used to detect rollover
+  IsEnabled                bool          default true        -- if false, ReceiptNumber stays NULL until issued manually
+  + standard audit columns (CreatedDate / ModifiedDate / IsActive / IsDeleted)
+```
+
+- **Why a separate table** (not folded back into `CompanyConfiguration`): the entity comment says receipt/tax explicitly belongs in a future "Receipt & Tax Configuration" screen. Keeping it isolated lets that future screen grow without touching the heavyweight CompanyConfiguration row.
+- **Bootstrap**: same pattern as `BootstrapReceiptStatusSeedAsync` in `GlobalReceiptDonationInventory.cs` — first call to the generator creates a default row idempotently if missing.
+
+**Option B (lighter, can ship sooner) — reuse two simple columns on `app.Companies`:**
+```
+ALTER TABLE app."Companies"
+  ADD COLUMN "ReceiptPrefix" varchar(20) NULL,
+  ADD COLUMN "ReceiptPattern" varchar(100) NULL DEFAULT '{PREFIX}-{YYYY}-{SEQ:000000}';
+```
+A separate `app.CompanyReceiptCounters` table holds `(CompanyId, PeriodKey, LastSequence)` so the counter is row-locked without contending on the main company row. Adopt this if user wants the smallest possible footprint and is fine deferring the full settings UI. Concurrency story is the same as Option A.
+
+### ⑮.3 Generation algorithm (mode-aware)
+
+Place the helper in the same folder as `GlobalReceiptDonationInventory.cs`:
+
+```
+Base.Application/Business/DonationBusiness/GlobalDonations/Services/GlobalDonationReceiptNumberer.cs
+
+public static class GlobalDonationReceiptNumberer
+{
+    /// Returns a fresh receipt number for the current tenant.
+    /// Caller is the Create handler — both standalone (CreateGlobalDonation
+    /// / Cheque / Online / DIK) and composite (CreateGlobalDonationWithChildren).
+    /// MUST be called inside the same EF unit-of-work + transaction so the
+    /// LastSequence row update + GlobalDonation insert commit together.
+    public static async Task<string?> GenerateAsync(
+        IApplicationDbContext db,
+        int companyId,
+        string modeCode,                  // CASH | CHEQUEDD | OD | BANKTRANSFER | DIK | RECEIPTBOOK
+        DateTime donationDate,
+        CancellationToken ct);
+}
+```
+
+Algorithm:
+1. **Mode short-circuit**: if `modeCode == "RECEIPTBOOK"` → return `null`. The caller already wires `receiptNumber = ReceiptBookSerialNo` in the receipt-book branch, so mid-stream auto-gen would clobber it.
+2. **Load config** for `companyId` (or bootstrap defaults via the seed pattern).
+3. **Skip if disabled**: `IsEnabled == false` → return `null` so the field stays empty until issued via the future "Issue Receipt" action.
+4. **Compute period key** based on `SequenceResetPolicy`:
+   - `NEVER` → `""`
+   - `YEARLY` → `donationDate.Year.ToString()`
+   - `FY` → derive financial-year start month from `CompanyConfiguration.FinancialYearStartMonth.DataValue` (already FK-driven), e.g. `FY2026`
+   - `MONTHLY` → `donationDate.ToString("yyyy-MM")`
+5. **Acquire & increment counter** under row-lock:
+   - `SELECT ... FOR UPDATE` (Postgres) on the `ReceiptNumberConfigs` row scoped by `CompanyId`.
+   - If `LastResetPeriodKey != periodKey` → reset `LastSequence = 0`, set `LastResetPeriodKey = periodKey`.
+   - `LastSequence += 1`. Capture the new value as `seq`.
+6. **Render template** by replacing tokens in `Pattern`:
+   - `{PREFIX}` → `Prefix`
+   - `{YYYY}/{YY}/{MM}/{DD}/{FY}/{COMPANYID}` → date / tenant tokens
+   - `{SEQ:N}` → `seq.ToString().PadLeft(N, '0')`
+7. **Uniqueness safety net**: enforce a partial unique index `IX_GlobalDonations_CompanyId_ReceiptNumber UNIQUE (CompanyId, ReceiptNumber) WHERE ReceiptNumber IS NOT NULL AND IsDeleted = false`. If the insert ever races to a duplicate (e.g. someone manually crafted a row with a future serial), retry the increment up to 3 times before bubbling a clear error.
+
+**Concurrency notes**:
+- The composite handler already wraps the create in `strategy.ExecuteAsync(... BeginTransactionAsync ...)` — the row-lock above must run inside that same transaction, otherwise two parallel saves can both compute the same `seq`.
+- Postgres `NpgsqlRetryingExecutionStrategy` is enabled; the helper must NOT call `SaveChanges` before the parent insert — keep it side-effect-only on the tracked entity until the outer commit.
+
+### ⑮.4 Wire-in points (BE)
+
+| File | Change |
+|---|---|
+| `CreateGlobalDonationWithChildren.cs:144` (mode-branch block) | After resolving `modeCode`, if `req.Donation.ReceiptNumber` is null/empty AND `modeCode != "RECEIPTBOOK"`, call `GlobalDonationReceiptNumberer.GenerateAsync(...)` and assign to `gd.ReceiptNumber` BEFORE `dbContext.GlobalDonations.Add(gd)`. For `RECEIPTBOOK`, the existing logic that mirrors the serial number stays. |
+| `CreateGlobalDonation.cs` (standalone) | Same mode-aware call right before `dbContext.GlobalDonations.Add(...)`. Today this handler doesn't even peek at mode code — pass it explicitly via the DTO or look up `MasterData.DataValue` first. |
+| `CreateGlobalReceiptDonation.cs` / `CreateChequeDonation.cs` / `CreateGlobalOnlineDonation.cs` (per-child standalone create paths) | These create the parent inline when `globalDonationId == 0`. Apply the same generator at the same place — once the parent's `DonationModeId` and `DonationDate` are known. |
+| `UpdateGlobalDonation*` handlers | **No change** — receipt number is allocated at create-time and immutable thereafter. If `loaded.ReceiptNumber` is null AND someone toggles a "Issue Receipt" action later, that'll be a separate transition command (Phase 2). |
+| New EF migration | Add the `sett.ReceiptNumberConfigs` table + the partial unique index on `fund.GlobalDonations(CompanyId, ReceiptNumber)`. Backfill: leave existing NULL rows as-is — the unique index is partial (`WHERE ReceiptNumber IS NOT NULL`), so the migration is non-blocking. |
+
+### ⑮.5 Wire-in points (FE)
+
+- `donation-form.tsx:1847` — change `receiptNumber: loaded?.receiptNumber ?? null` (already correct in spirit; no FE change needed).
+- After save, the response payload now carries the BE-generated `receiptNumber` — use it to update the FlowDataTable + the receipt modal preview.
+- Future enhancement (NOT in scope for the next session): a CompanySettings sub-screen / drawer that lets BUSINESSADMIN edit the prefix + pattern + reset policy, with a live preview of the next 3 receipt numbers.
+
+### ⑮.6 Acceptance checklist (status reflects Session 4 generic implementation)
+
+- [x] ~~New `sett.ReceiptNumberConfigs` table~~ → **`sett.NumberSequenceEntityTypes` + `sett.NumberSequenceConfigs`** EF entities + EF Configurations + DbSets wired. ← Session 3 (reverted) → Session 4 (redesigned generic)
+- [x] Bootstrap seed inside `NumberSequenceGenerator.GenerateAsync` so a fresh tenant works without a manual seed step. ← Session 4
+- [x] Helper supports tokens: `{PREFIX} {SUFFIX} {YYYY} {YY} {MM} {DD} {FY} {COMPANYID} {SEQ:N}`. ← Session 4 (added `{SUFFIX}` over Session 3's plan)
+- [x] Mode-aware: RECEIPTBOOK short-circuit moved into callers (helper is entity-agnostic by design); helper itself returns `null` when global or per-tenant `IsEnabled = false`. ← Session 4
+- [x] Period-reset rollover correct for `YEARLY` / `FY` / `MONTHLY` / `NEVER`. ← Session 4 — FY scoped to caller's `companyId` (KI-17 fix).
+- [x] Concurrency: advisory-lock (`pg_advisory_xact_lock`) keyed on `(numberSequenceEntityTypeId, companyId)` inside the parent transaction. ← Session 4 — different entities + tenants don't block each other.
+- [x] Partial unique index on `fund.GlobalDonations(CompanyId, ReceiptNumber) WHERE ReceiptNumber IS NOT NULL` recreated. ← Session 4 — migration `20260502044341` ships it; `dotnet ef database update` is the team-owned step.
+- [x] Wired into both standalone Create handlers and the composite `CreateGlobalDonationWithChildren` handler at the right point in the flow. ← Session 4 — 3 active wires (composite + standalone GD + ChequeDonation inline). `CreateGlobalReceiptDonation` and `CreateGlobalOnlineDonation` remain unwired by design (no inline parent-create branch — composite handler covers actual creation).
+- [x] Eligibility-driven extension model — adding ReceiptBook / Contact / etc. requires only a row in `sett.NumberSequenceEntityTypes` + caller-side wiring; no helper code changes. ← Session 4 (new criterion vs Session 3's RECEIPT-only plan).
+- [x] Update `dotnet build` clean. ← Session 4 — `Base.Application` 0/0; `Base.Infrastructure` 0/1 pre-existing NPOI warning. FE `tsc --noEmit` not applicable (no FE changes).
+- [ ] Manual E2E: create one donation per mode (CASH, CHEQUEDD, OD, BANKTRANSFER, DIK, RECEIPTBOOK) — first five get the templated `RCPT-2026-000001` style, RECEIPTBOOK keeps its book serial. ← User-side verification remains
+
+#### Session 5 — 2026-05-02 — FIX + ENHANCE — COMPLETED
+
+- **Scope**: Two parts.
+  1. **FIX** — three bugs in `createGlobalDonationWithChildren` surfaced while testing the cheque flow: (a) `FK_ChequeDonations_MasterDatas_ChequeStatusId` violation on insert, (b) missing ChequeNo uniqueness validation in the composite validator, (c) `NullReferenceException` during response DTO mapping (first on Distributions, then on ChequeDonation).
+  2. **ENHANCE** — In-Kind Donation valuation lifecycle: `DonationInKind` carries `IntendedUseId / ValuationStatusId / EstimatedAmount / RealizedAmount / RealizedDate / RealizationNotes`; new `realizeInKindDonation` command transitions PENDING/ESTIMATED → REALIZED; FE form locks DonationAmount/Distribution amounts to read-only when mode=DIK and exposes only `EstimatedAmount` for editing.
+- **Files touched**:
+  - BE:
+    - [DonationInKind.cs](PSS_2.0_Backend/PeopleServe/Services/Base/Base.Domain/Models/DonationModels/DonationInKind.cs) — 6 new columns + 2 nav props
+    - [DonationInKindConfiguration.cs](PSS_2.0_Backend/PeopleServe/Services/Base/Base.Infrastructure/Data/Configurations/DonationConfigurations/DonationInKindConfiguration.cs) — decimal precision + FK config for IntendedUse/ValuationStatus
+    - [DonationInKindSchemas.cs](PSS_2.0_Backend/PeopleServe/Services/Base/Base.Application/Schemas/DonationSchemas/DonationInKindSchemas.cs) — added `IntendedUseId`/`EstimatedAmount` to RequestDto; 6 fields + 2 nav DTOs to ResponseDto
+    - [CreateGlobalDonationWithChildren.cs](PSS_2.0_Backend/PeopleServe/Services/Base/Base.Application/Business/DonationBusiness/GlobalDonations/Commands/CreateGlobalDonationWithChildren.cs) — KI-20/KI-21/KI-22 fixes (recChequeStatusId resolution + override; `When(ChequeDonation != null)` validator block with uniqueness rule; scalar projection for Distributions + ChequeDonation; DetachGlobalDonationBackRefs helper; SafeAdapt wrapper); KI-23 DIK auto-fill (resolve VALUATIONSTATUS dictionary, derive `derivedStatusCode` from `EstimatedAmount > 0` / `IntendedUse=INTERNAL_USE` / else PENDING; override gd.DonationAmount/NetAmount/BaseCurrencyAmount; force single distribution row mirroring estimated)
+    - [RealizeInKindDonation.cs](PSS_2.0_Backend/PeopleServe/Services/Base/Base.Application/Business/DonationBusiness/DonationInKinds/Commands/RealizeInKindDonation.cs) **(new)** — guard PENDING/ESTIMATED → REALIZED; atomically updates DIK + parent GD.DonationAmount + the single distribution
+    - [DonationInKindMutations.cs](PSS_2.0_Backend/PeopleServe/Services/Base/Base.API/EndPoints/Donation/Mutations/DonationInKindMutations.cs) — wired `realizeInKindDonation` GraphQL mutation
+  - FE:
+    - [DonationInKindDto.ts](PSS_2.0_Frontend/src/domain/entities/donation-service/DonationInKindDto.ts) — 6 new response fields + 2 nav DTOs; 2 new request fields
+    - [GlobalDonationCompositeMutation.ts](PSS_2.0_Frontend/src/infrastructure/gql-mutations/donation-mutations/GlobalDonationCompositeMutation.ts) — extended `donationInKind` selection sets in create/update; new `REALIZE_IN_KIND_DONATION_MUTATION`
+    - [GlobalDonationQuery.ts](PSS_2.0_Frontend/src/infrastructure/gql-queries/donation-queries/GlobalDonationQuery.ts) — extended by-id query for new DIK fields
+    - [donation-form.tsx](PSS_2.0_Frontend/src/presentation/components/page-components/crm/donation/globaldonation/donation-form.tsx) — `dikIntendedUseId` + `dikEstimatedAmount` Zod fields; INTENDED_USE filter + dropdown; reactive auto-fill (estimated → donationAmount); locks DonationAmount when isDikMode; DIK info banner; passes isDikMode to DistributionGrid
+    - [distribution-grid.tsx](PSS_2.0_Frontend/src/presentation/components/page-components/crm/donation/globaldonation/distribution-grid.tsx) — `isDikMode` prop hides Add/Remove buttons + locks AllocatedAmount input; auto-filled label hint
+    - [globaldonation-store.ts](PSS_2.0_Frontend/src/presentation/components/page-components/crm/donation/globaldonation/globaldonation-store.ts) — Zustand state for realize modal
+    - [realize-modal.tsx](PSS_2.0_Frontend/src/presentation/components/page-components/crm/donation/globaldonation/realize-modal.tsx) **(new)** — RealizedAmount/Date/Notes form; calls REALIZE_IN_KIND_DONATION_MUTATION; bumpRefresh on success
+    - [view-page.tsx](PSS_2.0_Frontend/src/presentation/components/page-components/crm/donation/globaldonation/view-page.tsx) — "Realize" action button (visible only for DIK + status PENDING/ESTIMATED); mounted modal; extended DIK card with new fields + colored ValuationStatus chip
+  - DB:
+    - [DonationInKind-ValuationLifecycle-sqlscripts.sql](PSS_2.0_Backend/PeopleServe/Services/Base/sql-scripts-dyanmic/DonationInKind-ValuationLifecycle-sqlscripts.sql) **(new)** — INTENDEDUSE (3 rows) + VALUATIONSTATUS (4 rows) idempotent seed
+- **Deviations from spec**: None. FE preserved the legacy `dikBillAmount` Zod field (no longer rendered or validated) to avoid breaking serialized form state.
+- **Known issues opened**: KI-20 (FIXED same session), KI-21 (FIXED same session), KI-22 (FIXED same session), KI-23 (FIXED same session — DIK lifecycle delivered), KI-24 (OPEN — EF migration deferred due to running API), KI-25 (OPEN — DonationAmount=0 for non-monetary DIK is by design; reporting queries must filter on ValuationStatus).
+- **Known issues closed**: KI-20, KI-21, KI-22, KI-23.
+- **Next step**: User-side: stop running API, run `dotnet ef migrations add Add_DonationInKind_ValuationLifecycle_Columns` (per KI-24), apply via `dotnet ef database update`, run the new seed SQL, restart API. Then E2E test the DIK create flow (FOR_SALE + 5000 estimated → REALIZE with 4750 → confirm parent DonationAmount updates).
+
+#### Session 6 — 2026-05-02 — FIX — COMPLETED
+
+- **Scope**: Two follow-up fixes after Session 5 testing:
+  1. **DIK currency lock** — donor's currency is meaningless for in-kind donations (org keeps the item, sells/uses it in base currency), so on the donation form `currencyId` is now disabled and force-set to the company base currency whenever mode=DIK.
+  2. **DateTime UTC normalisation** — Postgres `timestamp with time zone` rejected `Kind=Unspecified` values from JSON-deserialised payloads (`Cannot write DateTime with Kind=Unspecified ...`). Fixed globally at the `AuditableEntityInterceptor` level so every Add/Modify pass coerces all DateTime/DateTime? scalar properties to UTC kind before EF persists them.
+- **Files touched**:
+  - BE:
+    - [AuditableEntityInterceptor.cs](PSS_2.0_Backend/PeopleServe/Services/Base/Base.Infrastructure/Data/Interceptors/AuditableEntityInterceptor.cs) — added `NormalizeDateTimesToUtc()` method called from both `SavingChanges` and `SavingChangesAsync`. Policy: Utc kept, Local → ToUniversalTime, Unspecified → SpecifyKind(Utc).
+  - FE:
+    - [donation-form.tsx](PSS_2.0_Frontend/src/presentation/components/page-components/crm/donation/globaldonation/donation-form.tsx) — `lock.currencyId` includes `isDikMode`; new effect mirrors `sessionBaseCurrencyId` into the form's `currencyId` field whenever DIK mode is selected and base currency is hydrated.
+- **Deviations from spec**: None.
+- **Known issues opened**: None.
+- **Known issues closed**: None (these were follow-ups, not registered KIs).
+- **Next step**: Pending Session 5 user-side actions (KI-24 migration + seed). Once those are applied + API restarted, retest cheque create (UTC fix) and DIK create with currency observed locked at base currency.
+
+#### Session 7 — 2026-05-02 — ENHANCE — COMPLETED
+
+- **Scope**: KI-26 — Pledge Donation lifecycle wired into the existing GlobalDonation FLOW screen. §⑯'s original spec assumed a new `PledgeDonations` mapping table + `Pledge.GivenAmount/BalanceAmount` + new PLEDGESTATUS rows; verified during this session that this contradicted the live schema (Pledge is the header; PledgePayment is the existing 1:N installment ledger and already has `GlobalDonationId/PaidDate/PaidAmount/PaymentStatusId`). User-confirmed **Path A** — re-use the existing `PledgePayment` row as the fulfillment ledger; **no new entity, no migration, no new MasterData seed**. Strict partial-pay rule chosen: `PaidAmount` per row must equal that row's `DueAmount`. Pledge stays under `DonationType=PLEDGE` (NOT Mode) — Pledge fulfillment can combine with any payment Mode (Cash / Cheque / etc).
+- **Files touched**:
+  - **BE created (1)**:
+    - [PledgeFulfillmentSchemas.cs](PSS_2.0_Backend/PeopleServe/Services/Base/Base.Application/Schemas/DonationSchemas/PledgeFulfillmentSchemas.cs) — `PledgeFulfillmentRequestDto { int PledgePaymentId; decimal PaidAmount; }` + `PledgeFulfillmentResponseDto { 16 fields covering fulfillment row + pledge header snapshot }`.
+  - **BE modified (4)**:
+    - [GlobalDonationCompositeSchemas.cs](PSS_2.0_Backend/PeopleServe/Services/Base/Base.Application/Schemas/DonationSchemas/GlobalDonationCompositeSchemas.cs) — added `PledgeFulfillments` list to both `CreateGlobalDonationWithChildrenRequestDto` and `CreateGlobalDonationWithChildrenResponseDto`.
+    - [GlobalDonationSchemas.cs](PSS_2.0_Backend/PeopleServe/Services/Base/Base.Application/Schemas/DonationSchemas/GlobalDonationSchemas.cs) — added `PledgeFulfillments` to `GlobalDonationDto` (used by `getGlobalDonationById`).
+    - [CreateGlobalDonationWithChildren.cs](PSS_2.0_Backend/PeopleServe/Services/Base/Base.Application/Business/DonationBusiness/GlobalDonations/Commands/CreateGlobalDonationWithChildren.cs) — Validator: `When(PledgeFulfillments non-empty)` block with per-item rules (PledgePaymentId>0, PaidAmount>0), no-duplicate-PledgePaymentId rule, `MustAsync` batch verification (existence + open status + `PaidAmount == DueAmount` strict + cross-donor guard + tenant scope), and a cross-cutting `Custom` rule that sum of `PaidAmount` equals `Donation.DonationAmount` (±0.01) when fulfillments are present. Handler: inside the existing `strategy.ExecuteAsync` block, AFTER `dbContext.SaveChangesAsync` populates `gd.GlobalDonationId`, BEFORE `transaction.CommitAsync`: re-loads tracked PledgePayment rows, stamps each with `GlobalDonationId / PaidDate (= Donation.DonationDate) / PaidAmount / PaymentStatusId (= MasterData PAID under PLEDGEPAYMENTSTATUS)`, then re-loads each affected Pledge's full schedule and recomputes `PledgeStatusId` (all rows paid → `FULFILLED`; any unpaid past-due → `OVERDUE`; else → `ONTRACK`). Response build: new private static helper `ProjectFulfillmentsAsync` does scalar-only projection from PledgePayments-with-Pledge/Currency/PaymentStatus joins (mirrors Session 5 KI-22 NRE-avoidance pattern).
+    - [GetGlobalDonationById.cs](PSS_2.0_Backend/PeopleServe/Services/Base/Base.Application/Business/DonationBusiness/GlobalDonations/Queries/GetGlobalDonationById.cs) — after `ApplyEntityQuery` materializes the donation, runs a separate `AsNoTracking` query against `PledgePayments WHERE GlobalDonationId = id AND IsDeleted = false` (with `.Include` on Pledge/Pledge.PledgeStatus/Pledge.Currency/PaymentStatus), projects to `PledgeFulfillmentResponseDto[]` via manual scalar projection, and assigns to the first result's `PledgeFulfillments` property when non-empty. **Deliberate choice**: did NOT add a `PledgePayments` back-nav to the GlobalDonation entity to keep the EF model surface unchanged.
+  - **BE not touched**:
+    - [UpdateGlobalDonationWithChildren.cs](PSS_2.0_Backend/PeopleServe/Services/Base/Base.Application/Business/DonationBusiness/GlobalDonations/Commands/UpdateGlobalDonationWithChildren.cs) — confirmed it does not touch PledgePayments. Edit-mode treats existing fulfillments as immutable audit rows (no add/remove via update). Future support is out of scope per Session 7 contract.
+    - GraphQL endpoints — HotChocolate auto-discovers `PledgeFulfillmentRequestDto` / `PledgeFulfillmentResponseDto` via the existing composite mutation/query type registration; no manual GQL type registration needed.
+  - **FE created (3)**:
+    - [PledgeFulfillmentDto.ts](PSS_2.0_Frontend/src/domain/entities/donation-service/PledgeFulfillmentDto.ts) — TS DTOs mirror BE shapes (request 2 fields, response 16 fields).
+    - [OpenPledgeInstallmentsByContactQuery.ts](PSS_2.0_Frontend/src/infrastructure/gql-queries/donation-queries/OpenPledgeInstallmentsByContactQuery.ts) — new GQL query against existing `pledges` resolver with `advancedFilter` (contactId + computedStatusCode IN ONTRACK/OVERDUE/BEHIND), requests `paymentSchedule` nested array. Component flattens client-side to rows where `paidDate == null && globalDonationId == null && isCancelled == false`. **No new BE field requested.**
+    - [pledge-fulfillment-grid.tsx](PSS_2.0_Frontend/src/presentation/components/page-components/crm/donation/globaldonation/pledge-fulfillment-grid.tsx) — in-form picker block (≈14kB). Props: `contactId`, `donationAmount`, `value`, `onChange`, `disabled`. Renders shaped `<Skeleton>` while loading; "select donor first" / "no open installments" empty states; shadcn `<Card> + <Table> + <Checkbox>` table with 1 row per OPEN installment showing PledgeCode + InstallmentNumber + DueDate + DueAmount + Currency; selecting a row auto-fills `PaidAmount = DueAmount` (read-only — strict rule); currency-mismatch rows are disabled with tooltip; live "Applied: X / Donation: Y" total chip (green when equal, amber when ≠). Tokens only — no inline hex / no inline px.
+  - **FE modified (7)**:
+    - [GlobalDonationCompositeMutation.ts](PSS_2.0_Frontend/src/infrastructure/gql-mutations/donation-mutations/GlobalDonationCompositeMutation.ts) — extended CREATE mutation input variables + selection set with `pledgeFulfillments`.
+    - [GlobalDonationQuery.ts](PSS_2.0_Frontend/src/infrastructure/gql-queries/donation-queries/GlobalDonationQuery.ts) — added `pledgeFulfillments { ... }` selection to `GLOBALDONATION_BY_ID_QUERY`.
+    - [GlobalDonationCompositeDto.ts](PSS_2.0_Frontend/src/domain/entities/donation-service/GlobalDonationCompositeDto.ts) + [GlobalDonationDto.ts](PSS_2.0_Frontend/src/domain/entities/donation-service/GlobalDonationDto.ts) — added `pledgeFulfillments?:` to request/response DTOs.
+    - [donation-service/index.ts](PSS_2.0_Frontend/src/domain/entities/donation-service/index.ts) + [donation-queries/index.ts](PSS_2.0_Frontend/src/infrastructure/gql-queries/donation-queries/index.ts) — barrel re-exports.
+    - [donation-form.tsx](PSS_2.0_Frontend/src/presentation/components/page-components/crm/donation/globaldonation/donation-form.tsx) — Zod `pledgeFulfillments` field + `superRefine` balance check (sum-of-paid-amounts equals donationAmount); `donationTypeRows` state + effect to resolve type DataValue; `isPledgeMode = donationType.dataValue === "PLEDGE"` computed; `pledgeFulfillments` local state mirrored to RHF; contactId-change reset effect; `<PledgeFulfillmentGrid>` block in Section 2 (after Mode cards), conditional on `isPledgeMode`; `pledgeFulfillmentsPayload` extracted in `onSubmit` and passed to both new + edit composite mutation calls; `pledgeFulfillments` restored on `reset()` for edit-mode (read-only).
+    - [view-page.tsx](PSS_2.0_Frontend/src/presentation/components/page-components/crm/donation/globaldonation/view-page.tsx) — new `<PledgeFulfillmentsCard>` mounted in right column under DonorCard; renders only when `donation.pledgeFulfillments?.length > 0`; per-row PledgeCode + InstallmentNumber + DueDate + PaidAmount + status badge; footer total of applied-vs-donation.
+- **Build verification**:
+  - **Backend**: `Base.Application` direct build → **0 errors / 0 warnings / 4.19s** (binding signal per build directive memory).
+  - **Frontend**: `npx tsc --noEmit` from `PSS_2.0_Frontend/` → **exit 0, 0 errors**.
+- **Renderer keys (Component Reuse-or-Create check)**:
+  - **Reused**: shadcn `<Card>`, `<Table>`, `<Checkbox>`, `<Skeleton>`, `<Badge>` — all already in the registry.
+  - **Created**: NONE — no new GridComponentName renderer registered. PledgeFulfillmentGrid is a screen-scoped component, not a registered grid renderer.
+- **Variant B compliance**: VERIFIED unchanged — index-page.tsx untouched.
+- **UI uniformity** (per directive): no inline hex / no inline px in created/modified files — agent reported clean; manual spot-check confirmed Tailwind tokens throughout.
+- **Deviations from spec / scope notes**:
+  - **§⑯ design SUPERSEDED by Path A** — see `### ⑯.0 STATUS` note added at top of §⑯. The `PledgeDonations` mapping entity, `Pledge.GivenAmount/BalanceAmount` columns, and `OPEN / PARTIALLY_FULFILLED` PLEDGESTATUS values from the original §⑯ design are **NOT** part of the shipped contract. The shipped contract uses existing `PledgePayment` + existing PLEDGESTATUS values + strict-pay rule. KI-26 description has been rewritten to point at this Session 7 entry as the source of truth.
+  - **Currency mismatch handling**: rows with currency ≠ donation currency are shown but disabled with tooltip ("Currency mismatch — switch donation currency or pick a different pledge"). Cross-currency FX conversion is **out of scope this session** per §⑯.11 — single-currency-only in v1.
+  - **"Add by next-due" quick action** (§⑯ optional) — NOT implemented this session. Rationale: requires sort/filter pass over loaded installments; can be added as a follow-up if user wants.
+  - **Update-mode fulfillments** are read-only audit rows — no add/remove via Update. The Update mutation is NOT extended with `pledgeFulfillments`. Documented decision; deferred to future session if business needs change.
+- **Known issues opened (none new)**: see KI-27..KI-29 below if/when surfaced. None opened this session.
+- **Known issues closed**: KI-26 — superseded original §⑯ design and shipped Path A.
+- **Next step (user-side)**:
+  1. **Apply Session 5 prereqs first** (KI-24 — DIK migration + seed); Pledge fulfillment doesn't depend on these but the API needs to start cleanly for E2E.
+  2. **Restart API**, then `dotnet build` from `PeopleServe/` for full-sln if you want a clean publish.
+  3. `pnpm dev` from `PSS_2.0_Frontend/` and visit `/en/crm/donation/globaldonation`.
+  4. **Smoke E2E (Pledge mode)**:
+     - Pre-req: a donor (Contact) with at least one Pledge that has open scheduled installments (`PaidDate IS NULL`).
+     - Click "+ New" donation. Pick the donor. Set `DonationType = Pledge`. Section 2 should now show the **Pledge Fulfillments** block.
+     - Pick one or more open installments. Each selected row's PaidAmount auto-fills to its DueAmount (read-only). The "Applied / Donation" chip should turn green when sums match.
+     - Adjust `DonationAmount` to equal sum of selected installments. Pick any payment Mode (Cash, Cheque, etc.). Save.
+     - Verify in `view-page` (`?mode=read`): Pledge Fulfillments card renders with the rows you stamped.
+     - Verify in DB: stamped `PledgePayment` rows have `GlobalDonationId / PaidDate / PaidAmount / PaymentStatusId = PAID`. Affected `Pledge.PledgeStatusId` recomputed (FULFILLED if all installments now paid, else ONTRACK/OVERDUE).
+  5. **Negative tests**:
+     - Sum-mismatch (PaidAmount sum ≠ DonationAmount) → form blocks submit with red chip + Zod error.
+     - Strict-pay violation (e.g. send modified PaidAmount via DevTools) → BE returns 400 with strict-pay error.
+     - Cross-donor pledge selection (manual API call) → BE rejects.
+     - Fulfilling already-fulfilled installment (race) → BE rejects with "no longer eligible".
+- **Notes**:
+  - The 13 OPEN KIs from prior sessions (KI-5/6/7/8/9/10/11/12/13/18/19/24/25) remain unchanged — **none touched this session.**
+  - Session 7 follows Session 6 same-day; total session count is now 7 (8 if you count Session 0 BUILD).
+
+#### Session 8 — 2026-05-02 — FIX — COMPLETED
+
+- **Scope**: Hot-fix discovered immediately after Session 7 ship. User reported: "Selected DonationType=Pledge but contact's pledge details not shown." Two root causes:
+  1. **`GetPledges` did NOT populate `paymentSchedule` on its DTO** — only `GetPledgeById` did. The Session 7 FE picker fetches via the LIST query (`pledges`), so every pledge came back with `paymentSchedule = null` and the picker rendered the "no open installments" empty state regardless of the donor's actual pledge state.
+  2. **FE picker filtered via `advancedFilter` on `contactId` AND `computedStatusCode`** — the latter is a computed DTO field, not an entity column, so the filter was silently broken; even the contactId rule was relying on the generic advancedFilter handler instead of an explicit, type-safe filter.
+- **Files touched**:
+  - **BE modified (2)**:
+    - [GetPledges.cs](PSS_2.0_Backend/PeopleServe/Services/Base/Base.Application/Business/DonationBusiness/Pledges/Queries/GetPledges.cs) — added `int? ContactId = null` to `GetPledgesQuery` record; handler applies `Where(p => p.ContactId == request.ContactId.Value)` filter alongside the other explicit filters; new `public static void ProjectPaymentSchedule(dto, src, today)` helper mirrors the per-row projection from `GetPledgeById` (PaymentStatusCode/Name/Color + DaysUntilDue) and populates `dto.PaymentSchedule`. Post-projection loop now calls both `ProjectFields` AND `ProjectPaymentSchedule` for each row. Added a new `private static MapPaymentStatusColor` (mirrors the one in `GetPledgeById` — kept duplicated locally to avoid cross-handler dependency).
+    - [PledgeQueries.cs](PSS_2.0_Backend/PeopleServe/Services/Base/Base.API/EndPoints/Donation/Queries/PledgeQueries.cs) — added `int? contactId = null` arg to the GraphQL `GetPledges` endpoint signature; passed through to `GetPledgesQuery` constructor.
+  - **FE modified (2)**:
+    - [OpenPledgeInstallmentsByContactQuery.ts](PSS_2.0_Frontend/src/infrastructure/gql-queries/donation-queries/OpenPledgeInstallmentsByContactQuery.ts) — rewritten to use explicit `$contactId: Int` GraphQL variable passed as a top-level arg on `pledges(...)` (alongside `request: { pageSize: 100, pageIndex: 0, ... }`). Dropped the `$advancedFilter: QueryBuilderModelInput` rule construction.
+    - [pledge-fulfillment-grid.tsx](PSS_2.0_Frontend/src/presentation/components/page-components/crm/donation/globaldonation/pledge-fulfillment-grid.tsx) — removed the `advancedFilter` `useMemo` block; `useQuery` now passes `variables: { contactId }` directly. The component's existing client-side filter on `paymentSchedule` (`paidDate == null && globalDonationId == null && !isCancelled`) remains the source of truth for "open installments" — pledges with no remaining open rows simply produce zero picker rows.
+- **Build verification**:
+  - **Backend**: `Base.Application` direct build → **0 errors / 373 pre-existing warnings / 26.96s** (binding signal). The pre-existing warnings are unrelated NPOI / nullability / CA2022 noise across the project — none in our created/edited files.
+  - **Frontend**: `npx tsc --noEmit` from `PSS_2.0_Frontend/` → **exit 0, 0 errors**.
+- **Renderer keys**: N/A — no FE renderers touched.
+- **Variant B compliance**: N/A.
+- **UI uniformity**: N/A.
+- **Deviations from spec**: None.
+- **Known issues opened**: None.
+- **Known issues closed**: None (these are post-ship hot-fixes for a regression introduced by Session 7's choice to use the LIST query rather than a dedicated by-contact endpoint — KI-26 stays CLOSED, this just makes the shipped code actually work).
+- **Next step (user-side)**:
+  1. **Restart API** (if running) so the new `GetPledgesQuery` shape and the `contactId` GraphQL arg take effect.
+  2. **Re-run the seed** [`Demo-PledgeFulfillment-sqlscripts.sql`](PSS_2.0_Backend/PeopleServe/Services/Base/sql-scripts-dyanmic/Demo-PledgeFulfillment-sqlscripts.sql) (if not already applied) — idempotent.
+  3. **Refresh the donation form** (no FE rebuild needed — `pnpm dev` HMR will pick up the changes). Pick "Demo Pledge Donor", set DonationType = Pledge — the picker should now load 6 open installments. Selecting them auto-fills `PaidAmount = DueAmount` per row, the "Applied / Donation" chip turns green when sums match, and Save stamps the rows + recomputes pledge status.
+- **Notes**:
+  - The 13 OPEN KIs from prior sessions remain unchanged — none touched this session.
+  - The fix preserves backward compatibility: existing Pledge grid screen #12 (`/crm/donation/pledge`) continues to work unchanged — the new `paymentSchedule` field on the LIST response is additive (was always declared on the DTO; previously just `null`).
+  - **2026-05-02 follow-up to Session 8**: User reported the picker still didn't fetch even after the BE fix landed. Discovered a third bug: `isPledgeMode` matched only `dataValue === "PLEDGE"`, but the tenant's actual DONATIONTYPE seed uses `dataValue = 'PLEDGEDONATION'` (per user). Hardened the matcher in [donation-form.tsx](PSS_2.0_Frontend/src/presentation/components/page-components/crm/donation/globaldonation/donation-form.tsx#L1923-L1934) to accept `PLEDGEDONATION` / `PLEDGE` / `PLG` (DataValue) and `PLEDGE` / `PLEDGE DONATION` (DataName) — same multi-form pattern used elsewhere in the form for the Recurring exclusion. Without this match, `isPledgeMode` stayed false, the `<PledgeFulfillmentGrid>` never mounted, and no API call was ever issued. tsc still 0 errors after the change. **Lesson for future sessions**: never hardcode a single MasterData DataValue without verifying the actual tenant seed — the codebase already has this pattern documented (KI-5 / Recurring exclusion) and Session 8's first patch ignored that lesson.
+
+---
+
+## ⑯ Spec Addendum — Pledge Donation Lifecycle
+
+> ### ⑯.0 STATUS — HISTORICAL (SUPERSEDED 2026-05-02 by Session 7 Path A)
+>
+> The original §⑯ design (new `PledgeDonations` mapping entity + `Pledge.GivenAmount` / `BalanceAmount` columns + `OPEN` / `PARTIALLY_FULFILLED` PLEDGESTATUS rows + ad-hoc applied-amounts) was written **before reading the live schema**. During Session 7 implementation it was discovered that:
+>
+> - `Pledge` already pre-generates an installment schedule via the `PledgePayment` 1:N child table.
+> - `PledgePayment` already carries `GlobalDonationId`, `PaidDate`, `PaidAmount`, `PaymentStatusId` — the exact row §⑯ wanted to add.
+> - PLEDGESTATUS is already seeded with `ONTRACK / FULFILLED / OVERDUE / BEHIND / CANCELLED` (NOT `OPEN / PARTIALLY_FULFILLED`).
+>
+> **The shipped contract (Path A)** uses existing `PledgePayment` rows as the fulfillment ledger. Donor picks one or more open installments; strict-pay rule (`PaidAmount == DueAmount`); BE recomputes `Pledge.PledgeStatusId` on save. NO new entity, NO migration, NO new MasterData seed. **See the Session 7 Build Log entry above for the source-of-truth file manifest, validation rules, and acceptance flow.**
+>
+> The §⑯.1–⑯.11 sections below are kept for audit history but **DO NOT match the shipped code**. Do not implement them literally — they were superseded.
+
+> **Consumer**: `/continue-screen` Session 7 (planned) and the BE/FE agents that implement KI-26.
+> **Status**: SPEC CAPTURED — NOT YET IMPLEMENTED. This section is the authoritative design contract for the Pledge donation flow; do not deviate without updating it first.
+> **Why this lives here, not in `/plan-screens` revision**: this is an *additive* extension to the existing GlobalDonation FLOW screen — new conditional UI block on the form, one new child-mapping entity, one new validator branch, atomic balance update on save. It does NOT change the screen's identity, route, or top-level pattern, so it stays under the same prompt file. If scope grows (e.g. pledge creation moves into this screen, or pledges become first-class screen #X) the spec moves to `/plan-screens`.
+
+### ⑯.1 Architectural decision — Pledge stays as DonationType (NOT DonationMode)
+
+**Rule**: `Pledge` is a `DONATIONTYPE` MasterData row. It is **not** moved to `DONATIONMODE`.
+
+**Why**:
+- `Mode` = HOW the donation was paid → Cash, Cheque, BankTransfer, OnlineGateway, DIK, ReceiptBook. These are payment instruments.
+- `Type` = WHY / intent / nature → One-Time, Recurring, Pledge, Memorial, Tribute. These describe the donation's classification, independent of payment instrument.
+- A pledge fulfillment IS paid via one of the actual modes (cash/cheque/etc). If we move Pledge to Mode, we (a) lose the ability to record HOW the pledge was settled, (b) create a phantom "Pledge" mode that competes with real payment instruments, and (c) prevent a pledge from being settled through a real payment channel.
+- This mirrors the existing precedent: `Recurring` is a Type (not a Mode) for the same reason — see Session 6 work that filtered Recurring out of the Type dropdown to force Hangfire-only generation.
+
+**How to apply**: keep current MasterData seed for `Pledge` under `DONATIONTYPE`. No migration needed for this decision.
+
+### ⑯.2 Missing entity — `PledgeDonations` mapping table
+
+**Why required**: a single donation can fulfill more than one open pledge from the same donor (rare but valid — donor sends a lump sum that covers two outstanding pledges). The current schema has `Pledges` and `GlobalDonations` but **no transaction row recording each fulfillment** — meaning you can't audit *how* a pledge's `BalanceAmount` reached its current value, *which* donation paid down which pledge, or split a single donation across multiple pledges.
+
+**Shape** (to be created under `Base.Domain/Models/DonationModels/`):
+
+```csharp
+public class PledgeDonation : EntityBase, IAuditableEntity, ISoftDeletable, ICompanyScoped
+{
+    public int PledgeDonationId { get; set; }            // PK
+    public int GlobalDonationId { get; set; }            // FK → GlobalDonations
+    public int PledgeId { get; set; }                    // FK → Pledges
+    public decimal AppliedAmount { get; set; }           // amount of THIS donation applied to THIS pledge
+    public decimal PledgePreviousBalance { get; set; }   // Pledge.BalanceAmount BEFORE this fulfillment (audit)
+    public decimal PledgeNewBalance { get; set; }        // Pledge.BalanceAmount AFTER (audit)
+    public int CompanyId { get; set; }                   // tenant scope
+    // Standard audit + soft-delete fields inherited
+    public GlobalDonation GlobalDonation { get; set; } = default!;
+    public Pledge Pledge { get; set; } = default!;
+    public Company Company { get; set; } = default!;
+}
+```
+
+**EF configuration** (`Base.Infrastructure/Data/Configurations/DonationConfigurations/PledgeDonationConfiguration.cs`):
+- Schema: `fund` (matches GlobalDonation/Pledge).
+- Decimal precision: `AppliedAmount`, `PledgePreviousBalance`, `PledgeNewBalance` → `(18,2)`.
+- Indexes: `(GlobalDonationId)`, `(PledgeId, IsDeleted)`, `(CompanyId)`.
+- Cascade: do NOT cascade delete from GlobalDonation or Pledge — soft-delete only.
+
+**Migration**: `Add_PledgeDonations_FulfillmentMapping` — single table create, no schema-altering changes to existing tables.
+
+### ⑯.3 Validation rules
+
+**On Create donation when `DonationType=Pledge`**:
+
+1. **At least one pledge must be selected** — `pledgeFulfillments.length >= 1`.
+2. **Each pledge must belong to the donating contact** — `Pledge.ContactId == GlobalDonation.ContactId` (no cross-donor fulfillment). Server-side check.
+3. **Each pledge must be open** — `Pledge.Status.DataValue ∈ {OPEN, PARTIALLY_FULFILLED}`. `Pledge.BalanceAmount > 0`. Server-side check (don't trust FE-filtered list).
+4. **Each `AppliedAmount` must be ≤ that pledge's current `BalanceAmount`** — over-application is rejected with a per-row validation error.
+5. **Sum of `AppliedAmount` across all selected pledges must be ≤ `GlobalDonation.DonationAmount`** — donor cannot apply more to pledges than they actually donated. Excess (donation > sum-applied) is allowed and treated as a regular donation overflow (recorded but not pledge-linked).
+6. **No duplicate pledge in the same donation** — same `PledgeId` cannot appear twice in the fulfillments array.
+
+**Currency rule**: pledges are denominated in their own currency. If `Pledge.CurrencyId != GlobalDonation.CurrencyId`, the FE converts using the captured `ConversionRate` snapshot at save time (consistent with the rest of GlobalDonation FX policy — direct-pair lookup, never USD-pivoted). Apply the converted amount to `Pledge.BalanceAmount`, store both the original donation-currency `AppliedAmount` and the pledge-currency-equivalent in the `PledgeDonations` row (add `AppliedAmountInPledgeCurrency` + `ConversionRate` columns if cross-currency is in scope; if v1 ships single-currency-only, document that constraint and reject mismatched currencies at the validator).
+
+### ⑯.4 BE flow — extending `CreateGlobalDonationWithChildren`
+
+**Insertion point**: same handler that already handles cheque/online/DIK composites. Add a new branch keyed off `donationTypeRow.DataValue == "PLEDGE"`.
+
+**Pseudocode** (inside the existing `dbContext.Database.BeginTransactionAsync` block):
+
+```csharp
+// 1. Resolve all selected pledges with row-locks (FOR UPDATE) to avoid concurrent fulfillment races.
+//    Use IApplicationDbContext.ExecuteRawSqlAsync with pg_advisory_xact_lock per pledge OR
+//    SELECT ... FOR UPDATE if Infrastructure layer exposes it. Mirror KI-13 approach.
+var pledgeIds = req.PledgeFulfillments.Select(f => f.PledgeId).ToList();
+var pledges = await dbContext.Pledges
+    .Where(p => pledgeIds.Contains(p.PledgeId)
+                && p.ContactId == req.Donation.ContactId
+                && p.CompanyId == companyId
+                && p.IsDeleted == false)
+    .ToListAsync(ct);
+// Validate count, ownership, status, balance per ⑯.3.
+
+// 2. Save GlobalDonation first (existing flow). gd.GlobalDonationId now populated.
+
+// 3. For each fulfillment, create PledgeDonation row + update Pledge.
+foreach (var f in req.PledgeFulfillments)
+{
+    var p = pledges.Single(x => x.PledgeId == f.PledgeId);
+    var prevBalance = p.BalanceAmount;
+    var newBalance = prevBalance - f.AppliedAmount;
+    if (newBalance < 0) throw new ValidationException(...); // race-safety net
+
+    dbContext.PledgeDonations.Add(new PledgeDonation
+    {
+        GlobalDonationId = gd.GlobalDonationId,
+        PledgeId = p.PledgeId,
+        AppliedAmount = f.AppliedAmount,
+        PledgePreviousBalance = prevBalance,
+        PledgeNewBalance = newBalance,
+        CompanyId = companyId,
+    });
+
+    p.GivenAmount += f.AppliedAmount;
+    p.BalanceAmount = newBalance;
+    if (newBalance == 0)
+        p.PledgeStatusId = fulfilledStatusId; // resolved up-top from PLEDGESTATUS=FULFILLED
+    else if (p.PledgeStatusId == openStatusId)
+        p.PledgeStatusId = partiallyFulfilledStatusId; // PLEDGESTATUS=PARTIALLY_FULFILLED
+}
+
+await dbContext.SaveChangesAsync(ct);
+await transaction.CommitAsync(ct);
+```
+
+**MasterData required**: `PLEDGESTATUS` type with rows `OPEN`, `PARTIALLY_FULFILLED`, `FULFILLED`, `CANCELLED`, `EXPIRED`. Verify the existing Pledge entity already references this — if not, add it to the seed alongside the entity migration.
+
+### ⑯.5 BE query — surface fulfillments on `globalDonationById`
+
+Extend `GetGlobalDonationById.cs` projection:
+
+```csharp
+.Include(x => x.PledgeDonations!.Where(pd => pd.IsDeleted == false))
+    .ThenInclude(pd => pd.Pledge)
+        .ThenInclude(p => p.PledgeStatus)
+.Include(x => x.PledgeDonations!.Where(pd => pd.IsDeleted == false))
+    .ThenInclude(pd => pd.Pledge)
+        .ThenInclude(p => p.Currency)
+```
+
+Response DTO (`GlobalDonationDto`) gains a `pledgeDonations: PledgeDonationDto[]` array (scalar projection per Session 5 KI-22 lesson — no nested back-refs to GlobalDonation, no recursive nav DTOs).
+
+### ⑯.6 FE flow — conditional pledge-selector block on `donation-form.tsx`
+
+**Location**: under Section 2 (Donation Details), after the `donationTypeId` field. Renders only when the resolved Type code = `PLEDGE`.
+
+**Block contents**:
+
+1. **Pledge picker grid** — small in-form grid (NOT modal):
+   - Source: new GraphQL query `OPEN_PLEDGES_BY_CONTACT_QUERY({ contactId, companyId })` filtered by `Status ∈ {OPEN, PARTIALLY_FULFILLED}` AND `BalanceAmount > 0`.
+   - Columns: `PledgeNumber`, `PledgeDate`, `TotalAmount`, `GivenAmount`, `BalanceAmount`, `Currency`, `Status`, `[AppliedAmount input]`, `[Remove]`.
+   - Empty state: "This donor has no open pledges. Either create a pledge first, or change the Donation Type."
+2. **Add row** action — opens a sub-popover listing donor's remaining open pledges (the ones not already selected). Click adds it to the picker grid with `AppliedAmount = min(BalanceAmount, donationAmount - sumApplied)` as a sensible default.
+3. **Live total under the grid** — "Applied: ₹X / Donation: ₹Y" with a warning chip when applied > donation (blocks submit).
+4. **Remove** action — soft-removes a row from the local state; does NOT mutate the pledge until save.
+
+**Zod schema additions**:
+```ts
+pledgeFulfillments: z.array(z.object({
+  pledgeId: z.number().int().positive(),
+  appliedAmount: z.number().positive(),
+})).optional(),
+```
+With `.refine(...)` rules mirroring ⑯.3 (sum check, no duplicates).
+
+**Lock rules**:
+- When `donationType=Pledge` is picked AND `contactId` is empty → show contact-selection prompt and disable the pledge block.
+- When `contactId` changes → clear `pledgeFulfillments` (donor's pledges are donor-specific).
+- When mode = `edit` AND donation already has fulfillments → fulfillments are read-only (cannot modify which pledges a past donation paid down — that's an audit row); to "fix" a wrong fulfillment, void the donation and re-create.
+
+**Save payload**: include `pledgeFulfillments` array on `CreateGlobalDonationWithChildrenInput` only when type = Pledge; null/empty otherwise.
+
+### ⑯.7 View page — render fulfillments on `view-page.tsx`
+
+Add a new card "Pledge Fulfillments" (visible only when `pledgeDonations?.length > 0`) showing:
+- Per row: PledgeNumber + PledgeDate + AppliedAmount + (PledgePreviousBalance → PledgeNewBalance) + status pill.
+- Footer: "Total applied to pledges: ₹{sum} of donation ₹{donationAmount}".
+
+Card appears in the right column under "Distribution Breakdown".
+
+### ⑯.8 Receipt impact
+
+Pledge fulfillments DO appear on the donor receipt — donors expect to see "this donation paid down your pledge of ₹X by ₹Y, remaining balance ₹Z." Extend `receipt-template.tsx`:
+- For non-DIK + has-pledge-fulfillments → render a "Pledge Settlement" section listing pledge number + applied amount + new balance.
+- For DIK + Pledge → not a valid combination at v1 (DIK donations are item-based and not currently expected to fulfill cash pledges); validator rejects. Document this constraint in the form's DIK info banner.
+
+### ⑯.9 File manifest (planned — generated when KI-26 is built)
+
+**BE create**:
+- `Base.Domain/Models/DonationModels/PledgeDonation.cs`
+- `Base.Infrastructure/Data/Configurations/DonationConfigurations/PledgeDonationConfiguration.cs`
+- EF migration `Add_PledgeDonations_FulfillmentMapping`
+- Seed: `Base/sql-scripts-dyanmic/PledgeDonation-MasterData-sqlscripts.sql` (PLEDGESTATUS rows + any missing DonationType row audit)
+- DTO: `Base.Application/Schemas/DonationSchemas/PledgeDonationSchemas.cs`
+
+**BE modify**:
+- `Base.Application/Business/DonationBusiness/GlobalDonations/Commands/CreateGlobalDonationWithChildren.cs` — Pledge branch + validator rules
+- `Base.Application/Business/DonationBusiness/GlobalDonations/Queries/GetGlobalDonationById.cs` — include PledgeDonations + Pledge nav projections
+- `Base.Application/Schemas/DonationSchemas/GlobalDonationSchemas.cs` — `PledgeFulfillmentRequestDto[]` on Create input; `PledgeDonationResponseDto[]` on response
+- `Base.Infrastructure/Data/ApplicationDbContext.cs` — register `DbSet<PledgeDonation>`
+
+**FE create**:
+- `domain/entities/donation-service/PledgeDonationDto.ts`
+- `infrastructure/gql-queries/donation-queries/OpenPledgesByContactQuery.ts`
+- `presentation/components/page-components/crm/donation/globaldonation/pledge-fulfillment-grid.tsx` (the in-form picker block)
+
+**FE modify**:
+- `donation-form.tsx` — pledgeFulfillments Zod field + conditional block render + payload assembly + lock rules
+- `view-page.tsx` — Pledge Fulfillments card
+- `receipt-template.tsx` — pledge settlement section (donor variant only)
+- `infrastructure/gql-mutations/donation-mutations/GlobalDonationCompositeMutation.ts` — extend create input with pledgeFulfillments
+- `infrastructure/gql-queries/donation-queries/GlobalDonationQuery.ts` — extend by-id with pledgeDonations selection
+- Barrel/index re-exports for the new pledge-fulfillment-grid component
+
+### ⑯.10 Acceptance criteria (for the future Session 7)
+
+- [ ] PledgeDonation entity + EF config + migration apply cleanly; rolls back cleanly.
+- [ ] PLEDGESTATUS MasterData seeded; existing pledges get `Status=OPEN` if missing.
+- [ ] Donor's open pledges load on the form when `DonationType=Pledge` is picked AND `contactId` is set.
+- [ ] User can add multiple pledges, set per-row `AppliedAmount`, see live "applied of donation" total, remove rows.
+- [ ] Server rejects: cross-donor pledge, closed pledge, applied > balance, sum-applied > donation, duplicate pledge.
+- [ ] On save: PledgeDonations row created per fulfillment with before/after snapshots; `Pledge.GivenAmount` / `BalanceAmount` / `Status` updated atomically; concurrent fulfillment race surfaces a clean error (advisory-lock or row-lock).
+- [ ] View page shows the Pledge Fulfillments card with previous→new balance per row.
+- [ ] Donor receipt shows "Pledge Settlement" section with pledge number + applied amount + remaining balance.
+- [ ] Edit mode treats existing fulfillments as read-only audit rows.
+- [ ] Reverse path documented (or implemented) for voiding a pledge donation: must restore `Pledge.GivenAmount` / `BalanceAmount` and recompute status. v1 may defer reversal — document this in a follow-up KI if so.
+
+### ⑯.11 Out of scope (explicitly NOT in this addendum)
+
+- Creating new pledges from this screen (separate Pledge screen owns that).
+- Pledge reminder workflows / Hangfire scheduling (separate concern).
+- Pledge installment plans (one pledge → many scheduled fulfillments) — this addendum supports ad-hoc applied amounts, not pre-scheduled installments.
+- Cross-currency pledge fulfillment beyond direct-pair FX snapshot (single-currency-only in v1 if cross-currency is dropped per ⑯.3 currency rule).
+- Pledge transfer between donors (legal/audit concern).

@@ -319,6 +319,7 @@
 | SETTINGGROUP | Setting Group | setting/orgsettings/settinggroup | 1 |
 | ORGANIZATIONSETTING | Organization Setting | setting/orgsettings/organizationsetting | 2 |
 | USERSETTING | User Setting | setting/orgsettings/usersetting | 3 |
+| COMPANYSETTINGS | Company Settings | setting/orgsettings/companysettings | 4 |
 
 ### SET_INTEGRATION (MenuId: 378)
 | MenuCode | MenuName | MenuUrl | OrderBy |
@@ -360,7 +361,7 @@
 | MenuCode | MenuName | MenuUrl | OrderBy |
 |----------|----------|---------|---------|
 | AUDITTRAIL | Audit Trail | reportaudit/audit/audittrail | 1 |
-| COMPANYSETTINGS | Company Settings | reportaudit/audit/companysettings | 2 |
+<!-- COMPANYSETTINGS re-parented to SET_ORGSETTINGS (MenuId 377) by CompanySettings #75 build (2026-05-01). See sql-scripts-dyanmic/CompanySettings-sqlscripts.sql for the live UPDATE statement. -->
 
 ---
 
