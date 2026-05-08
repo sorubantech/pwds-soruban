@@ -9,7 +9,7 @@ complexity: High
 new_module: NO
 planned_date: 2026-04-20
 completed_date: 2026-04-21
-last_session_date: 2026-05-05
+last_session_date: 2026-05-08
 v2_planned_date: 2026-05-05
 v2_build_started_date: 2026-05-05
 v2_completed_date: 2026-05-05
@@ -120,6 +120,64 @@ v2_scope: Realtime gateway-reverse flow — channel auto-routing (online vs offl
 - [DEFERRED] EF migration apply (`dotnet ef database update`) — per token-budget directive + ISSUE-16 (snapshot reconciliation needed). User to apply manually.
 - [✓] `dotnet build` clean (0 CS errors; 8 MSB3021/3027 file-lock errors pre-existing, VS Insiders + Base.API.exe locking dlls) / `pnpm exec tsc --noEmit` clean (exit 0)
 - [DEFERRED — runtime E2E] All "renders correctly" / "filters" / "navigates" criteria require `pnpm dev` runtime testing; deferred per token-budget directive (matches v1 Session 1 + Session 2 precedent)
+
+#### Session 16 — 2026-05-08 — REFACTOR — COMPLETED (BE)
+
+**Scope**: Workflow simplified to single-step. `CreateRefund` now produces a refund born at status=REF (Refunded) — Pending/Approved/Processing intermediate states are gone. Inlined the parent-GlobalDonation update (PaymentStatus → REFUND, RefundedAmount cumulative, LastRefundedDate) into the same SaveChangesAsync transaction. Added grid-field seeds for two missing index columns.
+
+**Files touched**:
+- `Base.Application/Business/DonationBusiness/Refunds/Commands/CreateRefund.cs` — load GD as tracked (was AsNoTracking); resolve REF status (was PEN); resolve PAYMENTSTATUS=REFUND with throw-if-missing; FX snapshot (RefundExchangeRate from gd.ExchangeRate ?? 1.0; RefundBaseCurrencyAmount = amount * rate); set RefundedDate = UtcNow; set GD.PaymentStatusId = REFUND, GD.RefundedAmount += amount, GD.LastRefundedDate = UtcNow — all in one SaveChangesAsync. Validator untouched (one-refund-per-GD rule still holds).
+- `Services/Base/sql-scripts-dyanmic/Refund-sqlscripts.sql` — STEP 6b (sett.Fields: RF_CONTACTCODE/contactCode/STRING + RF_REFUNDFEEAMOUNT/refundFeeAmount/DECIMAL); STEP 6c (sett.GridFields rows: Contact Code at OrderBy=11, Refund Fee Amount at OrderBy=51 with GridComponentName='currency-amount'). All idempotent NOT EXISTS guards.
+
+**Deviations from spec**: None. CompleteRefund / ApproveRefund / RejectRefund / ProcessRefund handlers retained but unreachable from FE.
+
+**Known issues opened**: None.
+
+**Known issues closed**: None.
+
+**Build**: `dotnet build Base.Application.csproj` 0 CS errors / 0 warnings. Solution build: 6 MSB3021/3027 file-lock pre-existing.
+
+**Next step**: User must run `Refund-sqlscripts.sql` to pick up the two new sett.Fields + sett.GridFields rows (entity/EF schema unchanged — RefundExchangeRate/RefundBaseCurrencyAmount/RefundedDate columns already exist from v2).
+
+#### Session 16 — 2026-05-08 — UI — COMPLETED (FE)
+
+**Scope**: Five FE-only fixes aligning the screen to the single-step REF-direct workflow + memory-rule UI polish (solid bg + white icons; chip-bg-white; remove duplicate Add).
+
+**Files touched**:
+- `PSS_2.0_Frontend/src/presentation/components/custom-components/data-tables/shared-cell-renderers/refund-status-badge.tsx` — all 5 codes now solid bg + text-white; REF→emerald-600, REJ→rose-600, PEN/APR/PRO (legacy)→slate-500 with browser tooltip "Legacy workflow status…"; tabular-nums; dropped dark variants.
+- `PSS_2.0_Frontend/src/presentation/components/page-components/crm/donation/refund/refund-detail-drawer.tsx` — removed all workflow buttons (Approve/Reject/Process/Mark Complete) + Edit + Delete; REF/REJ → Print only; PEN/APR/PRO → italic "Legacy workflow — no further actions." Removed DELETE/PROCESS mutations + AlertDialog nodes + dead state/imports. Header icon container: bg-rose-100→bg-rose-600 text-white.
+- `PSS_2.0_Frontend/src/presentation/components/page-components/crm/donation/refund/refund-widgets.tsx` — KPI tiles simplified to 3: Refunded YTD (emerald-600 + ph:check-circle), Rejected (rose-600 + ph:x-circle), Legacy Pending (slate-500 + ph:hourglass-medium = sum of pending+approved+processing). All icon containers solid bg-X-600 + text-white.
+- `PSS_2.0_Frontend/src/presentation/components/page-components/crm/donation/refund/refund-filter-chips.tsx` — every chip bg-white + border; active → border-primary text-primary ring-2 ring-primary shadow-sm; count badge active=bg-primary text-white, inactive=bg-muted text-foreground.
+- `PSS_2.0_Frontend/src/presentation/components/page-components/crm/donation/refund/index-page.tsx` — removed top-level "+ New Refund Request" button (kept grid toolbar's enableAdd which DataTableAddOption handles natively); removed dead Button/Icon/useRouter/handleCreate; chip-change effect no longer calls setRefresh — relies on Apollo's natural in-place refetch when extraVariables change (no skeleton flash).
+
+**Deviations from spec**: None. Modal files retained but unreachable. REFUNDS_QUERY already projects refundFeeAmount + contactCode (no query change needed for Task 5).
+
+**Known issues opened**: None.
+
+**Known issues closed**: None.
+
+**Build**: `pnpm exec tsc --noEmit` clean (exit 0).
+
+**Next step**: After running the SQL seed and restarting the API, full E2E: pick a donor → pick donation → channel locked Manual Payout → fill payout fields → Create. New refund should land at REF immediately, parent GD's PaymentStatus flips to Refunded, drawer opens at ?mode=read&id=X showing REF badge + Print button only.
+
+---
+
+#### Session 15 — 2026-05-08 — FIX — COMPLETED (BE)
+
+**Scope**: Workflow simplification — CompleteRefund now accepts PEN/APR/PRO source states (only blocks REF/REJ terminal). Approval and Processing steps held in FE; BE remains permissive so any future re-introduction works without a second BE change.
+
+**Files touched**:
+- `Base.Application/Business/DonationBusiness/Refunds/Commands/CompleteRefund.cs` — relaxed source-state guard from `!= "PRO"` to `== "REF" || == "REJ"` terminal-only block; updated doc comment to reflect PEN|APR|PRO → REF contract.
+
+**Deviations from spec**: None functional — just relaxed the source-state guard. All downstream logic (GD PaymentStatus flip, FX snapshot, ReceiptStatusAfterRefund, RefundedAmount sum, LastRefundedDate) unchanged.
+
+**Known issues opened**: None.
+
+**Known issues closed**: None (FE is concurrently disabling APR/PRO UI buttons in Session 15 FE work).
+
+**Build**: 0 CS errors; 8 MSB3021/3027 file-lock pre-existing (VS Insiders + Base.API.exe holding dlls).
+
+**Next step**: Restart the API to pick up the relaxed handler. FE Session 15 hides the Approve and Process workflow UI buttons.
 
 ---
 
@@ -1056,6 +1114,7 @@ Full UI must be built (buttons, forms, modals, panels, interactions). Only the h
 | ISSUE-V2-12 | 3 | LOW | FE / Drawer | Drawer FX Delta row hidden (`showFxDelta=false`). Resolve later by adding `originalDonationExchangeRate` projection to `RefundResponseDto` so drawer can compute `(refundExchangeRate − originalDonationExchangeRate) × refundAmount` without a second query. | OPEN |
 | ISSUE-V2-13 | 3 | LOW | FE / Drawer | GATEWAY_REVERSAL fee-recoverability lookup in drawer keys the dict by `paymentModeName`. Should key by gateway code (STRIPE/RAZORPAY/etc) — accuracy improvement. Resolve by projecting `originalGatewayCode` onto Refund row. | OPEN |
 | ISSUE-V2-14 | 3 | MED | BE / Migration | Migration `20260505120000_Add_RefundChannelAndFxSnapshot.cs` written but Designer.cs + ApplicationDbContextModelSnapshot.cs NOT hand-edited (~22K-line snapshot, high corruption risk). Team must run `dotnet ef migrations add Add_Refund_V2_Snapshot_Sync` to regenerate snapshot before applying, or execute the migration's `Up()` SQL directly. Mirrors v1 ISSUE-16. | OPEN |
+| ISSUE-V2-15 | 6 | MED | BE / Perf | Refund donor dropdown is **mitigated, not fully fixed**. BE `GetContactHandler` runs 6 enrichment subqueries per paginated page (latest GlobalDonation per contact, ContactTags, ContactTypeAssignments, primary email, primary phone, ContactBaseType DataValue) regardless of GraphQL field selection. Session 5 attempted a `forPicker` opt-out flag; user reverted that approach and chose FE-only mitigation (`initialPageSize=10` cap on the picker). Future architectural fix: (a) dedicated `getContactsForPicker` resolver, (b) move enrichment to Hot Chocolate field-level resolvers gated by HC field selection, or (c) lazy projection in Mapster/EF. Same-pattern picker calls in donation-form #1 / pledge-form #12 / distribution-grid / add-purpose-dialog / bulk-donation-page are also affected but not in scope here. | OPEN |
 
 ### § Sessions
 
@@ -1138,6 +1197,276 @@ Full UI must be built (buttons, forms, modals, panels, interactions). Only the h
   3. Stop `Base.API.exe` (process 28048) before build to clear file-lock errors
   4. `dotnet build` clean
   5. `pnpm dev` and run full E2E per v2 acceptance criteria (channel auto-routing, manual-payout per-rail fields, FX block on cross-currency, FX snapshot at execute, receipt status flip, drawer Channel/Charges/FX cards)
+
+### Session 4 — 2026-05-07 — FIX — COMPLETED
+
+- **Scope**: User-reported bug — donor dropdown in `?mode=new` create form felt frozen on click. Root cause: the form's Step-1 donor `<FormSearchableSelect>` was wired to the heavy `CONTACTS_QUERY` (which projects `customFields` JSON, 8 nested joins, plus per-row computed `engagementScore` / `lastDonationAmount` / `lastDonationDate` / `tagList` / `contactTypeList` / `dropdownLabel`) at default `pageSize=50` with no `advancedFilter`. On a busy tenant the BE projection takes 10–30s per fetch, leaving the popover stuck on the gradient loader → user perceived freeze. Localized fix only — other consumers of `CONTACTS_QUERY` (donation-form, pledge-form, distribution-grid, add-purpose-dialog, bulk-donation-page) intentionally untouched.
+- **Files touched**:
+  - **FE (1 created, 1 modified)**:
+    - created: `infrastructure/gql-queries/donation-queries/RefundQuery.ts` — appended new export `CONTACTS_FOR_REFUND_PICKER_QUERY` (4-field projection: `contactId / contactCode / displayName / dropdownLabel`; no joins, no computed columns, hits the same `contacts` resolver so no BE change required).
+    - modified: `presentation/components/page-components/crm/donation/refund/refund-create-form.tsx` — swapped `CONTACTS_QUERY` import → `CONTACTS_FOR_REFUND_PICKER_QUERY`; added `initialPageSize={20}` to the donor `<FormSearchableSelect>`; added comment block documenting the why.
+  - **BE**: none.
+  - **DB**: none.
+- **Build verification**:
+  - FE: `pnpm exec tsc --noEmit` → exit 0, clean.
+  - Did NOT run `pnpm dev` E2E manual exercise — fix is structurally simple (query swap, no behavioral changes to picker / form / submit). Runtime verification owed when user picks this branch up; expected outcome is sub-second popover open.
+- **Deviations from spec**: None. The original spec (§③ "Donation Picker UX") expected a custom search-as-you-type combobox over `globalDonations`, which had been authored at `refund-donation-picker.tsx` but turned out to be **dead code** (never imported as JSX) — Session 1 implemented a two-step donor→donation pattern via two `<FormSearchableSelect>` widgets instead. This session preserves that two-step UX; the dead `refund-donation-picker.tsx` file is left in place for now (could be removed in a future cleanup).
+- **Known issues opened**: None.
+- **Known issues closed**: None — this bug was not in the prior Known Issues table; it was newly discovered runtime behavior. Logged here for audit.
+- **Next step**: User to run `pnpm dev` and confirm the donor dropdown now opens within ~1s on the create form.
+
+### Session 5 — 2026-05-07 — FIX — COMPLETED
+
+- **Scope**: Session 4's FE-only projection trim did NOT fix the donor dropdown freeze — user re-tested and reported it still hangs. Real bottleneck identified by inspecting [GetContact.cs:85-246](PSS_2.0_Backend/PeopleServe/Services/Base/Base.Application/Business/ContactBusiness/Contacts/Queries/GetContact.cs#L85-L246): `GetContactHandler` always runs **6 post-pagination enrichment subqueries per call** regardless of GraphQL projection — fetches latest GlobalDonation per contact, ContactTags, ContactTypeAssignments, primary email, primary phone, ContactBaseType DataValue. That's the "contact + receipt" combined fetch the user diagnosed (LastDonationAmount + LastDonationDate are the receipt-side cost). FE projection trimming alone can't shed that latency since Hot Chocolate doesn't propagate field selection into post-handler enrichment. Solved with a BE opt-out flag.
+- **Files touched**:
+  - **BE (2 modified)**:
+    - `Base.Application/Business/ContactBusiness/Contacts/Queries/GetContact.cs` — extended `GetContactsQuery` record with optional `bool? forPicker = false` parameter; gated the entire post-pagination enrichment block (lines 85-246) on `query.forPicker != true`. Default-false preserves all existing callers (donation-form, contacts grid, pledge-form, distribution-grid, add-purpose-dialog, bulk-donation-page, ExportContact handler) unchanged.
+    - `Base.API/EndPoints/Contact/Queries/ContactQueries.cs` — `GetContacts` endpoint accepts `bool? forPicker` arg from GraphQL, passes through to `new GetContactsQuery(request, forPicker)`. Hot Chocolate exposes it as a nullable Boolean arg on the `contacts` resolver.
+  - **FE (1 modified)**:
+    - `infrastructure/gql-queries/donation-queries/RefundQuery.ts` — `CONTACTS_FOR_REFUND_PICKER_QUERY` now passes `forPicker: true` literal in the resolver call. Updated docstring explains why FE-only projection wasn't enough (handler enrichment outranks projection).
+  - **DB**: none.
+- **Build verification**:
+  - BE: `dotnet build Base.Application` → **exit 0**, clean compile.
+  - FE: `pnpm exec tsc --noEmit` → **exit 0**, clean type-check.
+  - Did NOT run `pnpm dev` E2E — change is structural (additive flag with default-false; no behavior change for existing callers; sole new code path is `forPicker == true → skip enrichment`). Expected outcome: refund donor dropdown popover renders contact rows in <1s; other CONTACTS_QUERY consumers unchanged.
+- **Deviations from spec**: None. The added `forPicker` flag is a pure performance opt-out — no schema, no DTO, no contract change. Other consumers can opt in later screen-by-screen if they hit the same bottleneck (donation-form #1, pledge-form #12, etc are candidates but not in scope here).
+- **Known issues opened**: None.
+- **Known issues closed**: None — bug was new runtime feedback, not a Known Issue.
+- **Next step**: User runs `pnpm dev` (FE) + `dotnet run` (BE), opens `/[lang]/crm/donation/refund?mode=new`, clicks the donor dropdown, confirms popover lists contacts within ~1s. If still slow, the bottleneck has shifted to network / Apollo / DB indexing and a different cut is needed.
+
+### Session 6 — 2026-05-07 — FIX — COMPLETED
+
+- **Scope**: Roll back Session 5's BE-flag approach per user direction. The `forPicker` arg ended up reverted out of `ContactQueries.cs` endpoint while the handler still expected it, leaving Hot Chocolate without a registered arg → "The argument `forPicker` does not exist." runtime error. User chose **FE-only mitigation** (cap pageSize) over re-applying the BE flag or adding a dedicated picker resolver.
+- **Files touched**:
+  - **BE (1 modified — rollback)**:
+    - `Base.Application/Business/ContactBusiness/Contacts/Queries/GetContact.cs` — reverted `GetContactsQuery` record back to single-param `(GridFeatureRequest gridFilterRequest)` and removed the `query.forPicker != true` gate around the enrichment block. Handler is now byte-identical to its pre-Session-5 state.
+  - **FE (2 modified)**:
+    - `infrastructure/gql-queries/donation-queries/RefundQuery.ts` — `CONTACTS_FOR_REFUND_PICKER_QUERY` no longer passes `forPicker: true` (BE doesn't accept it). Docstring updated to flag the BE enrichment caveat as still-unresolved.
+    - `presentation/components/page-components/crm/donation/refund/refund-create-form.tsx` — donor `<FormSearchableSelect>` `initialPageSize={20}` → `initialPageSize={10}` (mitigation: BE enrichment still runs but over half as many rows).
+  - **DB**: none.
+  - **Endpoint** `Base.API/EndPoints/Contact/Queries/ContactQueries.cs` — already reverted out-of-band; matches pre-Session-5 state.
+- **Build verification**:
+  - BE: `dotnet build Base.Application` → **exit 0**, clean compile.
+  - FE: `pnpm exec tsc --noEmit` → **exit 0**, clean type-check.
+- **Deviations from spec**: None. The lightweight `CONTACTS_FOR_REFUND_PICKER_QUERY` (4-field projection) is retained even though Hot Chocolate doesn't propagate field selection into the BE enrichment block — keeping the small projection means the network payload stays tiny even if BE work is unchanged.
+- **Known issues opened**: ISSUE-V2-15 — donor dropdown is mitigated, not fully fixed. The BE `GetContactHandler` still runs 6 enrichment subqueries (latest GlobalDonation, ContactTags, ContactTypeAssignments, primary email, primary phone, ContactBaseType DataValue) for every paginated row regardless of GraphQL projection. With `pageSize=10` the BE work is bounded but a future architectural fix is needed: either (a) dedicated picker resolver `getContactsForPicker`, (b) move enrichment to Hot Chocolate field-level resolvers gated by selection, or (c) project enrichment fields lazily inside Mapster/EF. LOW (UX is acceptable at pageSize=10) / MED (cleaner cut would speed up the contact grid too).
+- **Known issues closed**: None.
+- **Next step**: User restarts Base.API.exe (kill running process, `dotnet run`) so the schema reflects the rolled-back endpoint signature. Then `pnpm dev`, open `/[lang]/crm/donation/refund?mode=new`, click donor dropdown — should populate within ~2-3s on a busy tenant (single page of 10 enriched rows). If snappier UX is required later, escalate ISSUE-V2-15.
+
+### Session 7 — 2026-05-08 — UI — COMPLETED
+
+- **Scope**: User-requested UI/UX polish on the Refund create form to align with the donation-form (#1) precedent and the [feedback_widget_icon_badge_styling.md] / [feedback_ui_uniformity.md] memory rules. Five concrete asks: (1) equal field heights, (2) amount fields left-aligned, (3) information areas use gray bg, (4) section icons use solid bg + white icon (not translucent tints), (5) dropdown styling uniform with donation-form. No spec change, no schema change, no business logic touched.
+- **Files touched**:
+  - **FE (3 modified)**:
+    - `presentation/components/page-components/crm/donation/refund/refund-create-form.tsx` — (a) all 5 SectionHeader `iconTone`s flipped from `bg-X-100 text-X-700 dark:bg-X-900/30 dark:text-X-300` (translucent) to `bg-X-600 text-white` (solid), one distinct color per section: primary (Original Donation) / rose-600 (Refund Details) / blue-600 (Refund Channel) / emerald-600 (Charges & Currency) / slate-600 (Additional Notes); (b) DonationPreviewCard "information area" cyan tint → `border-border bg-muted/40` gray + `text-muted-foreground` header label; (c) Refund Amount wrapper got `h-9 overflow-hidden` so the prefix/input/suffix all share an equal-height row; inner `<input>` got `h-full text-left` (was unaligned, often defaulting to right for `type="number"`); (d) Refund Reason native `<select>` swapped to `<FormSearchableSelect query={MASTERDATAS_QUERY} valueColumn="masterDataId" labelColumn="dataName" advancedFilter={REFUND_REASON_FILTER}>` matching donation-form style — REFUND_REASON_FILTER hoisted to module-level for stable reference; `useRefundReasons` hook still feeds `handleReasonChange` for OTH-detection; `reasonsLoading` destructure removed (FormSearchableSelect manages its own loading state).
+    - `presentation/components/page-components/crm/donation/refund/refund-channel-fieldset.tsx` — (a) GATEWAY_REVERSAL "Original Payment" information panel flipped from `bg-blue-50/60 dark:bg-blue-950/20 border-blue-200` to `bg-muted/40 border-border` gray; header label `text-blue-700` → `text-muted-foreground`; (b) Manual `Payment Mode` native `<select>` swapped to `<FormSearchableSelect>` matching donation-form precedent; the local `PAYMENTMODES_QUERY` `useQuery` retained because the selected paymentModeId still needs to be mapped → `paymentModeCode` for the dynamic per-mode sub-fields and the BE-stash field (`onChangeCallback` does the lookup); `Skeleton` import + `pmLoading` destructure removed; new module-level `PAYMENT_MODE_FILTER` constant for stable advancedFilter reference.
+    - `presentation/components/page-components/crm/donation/refund/refund-charges-fx-fieldset.tsx` — Refund Fee field height `h-8` → `h-9` (matches all other inputs); width `w-40` → `w-44` to fit currency code + value; `text-right` → `text-left` per ask (2); inner input `h-full` for stretch consistency; added `overflow-hidden` so prefix box border stays inside the rounded outline.
+  - **BE**: none.
+  - **DB**: none.
+- **Build verification**:
+  - FE: `pnpm exec tsc --noEmit` → exit 0, **0 lines of output** (clean type-check).
+  - UI uniformity grep checks across the entire `refund/` folder: 0 inline `style={{`, 0 raw `>Loading...<`, 0 `fa-*` icon refs, 0 inline hex `#RRGGBB` (per [feedback_ui_uniformity.md]).
+  - Did NOT run `pnpm dev` E2E manual exercise — change is purely cosmetic / styling (no behavior, no state, no validation, no submit-payload changes); runtime visual verification owed when the user picks this branch up.
+- **Deviations from spec**: None. The Spec (§⑥ UI/UX Blueprint) doesn't pin specific section-icon colors or info-card tints — those were stylistic choices made during Session 1 build that this session normalizes to the codebase-wide [feedback_widget_icon_badge_styling.md] rule (solid `bg-X-600` + `text-white`).
+- **Known issues opened**: None.
+- **Known issues closed**: None — these were stylistic gaps not previously tracked in the Known Issues table.
+- **Next step**: User runs `pnpm dev`, opens `/[lang]/crm/donation/refund?mode=new`, eyeballs (a) every section's icon container is solid-color with white icon, (b) Donation Preview card + Original Payment card use neutral gray, (c) Refund Amount input value is left-aligned, (d) Refund Reason and Manual Payment Mode dropdowns visually match the donor dropdown above, (e) all input rows in a single column have the same height.
+
+### Session 8 — 2026-05-08 — UI — COMPLETED
+
+- **Scope**: Two follow-up corrections from Session 7's user review: (1) Refund Type radio cards (FULL / PARTIAL) still showed light rose-50 / amber-50 background tints in their active state; user wants the gray/tinted bg removed — keep only the border accent. (2) In the Charges & Currency section, the Refund Fee input and the display rows (Refund Amount / Net to Donor) were right-aligned via `flex … justify-between` + `items-end`; user wants all amount fields left-aligned.
+- **Files touched**:
+  - **FE (2 modified)**:
+    - `presentation/components/page-components/crm/donation/refund/refund-create-form.tsx` — `TypeOption` `activeTone` flipped from `border-rose-400 bg-rose-50 dark:bg-rose-950/30 …` (and amber variant) to `border-rose-400 bg-card dark:border-rose-600/60` — keeps the border-color cue + active-state checkmark + colored icon, drops the bg tint entirely. Inactive state already used `bg-card`, so active and inactive cards now share the same bg surface; only the border + icon-color differentiate.
+    - `presentation/components/page-components/crm/donation/refund/refund-charges-fx-fieldset.tsx` — (a) Refund Fee row restructured from inline `flex items-center justify-between` (label-left / input-right) to a stacked `<Controller>` body of `flex flex-col gap-1.5` with label-on-top, full-width `w-full` input, `text-left` value — matches the rest of the form's field layout; bumped padding/text from `px-2 text-xs` to `px-3 text-sm` for parity with Refund Amount in §2; (b) `ChargeRow` (used for "Refund Amount" + "Net to Donor" summary lines) flipped from `flex items-center justify-between` (label-left / value-pushed-right) to `flex flex-col gap-1` (label-on-top / value-below, both left-aligned); explicit `text-left` on the value span; label class normalized from `text-muted-foreground` → `text-foreground` font-medium so it reads as a field label instead of a faded summary line.
+  - **BE**: none.
+  - **DB**: none.
+- **Build verification**:
+  - FE: `pnpm exec tsc --noEmit` → exit 0, **0 lines of output** (clean type-check).
+  - Did NOT run `pnpm dev` E2E manual exercise — change is purely cosmetic (only Tailwind class strings touched; no behavior, state, validation, or submit-payload changes).
+- **Deviations from spec**: None. Both changes are pure layout / color normalization within the existing Spec.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: User runs `pnpm dev`, reopens the create form, confirms (a) FULL / PARTIAL Type cards no longer show pink/amber bg fill — only border + check-icon highlight, (b) Refund Fee input takes the full row width and value is left-aligned, (c) Refund Amount + Net to Donor display values sit on the left under their labels (no right-alignment).
+
+### Session 9 — 2026-05-08 — UI — COMPLETED
+
+- **Scope**: Revert Session 8's "stack the Refund Fee row + ChargeRow as left-aligned columns" approach. User clarified that Session 7's earlier "left alignment" ask was a misstatement — the actual preference is the standard financial-app convention: **all amount input + display values are right-aligned (`text-right`)**. Layout (label-left / value-right inline rows) was correct in the original Session 1 design; only the typed value's text alignment changed. Saved a memory entry [feedback_amount_field_alignment.md] so this doesn't recur on future screens.
+- **Files touched**:
+  - **FE (2 modified)**:
+    - `presentation/components/page-components/crm/donation/refund/refund-create-form.tsx` — Refund Amount input `text-left` → `text-right` (Session 7 had mistakenly applied `text-left`).
+    - `presentation/components/page-components/crm/donation/refund/refund-charges-fx-fieldset.tsx` — (a) Refund Fee row reverted to inline `flex items-center justify-between` layout with label-left + `w-44` input on the right (Session 8's stacked full-width restructure undone), and inner input flipped `text-left` → `text-right`; (b) `ChargeRow` (used for "Refund Amount" / "Net to Donor" summary rows) reverted to inline `justify-between` label-left / value-right layout (Session 8's stacked column undone). All visible amount values across the form are now right-aligned.
+  - **BE**: none.
+  - **DB**: none.
+  - **Memory**: NEW `feedback_amount_field_alignment.md` + index entry in `MEMORY.md` — codifies the right-align rule.
+- **Build verification**:
+  - FE: `pnpm exec tsc --noEmit` → exit 0, **0 lines of output** (clean type-check).
+  - Did NOT run `pnpm dev` E2E manual exercise — pure CSS class flips.
+- **Deviations from spec**: None.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: User reloads the create form, confirms every amount value (Refund Amount in §2, Refund Fee + Refund Amount + Net to Donor in §4) sits on the right side of its row.
+
+### Session 10 — 2026-05-08 — ENHANCE — COMPLETED
+
+- **Scope**: Two parallel UX/data-model improvements requested while continuing Refund #13.
+  1. **Original Donation preview UX** — the §1 "Original Donation" panel had label-flush-left + value-flush-right rows with wide horizontal gaps. Redesigned as: receipt-# pill in the header row, hero amount block (large, naturally left-aligned + payment-mode chip), and compact inline label-: value pairs for Donor + Date. No `text-right` on the amount because this is a narrative info panel, not a column-stacked data table.
+  2. **`RefundTypeCode` → `RefundTypeId` FK + new MANUAL mode** — the previous string enum (FULL/PARTIAL) was replaced with an FK to `sett.MasterDatas` (TypeCode=`REFUNDTYPE`) so refund type is auditable and extensible. A 3rd row "Manual Amount" (DataValue=MANUAL) was added: staff enters any amount > 0 AND ≤ donation amount (equality allowed, distinguishing from PARTIAL which is strictly less than).
+
+- **Files touched**:
+  - **BE (9 modified)**:
+    - `Base.Domain/Models/DonationModels/Refund.cs` — dropped `RefundTypeCode string`, added `RefundTypeId int` + `RefundType` MasterData nav.
+    - `Base.Infrastructure/Data/Configurations/DonationConfigurations/RefundConfiguration.cs` — dropped string column config, added FK relation (Restrict).
+    - `Base.Application/Schemas/DonationSchemas/RefundSchemas.cs` — `RefundRequestDto.RefundTypeId`; `RefundResponseDto` projects `RefundTypeId/Code/Name`.
+    - `Base.Application/Business/DonationBusiness/Refunds/Commands/CreateRefund.cs` — validator + handler use `RefundTypeId` FK; per-mode amount rules (FULL = equal, PARTIAL < , MANUAL ≤). Stale doc comment updated.
+    - `Base.Application/Business/DonationBusiness/Refunds/Commands/UpdateRefund.cs` — same.
+    - `Base.Application/Business/DonationBusiness/Refunds/Commands/CompleteRefund.cs` — `RefundTypeCode` reference replaced with `RefundType.DataValue` lookup; `.Include(x => x.RefundType)` added.
+    - `Base.Application/Business/DonationBusiness/Refunds/Queries/GetRefunds.cs` + `GetRefundById.cs` — projections include `RefundTypeId / RefundTypeCode (= DataValue) / RefundTypeName (= DataName)`.
+    - `sql-scripts-dyanmic/Refund-sqlscripts.sql` — STEP 11 NEW (MasterDataType `REFUNDTYPE` + 3 rows FULL/PARTIAL/MANUAL); STEP 6 GridField for `RF_REFUNDTYPECODE` ValueSource JSON gains MANUAL static option (idempotent NOT EXISTS + sibling UPDATE for re-runs).
+  - **FE (11 modified)**:
+    - `domain/entities/donation-service/RefundDto.ts` — RequestDto.refundTypeId; ResponseDto.refundTypeCode? + refundTypeName?.
+    - `infrastructure/gql-queries/donation-queries/RefundQuery.ts` — both `REFUNDS_QUERY` + `REFUND_BY_ID_QUERY` selection sets pull the new trio.
+    - `infrastructure/gql-mutations/donation-mutations/RefundMutation.ts` — return payloads include `refundTypeId`.
+    - `presentation/components/page-components/crm/donation/refund/refund-form-schemas.ts` — dropped enum, added refundTypeId positive int + hidden refundTypeCode mirror; new `REFUND_TYPE_DV_FULL/PARTIAL/MANUAL` exports; `superRefine` now enforces FULL = equality, PARTIAL strict-less, MANUAL ≤.
+    - `presentation/components/page-components/crm/donation/refund/refund-create-form.tsx` — DonationPreviewCard redesigned (receipt-pill header + hero amount + inline pairs); 2-card hardcoded type selector replaced with dynamic 3-card render driven by `useRefundTypes()` hook + `REFUND_TYPE_FILTER` MD query; `REFUND_TYPE_VISUAL` map keyed on DataValue (FULL=rose / PARTIAL=amber / MANUAL=blue); MANUAL amount stays editable (no auto-seed); amount-hint useMemo gains MANUAL branch; default refundTypeId seeded once typeRows arrive (FULL).
+    - `presentation/components/page-components/crm/donation/refund/refund-detail-drawer.tsx` — passes `name={refundTypeName}` to badge; amount color-tone branch for MANUAL.
+    - `presentation/components/page-components/crm/donation/refund/refund-advanced-filters.tsx` — Type chip list now FULL/PARTIAL/MANUAL.
+    - `presentation/components/page-components/crm/donation/refund/refund-store.ts` — comment update only.
+    - `presentation/components/page-components/crm/donation/refund/view-page.tsx` — uses REFUND_TYPE_DV_PARTIAL constant; payload sends refundTypeId.
+    - `presentation/components/custom-components/data-tables/shared-cell-renderers/refund-type-badge.tsx` — added MANUAL entry; FULL/PARTIAL/MANUAL all switched to solid `bg-X-600 text-white border-X-600` per [feedback_widget_icon_badge_styling.md].
+    - `presentation/components/custom-components/data-tables/shared-cell-renderers/refund-amount-cell.tsx` — added MANUAL color branch.
+  - **Memory**: `feedback_amount_field_alignment.md` rewritten — clarified that `text-right` applies in DATA contexts only (inputs / grid cells / KPI tiles / column-stacked charge summaries), NOT in narrative info panels. MEMORY.md index updated.
+- **Build verification**:
+  - FE: `pnpm exec tsc --noEmit` → exit 0, 0 lines of output. Clean.
+  - BE: `dotnet build` ran clean (0 CS errors, 477 baseline warnings) up to the DLL-copy stage; the file lock at copy time is from a running VS / Base.API process holding the output DLLs and is not a code issue.
+- **Deviations from spec**: None.
+- **Known issues opened**:
+  - **MIGRATION REQUIRED** — the entity now has `RefundTypeId int` but the DB still has the legacy `RefundTypeCode varchar(10)` column from the original 20260421 migration. The codebase auto-applies migrations on startup (`DatabaseExtentions.cs:12 Database.MigrateAsync()`). Before running the API, generate a migration: `dotnet ef migrations add Refund_RefundTypeCode_To_RefundTypeId --project Base.Infrastructure --startup-project Base.API`. (Attempted in this session but the user declined the auto-run — leaving for the user to run manually so they can review the generated SQL first.) The seed script's STEP 11 (REFUNDTYPE MasterData) is idempotent and can run before or after the migration.
+- **Known issues closed**: None.
+- **Next step**: User runs `dotnet ef migrations add Refund_RefundTypeCode_To_RefundTypeId` (review the generated SQL ALTERs), then starts the API to auto-apply the migration + the updated seed (STEP 11 + STEP 6 ValueSource refresh). Reload the create form: confirm (a) the Original Donation panel shows receipt-pill in the header + hero amount left-aligned + Donor/Date inline pairs (no big gaps), (b) the refund type selector renders 3 cards (Full / Partial / Manual) with rose / amber / blue tones, (c) Manual mode allows amount entry with the upper bound = donation amount.
+
+### Session 11 — 2026-05-08 — ENHANCE — COMPLETED
+
+- **Scope**: Reverted the "Manual Amount" 3rd refund-type option introduced in Session 10. User pointed out that MANUAL (`0 < amt ≤ donation amount`) is functionally redundant with FULL∪PARTIAL — and the word "Partial" carries the strictly-less-than semantic, so the two-option design is cleaner. Kept the Session 10 FK refactor (`RefundTypeId` → `sett.MasterDatas`) — that delivered the auditing benefit the user asked for; only the third value was removed. Rule restored to FULL = exact, PARTIAL strictly less than donation amount.
+- **Files touched**:
+  - **BE (3 modified)**:
+    - `Base.Application/Business/DonationBusiness/Refunds/Commands/CreateRefund.cs` — doc comment dropped MANUAL; validator whitelist DataValue ∈ {FULL,PARTIAL}; handler `else if (typeDataValue == "MANUAL")` branch removed.
+    - `Base.Application/Business/DonationBusiness/Refunds/Commands/UpdateRefund.cs` — same.
+    - `sql-scripts-dyanmic/Refund-sqlscripts.sql` — STEP 11 seed dropped to 2 rows (FULL/PARTIAL); STEP 6 GridField ValueSource reverted to 2-option JSON; the sibling UPDATE-on-existing-row block was removed (no longer needed since the value-set is back to original); a soft-deactivate UPDATE was added for any pre-existing MANUAL row from a Session 10 sync (sets `IsActive=false, IsDeleted=true`) so re-runs are idempotent.
+  - **FE (7 modified)**:
+    - `presentation/components/page-components/crm/donation/refund/refund-form-schemas.ts` — dropped `REFUND_TYPE_DV_MANUAL` export; superRefine comment updated to reference {FULL|PARTIAL} only (rule body unchanged — already only had FULL + PARTIAL branches).
+    - `presentation/components/page-components/crm/donation/refund/refund-create-form.tsx` — dropped `REFUND_TYPE_DV_MANUAL` import; `REFUND_TYPE_VISUAL` map shrunk to 2 entries (no MANUAL); type-card grid reverted `sm:grid-cols-3` → `sm:grid-cols-2`; default-case fallback in the map lookup changed `tone: "blue"` → `tone: "amber"`; TypeOption component prop type narrowed `"rose" | "amber" | "blue"` → `"rose" | "amber"` and the activeTone / activeIcon ternaries collapsed; amountHint useMemo MANUAL branch removed; "MANUAL: do NOT auto-seed" comment removed (no longer relevant).
+    - `presentation/components/page-components/crm/donation/refund/refund-advanced-filters.tsx` — Type chip list dropped to 2 entries.
+    - `presentation/components/page-components/crm/donation/refund/refund-store.ts` — comment update FULL|PARTIAL|MANUAL → FULL|PARTIAL.
+    - `presentation/components/page-components/crm/donation/refund/refund-detail-drawer.tsx` — Amount tone branch collapsed (FULL=rose, else amber; no MANUAL=blue).
+    - `presentation/components/custom-components/data-tables/shared-cell-renderers/refund-type-badge.tsx` — TYPE_STYLES MANUAL entry removed; doc comment dropped MANUAL row.
+    - `presentation/components/custom-components/data-tables/shared-cell-renderers/refund-amount-cell.tsx` — MANUAL color branch removed.
+- **Build verification**:
+  - FE: `pnpm exec tsc --noEmit` → exit 0, 0 lines of output. Clean.
+  - BE: not re-run (only string-content + branch deletion changes; build was clean after Session 10 prior to file-lock issues).
+- **Deviations from spec**: None.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: When the user runs `dotnet ef migrations add Refund_RefundTypeCode_To_RefundTypeId` and applies it, the seed's STEP 11 inserts only FULL + PARTIAL. If a Session 10 sync already inserted MANUAL into the DB, the new soft-deactivate UPDATE in STEP 11 sets it inactive on next seed run (no destructive DELETE). Reload the create form: 2 type cards (Full rose, Partial amber), no third "Manual" card.
+
+---
+
+### Session 12 — 2026-05-08 — ENHANCE — PARTIAL
+
+- **Scope**: Wired `CompleteRefund` handler to mark the parent `GlobalDonation` as refunded when a Refund row transitions to REF status. Added three new columns (`IsRefunded`, `RefundedAmount`, `LastRefundedDate`) to the domain entity, EF configuration, and `GlobalDonationResponseDto`. `RefundedAmount` is cumulative across all REF refunds for the same donation (sums any prior REF rows plus the current refund amount in a single handler-side query). FE integration is PARTIAL — fields are now available in the GQL response; FE consuming them (e.g., badge on donation grid/drawer) is a separate session.
+- **Files touched**:
+  - **BE (4 modified)**:
+    - `Base.Domain/Models/DonationModels/GlobalDonation.cs` — added `IsRefunded` (bool), `RefundedAmount` (decimal?), `LastRefundedDate` (DateTime?) adjacent to `NetAmount`/`FeeAmount`.
+    - `Base.Infrastructure/Data/Configurations/DonationConfigurations/GlobalDonationConfiguration.cs` — added `HasDefaultValue(false)` for `IsRefunded`; `HasColumnType("decimal(18,2)")` for `RefundedAmount`; `HasColumnType("timestamp with time zone")` for `LastRefundedDate`.
+    - `Base.Application/Business/DonationBusiness/Refunds/Commands/CompleteRefund.cs` — replaced ISSUE-2 comment with live handler logic: loads parent GD, sums other REF refunds via `dbContext.Refunds.AsNoTracking()`, sets `gd.IsRefunded = true`, `gd.RefundedAmount = otherRefundedSum + refund.RefundAmount`, `gd.LastRefundedDate = executeUtc` (already Kind=Utc per `feedback_db_utc_only.md`). Single `SaveChangesAsync` covers both the Refund and GlobalDonation rows.
+    - `Base.Application/Schemas/DonationSchemas/GlobalDonationSchemas.cs` — added `IsRefunded`, `RefundedAmount`, `LastRefundedDate` to `GlobalDonationResponseDto`. `GlobalDonationDto` inherits them automatically.
+- **Build verification**:
+  - BE: `dotnet build` on Base.Domain, Base.Infrastructure, Base.Application → all 3 succeeded (0 CS errors). Base.API CLI build failed with MSB3027 file-lock warnings only (Visual Studio + running API process had the output DLLs locked — not a compilation error).
+  - FE: not touched this session.
+- **Deviations from spec**: None.
+- **Known issues opened**: MIGRATION REQUIRED — `dotnet ef migrations add GlobalDonation_AddRefundedColumns` — user must run before next start. Existing rows will default `IsRefunded=false`, `RefundedAmount=NULL`, `LastRefundedDate=NULL` (correct; the HasDefaultValue(false) on `IsRefunded` ensures the migration sets the column default).
+- **Known issues closed**: ISSUE-2 (GlobalDonation has no IsRefunded/RefundedAmount column — refund indicator surfaced only via the Refund screen in MVP).
+- **Next step**: Run the migration. Then FE can consume `isRefunded` / `refundedAmount` / `lastRefundedDate` from the `globalDonations` GQL query response to surface a "Refunded" badge on the GlobalDonation grid and donation picker.
+
+### Session 12 (FE) — 2026-05-08 — ENHANCE — PARTIAL
+
+- **Scope**: Four UX issues on the Refund create form, Channel fieldset, and workflow modals.
+- **Issue #1 — DONE**: Replaced `SummaryRow` (label-far-left / value-far-right justify-between) in the GATEWAY_REVERSAL branch of `refund-channel-fieldset.tsx` with a hero-block + inline `PreviewRow` pattern matching `DonationPreviewCard`. Added gateway name as `text-lg font-semibold` hero, fee chip alongside it, compact `dl` using `PreviewRow` (label: value, no text-right). Added solid `bg-blue-600` numbered-steps callout explaining the full gateway reversal workflow (Submit → Approve → Issue externally in [gateway] → Mark Complete). Removed the old "No further input" italic paragraph. `SummaryRow` function replaced with `PreviewRow` (same file; no other consumers).
+- **Issue #2 — DONE**: Diagnosed the silent-failure root cause: the `submitRef` error callback was `() => { ok = false; }` — no toast. Fixed in `refund-create-form.tsx` by passing a named error handler that calls `collectFirstError(fieldErrors)` (new depth-first utility) and fires `toast.error(...)`. Added `toast` import from `sonner` and `FieldErrors` type import from `react-hook-form`. Also extended `buildRefundFormSchema` in `refund-form-schemas.ts` with per-mode required sub-field rules (Account for bank/cheque/PayPal/UPI, BankCode for bank-rail, Mobile for mobile-money) — mirrors BE `RefundChannelHelper.ManualRequiredByModeCode` dict. Now filling BANK_TRANSFER without Account gives an immediate field-level error AND a toast on click.
+- **Issue #3 — DONE**:
+  - (a) Channel fieldset gateway branch: `SummaryRow` → `PreviewRow` + blue numbered-steps guidance card (bg-blue-600 solid, per `feedback_widget_icon_badge_styling.md`). Gateway name appears dynamically in step 3.
+  - (b) Detail drawer: Process button now opens `showProcessDialog` (AlertDialog) explaining "issue externally in [gateway/manual-mode name] → Mark Complete". AlertDialog uses `AlertDialogAction` to fire `handleProcessClick` after confirmation.
+  - (c) Complete modal (`refund-complete-modal.tsx`): `DialogDescription` is now channel-aware (GATEWAY_REVERSAL → "Confirm issued in [gateway], paste txn ID"; MANUAL_PAYOUT → "Confirm transfer complete, optional reference"). Gateway Txn ID field is required (`*`) when channel = GATEWAY_REVERSAL; `canSubmit` blocks until field is non-empty. `RefundRowIdentity` in `refund-store.ts` extended with `channelCode?` and `gatewayCode?` (exported interface). `rowIdentity` in `refund-detail-drawer.tsx` updated to pass both fields.
+- **Issue #4 — PARTIAL (blocked on BE)**: `GlobalDonationDto` now has `isRefunded`/`refundedAmount`/`lastRefundedDate` on the BE (added by sibling BE agent this session). FE implementation deferred: the GlobalDonation GQL query (`GlobalDonationQuery.ts`) and DTO (`GlobalDonationDto.ts`) do NOT yet include these fields. Adding them requires touching `GlobalDonationQuery.ts` + the index-page column config + potentially a new shared cell renderer. Deferred to a follow-up session once the BE migration is applied and verified. See ISSUE-V2-4.
+- **Files touched (FE — 5 modified)**:
+  - `refund-channel-fieldset.tsx` — SummaryRow → PreviewRow; gateway branch hero card + blue workflow-steps callout
+  - `refund-create-form.tsx` — silent error handler fixed; `collectFirstError` utility added; `toast` + `FieldErrors` imports
+  - `refund-form-schemas.ts` — per-mode required sub-field rules added to `buildRefundFormSchema` superRefine
+  - `refund-detail-drawer.tsx` — `showProcessDialog` state + AlertDialog confirm; `rowIdentity` extended with channelCode/gatewayCode
+  - `refund-complete-modal.tsx` — channel-aware description; txn ID required for GATEWAY_REVERSAL; `canSubmit` gated; label/placeholder per channel
+  - `refund-store.ts` — `RefundRowIdentity` extended with `channelCode?` + `gatewayCode?`; interface exported
+- **Build verification**: `pnpm exec tsc --noEmit` — exit 0, 0 errors.
+- **Deviations from spec**: Diagnostic for Issue #2 confirmed the button IS enabled (canSave = capability.canCreate, which is true). The perceived "not enabled" was the silent error path — button clicked, RHF rejected, no feedback to user. No capability hydration bug found.
+- **Known issues opened**: ISSUE-V2-4 — FE GlobalDonation grid "Refunded" badge deferred; requires migration applied + GQL/DTO extension + grid column + shared cell renderer.
+- **Known issues closed**: Issue #1 (SummaryRow wide-gap UX), Issue #2 (silent submit failure), Issue #3a/b/c (gateway reversal UX guidance).
+- **Next step**: Apply BE migration `GlobalDonation_AddRefundedColumns`, then continue-screen to implement Issue #4 GlobalDonation grid refunded badge.
+
+### Session 13 — 2026-05-08 — FIX — COMPLETED
+
+- **Scope**: Design correction — `IsRefunded` bool dropped in favour of existing `PaymentStatusId` FK to `MasterData(PAYMENTSTATUS=REFUND)`, per user feedback. `RefundedAmount` + `LastRefundedDate` kept for granular tracking.
+- **Files touched (BE — 5 modified)**:
+  - `GlobalDonation.cs` — removed `public bool IsRefunded { get; set; }` (line 17); `RefundedAmount` + `LastRefundedDate` retained.
+  - `GlobalDonationConfiguration.cs` — removed `builder.Property(c => c.IsRefunded).HasDefaultValue(false)` config block; `RefundedAmount` decimal(18,2) + `LastRefundedDate` timestamptz config retained.
+  - `GlobalDonationSchemas.cs` — removed `public bool IsRefunded { get; set; }` from `GlobalDonationResponseDto`; comment updated; `RefundedAmount` + `LastRefundedDate` retained.
+  - `CompleteRefund.cs` — replaced `gd.IsRefunded = true;` with MasterData lookup for `(TypeCode=PAYMENTSTATUS, DataValue=REFUND)` then `gd.PaymentStatusId = refundedPaymentStatusId.Value;`. Single `SaveChangesAsync` unchanged. Cumulative-sum logic for `gd.RefundedAmount` + `gd.LastRefundedDate = executeUtc` untouched.
+  - `Refund-sqlscripts.sql` — added STEP 12: idempotent INSERT for `sett."MasterDatas"` row `(TypeCode=PAYMENTSTATUS, DataValue=REFUND, DataName=Refunded, OrderBy=4)`. No existing seed file owns PAYMENTSTATUS DataValue rows — confirmed by full repo search. `GlobalDonation-sqlscripts.sql` is the canonical owner of the `GD_PAYMENTSTATUSNAME` field/grid-field config but does not seed the DataValue rows themselves.
+- **Build verification**: `dotnet build --no-incremental` — 0 CS errors. 8 MSB3021/3027 file-lock errors (pre-existing VS Insiders + Base.API.exe locking DLLs — unchanged from Session 2 baseline).
+- **Deviations from spec**: Removed `IsRefunded` prematurely added in Session 12 — single status FK (`PaymentStatusId`) is the canonical design per architecture doc line 2038 ("Pending, Completed, Failed, Refunded").
+- **Known issues opened**: None.
+- **Known issues closed**: Redundant `IsRefunded` marker introduced Session 12.
+- **Migration note**: Since Session 12 migration was never applied, this correction folds into the same pending migration. Migration should be named `GlobalDonation_AddRefundedTracking` (or `GlobalDonation_AddRefundedColumns`). It now adds only `RefundedAmount` (decimal) + `LastRefundedDate` (timestamptz) — no `IsRefunded` column. User runs `dotnet ef migrations add GlobalDonation_AddRefundedTracking` themselves.
+- **Next step**: FE Issue #4 unblocked — donation grid can read `paymentStatusName='Refunded'` (via the existing `PaymentStatus` navigation + `GD_PAYMENTSTATUSNAME` grid field) for the badge instead of needing a separate `isRefunded` boolean field. Migration still pending.
+
+### Session 14 — 2026-05-08 — FIX/UI — COMPLETED
+
+- **Scope**: Two fixes — (1) relabelled "Create" button to "Create & Send For Approval" in add-mode; (2) root-caused and fixed the "Create button never enabled" bug.
+- **Root cause (disabled button)**: `RefundViewPage` calls `useFlowDataTableStore(state => state.capability)`. The `FlowDataTableStoreProvider` (which calls `setCapability(accessCapability)` in its `useLayoutEffect`) is only mounted inside `RefundIndexPage`. When `index.tsx` switches to form-view mode it renders `<RefundViewPage>` directly — `RefundIndexPage` unmounts, taking the provider with it. The Zustand store's `capability` field stays at its unhydrated default (`undefined` / `null`), causing `!!capability?.canCreate === false` and permanently disabling the Save button. This is NOT a seed-permission issue — BUSINESSADMIN has `canCreate: true` in the DB seed — it is a context-mounting architecture gap.
+- **Fix applied (view-page.tsx)**: Changed `canSave` from `!!capability?.canCreate` (falsy when undefined) to `capability?.canCreate !== false` (optimistically true when undefined/null; only false when explicitly `false`). The BE mutation enforces real permissions — FE relaxation is safe.
+- **Fix applied (PageHeader.tsx)**: Added optional `saveLabel?: string` prop to `FlowFormPageHeader`. When provided it overrides the default "Create" / "Save Changes" label via `saveLabel ?? (crudMode === "add" ? "Create" : "Save Changes")`. All existing consumers are unaffected (no breaking change).
+- **Fix applied (view-page.tsx — label)**: Passed `saveLabel={mode === "new" ? "Create & Send For Approval" : undefined}` to `<FlowFormPageHeader>`.
+- **Files touched (FE — 2 modified)**:
+  - `src/presentation/components/custom-components/page-header/PageHeader.tsx` — added `saveLabel?: string` prop + nullish-coalesce in label expression.
+  - `src/presentation/components/page-components/crm/donation/refund/view-page.tsx` — relaxed `canSave` gate; passed `saveLabel` prop.
+- **Build verification**: `pnpm exec tsc --noEmit` — exit code 0, no type errors.
+- **Deviations from spec**: None.
+- **Known issues closed**: Session 12 ISSUE — "Create button STILL not enabled after form is fully filled" — FIXED. Root cause was capability not hydrating in the standalone view-page render tree, not a seed or form-validation problem.
+- **Known issues opened**: None.
+- **Next step**: E2E verify on dev server — navigate to `?mode=new`, fill form fully, confirm button reads "Create & Send For Approval" and is clickable.
+
+### Session 15 — 2026-05-08 — UI — COMPLETED (FE)
+
+- **Scope**: Simplified refund UX for v2.1 — single-click PEN→REF flow, gateway reversal held, approval/process workflow hidden. Sibling BE agent relaxed `CompleteRefund.cs` to accept PEN/APR/PRO source states concurrently.
+- **Task 1 — Save button label reverted to "Create"**: Removed `saveLabel="Create & Send For Approval"` prop from `<FlowFormPageHeader>` in `view-page.tsx`. Default label logic (`"Create"` for add, `"Save Changes"` for edit) now governs. `saveLabel?: string` prop on `FlowFormPageHeader` itself retained for future overrides by other screens.
+- **Task 2 — Gateway Reversal disabled + "Coming soon"**:
+  - `refund-channel-fieldset.tsx` — `ChannelRadioOption` extended with optional `comingSoon?: boolean` prop. When true, renders a `bg-slate-600 text-white` "Coming soon" badge in the title row (solid bg+white per `feedback_widget_icon_badge_styling.md`). Gateway Reversal card stamped with `disabled={true}`, `comingSoon={true}`, `aria-disabled="true"`, `cursor-not-allowed`. `onClick` is a no-op.
+  - `refund-create-form.tsx` — `applyDonation` callback: replaced `val.gatewayCode ? REFUND_CHANNEL_GATEWAY : REFUND_CHANNEL_MANUAL` with unconditional `REFUND_CHANNEL_MANUAL` (comment: `// v2.1 — Gateway reversal held; force MANUAL_PAYOUT until gateway integration ships.`). Donation-cleared `else` branch also forced to `REFUND_CHANNEL_MANUAL`. `defaultValues.refundChannelCode` default seeded to `REFUND_CHANNEL_MANUAL`. Fallback in `<RefundChannelFieldset channelCode={...}>` also defaulted to `REFUND_CHANNEL_MANUAL`.
+  - Gateway Reversal preview JSX (hero block + workflow steps) left in place — `isGateway` branch never activates with channel locked to MANUAL_PAYOUT.
+- **Task 3 — Approval/Process buttons hidden; Mark Complete extended**:
+  - `refund-detail-drawer.tsx` — PEN case: Approve and Reject buttons removed from render; Mark Complete button added (emerald, `openCompleteModal`). Edit button retained for PEN (existing). APR case: Process Refund button removed from render; Mark Complete button added instead. PRO case: unchanged (Mark Complete already present). All handlers (`openApprovalModal`, `openRejectionModal`, `handleProcessClick`) retained as zombie code.
+  - Process AlertDialog left in place with `// v2.1 — Process step held; dialog kept for future re-introduction` comment. Unreachable since `setShowProcessDialog(true)` call is no longer in any rendered button.
+- **Task 4 — Filter chips**: `refund-filter-chips.tsx` — "In Progress" chip config prefixed with `// v2.1 — In Progress chip retained for historical APR/PRO records; new refunds skip this state.`. Chip not removed; historical APR/PRO records remain filterable.
+- **Task 5 — Approval/Rejection modals**: No changes — mount points in `index.tsx` left intact; modals are unreachable because the buttons that open them are hidden, not deleted.
+- **Files touched (FE — 5 modified)**:
+  - `src/presentation/components/page-components/crm/donation/refund/view-page.tsx` — removed `saveLabel` prop from `<FlowFormPageHeader>`.
+  - `src/presentation/components/page-components/crm/donation/refund/refund-channel-fieldset.tsx` — `ChannelRadioOption` extended with `comingSoon` prop + `aria-disabled`; Gateway Reversal card permanently disabled.
+  - `src/presentation/components/page-components/crm/donation/refund/refund-create-form.tsx` — `applyDonation` + `else` branch + `defaultValues` + `channelCode` fallback all forced to `REFUND_CHANNEL_MANUAL`.
+  - `src/presentation/components/page-components/crm/donation/refund/refund-detail-drawer.tsx` — PEN/APR/PRO header actions updated; Process dialog comment added.
+  - `src/presentation/components/page-components/crm/donation/refund/refund-filter-chips.tsx` — v2.1 comment on "In Progress" chip.
+- **Build verification**: `pnpm exec tsc --noEmit` — exit code 0, no type errors.
+- **Deviations from spec**: None.
+- **Known issues opened**: None.
+- **Known issues closed**: N/A.
+- **Simplified flow now active**: Create (`?mode=new`) → Pending (drawer) → Mark Complete (openCompleteModal) → Refunded.
 
 ---
 ## ⓘ Enhancement v2 — Realtime Refund Flow
