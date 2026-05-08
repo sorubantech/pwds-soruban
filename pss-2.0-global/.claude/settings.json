@@ -305,7 +305,9 @@
       "PowerShell(cd d:\\\\Repos\\\\PWDS\\\\pwds-soruban\\\\pss-2.0-global\\\\PSS_2.0_Backend\\\\PeopleServe; $output = dotnet build PeopleServe.sln --nologo 2>&1; \\($output | Select-String -Pattern \"error CS\\\\d|error MSB\\(?!3021|3027\\)\" | Select-Object -First 30\\); \"---\"; \\($output | Select-String -Pattern \"Build succeeded|Build FAILED|errors?$\" | Select-Object -Last 5\\); \"exit-code=$LASTEXITCODE\")",
       "PowerShell($output = dotnet build \"d:\\\\Repos\\\\PWDS\\\\pwds-soruban\\\\pss-2.0-global\\\\PSS_2.0_Backend\\\\PeopleServe\\\\PeopleServe.sln\" --nologo 2>&1; \\($output | Select-String -Pattern \"error CS\\\\d{4}|error MSB\\(?!3021|3027|3030\\)\" | Select-Object -First 50\\); \"---summary---\"; \\($output | Select-String -Pattern \"Build succeeded|Build FAILED|^\\\\s+\\\\d+ Error\" | Select-Object -Last 8\\); \"exit-code=$LASTEXITCODE\")",
       "PowerShell($output = dotnet build \"d:\\\\Repos\\\\PWDS\\\\pwds-soruban\\\\pss-2.0-global\\\\PSS_2.0_Backend\\\\PeopleServe\\\\PeopleServe.sln\" --nologo 2>&1; $output | Out-File -FilePath \"d:\\\\Repos\\\\PWDS\\\\pwds-soruban\\\\pss-2.0-global\\\\.dotnet-build-output.txt\" -Encoding utf8; \"Lines: $\\($output.Count\\)\"; \"---errors---\"; \\($output | Select-String -Pattern \": error\" | Select-Object -First 20\\); \"exit-code=$LASTEXITCODE\")",
-      "Bash(rm \"d:/Repos/PWDS/pwds-soruban/pss-2.0-global/.dotnet-build-output.txt\" 2>/dev/null; echo done)"
+      "Bash(rm \"d:/Repos/PWDS/pwds-soruban/pss-2.0-global/.dotnet-build-output.txt\" 2>/dev/null; echo done)",
+      "Bash(grep -iE \"config|setting|page$\")",
+      "Bash(rm \"d:/Repos/PWDS/pwds-soruban - Copy/pss-2.0-global/.claude/screen-tracker/_p2p_mockup_analysis.tmp.md\" 2>/dev/null && echo \"Cleaned up temp file\")"
     ],
     "ask": [
       "Bash(rm -rf *)",
