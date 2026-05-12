@@ -2,7 +2,7 @@
 screen: EmailAnalytics
 registry_id: 38
 module: CRM (Communication sub-module)
-status: PROMPT_READY
+status: IN_PROGRESS
 scope: FULL
 screen_type: DASHBOARD
 dashboard_variant: MENU_DASHBOARD
@@ -10,7 +10,7 @@ complexity: High
 new_module: NO
 planned_date: 2026-05-12
 completed_date:
-last_session_date:
+last_session_date: 2026-05-12
 ---
 
 ## Tasks
