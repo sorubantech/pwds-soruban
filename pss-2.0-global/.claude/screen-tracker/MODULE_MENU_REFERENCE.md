@@ -114,9 +114,9 @@
 ### CRM_PRAYERREQUEST (MenuId: 269)
 | MenuCode | MenuName | MenuUrl | OrderBy |
 |----------|----------|---------|---------|
-| PRAYERREQUESTENTRY | Prayer Request Entry | crm/prayerrequest/prayerrequestentry | 1 |
-| REVIEWREPLY | Review Reply | crm/prayerrequest/reviewreply | 2 |
-| REPLYQUEUE | Reply Queue | crm/prayerrequest/replyqueue | 3 |
+| PRAYERREQUESTS | Prayer Requests | crm/prayerrequest/prayerrequests | 1 |
+
+> **Consolidated 2026-05-12** (UX decision): the original three menus (`PRAYERREQUESTENTRY`, `REVIEWREPLY`, `REPLYQUEUE`) were collapsed into ONE menu `PRAYERREQUESTS` with three tabs (`?tab=entry` / `?tab=replyqueue` / `?tab=reviewreplies`). Tab visibility is capability-driven: `READ` shows Entry tab; `REPLY_DRAFT` shows Reply Queue tab; `REPLY_APPROVE` shows Review Replies tab. The workspace shell + Tab 1 are built by #136; Tabs 2/3 are built by #137/#138 as tab content (no new menus/routes).
 
 ### CRM_ORGANIZATION (MenuId: 270)
 | MenuCode | MenuName | MenuUrl | OrderBy |
