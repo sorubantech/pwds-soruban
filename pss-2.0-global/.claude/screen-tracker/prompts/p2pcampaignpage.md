@@ -2,15 +2,15 @@
 screen: P2PCampaignPage
 registry_id: 170
 module: Setting (Public Pages)
-status: PROMPT_READY
+status: COMPLETED
 scope: FULL
 screen_type: EXTERNAL_PAGE
 external_page_subtype: P2P_FUNDRAISER
 complexity: High
 new_module: NO
 planned_date: 2026-05-08
-completed_date:
-last_session_date:
+completed_date: 2026-05-10
+last_session_date: 2026-05-10
 ---
 
 ## Tasks
@@ -28,19 +28,19 @@ last_session_date:
 - [x] Prompt generated
 
 ### Generation (by /build-screen → /generate-screen)
-- [ ] BA Analysis validated (page purpose + audience + conversion + lifecycle + Campaign linkage)
-- [ ] Solution Resolution complete (sub-type confirmed, Campaign-linkage decision, slug strategy, fundraiser-approval-mode decision, save model, payment scope)
-- [ ] UX Design finalized (5 setup tabs + leaderboard preview + active-fundraiser admin grid + 3 public render trees: parent / child / start-wizard)
-- [ ] User Approval received
-- [ ] Backend code generated          ← parent + 3 child entities + lifecycle commands + leaderboard + approval queue + public mutations
-- [ ] Backend wiring complete         ← DbContext + decorators + mappings + public route registration + rate-limit policy + OG meta-tag SSR handler
-- [ ] Frontend (admin setup) code generated         ← list view + 5-tab editor + active-fundraiser embedded grid + approval queue
-- [ ] Frontend (public parent page) code generated         ← `(public)/p2p/[campaignSlug]/page.tsx`
-- [ ] Frontend (public child fundraiser page) code generated         ← `(public)/p2p/[campaignSlug]/[fundraiserSlug]/page.tsx`
-- [ ] Frontend (public Start-Fundraiser wizard) code generated         ← `(public)/p2p/[campaignSlug]/start/page.tsx`
-- [ ] Frontend wiring complete        ← entity-operations + sidebar menu + public layout group + generateMetadata
-- [ ] DB Seed script generated (sample published parent + 3 child fundraisers + leaderboard data + GridType `EXTERNAL_PAGE` registration confirmation + per-role capabilities + sample CampaignDonationPurposes / SuggestedAmounts already seeded for the linked Campaign)
-- [ ] Registry updated to COMPLETED
+- [x] BA Analysis validated (prompt is exhaustively pre-analyzed — orchestrator validated against §① §② §④ §⑤ rather than re-running BA agent)
+- [x] Solution Resolution complete (sub-type confirmed P2P_FUNDRAISER, Campaign-linkage via FK, custom-with-fallback slug, MANUAL approval seeded, save-all model, SERVICE_PLACEHOLDER payment scope)
+- [x] UX Design finalized (Session 2 — FE Build Brief stamped Layout Variants per surface, state-management strategy, file manifest with reuse/wrapper/custom decisions, edge states, FA→Phosphor icon mapping)
+- [x] User Approval received (BE + DB-seed scope split approved 2026-05-09; FE_ONLY full-in-one-run + reuse session-1 config approved 2026-05-10)
+- [x] Backend code generated          ← 5 entities (parent + 4 children) + 15 commands + 9 queries + 4 public mutations + 4 public queries + 8 communication handlers + slug validator + helper + GlobalDonation modification with CHECK constraint
+- [x] Backend wiring complete         ← IDonationDbContext + DonationDbContext + DecoratorProperties + DonationMappings + IMemoryCache + rate-limit policies (P2PStartFundraiser 3/min/IP, P2PDonationSubmit 5/min/IP) + GraphQL endpoints (admin + public, queries + mutations)
+- [x] Frontend (admin setup) code generated         ← list-page (KPI cards + filterable table) + 5-tab editor + active-fundraiser embedded grid + approval queue + slide-out detail panel + reject/send-message modals + status-bar + tab-nav + 5 tab components + live-preview (inline, debounced 300ms) + 9 form-control components (section-card, api-single-select, upload-area, amount-chips, radio-cards, color-picker, rich-text-editor) + Zustand store (save-all model, no autosave)
+- [x] Frontend (public parent page) code generated         ← `(public)/p2p/[campaignSlug]/page.tsx` SSR + `generateMetadata` for OG tags + `revalidate=60` + parent-landing-page composition (org-header / parent-hero / progress-section / leaderboard / donor-wall / impact-stats / public-footer) + Closed banner edge state
+- [x] Frontend (public child fundraiser page) code generated         ← `(public)/p2p/[campaignSlug]/[fundraiserSlug]/page.tsx` SSR + `generateMetadata` + 60/40 two-col layout (child-cover-profile / child-story / child-updates / child-team-section / child-progress-widget / donate-form / share-buttons / mobile-donate-bar) + Paused/Closed banner edge states + notFound() for non-Active states
+- [x] Frontend (public Start-Fundraiser wizard) code generated         ← `(public)/p2p/[campaignSlug]/start/page.tsx` CSR + 4-step stepper + Zustand wizard store (idempotencyKey via sessionStorage) + step-1-identity (email-dedupe + Individual/Team radio) + step-2-page-setup (slug availability check) + step-3-donation-settings + step-4-review + success-screen
+- [x] Frontend wiring complete        ← entity-operations.ts (P2PCAMPAIGNPAGE block appended; mirrors ONLINEDONATIONPAGE pattern) + sidebar menu (DB-seeded by Session 1; no FE config change needed) + (public) layout group (already exists) + generateMetadata exports on both public-parent and public-child routes
+- [x] DB Seed script generated (sample published parent + 1 team + 3 child fundraisers (Sarah Active, Khalid Team-Captain Active, Maria Pending) + 9 milestones + new P2PCAMPAIGNTYPE MasterData; GridType `EXTERNAL_PAGE` already registered by OnlineDonationPage; menu + role capabilities included)
+- [x] Registry updated to COMPLETED
 
 ### Verification (post-generation — FULL E2E required)
 - [ ] `dotnet build` passes
@@ -1666,10 +1666,104 @@ Full UI must be built (5 setup tabs, 4 public render trees including wizard, don
 
 | ID | Raised (session) | Severity | Area | Description | Status |
 |----|------------------|----------|------|-------------|--------|
-| — | — | — | — | (empty — no issues raised yet) | — |
+| ISSUE-1 | 1 | LOW | BE / Public | `ConfirmP2PDonation` returns mock success and does NOT persist `fund.GlobalDonation` — SERVICE_PLACEHOLDER. Real handler will read `PaymentTransaction`, flip status, bump aggregates. Mirrors OnlineDonationPage's existing pattern. Wire when payment-gateway connect lands. | OPEN |
+| ISSUE-2 | 1 | LOW | BE / Public | `StartP2PFundraiser` Contact upsert is minimal — `ContactBaseTypeId=0` and `PrimaryCountryId=0` placeholders. Real CRM intake (proper resolution + ContactEmailAddress row + dedupe-rule pipeline) deferred. | OPEN |
+| ISSUE-3 | 1 | LOW | BE / Public | `DonorEntryDto.IsAnonymous` is heuristic-based (no display name = anonymous) because `GlobalDonation` has no `IsAnonymous` column yet. Swap to real flag when added. | OPEN |
+| ISSUE-4 | 1 | LOW | BE | `P2PFundraiserUpdates` GraphQL queries not added — child Updates have CRUD commands and EF-mapped collection on `P2PFundraiser`, but no dedicated `GetUpdatesForFundraiser` query. Extend `GetP2PFundraiserById` or add a new query when FE needs it. | OPEN |
+| ISSUE-5 | 1 | MEDIUM | BE / Infra | Leaderboard cache (`IMemoryCache.Remove`) is process-local. In multi-instance deployment, leaderboard invalidation needs Redis/distributed cache. Acceptable for MVP single-instance; flag for production hardening. | OPEN |
+| ISSUE-6 | 1 | LOW | BE / Public | CSRF token validation is length-only (≥16 chars). Real cookie+header double-submit middleware (`[ValidateCsrfToken]`) lives at API endpoint layer; body-token format check is MVP guard. | OPEN |
+| ISSUE-7 | 1 | LOW | BE / Seed | `Sett.Grids` row seeded but `GridFields` / `GridFieldFilters` mappings deliberately omitted because `GridFormSchema: SKIP` (custom UI, not stock DataTable). Confirm FE doesn't rely on grid-field metadata for the admin list. | OPEN |
+| ISSUE-8 | 2 | LOW | FE / Public | Login-link manage page (`(public)/p2p/[campaignSlug]/[fundraiserSlug]/manage/page.tsx`) deferred. Token-auth fundraiser-owner edit shell not generated — depends on JWT issuance + validation (SERVICE_PLACEHOLDER). When token-auth lands, create the manage page reusing `<ChildFundraiserPage>` in an editable variant for story / cover / personal-goal / milestones. | OPEN |
 
 ### § Sessions
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
 
-{No sessions recorded yet — filled in after /build-screen completes.}
+### Session 1 — 2026-05-09 — BUILD — PARTIAL
+
+- **Scope**: Initial Backend + DB Seed build from PROMPT_READY prompt (split-strategy session 1 of 2; FE deferred to session 2).
+- **Files touched**:
+  - BE (created — 51):
+    - Entities: `P2PCampaignPage.cs`, `P2PFundraiser.cs`, `P2PFundraiserTeam.cs`, `P2PFundraiserMilestone.cs`, `P2PFundraiserUpdate.cs` (created)
+    - EF Configs: `P2PCampaignPageConfiguration.cs`, `P2PFundraiserConfiguration.cs`, `P2PFundraiserTeamConfiguration.cs`, `P2PFundraiserMilestoneConfiguration.cs`, `P2PFundraiserUpdateConfiguration.cs` (created)
+    - DTOs: `P2PCampaignPageSchemas.cs`, `P2PFundraiserSchemas.cs`, `P2PFundraiserTeamSchemas.cs`, `P2PFundraiserMilestoneSchemas.cs`, `P2PFundraiserUpdateSchemas.cs` (created)
+    - Validator: `P2PCampaignPageSlugValidator.cs` (created)
+    - Helper: `P2PCampaignPageEntityHelper.cs` (created)
+    - Admin Queries (8): `GetP2PCampaignPageById/List/Stats/PublishValidation/Leaderboard/PendingFundraisers.cs` + `GetP2PFundraiserById/Stats.cs` + `GetAllFundraisersByP2PCampaignPage.cs` (created)
+    - Admin Commands (15): Create/Update + 4 Lifecycle (Publish/Unpublish/Close/Archive) for parent; Create/Update + 5 Approval (Approve/Reject/Pause/Resume/Feature) for fundraiser; Team CRUD (3); Milestone CRUD+Reorder (4); Update CRUD (3) (created)
+    - Public Queries (4): `GetP2PCampaignPageBySlug.cs`, `GetP2PCampaignPagePublicLeaderboard.cs`, `GetP2PCampaignPageRecentDonors.cs`, `GetP2PFundraiserBySlug.cs` (created)
+    - Public Mutations (4): `StartP2PFundraiser.cs`, `InitiateP2PDonation.cs`, `ConfirmP2PDonation.cs`, `IncrementP2PFundraiserViewCount` (created)
+    - Communication Handlers: `P2PCommunicationHandlers.cs` (8 stubs in one file) (created)
+    - GraphQL Endpoints: `P2PCampaignPageQueries.cs`, `P2PCampaignPageMutations.cs`, `P2PCampaignPagePublicQueries.cs`, `P2PCampaignPagePublicMutations.cs` (created)
+    - Migration: `20260509115557_Add_P2PCampaignPage_Schema.cs` + Designer (created)
+  - BE (modified — 7):
+    - `GlobalDonation.cs` (added `P2PCampaignPageId?`, `P2PFundraiserId?` + 2 nav props)
+    - `GlobalDonationConfiguration.cs` (added 2 FK rels Restrict + 2 indexes + `CK_GlobalDonations_OnePageSource` CHECK constraint)
+    - `IDonationDbContext.cs` (5 new DbSet declarations)
+    - `DonationDbContext.cs` (5 new DbSet implementations)
+    - `DecoratorProperties.cs` (5 new entity decorator constants under `DecoratorDonationModules`)
+    - `DonationMappings.cs` (5 Mapster `TypeAdapterConfig` entries)
+    - `DependencyInjection.cs` (registered `AddMemoryCache`, rate-limit policies `P2PStartFundraiser` 3/min/IP and `P2PDonationSubmit` 5/min/IP, added `UseRateLimiter`)
+  - DB:
+    - `sql-scripts-dyanmic/p2pcampaignpage-sqlscripts.sql` (created — 426 lines, 11 idempotent steps; sample Campaign "Run for Education 2026" + P2PCampaignPage Active + Team "Dubai Runners Club" + 3 Fundraisers (Sarah Active, Khalid Team-Captain Active, Maria Pending) + 9 Milestones + P2PCAMPAIGNTYPE MasterData + Menu + Capabilities + RoleMenuMapping for BUSINESSADMIN)
+- **Build status**: `dotnet build PeopleServe.sln` succeeded (no errors, only pre-existing warnings unrelated to P2P).
+- **Migration status**: `20260509115557_Add_P2PCampaignPage_Schema` generated cleanly. Includes 5 CreateTable + 7 FK constraints + filtered unique indexes + ALTER fund.GlobalDonations + `CK_GlobalDonations_OnePageSource` CHECK constraint via raw SQL.
+- **Deviations from spec**: All SERVICE_PLACEHOLDERs implemented as scoped per §⑫ (see Known Issues). No deviations from primary entity / DTO / endpoint contracts.
+- **Known issues opened**: ISSUE-1 through ISSUE-7 (see Known Issues table above).
+- **Known issues closed**: None.
+- **Next step**: All FE files (admin list + 5-tab editor + grid/queue + 3 public routes + start wizard + supporting components + entity-operations + module-menu wiring + Apollo public-route client + generateMetadata exports). Run `/build-screen #170 --scope FE_ONLY` (or `/continue-screen p2pcampaignpage`) in a fresh session.
+
+### Session 2 — 2026-05-10 — BUILD — COMPLETED
+
+- **Scope**: FE_ONLY (continuation of split-strategy build). Full FE generated in one run per user approval. UX Architect (opus) → FE Build Brief → Frontend Developer (opus) → static validation.
+- **Files touched**:
+  - FE (created — 61):
+    - DTO (1): `domain/entities/donation-service/P2PCampaignPageDto.ts` (~600 LOC; all parent + child + public + stats DTOs + literal types)
+    - GQL constants (4): `gql-queries/donation-queries/P2PCampaignPageQuery.ts` (9 admin queries), `gql-queries/public-queries/P2PCampaignPagePublicQuery.ts` (7 public queries), `gql-mutations/donation-mutations/P2PCampaignPageMutation.ts` (22 admin mutations), `gql-mutations/public-mutations/P2PCampaignPagePublicMutation.ts` (4 public mutations)
+    - Admin setup (28): `setting/publicpages/p2pcampaignpage/{p2pcampaignpage-root, p2pcampaignpage-store, list-page, editor-page, index}.tsx/.ts` + `tabs/{basic-info, fundraiser-settings, donation-settings, branding-page, communication}-tab.tsx` (5 tabs) + `components/{tab-nav, status-bar, section-card, api-single-select, live-preview, fundraiser-grid, approval-queue, fundraiser-detail-panel, reject-reason-modal, send-message-modal, upload-area, amount-chips, radio-cards, color-picker, rich-text-editor, index}.tsx/.ts` (16 components)
+    - Page-config (1): `presentation/pages/setting/publicpages/p2pcampaignpage.tsx`
+    - Admin route wrapper (1): `app/[lang]/setting/publicpages/p2pcampaignpage/page.tsx` (REPLACED UnderConstruction stub)
+    - Public root pages (3): `app/[lang]/(public)/p2p/[campaignSlug]/{page, [fundraiserSlug]/page, start/page}.tsx`
+    - Public components (24): `public/p2pcampaignpage/{parent-landing-page, child-fundraiser-page, start-fundraiser-wizard, p2p-wizard-store, index}.tsx/.ts` + `components/{org-header, parent-hero, progress-section, leaderboard, donor-wall, impact-stats, child-cover-profile, child-story, child-updates, child-team-section, child-progress-widget, donate-form, share-buttons, mobile-donate-bar, public-footer}.tsx` + `wizard/{step-1-identity, step-2-page-setup, step-3-donation-settings, step-4-review, success-screen}.tsx` (5 wizard step components)
+  - FE (modified — 1):
+    - `application/configs/data-table-configs/donation-service-entity-operations.ts` — appended `P2PCAMPAIGNPAGE` block (mirrors ONLINEDONATIONPAGE pattern; 5 operation slots wired to admin queries/mutations; toggle aliases publish/unpublish; delete aliases archive)
+- **Build status**:
+  - `tsc --noEmit` (full-FE typecheck) — PASSED with 0 errors after generation
+  - Anti-pattern grep checks (per build-screen Step 5b) — ALL ZERO matches:
+    - inline hex colors (`style={{...#hex}}`): 0
+    - inline pixel padding/margin (`style={{...padding/margin: \d+}}`): 0
+    - bootstrap card chrome (`className="card..."`): 0
+    - raw "Loading..." text: 0
+  - GQL field-naming convention: confirmed HotChocolate camelCase mapping `P2PCampaignPageId → p2PCampaignPageId` (matches BE schema)
+  - Wiring symbol resolution: confirmed exports for `GET_P2P_CAMPAIGN_PAGE_LIST`, `GET_P2P_CAMPAIGN_PAGE_BY_ID`, `CREATE/UPDATE/DELETE/ACTIVATE_DEACTIVATE_P2P_CAMPAIGN_PAGE` mutations, `P2PCampaignPageDto` and `P2PCampaignPageRequestDto` interfaces — all present
+- **Layout Variant compliance**:
+  - Admin list: custom plain HTML table + 4 KPI cards above (mirrors OnlineDonationPage list-page.tsx; not FlowDataTableContainer/AdvancedDataTable; no ScreenHeader needed since not data-table-container based)
+  - Admin editor: custom 5-tab layout with sticky header/footer/status-bar; Active Fundraisers Grid below tabs when `pageStatus >= Published`; Tab 4 split-pane with inline live-preview (NOT iframe), debounced 300ms
+  - Public surfaces: bare layout (no admin chrome) under existing `(public)/layout.tsx`; tenant brand-driven via `primaryColorHex` / `secondaryColorHex` from public DTO
+- **Deviations from spec**:
+  - Login-link manage page (`(public)/p2p/[campaignSlug]/[fundraiserSlug]/manage/page.tsx`) DEFERRED — Tier 3, depends on token-auth service which is SERVICE_PLACEHOLDER. ISSUE-8 raised below.
+- **Known issues opened**:
+  - ISSUE-8 (LOW, FE / Public): Login-link manage page deferred. Token-auth fundraiser-owner edit shell at `/p2p/{slug}/{childSlug}/manage?token=X` not generated this session — depends on JWT issuance + validation (SERVICE_PLACEHOLDER). When token-auth lands, create the manage page using the same `<ChildFundraiserPage>` composition wrapped in editable mode for story / cover / personal-goal / milestones.
+- **Known issues closed**: None (ISSUE-1..ISSUE-7 from Session 1 all remain OPEN — they are SERVICE_PLACEHOLDER-scope and not in scope for the FE build).
+- **Next step**: Run `pnpm dev` to smoke-test the 4 routes:
+  1. `/{lang}/setting/publicpages/p2pcampaignpage` — admin list
+  2. `/{lang}/p2p/run-for-education-2026` — public parent (seeded sample)
+  3. `/{lang}/p2p/run-for-education-2026/sarah-chen` — public child (seeded sample)
+  4. `/{lang}/p2p/run-for-education-2026/start` — public Start-Fundraiser wizard
+  Confirm sidebar menu appears under Settings → Public Pages → P2P Campaign Pages, KPI cards render, table loads, "+ Create P2P Campaign" creates Draft → editor opens, all 5 tabs render with seeded values, Active Fundraisers Grid shows 3 seeded fundraisers (1 Pending tinted amber), public parent renders with hero + progress + leaderboard + donor wall, public child renders 60/40 layout with sticky mobile donate bar, wizard renders 4-step stepper with slug-availability check.
+
+### Session 3 — 2026-05-10 — FIX — COMPLETED
+
+- **Scope**: Hotfix during user smoke-test of Session 2 build. `getAllFundraisersByP2PCampaignPage` admin query failed with `Field "socialShareMessages" of type "[KeyValuePairOfStringAndString!]" must have a selection of subfields` — same shape applied to public child query and fundraiser stats query.
+- **Root cause**: BE schemas declare `Dictionary<string, string>? SocialShareMessages` (P2PFundraiserSchemas.cs lines 40, 107, 195) and `Dictionary<string, int> SharesByPlatform` (line 139). HotChocolate exposes `Dictionary<TKey,TValue>` as a list of `[KeyValuePairOf{K}And{V}]` objects requiring `{ key value }` subfield selection. The Session 2 GQL queries treated these as scalar fields.
+- **Files touched**:
+  - FE (modified — 3):
+    - `domain/entities/donation-service/P2PCampaignPageDto.ts` — added `KeyValuePair<V>` type alias + `recordToKvPairs` / `kvPairsToRecord` helper functions; changed 3 `socialShareMessages` field types and 1 `sharesByPlatform` field type from `Record<string, V>` to `KeyValuePair<V>[] | null`.
+    - `infrastructure/gql-queries/donation-queries/P2PCampaignPageQuery.ts` — line 302 `socialShareMessages` → `socialShareMessages { key value }` (in fundraiser fields fragment used by `getAllFundraisersByP2PCampaignPage` + `getP2PFundraiserById`); line 386 `sharesByPlatform` → `sharesByPlatform { key value }` (in `getP2PFundraiserStats`).
+    - `infrastructure/gql-queries/public-queries/P2PCampaignPagePublicQuery.ts` — line 139 `socialShareMessages` → `socialShareMessages { key value }` (in `getP2PFundraiserBySlug`).
+    - `presentation/components/page-components/public/p2pcampaignpage/start-fundraiser-wizard.tsx` — wizard submit transforms internal `Record<string,string>` form-state to `KeyValuePair<string>[]` via `recordToKvPairs(store.socialShareMessages)` before passing to `startP2PFundraiser` mutation (BE input type `[KeyValuePairOfStringAndStringInput!]`).
+- **Build status**: `tsc --noEmit` PASSED (0 errors).
+- **Deviations from spec**: None — this is a contract-correction hotfix. The DTO surface still keeps Record-shaped state internally in the wizard store; only the wire-protocol DTO uses array-of-pairs.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: User retests `getAllFundraisersByP2PCampaignPage` admin query (expected to succeed); also retests `getP2PFundraiserStats` and the public child query if exercised.
