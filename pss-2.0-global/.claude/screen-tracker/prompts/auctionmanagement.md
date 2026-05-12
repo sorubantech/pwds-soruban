@@ -9,7 +9,7 @@ complexity: High
 new_module: NO — reuses Application (ApplicationModels) group
 planned_date: 2026-04-20
 completed_date: 2026-04-21
-last_session_date: 2026-04-21
+last_session_date: 2026-05-12
 ---
 
 ## Tasks
@@ -1043,7 +1043,7 @@ Full UI must be built for all above (buttons, modals, toasts). Only the external
 
 | ID | Raised (session) | Severity | Area | Description | Status |
 |----|------------------|----------|------|-------------|--------|
-| ISSUE-1 | 1 | HIGH | Data | `CurrentHighBid` + `BidsCount` caching must be kept in sync — PlaceBid/RetractBid/ReAuctionItem commands do this atomically; integration test for PlaceBid+RetractBid cycles pending. | OPEN |
+| ISSUE-1 | 1 | HIGH | Data | `CurrentHighBid` + `BidsCount` caching must be kept in sync — PlaceBid/RetractBid/ReAuctionItem commands do this atomically; drift safety net `AuctionStatusHelper.AssertCacheConsistency(item, ctx)` now runs before SaveChanges in all 3 handlers (verifies BidsCount = count(valid bids), CurrentHighBid = max(valid bids), at most one IsCurrentHighest, exactly one when ≥1 valid bid). No integration test project exists in repo — assertion is the safety net. | RESOLVED (session 2) |
 | ISSUE-2 | 1 | MED | Data | `AuctionBid.IsCurrentHighest` flag flipped in-transaction by PlaceBid/RetractBid commands. Filtered unique index seeded. | RESOLVED |
 | ISSUE-3 | 1 | MED | Domain | Event has `EventName` column (verified during build at Event.cs:15) — use directly; composed-title fallback is defensive-only. | RESOLVED |
 | ISSUE-4 | 1 | MED | Service | Bid Activity feed polls 30 s. `// TODO: replace with SignalR when real-time infra lands` comment in bid-activity-feed.tsx. | OPEN |
@@ -1115,3 +1115,23 @@ Full UI must be built for all above (buttons, modals, toasts). Only the external
   - 5 UI uniformity grep checks all returned 0 matches in generated files: inline-hex-style, inline-px-padding/margin, raw-"Loading..."-text, inline-hex-background, fa-*-rendered (fa-* strings only in legacy-normalization map keys, never rendered).
   - BE ↔ Seed DataValue alignment verified: AuctionStatusHelper constants (Active/BelowReserve/Paused/Closed/Won/NoWinner; NotStarted/Open/Closed; Awaiting/Paid/NoPayment; Silent/Live) match seed DataValue codes exactly.
 - **Next step**: User action required — (1) `dotnet ef migrations add AuctionManagement_Initial --project Base.Infrastructure --startup-project Base.API --context ApplicationDbContext` + review filtered indexes; (2) `dotnet ef database update`; (3) apply `AuctionManagement-sqlscripts.sql`; (4) `dotnet build` to verify; (5) `pnpm dev` to verify FE route loads at `/[lang]/crm/event/auctionmanagement`; (6) full E2E per prompt §⑪ acceptance criteria (page load with/without eventId, 4 KPIs, 10-column grid, inline add form, 6 modals, Open/Close bidding workflow, bid history + place bid, bid activity feed, Winners & Payment table, contact deep-links, sidebar menu render).
+
+### Session 2 — 2026-05-12 — FIX — COMPLETED
+
+- **Scope**: ISSUE-1 (HIGH) — `CurrentHighBid` + `BidsCount` cache drift safety net. No BE test project exists in repo so adding an xUnit integration test would mean introducing a whole new `Base.Tests` project — out of scope for a fix session. Implemented an in-handler invariant assertion instead: catches drift before SaveChanges in dev/staging, throws a descriptive `InternalServerException` so the surrounding transaction (or pre-SaveChanges scope) rolls back.
+- **Files touched**:
+  - BE (4 modified):
+    - `Base.Application/Business/ApplicationBusiness/AuctionItems/AuctionStatusHelper.cs` — added `AssertCacheConsistency(AuctionItem item, string callerContext)` static method. Four invariants: (a) BidsCount = count of valid + non-deleted bids; (b) CurrentHighBid = max(Amount) over valid+non-deleted bids (null when none); (c) at most one bid carries IsCurrentHighest=true; (d) exactly one IsCurrentHighest when ≥1 valid bid exists.
+    - `Base.Application/Business/ApplicationBusiness/AuctionBids/Commands/PlaceBid.cs` — call `AuctionStatusHelper.AssertCacheConsistency(item, nameof(PlaceBidHandler))` inside the existing transaction `try` block, just before `dbContext.SaveChangesAsync`. Throw triggers the existing catch-and-rollback path.
+    - `Base.Application/Business/ApplicationBusiness/AuctionBids/Commands/RetractBid.cs` — call `AuctionStatusHelper.AssertCacheConsistency(item, nameof(RetractBidHandler))` after recomputing cache, before `dbContext.SaveChangesAsync`. Throws before persistence so EF tracker mutations are discarded with the scope.
+    - `Base.Application/Business/ApplicationBusiness/AuctionItems/Commands/ReAuctionAuctionItem.cs` — call `AuctionStatusHelper.AssertCacheConsistency(entity, nameof(ReAuctionAuctionItemHandler))` after resetting cache + invalidating bids, before `dbContext.SaveChangesAsync`.
+  - FE: none.
+  - DB: none.
+- **Deviations from spec**: None. Approach is additive — no logic changes to the existing atomic cache updates; the assertion is a passive drift sentinel.
+- **Verification**:
+  - `dotnet build` on `Base.Application` → 0 errors, 397 warnings (all pre-existing in unrelated files; none in the 4 files touched).
+  - No new compile warnings introduced.
+  - Mental dry-run of the existing handlers passes all four invariants for the happy path (PlaceBid: BidsCount += 1, CurrentHighBid = newAmount, exactly one IsCurrentHighest after the flip-and-insert; RetractBid: recomputes from `remaining` then flips top.IsCurrentHighest; ReAuctionItem: zeros everything then no IsCurrentHighest needed because zero valid bids).
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-1 (drift safety net in place — moved to RESOLVED in the Known Issues table).
+- **Next step**: None for this fix. Other OPEN issues (ISSUE-4..6 service placeholders, ISSUE-17 EF migration, ISSUE-22 grid migration, etc.) remain as intentionally-deferred items consistent with the original Session 1 build.

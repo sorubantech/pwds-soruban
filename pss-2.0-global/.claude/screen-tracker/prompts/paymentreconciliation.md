@@ -9,7 +9,8 @@ complexity: High
 new_module: NO
 planned_date: 2026-04-20
 completed_date: 2026-04-21
-last_session_date: 2026-04-21
+last_session_date: 2026-05-11
+last_session_n: 16
 ---
 
 ## Tasks
@@ -909,7 +910,7 @@ Full UI must be built (buttons, modals, tables, drawer, badges, empty states). O
 | ISSUE-5 | PLANNING | MED | BE | Auto-match confidence threshold (≥90) is hardcoded — should be a tunable | OPEN |
 | ISSUE-6 | PLANNING | MED | BE | RunAutoReconciliation batch size — chunk in 100s to avoid txn-log bloat | CLOSED (session 1) |
 | ISSUE-7 | PLANNING | MED | BE | GlobalOnlineDonation soft-delete on Unmatch — verify EF support | CLOSED (session 1) |
-| ISSUE-8 | PLANNING | MED | FE+BE | GetPaymentTransactionById projection extension for drawer sections 4-6 | OPEN |
+| ISSUE-8 | PLANNING | MED | FE+BE | GetPaymentTransactionById projection extension for drawer sections 4-6 | CLOSED (session 7 — `reconciliationTransactionById` query + `ReconciliationDetailDto` shipped) |
 | ISSUE-9 | PLANNING | MED | BE+FE | GetAutoMatchSuggestions bulk size cap 50 | CLOSED (session 1 — 50-cap enforced both sides) |
 | ISSUE-10 | PLANNING | HIGH | cross-screen | prefill_pt param handler on GlobalDonation create form not yet wired | OPEN |
 | ISSUE-11 | PLANNING | MED | FE | Row bg-tint for Unmatched/Disputed — plain table now, FlowDataTable later may clash | OPEN |
@@ -918,9 +919,23 @@ Full UI must be built (buttons, modals, tables, drawer, badges, empty states). O
 | ISSUE-14 | PLANNING | LOW | FE | Export Report format spec | OPEN |
 | ISSUE-15 | PLANNING | LOW | FE | Dispute evidence upload SERVICE_PLACEHOLDER | OPEN |
 
-| ISSUE-16 | SESSION-1 | HIGH | FE | Drawer uses new `reconciliationTransactionById` GQL field — BE query does NOT yet expose this. Drawer renders "Record not found" empty-state until BE projection is extended. Pair with ISSUE-8. | OPEN |
+| ISSUE-16 | SESSION-1 | HIGH | FE | Drawer uses new `reconciliationTransactionById` GQL field — BE query does NOT yet expose this. Drawer renders "Record not found" empty-state until BE projection is extended. Pair with ISSUE-8. | CLOSED (session 7 — paired with ISSUE-8) |
 | ISSUE-17 | SESSION-1 | LOW | BE | `RunAutoReconciliation` `CreatedBy` falls back to `0` when no HTTP context (commented `SystemUser` placeholder) — replace with real system-user id when available. | OPEN |
 | ISSUE-18 | SESSION-1 | LOW | FE | 4th cell renderer named `reconciliation-currency-amount` (not spec's `currency-amount-cell`) to avoid shadowing an existing `currency-amount` renderer for donation rows. DB seed must reference `reconciliation-currency-amount` for the Amount column. | OPEN |
+| ISSUE-19 | SESSION-2 | HIGH | FE | All 4 reconciliation reads (`reconciliationList`, `reconciliationSummary`, `unmatchedTransactionList`, `settlementSummaryList`) + `runAutoReconciliation` failed with HotChocolate `DateTime cannot parse the given literal of type StringValueNode` because the store emitted bare `YYYY-MM-DD` strings and the BE/HotChocolate `DateTime!` scalar requires a full ISO-8601 datetime with offset. | CLOSED (session 2) |
+| ISSUE-20 | SESSION-3 | CRITICAL | BE+DB | `RunAutoReconciliation` raised `PostgresException 23503: FK_GlobalOnlineDonations_MasterDatas_PaymentMethodId`. Root cause: PT seed inserted demo rows with `PaymentMethodTypeId = NULL` because the master-data lookup returned NULL; handler then passed `0` to the required FK. Two-layer fix: handler now defensively skips NULL-method PTs (counts into `Failed`), and `PaymentReconciliation-fix-paymentmethodtype.sql` back-fills the demo rows. | CLOSED (session 4) |
+| ISSUE-21 | SESSION-5 | MED | BE+DB | Repo-wide TypeCode inconsistency: `PaymentGateway-MasterData-seed.sql`, `PaymentReconciliation-sqlscripts.sql` (L488), and `Base.API/PaymentFlow/PaymentFlowService.cs` (L217, L318) all reference `PAYMENTMETHODTYPE`, but the canonical global TypeCode is `PAYMENTMETHOD` (12 entries: CARD, BANKTRANSFER, CREDITCARD, DEBITCARD, UPI, NETBANKING, WALLET, ACH, APPLEPAY, GOOGLEPAY, PAYPAL, SEPA). A fresh DB that ran only the legacy seed will end up with the wrong type and a runtime NULL on gateway-callback method resolution. Fix is a 1-line typecode rename in each + an optional data migration to merge any orphaned `PAYMENTMETHODTYPE` rows. | OPEN |
+| ISSUE-22 | SESSION-6 | HIGH | BE | `RunAutoReconciliation` candidate query did not filter by `DonationMode`, so CASH / CHEQUEDD / BANKTRANSFER / RECEIPTBOOK / DIK GlobalDonations were eligible candidates. Two problems: (a) wasted scan over all offline donations on a tenant with many records, and (b) mis-pair risk — an offline cash donation sharing amount/date/contact with a real PT could win the score-90 race. Restrict candidate pool to `DonationModeId = 'OD'` (canonical online mode). | CLOSED (session 6) |
+| ISSUE-23 | SESSION-6 | MED | DB | `PaymentReconciliation-runreconciliation-samples.sql` looked up DonationMode by `DataValue='ONLINE'` (wrong — canonical is `'OD'`). The OrderBy fallback then silently picked the first DonationMode row (e.g., RECEIPTBOOK), masking the bug. Demo GDs landed under the wrong mode and only matched because the old handler did not filter by mode. Fixed lookup; removed silent fallback so the seed now fails loudly if 'OD' is missing. Back-fill UPDATE added to the fix script. | CLOSED (session 6) |
+| ISSUE-24 | SESSION-10 | CRITICAL | BE | `GetAutoMatchSuggestions`, `MatchPaymentTransaction`, and `RunAutoReconciliation` treated "GOD row exists for this GD" as "already linked to a PT". But the GD-Create handler inserts a placeholder GOD row at donation creation time when DonationMode=OD, with `GatewayTransactionId` NULL/empty (per entity comment: "populated AFTER gateway response"). Result: manually-created online donations never appeared as suggestion candidates and could not be matched (mutation refused with "already linked"). Tightened "linked" filter in all three handlers to require GOD.GatewayTransactionId non-empty. Also taught both match paths (manual + bulk) to UPDATE the placeholder GOD in-place rather than insert a duplicate row, since there is no unique constraint on (CompanyId, GlobalDonationId). | CLOSED (session 10) |
+| ISSUE-25 | SESSION-11 | HIGH | BE | Manual Match modal "Search Donations" only matched ReceiptNumber / ReceiptSentTo / Note — user expected donor-name search ("229" → "User_229") which returned no results. The shared `GetGlobalDonations` handler's `searchTerm` predicate omitted `Contact.DisplayName`. Added Contact.DisplayName to the OR predicate; Contact is already Included so no new query overhead. | CLOSED (session 11) |
+| ISSUE-26 | SESSION-11 | MED | FE | Auto-suggestion pill in the Unmatched panel had no direct action — to accept the BE's high-confidence suggestion the user had to open the Match modal, see the pre-selection, and click Match. Redesigned the suggestion card: pill flipped from amber to emerald (positive "go" signal vs. amber's "heads-up" semantic), added a white-on-emerald "Map to this donation" CTA inside the card that one-click calls `MatchPaymentTransaction` with the suggestion's GD id and refreshes the lists on success. Manual-match and Create-Donation buttons remain on the right as fallback paths. | CLOSED (session 11) |
+| ISSUE-27 | SESSION-12 | HIGH | BE+FE | Match modal's donation picker called the shared `globalDonations` endpoint with no "exclude reconciled" filter, so already-mapped donations appeared in the search list. Clicking one would either fail at the BE guard ("already linked") or — in edge cases (different gateway, manual override) — accidentally re-map an already-reconciled donation to a different PT. Followed the Refund-screen precedent: added optional `excludeReconciled` arg to `GetGlobalDonationsQuery` + endpoint, filter in handler excludes GDs that have any active GOD with non-empty GatewayTransactionId, and created a dedicated `GLOBAL_DONATIONS_FOR_MATCH_PICKER_QUERY` for the modal that passes `excludeReconciled: true`. Helper text + empty-state updated to explain why some donations are hidden. | CLOSED (session 12) |
+| ISSUE-28 | SESSION-13 | MED | BE | Original Session-10 "linked" definition was: GOD has non-empty `GatewayTransactionId`. User reported that setting GTI to a junk value (e.g. `"random-string"`) via SQL — which does NOT correspond to any real PaymentTransaction — still blocked the GD from suggestions. Tightened the definition across all four reconciliation handlers: a GOD counts as "linked" only when it has a non-empty GTI AND there exists a `PaymentTransaction` with the same `(CompanyId, PaymentGatewayId, GatewayTransactionId)`. Junk/orphan GODs are now treated the same as NULL/empty placeholders — they leave the GD eligible for matching and let the Match handler UPDATE the orphan in place rather than insert a duplicate. | CLOSED (session 13) |
+| ISSUE-29 | SESSION-14 | HIGH | FE | `RespondToDisputeModal`'s `MASTERDATAS_QUERY` `advancedFilter` was missing the required `id` field on the outer filter AND on each rule — BE rejected the request with `"The required input field 'id' is missing."`, so the Decision dropdown never populated. Added `id: "0"` on the filter object and `id: "0"` on each rule, matching the canonical contact-create-modal advancedFilter shape. | CLOSED (session 14) |
+| ISSUE-30 | SESSION-14 | MED | FE | Reconciliation modals (`RespondToDisputeModal`, `MatchTransactionModal`) used plain `DialogContent` + bare `DialogHeader` + default `DialogFooter` — inconsistent with the project's uniform modal pattern (gradient header with primary bg + icon container + title/subtitle, scrollable body with `flex-1 min-h-0 overflow-y-auto`, muted custom footer with outline Cancel + primary Submit). Refactored both modals to match `ContactCreateModal`'s contract: `DialogContent size="lg"` (dispute) / `size="2xl"` (match), icon-in-bordered-container header, title + descriptive subtitle, scrollable body, custom footer with sized action buttons (`h-8 sm:h-9`, `text-[11px] sm:text-xs`, primary shadow, `lucide:circle-x` Cancel icon, contextual primary icon). | CLOSED (session 14) |
+| ISSUE-31 | SESSION-15 | MED | FE | `RespondToDisputeModal`'s Decision dropdown used the bare `Select` primitive (Radix portal at default `z-50`). Because the Dialog content sits at `z-9900+` via `BASE_DIALOG_Z_INDEX`, the option list rendered behind the modal and was unclickable. Replaced the bare `Select` with the project's canonical `FormSearchableSelect` (standalone mode — no RHF `control` prop) which delegates to `SearchableSelectRadix` → `PopoverContent` (`z-[10000]`), guaranteeing the options panel stacks above any modal level. Also moved the terminal-status filter (WON / LOST / ACCEPTED) from client-side JS post-filter to a server-side `advancedFilter` rule (`dataValue in "WON,LOST,ACCEPTED"`) so non-terminal statuses never reach the wire. | CLOSED (session 15) |
+| ISSUE-32 | SESSION-16 | HIGH | FE | After successfully opening the dispute modal, Submit returned `"Transaction has no active dispute to respond to."` Root cause was NOT the new SearchableSelect — it was the drawer's dispute-section gate. The seed (`PaymentReconciliation-sqlscripts.sql:527`) and real gateway webhooks populate `DisputeStatusId` with the **"NONE"** MasterData row (not NULL) for non-disputed PTs. The drawer used `showDisputeSection = record?.disputeStatusId != null`, which was true for EVERY PT — so the secondary inner "Respond to Dispute" button at `reconciliation-detail-drawer.tsx:511` rendered on non-disputed transactions (gated only by `!disputeResolvedAt`, which is null for never-disputed PTs). Clicking it triggered the BE handler's first guard (`pt.DisputeStatus.DataValue == "NONE"`). Tightened the FE gate to mirror the BE's `isDisputed` rule: `disputeStatusId != null && disputeStatusCode !== "NONE"`. Now the dispute section / inner Respond button only appear when the transaction actually has an active or resolved dispute. | CLOSED (session 16) |
 
 ### § Sessions
 
@@ -939,4 +954,803 @@ Full UI must be built (buttons, modals, tables, drawer, badges, empty states). O
 - **Still OPEN (11)**: ISSUE-5 (threshold tunable), ISSUE-8 (GetPaymentTransactionById projection — pair with ISSUE-16), ISSUE-10 (prefill_pt cross-screen wiring), ISSUE-11 (row bg-tint FlowDataTable-clash latent risk), ISSUE-12 (native-currency KPI summation — FE tooltip disclaimer in place), ISSUE-13 (Custom Range picker disabled), ISSUE-14 (Export Report format), ISSUE-15 (dispute evidence upload), ISSUE-16, ISSUE-17, ISSUE-18.
 - **Next step**: User must run (1) `ContactSource/PaymentReconciliation-sqlscripts.sql` to seed menu + MasterData + sample data; (2) `dotnet build` to verify BE compiles; (3) `pnpm dev` and verify page at `/[lang]/crm/donation/reconciliation`; (4) Full E2E per §⑪.
 
-No sessions recorded yet — filled in after /build-screen completes.
+### Session 2 — 2026-05-11 — FIX — COMPLETED
+
+- **Scope**: Resolve runtime `DateTime cannot parse the given literal of type StringValueNode` thrown by HotChocolate for all 4 reconciliation read queries (and the `runAutoReconciliation` mutation). Root cause: the store emitted bare `YYYY-MM-DD` strings (`"2026-04-12"`) while the GraphQL schema declares `dateFrom: DateTime!` / `dateTo: DateTime!`, which HotChocolate's strict scalar will not coerce — it requires a full ISO-8601 datetime literal with offset.
+- **Files touched**:
+  - BE: (none — defensive Kind=Utc normalisation deferred; FE now sends `Z`-suffixed datetimes that deserialise as `Kind=Utc`, so the existing `query.dateFrom.Date` LINQ works.)
+  - FE: 5 modified —
+    - `src/presentation/components/page-components/crm/donation/reconciliation/reconciliation-store.ts` — added two exported helpers `toIsoStart(yyyyMmDd)` → `"YYYY-MM-DDT00:00:00.000Z"` and `toIsoEnd(yyyyMmDd)` → `"YYYY-MM-DDT23:59:59.999Z"`. Store keeps `YYYY-MM-DD` for human-readable UI display (toolbar AlertDialog text); callers wrap at the GraphQL boundary.
+    - `reconciliation-widgets.tsx` — `useQuery` variables + `refetch({...})` wrapped.
+    - `reconciliation-details-table.tsx` — `useQuery` variables wrapped.
+    - `unmatched-transactions-panel.tsx` — `useQuery` variables wrapped.
+    - `settlement-summary-table.tsx` — `useQuery` variables wrapped.
+    - `reconciliation-toolbar.tsx` — `runAutoReconciliation` mutation variables wrapped.
+  - DB: (none).
+- **Deviations from spec**: None. The store still exposes `dateFrom`/`dateTo` as `string` (`YYYY-MM-DD`) for backward compatibility and human-readable display; ISO conversion happens at the 5 GraphQL boundary points, mirroring the precedent in `volunteershift-store.getRangeBounds` (which uses `.toISOString()`).
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-19 (new — opened + closed in this session).
+- **Still OPEN (11)**: ISSUE-5, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18.
+- **Verification**: `pnpm exec tsc --noEmit` reports 0 errors in any reconciliation file (only 2 pre-existing unrelated errors remain in `emailsendjob/components/{EmailConfiguration,RecipientFilterDialog}.tsx` — unchanged by this session). BE handlers untouched, so no `dotnet build` required.
+- **Next step**: User: refresh the reconciliation page — the 4 widgets + 3 section tables should now populate over the selected date range. Other OPEN issues remain on the backlog.
+### Session 3 — 2026-05-11 — FIX — COMPLETED
+
+- **Scope**: Run Reconciliation toast reported `0 matched, 0 unresolved, 2 failed` with no error surfaced — the `catch (DbUpdateException)` blocks at the inner-batch flush and the final flush in `RunAutoReconciliationHandler.Handle` silently swallowed the real DB exception and only moved counters from `autoMatched` → `failed`. User's stated suspicion that `CommitBatchSize=100` was the blocker is a red herring: the final flush at the bottom of the loop already handles `<100`-row batches. The real problem was loss of diagnostic information when `SaveChangesAsync` threw.
+- **Files touched**:
+  - BE: 1 modified — `PSS_2.0_Backend/PeopleServe/Services/Base/Base.Application/Business/DonationBusiness/Reconciliation/RunAutoReconciliationCommand/RunAutoReconciliation.cs` — `DbUpdateException` now captured into a local `firstSaveError`; if the loop produced **zero** successful matches AND a save error was captured, the handler re-throws as `InvalidOperationException` wrapping the original (`InnerException?.Message ?? Message`). The endpoint's outer `try/catch` at `ReconciliationMutations.RunAutoReconciliation` converts the throw into `BaseApiResponse<T>.Error(ex.Message)` → FE toast now surfaces the real cause via `payload?.errorDetails`. Partial-success runs (some matched + some failed) still return normally so the matched count is preserved.
+  - FE: (none — error already plumbed via existing `toast.error(payload?.errorDetails || …)` at `reconciliation-toolbar.tsx:77-81`).
+  - DB: 1 new sample-data file — `PSS_2.0_Backend/PeopleServe/Services/Base/sql-scripts-dyanmic/PaymentReconciliation-runreconciliation-samples.sql`. Idempotent seed of **7 unmatched PTs** + **6 candidate GDs** designed for the scoring rule (`score = 50 + 25(same date) + 25(same contact) ≥ 90`). Produces 5 score-100 pairs (auto-match), 1 no-candidate PT (unresolved), 1 amount-drift near-miss ($0.50). Pinned to `CompanyId = 3` to match the original `PaymentReconciliation-sqlscripts.sql` seed.
+- **Deviations from spec**: None. Per-record fallback was attempted but reverted because `IApplicationDbContext` doesn't expose `Entry()` for entity-state manipulation — keeping batch semantics with a surfaced error is simpler and matches the existing handler shape.
+- **Known issues opened**: ISSUE-20 — pending until user re-runs Run Reconciliation with the patched handler and reports the actual DB error (FK violation on `PaymentMethodId` / `CreatedBy`, NOT NULL constraint, duplicate key, etc.). Once known, seed or handler defensiveness can be hardened.
+- **Known issues closed**: None (ISSUE-20 stays OPEN pending diagnostic).
+- **Still OPEN (12)**: ISSUE-5, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20.
+- **Verification**: `dotnet build` on `Base.Application.csproj` → 0 errors (397 pre-existing warnings, all unrelated).
+- **Next step**: User: (1) restart backend; (2) re-run Run Reconciliation; (3) the toast should now show the *actual* DB error from PostgreSQL — most probable: `pt.PaymentMethodTypeId` is NULL → handler passes `0` to required `PaymentMethodId` FK, or session `CompanyId ≠ 3` so the seeded PTs are filtered out of the unmatched-list before the loop. Share the exact toast message to close ISSUE-20.
+
+### Session 4 — 2026-05-11 — FIX — COMPLETED
+
+- **Scope**: Resolve the actual DB error surfaced by Session 3's improved error path —
+  `23503: insert or update on table "GlobalOnlineDonations" violates foreign key constraint
+  "FK_GlobalOnlineDonations_MasterDatas_PaymentMethodId"`. Root cause: the `PAYMENTMETHODTYPE` / `CARD`
+  MasterData row was missing from this DB (file `PaymentGateway-MasterData-seed.sql` had not been
+  applied), so the lookup `v_method_card_id` in `PaymentReconciliation-sqlscripts.sql` and
+  `-runreconciliation-samples.sql` returned NULL. The demo PT rows landed with
+  `PaymentMethodTypeId = NULL`; the handler's `PaymentMethodId = pt.PaymentMethodTypeId ?? 0` then
+  substituted `0`, which has no MasterData row and trips the FK.
+- **Files touched**:
+  - BE: 1 modified —
+    - `RunAutoReconciliation.cs` — added defensive skip immediately after the empty-GTID guard:
+      ```csharp
+      if (!pt.PaymentMethodTypeId.HasValue || pt.PaymentMethodTypeId.Value <= 0) { failed++; continue; }
+      ```
+      and changed `PaymentMethodId = pt.PaymentMethodTypeId ?? 0` to
+      `PaymentMethodId = pt.PaymentMethodTypeId!.Value`. Future tenants with missing-method PTs
+      will see a deterministic `failed` count instead of a thrown FK violation.
+  - FE: (none).
+  - DB: 1 new fix script —
+    - `PaymentReconciliation-fix-paymentmethodtype.sql` — idempotent. STEP 1 ensures
+      `PAYMENTMETHODTYPE` MasterDataType exists. STEP 2 ensures `CARD/UPI/NETBANKING/WALLET`
+      MasterData rows exist (NOT EXISTS per row). STEP 3 back-fills `PaymentMethodTypeId`
+      with the resolved CARD id on every `DEMO-RECON-%` PaymentTransaction whose
+      `PaymentMethodTypeId` is currently NULL.
+- **Deviations from spec**: None. Handler now treats missing PaymentMethodTypeId as a soft
+  failure (counted into `Failed`) rather than crashing the entire run — aligns with the spec's
+  "loud but isolated failure" intent.
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-20 (root cause identified + fixed at both layers).
+- **Still OPEN (11)**: ISSUE-5, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18.
+- **Verification**: `dotnet build` on `Base.Application.csproj` → 0 errors (pre-existing
+  warnings unchanged). DB script is idempotent and verified by syntax inspection; user must
+  run it against their PG instance to confirm the back-fill UPDATE count matches their demo
+  PT row count.
+- **Next step**: User: (1) `psql -d <db> -f PaymentReconciliation-fix-paymentmethodtype.sql`
+  — check the NOTICE for back-filled row count; (2) restart backend; (3) click **Run
+  Reconciliation** again — expect `Auto-match complete — N matched, M left for manual review`
+  with N matching the score-100 pairs from your sample seed.
+
+### Session 5 — 2026-05-11 — FIX — COMPLETED
+
+- **Scope**: Correct the MasterDataType TypeCode used by the Session 4 fix script and the
+  runreconciliation sample seed. User flagged that the canonical global TypeCode is
+  `PAYMENTMETHOD` (not `PAYMENTMETHODTYPE`) and that it already carries the full 12-value
+  global set: CARD, BANKTRANSFER, CREDITCARD, DEBITCARD, UPI, NETBANKING, WALLET, ACH,
+  APPLEPAY, GOOGLEPAY, PAYPAL, SEPA. My earlier Session 4 script had created a parallel
+  India-biased `PAYMENTMETHODTYPE` type with only 4 values — wrong on both counts.
+- **Files touched**:
+  - DB: 2 modified —
+    - `PaymentReconciliation-fix-paymentmethodtype.sql` —
+      - STEP 1 now ensures `PAYMENTMETHOD` (the global TypeCode) MasterDataType, not the
+        India-biased `PAYMENTMETHODTYPE` duplicate.
+      - STEP 2 now ensures all 12 canonical global payment methods (NOT EXISTS guard
+        per `(TypeCode, DataValue)`).
+      - STEP 3 back-fill now joins via `t."TypeCode" = 'PAYMENTMETHOD'`.
+    - `PaymentReconciliation-runreconciliation-samples.sql` — the `v_method_card_id`
+      lookup on L75 now resolves under `PAYMENTMETHOD/CARD`, so future re-runs of the
+      sample seed will insert PaymentTransactions with the correct `PaymentMethodTypeId`
+      from row 1 (no back-fill needed for fresh seeds).
+- **Deviations from spec**: None. The script file name still references
+  `paymentmethodtype` for stability of the Build Log file paths — its purpose is unchanged
+  (back-fill PaymentMethodTypeId on demo PTs), only the underlying TypeCode is corrected.
+- **Pre-existing usages of `PAYMENTMETHODTYPE` (NOT touched, flagged for future review)**:
+  - `PaymentGateway-MasterData-seed.sql` (creates the wrong-name type)
+  - `PaymentReconciliation-sqlscripts.sql` L488 (uses the wrong-name lookup in the
+    original PT seed)
+  - `Base.API/PaymentFlow/PaymentFlowService.cs` L217, L318 (runtime gateway-callback
+    path looks up by the wrong TypeCode)
+  These should be swept in a follow-up pass if the goal is full repo consistency on
+  `PAYMENTMETHOD`. Filed separately — not in scope for ISSUE-20.
+- **Known issues opened**: ISSUE-21 — repo-wide inconsistency: three pre-existing
+  files reference `PAYMENTMETHODTYPE` instead of canonical `PAYMENTMETHOD`. Risk: a
+  fresh DB that ran only the legacy `PaymentGateway-MasterData-seed.sql` will have
+  the wrong TypeCode and the gateway-callback path in `PaymentFlowService` will
+  return NULL on method lookup. Fix is a 1-line typecode rename in each + a data
+  migration to merge any existing rows under the wrong type into the correct one.
+- **Known issues closed**: None this session (ISSUE-20 stayed closed from Session 4).
+- **Still OPEN (12)**: ISSUE-5, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21.
+- **Verification**: SQL syntax verified by inspection — both files are idempotent
+  (`NOT EXISTS` guards; back-fill UPDATE is WHERE-bound to `IdempotencyKey LIKE 'DEMO-RECON-%'`
+  and `PaymentMethodTypeId IS NULL`). No code changed; no rebuild needed.
+- **Next step**: User: (1) `psql -d <db> -f PaymentReconciliation-fix-paymentmethodtype.sql`
+  — the back-fill will resolve CARD under `PAYMENTMETHOD` (your existing 12-value type);
+  (2) restart backend; (3) re-click **Run Reconciliation**. If the user wants
+  ISSUE-21 swept across the repo, open a follow-up with `/continue-screen #14 "ISSUE-21"`.
+
+### Session 6 — 2026-05-11 — FIX — COMPLETED
+
+- **Scope**: Restrict `RunAutoReconciliation` candidate pool to `DonationMode = OD`.
+  User observation: the candidate query did not filter by mode, so every offline GD
+  (CASH / CHEQUEDD / BANKTRANSFER / RECEIPTBOOK / DIK) on the tenant was scanned and
+  scored against incoming PTs. Beyond the obvious I/O waste on a populated tenant,
+  this created a correctness risk — a cash donation that happens to share amount +
+  date + contact with a real PT could win the score-90 match and produce a wrong
+  GOD link. Also: the runreconciliation-samples seed had a related bug — it looked
+  up DonationMode by `DataValue='ONLINE'` (wrong; canonical is `'OD'`) and silently
+  fell back to "first DonationMode row by OrderBy" when that returned NULL — so my
+  demo GDs were landing under RECEIPTBOOK (or similar) and only matched because the
+  handler did not filter by mode.
+- **Files touched**:
+  - BE: 1 modified —
+    - `RunAutoReconciliation.cs` —
+      - Added a `DONATIONMODE/OD` MasterData lookup at handler start; throws
+        `InvalidOperationException` with a clear seed-it message if missing.
+      - Added `&& g.DonationModeId == onlineModeId.Value` to the candidate
+        `.Where()` clause.
+  - DB: 2 modified —
+    - `PaymentReconciliation-runreconciliation-samples.sql` —
+      - DonationMode lookup now uses canonical `DataValue = 'OD'`.
+      - Removed the OrderBy-fallback that masked the bug; `v_donation_mode_online`
+        is now allowed to stay NULL, and the master abort block (existing logic
+        on line ~108) raises a clear error rather than silently selecting RECEIPTBOOK.
+    - `PaymentReconciliation-fix-paymentmethodtype.sql` —
+      - Added STEP 4: idempotent back-fill of `DonationModeId` on every demo GD
+        (`Note LIKE 'DEMO-RECON-RUN-%'`) whose mode is not `OD`. Cosmetic — the
+        already-matched demo GDs already have GOD links and won't re-enter the
+        candidate pool anyway, but they should reflect the correct mode for
+        downstream reporting/querying.
+- **Deviations from spec**: None. The spec already implies "Online donations" in
+  the reconciliation context; the original handler just forgot to encode that.
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-22 (handler mode-filter); ISSUE-23 (seed lookup
+  + silent fallback).
+- **Still OPEN (12)**: ISSUE-5, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21.
+- **Verification**: `dotnet build` on `Base.Application.csproj` → 0 errors
+  (381 pre-existing warnings unchanged). SQL syntax verified by inspection;
+  back-fill UPDATE is idempotent (`<> v_od_mode_id` guard).
+- **Next step**: User: (1) re-run the fix script
+  `psql -d <db> -f PaymentReconciliation-fix-paymentmethodtype.sql` — STEP 4
+  will back-fill any demo GDs that landed under the wrong mode (NOTICE prints
+  the row count); (2) restart backend; (3) optional: seed a CASH or CHEQUEDD
+  GlobalDonation matching one of the unresolved PTs and re-run Run Reconciliation
+  to confirm it is correctly EXCLUDED from the candidate pool (will stay
+  unresolved).
+
+### Session 7 — 2026-05-11 — FIX — COMPLETED
+
+- **Scope**: Ship the missing BE GraphQL query `reconciliationTransactionById`
+  (ISSUE-8 + paired ISSUE-16). User reported two errors when clicking **View**
+  on a reconciliation row:
+  1. `The field 'reconciliationTransactionById' does not exist on the type 'Query'.`
+  2. `The following variables were not used: paymentTransactionId.`
+  Both come from the same root cause — the field doesn't exist on the BE schema,
+  so HotChocolate can't parse the query body, which orphans the variable. FE
+  was generated optimistically at Session 1 expecting this BE projection. Built
+  the by-id handler + DTO + endpoint.
+- **Files touched**:
+  - BE: 3 modified/created —
+    - `Base.Application/Schemas/DonationSchemas/ReconciliationSchemas.cs` —
+      Added `ReconciliationDetailDto` class (~55 fields, grouped Identity /
+      Contact / Money / Transaction / Match / Dispute / Settlement / Audit).
+      Marked `ContactEmail`, `ContactPhone`, `DonationPurposeName`, `IPCountryCode`
+      as null-in-v1 with summary comments — they live in child tables /
+      aren't captured on PT yet, and the drawer doesn't depend on them for
+      the dispute/settlement workflow.
+    - `Base.Application/Business/DonationBusiness/Reconciliation/GetReconciliationTransactionByIdQuery/GetReconciliationTransactionById.cs` —
+      NEW. Single shaped LINQ projection: PT + (LEFT JOIN) GOD → GD for
+      receipt / mode / status; + (LEFT JOIN) PaymentSettlement on
+      `PaymentGatewayId + DATE(SettledAt) = SettlementDate`. Computes
+      `matchStatusCode` and `settlementStatusCode` using the identical rule
+      as `GetReconciliationList` to keep grid + drawer consistent. Returns
+      `null` Detail when the PT isn't found (does NOT throw — endpoint
+      surfaces `success:false` so the drawer's "Record not found" fallback
+      renders).
+    - `Base.API/EndPoints/Donation/Queries/ReconciliationQueries.cs` —
+      Added namespace import + new `GetReconciliationTransactionById` method
+      (returns `BaseApiResponse<ReconciliationDetailDto>`). HotChocolate
+      strips the `Get` prefix → exposed field name is `reconciliationTransactionById`,
+      matching the FE query exactly.
+- **Deviations from spec**: ContactEmail / ContactPhone / DonationPurposeName /
+  IPCountryCode populated as `null` in v1 (FE DTO already typed them as
+  nullable). Not blocking the drawer — flagged inline with class summary so
+  a future session can join the child tables.
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-8 (drawer by-id projection); ISSUE-16
+  (paired FE-side BE-blocker).
+- **Still OPEN (10)**: ISSUE-5, 10, 11, 12, 13, 14, 15, 17, 18, 21.
+- **Verification**: `dotnet build Base.Application.csproj` → **0 errors**.
+  (Base.API build had file-lock errors from a running VS dev-server holding
+  the bin DLLs — actual compilation succeeded, those are MSB3026 post-link
+  copy errors unrelated to code.)
+- **Next step**: User: (1) **restart the backend** so the GraphQL schema
+  picks up the new query field; (2) re-open a reconciliation row's drawer
+  via **View** — should now render the 6-section detail panel instead of
+  the GraphQL error. If a field comes back null on a record where you
+  expect data (e.g., settlement values for a settled PT), check that the
+  PaymentSettlement row exists with matching `PaymentGatewayId` and
+  `SettlementDate = DATE(SettledAt)`.
+
+### Session 8 — 2026-05-11 — UI — COMPLETED
+
+- **Scope**: Apply the global "badges + widget icons = solid bg + white"
+  uniformity rule to every status/brand badge and widget/section icon on
+  Screen #14. Previously the badges used the soft `bg-X-50 text-X-700`
+  pattern with borders; widgets used the `bg-X-100 text-X-700` icon-tint
+  pattern. Per `feedback_widget_icon_badge_styling` user memory rule, both
+  must be solid `bg-X-600` + `text-white`. Touches grid columns, drawer
+  view sheet, settlement table, unmatched panel, KPI widgets, and modal
+  warnings.
+- **Files touched**:
+  - BE: None.
+  - FE: 8 modified —
+    - `presentation/components/custom-components/data-tables/shared-cell-renderers/match-status-badge.tsx` —
+      STATUS_MAP entries flipped from `bg-{tint}-50 text-{tint}-700 border ...`
+      to `bg-{tint}-600 text-white` for MATCHED (green-600) / UNMATCHED
+      (amber-600) / DISPUTED (red-600).
+    - `presentation/components/custom-components/data-tables/shared-cell-renderers/settlement-status-badge.tsx` —
+      Same flip for SETTLED (green-600) / PENDING (blue-600) / OPEN (red-600);
+      INTRANSIT + unmapped-name fallback now solid slate-600 / white instead
+      of `bg-muted text-foreground`.
+    - `presentation/components/custom-components/data-tables/shared-cell-renderers/gateway-brand-badge.tsx` —
+      BRAND_MAP simplified from `{fg, bg-tint, icon}` to `{bg, icon}` —
+      brand hex (Stripe purple, PayPal navy, Razorpay deep-navy) becomes
+      the full background, text is white. Fallback chip is solid slate-600
+      with white text instead of `bg-muted text-foreground`.
+    - `presentation/components/page-components/crm/donation/reconciliation/reconciliation-widgets.tsx` —
+      TONE_STYLES flipped from `bg-X-100 text-X-700` (and dark variants)
+      to `bg-X-600 text-white` for sky / emerald / amber / rose icon
+      containers on the 4 KPI cards.
+    - `presentation/components/page-components/crm/donation/reconciliation/reconciliation-detail-drawer.tsx` —
+      Header icon container now solid `bg-primary` with white icon;
+      Transaction Status pill flipped to solid `bg-slate-600 text-white`;
+      Dispute Status pill flipped to solid `bg-red-600 text-white`.
+    - `presentation/components/page-components/crm/donation/reconciliation/unmatched-transactions-panel.tsx` —
+      Header question icon wrapped in a solid amber-600 chip with white
+      icon; count pill flipped to solid amber-600 / white; "all clear"
+      empty-state icon container flipped to solid emerald-600 / white.
+    - `presentation/components/page-components/crm/donation/reconciliation/settlement-summary-table.tsx` —
+      Header bank icon wrapped in solid primary chip with white icon;
+      empty-state icon container flipped to solid slate-600 / white.
+    - `presentation/components/page-components/crm/donation/reconciliation/reconciliation-details-table.tsx` —
+      Header table icon wrapped in solid primary chip with white icon.
+    - `presentation/components/page-components/crm/donation/reconciliation/unmatched-transaction-item.tsx` —
+      "Possible match" suggestion box flipped to solid amber-600 with
+      white text (was bordered amber-50/amber-800 soft pill).
+    - `presentation/components/page-components/crm/donation/reconciliation/match-transaction-modal.tsx` —
+      Amount mismatch warning box flipped to solid amber-600 with white
+      content + white-bordered Checkbox.
+- **Deviations from spec**: None — the spec §⑫ already calls out
+  data-driven status / brand color constants are allowed for renderers;
+  this session only changes the saturation pattern, not the hue choices.
+  Action buttons (outline border + tint, used as secondary actions) left
+  intact — they're buttons not badges.
+- **Known issues opened**: None.
+- **Known issues closed**: None (this is a UI polish pass — pure
+  visual change, no functional issues addressed).
+- **Still OPEN (10)**: ISSUE-5, 10, 11, 12, 13, 14, 15, 17, 18, 21.
+- **Verification**: TypeScript surface unchanged (string-literal class
+  names only). No GraphQL / DTO / handler edits. Visual check expected
+  after `pnpm dev` reload — every badge and widget icon container now
+  reads as a saturated chip with white content; brand pills (Stripe /
+  PayPal / Razorpay) keep their hue but as the background rather than
+  the tint.
+- **Next step**: Reload the FE in the browser — verify the grid Match /
+  Settlement columns, the drawer Status / Dispute pills, the 4 KPI
+  widget icons, and the Unmatched suggestion pill all render as solid
+  saturated chips with white content. If any element still looks tinted,
+  it's likely an inline override outside the files in this session and
+  worth raising as a new fix.
+
+### Session 9 — 2026-05-11 — UI — COMPLETED
+
+- **Scope**: Extend the badge solid-bg + white-text rule to action
+  buttons across the screen. Previously action buttons used the outline
+  pattern (`variant="outline"` + `border-X-300 text-X-700 hover:bg-X-50`)
+  which read as low-contrast next to the now-saturated badges. Also
+  removed the duplicate close X from the drawer header (SheetContent
+  already renders its own absolute close button by default).
+- **Files touched**:
+  - BE: None.
+  - FE: 4 modified —
+    - `reconciliation-detail-drawer.tsx` — Removed `SheetClose` import +
+      duplicate header close button; added `mr-8` to action group to clear
+      space for SheetContent's built-in absolute X. Header Match (amber),
+      header Respond (red), section Unmatch (red — disabled + enabled
+      variants), section Respond to Dispute (red) all flipped to solid
+      `bg-X-600 text-white hover:bg-X-700`.
+    - `reconciliation-details-table.tsx` — Row-action buttons View
+      (slate-600), Match (amber-600), Investigate (slate-600), Respond
+      (red-600) all solid + white. Ghost variant replaced with slate-600
+      so they match the colored siblings in weight.
+    - `unmatched-transaction-item.tsx` — Match Manually (amber-600) +
+      Create Donation (emerald-600) flipped to solid + white.
+    - `reconciliation-toolbar.tsx` — Export Report flipped from outline
+      to solid slate-600 + white to match Run Reconciliation visual weight.
+- **Deviations from spec**: None.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Still OPEN (10)**: ISSUE-5, 10, 11, 12, 13, 14, 15, 17, 18, 21.
+- **Verification**: TypeScript surface unchanged — only `variant` /
+  `className` edits and one import removal. Visual check expected: every
+  action button now reads as a saturated chip matching the badges next to
+  it; drawer header has exactly one close X (SheetContent's built-in).
+- **Next step**: Reload FE — confirm grid row buttons, drawer action
+  buttons, and Unmatched panel buttons all read as solid saturated chips.
+  The drawer should also show only one close X at top-right.
+
+### Session 10 — 2026-05-11 — FIX — COMPLETED
+
+- **Scope**: Fix ISSUE-24 — auto-match suggestions never surfaced for
+  manually-created online donations, and the manual Match mutation refused
+  with "already linked to another payment transaction." Root cause: three
+  reconciliation handlers all treated "any GOD row exists for this GD" as
+  "already matched to a PT", but the GD-create handler also inserts a
+  placeholder GOD when DonationMode=OD with `GatewayTransactionId` NULL
+  (per entity comment: populated only AFTER gateway response). The real
+  match-link identity is GOD.GatewayTransactionId == PT.GatewayTransactionId
+  joined on PaymentGatewayId — a placeholder GOD with NULL/empty GTI is
+  not yet linked and remains eligible for reconciliation.
+
+  User reproduced the bug by creating an online donation manually, observing
+  the suggestion was suppressed, then deleting the auto-created GOD row to
+  confirm the suggestion then appeared with Score 100.
+
+- **Files touched**:
+  - BE: 3 modified —
+    - `Reconciliation/GetAutoMatchSuggestionsQuery/GetAutoMatchSuggestions.cs`
+      — tightened the "already linked" sub-query (line 83-87 → 87-93):
+      added `&& god.GatewayTransactionId != null && god.GatewayTransactionId != ""`
+      so the candidate pool now includes GDs whose only GOD is a placeholder.
+    - `Reconciliation/MatchCommand/MatchPaymentTransaction.cs` — same
+      tightening on the pre-match "GD already linked" guard, AND switched
+      the persistence path to UPDATE the placeholder GOD in place when one
+      exists (else fall back to INSERT). Avoids duplicate (CompanyId,
+      GlobalDonationId) GOD rows because there is no unique constraint.
+    - `Reconciliation/RunAutoReconciliationCommand/RunAutoReconciliation.cs`
+      — same tightening on the candidate-GD filter; added a tracked
+      `placeholderGods` dictionary keyed by GlobalDonationId so the bulk
+      run also UPDATEs placeholders rather than inserting duplicates.
+  - FE: None.
+  - DB: None.
+
+- **Deviations from spec**: None — Spec §⑥ only requires that matched
+  donations are excluded from suggestions; nothing in the spec mandated
+  the row-creation strategy. Updating the placeholder in-place is the
+  natural fit given the entity layout.
+
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-24.
+- **Still OPEN (10)**: ISSUE-5, 10, 11, 12, 13, 14, 15, 17, 18, 21.
+
+- **Verification**: `dotnet build Base.Application.csproj` → 0 errors,
+  381 warnings (all pre-existing). Functional verification deferred to
+  the user — create an online-mode donation manually, then open
+  PaymentReconciliation: the matching unmatched PT row should now show
+  the suggestion pill, and clicking Match Manually should succeed (with
+  the placeholder GOD updated rather than a duplicate inserted).
+
+- **Next step**: User reload BE + retest the flow from §⑫ — create
+  donation in online mode → run reconciliation OR open the suggestion
+  pill → confirm match succeeds + only one GOD row exists for that GD
+  with the real GatewayTransactionId populated.
+
+### Session 11 — 2026-05-11 — FIX + UI — COMPLETED
+
+- **Scope**: Two user-reported issues —
+  1. ISSUE-25 (BE bug): Manual Match modal's "Search Donations" field did
+     not match donor name. Typing "229" expecting to find donor
+     "User_229" returned no results.
+  2. ISSUE-26 (UI gap): The auto-suggestion pill in the Unmatched panel
+     was purely informational. To accept a high-confidence suggestion the
+     user had to open the Match modal, see the pre-selection, and click
+     Match — three taps for what should be one.
+
+- **Files touched**:
+  - BE: 1 modified —
+    - `Reconciliation` is unaffected; the change is in the shared
+      donation-list endpoint that the modal calls:
+      `DonationBusiness/GlobalDonations/Queries/GetGlobalDonations.cs` —
+      added `Contact.DisplayName` to the `searchTerm` OR predicate.
+      `Contact` is already `Include`d so no extra query cost.
+  - FE: 1 modified —
+    - `page-components/crm/donation/reconciliation/unmatched-transaction-item.tsx`
+      — added a `useMutation` for `MATCH_PAYMENT_TRANSACTION_MUTATION`
+      and a `handleMapSuggestion` that one-click matches the PT to the
+      suggestion's GD, then `bumpRefresh()`. Suggestion card flipped
+      from amber to emerald (positive "go" signal). Card now stacks the
+      details on top + a white-on-emerald "Map to this donation" CTA
+      below with spinner/disabled state during the mutation. Manual
+      Match and Create Donation buttons unchanged on the right.
+  - DB: None.
+
+- **Deviations from spec**: None — the Spec §⑥ Section 2 only required
+  the suggestion to be visible and the manual-match flow to be available;
+  it did not preclude a fast-path Map button on top of the manual flow.
+
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-25, ISSUE-26.
+- **Still OPEN (10)**: ISSUE-5, 10, 11, 12, 13, 14, 15, 17, 18, 21.
+
+- **Verification**: `dotnet build Base.Application.csproj` → 0 errors,
+  381 warnings (all pre-existing). Functional check deferred to user —
+  (a) open the Match modal, type a donor-name fragment → result list
+  should now populate; (b) on any unmatched PT row with a suggestion,
+  click the green "Map to this donation" CTA → row should disappear
+  from the Unmatched panel and reappear as MATCHED on the main table.
+
+- **Next step**: User retest both flows. If donor-name search should also
+  include amount or contact email, raise a follow-up — the current scope
+  was donor-name only per the user's reproduction case.
+
+### Session 12 — 2026-05-11 — FIX — COMPLETED
+
+- **Scope**: ISSUE-27 — Match modal's donation picker offered already-
+  reconciled donations in its search results. User concern: clicking
+  one would unexpectedly attempt to re-map a donation that's already
+  linked to a different PT, either failing loud at the BE guard or, in
+  pathological edge cases, mis-routing the link.
+
+  Fix is purely a filter — donations already linked to a PT (any active
+  GOD row with non-empty GatewayTransactionId) are now hidden from the
+  picker. Followed the Screen #13 Refund precedent that ships
+  `excludeRefunded` for the same reason on the same endpoint.
+
+- **Files touched**:
+  - BE: 2 modified —
+    - `DonationBusiness/GlobalDonations/Queries/GetGlobalDonations.cs`
+      — added optional `bool? excludeReconciled = false` param to the
+      query record; handler appends a NOT EXISTS predicate that excludes
+      GDs with any active GOD whose `GatewayTransactionId` is non-empty
+      (same "linked" definition as Session 10 ISSUE-24).
+    - `Base.API/EndPoints/Donation/Queries/GlobalDonationQueries.cs` —
+      threaded the new arg through the `globalDonations` resolver. Param
+      order: `excludeRefunded` first, `excludeReconciled` second.
+  - FE: 2 modified —
+    - `infrastructure/gql-queries/donation-queries/ReconciliationQuery.ts`
+      — added new `GLOBAL_DONATIONS_FOR_MATCH_PICKER_QUERY` co-located
+      with the other reconciliation queries. Mirrors the Refund picker
+      pattern: minimal projection + screen-owned filter arg.
+    - `page-components/crm/donation/reconciliation/match-transaction-modal.tsx`
+      — swapped import from `GLOBALDONATIONS_QUERY` (shared, full
+      projection, no filter) to the new local picker query with
+      `excludeReconciled: true`. Updated the field-list helper text
+      ("receipt #, donor name, note" — matching the BE searchable cols)
+      and the empty-state copy to explain why donations may be hidden.
+  - DB: None.
+
+- **Deviations from spec**: None. The Spec §⑥ said the picker should
+  show "candidate donations" — the current implementation is the
+  unambiguous reading.
+
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-27.
+- **Still OPEN (10)**: ISSUE-5, 10, 11, 12, 13, 14, 15, 17, 18, 21.
+
+- **Verification**: `dotnet build PeopleServe.sln` → 0 errors, 448
+  warnings (all pre-existing — no new warnings introduced by this fix).
+  Functional check deferred to user — (a) open Match modal on any PT,
+  search by any term that matches both a reconciled GD and an unmatched
+  GD → only the unmatched one should appear; (b) clear search → list
+  should show only unmatched donations sorted by donation date desc.
+
+- **Next step**: User retest the modal. If a power-user override is
+  needed to map a PT onto an already-linked GD (e.g., dispute reassignment),
+  raise a follow-up — current scope is the safe default.
+
+### Session 13 — 2026-05-11 — FIX — COMPLETED
+
+- **Scope**: ISSUE-28 — Session 10 introduced the rule "GOD with
+  non-empty `GatewayTransactionId` = linked to a PT". The user reported
+  that this rule was too loose: setting GTI to a junk value
+  (e.g. `"random-string"`) via SQL — a value that does NOT correspond
+  to any real PaymentTransaction — still blocked the GD from appearing
+  as a suggestion. The intent was always "linked to a REAL payment",
+  not "claims to be linked." Tightened the definition across every
+  reconciliation handler:
+
+  **A GOD counts as "linked" only when:**
+  1. It is not soft-deleted, AND
+  2. Its `GatewayTransactionId` is non-empty, AND
+  3. There exists a `PaymentTransaction` with the same
+     `(CompanyId, PaymentGatewayId, GatewayTransactionId)`.
+
+  This makes junk/orphan GODs equivalent to NULL/empty placeholders —
+  they leave the GD eligible for matching, and the Match handler
+  UPDATEs the orphan in place rather than inserting a duplicate.
+
+- **Files touched**:
+  - BE: 4 modified —
+    - `DonationBusiness/Reconciliation/GetAutoMatchSuggestionsQuery/GetAutoMatchSuggestions.cs`
+      — added nested PT-EXISTS subquery to the candidate-GD filter.
+    - `DonationBusiness/Reconciliation/MatchCommand/MatchPaymentTransaction.cs`
+      — same tightening on the pre-match "already linked" guard AND on
+      the placeholder-update lookup (so junk-GTI GODs are updated in
+      place rather than refused).
+    - `DonationBusiness/Reconciliation/RunAutoReconciliationCommand/RunAutoReconciliation.cs`
+      — same tightening on the candidate-GD filter AND on the
+      `placeholderGods` dictionary lookup.
+    - `DonationBusiness/GlobalDonations/Queries/GetGlobalDonations.cs`
+      — same tightening on the `excludeReconciled` filter so the Match
+      modal picker also surfaces GDs whose GOD is junk/orphan.
+  - FE: None.
+  - DB: None.
+
+- **Deviations from spec**: None — Spec §⑥ requires excluding
+  already-matched donations from suggestions; "already matched" was
+  always intended to mean "linked to a real PT", not "claims a link".
+  This brings the implementation in line with the spec intent.
+
+- **Performance note**: Each predicate now contains a nested EXISTS
+  subquery (`PaymentTransactions` lookup keyed by `(PaymentGatewayId,
+  GatewayTransactionId)`). On Postgres, the existing FK index on
+  `PaymentTransactions.PaymentGatewayId` covers gateway filtering; the
+  `(PaymentGatewayId, GatewayTransactionId)` pair is unique by webhook
+  contract, so the subquery is bounded by O(1) per outer row. No new
+  index needed for the demo dataset size; revisit if PT count grows
+  beyond ~1M per tenant.
+
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-28.
+- **Still OPEN (10)**: ISSUE-5, 10, 11, 12, 13, 14, 15, 17, 18, 21.
+
+### Session 14 — 2026-05-11 — FIX + UI — COMPLETED
+
+- **Scope**: Two changes against the dispute / match modal flow:
+  1. **ISSUE-29 (FIX)** — `Respond to Dispute` modal was firing the
+     `MASTERDATAS_QUERY` for `DISPUTESTATUS` options without the
+     required `id` field on the `advancedFilter` envelope or any of
+     its rules. HotChocolate's request validator returned
+     `"The required input field 'id' is missing."` and the Decision
+     dropdown stayed empty. Added `id: "0"` to the outer filter object
+     and `id: "0"` to the single `masterDataType.typeCode` rule —
+     matching the canonical advancedFilter shape used across the
+     `contact-create-modal` and every other modal that queries
+     MasterDatas.
+  2. **ISSUE-30 (UI)** — Reconciliation modals (`RespondToDisputeModal`,
+     `MatchTransactionModal`) were using the bare `DialogHeader` +
+     default `DialogFooter` shape — visually inconsistent with the
+     reference `ContactCreateModal`. Refactored both to the uniform
+     modal pattern:
+     - `DialogContent size="lg"` (dispute, ~536px) /
+       `size="2xl"` (match, ~720px — wider for the donation picker).
+     - Header: gradient primary bg (default `DialogHeader`), icon
+       container `w-7 h-7 rounded-md bg-white/15 border border-white/25`
+       with a `DynamicIcon` (`ph:gavel` / `ph:link-bold`), title on
+       top + descriptive subtitle below in
+       `text-primary-foreground/70`.
+     - Body: scrollable wrapper
+       `flex-1 min-h-0 overflow-y-auto` containing
+       `p-4 sm:p-6 space-y-4`.
+     - Footer: custom div
+       `shrink-0 px-4 sm:px-6 py-2.5 border-t border-border/50
+       bg-muted/10 flex items-center justify-end gap-2`
+       with sized action buttons (`h-8 sm:h-9`,
+       `text-[11px] sm:text-xs`, primary shadow on submit,
+       `lucide:circle-x` Cancel icon, `lucide:loader-2` spinner during
+       save, contextual `ph:check-circle` / `ph:link-bold` Submit
+       icon).
+
+- **Files touched**:
+  - BE: None.
+  - FE: 2 modified —
+    - `presentation/components/page-components/crm/donation/reconciliation/respond-to-dispute-modal.tsx`
+      — advancedFilter `id` fix + uniform modal layout (header / body /
+      footer) + DynamicIcon adoption + dropped now-unused
+      `DialogDescription` / `DialogFooter` imports.
+    - `presentation/components/page-components/crm/donation/reconciliation/match-transaction-modal.tsx`
+      — uniform modal layout only (same header / body / footer shape)
+      + DynamicIcon adoption + dropped now-unused
+      `DialogDescription` / `DialogFooter` imports. No filter changes
+      here (no advancedFilter on this modal's queries).
+  - DB: None.
+
+- **Deviations from spec**: None. Spec §⑥ never prescribed a specific
+  modal chrome; this change just brings reconciliation modals in line
+  with the rest of the app.
+
+- **Notes**:
+  - The `DialogHeader` component already paints the primary gradient
+    + watermark pattern when `showGradient` is left at its default
+    `true`. `DialogTitle` and `DialogDescription` already render in
+    `text-primary-foreground` / `text-primary-foreground/70`, so the
+    subtitle inside the title block uses those tokens directly.
+  - Inline `Icon` from `@iconify/react` is still used for one-off
+    content icons (`ph:upload` placeholder in dispute, `ph:funnel` /
+    `ph:check-circle` / `ph:circle` / `ph:warning` inside the match
+    picker rows) — they live inside body content, not chrome, so
+    swapping to `DynamicIcon` was not necessary for the uniformity
+    contract.
+
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-29, ISSUE-30.
+- **Still OPEN (10)**: ISSUE-5, 10, 11, 12, 13, 14, 15, 17, 18, 21.
+- **Next step**: User retest — open Reconciliation screen, click
+  **Respond to Dispute** on a disputed PT row, confirm Decision
+  dropdown populates with WON/LOST/ACCEPTED, confirm header is the
+  primary-gradient style with icon + subtitle and footer is the muted
+  bg with styled Cancel/Submit. Then open **Match Transaction**, check
+  the same chrome.
+
+- **Verification**: `dotnet build Base.Application.csproj` → 0 errors,
+  397 warnings (all pre-existing — none in the four modified files).
+  Functional check deferred to user — repeat the SQL test from
+  ISSUE-28: set `GatewayTransactionId` to a random non-empty string on
+  the GOD row, refresh the screen / click Run Reconciliation → the PT
+  should now appear as unmatched AND the suggestion pill should
+  reappear with Score 100 (or whatever the original score was). The
+  Match modal picker should also surface this GD in its search results.
+
+- **Next step**: User retest the random-GTI SQL scenario. If passing,
+  Screen #14 holds the canonical reconciliation semantics; future
+  screens that consume GlobalOnlineDonation can use the same
+  three-part "linked" definition.
+
+### Session 15 — 2026-05-11 — FIX — COMPLETED
+
+- **Scope**: ISSUE-31 — User reported the **Decision** dropdown in
+  `RespondToDisputeModal` was rendering its options panel BEHIND the
+  modal (unclickable). Root cause: the bare `Select` primitive from
+  `common-components` uses Radix's default portal at `z-50`, but the
+  Dialog content stack starts at `BASE_DIALOG_Z_INDEX = 9900` (level 1
+  ≈ z-9900). `z-50` = literally `z-index: 50`, which is far below the
+  modal — so the dropdown rendered underneath. User asked to swap to
+  the canonical "common dropdown with searchable" component (which
+  uses a `PopoverContent` at `z-[10000]`, designed to stack above any
+  Dialog level).
+
+  Replaced the bare `Select` with `FormSearchableSelect` (the
+  same component used throughout `ContactCreateModal` and 30+ other
+  forms), in **standalone mode** — i.e. no `control` prop, just
+  `value` / `onChange` — because the dispute modal does not use
+  react-hook-form. `FormSearchableSelect` internally renders
+  `SearchableSelectRadix` → `PopoverContent` with
+  `z-[10000]`, which correctly stacks above any modal in the project's
+  dialog level system.
+
+  While swapping, also moved the terminal-status filter from a
+  client-side JS `Array.filter` post-step to a **server-side
+  advancedFilter rule** so non-terminal statuses are never sent over
+  the wire:
+
+  ```
+  advancedFilter: {
+    id: "0",
+    combinator: "and",
+    rules: [
+      { id: "0", field: "masterDataType.typeCode",
+        operator: "=", value: "DISPUTESTATUS", dataType: "String" },
+      { id: "1", field: "dataValue",
+        operator: "in", value: "WON,LOST,ACCEPTED",
+        dataType: "String" },
+    ],
+  }
+  ```
+
+  The `in` operator on advancedFilter is already supported and used
+  in `api-multi-select` and the FlowDataTable filter builders, so this
+  is a known-good shape.
+
+- **Files touched**:
+  - BE: None.
+  - FE: 1 modified —
+    - `presentation/components/page-components/crm/donation/reconciliation/respond-to-dispute-modal.tsx`
+      — swapped the bare `Select` + manual `useQuery(MASTERDATAS_QUERY)`
+      + client-side `TERMINAL_DISPUTE_VALUES` filter for a single
+      `FormSearchableSelect` (standalone mode) with the server-side
+      `in` filter shown above. Dropped unused imports
+      (`Select*`, `useQuery`, `useMemo`). File-header doc-comment
+      updated — "filtered client-side" line removed because filtering
+      is now BE-only.
+  - DB: None.
+
+- **Deviations from spec**: None.
+
+- **Notes**:
+  - The submit handler still posts `newDisputeStatusId: decisionId`
+    (a `masterDataId: number`), same wire shape as before — the only
+    change is how the user picks that id. BE contract unchanged.
+  - `MatchTransactionModal`'s donation picker is custom (it shows
+    amount + receipt + donor in a 3-line row, with selection
+    indicator), not a single-value dropdown, so it stays as the
+    hand-built list. No equivalent z-index issue there because the
+    list lives inside the modal body, not in a portal.
+  - The `pageSize` default on `FormSearchableSelect` is 50, which is
+    fine — there are only 3 terminal DISPUTESTATUS rows so one page
+    covers it. Search is debounced (500ms, min 3 chars), but the user
+    will rarely need to search 3 options.
+
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-31.
+- **Still OPEN (10)**: ISSUE-5, 10, 11, 12, 13, 14, 15, 17, 18, 21.
+- **Next step**: User retest — open **Respond to Dispute** modal, click
+  the Decision dropdown, confirm the options panel appears ABOVE the
+  modal and lists exactly WON / LOST / ACCEPTED (in `orderBy` order).
+  Select one, confirm `decisionId` populates and Submit is enabled
+  once Response Text reaches 10 chars.
+
+### Session 16 — 2026-05-11 — FIX — COMPLETED
+
+- **Scope**: ISSUE-32 — User submitted the dispute response form and
+  the BE returned `"Transaction has no active dispute to respond to."`
+  At first glance this looked like a regression from the SearchableSelect
+  swap in Session 15, but the failure is independent: the dropdown
+  populated correctly and `newDisputeStatusId` was a real WON/LOST/ACCEPTED
+  MasterDataId. The handler rejected because the **PT itself** had no
+  active dispute.
+
+  Root cause is in the drawer, not the modal:
+  - `PaymentReconciliation-sqlscripts.sql:527` seeds non-disputed PTs
+    with `DisputeStatusId = v_dispute_none_id` (pointing to the "NONE"
+    MasterData row), NOT `NULL`. This matches how real gateways send
+    webhooks — they always include a dispute-status enum, with NONE
+    being the "no dispute" sentinel.
+  - The drawer's gate was `showDisputeSection = record?.disputeStatusId
+    != null`, which is true for EVERY PT in the system.
+  - That meant the dispute section rendered on every transaction, and
+    its inner "Respond to Dispute" button (`reconciliation-detail-drawer.tsx:511`,
+    gated only by `!record.disputeResolvedAt`) appeared on never-disputed
+    PTs too. Clicking it routed straight to the BE handler's first
+    guard (`pt.DisputeStatus.DataValue == "NONE"`), which correctly
+    rejected with the error the user saw.
+
+  The fix is a one-liner: tighten the FE gate to mirror the BE's
+  `isDisputed` rule.
+
+  ```diff
+  - const showDisputeSection = record?.disputeStatusId != null;
+  + const showDisputeSection =
+  +   record?.disputeStatusId != null &&
+  +   record?.disputeStatusCode !== "NONE";
+  ```
+
+  After the fix:
+  - Non-disputed PT (DataValue = NONE) → section hidden, button hidden,
+    can't trigger the BE error.
+  - Active dispute (DataValue = OPEN / UNDERREVIEW) → section shown,
+    Respond button shown (because `disputeResolvedAt` is null).
+  - Resolved dispute (DataValue = WON / LOST / ACCEPTED) → section
+    still shown (history), Respond button hidden because the second
+    inner gate is `!disputeResolvedAt`. The BE's second guard already
+    blocks re-resolution.
+
+- **Files touched**:
+  - BE: None.
+  - FE: 1 modified —
+    - `presentation/components/page-components/crm/donation/reconciliation/reconciliation-detail-drawer.tsx`
+      — tightened `showDisputeSection` (line ~158) to require
+      `disputeStatusCode !== "NONE"`. `disputeStatusCode` is already
+      part of the GraphQL projection (`ReconciliationQuery.ts:266`)
+      and the FE DTO (`ReconciliationDto.ts`), so no other plumbing
+      changes were needed.
+  - DB: None.
+
+- **Deviations from spec**: None. Spec §④ stipulates "dispute
+  precedence" only when there's an actual dispute (DataValue !=
+  NONE). The seed's choice to populate NONE rather than NULL is a
+  storage decision; the screen contract was always "show dispute UI
+  when there is a dispute."
+
+- **Cross-references**: The same `disputeStatusCode !== "NONE"` rule
+  is already used in `reconciliation-details-table.tsx:186` via
+  `matchStatusCode === "DISPUTED"`, which is derived BE-side from the
+  same rule. The drawer was the only place still using the looser
+  `!= null` gate.
+
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-32.
+- **Still OPEN (10)**: ISSUE-5, 10, 11, 12, 13, 14, 15, 17, 18, 21.
+- **Next step**: User retest — open the drawer on a non-disputed PT,
+  confirm the Dispute section is no longer visible. Then open the
+  drawer on a row whose `matchStatusCode === "DISPUTED"`, click
+  **Respond to Dispute** in either the header or the dispute section,
+  pick a Decision from the dropdown, fill 10+ chars of response, and
+  Submit. Should now succeed with the toast `"Dispute response
+  submitted"` instead of the BE rejection.

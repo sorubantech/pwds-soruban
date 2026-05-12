@@ -320,7 +320,10 @@
       "Bash(Get-Content \"C:\\\\Users\\\\USER\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--Repos-PWDS-pwds-soruban-pss-2-0-global\\\\3c4f16bd-ec88-4570-8727-f7a703324bf2\\\\tasks\\\\bnt1bbu00.output\" -Wait)",
       "Bash(Select-String -Pattern \"error TS|warning TS|Found \\\\d+ error|Done in\")",
       "Bash(grep -iE \"config|setting|page$\")",
-      "Bash(rm \"d:/Repos/PWDS/pwds-soruban - Copy/pss-2.0-global/.claude/screen-tracker/_p2p_mockup_analysis.tmp.md\" 2>/dev/null && echo \"Cleaned up temp file\")"
+      "Bash(rm \"d:/Repos/PWDS/pwds-soruban - Copy/pss-2.0-global/.claude/screen-tracker/_p2p_mockup_analysis.tmp.md\" 2>/dev/null && echo \"Cleaned up temp file\")",
+      "PowerShell(Set-Location \"d:\\\\Repos\\\\PWDS\\\\pwds-soruban\\\\pss-2.0-global\\\\PSS_2.0_Frontend\"; pnpm exec tsc --noEmit 2>&1 | Out-File -FilePath \"$env:TEMP\\\\tsc-reconciliation.log\" -Encoding utf8; Get-Content \"$env:TEMP\\\\tsc-reconciliation.log\" | Select-String -Pattern \"reconciliation\" -SimpleMatch -CaseSensitive:$false)",
+      "PowerShell(dotnet build \"d:\\\\Repos\\\\PWDS\\\\pwds-soruban\\\\pss-2.0-global\\\\PSS_2.0_Backend\\\\PeopleServe\\\\Services\\\\Base\\\\Base.API\\\\Base.API.csproj\" --nologo 2>&1)",
+      "PowerShell(dotnet build \"d:\\\\Repos\\\\PWDS\\\\pwds-soruban\\\\pss-2.0-global\\\\PSS_2.0_Backend\\\\PeopleServe\\\\PeopleServe.sln\" --nologo -v q 2>&1)"
     ],
     "ask": [
       "Bash(rm -rf *)",
