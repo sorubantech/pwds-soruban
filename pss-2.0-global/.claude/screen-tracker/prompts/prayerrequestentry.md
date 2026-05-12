@@ -993,3 +993,55 @@ GridCode: PRAYERREQUESTS
   3. Execute `sql-scripts-dyanmic/PrayerRequests-sqlscripts.sql` against the dev DB
   4. `pnpm dev` and visit `/{lang}/crm/prayerrequest/prayerrequests` → verify workspace shell + Tab 1 grid + KPI widgets + +Record Prayer Request → FORM (5 channel cards) → DETAIL (6-card multi-column) → moderation actions (Approve/Reject/etc.) → Tab 2/3 placeholders
   5. Test the legacy stub redirects: `/prayerrequestentry` → `/prayerrequests?tab=entry`, `/replyqueue` → `?tab=replyqueue`, `/reviewreply` → `?tab=reviewreplies`
+
+### Session 2 — 2026-05-12 — FIX — COMPLETED
+
+- **Scope**: Tab 1 grid GraphQL field/variable mismatch — FE was calling non-existent `allPrayerRequestList` with variables `pageId / dateFrom / dateTo / includeArchived` while BE exposes `prayerRequests` (HC strips `Get` from `GetPrayerRequests`) with params `prayerRequestPageId / fromDate / toDate` (no `includeArchived`). Renamed FE side to match BE (lowest-risk).
+- **Files touched**:
+  - FE: `src/infrastructure/gql-queries/contact-queries/PrayerRequestEntryQuery.ts` — root field `allPrayerRequestList` → `prayerRequests`; variable renames `$pageId` → `$prayerRequestPageId`, `$dateFrom` → `$fromDate`, `$dateTo` → `$toDate`; removed `$includeArchived` (BE never accepted it); header comment refreshed.
+- **Deviations from spec**: None. FE store `pendingFilters.pageId/dateFrom/dateTo` typed-state names left as-is (dead scaffolding — not wired to the GQL call via FlowDataTable; renaming would be churn-without-effect).
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Validation results**:
+  - `dotnet build` (Base.API): **0 errors, 466 warnings** (all pre-existing — same warning set as Session 1, drift attributable to unrelated builds).
+  - GraphQL field-name resolution verified by reading the working sibling query `getPrayerRequestById` in the same file (HC `Get`-strip rule confirmed against `CampaignQuery.ts:28 result: campaigns(...)` + `ContactQuery.ts:19 result: contacts(...)`).
+- **Next step**: User runs `pnpm dev` and verifies Tab 1 grid loads at `/{lang}/crm/prayerrequest/prayerrequests?tab=entry`. No DB migration / no seed / no BE redeploy required.
+
+---
+
+> **Cross-session note**: This Session 2 was triggered by a workspace-wide bug report that also produced Session 2 entries on `prayerrequestreplyqueue.md` (#137) and `prayerrequestreviewreplies.md` (#138). Each entry lists only the files touched for its own screen scope. See those prompts for #137 / #138 detail.
+
+### Session 3 — 2026-05-12 — FIX — COMPLETED
+
+- **Scope**: Tab 1 grid GraphQL field-shape mismatch — `prayerRequests` was returning `PrayerRequestResponseDto` (nested `linkedContact / moderatedBy / category` objects), but the FE selection-set asks for flat fields per `PrayerRequestEntryResponseDto` (`linkedContactDisplayName`, `linkedContactAvatarUrl`, `takenByStaffId`, `takenByStaffName`, `categoryName`, `categoryEmoji`, `pageTitle`, `moderatedByContactName`, `intakeNote`, `createdBy / createdAt / modifiedBy / modifiedAt`, `isActive`). Root cause: Session 1 added `MapToEntryResponseDto` but never wired the endpoint to call it. Switched the GetAll handler + endpoint to project the entry-shaped DTO end-to-end and added MasterData PRAYERCATEGORY resolve for `CategoryName / CategoryEmoji`.
+- **Files touched**:
+  - BE:
+    - `Base.Application/Schemas/ContactSchemas/PrayerRequestPageSchemas.cs` — `PrayerRequestEntryResponseDto`: added 4 audit fields (`CreatedBy`, `CreatedAt`, `ModifiedBy`, `ModifiedAt`) to surface `Entity` base-class audit columns.
+    - `Base.Application/Business/ContactBusiness/PrayerRequests/GetAllQuery/GetAllPrayerRequestsList.cs` — `GetAllPrayerRequestsListResult` swap `GridFeatureResult<PrayerRequestResponseDto>` → `GridFeatureResult<PrayerRequestEntryResponseDto>`; handler appends MasterData PRAYERCATEGORY lookup (DataValue→DataName/Description), then maps rows via `MapToEntryResponseDto(r, catName, catEmoji)`; `MapToEntryResponseDto` populates `CreatedBy / CreatedAt (from r.CreatedDate) / ModifiedBy / ModifiedAt (from r.ModifiedDate)`.
+    - `Base.API/EndPoints/ContactModels/Queries/PrayerRequestQueries.cs` — endpoint return type `PaginatedApiResponse<IEnumerable<PrayerRequestResponseDto>>` → `PaginatedApiResponse<IEnumerable<PrayerRequestEntryResponseDto>>` on `GetPrayerRequests` (resolves to GraphQL field `prayerRequests`).
+- **Deviations from spec**: None. `GetPrayerRequestById` still returns `PrayerRequestResponseDto` (nested-FK shape) — out of scope for this fix; will be addressed if the Tab 1 detail/view-page surfaces the same shape mismatch.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Validation results**:
+  - `dotnet build` (Base.API): **0 errors, 482 warnings** (all pre-existing in unrelated files — FxRateService, ContactEmailRecipientProvider, ApiResponseExtension, AuthendicationMutations, UserQueries, PowerBIReportQueries, StagingTableService; none in #136 files).
+  - Category resolve pattern mirrors the existing handler `GetReplyQueueList.cs:53-66` (same `MasterDataType.TypeCode == "PRAYERCATEGORY"` + `DataName` / `Description` projection).
+
+### Session 4 — 2026-05-12 — ENHANCE — COMPLETED
+
+- **Scope**: Generate `sett.Grids` + `sett.Fields` + `sett.GridFields` seed for all 3 workspace tabs. Original #136 seed declared Tab 1 grid (`PRAYERREQUESTS`) but punted `GridFields` (GridFormSchema=SKIP per FLOW pattern). FE `FlowDataTable` still needs column-definition rows (gridCode → GridFields → FieldKey → response column) to render the grid header / advanced-filter dropdowns / column visibility. Added Tab 2 (`PRAYERREQUEST_REPLYQUEUE`) + Tab 3 (`PRAYERREQUEST_REVIEWREPLIES`) grids — `index-page.tsx` of each tab references those gridCodes verbatim. FieldKeys verified against the row-field selection in `PrayerRequestEntryQuery.ts` (`PRAYER_REQUEST_ENTRY_FIELDS`) and `PrayerRequestReplyQuery.ts` (`REPLY_QUEUE_ROW_FIELDS`, `REVIEW_QUEUE_ROW_FIELDS`).
+- **Files touched**:
+  - DB: `PSS_2.0_Backend/PeopleServe/Services/Base/sql-scripts-dyanmic/PrayerRequests-Grid-seed.sql` — NEW. 8 steps:
+    - Step 1: Insert Tab 2 + Tab 3 grids (Tab 1 already inserted by `PrayerRequests-sqlscripts.sql`).
+    - Step 2: Shared `ISACTIVE` field guard.
+    - Steps 3-5: ~40 `sett.Fields` rows across 3 tabs (per-grid `*_PK / *_SUBMITTEDAT / *_STATUS / *_CATEGORYNAME` etc.), each guarded with `NOT EXISTS` on `FieldCode`.
+    - Steps 6-8: `DELETE`-then-`INSERT` `sett.GridFields` for each grid. Tab 1: 15 columns (12 visible). Tab 2: 13 columns (10 visible). Tab 3: 14 columns (9 visible).
+    - Columns wired with `ValueSource` JSON for FK-style advanced filters: PRAYERCATEGORY MasterData filter, Contact picker (TakenByStaff / LinkedContact / DraftedBy), PrayerRequestPage picker, and `staticOptions` arrays for enum-style filters (ReceivedSource, Status, ReplyStatus, Channel).
+- **Deviations from spec**: Spec §⑥ §6 declared `GridFormSchema: SKIP` (correct — FLOW screens render forms via view-page.tsx, not RJSF). This session does NOT change that — `GridFormSchema` stays NULL on all 3 grid rows. Only `GridFields` (the grid-column metadata table) is populated.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Validation results**:
+  - FieldKey alignment cross-checked against FE GQL selection-sets in `PrayerRequestEntryQuery.ts` (Tab 1) and `PrayerRequestReplyQuery.ts` (Tab 2 `REPLY_QUEUE_ROW_FIELDS` + Tab 3 `REVIEW_QUEUE_ROW_FIELDS`).
+  - GridCodes match `index-page.tsx` `<FlowDataTable gridCode=...>`: Tab 1 `PRAYERREQUESTS` · Tab 2 `PRAYERREQUEST_REPLYQUEUE` · Tab 3 `PRAYERREQUEST_REVIEWREPLIES`.
+  - Idempotency: every Field insert is `NOT EXISTS`-guarded; GridFields uses `DELETE` + `INSERT` so re-runs reset column config cleanly.
+- **Next step**: User runs the seed via existing DB-seed runner (or psql directly) and refreshes the 3 tabs to confirm column header rendering + advanced-filter dropdowns load.
+- **Next step**: User runs `pnpm dev` and verifies Tab 1 grid loads cleanly (no GraphQL field-resolve errors) at `/{lang}/crm/prayerrequest/prayerrequests?tab=entry`. Rows should render with resolved `linkedContactDisplayName / takenByStaffName / categoryName / categoryEmoji / pageTitle / moderatedByContactName`. No DB migration / no seed / no FE rebuild required (FE query was already shaped for `PrayerRequestEntryResponseDto`).

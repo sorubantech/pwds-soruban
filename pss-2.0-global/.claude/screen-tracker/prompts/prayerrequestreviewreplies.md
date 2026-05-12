@@ -938,3 +938,22 @@ DBSeedActions:
 - **Known issues opened**: ISSUE-GRID-CONFIG (Low — DB-side grid registry row for `PRAYERREQUEST_REVIEWREPLIES` deferred per spec §⑨), ISSUE-PERMISSION-ACTIONS (Low — drafter resubmit action lives in #137 by design), ISSUE-ACTION-FLAG-GRANULARITY (Low — cosmetic)
 - **Known issues closed**: ISSUE-FE-PENDING (High — was blocking screen completion)
 - **Next step**: Empty — screen COMPLETED. User to run `pnpm dev` and exercise the 40+ acceptance criteria; if any flow breaks, open via `/continue-screen #138 "<issue>"`.
+
+### Session 2 — 2026-05-12 — UI — COMPLETED
+
+- **Scope**: Tab 3 KPI widget sizing — first card ("Pending Review") was wrapped in an extra `<div>` for the SLA-alert ring, which broke grid-cell uniformity (cards 2-4 were direct grid children). Refactored shared `<SummaryCard>` to accept an optional `className` passthrough on the root `<button>`, then dropped the wrapping div on Tab 3.
+- **Files touched**:
+  - FE (2 modified):
+    - `src/presentation/components/custom-components/summary-card/index.tsx` — added optional `className?: string` prop, merged into the root button's `cn(...)`; comments updated to note 4-consumer count (Tab 1, Tab 2, Tab 3, future).
+    - `src/presentation/components/page-components/contact-service/prayerrequests/tabs/reviewreplies/index-page.tsx` — removed the `<div className={cn("rounded-xl", slaAlert && "ring-2 ring-red-200")}>` wrapper around the "Pending Review" `<SummaryCard>`; replaced it with `className={cn(slaAlert && "ring-2 ring-red-200")}` directly on the card. All 4 cards are now direct grid children.
+- **Deviations from spec**: None. SLA-alert semantics preserved (red ring + red icon tile when `oldestPendingMinutes > 1440`). Visual treatment identical from user's POV; only the layout structure changed.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Validation results**:
+  - No BE changes — no rebuild needed for this fix (BE was rebuilt in the parallel #137 fix this same session).
+  - Visual verification deferred to user; expected outcome: all 4 KPI cards equal-width within the grid row at every breakpoint.
+- **Next step**: User runs `pnpm dev`, opens `/{lang}/crm/prayerrequest/prayerrequests?tab=reviewreplies`, confirms the 4 KPI cards are uniformly sized and the SLA red ring still appears on the first card when `oldestPendingMinutes > 1440`.
+
+---
+
+> **Cross-session note**: This Session 2 was triggered by a workspace-wide bug report that also produced Session 2 entries on `prayerrequestentry.md` (#136) and `prayerrequestreplyqueue.md` (#137). Each entry lists only the files touched for its own screen scope. See those prompts for #136 / #137 detail.

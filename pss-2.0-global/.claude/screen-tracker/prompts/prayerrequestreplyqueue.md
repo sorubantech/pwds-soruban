@@ -975,3 +975,27 @@ DBSeedActions:
 - **Known issues opened**: ISSUE-9, ISSUE-10, ISSUE-11 (all RESOLVED-BY-DESIGN — see § Known Issues table).
 - **Known issues closed**: ISSUE-5 (from #136 — workspace tab content registration), ISSUE-8 (from #136 — useCapability named-flag surface).
 - **Next step**: User actions: (1) `dotnet ef migrations add Add_PrayerRequestReplies_Table --force` to regen Designer + snapshot (closes ISSUE-6-bis); (2) `dotnet ef database update` to apply migration; (3) Execute `PrayerRequestReplies-sqlscripts.sql` to seed 2 sample rows; (4) `pnpm dev` and E2E test per §⑪ acceptance criteria (workspace → Tab 2 → grid → 3 KPI widgets → draft → channel selector → save → submit → recall → edit → detail). Frontend typecheck/runtime validation deferred to user per session direction.
+
+### Session 2 — 2026-05-12 — FIX — COMPLETED
+
+- **Scope**: Tab 2 GraphQL field mismatches reported by user — `GetReplyQueueSummary` selected 3 fields with wrong names on `ReplyQueueSummaryDto`, and `GetReplyQueueList` selected 4 fields missing from `ReplyQueueRowDto`. Renamed FE side for existing-but-renamed fields (lowest-risk); added 4 new server-computed properties on BE for genuinely missing fields per user direction.
+- **Files touched**:
+  - BE (2 modified):
+    - `Base.Application/Schemas/ContactSchemas/PrayerRequestReplySchemas.cs` — `ReplyQueueRowDto` (lines 150-189) now exposes `PrayerSubmitterName` (anonymous-aware concat), `PrayerBodyExcerpt` (server-truncated ~120 chars), `PrayerSubmittedAt` (from `PrayerRequest.SubmittedAt`, non-nullable), `LatestReplyDraftedAt` (from latest active reply's `DraftedAt`). 4 new properties, no breaking changes to existing fields.
+    - `Base.Application/Business/ContactBusiness/PrayerRequestReplies/GetAllQuery/GetReplyQueueList.cs` — projection at lines 134-154 now computes + populates the 4 new fields; anonymous-aware concat: `IsAnonymous ? "Anonymous" : ($"{First} {Last}".Trim())` with null fallback; excerpt at `Body.Length > 120 ? Substring(0,120) + "…" : Body`.
+  - FE (4 modified):
+    - `src/infrastructure/gql-queries/contact-queries/PrayerRequestReplyQuery.ts` — `REPLY_QUEUE_ROW_FIELDS` renames `latestReplyStatus` → `replyStatus`, `latestReplyLastActivityAt` → `lastActivityAt`; `GET_REPLY_QUEUE_SUMMARY` renames `awaitingReplyCountAllTime` → `awaitingReplyAllTime`, `inDraftCountAllTime` → `inDraftAllTime`, `submittedForReviewCountAllTime` → `submittedForReviewAllTime`.
+    - `src/domain/entities/contact-service/PrayerRequestReplyDto.ts` — `ReplyQueueRowDto` + `ReplyQueueSummaryDto` interfaces renamed accordingly; doc-comment refreshed.
+    - `src/presentation/components/page-components/contact-service/prayerrequests/tabs/replyqueue/index-page.tsx` — 3 SummaryCard subtitle expressions updated (`awaitingReplyCountAllTime` → `awaitingReplyAllTime` etc.).
+    - `src/presentation/components/page-components/contact-service/prayerrequests/tabs/replyqueue/reply-status-badge.tsx` — comment reference `latestReplyStatus` → `replyStatus`.
+- **Deviations from spec**: None. The 4 new BE fields keep the FE row-anchored DTO contract (FE asks for one stable field; server does the concat/truncate/source-attribute work).
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Validation results**:
+  - `dotnet build` (Base.API): **0 errors, 466 warnings** (all pre-existing — none in `PrayerRequestReplySchemas.cs` or `GetReplyQueueList.cs`).
+  - FE-side: replyqueue grid card columns + status badges unaffected by field renames (verified by grep — no remaining references to old names in the codebase).
+- **Next step**: User runs `pnpm dev` and verifies Tab 2 grid loads at `/{lang}/crm/prayerrequest/prayerrequests?tab=replyqueue`. No DB migration / no seed / BE redeploy required after `dotnet build` confirmation.
+
+---
+
+> **Cross-session note**: This Session 2 was triggered by a workspace-wide bug report that also produced Session 2 entries on `prayerrequestentry.md` (#136) and `prayerrequestreviewreplies.md` (#138). Each entry lists only the files touched for its own screen scope. See those prompts for #136 / #138 detail.
