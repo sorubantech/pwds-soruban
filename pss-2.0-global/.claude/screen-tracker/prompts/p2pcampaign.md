@@ -2,15 +2,15 @@
 screen: P2PCampaign
 registry_id: 15
 module: CRM (P2P Fundraising)
-status: PROMPT_READY
+status: COMPLETED
 scope: FULL
 screen_type: FLOW
 flow_variant: drawer-only
 complexity: Medium
 new_module: NO
 planned_date: 2026-05-12
-completed_date:
-last_session_date:
+completed_date: 2026-05-12
+last_session_date: 2026-05-12
 ---
 
 ## Tasks
@@ -26,16 +26,16 @@ last_session_date:
 - [x] Prompt generated
 
 ### Generation (by /build-screen → /generate-screen)
-- [ ] BA Analysis validated (prompt is exhaustively pre-analyzed; orchestrator validates against §① §② §④ §⑤ rather than re-running BA agent)
-- [ ] Solution Resolution complete (FLOW-with-drawer-only confirmed, scope = CRM cross-campaign management grid only — page-content editing belongs to #170)
-- [ ] UX Design finalized (Variant B header + 4 KPI widgets + 5 chips + 10-col grid + 560px right-side detail Sheet + Duplicate confirm modal + Delete confirm modal)
-- [ ] User Approval received
-- [ ] Backend code generated          ← 1 NEW query (GetP2PCampaignSummary — 4-KPI cross-campaign rollup) + 2 NEW commands (DuplicateP2PCampaignPage / DeleteP2PCampaignPage) + 1 SummaryDto block in `P2PCampaignPageSchemas.cs` + 1 Mapster config block in `DonationMappings.cs` (for Duplicate command's clone projection) + extend `P2PCampaignPageQueries.cs` + `P2PCampaignPageMutations.cs` (do NOT create separate endpoint files — every P2P GQL field lives in those 2 endpoint files per #170/#135 precedent)
-- [ ] Backend wiring complete         ← Mapster mappings only; NO migration; NO IDonationDbContext change (entity already registered); NO new DecoratorProperties (P2PCampaignPage already declared by #170 in `DecoratorDonationModules`)
-- [ ] Frontend code generated         ← Variant B index-page + 4 KPI widgets + 5 filter chips + Duplicate confirm modal + Delete confirm modal + Detail Sheet (560px right-side, 6 sections) + Zustand store + DTO + GQL Q/M + page-config + index router + 3 NEW shared cell renderers (`campaign-name-link` / `p2p-progress-cell` / `p2p-campaign-status-badge`)
-- [ ] Frontend wiring complete        ← entity-operations (P2PCAMPAIGN block) + 3 column-type registries (advanced/basic/flow) + shared-cell-renderers barrel + pages barrel + sidebar (already present from #170 menu seed? VERIFY — answer: NO. #170 seeded P2PCAMPAIGNPAGE under SET_PUBLICPAGES; this screen seeds P2PCAMPAIGN under CRM_P2PFUNDRAISING)
-- [ ] DB Seed script generated (`P2PCampaign-sqlscripts.sql` in `sql-scripts-dyanmic/` — preserve typo per ChequeDonation #6 precedent. **Idempotent**: menu @ `P2PCAMPAIGN` under `CRM_P2PFUNDRAISING` OrderBy=1, 6 capabilities (READ / WRITE / DELETE / DUPLICATE / PUBLISH / ARCHIVE), BUSINESSADMIN grants, Grid type FLOW, 10 GridFields, GridFormSchema=NULL — **NO MasterData seed** since campaign lifecycle is a string column on entity, not a MasterData lookup; **NO sample data seed** since #170 build seeds sample published P2PCampaignPage rows already)
-- [ ] Registry updated to COMPLETED
+- [x] BA Analysis validated (prompt is exhaustively pre-analyzed; orchestrator validates against §① §② §④ §⑤ rather than re-running BA agent)
+- [x] Solution Resolution complete (FLOW-with-drawer-only confirmed, scope = CRM cross-campaign management grid only — page-content editing belongs to #170)
+- [x] UX Design finalized (Variant B header + 4 KPI widgets + 5 chips + 10-col grid + 560px right-side detail Sheet + Duplicate confirm modal + Delete confirm modal)
+- [x] User Approval received
+- [x] Backend code generated          ← 1 NEW query (GetP2PCampaignSummary) + 2 NEW commands (DuplicateP2PCampaignPage / DeleteP2PCampaignPage) + SummaryDto + RecentDonorEntryDto + RecentDonors property on StatsDto (ISSUE-2 fix) + endpoint appends. Clone isolation via .AsNoTracking() + manual property copy (no Mapster ignore-config needed). Permissions.Create used for Duplicate (Permissions.Write doesn't exist in enum). `dotnet build` 0 errors.
+- [x] Backend wiring complete         ← No migration, no DbContext change, no new DecoratorProperty (all pre-existing from #170)
+- [x] Frontend code generated         ← Variant B index-page + 4 KPI widgets + 5 filter chips + Duplicate/Delete confirm modals + Detail Sheet (6 sections) + Zustand store + DTO + GQL Q/M + page-config + URL router + 2 NEW shared cell renderers (`p2p-campaign-status-badge` / `p2p-progress-cell`); REUSED existing `campaign-name-link` (Screen #30). Grid is plain HTML table (Reconciliation #14 precedent) — double-header bug impossible by construction.
+- [x] Frontend wiring complete        ← entity-operations P2PCAMPAIGN block (in `application/configs/data-table-configs/`) + 3 column-type registries (advanced/basic/flow component-column.tsx) + shared-cell-renderers barrel + pages barrel + sidebar via DB seed
+- [x] DB Seed script generated (`P2PCampaign-sqlscripts.sql` in `sql-scripts-dyanmic/` — typo preserved. Idempotent. Menu @ P2PCAMPAIGN under CRM_P2PFUNDRAISING OrderBy=1, 6 caps + BUSINESSADMIN grants, Grid FLOW, 10 GridFields, GridFormSchema=NULL. NO MasterData seed, NO sample data seed.)
+- [x] Registry updated to COMPLETED
 
 ### Verification (post-generation — FULL E2E required)
 - [ ] `dotnet build` passes
@@ -928,6 +928,97 @@ The drawer (Sheet) is an *addition* to the mockup — the mockup doesn't show a 
 - **FE complexity**: Medium (Variant B + drawer + 2 modals + 3 renderers — same as P2PFundraiser #135)
 - **Parallel BE+FE**: SAFE — no shared contract changes mid-build; DTO is appended on BE then mirrored on FE
 - **Total estimated tokens**: ~80-100K for full build (one Opus session)
+
+---
+
+## ⑬ Build Log
+
+### § Sessions
+
+### Session 1 — 2026-05-12 — BUILD — COMPLETED
+
+- **Scope**: Initial full build from PROMPT_READY prompt. Backend (sonnet) + Frontend (opus) executed in parallel. Skipped BA / Solution Resolver / UX Architect agent spawns per prompt §⑫ token-optimization directive (prompt was exhaustively pre-analyzed).
+- **Files touched**:
+  - BE created (4):
+    - `Base.Application/Business/DonationBusiness/P2PCampaignPages/Queries/GetP2PCampaignSummary.cs` (created)
+    - `Base.Application/Business/DonationBusiness/P2PCampaignPages/Commands/DuplicateP2PCampaignPage.cs` (created)
+    - `Base.Application/Business/DonationBusiness/P2PCampaignPages/Commands/DeleteP2PCampaignPage.cs` (created)
+    - `PSS_2.0_Backend/PeopleServe/Services/Base/sql-scripts-dyanmic/P2PCampaign-sqlscripts.sql` (created — typo `dyanmic` preserved per ChequeDonation #6 precedent)
+  - BE modified (4):
+    - `Base.Application/Schemas/DonationSchemas/P2PCampaignPageSchemas.cs` (modified — appended `RecentDonorEntryDto`, `RecentDonors` property on `P2PCampaignPageStatsDto`, `P2PCampaignSummaryDto`)
+    - `Base.Application/Business/DonationBusiness/P2PCampaignPages/Queries/GetP2PCampaignPageStats.cs` (modified — added top-5 recent donors projection per ISSUE-2)
+    - `Base.API/EndPoints/Donation/Queries/P2PCampaignPageQueries.cs` (modified — appended GetP2PCampaignSummary)
+    - `Base.API/EndPoints/Donation/Mutations/P2PCampaignPageMutations.cs` (modified — appended DuplicateP2PCampaignPage + DeleteP2PCampaignPage)
+  - FE created (13):
+    - `presentation/components/custom-components/data-tables/shared-cell-renderers/p2p-campaign-status-badge.tsx` (created)
+    - `presentation/components/custom-components/data-tables/shared-cell-renderers/p2p-progress-cell.tsx` (created)
+    - `presentation/components/page-components/crm/p2pfundraising/p2pcampaign/p2p-campaign-store.ts` (created)
+    - `presentation/components/page-components/crm/p2pfundraising/p2pcampaign/p2p-campaign-widgets.tsx` (created)
+    - `presentation/components/page-components/crm/p2pfundraising/p2pcampaign/p2p-campaign-filter-bar.tsx` (created)
+    - `presentation/components/page-components/crm/p2pfundraising/p2pcampaign/p2p-campaign-grid.tsx` (created)
+    - `presentation/components/page-components/crm/p2pfundraising/p2pcampaign/p2p-campaign-detail-sheet.tsx` (created)
+    - `presentation/components/page-components/crm/p2pfundraising/p2pcampaign/duplicate-p2p-campaign-modal.tsx` (created)
+    - `presentation/components/page-components/crm/p2pfundraising/p2pcampaign/delete-p2p-campaign-modal.tsx` (created)
+    - `presentation/components/page-components/crm/p2pfundraising/p2pcampaign/index-page.tsx` (created — Variant B)
+    - `presentation/components/page-components/crm/p2pfundraising/p2pcampaign/index.tsx` (created — URL router)
+    - `presentation/components/page-components/crm/p2pfundraising/index.ts` (created — module barrel)
+    - `presentation/pages/crm/p2pfundraising/p2pcampaign.tsx` (created — page-config gatekeeper)
+  - FE modified (10):
+    - `app/[lang]/crm/p2pfundraising/p2pcampaign/page.tsx` (modified — overwrote UnderConstruction stub)
+    - `domain/entities/donation-service/P2PCampaignPageDto.ts` (modified — appended P2PCampaignPageGridRow + P2PCampaignSummaryDto)
+    - `infrastructure/gql-queries/donation-queries/P2PCampaignPageQuery.ts` (modified — appended GET_P2P_CAMPAIGN_SUMMARY)
+    - `infrastructure/gql-mutations/donation-mutations/P2PCampaignPageMutation.ts` (modified — appended DUPLICATE_P2P_CAMPAIGN_PAGE + DELETE_P2P_CAMPAIGN_PAGE_HARD)
+    - `presentation/components/custom-components/data-tables/shared-cell-renderers/index.ts` (modified — exported 2 new renderers)
+    - `presentation/components/custom-components/data-tables/advanced/data-table-column-types/component-column.tsx` (modified — registered 2 new cases)
+    - `presentation/components/custom-components/data-tables/basic/data-table-column-types/component-column.tsx` (modified — registered 2 new cases)
+    - `presentation/components/custom-components/data-tables/flow/data-table-column-types/component-column.tsx` (modified — registered 2 new cases)
+    - `presentation/pages/crm/p2pfundraising/index.ts` (modified — appended P2PCampaignPageConfig export)
+    - `application/configs/data-table-configs/donation-service-entity-operations.ts` (modified — appended P2PCAMPAIGN block)
+  - DB: `PSS_2.0_Backend/sql-scripts-dyanmic/P2PCampaign-sqlscripts.sql` (created)
+- **Deviations from spec**:
+  - **Grid uses plain HTML table** (not `<FlowDataTable>` / `<DataTableContainer>`) — Reconciliation #14 precedent. Five status-driven Actions sets + em-dash conditional rendering + drawer trigger are awkward inside generic column-config; plain table mirrors Reconciliation's `ReconciliationDetailsTable`. Variant B intent (ScreenHeader + widgets above a single grid block, no nested headers) is preserved; the double-header bug is impossible by construction (no internal grid header to suppress).
+  - **2 new renderers instead of 3** — `campaign-name-link` already exists from Screen #30 and is registered in all 3 registries; per `feedback_component_reuse_create.md` (reuse-or-create protocol) it was reused, not duplicated. The grid component renders the name link inline via plain JSX since the page bypasses the registry-driven path; the existing renderer remains available for any future DB-seeded grid that uses `campaign-name-link` as its `GridComponentName`.
+  - **`Permissions.Create` used for Duplicate** instead of `Permissions.Write` — `Permissions.Write` does not exist in `DecoratorProperties.cs` (available: Read / Create / Modify / Delete / Toggle). Duplicate creates a new row, so `Create` is the correct semantic.
+  - **`Campaign.StartDate` in clone** set to `DateTime.UtcNow` rather than NULL — `Campaign.StartDate` is non-nullable in the entity. Admin resets via #170 Edit after Duplicate.
+  - **`RecentDonors.IsAnonymous`** derived as `ContactId == null` — no stored flag on GlobalDonation. Edge case: a donation with a linked Contact whose DisplayName is "Anonymous" will show as non-anonymous. Data-quality matter, not a bug.
+  - **`RecentDonors` message source** uses `GlobalDonation.Note` — no dedicated `DonorMessage` field; `Note` is the closest available.
+  - **Drawer Edit deep-link Tab routing** — Section 5 sub-link routes to `?tab=communication`; Section 6 Quick Actions "Edit Campaign Setup" routes to default Tab 1. Faithful to §⑥.
+  - **Days-Remaining computation** uses native `Date.UTC()` calendar-day math instead of `date-fns differenceInCalendarDays` — avoids adding a dependency; precision is daily per §⑫ ISSUE-5.
+  - **KPI currency display** uses `$` prefix — tenant-default currency lookup is V2 per §⑫ ISSUE-11; multi-currency disclaimer tooltip on Total Raised tile.
+  - **`DELETE_P2P_CAMPAIGN_PAGE_HARD` constant name** disambiguates from existing `DELETE_P2P_CAMPAIGN_PAGE` (which #170 aliased to soft-archive). New constant is the true hard-delete (Draft only).
+- **Known issues opened**:
+  - ISSUE-1 (MED) — Multi-currency in TotalRaised / AvgPerFundraiser / TopFundraiserAmount: raw NetAmount aggregation without FX conversion. V2 fix: per-row ExchangeRate join → BaseAmount column sum. Mitigation: UI tooltip discloses approximation. Pre-flagged in prompt.
+  - ISSUE-2 (LOW) — Drawer Section 4 currently renders **populated list** (BE fix applied this session) — RESOLVED. Originally flagged as fallback "Recent donors panel coming soon" pre-build; closed by BE session 1.
+  - ISSUE-3 (LOW) — Duplicate slug counter capped at 99; BadRequestException at 100+. V2: switch to short-UUID suffix if real-world usage hits it. Pre-flagged.
+  - ISSUE-8 (LOW) — Duplicate slug uniqueness uses `LOWER(Slug)` comparison; may not hit #170's filtered unique index `(CompanyId, LOWER(Slug)) WHERE NOT IsDeleted`. Performance acceptable at hundreds-of-pages tenant scale.
+  - ISSUE-10 (LOW) — Dashboard inline action assumes #135 P2PFundraiser supports `?campaignPageId=` URL filter. Coordinated via prompt; verify when #135 builds.
+  - ISSUE-DUPLICATE-CAPS (NEW LOW) — BE flagged that the DB seed references `DUPLICATE`/`PUBLISH`/`ARCHIVE` capability codes. If `auth.Capabilities` doesn't already have these rows, the menu-capability inserts will fail. Add the 3 rows defensively before running seed (BE provided the INSERT snippet).
+  - ISSUE-BE-FE-HANDSHAKE (NEW LOW) — Page will load and render before BE deploys, but `getP2PCampaignSummary` / `duplicateP2PCampaignPage` / `deleteP2PCampaignPage` calls will GraphQL-error until BE is live. UI gracefully degrades (widgets show "—"; modal toasts error). E2E acceptance requires BE deployed.
+  - ISSUE-PUBLIC-BASE-URL (NEW LOW) — Public page URLs use `process.env.NEXT_PUBLIC_PUBLIC_PAGE_BASE_URL` with `window.location.origin` fallback. Verify env var is set in deploy configs.
+  - ISSUE-TS-PRE-EXISTING (NEW LOW) — 3 pre-existing TS errors in `domain/entities/index.ts` (PageLayoutOption duplicate export) and `crm/communication/emailsendjob/{EmailConfiguration,RecipientFilterDialog}.tsx` (SaveFilterParams mismatch). NOT introduced by this build; flagged so they aren't attributed to #15.
+- **Known issues closed**:
+  - ISSUE-2 — RecentDonors projection added inline this session (BE).
+  - ISSUE-13 — StartDate/EndDate already exposed by #170; verified no work needed.
+  - ISSUE-14 — Mapster clone-isolation resolved via `.AsNoTracking()` + manual property copy (no ignore-config required).
+  - ISSUE-15 — `sql-scripts-dyanmic/` typo preserved as required.
+- **Next step**: User runs (1) seed defensive `auth.Capabilities` INSERTs for DUPLICATE/PUBLISH/ARCHIVE if missing → (2) `psql … -f P2PCampaign-sqlscripts.sql` → (3) `dotnet build` (BE Sonnet session reported 0 errors) → (4) `pnpm dev` and full E2E test per prompt §⑪ (page load + 4 KPIs + 5 chips + 10-col grid + per-row actions × 5 status variants + drawer 6 sections + Duplicate modal happy path + Delete modal guard paths × 3 + deep-links to #170/#135/public page in new tab).
+
+### § Known Issues
+
+| ID | Severity | Description | Status |
+|----|----------|-------------|--------|
+| ISSUE-1 | MED | Multi-currency in TotalRaised / AvgPerFundraiser / TopFundraiserAmount (raw NetAmount sum without FX conversion) | OPEN (V2) |
+| ISSUE-2 | LOW | RecentDonors projection on P2PCampaignPageStatsDto | CLOSED Session 1 |
+| ISSUE-3 | LOW | Duplicate slug counter capped at 99 | OPEN (V2) |
+| ISSUE-8 | LOW | Duplicate slug check may not hit filtered unique index | OPEN |
+| ISSUE-10 | LOW | Dashboard action assumes #135 supports `?campaignPageId=` filter | OPEN (verify when #135 builds) |
+| ISSUE-13 | LOW | StartDate/EndDate on ResponseDto | CLOSED (no work needed) |
+| ISSUE-14 | LOW | Mapster clone-isolation | CLOSED via .AsNoTracking() |
+| ISSUE-15 | LOW | sql-scripts-dyanmic typo preservation | CLOSED |
+| ISSUE-DUPLICATE-CAPS | LOW | Seed references DUPLICATE/PUBLISH/ARCHIVE capability codes | OPEN — defensive INSERT before seed |
+| ISSUE-BE-FE-HANDSHAKE | LOW | New GQL fields need BE deployment before page is fully functional | OPEN — coordinate deploy |
+| ISSUE-PUBLIC-BASE-URL | LOW | Public page URLs depend on NEXT_PUBLIC_PUBLIC_PAGE_BASE_URL env | OPEN — verify deploy config |
+| ISSUE-TS-PRE-EXISTING | LOW | 3 pre-existing TS errors in unrelated files | OPEN — not introduced by #15 |
 
 ---
 
