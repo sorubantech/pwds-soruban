@@ -2,13 +2,15 @@
 screen: Crowdfunding
 registry_id: 16
 module: CRM (P2P Fundraising)
-status: PROMPT_READY
+status: COMPLETED
 scope: FULL
 screen_type: FLOW
 flow_variant: drawer-only
 complexity: High
 new_module: NO
 planned_date: 2026-05-12
+completed_date: 2026-05-13
+last_session_date: 2026-05-13
 ---
 
 ## Tasks
@@ -24,16 +26,16 @@ planned_date: 2026-05-12
 - [x] Prompt generated
 
 ### Generation (by /build-screen → /generate-screen)
-- [ ] BA Analysis validated (prompt is exhaustively pre-analyzed; orchestrator validates against §① §② §④ §⑤ rather than re-running BA agent)
-- [ ] Solution Resolution complete (FLOW-with-drawer-only confirmed; full editor deferred to follow-up screen)
-- [ ] UX Design finalized (Variant B header + 4 KPI widgets + 4 chips + cards-grid layout + 560px right-side detail Sheet + Quick Create dialog + lifecycle confirm modals + Duplicate / Delete confirm modals)
-- [ ] User Approval received
-- [ ] Backend code generated
-- [ ] Backend wiring complete (DbContext registration, Mapster mappings, DecoratorProperty `CrowdFund`, EF migration applied)
-- [ ] Frontend code generated
-- [ ] Frontend wiring complete (entity-operations CROWDFUNDING block + 3 column-type registries — only used for shared-cell renderers since grid is plain JSX card layout — + shared-cell-renderers barrel + pages barrel)
-- [ ] DB Seed script generated (`Crowdfunding-sqlscripts.sql` in `sql-scripts-dyanmic/` — typo preserved. Idempotent. Menu @ CROWDFUNDING under CRM_P2PFUNDRAISING OrderBy=3 + 8 caps READ/WRITE/DELETE/DUPLICATE/PUBLISH/UNPUBLISH/CLOSE/ARCHIVE + BUSINESSADMIN grants + Grid FLOW + GridFormSchema=NULL + NO master-data lookup [CrowdFundStatus is a string enum] + 2 sample Draft campaigns for smoke-test)
-- [ ] Registry updated to COMPLETED
+- [x] BA Analysis validated (prompt is exhaustively pre-analyzed; orchestrator validates against §① §② §④ §⑤ rather than re-running BA agent)
+- [x] Solution Resolution complete (FLOW-with-drawer-only confirmed; full editor deferred to follow-up screen)
+- [x] UX Design finalized (Variant B header + 4 KPI widgets + 4 chips + cards-grid layout + 560px right-side detail Sheet + Quick Create dialog + lifecycle confirm modals + Duplicate / Delete confirm modals)
+- [x] User Approval received
+- [x] Backend code generated
+- [x] Backend wiring complete (DbContext registration, Mapster mappings, DecoratorProperty `CrowdFund`, EF migration hand-crafted — user must run `dotnet ef migrations add` to regen Designer/Snapshot per ISSUE-19)
+- [x] Frontend code generated
+- [x] Frontend wiring complete (entity-operations CROWDFUNDING block + 3 column-type registries — only used for shared-cell renderers since grid is plain JSX card layout — + shared-cell-renderers barrel + pages barrel + 3 extra wiring barrels: DTO/Query/Mutation indexes)
+- [x] DB Seed script generated (`Crowdfunding-sqlscripts.sql` in `sql-scripts-dyanmic/` — typo preserved. Idempotent. Menu @ CROWDFUNDING under CRM_P2PFUNDRAISING OrderBy=3 + 8 caps READ/WRITE/DELETE/DUPLICATE/PUBLISH/UNPUBLISH/CLOSE/ARCHIVE + BUSINESSADMIN grants + Grid FLOW + GridFormSchema=NULL + NO master-data lookup [CrowdFundStatus is a string enum] + 2 sample Draft campaigns for smoke-test)
+- [x] Registry updated to COMPLETED
 
 ### Verification (post-generation — FULL E2E required)
 - [ ] `dotnet build` passes (no warnings in CrowdFunds folder)
@@ -1334,10 +1336,98 @@ The drawer (Sheet) is an *addition* to the mockup — mirror of P2PCampaign #15 
 
 ### § Sessions
 
-_(empty — populated by /build-screen)_
+### Session 1 — 2026-05-13 — BUILD — COMPLETED
+
+- **Scope**: Initial full build from PROMPT_READY prompt. BE + FE dispatched in parallel on Opus (FLOW complexity=High). BA / Solution Resolver / UX Architect agents skipped per §⑫ Token Optimization Notes.
+- **Files touched**:
+  - BE (20 created):
+    - `Base.Domain/Models/DonationModels/CrowdFund.cs` (created)
+    - `Base.Infrastructure/Data/Configurations/DonationConfigurations/CrowdFundConfiguration.cs` (created)
+    - `Base.Application/Schemas/DonationSchemas/CrowdFundSchemas.cs` (created)
+    - `Base.Application/Business/DonationBusiness/CrowdFunds/Commands/CrowdFundEntityHelper.cs` (created)
+    - `Base.Application/Validations/CrowdFundSlugValidator.cs` (created)
+    - `Base.Application/Business/DonationBusiness/CrowdFunds/Queries/GetAllCrowdFundList.cs` (created)
+    - `Base.Application/Business/DonationBusiness/CrowdFunds/Queries/GetCrowdFundSummary.cs` (created)
+    - `Base.Application/Business/DonationBusiness/CrowdFunds/Queries/GetCrowdFundById.cs` (created)
+    - `Base.Application/Business/DonationBusiness/CrowdFunds/Queries/GetCrowdFundStats.cs` (created)
+    - `Base.Application/Business/DonationBusiness/CrowdFunds/Commands/{CreateCrowdFund,UpdateCrowdFund,DuplicateCrowdFund,DeleteCrowdFund,PublishCrowdFund,UnpublishCrowdFund,CloseCrowdFund,ArchiveCrowdFund}.cs` (8 created)
+    - `Base.API/EndPoints/Donation/Queries/CrowdFundQueries.cs` (created)
+    - `Base.API/EndPoints/Donation/Mutations/CrowdFundMutations.cs` (created)
+    - `Base.Infrastructure/Migrations/20260513070928_Add_CrowdFund_Entities.cs` (created — hand-crafted; Designer/Snapshot pending regen per ISSUE-19)
+  - BE (6 modified):
+    - `Base.Application/Data/Persistence/IDonationDbContext.cs` (modified — DbSet appended)
+    - `Base.Infrastructure/Data/Persistence/DonationDbContext.cs` (modified — DbSet appended)
+    - `Base.Application/Extensions/DecoratorProperties.cs` (modified — `CrowdFund = "CROWDFUND"`)
+    - `Base.Domain/Models/DonationModels/GlobalDonation.cs` (modified — nullable FK + nav)
+    - `Base.Infrastructure/Data/Configurations/DonationConfigurations/GlobalDonationConfiguration.cs` (modified — HasOne + IX + extended CHECK constraint to 3-arg per deviation)
+    - `Base.Application/Mappings/DonationMappings.cs` (modified — CrowdFund Mapster block appended)
+  - FE (22 created):
+    - `src/domain/entities/donation-service/CrowdFundDto.ts` (created)
+    - `src/infrastructure/gql-queries/donation-queries/CrowdFundQuery.ts` (created)
+    - `src/infrastructure/gql-mutations/donation-mutations/CrowdFundMutation.ts` (created)
+    - `src/presentation/pages/crm/p2pfundraising/crowdfunding.tsx` (created)
+    - `src/presentation/components/custom-components/data-tables/shared-cell-renderers/{crowdfund-status-badge,crowdfund-progress-bar,crowdfund-category-chip}.tsx` (3 created)
+    - `src/presentation/components/page-components/crm/p2pfundraising/crowdfunding/{index,index-page,crowdfund-card,crowdfund-cards-grid,crowdfund-card-skeleton,crowdfund-widgets,crowdfund-filter-bar,crowdfund-detail-sheet,crowdfund-quick-create-dialog,crowdfund-quick-edit-dialog,lifecycle-confirm-modal,delete-crowdfund-modal,crowdfund-store,crowdfund-zod-schema}.{tsx,ts}` (14 created — co-located skeleton + `index.tsx` doubles as URL router + barrel per P2PCampaign #15 precedent)
+  - FE (11 modified):
+    - `src/app/[lang]/crm/p2pfundraising/crowdfunding/page.tsx` (modified — replaced UnderConstruction stub)
+    - `src/domain/entities/donation-service/index.ts` (modified — added CrowdFundDto export)
+    - `src/infrastructure/gql-queries/donation-queries/index.ts` (modified — added CrowdFundQuery export)
+    - `src/infrastructure/gql-mutations/donation-mutations/index.ts` (modified — added CrowdFundMutation export)
+    - `src/presentation/components/custom-components/data-tables/shared-cell-renderers/index.ts` (modified — added 3 renderer exports)
+    - `src/presentation/components/custom-components/data-tables/{advanced,basic,flow}/data-table-column-types/component-column.tsx` (3 modified — registered 3 column types)
+    - `src/application/configs/data-table-configs/donation-service-entity-operations.ts` (modified — appended CROWDFUNDING block)
+    - `src/presentation/pages/crm/p2pfundraising/index.ts` (modified — added CrowdFundingPageConfig export)
+    - `src/presentation/components/page-components/crm/p2pfundraising/index.ts` (modified — added crowdfunding barrel re-export)
+  - DB seed (1 created): `sql-scripts-dyanmic/Crowdfunding-sqlscripts.sql` (created)
+- **Deviations from spec**:
+  1. **Variant B containment**: index-page renders `<ScreenHeader>` + `<CrowdFundWidgets>` + `<CrowdFundFilterBar>` + `<CrowdFundCardsGrid>` as direct children — NO `<DataTableContainer>` wrapper used. Acceptable because the layout is a custom plain-JSX cards-grid (not a column-bound DataTable), so there is no internal table header to suppress. No double-header risk. (Strict prompt §⑥ wording said "DataTableContainer showHeader={false} wrapping the cards-grid" — FE agent's interpretation was simpler and equivalent.)
+  2. **EF migration Designer + ModelSnapshot intentionally omitted**: BE agent produced only the Up/Down migration `.cs` body. User must run `dotnet ef migrations remove` (to discard the hand-crafted file) then `dotnet ef migrations add Add_CrowdFund_Entities` so EF regenerates Designer + Snapshot. Migration body matches the model exactly.
+  3. **GlobalDonation CHECK constraint upgraded to 3-arg**: BE agent extended the existing single-source-page CHECK constraint (was 2-arg: OnlineDonationPageId + P2PCampaignPageId) to 3-arg by adding CrowdFundId. Down-migration restores 2-arg form.
+  4. **Goal Met inclusive count uses in-memory filtering**: `GetCrowdFundSummary.goalMetCount` loads candidate {Id, GoalAmount} rows then counts via aggLookup in memory (EF Core 10 + Npgsql couldn't translate the join+aggregate condition cleanly in one round-trip). Still a single small projection — acceptable for V1.
+  5. **`toggle` mutation alias**: CROWDFUNDING entity-operations has only 6 slots (getAll/getById/create/update/delete/toggle); FE agent aliased `toggle` to `UNPUBLISH_CROWDFUND` with comment that it's never invoked by this screen's UI. Mirrors P2PCampaign #15 `toggle → duplicate` alias.
+  6. **Cards-grid Tailwind arbitrary + inline-style belt-and-suspenders**: per ISSUE-9 the layout uses BOTH `grid-cols-[repeat(auto-fill,minmax(320px,1fr))]` AND `style={{ gridTemplateColumns: "..." }}` fallback. Inline-px in `style={{}}` is the documented ISSUE-9 exception.
+- **Known issues opened**: ISSUE-19, ISSUE-20, ISSUE-21 (see § Known Issues)
+- **Known issues closed**: None
+- **Next step**: User runs `dotnet ef migrations remove` then `dotnet ef migrations add Add_CrowdFund_Entities` (or `--force` to keep current body and regen Designer+Snapshot only) → `dotnet ef database update` → execute `Crowdfunding-sqlscripts.sql` → `pnpm dev` → smoke-test cards-grid + chips + Quick-Create + drawer + Publish flow. After that, run `/build-screen #173` for the Crowdfunding Page (public surface + 6-tab editor) which wraps this entity.
+
+### Session 2 — 2026-05-13 — DESIGN_CHANGE — COMPLETED
+
+- **Scope**: Reverse the CrowdFund ↔ GlobalDonation linkage direction. Per user direction: donations attribute via the existing `DonationType` taxonomy (new `'Crowd Donation'` `MasterData` value) and a many-to-many junction `fund.CrowdFundDonations(CrowdFundId, GlobalDonationId)`. This removes the just-shipped `fund.GlobalDonations.CrowdFundId` direct FK from Session 1.
+- **Files touched**:
+  - BE:
+    - `Base.Domain/Models/DonationModels/GlobalDonation.cs` (modified — removed `int? CrowdFundId` field + `CrowdFund? CrowdFund` nav)
+    - `Base.Infrastructure/Data/Configurations/DonationConfigurations/GlobalDonationConfiguration.cs` (modified — removed `HasOne(CrowdFund)` + `IX_GlobalDonations_CrowdFundId`; restored 2-arg `num_nonnulls` CHECK)
+    - `Base.Domain/Models/DonationModels/CrowdFundDonation.cs` (created — junction entity: `CrowdFundDonationId` PK + `CrowdFundId` FK + `GlobalDonationId` FK + nav properties)
+    - `Base.Infrastructure/Data/Configurations/DonationConfigurations/CrowdFundDonationConfiguration.cs` (created — unique index on `GlobalDonationId`, non-unique on `CrowdFundId`, both FKs `Restrict`)
+    - `Base.Domain/Models/DonationModels/CrowdFund.cs` (modified — updated header comment, added `ICollection<CrowdFundDonation> CrowdFundDonations` nav)
+    - `Base.Application/Data/Persistence/IDonationDbContext.cs` (modified — appended `DbSet<CrowdFundDonation> CrowdFundDonations`)
+    - `Base.Infrastructure/Data/Persistence/DonationDbContext.cs` (modified — appended `CrowdFundDonations => Set<CrowdFundDonation>()`)
+    - `Base.Infrastructure/Migrations/20260513070928_Add_CrowdFund_Entities.cs` (modified — removed all `GlobalDonations` changes from Up/Down; added `CrowdFundDonations` table create + 2 indexes; Down drops both tables)
+    - `Base.Application/Business/DonationBusiness/CrowdFunds/Queries/GetCrowdFundSummary.cs` (modified — donation aggregate GROUP BY rewritten to join through `CrowdFundDonations` junction)
+    - `Base.Application/Business/DonationBusiness/CrowdFunds/Queries/GetAllCrowdFundList.cs` (modified — same)
+    - `Base.Application/Business/DonationBusiness/CrowdFunds/Queries/GetCrowdFundById.cs` (modified — same)
+    - `Base.Application/Business/DonationBusiness/CrowdFunds/Queries/GetCrowdFundStats.cs` (modified — totals + WoW counts + Top-5 recent donors all rewritten through junction)
+    - `Base.Application/Business/DonationBusiness/CrowdFunds/Commands/DeleteCrowdFund.cs` (modified — Guard 2 donation-count now reads through junction)
+    - `Base.Application/Business/DonationBusiness/CrowdFunds/Commands/UnpublishCrowdFund.cs` (modified — same)
+    - `Base.Application/Business/DonationBusiness/CrowdFunds/Commands/DuplicateCrowdFund.cs` (modified — doc-only: clarifies clone starts with zero donations because aggregates live on the junction)
+  - FE: none (FE only references CrowdFund's own PK; no FE files saw the now-removed `GlobalDonation.CrowdFundId`)
+  - DB:
+    - `sql-scripts-dyanmic/Crowdfunding-sqlscripts.sql` (modified — STEP 0a inserts `'Crowd Donation' / CROWD_DONATION` row into `app.MasterData` under `MasterDataType.TypeCode = 'DONATIONTYPE'`; idempotent with EXISTS-on-type + NOT-EXISTS-on-row guards; header comment + ISSUE-22 entry updated)
+- **Deviations from spec**: None for this session. (Session 1 deviations 1–6 still apply; deviation 3 — "GlobalDonation CHECK constraint upgraded to 3-arg" — is REVERTED as part of this session by design.)
+- **Known issues opened**: ISSUE-22 (see § Known Issues)
+- **Known issues closed**: None. (Session 1's ISSUE-19/20/21 still apply against the rewritten migration.)
+- **Verification**: `dotnet build Base.API.csproj` → Build succeeded, 0 errors, 1 unrelated NPOI license warning.
+- **Next step**: User runs `dotnet ef migrations remove` then `dotnet ef migrations add Add_CrowdFund_Entities --force` to regenerate Designer + ModelSnapshot for the new junction-table-only shape → `dotnet ef database update` → execute the updated `Crowdfunding-sqlscripts.sql` (now seeds the `Crowd Donation` MasterData row) → smoke-test. Junction is empty at first; aggregations safely return zeros until the public-page surface (#173) starts inserting GlobalDonations + matching `CrowdFundDonations` rows.
 
 ### § Known Issues
 
-_(empty — populated by /build-screen)_
+| ID | Severity | Status | Title |
+|----|----------|--------|-------|
+| ISSUE-19 | LOW (DOC) | OPEN | EF migration Designer + ModelSnapshot regeneration required before `dotnet ef database update` |
+| ISSUE-20 | LOW | OPEN | Verify `OrganizationalUnits` table actually lives in `app` schema (migration assumes per P2PCampaignPage precedent; if it's `corg`, adjust principalSchema before applying) |
+| ISSUE-21 | LOW | OPEN | DB seed sample-data SELECTs use `app."Companies"`; if live DB uses a different schema the 2 sample inserts will silently skip (NOT EXISTS guards) |
+| ISSUE-22 | MED | OPEN | Public-page donation flow (#173) must explicitly insert a `fund.CrowdFundDonations` junction row each time it creates a `fund.GlobalDonations` row tagged `DonationType = 'Crowd Donation'`. If the junction insert is skipped, aggregations (RaisedAmount / DonorCount / RecentDonors / Goal-Met) will silently return zero for that campaign. Acceptance criteria for #173 must include this. |
+
+ISSUE-1 (MED multi-currency totalRaised), ISSUE-2 (MED public route — deferred to #173), ISSUE-3 (LOW slug counter cap), ISSUE-4 (MED IsGoalMet badge divergence — handled in goalMetCount), ISSUE-5/6/7/8/9/10/11/12/13/14/15/16/17/18 from prompt §⑫ all remain OPEN / accepted-as-designed per their original status. They are documented in the prompt and not duplicated here.
 
 ---

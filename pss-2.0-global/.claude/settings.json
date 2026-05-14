@@ -399,7 +399,23 @@
       "PowerShell(py --version 2>&1)",
       "PowerShell(python -c \"import openpyxl; print\\(openpyxl.__version__\\)\" 2>&1)",
       "PowerShell($src = \"D:\\\\Repos\\\\PWDS\\\\pwds-soruban\\\\pss-2.0-global\\\\.claude\\\\screen-tracker\\\\SCREEN-STATUS-OVERVIEW.xlsx\"; $bak = \"$src.bak-v2-$\\(Get-Date -Format yyyyMMdd-HHmmss\\)\"; Copy-Item $src $bak; Write-Output \"Backup: $bak\"; python \"C:\\\\Users\\\\USER\\\\AppData\\\\Local\\\\Temp\\\\update-excel-v2.py\")",
-      "PowerShell($src = \"D:\\\\Repos\\\\PWDS\\\\pwds-soruban\\\\pss-2.0-global\\\\.claude\\\\screen-tracker\\\\SCREEN-STATUS-OVERVIEW.xlsx\"; $bak = \"$src.bak-v3-$\\(Get-Date -Format yyyyMMdd-HHmmss\\)\"; Copy-Item $src $bak; Write-Output \"Backup: $bak\"; $env:PYTHONIOENCODING = 'utf-8'; python \"C:\\\\Users\\\\USER\\\\AppData\\\\Local\\\\Temp\\\\fix-summary-formulas.py\")"
+      "PowerShell($src = \"D:\\\\Repos\\\\PWDS\\\\pwds-soruban\\\\pss-2.0-global\\\\.claude\\\\screen-tracker\\\\SCREEN-STATUS-OVERVIEW.xlsx\"; $bak = \"$src.bak-v3-$\\(Get-Date -Format yyyyMMdd-HHmmss\\)\"; Copy-Item $src $bak; Write-Output \"Backup: $bak\"; $env:PYTHONIOENCODING = 'utf-8'; python \"C:\\\\Users\\\\USER\\\\AppData\\\\Local\\\\Temp\\\\fix-summary-formulas.py\")",
+      "PowerShell(python C:\\\\Users\\\\USER\\\\AppData\\\\Local\\\\Temp\\\\update-excel-v3.py)",
+      "PowerShell(python C:\\\\Users\\\\USER\\\\AppData\\\\Local\\\\Temp\\\\update-excel-v3b.py)",
+      "PowerShell(dotnet build PSS_2.0_Backend\\\\PeopleServe\\\\Services\\\\Base\\\\Base.API\\\\Base.API.csproj --nologo -v q 2>&1)",
+      "Bash(Get-Content \"d:\\\\Repos\\\\PWDS\\\\pwds-soruban\\\\pss-2.0-global\\\\PSS_2.0_Backend\\\\PeopleServe\\\\Services\\\\Base\\\\Base.Application\\\\Data\\\\Persistence\\\\IApplicationDbContext.cs\")",
+      "Bash(Select-String -Pattern \"IDbContext|CrowdFund|P2P|DbSet\")",
+      "Bash(Select-Object -First 30)",
+      "Bash(Select-String -Pattern \"error CS|Build succeeded|Error\\\\\\(s\\\\\\)\")",
+      "Bash(mkdir -p \"d:\\\\Repos\\\\PWDS\\\\pwds-soruban\\\\pss-2.0-global\\\\PSS_2.0_Frontend\\\\src\\\\app\\\\[lang]\\\\setting\\\\publicpages\\\\crowdfundingpage\")",
+      "Bash(mkdir -p \"d:\\\\Repos\\\\PWDS\\\\pwds-soruban\\\\pss-2.0-global\\\\PSS_2.0_Frontend\\\\src\\\\app\\\\[lang]\\\\\\(public\\)\\\\crowdfund\\\\[slug]\")",
+      "Bash(mkdir -p \"d:\\\\Repos\\\\PWDS\\\\pwds-soruban\\\\pss-2.0-global\\\\PSS_2.0_Frontend\\\\src\\\\app\\\\[lang]\\\\setting\\\\publicpages\\\\crowdfundingpage\" 2>/dev/null; echo \"done\")",
+      "Bash(mkdir -p \"d:\\\\Repos\\\\PWDS\\\\pwds-soruban\\\\pss-2.0-global\\\\PSS_2.0_Frontend\\\\src\\\\app\\\\[lang]\\\\\\(public\\)\\\\crowdfund\\\\[slug]\" 2>/dev/null && echo \"done\")",
+      "Bash(mkdir -p \"d:/Repos/PWDS/pwds-soruban/pss-2.0-global/PSS_2.0_Frontend/src/presentation/components/page-components/setting/publicpages/eventregpage\" *)",
+      "Bash(powershell -Command \"Get-Content 'C:\\\\Users\\\\USER\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--Repos-PWDS-pwds-soruban-pss-2-0-global\\\\cabb8ee2-7086-4659-ab46-5f9cec480349\\\\tasks\\\\bxqrr1yma.output' -ErrorAction SilentlyContinue | Select-Object -First 30\")",
+      "Bash(powershell -Command \"Get-Content 'C:\\\\Users\\\\USER\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--Repos-PWDS-pwds-soruban-pss-2-0-global\\\\cabb8ee2-7086-4659-ab46-5f9cec480349\\\\tasks\\\\ba3x2w2je.output' -ErrorAction SilentlyContinue\")",
+      "Bash(mv \"d:/Repos/PWDS/pwds-soruban/pss-2.0-global/PSS_2.0_Frontend/src/app/[lang]/\\(member\\)/login\" \"d:/Repos/PWDS/pwds-soruban/pss-2.0-global/PSS_2.0_Frontend/src/app/[lang]/\\(member\\)/member-login\" 2>/dev/null && echo \"OK\")",
+      "Bash(rm \"d:/Repos/PWDS/pwds-soruban/pss-2.0-global/PSS_2.0_Frontend/src/presentation/components/page-components/crm/grant/grantcalendar/grantcalendar-page-config.ts\")"
     ],
     "ask": [
       "Bash(rm -rf *)",
@@ -430,7 +446,11 @@
       "d:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global\\PSS_2.0_Frontend\\src\\app\\[lang]\\setting\\orgsettings",
       "d:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global",
       "d:\\Repos\\PWDS\\pwds-soruban - Copy\\pss-2.0-global\\PSS_2.0_Frontend\\src\\app\\[lang]\\(public)\\pray",
-      "C:\\Users\\USER\\AppData\\Local\\Temp"
+      "C:\\Users\\USER\\AppData\\Local\\Temp",
+      "d:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global\\PSS_2.0_Frontend\\src\\app\\[lang]\\setting\\publicpages\\crowdfundingpage",
+      "d:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global\\PSS_2.0_Frontend\\src\\app\\[lang]\\(public)\\crowdfund\\[slug]",
+      "d:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global\\PSS_2.0_Frontend\\src\\app\\[lang]\\(public)\\event",
+      "d:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global\\PSS_2.0_Frontend\\src\\app\\[lang]\\(member)\\login"
     ]
   }
 }

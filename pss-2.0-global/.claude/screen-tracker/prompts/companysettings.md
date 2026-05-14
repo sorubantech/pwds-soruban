@@ -7,15 +7,16 @@ scope: FULL
 screen_type: CONFIG
 config_subtype: SETTINGS_PAGE
 storage_pattern: singleton-per-tenant
-save_model: save-all
+save_model: save-all + per-tab-save (Section 9 NumberSequences is matrix-config with its own Save)
 complexity: High
 new_module: NO (uses existing `app` schema for Company enhancement + `sett` schema for NEW singletons + Setting group)
 planned_date: 2026-05-01
-completed_date: 2026-05-01
-last_session_date: 2026-05-01
+completed_date: 2026-05-13
+last_session_date: 2026-05-13
 backend_completed: true
 frontend_completed: true
 fe_session3_aligned: true
+session4_completed: true
 ---
 
 ## Tasks
@@ -1246,3 +1247,51 @@ After Session 1 BE-only build, user feedback drove a refactor:
   2. `pnpm dev` → load `/{lang}/setting/orgsettings/companysettings` as BUSINESSADMIN.
   3. Walk all 8 sections — confirm every FK ApiSelect populates from MasterData (TypeCode filter); confirm chip multi-select adds/removes correctly; confirm Save persists to all 3 tables in one round-trip; confirm Discard reverts.
   4. If any MasterData TypeCode dropdown is empty: verify the seed inserted those rows (TYPECODE casing matters — must be uppercase, e.g. `FINANCIALYEARSTARTMONTH` not `FinancialYearStartMonth`).
+
+
+### Session 4 — 2026-05-13 — ENHANCEMENT — COMPLETED
+
+- **Scope**: Two changes requested by user on the already-COMPLETED screen:
+  1. **Full-width layout** — the existing `max-w-6xl` container clamped content at 1152px. Removed so both sidebar nav and section content expand to viewport width.
+  2. **NEW §9 Number Sequences tab** — surfaces existing `sett.NumberSequenceEntityTypes` (catalog) + `sett.NumberSequenceConfigs` (per-tenant override) as an editable inline grid. Business: companies can modify the prefix/pattern/suffix/reset-policy of the unique-code generator (driven by `NumberSequenceGenerator`) for any registered entity. Section 9 is a matrix-config sub-pattern: own RHF form + own Apollo query/mutation + own Save button (does NOT participate in the composite Save All — counter state `LastSequence` / `LastResetPeriodKey` stays out of the composite payload).
+- **Files touched**:
+  - **BE — created (5)**:
+    - `Base.Application/Schemas/SettingSchemas/NumberSequenceConfigSchemas.cs` (created — `NumberSequenceConfigRowResponseDto` + `NumberSequenceConfigsResponseDto` + request DTOs)
+    - `Base.Application/Business/SettingBusiness/CompanySettings/Queries/GetNumberSequenceConfigsQuery/GetNumberSequenceConfigs.cs` (created — tenant-scoped LEFT JOIN of catalog + per-tenant overrides; `[CustomAuthorize(DecoratorSettingModules.CompanySettings, Permissions.Read)]`)
+    - `Base.Application/Business/SettingBusiness/CompanySettings/Commands/UpsertNumberSequenceConfigsCommand/UpsertNumberSequenceConfigs.cs` (created — `BaseCommandFluentValidator` validates `Id > 0` + Pattern non-empty when supplied + ResetPolicy ∈ {NEVER,YEARLY,FY,MONTHLY} + Prefix/Suffix maxLen 50; handler upserts by (CompanyId,NumberSequenceEntityTypeId); LastSequence/LastResetPeriodKey untouched; returns refreshed list via mediator.Send of Get query; `[CustomAuthorize(DecoratorSettingModules.CompanySettings, Permissions.Modify)]`)
+    - `Base.API/EndPoints/Setting/Queries/NumberSequenceConfigQueries.cs` (created — `GetNumberSequenceConfigs` GQL endpoint)
+    - `Base.API/EndPoints/Setting/Mutations/NumberSequenceConfigMutations.cs` (created — `UpsertNumberSequenceConfigs` GQL endpoint)
+  - **BE — modified (0)**: none — DbSets already existed on `ISettingDbContext` from earlier infra work, `DecoratorSettingModules.NumberSequenceConfig` already exists, namespaces already in GlobalUsing.
+  - **FE — created (4)**:
+    - `domain/entities/setting-service/NumberSequenceConfigDto.ts` (created — `SequenceResetPolicy` literal union + row/request/response DTOs mirroring BE shape)
+    - `infrastructure/gql-queries/setting-queries/NumberSequenceConfigQuery.ts` (created — `GET_NUMBER_SEQUENCE_CONFIGS_QUERY`)
+    - `infrastructure/gql-mutations/setting-mutations/NumberSequenceConfigMutation.ts` (created — `UPSERT_NUMBER_SEQUENCE_CONFIGS_MUTATION`)
+    - `presentation/components/page-components/setting/orgsettings/companysettings/sections/number-sequences-section.tsx` (created — self-contained section: own `useForm` + `useFieldArray`, Apollo Get + Upsert, inline Save + Reset buttons, Table grid with 7 columns: Entity name + code, Prefix, Suffix, Pattern, Reset Policy `Select` with `__inherit` sentinel, Enabled `Switch`, read-only Last Issued counter; mappers emit `null` for empty strings to honor "inherit catalog default" semantics; Skeleton + error + empty-catalog states)
+  - **FE — modified (5)**:
+    - `domain/entities/setting-service/index.ts` (added `export * from "./NumberSequenceConfigDto";`)
+    - `infrastructure/gql-queries/setting-queries/index.ts` (added barrel export)
+    - `infrastructure/gql-mutations/setting-mutations/index.ts` (added barrel export)
+    - `presentation/components/page-components/setting/orgsettings/companysettings/companysettings-store.ts` (extended `ActiveSection` union to include `9`)
+    - `presentation/components/page-components/setting/orgsettings/companysettings/settings-page.tsx` (removed `mx-auto … max-w-6xl` from outer flex container for full-viewport width; added `SIDEBAR_ITEMS` 9th entry `{ id: 9, label: "Number Sequences", icon: "ph:hash" }`; imported + rendered `<NumberSequencesSection />` for `activeSection === 9`)
+    - `presentation/components/page-components/setting/orgsettings/companysettings/components/save-changes-bar.tsx` (removed `mx-auto max-w-6xl` from inner flex container to match the page's new full-width frame)
+  - **DB**: no schema change. Existing seed `sql-scripts-dyanmic/NumberSequenceEntityType-sqlscripts.sql` already seeds GLOBALDONATION; adding more entity catalogs is a separate concern (the seed file already has template comments for new entries).
+- **Verification**:
+  - `dotnet build` Base.Application — **0 errors**, 415 pre-existing warnings (no warnings introduced by new files).
+  - `npx tsc --noEmit -p .` — 5 pre-existing errors in unrelated CRM files (`event/eventanalytics/event-overview-bar.tsx`, `event/eventanalytics/event-selector.tsx`, `domain/entities/index.ts` duplicate `PageLayoutOption` export, `crm/communication/emailsendjob/components/EmailConfiguration.tsx`, `RecipientFilterDialog.tsx`). Zero errors in any of the 9 created/modified files for this session.
+- **Deviations from spec**: None. Save model chosen explicitly by user (per-tab Save, not piggyback Save All); architectural fit with matrix-config sub-pattern. Counter state intentionally not editable — owned by `NumberSequenceGenerator.GenerateAsync`.
+- **Known issues opened**:
+  - **ISSUE-16** (LOW) — When `activeSection === 9`, the sticky parent `SaveChangesBar` remains mounted (disabled because parent form is clean). UX is acceptable but slightly noisy. Could conditionally hide the bar on §9 if user feedback requests it.
+  - **ISSUE-17** (LOW) — Catalog seed currently only registers `GLOBALDONATION`. Adding more entity types (Contact, Member, Volunteer, ReceiptBook, Case, etc.) is out of scope for this session — the seed file has commented templates for adding rows. Until additional rows are inserted, §9 grid shows only the GlobalDonation row.
+  - **ISSUE-18** (LOW) — Pattern token-help text shows `{PREFIX} {SUFFIX} {YYYY} {YY} {MM} {DD} {FY} {COMPANYID} {SEQ:NNNN}` on every row. Could be lifted to a single header tip above the table; deferred — current placement keeps token reference adjacent to the input.
+- **Known issues closed**: None.
+- **Next step**: Manual E2E verification:
+  1. `pnpm dev` → BUSINESSADMIN → `/{lang}/setting/orgsettings/companysettings` → click "Number Sequences" tab.
+  2. Confirm: row appears for GLOBALDONATION; placeholder text in Prefix/Pattern shows the catalog default; editing a field enables Save; saving persists + refetches; Reset reverts.
+  3. Confirm full-width: sections 1–8 expand beyond the previous 1152px clamp.
+  4. (Optional) Add a second `sett.NumberSequenceEntityTypes` row via the seed file template (e.g. RECEIPTBOOK) and verify the grid lists it on next page load.
+
+
+
+### Session 4 Addendum — Status flip
+
+Prompt frontmatter flipped: `status: NEEDS_FIX` → `status: COMPLETED`; `session4_in_progress: true` flag removed. Registry row #75 flipped from NEEDS_FIX back to COMPLETED with Notes appended (Session 4 file delta).
