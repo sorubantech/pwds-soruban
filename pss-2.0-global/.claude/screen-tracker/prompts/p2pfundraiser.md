@@ -2,14 +2,15 @@
 screen: P2PFundraiser
 registry_id: 135
 module: CRM (P2P Fundraising)
-status: PROMPT_READY
+status: COMPLETED
 scope: FULL
 screen_type: FLOW
 complexity: High
 new_module: NO
 planned_date: 2026-05-10
-completed_date:
-last_session_date:
+completed_date: 2026-05-13
+last_session_date: 2026-05-13
+session_count: 2
 ---
 
 ## Tasks
@@ -25,16 +26,16 @@ last_session_date:
 - [x] Prompt generated
 
 ### Generation (by /build-screen → /generate-screen)
-- [ ] BA Analysis validated (prompt is exhaustively pre-analyzed; orchestrator validates against §① §② §④ §⑤ rather than re-running BA agent)
-- [ ] Solution Resolution complete (FLOW-with-drawer-only confirmed, scope = admin-management-grid only — page-content editing belongs to #170)
-- [ ] UX Design finalized (Variant B header + 4 KPI widgets + 5 chips + 10-col grid + 520px right-side detail Sheet + Invite Fundraiser modal)
-- [ ] User Approval received
-- [ ] Backend code generated          ← 3 queries (GetAllP2PFundraiserList / GetP2PFundraiserSummary / GetP2PFundraiserById) + 3 commands (InviteP2PFundraiser / UpdateP2PFundraiser / SendMessageToP2PFundraiser) + 6 DTO blocks in P2PFundraiserSchemas.cs + Mapster configs added in DonationMappings.cs + extend P2PCampaignPageQueries.cs + P2PCampaignPageMutations.cs (do NOT create separate endpoint files — the 5 lifecycle commands already live there per #170 precedent)
-- [ ] Backend wiring complete         ← Mapster mappings only; NO migration; NO IDonationDbContext change (entity already registered)
-- [ ] Frontend code generated         ← Variant B index-page + 4 KPI widgets + filter chips + Invite Fundraiser modal + Reject Reason modal + Send Message modal + Detail Sheet (520px right-side, mockup-matching) + Zustand store + DTO + GQL Q/M + page-config + index router + 3 NEW shared cell renderers (`fundraiser-cell` avatar+name+email; `progress-cell` raised/goal bar with %; `team-badge`)
-- [ ] Frontend wiring complete        ← entity-operations + 3 column-type registries + shared-cell-renderers barrel + pages barrel + sidebar (already present from #170 menu seed? VERIFY)
-- [ ] DB Seed script generated (`P2PFundraiser-sqlscripts.sql` in `sql-scripts-dyanmic/` — preserve typo per ChequeDonation #6 precedent. **Idempotent**: menu @ `P2PFUNDRAISER` under `CRM_P2PFUNDRAISING` OrderBy=2 if not present, 8 capabilities, BUSINESSADMIN grants, Grid type FLOW, 10 GridFields, GridFormSchema=NULL — **NO MasterData seed** since FundraiserStatus is a string enum on entity, not a MasterData lookup; **NO sample data seed** since #170 build seeds 3 sample fundraisers already)
-- [ ] Registry updated to COMPLETED
+- [x] BA Analysis validated (prompt is exhaustively pre-analyzed; orchestrator validates against §① §② §④ §⑤ rather than re-running BA agent)
+- [x] Solution Resolution complete (FLOW-with-drawer-only confirmed, scope = admin-management-grid only — page-content editing belongs to #170)
+- [x] UX Design finalized (Variant B header + 4 KPI widgets + 5 chips + 10-col grid + 520px right-side detail Sheet + Invite Fundraiser modal)
+- [x] User Approval received (2026-05-13 — single-session BE+DB+FE in parallel, Reconciliation #14 / Refund #13 precedent)
+- [x] Backend code generated          ← 3 queries (GetAllP2PFundraiserList / GetP2PFundraiserSummary / GetP2PFundraiserDetailById — renamed from GetP2PFundraiserById per existing-endpoint collision) + 3 commands (InviteP2PFundraiser / UpdateP2PFundraiserAdmin — renamed / SendMessageToP2PFundraiser) + 6 DTO blocks + 1 inner DTO RecentDonationDto + 1 inner DTO P2PFundraiserSocialShareCountsDto in P2PFundraiserSchemas.cs + Mapster configs added in DonationMappings.cs + extended P2PCampaignPageQueries.cs + P2PCampaignPageMutations.cs
+- [x] Backend wiring complete         ← Mapster mappings + 1 EF migration `Add_P2PFundraiser_AdminInviteAudit` (2 nullable cols InvitedBy + InvitationEmailSentAt on fund.P2PFundraisers); NO IDonationDbContext change
+- [x] Frontend code generated         ← Variant B index-page + 4 KPI widgets + 5 chips + Invite Fundraiser modal + Reject Reason modal + Send Message modal + Detail Sheet (520px right-side) + Zustand store + DTO + GQL Q/M + page-config + 3 NEW shared cell renderers (fundraiser-cell, progress-cell, fundraiser-status-badge) + currency-amount-bold registry alias
+- [x] Frontend wiring complete        ← entity-operations P2PFUNDRAISER block (non-entity aliases) + 3 column-type registries + shared-cell-renderers barrel + pages barrel + page-components barrel + DTO barrel + GQL queries barrel + GQL mutations barrel + route stub OVERWRITTEN
+- [x] DB Seed script generated        ← `sql-scripts-dyanmic/P2PFundraiser-sqlscripts.sql` (typo preserved). Idempotent NOT EXISTS gates. Menu @ P2PFUNDRAISER under CRM_P2PFUNDRAISING OrderBy=2. 9 capabilities (READ/WRITE→MODIFY mapped/DELETE/APPROVE/REJECT/PAUSE/RESUME/INVITE/ISMENURENDER — 1 extra vs prompt's 8, per Refund-sqlscripts.sql precedent). BUSINESSADMIN role grants. Grid FLOW + GridFormSchema=NULL + 10 sett.Fields + 10 sett.GridFields. No MasterData, no sample data.
+- [x] Registry updated to COMPLETED
 
 ### Verification (post-generation — FULL E2E required)
 - [ ] `dotnet build` passes
@@ -897,4 +898,105 @@ The `P2PFundraiser` entity is **owned by #170 P2PCampaignPage** (parent-with-chi
 
 ## ⑬ Build Log
 
-(Empty — appended by /build-screen on first build session.)
+### § Sessions
+
+### Session 1 — 2026-05-13 — BUILD — COMPLETED
+
+- **Scope**: Initial full build from PROMPT_READY prompt. Single-session BE + DB seed + FE in parallel (Reconciliation #14 / Refund #13 precedent). Opus BE + Opus FE; BA / Solution Resolver / UX Architect agent spawns skipped (§①–⑫ exhaustive).
+- **Files touched**:
+  - **BE (6 created)**:
+    - `PSS_2.0_Backend/.../Base.Application/Business/DonationBusiness/P2PFundraisers/Commands/InviteP2PFundraiser.cs` (created)
+    - `.../Commands/UpdateP2PFundraiserAdmin.cs` (created)
+    - `.../Commands/SendMessageToP2PFundraiser.cs` (created)
+    - `.../Queries/GetAllP2PFundraiserList.cs` (created)
+    - `.../Queries/GetP2PFundraiserSummary.cs` (created)
+    - `.../Queries/GetP2PFundraiserDetailById.cs` (created)
+  - **BE (6 modified)**:
+    - `.../Base.Domain/Models/DonationModels/P2PFundraiser.cs` (modified — +InvitedBy + InvitationEmailSentAt)
+    - `.../Base.Infrastructure/Data/Configurations/DonationConfigurations/P2PFundraiserConfiguration.cs` (modified — explicit Property() for new audit cols)
+    - `.../Base.Application/Schemas/DonationSchemas/P2PFundraiserSchemas.cs` (modified — +6 DTOs incl. nested RecentDonationDto + P2PFundraiserSocialShareCountsDto)
+    - `.../Base.Application/Mappings/DonationMappings.cs` (modified — +Mapster configs for ListItemDto + DetailDto)
+    - `.../Base.API/EndPoints/Donation/Mutations/P2PCampaignPageMutations.cs` (modified — +3 mutations)
+    - `.../Base.API/EndPoints/Donation/Queries/P2PCampaignPageQueries.cs` (modified — +3 queries)
+  - **BE Migration**: `20260513053035_Add_P2PFundraiser_AdminInviteAudit.cs` + `.Designer.cs` + `ApplicationDbContextModelSnapshot.cs` (modified). ALTER TABLE fund."P2PFundraisers" ADD 2 nullable columns. `-c ApplicationDbContext` (local repo uses single ApplicationDbContext, not DonationDbContext as prompt §⑫ said).
+  - **FE (18 created)**:
+    - `PSS_2.0_Frontend/src/domain/entities/donation-service/P2PFundraiserAdminDto.ts` (created)
+    - `src/infrastructure/gql-queries/donation-queries/P2PFundraiserAdminQuery.ts` (created)
+    - `src/infrastructure/gql-mutations/donation-mutations/P2PFundraiserAdminMutation.ts` (created)
+    - `src/presentation/components/custom-components/data-tables/shared-cell-renderers/fundraiser-cell.tsx` (created)
+    - `.../shared-cell-renderers/progress-cell.tsx` (created)
+    - `.../shared-cell-renderers/fundraiser-status-badge.tsx` (created)
+    - `src/presentation/pages/crm/p2pfundraising/p2pfundraiser.tsx` (created — page-config wrapper)
+    - `src/presentation/components/page-components/crm/p2pfundraising/p2pfundraiser/index-page.tsx` (created — Variant B root)
+    - `.../p2pfundraiser/p2p-fundraiser-store.ts` (created — Zustand)
+    - `.../p2pfundraiser/p2p-fundraiser-widgets.tsx` (created — 4 KPIs)
+    - `.../p2pfundraiser/p2p-fundraiser-filter-chips.tsx` (created — 5 chips)
+    - `.../p2pfundraiser/p2p-fundraiser-toolbar.tsx` (created — search + Campaign + Sort)
+    - `.../p2pfundraiser/p2p-fundraiser-data-table.tsx` (created — plain HTML table, Reconciliation #14 pattern)
+    - `.../p2pfundraiser/p2p-fundraiser-actions-cell.tsx` (created — status-driven actions)
+    - `.../p2pfundraiser/p2p-fundraiser-detail-sheet.tsx` (created — 520px right-side Sheet, 6 sections)
+    - `.../p2pfundraiser/p2p-fundraiser-recent-donors-table.tsx` (created)
+    - `.../p2pfundraiser/p2p-fundraiser-admin-actions.tsx` (created)
+    - `.../p2pfundraiser/invite-fundraiser-modal.tsx` (created)
+    - `.../p2pfundraiser/reject-reason-modal.tsx` (created)
+    - `.../p2pfundraiser/send-message-modal.tsx` (created)
+    - `.../p2pfundraiser/index.ts` (created — barrel)
+  - **FE (10 modified)**:
+    - `src/app/[lang]/crm/p2pfundraising/p2pfundraiser/page.tsx` (modified — overwrote UnderConstruction stub)
+    - `src/domain/entities/donation-service/index.ts` (modified — barrel re-export)
+    - `src/infrastructure/gql-queries/donation-queries/index.ts` (modified — barrel)
+    - `src/infrastructure/gql-mutations/donation-mutations/index.ts` (modified — barrel)
+    - `src/presentation/pages/crm/p2pfundraising/index.ts` (modified — P2PFundraiserPageConfig export)
+    - `src/presentation/components/page-components/crm/p2pfundraising/index.ts` (modified — P2PFundraiserIndexPage export)
+    - `.../shared-cell-renderers/index.ts` (modified — 3 renderer barrel exports)
+    - `.../data-tables/advanced/data-table-column-types/component-column.tsx` (modified — +4 cases: fundraiserCell / progressCell / fundraiserStatusBadge / currency-amount-bold)
+    - `.../data-tables/basic/data-table-column-types/component-column.tsx` (modified — same 4 cases)
+    - `.../data-tables/flow/data-table-column-types/component-column.tsx` (modified — same 4 cases)
+    - `src/application/configs/data-table-configs/donation-service-entity-operations.ts` (modified — P2PFUNDRAISER block with non-entity aliases, mirrors RECONCILIATION precedent)
+  - **DB**: `PSS_2.0_Backend/.../sql-scripts-dyanmic/P2PFundraiser-sqlscripts.sql` (created — idempotent, 7 STEPs; preserve `dyanmic` typo)
+- **Deviations from spec**:
+  1. **DbContext**: Prompt §⑫ said `-c DonationDbContext`. Repo uses single `ApplicationDbContext`. Migration ran with the local context.
+  2. **Naming collisions**: Existing `UpdateP2PFundraiserCommand` (from #170 with `P2PFundraiserRequestDto` arg) prevented same-name reuse; admin-override renamed to `UpdateP2PFundraiserAdminCommand` (GQL: `updateP2PFundraiserAdmin`). Existing `GetP2PFundraiserByIdQuery` (returns `P2PFundraiserResponseDto`) prevented reuse; drawer-detail renamed to `GetP2PFundraiserDetailByIdQuery` (GQL: `getP2PFundraiserDetailById`).
+  3. **Handler folder**: Placed under `P2PFundraisers/` (not `P2PCampaignPages/` as prompt §⑦ said) to match local #170 precedent.
+  4. **Contact email/phone**: Prompt §③ named `CorgModels.Contact`; actual path is `ContactModels.Contact`. Email/phone live in child tables `ContactEmailAddresses`/`ContactPhoneNumbers`; JOIN-based lookup used (StartP2PFundraiser #170 pattern).
+  5. **GoalCurrencyId source**: Prompt said `parent.PrimaryCurrencyId` on `P2PCampaignPage`; that field doesn't exist. Used `parent.Campaign.GoalCurrencyId` instead.
+  6. **RecentDonations.IsAnonymous**: `GlobalDonation` entity has no `IsAnonymous` column — heuristic `(IsIndividualDonation ?? false) == false` used. DonorMessage mapped from `GlobalDonation.Note`.
+  7. **Seed capability count**: 9 caps not 8 (added `ISMENURENDER` per Refund-sqlscripts.sql precedent; `WRITE` mapped to existing `MODIFY` per PSS standard taxonomy + added APPROVE/REJECT/PAUSE/RESUME/INVITE rows to `auth."Capabilities"` with NOT EXISTS guard before grant).
+  8. **FE GQL field paths**: FE agent wrote against prompt's §⑩ names (`p2PFundraisers`, `p2PFundraiserSummary`, `p2PFundraiserAdminById`); BE agent exposed under method-name camelCase (`getAllP2PFundraiserList`, `getP2PFundraiserSummary`, `getP2PFundraiserDetailById`). Main session patched the 3 FE query strings + the data-table consumer (`data` is array, `totalCount` sibling per `PaginatedApiResponse` Refund #13 precedent).
+  9. **FE GQL field cleanup**: removed `teamMemberCount` (not on BE DTO); fixed `whatsapp` → `whatsApp` (HotChocolate camelCase of BE property `WhatsApp`).
+  10. **FE grid**: plain HTML `<table>` (Reconciliation #14 / P2PCampaign #15 precedent), not `FlowDataTableContainer`. `showHeader={false}` honored by construction (no internal header rendered). Drawer is Zustand-driven, not URL-routed.
+- **Known issues opened (new ISSUEs from this session)**:
+  - ISSUE-1 (OPEN, LOW) — Drawer state Zustand-driven, not URL-routed. Deep-linking to a specific drawer (e.g. notification CTA) unsupported in MVP. Future: migrate to `?drawer=<id>` (P2PCampaign #15 pattern).
+  - ISSUE-2 (OPEN, LOW) — Seed `actions` GridComponentName doesn't resolve in registries; plain-table grid renders `<P2PFundraiserActionsCell>` directly bypass. Wire only if migrated to FlowDataTableContainer.
+  - ISSUE-3 (OPEN, MED) — `IsAnonymous` heuristic via `IsIndividualDonation==false`. Needs explicit `IsAnonymous` boolean column on `GlobalDonation` (V2).
+  - ISSUE-4 (OPEN, MED) — `InviteP2PFundraiser` creates Contact with `ContactBaseTypeId=0` + `PrimaryCountryId=0` placeholders (StartP2PFundraiser #170 pattern). Real CRM intake rules + ContactSource attribution + default country from tenant in V2.
+  - ISSUE-5 (OPEN, LOW) — Conversion rate scaling: handler returns percentage (e.g. `12.50` for 12.5%); FE renderer consumes as-is. Document if downstream expects 0–1 fraction.
+  - ISSUE-6 (OPEN, MED) — `inviteP2PFundraiser` email send SERVICE_PLACEHOLDER — logs structured event + sets `InvitationEmailSentAt=NOW`. Real send when `notify.EmailQueue` infra ships.
+  - ISSUE-7 (OPEN, MED) — `sendMessageToP2PFundraiser` SERVICE_PLACEHOLDER — logs event only. Real Email/WhatsApp dispatch when notify infra ships.
+  - ISSUE-8 (OPEN, LOW) — Export List header button SERVICE_PLACEHOLDER toast.
+  - ISSUE-9 (OPEN, LOW) — `socialShareCounts` chips show "—" placeholder; depends on BE share-tracking pipeline (V2).
+  - ISSUE-10 (OPEN, LOW) — Team-row "Members" action SERVICE_PLACEHOLDER toast — full Team Members panel deferred to V2.
+- **Known issues closed**: None (all 7 prompt-flagged V2 deferrals remain as documented; ISSUE-15 typo-preservation honored, not "closed" in the bug-tracking sense).
+- **Next step**: User runs (1) `dotnet ef database update -c ApplicationDbContext` to apply migration; (2) apply `sql-scripts-dyanmic/P2PFundraiser-sqlscripts.sql`; (3) `dotnet build` full solution; (4) `pnpm dev` + full E2E per §⑪ acceptance criteria (4 KPIs / 5 chips / search / Campaign select / Sort select / 10-col grid / pending row tint / per-status inline actions / row-click drawer / Invite / Reject / Send Message modals / Approve+Pause+Resume mutations / Feature toggle / public child URL new tab / Edit deep-link).
+
+### Session 2 — 2026-05-13 — REFACTOR — COMPLETED
+
+- **Scope**: User directive — "use advanced table or flow table". Replaced the hand-rolled HTML `<table>` (Session 1 deviation #10 / ISSUE-2) with the canonical `FlowDataTable` pipeline (Refund #13 precedent). BE query signature reshaped to the shared `GridFeatureRequest` contract; FE GQL field names corrected to HotChocolate strip-Get convention (`allP2PFundraiserList` / `p2PFundraiserSummary` / `p2PFundraiserDetailById`); DB seed adds a synthetic actions GridField row + sets PK `IsPrimary=false` to suppress the standard `ActionColumnBuilder` (which only supports View/Edit/Delete/Toggle and doesn't fit our 5-status / 7-action workflow); shared `component-column.tsx` registry gets a `p2p-fundraiser-actions` case dispatching to the existing `<P2PFundraiserActionsCell>`.
+- **Files touched**:
+  - **BE (2 modified)**:
+    - `PSS_2.0_Backend/.../Base.Application/Business/DonationBusiness/P2PFundraisers/Queries/GetAllP2PFundraiserList.cs` (modified — `GridFeatureRequest` + `CampaignPageId` + `Status` args; handler computes `skip = pageIndex * pageSize`; sort dispatch keyed on FE field names: `raisedAmount` / `donorCount` / `registeredAt` / `fundraiserName` / `personalGoal` / `progressPercent` / `pageViewCount`)
+    - `PSS_2.0_Backend/.../Base.API/EndPoints/Donation/Queries/P2PCampaignPageQueries.cs` (modified — `GetAllP2PFundraiserList` now uses `[AsParameters] GridFeatureRequest request` + `campaignPageId` + `status`)
+  - **FE (3 modified, 1 deleted)**:
+    - `src/infrastructure/gql-queries/donation-queries/P2PFundraiserAdminQuery.ts` (modified — `request: { pageSize / pageIndex / sortDescending / sortColumn / searchTerm / advancedFilter }` wrap; field names `allP2PFundraiserList` / `p2PFundraiserSummary` / `p2PFundraiserDetailById`)
+    - `src/presentation/components/custom-components/data-tables/flow/data-table-column-types/component-column.tsx` (modified — added `case "p2p-fundraiser-actions"` rendering `<P2PFundraiserActionsCell />`)
+    - `src/presentation/components/page-components/crm/p2pfundraising/p2pfundraiser/index-page.tsx` (modified — full rewrite to `<FlowDataTableStoreProvider gridCode="P2PFUNDRAISER">` + `<FlowDataTableContainer showHeader={false} />`; 4 effect-mirrors push screen-store → flow-store: chip+campaign→extraVariables, search→setSearchTerm, sort→setSorting, refresh→setRefresh)
+    - `.../p2pfundraiser/p2p-fundraiser-data-table.tsx` (DELETED — obsolete after FlowDataTable swap)
+  - **DB**: `PSS_2.0_Backend/.../sql-scripts-dyanmic/P2PFundraiser-sqlscripts.sql` (modified — added `P2PF_ACTIONS` synthetic Field row + new GridField row at OrderBy=10 with `GridComponentName='p2p-fundraiser-actions'`; PK GridField row toggled to `IsPrimary=false` with idempotent UPDATE for prior-seed rows; `registeredAt` column upgraded from `'date-short'` to `'DateOnlyPreview'` to use an actually-registered renderer)
+- **Deviations from spec**: None new — refactor follows Refund #13 precedent which was already a sibling pattern.
+- **Known issues opened**:
+  - ISSUE-11 (OPEN, LOW) — Campaign + Status filters travel as top-level `campaignPageId` / `status` GQL args via `extraVariables`. Sort travels via `setSorting` (TanStack shape) which `data-table-fetch-data` translates to `sortColumn`/`sortDescending`. Search travels via `setSearchTerm`. The screen-level store still owns the input UI; effects mirror to the FlowDataTable store. Two stores in flight — acceptable per Refund #13 precedent, but documented for future review.
+  - ISSUE-12 (OPEN, LOW) — `number` GridComponentName falls through to the default-case renderer (renders raw `cellValue`) — no thousand-separator formatting. Acceptable degradation vs Session 1's `formatInt`; a global `case "number"` renderer would fix this for every screen.
+- **Known issues closed**:
+  - ISSUE-2 (CLOSED) — `actions` GridComponentName now resolves via `p2p-fundraiser-actions` case in `component-column.tsx`; DB seed updated accordingly.
+  - Session 1 deviation #10 — superseded; FE grid IS now the shared FlowDataTable.
+- **Next step**: User runs (1) re-apply `sql-scripts-dyanmic/P2PFundraiser-sqlscripts.sql` (idempotent — adds `P2PF_ACTIONS` Field row + new GridField row + flips PK `IsPrimary` to false on prior-seeded rows); (2) `dotnet build` to confirm BE compiles; (3) `pnpm dev` + smoke-test `/[lang]/crm/p2pfundraising/p2pfundraiser` — grid should render via `<FlowDataTableContainer>`, status-conditional action buttons should appear in the rightmost column for each row, chip + campaign + search + sort still filter correctly.
