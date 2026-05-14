@@ -430,7 +430,10 @@
       "Bash(powershell -Command \"Get-Content 'C:\\\\Users\\\\USER\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--Repos-PWDS-pwds-soruban-pss-2-0-global\\\\cabb8ee2-7086-4659-ab46-5f9cec480349\\\\tasks\\\\bxqrr1yma.output' -ErrorAction SilentlyContinue | Select-Object -First 30\")",
       "Bash(powershell -Command \"Get-Content 'C:\\\\Users\\\\USER\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--Repos-PWDS-pwds-soruban-pss-2-0-global\\\\cabb8ee2-7086-4659-ab46-5f9cec480349\\\\tasks\\\\ba3x2w2je.output' -ErrorAction SilentlyContinue\")",
       "Bash(mv \"d:/Repos/PWDS/pwds-soruban/pss-2.0-global/PSS_2.0_Frontend/src/app/[lang]/\\(member\\)/login\" \"d:/Repos/PWDS/pwds-soruban/pss-2.0-global/PSS_2.0_Frontend/src/app/[lang]/\\(member\\)/member-login\" 2>/dev/null && echo \"OK\")",
-      "Bash(rm \"d:/Repos/PWDS/pwds-soruban/pss-2.0-global/PSS_2.0_Frontend/src/presentation/components/page-components/crm/grant/grantcalendar/grantcalendar-page-config.ts\")"
+      "Bash(rm \"d:/Repos/PWDS/pwds-soruban/pss-2.0-global/PSS_2.0_Frontend/src/presentation/components/page-components/crm/grant/grantcalendar/grantcalendar-page-config.ts\")",
+      "Bash(python excel-audit.py)",
+      "Bash(python verify-round3.py)",
+      "Bash(python \"C:\\\\Users\\\\USER\\\\AppData\\\\Local\\\\Temp\\\\excel-round4.py\")"
     ],
     "ask": [
       "Bash(rm -rf *)",
