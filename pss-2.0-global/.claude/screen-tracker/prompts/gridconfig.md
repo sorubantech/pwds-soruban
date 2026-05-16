@@ -2,7 +2,7 @@
 screen: GridConfig
 registry_id: 77
 module: Settings
-status: PROMPT_READY
+status: PARTIALLY_COMPLETED
 scope: FULL
 screen_type: CONFIG
 config_subtype: SETTINGS_PAGE
@@ -10,7 +10,7 @@ complexity: High
 new_module: NO
 planned_date: 2026-05-14
 completed_date:
-last_session_date:
+last_session_date: 2026-05-15
 ---
 
 ## Tasks
@@ -27,15 +27,15 @@ last_session_date:
 - [x] Prompt generated
 
 ### Generation (by /build-screen → /generate-screen)
-- [ ] BA Analysis validated (3-tab CONFIG purpose + edit personas + risk of mis-set grid columns)
-- [ ] Solution Resolution complete (sub-type SETTINGS_PAGE / save model per-tab confirmed)
-- [ ] UX Design finalized (tab shell + Tab 1 settings layout + Tab 2 master grid + Tab 3 entity-sub-tabs + slide-panel)
-- [ ] User Approval received
-- [ ] Backend code generated (Tab 1 new GetGridConfiguration + BulkUpdateGridConfiguration; Tab 2 = existing Field CRUD verified; Tab 3 = existing CustomField CRUD verified)
+- [x] BA Analysis validated (Session 1 — see Build Log)
+- [x] Solution Resolution complete (Session 1 — all 14 OPEN issues + 4 BA gaps resolved; see Build Log § Resolver Decisions)
+- [x] UX Design finalized (Session 1 — see Build Log § UX Design Summary)
+- [x] User Approval received (Session 1 — Sonnet for all agents; FULL scope; REPORT/EXTERNAL_PAGE filtered from Tab 1 dropdown)
+- [ ] Backend code generated — **PARTIAL**: entities + migration only (pre-existing); 25 handler/wiring/seed files still pending
 - [ ] Backend wiring complete
-- [ ] Frontend code generated (tab shell replaces current `grid/page.tsx`; field stub becomes Tab 2 redirect; old dataconfig/customfields page becomes Tab 3 redirect)
+- [ ] Frontend code generated (38 files pending)
 - [ ] Frontend wiring complete
-- [ ] DB Seed script generated (Menu GRID re-parented? + FIELD_SETTING under SET_GRIDMANAGEMENT order 2 + CUSTOMFIELDS re-parented to SET_GRIDMANAGEMENT order 3; capability cascade preserved)
+- [ ] DB Seed script generated
 - [ ] Registry updated to COMPLETED
 
 ### Verification (post-generation — FULL E2E required)
@@ -1055,7 +1055,8 @@ Full UI must be built for all three placeholders — only the underlying handler
 | ISSUE-11 | low | BE Tab 1 | "Searchable" toggle has no direct column on GridField (existing `IsFilterable` covers filter; search is a separate concept). Add `IsSearchable` column or derive from `FilterOperator IN ('Text')` — Resolver to confirm. | OPEN |
 | ISSUE-12 | low | seed | Migrating existing `CUSTOMFIELDS` menu from `SET_DATACONFIG` (its current parent per #82 build) to `SET_GRIDMANAGEMENT` requires preserving capability cascade and URL redirect for live tenants. Seed script must be idempotent and handle re-parent gracefully. | OPEN |
 | ISSUE-13 | low | UX | Tab 3 entity-tabs use icons (users / heart / calendar / bullhorn / hands-helping / id-card / building). Map each to Phosphor: ph:users / ph:hand-heart / ph:calendar / ph:megaphone-simple / ph:hands-clapping / ph:identification-card / ph:buildings. Verify icon availability before build. | OPEN |
-| ISSUE-14 | medium | BE Tab 1 | `BulkUpdateGridConfiguration` must be transactional — partial save (e.g. GridField updates persist but LayoutConfiguration fails) leaves grid in inconsistent state. Wrap in EF transaction. | OPEN |
+| ISSUE-14 | medium | BE Tab 1 | `BulkUpdateGridConfiguration` must be transactional — partial save (e.g. GridField updates persist but LayoutConfiguration fails) leaves grid in inconsistent state. Wrap in EF transaction. | RESOLVED — Session 1 (must wrap in `BeginTransactionAsync` + Commit/Rollback) |
+| ISSUE-15 | high | session/tooling | Both BE + FE codegen agents stalled with 0 files written in Session 1 — dense mega-prompts (~6KB each, full DTOs inline) triggered stream-idle timeout on Sonnet. Recovery: split into 4-5 smaller spawns OR work inline. Affects ALL future builds for screens of this size. | OPEN — see [[feedback_long_agent_prompts_stall]] memory |
 
 ---
 
@@ -1073,4 +1074,366 @@ See §⑫ table above (ISSUE-1 through ISSUE-14 pre-flagged at plan time).
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
 
-{No sessions recorded yet — filled in after /build-screen completes.}
+### Session 1 — 2026-05-15 — BUILD — PARTIAL
+
+- **Scope**: Initial full build attempt from PROMPT_READY. User approved FULL scope with Sonnet for all agents and Tab 1 grid-dropdown filter excluding REPORT + EXTERNAL_PAGE.
+- **Files touched**:
+  - BE: `Pss2.0_Backend/.../Base.Domain/Models/SettingModels/Field.cs` (pre-existing — already had 10 new columns + MasterDataType nav from prior unrelated commit), `Pss2.0_Backend/.../Base.Domain/Models/SettingModels/GridField.cs` (pre-existing — already had IsSearchable from prior unrelated commit), `Pss2.0_Backend/.../Base.Infrastructure/Migrations/20260515112500_Add_CustomField_Config_Columns.cs` + `.Designer.cs` (pre-existing from prior unrelated commit)
+  - FE: None (zero FE code generated in this session)
+  - DB: None (seed script not yet written)
+  - Tracking: `.claude/screen-tracker/prompts/gridconfig.md` (this file — Phase 1 task checkboxes + Build Log entry); `.claude/screen-tracker/REGISTRY.md` (status PROMPT_READY → PARTIALLY_COMPLETED)
+- **Deviations from spec**: None. All Phase 1 outputs (BA, Resolver, UX) align with the original prompt + resolved 14 OPEN issues and 4 BA-surfaced gaps in line with the prompt's recommended defaults.
+- **Known issues opened**: ISSUE-15 (CRITICAL — agent stall pattern; see Known Issues table)
+- **Known issues closed**: ISSUE-1, ISSUE-3, ISSUE-4, ISSUE-6, ISSUE-8, ISSUE-9, ISSUE-10, ISSUE-12, ISSUE-13, ISSUE-14 — all resolved by Session 1 Resolver. ISSUE-2, ISSUE-5, ISSUE-7, ISSUE-11 partially resolved (decisions made; pending implementation).
+- **Next step**: Resume via `/continue-screen #77`. Foundation (entities + migration) is in place. Generate the remaining files per § Pending File Manifest below. Resolver decisions are pre-committed (no need to re-run BA/Resolver/UX). Recommended approach for resume session: ONE focused BE agent (file manifest is well-bounded — schemas + 8 new handlers + 7 modified handlers + GraphQL wiring + seed) and 3-4 split FE agents (tier-by-tier to avoid stall: Tier 1+2 / Tier 3 Tab 1 / Tier 4+5 Tabs 2+3 / Tier 6+7 routes+wiring).
+
+### Session 1.1 — 2026-05-15 — SCHEMA CORRECTION — COMPLETED
+
+- **Scope**: User caught architectural error in foundation — the 11 data-level / per-grid configuration columns added by migration `20260515112500_Add_CustomField_Config_Columns` were placed on `sett.Fields` but belong on `sett.GridFields`. Reason: the same `Field` row is reused across many grids, and per-grid usage may need different defaults/labels/validation/visibility/section/options/order. Storing on Field locks every reuse to one configuration. See [[feedback_data_level_config_on_gridfield]] memory.
+- **Columns affected (moved Field → GridField)**: `Description, FormSection, OptionsJson, MasterDataTypeId, AllowOther, NumberConfigJson, TextConfigJson, BehaviorJson, DefaultValue, VisibilityRulesJson, MasterDataType` nav. (`OrderBy` column was duplicated — already exists on GridField line 11; only removed the duplicate from Field. `IsSearchable` was already correctly on GridField.)
+- **Files touched**:
+  - BE: `Pss2.0_Backend/.../Base.Domain/Models/SettingModels/Field.cs` (stripped lines 24-36 — removed misplaced columns + nav, kept only immutable definition props), `Pss2.0_Backend/.../Base.Domain/Models/SettingModels/GridField.cs` (added the 10 columns + MasterDataType nav after the existing `IsSearchable` declaration)
+  - Migration: **NOT touched** — user will regenerate the migration `.cs` file themselves via `dotnet ef migrations` since DB is local-only.
+  - Memory: `~/.claude/projects/.../memory/feedback_data_level_config_on_gridfield.md` (NEW), `MEMORY.md` index updated
+- **Resolver decisions superseded by this correction** (replaces the corresponding rows in § Resolver Decisions above):
+  | Topic | Old (WRONG — superseded) | New (CORRECT) |
+  |-------|--------------------------|---------------|
+  | Field.Description | Added as nullable column on Field | `GridField.Description` (nullable) — per-grid help text |
+  | OptionsJson storage | Single `Field.OptionsJson` JSON column | `GridField.OptionsJson` JSON column (per-grid options) |
+  | Behavior/Number/Text/Visibility config | 4 JSON columns on Field | 4 JSON columns on **GridField** |
+  | FormSection / DefaultValue / AllowOther / MasterDataTypeId / OrderBy | (implicitly on Field via migration) | All on **GridField** (OrderBy already existed there) |
+  | MasterDataType FK | `Field.MasterDataTypeId → MasterDataTypes` | `GridField.MasterDataTypeId → MasterDataTypes` |
+- **Implication for CustomField handler logic in Session 2** (overrides DTO/handler guidance above):
+  - `CreateCustomField` handler now writes to **TWO** tables in a single transaction:
+    1. INSERT `Field` row with **only** immutable definition: `FieldName, FieldCode, FieldKey, DataTypeId, FieldSource, FieldTypeId, IsSystem=false, CompanyId=fromHttpContext`
+    2. INSERT `GridField` row binding the new `FieldId` to the user-selected `GridId` with all per-grid config: `Description, FormSection, OptionsJson, MasterDataTypeId, AllowOther, NumberConfigJson, TextConfigJson, BehaviorJson, DefaultValue, VisibilityRulesJson, OrderBy, IsVisible, IsPredefined=false, IsPrimary=false, IsSystem=false, IsSearchable, IsFilterable, Width`
+  - `UpdateCustomField` handler now updates **GridField** for per-grid config changes; updates **Field** ONLY when `FieldName`/`FieldCode`/`FieldKey`/`DataTypeId`/`FieldTypeId` change. (Most edits should be GridField-only.)
+  - `DeleteCustomField` cascade unchanged (already soft-deletes Field + linked GridFields).
+  - `DuplicateCustomField` handler — clones BOTH the Field definition AND the GridField binding for the source grid.
+  - DTO `CustomFieldRequestDto` shape (in § DTO Shapes above) is **unchanged** from FE perspective — the user fills in description/default/etc. as part of creating the field on a specific grid; BE handler is responsible for splitting the persistence between the two tables.
+  - DTO needs one extra field: `gridId: number` — required so BE knows which grid to bind the new GridField row to. Add to `CustomFieldRequestDto` in both BE `FieldSchemas.cs` and FE `CustomFieldDto.ts` Session 2 work.
+- **Action required from user**: Regenerate the migration before Session 2 BE codegen — `dotnet ef migrations remove` (to remove the broken 20260515112500), then `dotnet ef migrations add Add_CustomField_Config_Columns` (will pick up the corrected entity shape and emit columns on GridFields). The new migration should add columns: `Description, FormSection, OptionsJson, MasterDataTypeId, AllowOther, NumberConfigJson, TextConfigJson, BehaviorJson, DefaultValue, VisibilityRulesJson` on `sett.GridFields`, plus FK `GridFields.MasterDataTypeId → MasterDataTypes.MasterDataTypeId`. (`IsSearchable` on GridFields is already correct from the broken migration; OrderBy stays on GridFields.)
+- **Known issues opened**: None (correction is clean — no breakage since no handlers/queries referenced the misplaced props yet).
+- **Known issues closed**: None.
+- **Next step**: User regenerates migration; then Session 2 (`/continue-screen #77`) proceeds per the existing § Pending File Manifest, with the CustomField handler logic adjustments noted above.
+
+### Session 1.2 — 2026-05-15 — REDUNDANT-COLUMN CONSOLIDATION — COMPLETED
+
+- **Scope**: User caught a second-order issue in the Session 1.1 fix — three of the columns just moved to GridField are redundant with existing GridField columns:
+  - `OptionsJson` + `MasterDataTypeId` + `MasterDataType` nav → already covered by existing `GridField.ValueSource` JSON column (encodes BOTH API-driven master data AND static options via the `apiRequestRequired` flag — see canonical examples below)
+  - `IsSearchable` → already covered by existing `GridField.IsFilterable` (same concern: whether the field participates in grid quick-search / filter chips)
+- **Files touched**:
+  - BE: `Pss2.0_Backend/.../Base.Domain/Models/SettingModels/GridField.cs` — removed the 3 redundant columns + 1 nav. Final added column set on GridField: `Description, FormSection, AllowOther, NumberConfigJson, TextConfigJson, BehaviorJson, DefaultValue, VisibilityRulesJson` (8 columns, no nav). Comment updated to point future readers at `ValueSource` and `IsFilterable` so the redundant columns are not re-introduced.
+  - Migration: **NOT touched** — user regenerates after both 1.1 and 1.2 corrections are absorbed.
+  - Memory: `feedback_data_level_config_on_gridfield.md` rewritten — now leads with "use existing ValueSource for option lists, use existing IsFilterable for searchability" + the canonical ValueSource JSON shapes, and adds a "scan existing GridField columns before adding new ones" rule.
+- **Canonical ValueSource JSON shapes** (replaces any need for OptionsJson + MasterDataTypeId — the FE renderer branches on `apiRequestRequired`):
+  - API-driven (master data): `{"apiRequestRequired":true,"entityName":"masterDatas","valueField":"masterDataId","labelField":"dataName","orderBy":"dataName","orderDescending":false,"whereClause":null,"includeFields":[],"ruleFieldKey":"tracingStatusId","ruleFieldDataType":"Int"}`
+  - API-driven (any entity, e.g., paymentModes): `{"apiRequestRequired":true,"entityName":"paymentModes","valueField":"paymentModeId","labelField":"paymentModeName","orderBy":"paymentModeName","orderDescending":false,"whereClause":null,"includeFields":[],"ruleFieldKey":"paymentModeId","ruleFieldDataType":"Int"}`
+  - Static (boolean / fixed list): `{"apiRequestRequired":false,"staticOptions":[{"value":"true","label":"Yes"},{"value":"false","label":"No"}],"ruleFieldKey":"isNewContact","ruleFieldDataType":"boolean"}`
+- **Resolver decisions superseded by this consolidation** (replaces the corresponding rows in § Resolver Decisions and the Session 1.1 supersession table):
+  | Topic | Old (WRONG — superseded) | New (CORRECT) |
+  |-------|--------------------------|---------------|
+  | OptionsJson storage | `GridField.OptionsJson` JSON column | Use existing `GridField.ValueSource` (set `apiRequestRequired:false, staticOptions:[...]`) |
+  | MasterDataType FK | `GridField.MasterDataTypeId → MasterDataTypes` + nav | Use existing `GridField.ValueSource` (set `apiRequestRequired:true, entityName:"masterDatas", valueField, labelField, ...`) — supports any entity, not just MasterDataTypes |
+  | IsSearchable column | `GridField.IsSearchable` (NEW bool?) | Use existing `GridField.IsFilterable bool?` |
+- **Implication for CustomField handler logic in Session 2** (overrides Session 1.1 list):
+  - `CreateCustomField` GridField INSERT now writes: `Description, FormSection, AllowOther, NumberConfigJson, TextConfigJson, BehaviorJson, DefaultValue, VisibilityRulesJson, OrderBy, IsVisible, IsPredefined=false, IsPrimary=false, IsSystem=false, IsFilterable, ValueSource, ValueSourceParams, Width` — no `IsSearchable`, no `OptionsJson`, no `MasterDataTypeId`.
+  - DTO `CustomFieldRequestDto` (BE `FieldSchemas.cs` + FE `CustomFieldDto.ts`) — DROP fields: `optionsJson`, `masterDataTypeId`, `searchable` (in `CustomFieldBehaviorDto`). ADD field: `valueSource: string | null` (raw JSON string the form serializes from a structured ValueSource builder UI). Keep all other fields from § DTO Shapes above.
+  - FE Custom Fields form (Tab 3): the "Options" panel becomes a **ValueSource builder** with two modes — "From API" (renders fields for entityName/valueField/labelField/orderBy/whereClause) and "Static list" (renders the staticOptions array editor) — driven by `apiRequestRequired` toggle. Output serialized into the `valueSource` JSON string.
+  - FE behavior toggles (Tab 3): drop the "Searchable" toggle from `CustomFieldBehaviorDto` UI; the existing "Filterable" toggle (binds to `isFilterable`) covers it.
+- **Action required from user**: Regenerate migration AFTER absorbing both Session 1.1 and Session 1.2 corrections. The new migration `Add_CustomField_Config_Columns` should add ONLY these 8 columns to `sett.GridFields`: `Description, FormSection, AllowOther, NumberConfigJson, TextConfigJson, BehaviorJson, DefaultValue, VisibilityRulesJson`. No `IsSearchable`, no `OptionsJson`, no `MasterDataTypeId`, no FK to MasterDataTypes. (`OrderBy`, `IsFilterable`, `ValueSource`, `ValueSourceParams` already exist on GridFields — leave alone.)
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: User regenerates migration; then Session 2 (`/continue-screen #77`) proceeds per the existing § Pending File Manifest, with the CustomField handler logic adjustments from BOTH Session 1.1 and Session 1.2 in effect.
+
+### Session 1.3 — 2026-05-15 — NO NEW COLUMNS, JSON SCHEMA AT UI — COMPLETED
+
+- **Scope**: User's final architectural call — stop touching the schema entirely. ALL newly added columns from migration `20260515112500_Add_CustomField_Config_Columns` are removed from BOTH `Field` and `GridField` entities. The per-grid Custom Field configuration is implemented purely at the UI/DTO layer using **existing** GridField columns. Migration becomes a no-op (user regenerates).
+- **User intent**: "remove all the newly created columns only ui side proply impleemnt - grid,fields,gridfields,customfields,jsonschema development"
+- **Files touched**:
+  - BE: `Pss2.0_Backend/.../Base.Domain/Models/SettingModels/GridField.cs` — stripped the 8 columns added in Session 1.1 (Description, FormSection, AllowOther, NumberConfigJson, TextConfigJson, BehaviorJson, DefaultValue, VisibilityRulesJson) AND the IsSearchable column added by the broken migration. GridField is now back to its pre-migration shape (line 23 jumps directly from `Width` to the `// 360 degree filter config property` block).
+  - BE: `Field.cs` — already clean from Session 1.1 (immutable definition props only).
+  - Migration: **NOT touched** — user runs `dotnet ef migrations remove` to roll back the broken migration; next `dotnet ef migrations add` is empty since no entity has new columns.
+  - Memory: `feedback_data_level_config_on_gridfield.md` rewritten with the "no new columns, JSON-schema-driven UI" rule + canonical FieldConfiguration JSON shape; `MEMORY.md` index entry updated to reflect the new policy.
+- **Existing GridField columns the UI/handlers will use** (everything stays in this set — nothing else is needed):
+  | Concern | Existing column |
+  |---|---|
+  | Per-grid form behavior (description, formSection, allowOther, defaultValue, required/readonly/hide flags, number/text validation, visibility rules) | `FieldConfiguration` (string?, JSON) — single structured blob |
+  | Option list source (API or static) | `ValueSource` (string?, JSON) + `ValueSourceParams` (string?) |
+  | Searchability / filter participation | `IsFilterable` (bool?) |
+  | Display order | `OrderBy` (int) |
+  | Column width | `Width` (int?) |
+  | Visibility in grid | `IsVisible` (bool) |
+  | Primary column | `IsPrimary` (bool) |
+  | Default filter operator | `FilterOperator` + `DefaultOperator` (string?) |
+  | Aggregation | `IsAggregate` + `AggregationType` + `AggregateConfig` |
+  | CSS / component overrides | `CssClass` + `GridComponentName` + `ParentObject` |
+- **Canonical `FieldConfiguration` JSON shape** (UI form serializes/deserializes; BE persists as opaque text):
+  ```json
+  {
+    "description": "Donor's primary email — used for receipts and newsletter.",
+    "formSection": "Contact Info",
+    "allowOther": false,
+    "defaultValue": null,
+    "behavior": { "required": true, "readonly": false, "hideOnList": false, "hideOnCreate": false, "hideOnEdit": false },
+    "number": { "min": null, "max": null, "step": null, "precision": null, "prefix": null, "suffix": null },
+    "text": { "minLength": null, "maxLength": 100, "pattern": null, "multiline": false, "caseFormat": null },
+    "visibility": { "rules": [] }
+  }
+  ```
+- **Resolver decisions superseded** (replaces all Session 1, 1.1, 1.2 rows touching per-grid config columns):
+  | Topic | Old (WRONG — superseded) | New (FINAL) |
+  |-------|--------------------------|-------------|
+  | Description / FormSection / AllowOther / DefaultValue / behavior+number+text+visibility configs | Separate columns on Field or GridField | All persisted as nested keys inside existing `GridField.FieldConfiguration` JSON |
+  | OptionsJson / MasterDataTypeId | Separate columns + FK | Persisted in existing `GridField.ValueSource` JSON (apiRequestRequired flag branches API vs static) |
+  | IsSearchable | New `bool?` column on GridField | Use existing `GridField.IsFilterable bool?` |
+  | OrderBy | (unchanged) | Already exists on GridField — still used as-is |
+  | Migration `Add_CustomField_Config_Columns` | Required, with corrected target table | NOT REQUIRED — user removes the broken migration; no replacement migration needed |
+- **Implication for Session 2 codegen**:
+  - **CustomField handler logic** simplifies dramatically:
+    - `CreateCustomField`: INSERT `Field` row (immutable definition only) + INSERT `GridField` row binding to user-selected `GridId`. The GridField INSERT writes `FieldConfiguration` (JSON string serialized from typed DTO), `ValueSource` (JSON string for picklists), `OrderBy`, `IsVisible`, `IsFilterable`, `Width`, `IsPredefined=false`, `IsPrimary=false`, `IsSystem=false`, `CompanyId=fromHttpContext`. No new columns referenced anywhere.
+    - `UpdateCustomField`: UPDATE `GridField` (re-serialize FieldConfiguration JSON + ValueSource JSON + scalars). UPDATE `Field` only on FieldName/FieldCode/FieldKey/DataTypeId/FieldTypeId change.
+    - `DuplicateCustomField`: clone both Field row AND GridField row (FieldConfiguration JSON + ValueSource JSON copy verbatim).
+    - `DeleteCustomField`: soft-delete Field + cascade soft-delete linked GridFields (unchanged from Session 1).
+  - **DTO shapes**:
+    - `CustomFieldRequestDto` (BE `FieldSchemas.cs` + FE `CustomFieldDto.ts`) exposes the structured JSON shape on the wire as **typed nested objects** (description, formSection, allowOther, defaultValue, behavior {…}, number {…}, text {…}, visibility {…}, plus separate valueSource: string | null, isFilterable, orderBy, width, isVisible, gridId). BE handler serializes the typed nested objects to JSON strings before persisting to FieldConfiguration; deserializes on read.
+    - `GridFieldConfigDto` (used by Tab 1 GetGridConfigurationByGridId): drop the per-config column flattening; expose `fieldConfiguration: string | null` (raw JSON) OR a typed parsed shape — UX team's call (default to typed parsed shape so the UI doesn't re-parse on every render).
+  - **FE Tab 3 form** is JSON-schema-driven: a structured form builder UI emits the FieldConfiguration JSON; a separate ValueSource builder (with API/Static toggle) emits the ValueSource JSON. The two get bundled into the CreateCustomField mutation along with the scalars.
+  - **No EF migration needed for Session 2.** Skip any "EF entity / migration" tier from FE Developer prompts. BE Developer prompts must NOT reference removed columns (Description, FormSection, OptionsJson, MasterDataTypeId, AllowOther, NumberConfigJson, TextConfigJson, BehaviorJson, DefaultValue, VisibilityRulesJson, IsSearchable, MasterDataType nav).
+  - **Tab 1 (Grid Config) and Tab 2 (Field Master)** — unchanged scope; no new columns there either.
+- **Action required from user**: 
+  1. `dotnet ef migrations remove` to roll back `20260515112500_Add_CustomField_Config_Columns` (or manually drop the migration file + Down() from DB if already applied).
+  2. Verify `sett.Fields` and `sett.GridFields` tables have no leftover columns from the broken migration (drop `Fields.Description, Fields.FormSection, Fields.OptionsJson, Fields.MasterDataTypeId, Fields.AllowOther, Fields.NumberConfigJson, Fields.TextConfigJson, Fields.BehaviorJson, Fields.DefaultValue, Fields.VisibilityRulesJson, Fields.OrderBy, Fields.MasterDataTypeId FK, GridFields.IsSearchable` if migration was already applied).
+  3. NO new `dotnet ef migrations add` needed — entities are pre-migration shape.
+- **Known issues opened**: None.
+- **Known issues closed**: Session 1.1 + 1.2 corrections superseded by Session 1.3 (the cleanest path); the supersession tables in those sessions are now historical context only.
+- **Next step**: User confirms migration rollback complete; then Session 2 (`/continue-screen #77`) proceeds per the existing § Pending File Manifest with: (a) zero migration/EF entity work, (b) BE handlers serialize typed DTO → JSON strings into FieldConfiguration/ValueSource, (c) FE Tab 3 form is the JSON-schema-driven builder for FieldConfiguration + ValueSource.
+
+#### § Resolver Decisions (Session 1 — copy-pastable for next session)
+
+| Topic | Decision |
+|-------|----------|
+| DefaultFilters storage | `Grid.LayoutConfiguration.defaultFilters` JSON (NOT UserGridFilters table) |
+| Field.Description | Added as nullable column (already in entity + migration) |
+| OptionsJson storage | Single `Field.OptionsJson` JSON column (NOT child table) |
+| Behavior/Number/Text/Visibility config | 4 JSON columns (`BehaviorJson`, `NumberConfigJson`, `TextConfigJson`, `VisibilityRulesJson`) — already in entity + migration |
+| CustomField DTO | Replace existing — see § DTO Shapes below for new shape |
+| Entity-type tabs | MasterData type `CUSTOMFIELDENTITY` with 7 rows (Contacts/Donations/Events/Campaigns/Volunteers/Members/Organizations) |
+| GetFields fieldSource arg | ADD optional `string? FieldSource` param to query record + handler |
+| GetCustomFields fieldSource arg | REPLACE hard-coded `"Custom"` with `string? FieldSource` arg |
+| Old grid/page.tsx | DEPRECATED — body fully replaced by `<GridConfigPageConfig />` |
+| Width persistence | int? (px); FE formats with `px` suffix on display |
+| IsSearchable column | NEW `GridField.IsSearchable bool?` (NOT derived) — already in entity + migration |
+| CUSTOMFIELDS menu | Re-parent from SET_DATACONFIG to SET_GRIDMANAGEMENT in idempotent seed |
+| Tab 3 entity-tab icons | ph:users / ph:hand-heart / ph:calendar / ph:megaphone-simple / ph:hands-clapping / ph:identification-card / ph:buildings |
+| BulkUpdateGridConfiguration | MUST wrap in explicit EF transaction (BeginTransactionAsync + Commit/Rollback) + validate ≥1 IsVisible server-side |
+| Tab 2 cross-tenant | New Standard fields get `CompanyId` from HttpContext (tenant-additive); system rows untouched |
+| GetGridListGrouped | Returns ALL system grids EXCEPT GridType IN ('REPORT', 'EXTERNAL_PAGE') — per user approval choice |
+| CustomField VALUE storage | OUT OF SCOPE for #77 — usage count = `dbContext.GridFields.Count(x => x.FieldId == fieldId)`, NOT entity record count |
+| Field delete cascade (Tab 2) | BLOCK + 2-step confirm modal showing usage count; on confirm, soft-delete Field + linked GridFields in same EF transaction |
+| CustomField delete cascade (Tab 3) | Same pattern as Tab 2 |
+| Migration name | `Add_CustomField_Config_Columns` (already created) |
+
+#### § DTO Shapes (Session 1 — copy-pastable for next session)
+
+**`CustomFieldDto.ts`** (REPLACE entire existing file with this shape):
+```typescript
+export interface CustomFieldOptionDto { value: string; label: string; order: number; }
+export interface CustomFieldBehaviorDto {
+  required: boolean; unique: boolean; readOnly: boolean;
+  showInGrid: boolean; showInFilters: boolean;
+  includeInExport: boolean; includeInImport: boolean;
+  searchable: boolean;
+}
+export interface CustomFieldNumberConfigDto { decimalPlaces: number; min: number | null; max: number | null; }
+export interface CustomFieldTextConfigDto { maxLength: number | null; regexPattern: string | null; placeholder: string | null; }
+export interface CustomFieldVisibilityRuleDto { field: string; operator: string; value: any; }
+
+export interface CustomFieldRequestDto {
+  fieldName: string;
+  fieldSource: string;             // "Contacts" | "Donations" | etc.
+  dataTypeCode: string;
+  fieldTypeCode: string;
+  description: string | null;
+  formSection: string | null;
+  optionsJson: string | null;
+  masterDataTypeId: number | null;
+  allowOther: boolean;
+  numberConfigJson: string | null;
+  textConfigJson: string | null;
+  behaviorJson: string | null;
+  defaultValue: string | null;
+  visibilityRulesJson: string | null;
+  orderBy: number;
+}
+export interface CustomFieldResponseDto extends CustomFieldRequestDto {
+  fieldId: number;
+  fieldCode: string;
+  fieldKey: string;
+  isActive: boolean;
+  fieldTypeId: number;
+  dataTypeId: number;
+}
+export interface CustomFieldDto extends CustomFieldResponseDto {}
+
+// Vestigial value DTOs — keep for backward compat but do NOT extend in #77
+export interface CustomFieldValueRequestDto { customFieldValueId?: number; entityRegistryId: number; entityRecordId: number; fieldValues: any; }
+export interface CustomFieldValueResponseDto extends CustomFieldValueRequestDto { customFieldValueId: number; createdDate?: string; modifiedDate?: string; }
+export interface CustomFieldValueDto extends CustomFieldValueResponseDto {}
+```
+
+**`GridConfigurationDto.ts`** (NEW):
+```typescript
+export interface GridFieldConfigDto {
+  gridFieldId: number | null;
+  fieldId: number;
+  fieldName: string;
+  fieldKey: string;
+  dataTypeName: string;
+  isVisible: boolean;
+  isSearchable: boolean;
+  isSortable: boolean;
+  isFilterable: boolean;
+  filterOperator: string | null;
+  width: number | null;
+  orderBy: number;
+  isPredefined: boolean;
+  isSystem: boolean;
+}
+export interface GridLayoutBehaviorDto {
+  rowsPerPage: 10 | 25 | 50 | 100;
+  enableColumnResize: boolean;
+  enableColumnReorder: boolean;
+  enableRowSelection: boolean;
+  freezeColumns: number;
+  showSummaryRow: boolean;
+  exportColumns: "all" | "visible";
+}
+export interface GridLayoutConfigurationDto {
+  defaultSort: Array<{ fieldKey: string; direction: "asc" | "desc" }>;
+  defaultFilters: Array<{ fieldKey: string; operator: string; value: any }>;
+  behavior: GridLayoutBehaviorDto;
+}
+export interface GridConfigurationResponseDto {
+  gridId: number; gridCode: string; gridName: string;
+  moduleId: string; moduleName: string;
+  gridFields: GridFieldConfigDto[];
+  layoutConfiguration: GridLayoutConfigurationDto;
+}
+export interface GridConfigurationUpdateRequestDto {
+  gridId: number;
+  gridFields: GridFieldConfigDto[];
+  layoutConfiguration: GridLayoutConfigurationDto;
+}
+export interface GridGroupItemDto { gridId: number; gridCode: string; gridName: string; }
+export interface GridGroupDto { moduleName: string; moduleIcon: string | null; grids: GridGroupItemDto[]; }
+```
+
+#### § UX Design Summary (Session 1 — Layout Variants pre-stamped)
+
+| Surface | Variant Stamp | Notes |
+|---------|--------------|-------|
+| Outer shell | `tabs-only` | ScreenHeader + 3-tab strip; conditional "Reset All to Defaults" page action visible only when `?tab=grid` |
+| Tab 1 (Grid Config) | `widgets-above-grid` (Variant B) | NO ScreenHeader inside Tab 1; 6 stacked cards: Grid Selector / Column Configuration (DnD table) / Default Sort + Default Filters (side-by-side at lg) / Grid Behavior / Actions Bar |
+| Tab 2 (Field Master) | `grid-only` (Variant A) | AdvancedDataTable with internal toolbar; Source: Standard|Custom|All select + +New Field |
+| Tab 3 (Custom Fields) | `widgets-above-grid` (Variant B) | Toolbar + entity-sub-tab strip + DataTable + 520px Sheet slide-panel; 5 always-expanded sections (Field Definition / Field Type & Options / Validation & Behavior / Visibility Rules / Field Preview) |
+
+**Key UX rules** (must honor in next session):
+- Tab persistence: `?tab=grid|field|customfield` + Tab 3 also `?entity=contacts|donations|...`. Slide-panel state is local (NOT in URL).
+- Grid selector = native `<select>` with `<optgroup>` (NOT ApiSelectV2 — doesn't support optgroups).
+- Drag-reorder = `@dnd-kit/sortable` (verify in package.json before use).
+- Slide-panel = Shadcn `Sheet` `side="right"` `className="w-[520px] sm:w-full max-w-full"`; body uses `ScrollArea`.
+- Conditional sub-form per FieldType in slide-panel: Dropdown/MultiSelect/Radio → Options Editor + Master-Data toggle + Allow Other; Number/Currency → DecimalPlaces+Min+Max; Text/URL/Email/Phone → MaxLength+Placeholder+Regex; TextArea → MaxLength only; Date/DateTime/Checkbox/ContactLookup/File → no sub-form.
+- Field Preview re-renders live from form state.
+- Reuse: Sheet, Tabs, Switch, DropdownMenu, AlertDialog, ScrollArea, RadioGroup, SettingRow (from OrgSettings).
+
+#### § Pending File Manifest (Session 2+ work)
+
+**Backend — Schemas + Handlers + Wiring (~25 files)**
+
+NEW handlers in `Pss2.0_Backend/.../Base.Application/Business/SettingBusiness/Grids/Queries/`:
+1. `GetGridConfigurationByGridId.cs` — composite Grid + GridFields + Field details + LayoutConfiguration JSON deserialization
+2. `GetGridListGrouped.cs` — joins Grid → GridType → Module; filters out REPORT + EXTERNAL_PAGE; groups by Module
+3. `GetFieldGridUsageCount.cs` — count of GridFields referencing fieldId
+
+NEW handlers in `…/Grids/Commands/`:
+4. `BulkUpdateGridConfiguration.cs` — explicit EF transaction; upsert GridFields (add/update/soft-delete); set Grid.LayoutConfiguration JSON; validate ≥1 IsVisible
+5. `ResetGridConfigurationToDefaults.cs` — clear LayoutConfiguration to defaults
+6. `ResetAllGridConfigurationsToDefaults.cs` — page-level reset
+
+NEW handlers in `…/CustomFields/Commands/`:
+7. `ReorderCustomFields.cs` — bulk update OrderBy
+8. `DuplicateCustomField.cs` — clone Field with name/key suffix
+
+NEW schema file:
+9. `…/Base.Application/Schemas/SettingSchemas/GridConfigurationSchemas.cs` — `GridConfigurationResponseDto`, `GridFieldConfigDto`, `GridLayoutConfigurationDto`, `GridLayoutBehaviorDto`, `GridConfigurationUpdateRequestDto`, `GridGroupDto`, `GridGroupItemDto`
+
+MODIFY existing files:
+10. `…/Fields/Queries/GetField.cs` — add `string? FieldSource` to query record + apply Where filter
+11. `…/CustomFields/Queries/GetCustomFields.cs` — replace hard-coded `"Custom"` with `string? FieldSource` arg
+12. `…/Fields/Commands/CreateField.cs` — set CompanyId from HttpContext for new Standard fields
+13. `…/CustomFields/Commands/CreateCustomField.cs` — accept and persist all 10 new DTO fields
+14. `…/CustomFields/Commands/UpdateCustomField.cs` — same expanded persistence (current handler reportedly only updates FieldName)
+15. `…/Fields/Commands/DeleteField.cs` — pre-flight GridField usage count + cascade-soft-delete on confirm
+16. `…/CustomFields/Commands/DeleteCustomField.cs` — same pattern
+17. `…/Schemas/SettingSchemas/FieldSchemas.cs` — expand `CustomFieldRequestDto` with new fields
+
+GraphQL endpoint wiring (locate exact file paths via Glob — likely under `Base.API/EndPoints/Setting/`):
+18. GridQueries.cs — register GetGridConfigurationByGridId, GetGridListGrouped, GetFieldGridUsageCount
+19. GridMutations.cs — register BulkUpdateGridConfiguration, ResetGridConfigurationToDefaults, ResetAllGridConfigurationsToDefaults
+20. FieldQueries.cs — update GetFields signature with fieldSource arg
+21. FieldMutations.cs — update CreateField/DeleteField signatures
+22. CustomFieldQueries.cs — update GetCustomFields signature with fieldSource arg
+23. CustomFieldMutations.cs — register Reorder + Duplicate; update Create/Update/Delete signatures
+24. SettingMappings.cs — add Profile entries for Grid → GridConfigurationResponseDto and GridFieldConfigDto
+
+DB seed:
+25. `Pss2.0_Backend/PeopleServe/Services/Base/sql-scripts-dyanmic/gridconfig-sqlscripts.sql` — idempotent: CUSTOMFIELDENTITY MasterDataType + 7 rows; verify FIELDTYPE has 15 rows; verify CONDITIONALOPERATOR; GRID menu under SET_GRIDMANAGEMENT (BUSINESSADMIN gets READ/CREATE/MODIFY/DELETE); FIELD_SETTING + CUSTOMFIELDS hidden seeded entries (re-parent CUSTOMFIELDS from SET_DATACONFIG)
+
+**Frontend — All tiers (~38 files)**
+
+Tier 1 — DTOs + GraphQL contracts:
+1. `…/domain/entities/setting-service/GridConfigurationDto.ts` (NEW — see § DTO Shapes above)
+2. `…/domain/entities/setting-service/CustomFieldDto.ts` (REPLACE — see § DTO Shapes above)
+3. `…/infrastructure/gql-queries/setting-queries/GridConfigurationQuery.ts` (NEW) — GET_GRID_CONFIGURATION_BY_GRID_ID, GET_GRID_LIST_GROUPED, GET_FIELD_GRID_USAGE_COUNT
+4. `…/infrastructure/gql-mutations/setting-mutations/GridConfigurationMutation.ts` (NEW) — BULK_UPDATE_GRID_CONFIGURATION, RESET_GRID_CONFIGURATION_TO_DEFAULTS, RESET_ALL_GRID_CONFIGURATIONS_TO_DEFAULTS
+5. `…/infrastructure/gql-queries/setting-queries/FieldQuery.ts` (NEW) — GET_FIELDS (with fieldSource arg), GET_FIELD_BY_ID
+6. `…/infrastructure/gql-mutations/setting-mutations/FieldMutation.ts` (NEW) — CREATE/UPDATE/DELETE/ACTIVATE_DEACTIVATE_FIELD
+7. `…/infrastructure/gql-queries/setting-queries/CustomFieldQuery.ts` (modify if exists else NEW) — GET_CUSTOM_FIELDS with fieldSource arg
+8. `…/infrastructure/gql-mutations/setting-mutations/CustomFieldMutation.ts` (modify) — add REORDER_CUSTOM_FIELDS, DUPLICATE_CUSTOM_FIELD
+
+Tier 2 — Outer shell + page wrapper:
+9. `…/presentation/components/page-components/setting/gridmanagement/grid-config/grid-config-page.tsx` (NEW) — main 3-tab orchestrator with ScreenHeader
+10. `…/presentation/pages/setting/gridmanagement/gridconfig.tsx` (NEW) — `GridConfigPageConfig` wrapper
+11. `…/presentation/pages/index.ts` (modify) — export `GridConfigPageConfig`
+
+Tier 3 — Tab 1 components (8 files):
+12-19. `…/grid-config/tabs/grid-tab/{grid-tab,grid-selector,column-config-table,default-sort-card,default-filters-card,grid-behavior-card,actions-bar,preview-grid-modal,reset-confirm-modals}.tsx`
+
+Tier 4 — Tab 2 components (2 files):
+20-21. `…/grid-config/tabs/field-tab/{field-tab,field-data-table}.tsx`
+
+Tier 5 — Tab 3 components (11 files):
+22-32. `…/grid-config/tabs/customfield-tab/{customfield-tab,entity-tabs,customfield-data-table}.tsx` + `…/customfield-tab/slide-panel/customfield-slide-panel.tsx` + `…/customfield-tab/slide-panel/sections/{field-definition-section,field-type-options-section,validation-behavior-section,visibility-rules-section,field-preview-panel}.tsx` + `…/customfield-tab/slide-panel/components/{options-editor,condition-row}.tsx`
+
+Tier 6 — Page route swaps + redirects:
+33. `…/app/[lang]/setting/gridmanagement/grid/page.tsx` (modify) — swap to `<GridConfigPageConfig />`
+34. `…/app/[lang]/setting/gridmanagement/field/page.tsx` (modify) — Next.js `redirect` to `?tab=field`
+35. `…/app/[lang]/setting/dataconfig/customfields/page.tsx` (modify) — `redirect` to `?tab=customfield`
+
+Tier 7 — Wiring:
+36. `…/infrastructure/config/entity-operations.ts` — register/verify GRID, FIELD_SETTING, CUSTOMFIELDS ops
+37. `…/infrastructure/config/operations-config.ts` — register new ops where applicable
+38. Verify `@dnd-kit/sortable` is in `package.json` — install if missing (drag-reorder dependency for Column Config Table + Options Editor + custom-field row drag-reorder)
+
+#### § Resume Strategy (Session 2 — read this first)
+
+1. Verify foundation still in place: `Read` Field.cs, GridField.cs, migration file (lines should match § Resolver Decisions table above).
+2. Spawn ONE backend-developer agent with focused prompt: "Foundation done. Build files 1-25 from § Pending File Manifest. Use existing CreateCustomField.cs as handler template, FieldSchemas.cs as DTO template." Do NOT pass full DTOs inline — they're already in the prompt file.
+3. Spawn 3 frontend-developer agents in sequence (NOT parallel — to avoid stall):
+   - FE-A: Tier 1 + Tier 2 (DTOs + GQL contracts + outer shell) — 11 files
+   - FE-B: Tier 3 (Tab 1) — 8 files  
+   - FE-C: Tier 4 + Tier 5 (Tabs 2 + 3) — 13 files
+   - FE-D: Tier 6 + Tier 7 (route swaps + wiring) — 6 files
+4. Each agent prompt should be < 3KB (front-load file-write directive; reference this Build Log for context, do NOT re-embed decisions inline).
+5. After all agents finish: full E2E test per Step 5b of /build-screen skill (3-tab page loads, Tab 1 grid selector loads grouped options, Tab 1 save persists, Tab 2 +New opens RJSF modal, Tab 3 +New Custom Field opens slide-panel from right edge, conditional sub-forms render per FieldType, drag-reorder fires Reorder mutation, delete shows usage-count modal).
