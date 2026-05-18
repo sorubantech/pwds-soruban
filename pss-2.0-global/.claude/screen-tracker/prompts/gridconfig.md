@@ -1060,7 +1060,8 @@ Full UI must be built for all three placeholders — only the underlying handler
 | ISSUE-11 | low | BE Tab 1 | "Searchable" toggle has no direct column on GridField (existing `IsFilterable` covers filter; search is a separate concept). Add `IsSearchable` column or derive from `FilterOperator IN ('Text')` — Resolver to confirm. | OPEN |
 | ISSUE-12 | low | seed | Migrating existing `CUSTOMFIELDS` menu from `SET_DATACONFIG` (its current parent per #82 build) to `SET_GRIDMANAGEMENT` requires preserving capability cascade and URL redirect for live tenants. Seed script must be idempotent and handle re-parent gracefully. | OPEN |
 | ISSUE-13 | low | UX | Tab 3 entity-tabs use icons (users / heart / calendar / bullhorn / hands-helping / id-card / building). Map each to Phosphor: ph:users / ph:hand-heart / ph:calendar / ph:megaphone-simple / ph:hands-clapping / ph:identification-card / ph:buildings. Verify icon availability before build. | OPEN |
-| ISSUE-14 | medium | BE Tab 1 | `BulkUpdateGridConfiguration` must be transactional — partial save (e.g. GridField updates persist but LayoutConfiguration fails) leaves grid in inconsistent state. Wrap in EF transaction. | OPEN |
+| ISSUE-14 | medium | BE Tab 1 | `BulkUpdateGridConfiguration` must be transactional — partial save (e.g. GridField updates persist but LayoutConfiguration fails) leaves grid in inconsistent state. Wrap in EF transaction. | RESOLVED — Session 1 (must wrap in `BeginTransactionAsync` + Commit/Rollback) |
+| ISSUE-15 | high | session/tooling | Both BE + FE codegen agents stalled with 0 files written in Session 1 — dense mega-prompts (~6KB each, full DTOs inline) triggered stream-idle timeout on Sonnet. Recovery: split into 4-5 smaller spawns OR work inline. Affects ALL future builds for screens of this size. | OPEN — see [[feedback_long_agent_prompts_stall]] memory |
 
 ---
 
