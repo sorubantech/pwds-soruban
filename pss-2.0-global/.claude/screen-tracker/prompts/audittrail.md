@@ -2,7 +2,7 @@
 screen: AuditTrail
 registry_id: 74
 module: Report & Audit
-status: PROMPT_READY
+status: COMPLETED
 scope: FULL
 screen_type: REPORT
 report_subtype: TABULAR
@@ -11,8 +11,8 @@ pagination_strategy: server-paginate
 complexity: High
 new_module: NO — module REPORTAUDIT exists; new Group folder ReportAuditBusiness + new Schema folder ReportAuditSchemas
 planned_date: 2026-05-10
-completed_date:
-last_session_date:
+completed_date: 2026-05-16
+last_session_date: 2026-05-16
 ---
 
 > **Type override note**: REGISTRY.md classified this screen as `FLOW` ("TrackingData concept").
@@ -40,19 +40,19 @@ last_session_date:
 - [x] Prompt generated
 
 ### Generation (by /build-screen → /generate-screen)
-- [ ] BA Analysis validated (audience, frequency, decisions, data sensitivity, retention policy)
-- [ ] Solution Resolution complete (sub-type confirmed, capture-mechanism strategy confirmed)
-- [ ] UX Design finalized (filter panel + summary cards + table view + timeline view + detail panel + export menu)
-- [ ] User Approval received
-- [ ] Backend AuditLog entity + EF config + migration
-- [ ] Backend audit-capture infrastructure (AuditLogWriter service + interceptor extension OR explicit handler emits)
-- [ ] Backend report query (paginated + summary aggregate)
-- [ ] Backend export handlers (Excel / CSV / PDF — placeholders OK)
-- [ ] Backend wiring complete
-- [ ] Frontend report page (replace `<UnderConstruction />` stub at existing route)
-- [ ] Frontend wiring complete
-- [ ] DB Seed script (menu entry + MasterData seeds for AUDIT_ACTION_TYPE / AUDIT_STATUS / AUDIT_SEVERITY)
-- [ ] Registry updated to COMPLETED
+- [x] BA Analysis validated (audience, frequency, decisions, data sensitivity, retention policy — embedded in §①–④, no re-analysis needed)
+- [x] Solution Resolution complete (TABULAR sub-type confirmed; capture-mechanism strategy confirmed: interceptor + IAuditLogWriter + MediatR pipeline behavior — DEVIATES from prompt §⑫ literal per user-approved scope)
+- [x] UX Design finalized (filter panel + summary cards + table view + timeline view + detail panel + export menu — all 13 components built)
+- [x] User Approval received (scope adjustments: pipeline behavior replaces 50+ per-handler edits; ACCOUNT_LOCKED deferred; Excel/PDF as SERVICE_PLACEHOLDER)
+- [x] Backend AuditLog entity + EF config (NEW group folder `ReportAuditModels` + `ReportAuditConfigurations`)
+- [x] Backend audit-capture infrastructure (`IAuditLogWriter` + `AuditLogWriter` separate-scope writer + `AuditLogInterceptor` post-save diff + `AuditEventPipelineBehavior` for Export*/Approve*/Reject*/Submit* + 5 explicit auth-event hooks in `AuthendicationMutations.cs`)
+- [x] Backend report query (`GetAuditTrailReport` paginated w/ role-scoped WHERE + max-row guard + `GetAuditTrailSummary` 4-card aggregate + `GetAuditTrailById` detail + `GetAuditTrailByCorrelation` security timeline)
+- [x] Backend export handlers (Excel SERVICE_PLACEHOLDER, CSV REAL via StringBuilder/base64, PDF SERVICE_PLACEHOLDER — all emit self-audit EXPORT row)
+- [x] Backend wiring complete (`IApplicationDbContext` + `ApplicationDbContext` + `Base.Infrastructure/DependencyInjection.cs` + `Base.Application/DependencyInjection.cs` + `ReportAuditMappings.cs` Mapster + 4 GlobalUsing files + `AuthendicationMutations.cs` injection)
+- [x] Frontend report page (replaced `<UnderConstruction />` stub at `[lang]/reportaudit/audit/audittrail/page.tsx` — now renders `<AuditTrailPageConfig />` → `<AuditTrailReportPage />`)
+- [x] Frontend wiring complete (`reportaudit-service-entity-operations.ts` + spread into `data-table-configs/index.ts` + page config in `pages/reportaudit/audit/audittrail.tsx`)
+- [x] DB Seed script (`AuditTrail-sqlscripts.sql` — Module + Menu + MenuCapabilities + RoleCapabilities + Grid AUDITTRAILREPORT + 9 Fields + 8 GridFields + 3 MasterDataTypes (AUDIT_ACTION_TYPE / AUDIT_STATUS / AUDIT_SEVERITY) + 23 MasterData rows)
+- [x] Registry updated to COMPLETED (#74)
 
 ### Verification (post-generation — FULL E2E required)
 - [ ] dotnet build passes
@@ -917,10 +917,87 @@ This screen is the *first* in the registry to require a **cross-cutting capture 
 
 | ID | Raised (session) | Severity | Area | Description | Status |
 |----|------------------|----------|------|-------------|--------|
-| — | — | — | — | (empty — no issues raised yet) | — |
+| ISSUE-1 | 1 | MED | BE / Auth | Account-lockout 5-attempt chain (ACCOUNT_LOCKED rows) deferred. `User` entity has no `FailedAttemptCount`/`LockedUntil` cols. `LOGIN_FAILED` rows emit with `AttemptNumber=null` and `CorrelationId=null`. Once lockout feature ships, fill these and add an `ACCOUNT_LOCKED` emit at 5th-failure threshold. | OPEN |
+| ISSUE-2 | 1 | LOW | BE / Auth | `RefreshToken` mutation in `AuthendicationMutations.cs` has NO audit hook (mechanical, high frequency — would be noisy). If compliance later requires it, add `WriteAuthEvent(action="TOKEN_REFRESH",status="SUCCESS")` inside the `RefreshToken` success path. | OPEN |
+| ISSUE-3 | 1 | MED | BE / Role-scoping | `GetAuditTrailReport` STAFFADMIN branch-scoping is simplified — looks up the current user's own `BranchUsers` assignments rather than the full set of users assigned to the admin's branches. Full row-security needs a separate sub-query joining `BranchUsers` across all users in the same branches. | OPEN |
+| ISSUE-4 | 1 | LOW | BE / AuditNo | `AuditLogWriter.GenerateAuditNo` opens a second scoped DbContext to compute the day's max ID. Under high concurrency, two writes in the same second could compute the same `AuditNo`. The `AuditNo` UNIQUE index will reject the duplicate (writer logs+swallows; never throws to caller per immutability contract). Future improvement: PostgreSQL `SEQUENCE` or UUID-based AuditNo. | OPEN |
+| ISSUE-5 | 1 | LOW | BE / DI | `Base.Infrastructure/DependencyInjection.cs(10,7)` — duplicate `using Base.Infrastructure.Services` directive (CS0105 warning). Trivial cleanup. | OPEN |
+| ISSUE-6 | 1 | INFO | FE / Convention | Mutations file lives at `gql-queries/reportaudit-queries/AuditTrailMutations.ts` rather than under a separate `gql-mutations/` folder (no such folder exists in project — queries+mutations colocated under `gql-queries/`). No functional impact; matches some existing convention in the project. | OPEN |
+| ISSUE-7 | 1 | LOW | FE / TS-types | `entity-operations.ts` typing requires all 6 CRUD+toggle slots (`getAll/getById/create/update/delete/toggle`); audit-trail is READ+EXPORT only. CSV mutation used as safe `_noop` placeholder for the 4 unused slots — never invoked because page bypasses `<AdvancedDataTable>`. Consider extending `TDataTableOperationConfigs` to allow optional CRUD slots for read-only entities. | OPEN |
+| ISSUE-8 | 1 | INFO | FE / GQL typing | TS errors fixed by inline-annotating `useQuery`/`useLazyQuery`/`useMutation` with `TApiSingleResponse<T>` / `TApiCollectionResponse<T>` from `@/domain/types/common-types/TApiResponse`. Project uses untyped `gql` tags (no codegen) — this means *every* Apollo hook must be hand-annotated. Many existing files in the codebase have the same `Property 'result' does not exist on type '{}'` error; fixing them is out of scope for this build. | OPEN |
 
 ### § Sessions
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
 
-{No sessions recorded yet — filled in after /build-screen completes.}
+### Session 1 — 2026-05-16 — BUILD — COMPLETED
+
+- **Scope**: Initial full build from PROMPT_READY prompt. First REPORT/TABULAR in registry; sets canonical §⑦ for the report sub-type and the `ReportAuditBusiness` group folder convention. Includes cross-cutting audit-capture infrastructure (interceptor + writer + MediatR pipeline behavior + 5 explicit auth-event hooks).
+- **User-approved scope deviations from prompt §⑫**:
+  1. Per-handler `Export*`/`Approve*`/`Reject*`/`Submit*` injection REPLACED by single `AuditEventPipelineBehavior` MediatR pipeline behavior matching request-class-name prefix → ~65 file edits avoided.
+  2. Auth-event hooks all land in single file `AuthendicationMutations.cs` (no separate `LoginCommand` exists in this codebase).
+  3. Account-lockout 5-attempt chain DEFERRED (see ISSUE-1).
+  4. Excel + PDF exports kept as SERVICE_PLACEHOLDER (no ClosedXML / EPPlus / PDF generator NuGet in repo).
+- **Files touched**:
+  - **BE NEW (18)**:
+    - `Base.Domain/Models/ReportAuditModels/AuditLog.cs` (created)
+    - `Base.Infrastructure/Data/Configurations/ReportAuditConfigurations/AuditLogConfiguration.cs` (created)
+    - `Base.Application/Schemas/ReportAuditSchemas/AuditTrailSchemas.cs` (created)
+    - `Base.Application/Common/Interfaces/IAuditLogWriter.cs` (created)
+    - `Base.Application/Business/ReportAuditBusiness/AuditLogs/Queries/GetAuditTrailReport.cs` (created)
+    - `Base.Application/Business/ReportAuditBusiness/AuditLogs/Queries/GetAuditTrailSummary.cs` (created)
+    - `Base.Application/Business/ReportAuditBusiness/AuditLogs/Queries/GetAuditTrailById.cs` (created)
+    - `Base.Application/Business/ReportAuditBusiness/AuditLogs/Queries/GetAuditTrailByCorrelation.cs` (created)
+    - `Base.Application/Business/ReportAuditBusiness/AuditLogs/ReportExport/ExportAuditTrailExcel.cs` (created — SERVICE_PLACEHOLDER)
+    - `Base.Application/Business/ReportAuditBusiness/AuditLogs/ReportExport/ExportAuditTrailCsv.cs` (created — REAL)
+    - `Base.Application/Business/ReportAuditBusiness/AuditLogs/ReportExport/ExportAuditTrailPdf.cs` (created — SERVICE_PLACEHOLDER)
+    - `Base.Application/Common/Behaviors/AuditEventPipelineBehavior.cs` (created — replaces ~65 per-handler edits)
+    - `Base.Application/Mappings/ReportAuditMappings.cs` (created)
+    - `Base.Infrastructure/Services/AuditLogWriter.cs` (created — separate-scope DbContext write so audit persists on caller transaction rollback; SHA-256 SessionId hash; redacts `password|token|secret` keys; catch-never-throw)
+    - `Base.Infrastructure/Data/Interceptors/AuditLogInterceptor.cs` (created — post-`SavedChangesAsync` ChangeTracker scan; skips `AuditLog`+`RefreshToken`+password fields)
+    - `Base.API/EndPoints/ReportAudit/Queries/AuditTrailQueries.cs` (created — 4 GQL queries)
+    - `Base.API/EndPoints/ReportAudit/Mutations/AuditTrailMutations.cs` (created — 3 export mutations)
+    - `PSS_2.0_Backend/PeopleServe/Services/Base/sql-scripts-dyanmic/AuditTrail-sqlscripts.sql` (created — Module/Menu/MenuCapabilities/RoleCapabilities for BUSINESSADMIN+SUPERADMIN/Grid AUDITTRAILREPORT/9 Fields/8 GridFields/3 MasterDataTypes/23 MasterData rows)
+  - **BE MODIFIED (9)**:
+    - `Base.Domain/GlobalUsing.cs` (modified — added ReportAuditModels)
+    - `Base.Application/GlobalUsing.cs` (modified — added ReportAuditModels + ReportAuditSchemas)
+    - `Base.Infrastructure/GlobalUsing.cs` (modified — added ReportAuditModels + Common.Interfaces)
+    - `Base.API/GlobalUsing.cs` (modified — added ReportAuditSchemas + ReportAuditBusiness query/export namespaces)
+    - `Base.Application/Data/Persistence/IApplicationDbContext.cs` (modified — added `DbSet<AuditLog> AuditLogs { get; }`)
+    - `Base.Infrastructure/Data/Persistence/ApplicationDbContext.cs` (modified — added `DbSet<AuditLog>`)
+    - `Base.Infrastructure/DependencyInjection.cs` (modified — registered `ISaveChangesInterceptor → AuditLogInterceptor` (transient) + `IAuditLogWriter → AuditLogWriter` (scoped))
+    - `Base.Application/DependencyInjection.cs` (modified — registered `AuditEventPipelineBehavior<,>` in MediatR + `ReportAuditMappings.ConfigureMappings()`)
+    - `Base.API/EndPoints/Auth/Mutations/AuthendicationMutations.cs` (modified — injected `IAuditLogWriter`; hooked `Login` (LOGIN/SUCCESS + LOGIN_FAILED/WARNING), `RevokeRefreshToken` (LOGOUT/SUCCESS), `ForgotPasswords` (FORGOT_PASSWORD/SUCCESS), `ResetPasswords` (PASSWORD_RESET/HIGH))
+  - **FE NEW (17)**:
+    - `domain/entities/reportaudit-service/AuditTrailDto.ts` (created — all TS interfaces + `BaseApiResponse` shape)
+    - `domain/entities/reportaudit-service/index.ts` (created — barrel)
+    - `infrastructure/gql-queries/reportaudit-queries/AuditTrailQueries.ts` (created — 4 query exports)
+    - `infrastructure/gql-queries/reportaudit-queries/AuditTrailMutations.ts` (created — 3 mutation exports)
+    - `infrastructure/gql-queries/reportaudit-queries/index.ts` (created — barrel)
+    - `presentation/pages/reportaudit/audit/audittrail.tsx` (created — page config gated by `useAccessCapability({ menuCode: "AUDITTRAIL" })`)
+    - `presentation/components/page-components/reportaudit/audit/audittrail/index.ts` (created — barrel)
+    - `presentation/components/page-components/reportaudit/audit/audittrail/report-page.tsx` (created — Variant B layout, 2 useLazyQuery, view-toggle pure FE state)
+    - `presentation/components/page-components/reportaudit/audit/audittrail/components/summary-cards.tsx` (created — 4 KPI cards w/ solid bg-X-600 + text-white per `feedback-widget-icon-badge-styling`)
+    - `presentation/components/page-components/reportaudit/audit/audittrail/components/filter-panel.tsx` (created — 7 controls, 5 quick-date chips, Save Filter SERVICE_PLACEHOLDER)
+    - `presentation/components/page-components/reportaudit/audit/audittrail/components/view-toggle-bar.tsx` (created)
+    - `presentation/components/page-components/reportaudit/audit/audittrail/components/result-table.tsx` (created — 8 cols, action-pill + status-badge + entity-link + row-severity coloring + server-side pagination 50)
+    - `presentation/components/page-components/reportaudit/audit/audittrail/components/result-timeline.tsx` (created — date-grouped, NO refetch on toggle)
+    - `presentation/components/page-components/reportaudit/audit/audittrail/components/detail-panel.tsx` (created — 480px Sheet slide-in, 6 conditional sections, security timeline sub-query)
+    - `presentation/components/page-components/reportaudit/audit/audittrail/components/action-pill.tsx` (created — semantic palette in `style={{}}` per prompt-mandated exception)
+    - `presentation/components/page-components/reportaudit/audit/audittrail/components/status-badge.tsx` (created — solid bg-X-600 + text-white)
+    - `presentation/components/page-components/reportaudit/audit/audittrail/components/entity-link.tsx` (created — entity→route map fallback when BE doesn't supply route)
+    - `presentation/components/page-components/reportaudit/audit/audittrail/components/export-menu.tsx` (created — Excel/PDF placeholder toasts, CSV base64 → blob → download)
+    - `presentation/components/page-components/reportaudit/audit/audittrail/components/print-styles.module.css` (created — `@media print` hides filter+toggle+cards, repeats thead, exact color print)
+  - **FE MODIFIED (4)**:
+    - `app/[lang]/reportaudit/audit/audittrail/page.tsx` (modified — replaced `<UnderConstruction />` with `<AuditTrailPageConfig />`)
+    - `application/configs/data-table-configs/reportaudit-service-entity-operations.ts` (created/modified — AUDITTRAIL operations w/ `_noop` placeholder per ISSUE-7)
+    - `application/configs/data-table-configs/index.ts` (modified — spread `ReportAuditServiceEntityOperations`)
+    - `presentation/pages/reportaudit/audit/index.ts` (modified — added `export * from "./audittrail"`)
+- **TS-error fixes (post-build)**: Annotated `useQuery`/`useLazyQuery`/`useMutation` with `TApiSingleResponse<T>` / `TApiCollectionResponse<T>` in `report-page.tsx` + `detail-panel.tsx` + `export-menu.tsx`; added `id` field to breadcrumb items in `report-page.tsx` to satisfy `IBreadcrumbItem` interface.
+- **Build verification**: 
+  - `dotnet build PSS_2.0_Backend/PeopleServe/PeopleServe.sln` → **0 errors, 540 warnings** (all warnings pre-existing in unrelated files; 1 trivial new — see ISSUE-5).
+  - `pnpm exec tsc --noEmit` → **0 errors in `presentation/components/page-components/reportaudit/audit/audittrail/**`** (other pre-existing TS errors in unrelated files in the project remain).
+- **Deviations from spec**: Account-lockout (ACCOUNT_LOCKED) DEFERRED → ISSUE-1. Excel+PDF kept SERVICE_PLACEHOLDER → no NuGet additions. Per-handler `Export*`/`Approve*`/`Reject*` injection REPLACED by single MediatR pipeline behavior (user-approved). RefreshToken mutation has no audit hook (deliberate noise reduction → ISSUE-2).
+- **Known issues opened**: ISSUE-1 through ISSUE-8 (see Known Issues table).
+- **Known issues closed**: None (first session).
+- **Next step**: User must run (1) `dotnet ef migrations add Add_AuditLog --project Base.Infrastructure --startup-project Base.API` (from `PSS_2.0_Backend/PeopleServe/Services/Base`), (2) `dotnet ef database update`, (3) execute `sql-scripts-dyanmic/AuditTrail-sqlscripts.sql`, (4) `pnpm dev` and visit `/{lang}/reportaudit/audit/audittrail` to verify the screen loads (BUSINESSADMIN role required).

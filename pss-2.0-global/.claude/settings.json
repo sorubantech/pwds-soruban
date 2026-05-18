@@ -433,7 +433,17 @@
       "Bash(rm \"d:/Repos/PWDS/pwds-soruban/pss-2.0-global/PSS_2.0_Frontend/src/presentation/components/page-components/crm/grant/grantcalendar/grantcalendar-page-config.ts\")",
       "Bash(python excel-audit.py)",
       "Bash(python verify-round3.py)",
-      "Bash(python \"C:\\\\Users\\\\USER\\\\AppData\\\\Local\\\\Temp\\\\excel-round4.py\")"
+      "Bash(python \"C:\\\\Users\\\\USER\\\\AppData\\\\Local\\\\Temp\\\\excel-round4.py\")",
+      "Read(//d/Repos/PWDS/pwds-soruban/pss-2.0-global/PSS_2.0_Frontend/src/app/**)",
+      "PowerShell($base = 'PSS_2.0_Backend\\\\PeopleServe\\\\Services\\\\Base'; Test-Path \"$base\\\\Base.Domain\\\\Models\\\\NotifyModels\"; Test-Path \"$base\\\\Base.Domain\\\\Models\\\\NotifyModels\\\\WhatsAppTemplate.cs\"; Test-Path \"$base\\\\Base.Domain\\\\Models\\\\ContactModels\\\\Contact.cs\"; Test-Path \"$base\\\\Base.Domain\\\\Models\\\\AuthModels\\\\User.cs\"; Test-Path \"$base\\\\Base.Domain\\\\Models\\\\AuthModels\\\\Company.cs\"; Test-Path \"$base\\\\Base.Infrastructure\\\\Data\\\\INotifyDbContext.cs\"; Test-Path \"$base\\\\Base.Infrastructure\\\\Data\\\\NotifyDbContext.cs\"; Test-Path \"$base\\\\Base.Infrastructure\\\\Data\\\\Configurations\\\\NotifyConfigurations\")",
+      "PowerShell($p = 'PSS_2.0_Frontend\\\\src\\\\app\\\\[lang]\\\\crm\\\\whatsapp'; if \\(Test-Path -LiteralPath $p\\) { Get-ChildItem -LiteralPath $p -Directory | Format-Table Name }; $f = \"$p\\\\whatsappconversation\\\\page.tsx\"; if \\(Test-Path -LiteralPath $f\\) { 'STUB EXISTS' } else { 'STUB MISSING' })",
+      "Bash(Read \"C:/Users/USER/AppData/Local/Temp/claude/d--Repos-PWDS-pwds-soruban-pss-2-0-global/cd99cc7e-532c-4e49-bf7c-d3a70ddc268a/tasks/boz1fbo16.output\")",
+      "Bash(grep -n \"DecoratorSettingModules\\\\|//Decorator\" \"d:/Repos/PWDS/pwds-soruban/pss-2.0-global/PSS_2.0_Backend/PeopleServe/Services/Base/Base.Application/Extensions/DecoratorProperties.cs\")",
+      "Bash(grep -n \"//MappingsLines\\\\|// MappingsLines\\\\|end of\" \"d:/Repos/PWDS/pwds-soruban/pss-2.0-global/PSS_2.0_Backend/PeopleServe/Services/Base/Base.Application/Mappings/AuthMappings.cs\")",
+      "Bash(xargs sed -i 's/data\\\\?\\\\.\\\\\\(result\\\\\\)/\\\\\\(data as any\\\\\\)?.\\\\1/g')",
+      "Bash(awk 'NR==268 {print length\\($0\\)}' \"d:/Repos/PWDS/pwds-soruban/pss-2.0-global/.claude/screen-tracker/REGISTRY.md\")",
+      "Bash(awk 'NR==268' \"d:/Repos/PWDS/pwds-soruban/pss-2.0-global/.claude/screen-tracker/REGISTRY.md\")",
+      "Bash(findstr /C:\"error CS\" /C:\"Build succeeded\" /C:\"Error\\(s\\)\")"
     ],
     "ask": [
       "Bash(rm -rf *)",

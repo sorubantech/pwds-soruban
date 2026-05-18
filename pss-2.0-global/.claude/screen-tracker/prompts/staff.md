@@ -2,7 +2,9 @@
 
 > **Scope**: ALIGN — near-greenfield rebuild of form + detail UX, major BE schema extension.
 > **Canonical sibling**: RecurringDonationSchedule #8 (drawer-based DETAIL) + Family #20 (accordion FORM + 4 KPI widgets) + StaffCategory #43 (Organization module conventions).
-> **Status**: PROMPT_READY (2026-04-20)
+> **Status**: COMPLETED (2026-05-14) — Session 1 build · BE 0 errors · 5 BE created + 12 BE modified + DB seed · 13 FE created + 11 FE modified + 7 FE neutralized (physical delete deferred to user) · 2 reconciliations (StaffSummaryDto→StaffsSummaryDto, status-badge→staff-status-badge)
+> **Last session**: 2026-05-14
+> **Completed date**: 2026-05-14
 
 ---
 
@@ -936,4 +938,70 @@ variables: {
 
 ## ⑬ Build Log (append during /build-screen)
 
-(Empty — to be populated by orchestrator during build session.)
+### § Sessions
+
+### Session 1 — 2026-05-14 — BUILD — COMPLETED
+
+- **Scope**: Initial full build from PROMPT_READY prompt. BA/SR/UX agents skipped per §⑫ Agent Directives (prompt has full §②–⑫ analysis). BE + FE dispatched in parallel on Opus.
+- **Files touched**:
+  - **BE** (5 created + 12 modified):
+    - `Base.Application/Business/ApplicationBusiness/Staffs/Commands/TransferStaff.cs` (created)
+    - `Base.Application/Business/ApplicationBusiness/Staffs/Queries/GetStaffSummary.cs` (created)
+    - `Base.Application/Business/ApplicationBusiness/Staffs/Queries/GetStaffActivitySummary.cs` (created)
+    - `Base.Infrastructure/Migrations/20260514120000_ExpandStaffEntity_2026_0514.cs` + `.Designer.cs` (created — Designer is placeholder, user regenerates locally)
+    - `sql-scripts-dyanmic/Staff-sqlscripts.sql` (created)
+    - `Base.Domain/Models/ApplicationModels/Staff.cs` (modified — +20 cols, +OrganizationalUnit nav, +ReportingTo self-FK + Reports inverse)
+    - `Base.Application/Schemas/ApplicationSchemas/StaffSchemas.cs` (modified — extended Request/Response, +`StaffsSummaryDto`, +`StaffActivitySummaryDto`, +`NewUserSubFormDto`, +`StaffCategoryBreakdownItem`, +`TransferStaffDto`)
+    - `Base.Infrastructure/Data/Configurations/ApplicationConfigurations/StaffConfiguration.cs` (modified — per-Company filtered unique indexes, explicit self-FK Fluent config per ISSUE-14, OrgUnit FK)
+    - `Base.Application/Mappings/ApplicationMappings.cs` (modified — **ISSUE-2 fix**: removed wrong `Staff↔StaffCategoryResponseDto`, added correct `Staff→StaffResponseDto` with explicit projected-field maps)
+    - `Base.Application/Business/ApplicationBusiness/Staffs/Commands/CreateStaff.cs` (modified — auto-gen `STF-NNNN` per Company, two-path user link, FirstName/LastName + DisplayName, defaults StaffStatus=ACTIVE, per-Company uniqueness validators per ISSUE-15)
+    - `Base.Application/Business/ApplicationBusiness/Staffs/Commands/UpdateStaff.cs` (modified — full 20-field update, cycle-walk validator 10-level depth, StaffEmpId readonly)
+    - `Base.Application/Business/ApplicationBusiness/Staffs/Queries/GetStaffs.cs` (modified — Includes 5 navs, CompanyId scope, extended search, 5 top-level filter args)
+    - `Base.Application/Business/ApplicationBusiness/Staffs/Queries/GetStaffById.cs` (modified — Includes all FK navs)
+    - `Base.API/EndPoints/Application/Mutations/StaffMutations.cs` (modified — +`transferStaff`)
+    - `Base.API/EndPoints/Application/Queries/StaffQueries.cs` (modified — +`staffSummary`, +`staffActivitySummary`, extended `staffs` with 5 filter args)
+    - `Base.Application/Business/AuthBusiness/Users/Queries/GetUsers.cs` (modified — +`excludeAssignedStaff` filter arg)
+    - `Base.API/EndPoints/Auth/Queries/UserQueries.cs` (modified — surfaces `excludeAssignedStaff`)
+    - `Base.Infrastructure/Data/.../ApplicationDbContextModelSnapshot.cs` (modified — Staff entity post-state)
+  - **FE** (13 created + 11 modified):
+    - Renderers (created): `shared-cell-renderers/link-cell.tsx`, `staff-id-chip.tsx`, `staff-avatar-name-cell.tsx`, `staff-status-badge.tsx`, `text-cell.tsx`, `user-account-cell.tsx`
+    - Page components (created): `staff-components/staff-avatar.tsx`, `staff-widgets.tsx`, `staff-advanced-filter-panel.tsx`, `staff-detail-drawer.tsx`, `staff-accordion-form.tsx`, `transfer-staff-modal.tsx`, `detail-primitives.tsx`
+    - Domain/Infra (modified): `domain/entities/application-service/StaffDto.ts` (rewritten), `infrastructure/gql-queries/application-queries/StaffQuery.ts` (extended), `infrastructure/gql-mutations/application-mutations/StaffMutation.ts` (extended)
+    - Application/state (modified): `application/stores/hrms-stores/staff-store.ts` (rewritten), `application/configs/data-table-configs/application-service-entity-operations.ts` (gridCode `STAFF`→`STAFFS` per ISSUE-12)
+    - Page wrappers (modified): `presentation/pages/organization/staff/staff.tsx` (`useAccessCapability` `STAFF`→`STAFFS` per ISSUE-18), `staff-wizard/index.tsx` (router rewrite — read mode opens drawer overlay), `staff-wizard/index-page.tsx` (Variant B rewrite), `staff-wizard/view-page.tsx` (form-only mode=add/edit), `staff-wizard/staff-wizard-context.tsx` (thin compat shim for preserved `staff-company-config-tab`), `staff-components/index.ts` (barrel refresh)
+    - Defensive (modified): `presentation/pages/shared/general/profile/personal-info-tab.tsx` (optional chaining for `staffCategory`)
+    - **Renderer registries** (modified): all 3 of `advanced/`, `basic/`, `flow/data-table-column-types/component-column.tsx` + `shared-cell-renderers/index.ts` barrel — 6 new renderer keys wired
+  - **DB**: `sql-scripts-dyanmic/Staff-sqlscripts.sql` (created — Menu STAFFS + 7 caps + BUSINESSADMIN grant + Grid FLOW + 10 Fields + 10 GridFields + MasterData GENDER/STAFFEMPLOYMENTTYPE/STAFFSTATUS)
+- **Cross-agent reconciliations applied**:
+  1. BE renamed `StaffSummaryDto` → `StaffsSummaryDto` (collision with `FieldCollectionSchemas.StaffSummaryDto`); orchestrator patched FE to match: `StaffDto.ts` interface + 2 import sites (`staff-widgets.tsx`, `index-page.tsx`).
+  2. FE created `staff-status-badge` (3-state ACTIVE/INACTIVE/ONLEAVE) instead of using boolean-only `status-badge`; orchestrator hot-patched seed `Staff-sqlscripts.sql` line 272 from `'status-badge'` → `'staff-status-badge'` + updated comment block at line 172.
+- **Deviations from spec**:
+  - **`StaffSummaryDto` → `StaffsSummaryDto`** across BE+FE due to namespace collision with `FieldCollectionSchemas.StaffSummaryDto` (BE-blocking, FE-cosmetic but renamed for cross-stack consistency).
+  - **`staff-status-badge` instead of `status-badge`** for Status column (existing `status-badge` is boolean-only — Staff needs 3-state code rendering).
+  - **7 old wizard files neutralized to `export {}` stubs instead of physically deleted** — sandbox `rm`/`Remove-Item` denied. User must `git rm` these in a follow-up: `staff-wizard/staff-wizard-widget.tsx`, `staff-profile-tab.tsx`, `staff-parent-form.tsx`, `staff-category-tab.tsx`, `staff-components/data-table.tsx`, `staff-components/staff-edit-form/index.tsx`, `staff-edit-form/staff-profile.tsx`, `staff-edit-form/staff-role.tsx`. (`staff-wizard-context.tsx` is preserved as compat shim, not a stub.)
+  - **`StaffName` legacy field kept** as derived `FirstName + ' ' + LastName` in CreateStaff handler (per §② "keep StaffName as derived/legacy" note).
+  - **Photo upload helper `staff-profile-photo.tsx` preserved but NOT wired** into new accordion form (SERVICE_PLACEHOLDER ISSUE-3); form shows "Upload photo" placeholder + `toast.info("pending infrastructure")`. Slot helper in when upload pipeline lands.
+  - **Migration Designer file is a placeholder stub** — user must run `dotnet ef migrations remove && dotnet ef migrations add ExpandStaffEntity_2026_0514` locally to regenerate the proper Designer with embedded model snapshot. Migration `.cs` body and hand-edited `ApplicationDbContextModelSnapshot.cs` are correct.
+- **Known issues opened** (added to Known Issues table below):
+  - ISSUE-19: 7 stub files need physical `git rm` follow-up.
+  - ISSUE-20: Migration Designer placeholder requires local regeneration before `dotnet ef database update`.
+- **Known issues closed**: ISSUE-2 (Mapster copy-paste fixed), ISSUE-12 (gridCode rename), ISSUE-14 (self-FK Fluent config), ISSUE-15 (per-Company uniqueness scope), ISSUE-16 (staff-category-tab neutralized), ISSUE-17 (seed in `dyanmic` typo folder per convention), ISSUE-18 (`useAccessCapability` rename).
+- **Next step**: (none — COMPLETED. User should run: 1) `git rm` the 7 stub files, 2) regenerate migration Designer locally, 3) `dotnet build`, 4) apply migration, 5) run seed SQL, 6) `pnpm dev` and smoke-test the CRUD + Transfer + Drawer flow.)
+
+### § Known Issues
+
+| ID | Status | Description |
+|----|--------|-------------|
+| ISSUE-1 | OPEN | `Staff.UserId` non-nullable; treats `0` as "no account" via `HasUserAccount` projected. Future: migrate to `UserId int?` when Unlink lands. |
+| ISSUE-3 | OPEN | Photo upload — UI placeholder only; needs server upload pipeline. |
+| ISSUE-4 | OPEN | Import Staff — toast placeholder only; needs ETL pipeline. |
+| ISSUE-5 | OPEN | "Manage User Account" link assumes User Management screen #72 exists (#72 is PARTIAL — no FE management screen). |
+| ISSUE-6 | OPEN | No `StaffBranchHistory` audit table — Transfer updates FKs in place. |
+| ISSUE-7 | OPEN | Branch History list in drawer = static placeholder (depends on ISSUE-6). |
+| ISSUE-8 | OPEN | Activity Summary "Events managed" = `0` (Event.OwnerStaffId not present). |
+| ISSUE-9 | OPEN | Activity Summary "Last login" = `null` (User.LastLoginDate not on entity). |
+| ISSUE-10 | OPEN | "Send welcome email" toggle persisted on `NewUserSubFormDto` but not consumed (no email pipeline). |
+| ISSUE-11 | OPEN | "Unlink user" — disabled with tooltip; depends on ISSUE-1 (UserId nullable). |
+| ISSUE-13 | OPEN | `staff-company-config-tab` preserved + reachable via `?tab=companyconfig` URL — full UX redesign deferred. |
+| ISSUE-19 | OPEN | 7 old wizard stub files need physical `git rm` (sandbox blocked rm during build). |
+| ISSUE-20 | OPEN | Migration Designer file is a placeholder — regenerate locally before applying migration. |
