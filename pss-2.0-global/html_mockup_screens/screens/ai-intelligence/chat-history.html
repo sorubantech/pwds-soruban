@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIDA · Chat History - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --text-muted: #94a3b8;
+      --border-color: #e2e8f0;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #dc2626;
+      --ai-accent: #8b5cf6;
+      --ai-accent-dark: #7c3aed;
+      --ai-accent-bg: #f5f3ff;
+      --ai-accent-border: #ddd6fe;
+      --card-radius: 12px;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9; font-size: 14px; color: var(--text-primary);
+      height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+    }
+
+    /* Header */
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.875rem 1.5rem; background: white;
+      border-bottom: 1px solid var(--border-color); flex-shrink: 0; gap: 1rem; flex-wrap: wrap;
+    }
+    .header-title { display: flex; align-items: center; gap: 0.625rem; }
+    .ai-logo {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--ai-accent), #a78bfa);
+      color: white; display: flex; align-items: center; justify-content: center; font-size: 1rem;
+    }
+    .header-title h1 { font-size: 1.125rem; font-weight: 700; line-height: 1.15; }
+    .header-title .subtitle { font-size: 0.75rem; color: var(--text-secondary); }
+    .header-actions { display: flex; gap: 0.375rem; align-items: center; }
+    .btn-primary-custom {
+      background: linear-gradient(135deg, var(--ai-accent), #a78bfa); color: white; border: none;
+      padding: 0.4375rem 0.875rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 600;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 0.375rem;
+    }
+    .btn-primary-custom:hover { background: linear-gradient(135deg, var(--ai-accent-dark), var(--ai-accent)); }
+    .btn-outline-custom {
+      background: white; color: var(--text-primary); border: 1px solid var(--border-color);
+      padding: 0.4375rem 0.75rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 500;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 0.375rem;
+    }
+    .btn-outline-custom:hover { border-color: var(--ai-accent); color: var(--ai-accent); }
+    .icon-btn {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: white; border: 1px solid var(--border-color);
+      color: var(--text-secondary); cursor: pointer; display: inline-flex;
+      align-items: center; justify-content: center; font-size: 0.8125rem;
+    }
+    .icon-btn:hover { border-color: var(--ai-accent); color: var(--ai-accent); }
+
+    /* Main Layout */
+    .main-layout { flex: 1; display: flex; overflow: hidden; }
+
+    /* Left rail — Sessions list */
+    .sessions-rail {
+      width: 320px; background: white; border-right: 1px solid var(--border-color);
+      display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden;
+    }
+    .rail-search {
+      padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color); flex-shrink: 0;
+    }
+    .search-input-group {
+      display: flex; align-items: center; gap: 0.5rem;
+      background: #f8fafc; border: 1px solid var(--border-color);
+      border-radius: 0.5rem; padding: 0.375rem 0.625rem;
+      transition: all 0.15s;
+    }
+    .search-input-group:focus-within { border-color: var(--ai-accent); background: white; }
+    .search-input-group i { color: var(--text-muted); font-size: 0.8125rem; }
+    .search-input-group input {
+      flex: 1; border: none; outline: none; background: transparent;
+      font-size: 0.8125rem; font-family: inherit;
+    }
+    .filter-chips {
+      display: flex; gap: 0.25rem; margin-top: 0.5rem; flex-wrap: wrap;
+    }
+    .filter-chip {
+      background: white; color: var(--text-secondary); border: 1px solid var(--border-color);
+      padding: 0.1875rem 0.5rem; border-radius: 999px; font-size: 0.6875rem; font-weight: 500;
+      cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 0.25rem;
+    }
+    .filter-chip:hover { border-color: var(--ai-accent); color: var(--ai-accent); }
+    .filter-chip.active { background: var(--ai-accent-bg); color: var(--ai-accent); border-color: var(--ai-accent-border); font-weight: 600; }
+    .filter-chip i { font-size: 0.5625rem; }
+
+    .sessions-list { flex: 1; overflow-y: auto; padding: 0.5rem 0; }
+    .session-group-label {
+      padding: 0.625rem 1rem 0.375rem; font-size: 0.625rem; font-weight: 700;
+      color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .session-item {
+      padding: 0.625rem 1rem; cursor: pointer; transition: all 0.15s;
+      border-left: 3px solid transparent; position: relative;
+    }
+    .session-item:hover { background: #f8fafc; }
+    .session-item.active {
+      background: var(--ai-accent-bg);
+      border-left-color: var(--ai-accent);
+    }
+    .session-row1 { display: flex; align-items: center; gap: 0.375rem; margin-bottom: 0.125rem; }
+    .session-title {
+      font-size: 0.8125rem; font-weight: 600; color: var(--text-primary);
+      line-height: 1.3; flex: 1;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .session-item.active .session-title { color: var(--ai-accent-dark); }
+    .session-pin { color: var(--warning); font-size: 0.625rem; flex-shrink: 0; }
+    .session-row2 {
+      display: flex; align-items: center; gap: 0.4375rem; font-size: 0.6875rem;
+      color: var(--text-secondary);
+    }
+    .session-surface {
+      font-size: 0.5625rem; font-weight: 700; padding: 0.0625rem 0.375rem;
+      border-radius: 4px; text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .session-surface.chat { background: #e0e7ff; color: #4338ca; }
+    .session-surface.grid { background: #d1fae5; color: #047857; }
+    .session-surface.flow { background: #fef3c7; color: #b45309; }
+    .session-surface.hook { background: #fce7f3; color: #be185d; }
+    .session-meta { color: var(--text-muted); }
+    .session-msg-count { margin-left: auto; }
+    .session-action-icon {
+      color: var(--text-muted); opacity: 0; transition: opacity 0.15s; cursor: pointer;
+    }
+    .session-item:hover .session-action-icon { opacity: 1; }
+    .session-action-icon:hover { color: var(--ai-accent); }
+
+    .rail-footer {
+      padding: 0.75rem 1rem; border-top: 1px solid var(--border-color);
+      font-size: 0.6875rem; color: var(--text-secondary); flex-shrink: 0;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    /* Main Conversation Viewer */
+    .viewer { flex: 1; display: flex; flex-direction: column; background: white; overflow: hidden; }
+    .viewer-head {
+      padding: 0.875rem 1.5rem; border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; flex-wrap: wrap;
+    }
+    .viewer-title-block { flex: 1; min-width: 200px; }
+    .viewer-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); }
+    .viewer-subtitle {
+      display: flex; align-items: center; gap: 0.5rem; font-size: 0.6875rem;
+      color: var(--text-secondary); margin-top: 0.25rem;
+    }
+    .viewer-subtitle .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--text-muted); }
+    .viewer-head-actions { display: flex; gap: 0.375rem; align-items: center; }
+
+    .viewer-body {
+      flex: 1; overflow-y: auto; padding: 1.25rem 1.5rem;
+    }
+    .viewer-inner { max-width: 760px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 1rem; }
+
+    .date-divider {
+      text-align: center; font-size: 0.6875rem; color: var(--text-muted);
+      font-weight: 600; padding: 0.5rem 0; letter-spacing: 0.05em; text-transform: uppercase;
+    }
+
+    .msg { display: flex; gap: 0.75rem; align-items: flex-start; }
+    .msg.user { flex-direction: row-reverse; }
+    .avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.75rem; flex-shrink: 0;
+    }
+    .avatar.user-av { background: var(--accent-bg); color: var(--accent); }
+    .avatar.ai-av { background: linear-gradient(135deg, var(--ai-accent), #a78bfa); color: white; }
+
+    .bubble {
+      padding: 0.75rem 1rem; border-radius: 0.75rem; font-size: 0.875rem;
+      line-height: 1.5; max-width: 85%;
+    }
+    .msg.user .bubble {
+      background: var(--accent); color: white; border-bottom-right-radius: 0.25rem;
+    }
+    .msg.ai .bubble {
+      background: #f8fafc; border: 1px solid var(--border-color);
+      color: var(--text-primary); border-bottom-left-radius: 0.25rem; max-width: 100%; flex: 1;
+    }
+
+    .compact-trace {
+      font-size: 0.6875rem; color: var(--text-secondary);
+      background: var(--ai-accent-bg); border: 1px dashed var(--ai-accent-border);
+      border-radius: 0.5rem; padding: 0.4375rem 0.625rem; margin-bottom: 0.5rem;
+      display: flex; align-items: center; gap: 0.375rem;
+    }
+    .compact-trace i { color: var(--ai-accent); }
+    .compact-trace strong { color: var(--text-primary); }
+
+    .msg-foot {
+      font-size: 0.625rem; color: var(--text-muted); margin-top: 0.375rem;
+      display: flex; gap: 0.5rem; align-items: center;
+    }
+    .msg-foot .dot { width: 2px; height: 2px; border-radius: 50%; background: var(--text-muted); }
+
+    .cite-ref {
+      display: inline-block; background: var(--ai-accent-bg); color: var(--ai-accent);
+      font-size: 0.625rem; font-weight: 700; padding: 0 0.3125rem;
+      border-radius: 4px; margin: 0 0.125rem; cursor: pointer; vertical-align: 1px;
+    }
+
+    .resume-bar {
+      max-width: 760px; width: 100%; margin: 0.75rem auto 0;
+      background: linear-gradient(135deg, var(--ai-accent-bg), #faf5ff);
+      border: 1px solid var(--ai-accent-border); border-radius: 0.75rem;
+      padding: 0.875rem 1rem; display: flex; align-items: center; gap: 0.75rem;
+    }
+    .resume-bar i.lead-icon {
+      color: var(--ai-accent); font-size: 1rem;
+      width: 32px; height: 32px; border-radius: 8px;
+      background: white; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .resume-text { flex: 1; }
+    .resume-title { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); }
+    .resume-subtitle { font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.125rem; }
+
+    /* Right side: Session details panel */
+    .details-panel {
+      width: 280px; background: #fafbfc; border-left: 1px solid var(--border-color);
+      flex-shrink: 0; overflow-y: auto; padding: 1rem;
+      display: flex; flex-direction: column; gap: 0.875rem;
+    }
+    .details-card {
+      background: white; border: 1px solid var(--border-color); border-radius: 0.625rem;
+      overflow: hidden;
+    }
+    .details-card-head {
+      padding: 0.5rem 0.75rem; font-size: 0.625rem; font-weight: 700;
+      color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;
+      background: #f8fafc; border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; gap: 0.375rem;
+    }
+    .details-card-head i { color: var(--ai-accent); font-size: 0.6875rem; }
+    .details-card-body { padding: 0.625rem 0.75rem; }
+
+    .detail-row {
+      display: flex; justify-content: space-between; padding: 0.1875rem 0;
+      font-size: 0.75rem;
+    }
+    .detail-row .lbl { color: var(--text-secondary); }
+    .detail-row .val { font-weight: 600; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+
+    .stack-list { display: flex; flex-direction: column; gap: 0.375rem; }
+    .stack-item {
+      display: flex; align-items: center; gap: 0.4375rem; font-size: 0.75rem;
+    }
+    .stack-icon {
+      width: 22px; height: 22px; border-radius: 5px;
+      background: var(--ai-accent-bg); color: var(--ai-accent);
+      display: flex; align-items: center; justify-content: center; font-size: 0.6875rem;
+      flex-shrink: 0;
+    }
+    .stack-item .name { flex: 1; }
+    .stack-item .count {
+      font-size: 0.625rem; color: var(--text-muted); font-weight: 600;
+      background: #f1f5f9; padding: 0.0625rem 0.375rem; border-radius: 999px;
+    }
+
+    .retention-bar {
+      height: 4px; background: #f1f5f9; border-radius: 2px; margin-top: 0.4375rem; overflow: hidden;
+    }
+    .retention-fill { height: 100%; background: var(--success); width: 73%; }
+    .retention-hint { font-size: 0.625rem; color: var(--text-muted); margin-top: 0.25rem; }
+
+    .audit-row {
+      display: flex; gap: 0.4375rem; padding: 0.375rem 0; border-top: 1px solid #f1f5f9;
+      font-size: 0.6875rem; align-items: flex-start;
+    }
+    .audit-row:first-child { border-top: none; padding-top: 0; }
+    .audit-row i { color: var(--ai-accent); font-size: 0.625rem; margin-top: 0.1875rem; flex-shrink: 0; }
+    .audit-row .when { color: var(--text-muted); font-size: 0.5625rem; margin-top: 0.0625rem; }
+
+    .danger-block {
+      padding: 0.625rem 0.75rem; background: #fef2f2; border: 1px solid #fecaca;
+      border-radius: 0.5rem; font-size: 0.6875rem; color: var(--danger);
+      display: flex; align-items: center; gap: 0.4375rem; cursor: pointer;
+    }
+    .danger-block:hover { background: #fee2e2; }
+
+    @media (max-width: 1200px) { .details-panel { display: none; } }
+    @media (max-width: 768px)  { .sessions-rail { width: 260px; } }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-title">
+      <div class="ai-logo"><i class="fas fa-clock-rotate-left"></i></div>
+      <div>
+        <h1>Chat History</h1>
+        <div class="subtitle">AIDA conversations · last 60 days</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline-custom"><i class="fas fa-download"></i> Export all</button>
+      <button class="btn-primary-custom"><i class="fas fa-plus"></i> New chat</button>
+    </div>
+  </div>
+
+  <!-- Main Layout -->
+  <div class="main-layout">
+
+    <!-- Sessions rail (left) -->
+    <aside class="sessions-rail">
+      <div class="rail-search">
+        <div class="search-input-group">
+          <i class="fas fa-magnifying-glass"></i>
+          <input type="text" placeholder="Search conversations…" />
+        </div>
+        <div class="filter-chips">
+          <span class="filter-chip active"><i class="fas fa-circle"></i>All</span>
+          <span class="filter-chip"><i class="fas fa-comments"></i>Chat</span>
+          <span class="filter-chip"><i class="fas fa-table"></i>Grid</span>
+          <span class="filter-chip"><i class="fas fa-diagram-project"></i>Workflow</span>
+          <span class="filter-chip"><i class="fas fa-bolt"></i>Hook</span>
+          <span class="filter-chip"><i class="fas fa-thumbtack"></i>Pinned</span>
+        </div>
+      </div>
+
+      <div class="sessions-list">
+
+        <div class="session-group-label">Today</div>
+        <div class="session-item active">
+          <div class="session-row1">
+            <span class="session-title">Diwali Drive performance vs last year</span>
+            <i class="fas fa-thumbtack session-pin" title="Pinned"></i>
+          </div>
+          <div class="session-row2">
+            <span class="session-surface chat">Chat</span>
+            <span class="session-meta">10:42 AM · 4 msgs</span>
+            <i class="fas fa-ellipsis-vertical session-action-icon"></i>
+          </div>
+        </div>
+        <div class="session-item">
+          <div class="session-row1">
+            <span class="session-title">Unreceipted donations &gt; ₹50K Q2</span>
+          </div>
+          <div class="session-row2">
+            <span class="session-surface grid">Grid</span>
+            <span class="session-meta">09:18 AM · /donations</span>
+            <i class="fas fa-ellipsis-vertical session-action-icon"></i>
+          </div>
+        </div>
+        <div class="session-item">
+          <div class="session-row1">
+            <span class="session-title">Draft acknowledgement for Mr. Ramesh V.</span>
+          </div>
+          <div class="session-row2">
+            <span class="session-surface hook">Hook</span>
+            <span class="session-meta">08:45 AM · auto</span>
+            <i class="fas fa-ellipsis-vertical session-action-icon"></i>
+          </div>
+        </div>
+
+        <div class="session-group-label">Yesterday</div>
+        <div class="session-item">
+          <div class="session-row1">
+            <span class="session-title">DIK valuation for ₹2L sewing machines</span>
+          </div>
+          <div class="session-row2">
+            <span class="session-surface flow">Workflow</span>
+            <span class="session-meta">04:12 PM · 8 msgs</span>
+            <i class="fas fa-ellipsis-vertical session-action-icon"></i>
+          </div>
+        </div>
+        <div class="session-item">
+          <div class="session-row1">
+            <span class="session-title">Lapsed recurring donors in Tamil Nadu</span>
+            <i class="fas fa-thumbtack session-pin" title="Pinned"></i>
+          </div>
+          <div class="session-row2">
+            <span class="session-surface chat">Chat</span>
+            <span class="session-meta">02:05 PM · 12 msgs</span>
+            <i class="fas fa-ellipsis-vertical session-action-icon"></i>
+          </div>
+        </div>
+        <div class="session-item">
+          <div class="session-row1">
+            <span class="session-title">Compare Annual Fund 2025 vs 2024</span>
+          </div>
+          <div class="session-row2">
+            <span class="session-surface chat">Chat</span>
+            <span class="session-meta">11:32 AM · 6 msgs</span>
+            <i class="fas fa-ellipsis-vertical session-action-icon"></i>
+          </div>
+        </div>
+
+        <div class="session-group-label">This week</div>
+        <div class="session-item">
+          <div class="session-row1">
+            <span class="session-title">FCRA donations needing compliance review</span>
+          </div>
+          <div class="session-row2">
+            <span class="session-surface grid">Grid</span>
+            <span class="session-meta">Mon · /donations</span>
+            <i class="fas fa-ellipsis-vertical session-action-icon"></i>
+          </div>
+        </div>
+        <div class="session-item">
+          <div class="session-row1">
+            <span class="session-title">Duplicate donor merge: Suresh K candidates</span>
+          </div>
+          <div class="session-row2">
+            <span class="session-surface flow">Workflow</span>
+            <span class="session-meta">Mon · 14 msgs</span>
+            <i class="fas fa-ellipsis-vertical session-action-icon"></i>
+          </div>
+        </div>
+        <div class="session-item">
+          <div class="session-row1">
+            <span class="session-title">Anomaly: 3 donations from new IP cluster</span>
+          </div>
+          <div class="session-row2">
+            <span class="session-surface hook">Hook</span>
+            <span class="session-meta">Sun · auto</span>
+            <i class="fas fa-ellipsis-vertical session-action-icon"></i>
+          </div>
+        </div>
+
+        <div class="session-group-label">Earlier</div>
+        <div class="session-item">
+          <div class="session-row1">
+            <span class="session-title">Pledge follow-up cadence for ₹10L commitments</span>
+          </div>
+          <div class="session-row2">
+            <span class="session-surface chat">Chat</span>
+            <span class="session-meta">Sep 12 · 9 msgs</span>
+            <i class="fas fa-ellipsis-vertical session-action-icon"></i>
+          </div>
+        </div>
+        <div class="session-item">
+          <div class="session-row1">
+            <span class="session-title">Quarterly Board Report — draft outline</span>
+          </div>
+          <div class="session-row2">
+            <span class="session-surface chat">Chat</span>
+            <span class="session-meta">Sep 08 · 22 msgs</span>
+            <i class="fas fa-ellipsis-vertical session-action-icon"></i>
+          </div>
+        </div>
+        <div class="session-item">
+          <div class="session-row1">
+            <span class="session-title">Volunteer hour roll-up for August</span>
+          </div>
+          <div class="session-row2">
+            <span class="session-surface grid">Grid</span>
+            <span class="session-meta">Sep 03 · /volunteer</span>
+            <i class="fas fa-ellipsis-vertical session-action-icon"></i>
+          </div>
+        </div>
+        <div class="session-item">
+          <div class="session-row1">
+            <span class="session-title">Why is Coimbatore region underperforming?</span>
+          </div>
+          <div class="session-row2">
+            <span class="session-surface chat">Chat</span>
+            <span class="session-meta">Aug 28 · 7 msgs</span>
+            <i class="fas fa-ellipsis-vertical session-action-icon"></i>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="rail-footer">
+        <span>34 sessions · ~12 MB</span>
+        <a href="#" style="color: var(--ai-accent); text-decoration: none; font-weight: 600;">Retention →</a>
+      </div>
+    </aside>
+
+    <!-- Conversation viewer (center) -->
+    <main class="viewer">
+      <div class="viewer-head">
+        <div class="viewer-title-block">
+          <div class="viewer-title">
+            Diwali Drive performance vs last year
+            <i class="fas fa-thumbtack" style="color: var(--warning); font-size: 0.75rem; margin-left: 0.375rem;"></i>
+          </div>
+          <div class="viewer-subtitle">
+            <span><i class="fas fa-calendar" style="margin-right: 0.25rem;"></i>Started today, 10:42 AM</span>
+            <span class="dot"></span>
+            <span><i class="fas fa-message" style="margin-right: 0.25rem;"></i>4 messages</span>
+            <span class="dot"></span>
+            <span><i class="fas fa-wand-magic-sparkles" style="margin-right: 0.25rem; color: var(--ai-accent);"></i>campaign_performance_explainer</span>
+            <span class="dot"></span>
+            <span><i class="fas fa-coins" style="margin-right: 0.25rem;"></i>₹0.18</span>
+          </div>
+        </div>
+        <div class="viewer-head-actions">
+          <button class="icon-btn" title="Rename"><i class="fas fa-pen"></i></button>
+          <button class="icon-btn" title="Share"><i class="fas fa-share-nodes"></i></button>
+          <button class="icon-btn" title="Export"><i class="fas fa-download"></i></button>
+          <button class="icon-btn" title="Unpin"><i class="fas fa-thumbtack" style="color: var(--warning);"></i></button>
+          <button class="icon-btn" title="Archive"><i class="fas fa-box-archive"></i></button>
+          <button class="icon-btn" title="Delete" style="color: var(--danger);"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+
+      <div class="viewer-body">
+        <div class="viewer-inner">
+
+          <div class="date-divider">Today · 10:42 AM</div>
+
+          <!-- User message -->
+          <div class="msg user">
+            <div class="avatar user-av">LR</div>
+            <div class="bubble">How is the Diwali Drive performing vs last year's Diwali campaign? Show me where it's lagging.</div>
+          </div>
+
+          <!-- AI message (condensed) -->
+          <div class="msg ai">
+            <div class="avatar ai-av"><i class="fas fa-sparkles"></i></div>
+            <div class="bubble">
+              <div class="compact-trace">
+                <i class="fas fa-list-check"></i>
+                <span><strong>4 actions taken:</strong> get_campaign · compare_campaigns · KB retrieval (5 docs) · synthesize</span>
+                <span style="color: var(--text-muted); margin-left: auto;">2.1s</span>
+              </div>
+              <p>Diwali Drive 2025 is tracking <strong>22% below</strong> last year (₹18.4 L vs ₹23.6 L) on <strong>18% fewer donors</strong>. The gap is concentrated in the mid-tier (₹5K–₹50K) and is largely driven by lapsed recurring donors <span class="cite-ref">1</span><span class="cite-ref">2</span>. The WhatsApp push had a 14 pp lower open rate than last year's email campaign <span class="cite-ref">3</span>. Reactivating the 47 lapsed recurring donors at last year's avg gift could close ~₹3.2 L of the gap with 8 days remaining.</p>
+              <div class="msg-foot">
+                <span>10:42:18 · Claude Sonnet 4.6 · 1,840 tok · ₹0.18</span>
+                <span class="dot"></span>
+                <span style="color: var(--success);"><i class="fas fa-thumbs-up"></i> Rated helpful</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- User follow-up -->
+          <div class="msg user">
+            <div class="avatar user-av">LR</div>
+            <div class="bubble">Show me those 47 lapsed recurring donors. Draft an email I can review before sending.</div>
+          </div>
+
+          <!-- AI response 2 -->
+          <div class="msg ai">
+            <div class="avatar ai-av"><i class="fas fa-sparkles"></i></div>
+            <div class="bubble">
+              <div class="compact-trace">
+                <i class="fas fa-list-check"></i>
+                <span><strong>3 actions:</strong> list_donors (47 results) · load brand voice · draft_email</span>
+                <span style="color: var(--text-muted); margin-left: auto;">3.4s</span>
+              </div>
+              <p>I've identified <strong>47 lapsed recurring donors</strong> who gave to Diwali 2024 but haven't this year. I drafted a personalized reactivation email referencing their past contribution and this year's specific cause. The draft has been queued for your review in the <a href="#" style="color: var(--ai-accent);">Communication Center → Pending Approvals</a>.</p>
+              <div class="msg-foot">
+                <span>10:43:55 · Claude Sonnet 4.6 · 2,210 tok · ₹0.21</span>
+                <span class="dot"></span>
+                <span style="color: var(--success);"><i class="fas fa-check"></i> Action staged for approval</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Resume bar at bottom -->
+          <div class="resume-bar">
+            <i class="fas fa-arrow-right lead-icon"></i>
+            <div class="resume-text">
+              <div class="resume-title">Pick up where you left off</div>
+              <div class="resume-subtitle">The 47-donor list and email draft are still in working memory. AIDA will resume with full context.</div>
+            </div>
+            <button class="btn-primary-custom"><i class="fas fa-comments"></i> Resume chat</button>
+          </div>
+
+        </div>
+      </div>
+    </main>
+
+    <!-- Right details panel -->
+    <aside class="details-panel">
+
+      <!-- Conversation meta -->
+      <div class="details-card">
+        <div class="details-card-head"><i class="fas fa-circle-info"></i> Conversation</div>
+        <div class="details-card-body">
+          <div class="detail-row"><span class="lbl">Started</span><span class="val">10:42 AM</span></div>
+          <div class="detail-row"><span class="lbl">Last activity</span><span class="val">10:43 AM</span></div>
+          <div class="detail-row"><span class="lbl">Messages</span><span class="val">4</span></div>
+          <div class="detail-row"><span class="lbl">Tool calls</span><span class="val">7</span></div>
+          <div class="detail-row"><span class="lbl">Tokens</span><span class="val">4,224</span></div>
+          <div class="detail-row"><span class="lbl">Cost</span><span class="val">₹0.39</span></div>
+          <div class="detail-row"><span class="lbl">Avg latency</span><span class="val">2.7 s</span></div>
+        </div>
+      </div>
+
+      <!-- Skills used -->
+      <div class="details-card">
+        <div class="details-card-head"><i class="fas fa-wand-magic-sparkles"></i> Skills used</div>
+        <div class="details-card-body">
+          <div class="stack-list">
+            <div class="stack-item">
+              <div class="stack-icon"><i class="fas fa-chart-line"></i></div>
+              <span class="name">campaign_performance_explainer</span>
+              <span class="count">×1</span>
+            </div>
+            <div class="stack-item">
+              <div class="stack-icon"><i class="fas fa-users"></i></div>
+              <span class="name">donor_segmenter</span>
+              <span class="count">×1</span>
+            </div>
+            <div class="stack-item">
+              <div class="stack-icon"><i class="fas fa-envelope-open-text"></i></div>
+              <span class="name">acknowledgement_drafter</span>
+              <span class="count">×1</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tools called -->
+      <div class="details-card">
+        <div class="details-card-head"><i class="fas fa-screwdriver-wrench"></i> Tools called</div>
+        <div class="details-card-body">
+          <div class="stack-list">
+            <div class="stack-item">
+              <div class="stack-icon" style="background: #e0e7ff; color: #4338ca;"><i class="fas fa-database"></i></div>
+              <span class="name">get_campaign</span>
+              <span class="count">×2</span>
+            </div>
+            <div class="stack-item">
+              <div class="stack-icon" style="background: #e0e7ff; color: #4338ca;"><i class="fas fa-scale-balanced"></i></div>
+              <span class="name">compare_campaigns</span>
+              <span class="count">×1</span>
+            </div>
+            <div class="stack-item">
+              <div class="stack-icon" style="background: #e0e7ff; color: #4338ca;"><i class="fas fa-list"></i></div>
+              <span class="name">list_donors</span>
+              <span class="count">×1</span>
+            </div>
+            <div class="stack-item">
+              <div class="stack-icon" style="background: #fef3c7; color: #b45309;"><i class="fas fa-clock"></i></div>
+              <span class="name">queue_email_for_review</span>
+              <span class="count">×1</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Retention -->
+      <div class="details-card">
+        <div class="details-card-head"><i class="fas fa-hourglass-half"></i> Retention</div>
+        <div class="details-card-body">
+          <div class="detail-row"><span class="lbl">Auto-delete in</span><span class="val">44 days</span></div>
+          <div class="retention-bar"><div class="retention-fill"></div></div>
+          <div class="retention-hint">Tenant policy · 60-day retention</div>
+        </div>
+      </div>
+
+      <!-- Audit trail -->
+      <div class="details-card">
+        <div class="details-card-head"><i class="fas fa-shield-halved"></i> Audit trail</div>
+        <div class="details-card-body" style="padding: 0.5rem 0.75rem;">
+          <div class="audit-row">
+            <i class="fas fa-plus"></i>
+            <div>Session created<div class="when">10:42:01 AM</div></div>
+          </div>
+          <div class="audit-row">
+            <i class="fas fa-paper-plane"></i>
+            <div>4 LLM calls, 7 tool invocations<div class="when">10:42:18 — 10:43:55</div></div>
+          </div>
+          <div class="audit-row">
+            <i class="fas fa-thumbtack"></i>
+            <div>Pinned by Logarajan E.<div class="when">10:44:12 AM</div></div>
+          </div>
+          <div class="audit-row">
+            <i class="fas fa-thumbs-up"></i>
+            <div>Marked helpful · msg #2<div class="when">10:46:33 AM</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Forget / privacy -->
+      <div class="details-card">
+        <div class="details-card-head"><i class="fas fa-lock"></i> Privacy</div>
+        <div class="details-card-body">
+          <div style="font-size: 0.6875rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 0.5rem;">
+            Only you can read this conversation. Audit log records metadata only.
+          </div>
+          <div class="danger-block">
+            <i class="fas fa-trash"></i>
+            <span>Forget this conversation (irreversible)</span>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+  </div>
+
+</body>
+</html>

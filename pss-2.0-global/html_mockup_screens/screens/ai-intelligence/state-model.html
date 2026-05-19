@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIDA · State Model - PeopleServe 2.0</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0e7490;
+      --accent-light: #06b6d4;
+      --accent-bg: #ecfeff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --text-muted: #94a3b8;
+      --border-color: #e2e8f0;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #dc2626;
+      --ai-accent: #8b5cf6;
+      --ai-accent-dark: #7c3aed;
+      --ai-accent-bg: #f5f3ff;
+      --ai-accent-border: #ddd6fe;
+      --card-radius: 12px;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9; font-size: 14px; color: var(--text-primary); min-height: 100vh;
+    }
+
+    /* Header */
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 1.5rem; background: white;
+      border-bottom: 1px solid var(--border-color);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .header-title { display: flex; align-items: center; gap: 0.625rem; }
+    .ai-logo {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--ai-accent), #a78bfa);
+      color: white; display: flex; align-items: center; justify-content: center; font-size: 1rem;
+    }
+    .page-header h1 { font-size: 1.125rem; font-weight: 700; line-height: 1.15; }
+    .page-header .subtitle { font-size: 0.75rem; color: var(--text-secondary); }
+    .ai-badge {
+      display: inline-flex; align-items: center; gap: 0.3125rem;
+      background: var(--ai-accent-bg); color: var(--ai-accent);
+      border: 1px solid var(--ai-accent-border); border-radius: 999px;
+      font-size: 0.625rem; font-weight: 700; padding: 0.1875rem 0.625rem;
+      text-transform: uppercase; letter-spacing: 0.04em; margin-left: 0.375rem;
+    }
+    .legend { display: flex; gap: 0.75rem; font-size: 0.6875rem; color: var(--text-secondary); flex-wrap: wrap; }
+    .legend-item { display: inline-flex; align-items: center; gap: 0.3125rem; }
+    .legend-swatch { width: 10px; height: 10px; border-radius: 3px; }
+
+    /* Main container */
+    .content { padding: 1.25rem 1.5rem 3rem; max-width: 1400px; margin: 0 auto; }
+    .section-heading {
+      font-size: 0.6875rem; font-weight: 700; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .section-heading::after {
+      content: ''; flex: 1; height: 1px; background: var(--border-color);
+    }
+
+    /* Lane grid */
+    .lanes {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem;
+    }
+    .lane {
+      background: white; border: 1px solid var(--border-color); border-radius: var(--card-radius);
+      overflow: hidden; display: flex; flex-direction: column;
+    }
+    .lane.grid-lane { border-top: 4px solid #22c55e; }
+    .lane.chat-lane { border-top: 4px solid var(--ai-accent); }
+    .lane.history-lane { border-top: 4px solid var(--accent); }
+
+    .lane-head {
+      padding: 0.875rem 1rem; border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; gap: 0.625rem;
+    }
+    .lane-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.875rem; color: white; flex-shrink: 0;
+    }
+    .lane.grid-lane .lane-icon { background: #22c55e; }
+    .lane.chat-lane .lane-icon { background: var(--ai-accent); }
+    .lane.history-lane .lane-icon { background: var(--accent); }
+    .lane-title { font-size: 0.9375rem; font-weight: 700; }
+    .lane-subtitle { font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.0625rem; }
+    .lane-tag {
+      margin-left: auto; font-size: 0.625rem; font-weight: 700;
+      padding: 0.1875rem 0.5rem; border-radius: 999px;
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .lane-tag.stateless { background: #dcfce7; color: #15803d; }
+    .lane-tag.stateful { background: var(--ai-accent-bg); color: var(--ai-accent-dark); }
+    .lane-tag.readonly { background: var(--accent-bg); color: var(--accent); }
+
+    .lane-body { padding: 1rem; flex: 1; display: flex; flex-direction: column; gap: 0.5rem; }
+
+    /* Step boxes in lane */
+    .step {
+      padding: 0.5rem 0.625rem; border-radius: 0.5rem;
+      font-size: 0.75rem; display: flex; align-items: center; gap: 0.5rem; position: relative;
+      background: white; border: 1px solid var(--border-color);
+    }
+    .step .num {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--text-secondary); color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.625rem; font-weight: 700; flex-shrink: 0;
+    }
+    .step .name { flex: 1; font-weight: 500; }
+    .step .name strong { color: var(--text-primary); font-weight: 700; }
+
+    .step.user      { background: var(--accent-bg);     border-color: #a5f3fc; }
+    .step.user .num { background: var(--accent); }
+    .step.compute   { background: #fef3c7;              border-color: #fde68a; }
+    .step.compute .num { background: var(--warning); }
+    .step.llm       { background: var(--ai-accent-bg);  border-color: var(--ai-accent-border); }
+    .step.llm .num  { background: var(--ai-accent); }
+    .step.persist   { background: #dcfce7;              border-color: #bbf7d0; }
+    .step.persist .num { background: var(--success); }
+    .step.audit     { background: #f1f5f9;              border-color: var(--border-color); }
+    .step.audit .num { background: var(--text-secondary); }
+
+    .arrow-down {
+      text-align: center; color: var(--text-muted); font-size: 0.625rem;
+      line-height: 0.5; margin: -0.125rem 0;
+    }
+
+    /* Storage layer */
+    .storage-row {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.625rem;
+    }
+    .storage-box {
+      padding: 0.5rem 0.625rem; border-radius: 0.5rem; font-size: 0.6875rem;
+      display: flex; align-items: center; gap: 0.4375rem; min-height: 38px;
+    }
+    .storage-box.redis {
+      background: #fef2f2; border: 1px dashed #fecaca; color: #991b1b;
+    }
+    .storage-box.postgres {
+      background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af;
+    }
+    .storage-box.none {
+      background: #f8fafc; border: 1px dashed var(--border-color); color: var(--text-muted);
+    }
+    .storage-box i { font-size: 0.8125rem; flex-shrink: 0; }
+    .storage-box .lbl { font-weight: 600; }
+    .storage-box .desc { color: var(--text-secondary); font-weight: 400; font-size: 0.625rem; margin-top: 0.0625rem; line-height: 1.3; }
+    .storage-box .desc-wrap { display: flex; flex-direction: column; }
+
+    /* Refresh scenario callout */
+    .refresh-callout {
+      margin-top: 0.625rem; padding: 0.625rem 0.75rem;
+      background: linear-gradient(135deg, var(--ai-accent-bg), #faf5ff);
+      border: 1px solid var(--ai-accent-border); border-radius: 0.5rem;
+      font-size: 0.6875rem; display: flex; gap: 0.5rem; align-items: flex-start;
+    }
+    .refresh-callout i { color: var(--ai-accent); flex-shrink: 0; margin-top: 0.125rem; }
+    .refresh-callout strong { color: var(--text-primary); }
+    .refresh-callout code {
+      background: white; padding: 0.0625rem 0.3125rem; border-radius: 4px;
+      font-family: 'Consolas', monospace; font-size: 0.625rem; color: var(--ai-accent-dark);
+      border: 1px solid var(--ai-accent-border);
+    }
+
+    /* Persist / Refresh / History row indicators */
+    .lane-footer-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.375rem;
+      padding: 0.75rem 1rem; border-top: 1px solid var(--border-color); background: #fafbfc;
+    }
+    .lf-cell {
+      text-align: center; padding: 0.375rem 0.25rem;
+      background: white; border: 1px solid var(--border-color); border-radius: 0.4375rem;
+    }
+    .lf-cell .lf-lbl {
+      font-size: 0.5625rem; color: var(--text-muted); font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.125rem;
+    }
+    .lf-cell .lf-val {
+      font-size: 0.6875rem; font-weight: 700;
+    }
+    .lf-cell .lf-val.yes { color: var(--success); }
+    .lf-cell .lf-val.no  { color: var(--danger); }
+    .lf-cell .lf-val.opt { color: var(--warning); }
+
+    /* Refresh scenario diagram */
+    .refresh-section {
+      background: white; border: 1px solid var(--border-color); border-radius: var(--card-radius);
+      padding: 1.25rem 1.5rem; margin-bottom: 2rem;
+    }
+    .refresh-flow {
+      display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 0.75rem; align-items: stretch;
+    }
+    .rf-box {
+      padding: 0.75rem 0.875rem; border-radius: 0.625rem; min-height: 110px;
+      display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .rf-box.before { background: var(--ai-accent-bg); border: 1px solid var(--ai-accent-border); }
+    .rf-box.event { background: #fef3c7; border: 1px solid #fde68a; }
+    .rf-box.after { background: #dcfce7; border: 1px solid #bbf7d0; }
+    .rf-arrow {
+      align-self: center; color: var(--text-muted); font-size: 1rem;
+    }
+    .rf-title {
+      font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 0.375rem;
+    }
+    .rf-title.before { color: var(--ai-accent-dark); }
+    .rf-title.event { color: #b45309; }
+    .rf-title.after { color: #047857; }
+    .rf-content { font-size: 0.75rem; line-height: 1.5; color: var(--text-primary); }
+    .rf-content code {
+      background: white; padding: 0.0625rem 0.3125rem; border-radius: 4px;
+      font-family: 'Consolas', monospace; font-size: 0.6875rem;
+      border: 1px solid var(--border-color);
+    }
+    .rf-content .url-bar {
+      background: white; padding: 0.3125rem 0.5rem; border-radius: 0.375rem;
+      font-family: 'Consolas', monospace; font-size: 0.6875rem;
+      border: 1px solid var(--border-color); margin-top: 0.375rem;
+      word-break: break-all; color: var(--text-primary);
+    }
+    .url-bar .key { color: var(--ai-accent); }
+    .url-bar .guid { color: var(--text-secondary); }
+
+    /* Identifier hierarchy + matrix */
+    .lower-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+    }
+    .info-card {
+      background: white; border: 1px solid var(--border-color); border-radius: var(--card-radius);
+      padding: 1rem 1.25rem;
+    }
+    .info-card-title {
+      font-size: 0.875rem; font-weight: 700; margin-bottom: 0.75rem;
+      display: flex; align-items: center; gap: 0.4375rem;
+    }
+    .info-card-title i { color: var(--ai-accent); font-size: 0.875rem; }
+
+    /* Identifier tree */
+    .id-tree {
+      font-family: 'Consolas', 'Monaco', monospace; font-size: 0.75rem;
+      background: #f8fafc; padding: 0.875rem 1rem; border-radius: 0.5rem;
+      border: 1px solid var(--border-color); line-height: 1.7;
+    }
+    .id-tree .id-key { color: var(--ai-accent-dark); font-weight: 700; }
+    .id-tree .id-type { color: var(--text-secondary); }
+    .id-tree .id-comment { color: var(--text-muted); font-style: italic; }
+
+    /* SessionId minting table */
+    .mint-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+    .mint-table th, .mint-table td {
+      padding: 0.5rem 0.625rem; text-align: left;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .mint-table th {
+      font-size: 0.625rem; text-transform: uppercase; letter-spacing: 0.05em;
+      color: var(--text-secondary); font-weight: 700; background: #f8fafc;
+    }
+    .mint-table tr:last-child td { border-bottom: none; }
+    .mint-table td.center { text-align: center; font-weight: 700; }
+    .mint-table td.yes { color: var(--success); }
+    .mint-table td.no { color: var(--danger); }
+    .mint-table td.opt { color: var(--warning); }
+    .mint-table td.surface-cell {
+      font-size: 0.625rem; font-weight: 700; padding: 0.125rem 0.4375rem;
+    }
+
+    @media (max-width: 992px) {
+      .lanes { grid-template-columns: 1fr; }
+      .refresh-flow { grid-template-columns: 1fr; }
+      .rf-arrow { transform: rotate(90deg); }
+      .lower-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-title">
+      <div class="ai-logo"><i class="fas fa-diagram-project"></i></div>
+      <div>
+        <h1>AIDA State Model <span class="ai-badge">Engineer Reference</span></h1>
+        <div class="subtitle">How conversations persist, refresh, and resume across the three surfaces</div>
+      </div>
+    </div>
+    <div class="legend">
+      <span class="legend-item"><span class="legend-swatch" style="background:#22c55e"></span>Stateless</span>
+      <span class="legend-item"><span class="legend-swatch" style="background:#8b5cf6"></span>Stateful · live</span>
+      <span class="legend-item"><span class="legend-swatch" style="background:#0e7490"></span>Stateful · history</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ─────────────────────── THREE LANES ─────────────────────── -->
+    <div class="section-heading"><i class="fas fa-layer-group" style="color: var(--ai-accent);"></i> Per-turn data flow · the three surfaces</div>
+
+    <div class="lanes">
+
+      <!-- Grid Ask-AI -->
+      <div class="lane grid-lane">
+        <div class="lane-head">
+          <div class="lane-icon"><i class="fas fa-table"></i></div>
+          <div>
+            <div class="lane-title">Grid Ask-AI</div>
+            <div class="lane-subtitle">NL → filter · one shot</div>
+          </div>
+          <span class="lane-tag stateless">Stateless</span>
+        </div>
+        <div class="lane-body">
+          <div class="step user"><span class="num">1</span><span class="name">User types question in grid</span></div>
+          <div class="arrow-down">▼</div>
+          <div class="step compute"><span class="num">2</span><span class="name">Compile prompt · scoped to <strong>this grid</strong></span></div>
+          <div class="arrow-down">▼</div>
+          <div class="step llm"><span class="num">3</span><span class="name">LLM → JSON filter expression</span></div>
+          <div class="arrow-down">▼</div>
+          <div class="step compute"><span class="num">4</span><span class="name">Validate schema · translate to GraphQL</span></div>
+          <div class="arrow-down">▼</div>
+          <div class="step persist"><span class="num">5</span><span class="name">Execute query against tenant data</span></div>
+          <div class="arrow-down">▼</div>
+          <div class="step audit"><span class="num">6</span><span class="name">Append <strong>audit row</strong> · cost &amp; tokens</span></div>
+
+          <div class="storage-row">
+            <div class="storage-box redis" title="Not used">
+              <i class="fas fa-bolt"></i>
+              <div class="desc-wrap">
+                <span class="lbl">Redis</span>
+                <span class="desc">Not used — no working memory needed</span>
+              </div>
+            </div>
+            <div class="storage-box postgres">
+              <i class="fas fa-database"></i>
+              <div class="desc-wrap">
+                <span class="lbl">Postgres</span>
+                <span class="desc">Audit row · optional 1-turn session (Design B)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="refresh-callout">
+            <i class="fas fa-rotate"></i>
+            <div><strong>Refresh:</strong> N/A — single turn. Re-asking creates a new audit row (and new <code>SessionId</code> in Design B).</div>
+          </div>
+        </div>
+        <div class="lane-footer-grid">
+          <div class="lf-cell"><div class="lf-lbl">Persisted</div><div class="lf-val yes">Audit only</div></div>
+          <div class="lf-cell"><div class="lf-lbl">Refresh-safe</div><div class="lf-val opt">N/A</div></div>
+          <div class="lf-cell"><div class="lf-lbl">In history</div><div class="lf-val opt">Optional</div></div>
+        </div>
+      </div>
+
+      <!-- Global Chat -->
+      <div class="lane chat-lane">
+        <div class="lane-head">
+          <div class="lane-icon"><i class="fas fa-comments"></i></div>
+          <div>
+            <div class="lane-title">Global Chat</div>
+            <div class="lane-subtitle">Multi-turn assistant</div>
+          </div>
+          <span class="lane-tag stateful">Stateful</span>
+        </div>
+        <div class="lane-body">
+          <div class="step user"><span class="num">1</span><span class="name">User sends message · <code>SessionId</code> known</span></div>
+          <div class="arrow-down">▼</div>
+          <div class="step compute"><span class="num">2</span><span class="name">Load working memory <strong>OR</strong> rebuild from DB</span></div>
+          <div class="arrow-down">▼</div>
+          <div class="step compute"><span class="num">3</span><span class="name">Retrieve KB · permission-filtered</span></div>
+          <div class="arrow-down">▼</div>
+          <div class="step llm"><span class="num">4</span><span class="name">LLM call · stream chunks back</span></div>
+          <div class="arrow-down">▼</div>
+          <div class="step compute"><span class="num">5</span><span class="name">Tool-call loop · validate · guardrail</span></div>
+          <div class="arrow-down">▼</div>
+          <div class="step persist"><span class="num">6</span><span class="name">Write user + assistant <strong>Messages</strong> · update Session</span></div>
+          <div class="arrow-down">▼</div>
+          <div class="step audit"><span class="num">7</span><span class="name">Append audit · refresh working memory</span></div>
+
+          <div class="storage-row">
+            <div class="storage-box redis">
+              <i class="fas fa-bolt"></i>
+              <div class="desc-wrap">
+                <span class="lbl">Redis · working mem</span>
+                <span class="desc">Compiled context · evictable · rebuildable</span>
+              </div>
+            </div>
+            <div class="storage-box postgres">
+              <i class="fas fa-database"></i>
+              <div class="desc-wrap">
+                <span class="lbl">Postgres · source of truth</span>
+                <span class="desc">ChatSessions + ChatMessages · every turn</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="refresh-callout">
+            <i class="fas fa-rotate"></i>
+            <div><strong>Refresh:</strong> URL holds <code>?session={guid}</code> → page reloads → fetch Messages from Postgres → user sees full thread. Working memory rebuilds lazily on next send.</div>
+          </div>
+        </div>
+        <div class="lane-footer-grid">
+          <div class="lf-cell"><div class="lf-lbl">Persisted</div><div class="lf-val yes">Every turn</div></div>
+          <div class="lf-cell"><div class="lf-lbl">Refresh-safe</div><div class="lf-val yes">Yes</div></div>
+          <div class="lf-cell"><div class="lf-lbl">In history</div><div class="lf-val yes">Yes</div></div>
+        </div>
+      </div>
+
+      <!-- Chat History -->
+      <div class="lane history-lane">
+        <div class="lane-head">
+          <div class="lane-icon"><i class="fas fa-clock-rotate-left"></i></div>
+          <div>
+            <div class="lane-title">Chat History</div>
+            <div class="lane-subtitle">Read-only browser</div>
+          </div>
+          <span class="lane-tag readonly">Read-only</span>
+        </div>
+        <div class="lane-body">
+          <div class="step user"><span class="num">1</span><span class="name">User opens History page</span></div>
+          <div class="arrow-down">▼</div>
+          <div class="step persist"><span class="num">2</span><span class="name">Query <strong>ChatSessions</strong> · scoped <code>(CompanyId, UserId)</code></span></div>
+          <div class="arrow-down">▼</div>
+          <div class="step compute"><span class="num">3</span><span class="name">Apply filter · search · pagination</span></div>
+          <div class="arrow-down">▼</div>
+          <div class="step user"><span class="num">4</span><span class="name">Render rail (sessions list)</span></div>
+          <div class="arrow-down">▼</div>
+          <div class="step user"><span class="num">5</span><span class="name">Select session → fetch <strong>Messages</strong></span></div>
+          <div class="arrow-down">▼</div>
+          <div class="step llm"><span class="num">6</span><span class="name">Click <strong>Resume</strong> → opens Global Chat with same <code>SessionId</code></span></div>
+
+          <div class="storage-row">
+            <div class="storage-box none">
+              <i class="fas fa-circle-minus"></i>
+              <div class="desc-wrap">
+                <span class="lbl">Redis</span>
+                <span class="desc">Not used · read-only view</span>
+              </div>
+            </div>
+            <div class="storage-box postgres">
+              <i class="fas fa-database"></i>
+              <div class="desc-wrap">
+                <span class="lbl">Postgres · reads only</span>
+                <span class="desc">Sessions · Messages · Audit · Usage</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="refresh-callout">
+            <i class="fas fa-rotate"></i>
+            <div><strong>Refresh:</strong> always safe — refetches list and selected conversation from DB. No client state.</div>
+          </div>
+        </div>
+        <div class="lane-footer-grid">
+          <div class="lf-cell"><div class="lf-lbl">Writes</div><div class="lf-val no">None *</div></div>
+          <div class="lf-cell"><div class="lf-lbl">Refresh-safe</div><div class="lf-val yes">Yes</div></div>
+          <div class="lf-cell"><div class="lf-lbl">Resumes into</div><div class="lf-val yes">Chat</div></div>
+        </div>
+      </div>
+
+    </div>
+    <div style="font-size: 0.6875rem; color: var(--text-muted); margin-top: -1rem; margin-bottom: 1.5rem;">
+      * Pin / archive / rename / delete are metadata updates on <code>ChatSessions</code> — no message writes.
+    </div>
+
+    <!-- ─────────────────────── REFRESH SCENARIO ─────────────────────── -->
+    <div class="section-heading"><i class="fas fa-rotate" style="color: var(--ai-accent);"></i> Refresh scenario · "did I lose my chat?"</div>
+
+    <div class="refresh-section">
+      <div class="refresh-flow">
+
+        <div class="rf-box before">
+          <div>
+            <div class="rf-title before"><i class="fas fa-circle-dot"></i> Before refresh</div>
+            <div class="rf-content">
+              User is mid-conversation. <strong>4 messages exchanged</strong>. URL carries the session GUID.
+              <div class="url-bar">
+                pss.app/aida<span class="key">?session=</span><span class="guid">8f3e1a4c-…-d2b9</span>
+              </div>
+            </div>
+          </div>
+          <div style="font-size: 0.625rem; color: var(--text-secondary); margin-top: 0.5rem;">
+            <i class="fas fa-bolt" style="color:#991b1b;"></i> Redis: <strong>warm</strong> · last 4 turns compiled
+            <br><i class="fas fa-database" style="color:#1e40af;"></i> Postgres: 4 ChatMessages rows persisted
+          </div>
+        </div>
+
+        <div class="rf-arrow"><i class="fas fa-arrow-right"></i></div>
+
+        <div class="rf-box event">
+          <div>
+            <div class="rf-title event"><i class="fas fa-rotate"></i> User hits F5</div>
+            <div class="rf-content">
+              Browser drops everything. New page load with the <strong>same URL</strong>. Server has no idea the refresh happened.
+            </div>
+          </div>
+          <div style="font-size: 0.625rem; color: var(--text-secondary); margin-top: 0.5rem;">
+            <i class="fas fa-bolt" style="color:#991b1b;"></i> Redis: still warm (unaware)
+            <br><i class="fas fa-database" style="color:#1e40af;"></i> Postgres: unchanged
+          </div>
+        </div>
+
+        <div class="rf-arrow"><i class="fas fa-arrow-right"></i></div>
+
+        <div class="rf-box after">
+          <div>
+            <div class="rf-title after"><i class="fas fa-circle-check"></i> After refresh</div>
+            <div class="rf-content">
+              Frontend reads <code>?session=8f3e1a4c-…</code> from URL → GraphQL: <code>chatSession(id)</code> → returns last 50 messages → thread rendered.
+              <div style="margin-top: 0.375rem;">User sees their full conversation. Continues typing.</div>
+            </div>
+          </div>
+          <div style="font-size: 0.625rem; color: var(--text-secondary); margin-top: 0.5rem;">
+            <i class="fas fa-bolt" style="color:#991b1b;"></i> Redis: still warm · reused
+            <br><i class="fas fa-database" style="color:#1e40af;"></i> Postgres: read 4 rows
+          </div>
+        </div>
+
+      </div>
+
+      <div style="margin-top: 1rem; padding: 0.75rem 0.875rem; background: var(--accent-bg); border: 1px solid #a5f3fc; border-radius: 0.5rem; font-size: 0.75rem; color: var(--text-primary); display: flex; gap: 0.5rem; align-items: flex-start;">
+        <i class="fas fa-circle-info" style="color: var(--accent); margin-top: 0.125rem;"></i>
+        <div>
+          <strong>The only thing actually lost:</strong> if the LLM was streaming a reply at the moment of refresh, the partial response is dropped (it was never committed). User can simply resend the last question or use <em>Regenerate</em>. Everything that was <em>completed</em> survives.
+        </div>
+      </div>
+    </div>
+
+    <!-- ─────────────────────── IDENTIFIERS + MINTING ─────────────────────── -->
+    <div class="section-heading"><i class="fas fa-fingerprint" style="color: var(--ai-accent);"></i> Identifiers · keys you'll see in the database</div>
+
+    <div class="lower-grid">
+
+      <!-- Identifier hierarchy -->
+      <div class="info-card">
+        <div class="info-card-title"><i class="fas fa-sitemap"></i> Hierarchy</div>
+        <div class="id-tree">
+<span class="id-key">SessionId</span> <span class="id-type">(UUID)</span>            <span class="id-comment">— one conversation</span>
+   ├── <span class="id-key">MessageId</span> <span class="id-type">(bigserial)</span>     <span class="id-comment">— each user/AI turn</span>
+   │       ├── <span class="id-key">AuditId</span> <span class="id-type">(bigserial)</span>   <span class="id-comment">— each LLM call (≥1 on retry)</span>
+   │       └── <span class="id-key">ToolCallId</span> <span class="id-type">(uuid)</span>    <span class="id-comment">— inside ToolCallsJson</span>
+   ├── <span class="id-key">EventId</span> <span class="id-type">(UUID, nullable)</span>      <span class="id-comment">— hook trigger that opened session</span>
+   └── <span class="id-key">CompanyId · UserId</span> <span class="id-type">(BIGINT)</span>   <span class="id-comment">— tenancy keys (on every row)</span>
+        </div>
+        <div style="font-size: 0.6875rem; color: var(--text-secondary); margin-top: 0.625rem; line-height: 1.5;">
+          <strong>SessionId is the durable key.</strong> Frontend stores it in URL + localStorage. Backend uses it for memory partitioning, audit grouping, and resume-from-history.
+        </div>
+      </div>
+
+      <!-- SessionId minting matrix -->
+      <div class="info-card">
+        <div class="info-card-title"><i class="fas fa-wand-magic-sparkles"></i> When is a new SessionId minted?</div>
+        <table class="mint-table">
+          <thead>
+            <tr>
+              <th>Trigger</th>
+              <th style="text-align: center;">New GUID?</th>
+              <th>Surface</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Click <strong>+ New chat</strong></td>
+              <td class="center yes"><i class="fas fa-check"></i> Yes</td>
+              <td><span style="background:#e0e7ff;color:#4338ca;padding:0.0625rem 0.3125rem;border-radius:4px;font-size:0.625rem;font-weight:700;">CHAT</span></td>
+            </tr>
+            <tr>
+              <td>Grid Ask-AI query (Design B)</td>
+              <td class="center yes"><i class="fas fa-check"></i> Yes · auto-archived</td>
+              <td><span style="background:#d1fae5;color:#047857;padding:0.0625rem 0.3125rem;border-radius:4px;font-size:0.625rem;font-weight:700;">GRID</span></td>
+            </tr>
+            <tr>
+              <td>Hook fires (e.g. <code>donation.created</code>)</td>
+              <td class="center yes"><i class="fas fa-check"></i> Yes</td>
+              <td><span style="background:#fce7f3;color:#be185d;padding:0.0625rem 0.3125rem;border-radius:4px;font-size:0.625rem;font-weight:700;">HOOK</span></td>
+            </tr>
+            <tr>
+              <td>Workflow starts (DIK valuation…)</td>
+              <td class="center yes"><i class="fas fa-check"></i> Yes</td>
+              <td><span style="background:#fef3c7;color:#b45309;padding:0.0625rem 0.3125rem;border-radius:4px;font-size:0.625rem;font-weight:700;">FLOW</span></td>
+            </tr>
+            <tr>
+              <td>Resume from History</td>
+              <td class="center no"><i class="fas fa-times"></i> No</td>
+              <td>(same)</td>
+            </tr>
+            <tr>
+              <td>Page refresh / tab close+reopen</td>
+              <td class="center no"><i class="fas fa-times"></i> No</td>
+              <td>(same)</td>
+            </tr>
+            <tr>
+              <td>Another Ask-AI on same grid (Design A)</td>
+              <td class="center no"><i class="fas fa-times"></i> No · audit only</td>
+              <td>—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+    <!-- Stateful matrix recap -->
+    <div style="margin-top: 1.25rem;" class="info-card">
+      <div class="info-card-title"><i class="fas fa-table-list"></i> Surface comparison · the cheat sheet</div>
+      <table class="mint-table">
+        <thead>
+          <tr>
+            <th>Surface</th>
+            <th style="text-align:center;">In-turn memory</th>
+            <th style="text-align:center;">Multi-turn state</th>
+            <th style="text-align:center;">Persisted to DB</th>
+            <th style="text-align:center;">Survives refresh</th>
+            <th style="text-align:center;">Shows in History UI</th>
+            <th style="text-align:center;">SessionId minting</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Grid Ask-AI</strong></td>
+            <td class="center yes">Yes (compile only)</td>
+            <td class="center no">No</td>
+            <td class="center yes">Audit + (opt session)</td>
+            <td class="center opt">N/A · single-turn</td>
+            <td class="center opt">Opt-in</td>
+            <td class="center">Per query (Design B)</td>
+          </tr>
+          <tr>
+            <td><strong>Global Chat</strong></td>
+            <td class="center yes">Yes</td>
+            <td class="center yes">Yes</td>
+            <td class="center yes">Every message</td>
+            <td class="center yes">Yes</td>
+            <td class="center yes">Yes</td>
+            <td class="center">Per conversation</td>
+          </tr>
+          <tr>
+            <td><strong>Chat History</strong></td>
+            <td class="center">—</td>
+            <td class="center">—</td>
+            <td class="center yes">Read-only</td>
+            <td class="center yes">Yes</td>
+            <td class="center yes">It <em>is</em> the UI</td>
+            <td class="center">None (browses)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</body>
+</html>
