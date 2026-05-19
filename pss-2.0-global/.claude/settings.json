@@ -447,7 +447,10 @@
       "Bash(xargs sed -i 's/data\\\\?\\\\.\\\\\\(result\\\\\\)/\\\\\\(data as any\\\\\\)?.\\\\1/g')",
       "Bash(awk 'NR==268 {print length\\($0\\)}' \"d:/Repos/PWDS/pwds-soruban/pss-2.0-global/.claude/screen-tracker/REGISTRY.md\")",
       "Bash(awk 'NR==268' \"d:/Repos/PWDS/pwds-soruban/pss-2.0-global/.claude/screen-tracker/REGISTRY.md\")",
-      "Bash(findstr /C:\"error CS\" /C:\"Build succeeded\" /C:\"Error\\(s\\)\")"
+      "Bash(findstr /C:\"error CS\" /C:\"Build succeeded\" /C:\"Error\\(s\\)\")",
+      "Bash(Select-String -Pattern \"error CS|Error\\\\\\(s\\\\\\)|Warning\\\\\\(s\\\\\\)|succeeded\")",
+      "Bash(Select-Object -Last 10)",
+      "Bash(powershell -Command \"\\(Get-Content 'd:\\\\Repos\\\\PWDS\\\\pwds-soruban - Copy\\\\pss-2.0-global\\\\.claude\\\\screen-tracker\\\\prompts\\\\socialmediaintegration.md' | Measure-Object -Line\\).Lines\")"
     ],
     "ask": [
       "Bash(rm -rf *)",

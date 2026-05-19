@@ -2,7 +2,7 @@
 screen: RoleManagement
 registry_id: 70
 module: Access Control
-status: PENDING
+status: COMPLETED
 scope: FULL
 screen_type: CONFIG
 config_subtype: SETTINGS_PAGE
@@ -12,8 +12,9 @@ complexity: High
 new_module: NO
 absorbs_registry_ids: [73 Role-Capability Matrix, 127 Capabilities]
 planned_date: 2026-05-16
-completed_date:
-last_session_date:
+completed_date: 2026-05-18
+last_session_date: 2026-05-18
+last_fix_date: 2026-05-18 (Session 3)
 ---
 
 ## Tasks
@@ -30,19 +31,21 @@ last_session_date:
 - [x] Prompt generated
 
 ### Generation (by /build-screen → /generate-screen)
-- [ ] BA Analysis validated (4-tab CONFIG + system-role guard + matrix-diff persistence)
-- [ ] Solution Resolution complete (hybrid container w/ MATRIX_CONFIG Tab 3 confirmed; existing entities preserved)
-- [ ] UX Design finalized (card-grid Tab 1 + list-grid Tab 2 + matrix Tab 3 + comparison Tab 4)
-- [ ] User Approval received
-- [ ] Backend code generated (Role entity field extension + 2 new composite handlers GetRoleCapabilityMatrix + BulkUpdateRoleCapabilityMatrix + Capability list completion + Role comparison query)
-- [ ] Backend wiring complete (Mutations/Queries endpoint method registration + Mapster extensions + EF migration scaffold)
-- [ ] Frontend code generated (workspace shell + 4 tab modules + Role modal w/ 4 form-sections + Matrix grid w/ sticky save bar)
-- [ ] Frontend wiring complete (page config + dispatcher + entity-operations registry + capability flag plumbing)
-- [ ] DB Seed script generated (1 visible parent ROLEMANAGEMENT menu + 3 hidden child menus ROLE/CAPABILITY/ROLECAPABILITY + capabilities + BUSINESSADMIN role grants + seeded sample Capability rows)
-- [ ] Registry updated to COMPLETED
+- [x] BA Analysis validated (4-tab CONFIG + system-role guard + matrix-diff persistence — prompt was pre-analyzed; no separate agent spawn)
+- [x] Solution Resolution complete (hybrid container w/ MATRIX_CONFIG Tab 3 confirmed; existing entities preserved)
+- [x] UX Design finalized (card-grid Tab 1 + list-grid Tab 2 + matrix Tab 3 + comparison Tab 4 — modal Section 2 swapped to deep-link card per user-approved scope reduction)
+- [x] User Approval received (2026-05-18 — approved with V1 scope reductions: drop modal Section 2 Module Access table, drop GetRoleSummary, defer matrix virtualization)
+- [x] Backend code generated (Role entity field extension + 8 new composite handlers + Capability + RoleCapability extensions)
+- [x] Backend wiring complete (Mutations/Queries endpoint method registration + Mapster extensions; EF migration NOT scaffolded — user runs `dotnet ef migrations add Add_Role_RBAC_Extensions` per team rule)
+- [x] Frontend code generated (workspace shell + 4 tab modules + Role modal w/ 3 form-sections + Module-Access deep-link card + Matrix grid w/ sticky save bar + Comparison table)
+- [x] Frontend wiring complete (page config + barrel exports + forwarder routes for /role, /capability, /rolecapability → /rolemanagement?tab=)
+- [x] DB Seed script generated (1 visible parent ROLEMANAGEMENT menu + 3 hidden child menus ROLE/CAPABILITY/ROLECAPABILITY + capabilities + BUSINESSADMIN role grants + re-parent existing ROLE/CAPABILITY)
+- [x] Registry updated to COMPLETED
 
 ### Verification (post-generation — FULL E2E required)
-- [ ] dotnet build passes
+- [x] dotnet build passes (Base.Application + Base.API — 0 errors, only pre-existing warnings)
+- [ ] User runs `dotnet ef migrations add Add_Role_RBAC_Extensions` + `dotnet ef database update` (deferred per team-handles-migrations rule)
+- [ ] User runs `RoleManagement-sqlscripts.sql` after migration applies (creates ROLEMANAGEMENT menu + grants)
 - [ ] pnpm dev — page loads at `/{lang}/accesscontrol/usersroles/rolemanagement`
 - [ ] **Hybrid CONFIG checks** (covering all 4 tabs):
   - Tab 1 (Roles — card grid):
@@ -1170,9 +1173,134 @@ Full UI must be built (cards, modal sections, matrix grid, sticky save bar, comp
 | ISSUE-PLAN-7 | planning | LOW | Sub-tab Comparison promoted to Tab 4 | Original `role-management.html` mockup had Comparison as a Tab 2-style switcher next to "All Roles". This prompt promotes it to a 4th top-level tab to keep the 3 RBAC entities (Role / Capability / Matrix) as Tabs 1-3 per registry note. Easy to revert. | OPEN |
 | ISSUE-PLAN-8 | planning | LOW | Existing routes | `accesscontrol/usersroles/role` page is currently active (full grid). Replacing it with a forwarder will break existing capability checks tied to `ROLE.READ`. Verify the hidden-child-menu seeds preserve the capability records. | OPEN |
 | ISSUE-PLAN-9 | planning | LOW | First MATRIX_CONFIG | This is the FIRST MATRIX_CONFIG — `_CONFIG.md` §⑦ canonical reference is currently TBD. On completion, update `_CONFIG.md` and `_COMMON.md` § Substitution Guide. | OPEN |
+| ISSUE-1 | 1 (2026-05-18) | LOW | BE perf | `GetRoles` / `GetCapabilities` perform 2 extra async sub-queries post-grid-feature (UserCount + ModuleTags / RoleCapabilityCount). Acceptable for V1 but should be converted to projected SQL subqueries in V2. | OPEN |
+| ISSUE-2 | 1 (2026-05-18) | LOW | BE matrix-reset baseline | `ResetRoleCapabilityMatrix` clones BUSINESSADMIN as the baseline; if platform tenant's BUSINESSADMIN row was customised the reset inherits those customisations rather than true factory defaults. Introduce a static `SystemRoleDefaults` dictionary in V2. | OPEN |
 
 ### § Sessions
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
 
-{No sessions recorded yet — filled in after /build-screen completes.}
+### Session 1 — 2026-05-18 — BUILD — COMPLETED
+
+- **Scope**: Initial full build from PROMPT_READY prompt. User-approved V1 scope reductions: dropped Role-modal Section 2 (Module Access table) → replaced with deep-link to Tab 3 Matrix; dropped optional `GetRoleSummary` query; deferred matrix DOM virtualization. Reuse decision: existing `RoleCapabilitiesEditor` (3-listbox per-role drill-down) wired into Tab 3 role-header context menu's "Edit Role Capabilities" action.
+- **Files touched**:
+  - BE (created):
+    - `PSS_2.0_Backend/PeopleServe/Services/Base/Base.Application/Business/AuthBusiness/RoleCapabilities/Queries/GetRoleCapabilityMatrix.cs`
+    - `.../RoleCapabilities/Queries/GetRoleComparison.cs`
+    - `.../RoleCapabilities/Commands/BulkUpdateRoleCapabilityMatrix.cs`
+    - `.../RoleCapabilities/Commands/ResetRoleCapabilityMatrix.cs`
+    - `.../RoleCapabilities/Commands/ResetRoleCapabilityMatrixForRole.cs`
+    - `.../RoleCapabilities/Commands/CopyRoleCapabilities.cs`
+    - `.../RoleCapabilities/Commands/GrantCapabilityToAllRoles.cs`
+    - `.../RoleCapabilities/Commands/RevokeCapabilityFromAllRoles.cs`
+  - BE (modified):
+    - `Base.Domain/Models/AuthModels/Role.cs` (+14 RBAC columns + UpdateRBACProfile helper)
+    - `Base.Infrastructure/Data/Configurations/AuthConfigurations/RoleConfiguration.cs`
+    - `Base.Application/Schemas/AuthSchemas/RoleSchemas.cs`
+    - `Base.Application/Schemas/AuthSchemas/CapabilitySchemas.cs`
+    - `Base.Application/Schemas/AuthSchemas/RoleCapabilitySchemas.cs` (+14 matrix/comparison projection DTOs)
+    - `Base.Application/Business/AuthBusiness/Roles/Commands/{CreateRole,UpdateRole,DeleteRole}.cs` (system-role guard + FK guards + conditional validators)
+    - `Base.Application/Business/AuthBusiness/Roles/Queries/{GetRoles,GetRoleById}.cs` (UserCount + ModuleTags)
+    - `Base.Application/Business/AuthBusiness/Capabilities/Commands/DeleteCapability.cs` (FK guard)
+    - `Base.Application/Business/AuthBusiness/Capabilities/Queries/GetCapabilities.cs` (RoleCapabilityCount)
+    - `Base.API/EndPoints/Auth/Mutations/RoleCapabilityMutations.cs` (+6 mutations)
+    - `Base.API/EndPoints/Auth/Queries/RoleCapabilityQueries.cs` (+2 queries)
+    - `Base.Application/Mappings/AuthMappings.cs`
+    - `Base.Application/Extensions/DecoratorProperties.cs` (+`RoleManagement = "ROLEMANAGEMENT"`)
+  - FE (created — 27 files):
+    - `src/domain/entities/auth-service/RoleCapabilityMatrixDto.ts`
+    - `src/domain/entities/auth-service/RoleComparisonDto.ts`
+    - `src/infrastructure/gql-queries/auth-queries/{CapabilityQuery,RoleCapabilityMatrixQuery,RoleComparisonQuery}.ts`
+    - `src/infrastructure/gql-mutations/auth-mutations/RoleCapabilityMatrixMutation.ts`
+    - `src/presentation/components/page-components/accesscontrol/usersroles/rolemanagement/{index-page.tsx, index.ts, rolemanagement-store.ts}`
+    - `.../rolemanagement/tabs/roles/` — `tab-roles.tsx`, `role-card-grid.tsx`, `role-card.tsx`, `role-modal.tsx`, `role-delete-confirm.tsx`, `sections/{role-info-section,role-module-access-deeplink,role-data-scope-section,role-restrictions-section}.tsx`
+    - `.../rolemanagement/tabs/capabilities/{tab-capabilities.tsx,capability-modal.tsx}`
+    - `.../rolemanagement/tabs/matrix/{tab-matrix.tsx,matrix-grid.tsx,matrix-toolbar.tsx,matrix-save-bar.tsx,matrix-context-menus.tsx,matrix-confirm-dialogs.tsx,matrix-utils.ts}`
+    - `.../rolemanagement/tabs/comparison/{tab-comparison.tsx,comparison-table.tsx}`
+    - `src/presentation/pages/accesscontrol/usersroles/rolemanagement.tsx`
+    - `src/app/[lang]/accesscontrol/usersroles/rolemanagement/page.tsx`
+    - `src/app/[lang]/accesscontrol/usersroles/rolecapability/page.tsx` (new forwarder route)
+  - FE (modified):
+    - `src/domain/entities/auth-service/{RoleDto,CapabilityDto,index}.ts`
+    - `src/infrastructure/gql-queries/auth-queries/{RoleQuery,index}.ts`
+    - `src/infrastructure/gql-mutations/auth-mutations/{RoleMutation,index}.ts`
+    - `src/app/[lang]/accesscontrol/usersroles/role/page.tsx` (replaced with redirect)
+    - `src/app/[lang]/accesscontrol/usersroles/capability/page.tsx` (replaced with redirect)
+    - `src/presentation/components/page-components/accesscontrol/usersroles/index.tsx`
+    - `src/presentation/pages/accesscontrol/usersroles/index.ts`
+  - DB: `PSS_2.0_Backend/PeopleServe/Services/Base/sql-scripts-dyanmic/RoleManagement-sqlscripts.sql` (created)
+- **Deviations from spec**:
+  - Role-modal trimmed from 4 to 3 functional sections (Info / Data Scope / Restrictions) + 1 deep-link card (replaces Module Access shortcut table) — per user approval.
+  - `GetRoleSummary` query dropped — was optional in §⑤.
+  - Matrix DOM virtualization deferred — known issue ISSUE-PLAN-2 stays OPEN; sections auto-collapse when >5 menus to mitigate.
+  - 6 matrix command handlers each contain a duplicated private `BuildMatrix` projection method instead of extracting a shared service — flagged for V2 refactor.
+  - `Menu.ModuleId` is `Guid` not `int` — matrix row-section ordering uses `OrderBy(m => m.ModuleId)` which compiles but may not match expected business sort; can add `ThenBy(m.Module.OrderBy)` later.
+  - Apollo Client 4.x removed `onCompleted` from `useQuery`; converted to `useEffect`-on-data pattern in `role-modal.tsx` and `capability-modal.tsx` during validation sweep.
+- **Known issues opened**:
+  - ISSUE-1: `GetRoles`/`GetCapabilities` perform 2 extra async sub-queries post-grid-feature; convert to projected SQL subqueries in V2 (LOW).
+  - ISSUE-2: `ResetRoleCapabilityMatrix` clones BUSINESSADMIN as the baseline; if the platform tenant's BUSINESSADMIN row has been customised, reset will inherit those customisations rather than true factory defaults. Static `SystemRoleDefaults` dictionary needed in V2 (LOW).
+- **Known issues closed**: None
+- **Next step**: (empty — COMPLETED)
+- **User actions before testing**:
+  1. Run EF migration: `dotnet ef migrations add Add_Role_RBAC_Extensions --project Base.Infrastructure --startup-project Base.API` then `dotnet ef database update`.
+  2. Run `PSS_2.0_Backend/PeopleServe/Services/Base/sql-scripts-dyanmic/RoleManagement-sqlscripts.sql` against the tenant DB.
+  3. `pnpm dev` and navigate to `/{lang}/accesscontrol/usersroles/rolemanagement`.
+  4. Verify all 4 tabs render, role CRUD works, matrix Tab 3 loads with sticky-bottom save bar, comparison Tab 4 supports 2-3 role compare.
+
+### Session 2 — 2026-05-18 — FIX — COMPLETED
+
+- **Scope**: User requested removal of duplicate data-scope gating columns on the Role entity. Per user: "we already have capability and rolecapability entity — this table store role-based access capabilities currently … so no need 'accesslevel, canviewowndata, this related fields'". Confirmed scope = data-scope group only (kept ColorHex, IP / Time / Session restrictions which are session policies, not capability checks). Removed 7 columns from Role + cascaded the removal through EF config, DTOs, validators, system-role guard, GraphQL queries/mutations, FE DTOs, and FE form. Deleted the `RoleDataScopeSection` component and its accordion section from the role modal. The `Data Scope` axis is now expressed solely via `Capability` + `RoleCapability`, consistent with the rest of the platform.
+- **Files touched**:
+  - BE (modified):
+    - `Base.Domain/Models/AuthModels/Role.cs` — removed 7 props (AccessLevel, BranchAccess, CanViewOwnData, CanViewBranchData, CanViewOrgData, CanViewCrossBranchData, RecordOwnership); slimmed Create() defaults and UpdateRBACProfile() signature accordingly.
+    - `Base.Infrastructure/Data/Configurations/AuthConfigurations/RoleConfiguration.cs` — removed 7 column configs.
+    - `Base.Application/Schemas/AuthSchemas/RoleSchemas.cs` — removed 7 fields from `RoleRequestDto`.
+    - `Base.Application/Business/AuthBusiness/Roles/Commands/CreateRole.cs` — removed 3 ValidateStringLength + the at-least-one-CanView rule.
+    - `Base.Application/Business/AuthBusiness/Roles/Commands/UpdateRole.cs` — same validator cleanup + slimmed the system-role guard's partial-update block (no longer writes the 7 dropped fields).
+  - BE (sql):
+    - `sql-scripts-dyanmic/RoleManagement-sqlscripts.sql` — header NOTES updated (14 → 7 columns) and added an explicit "data-scope handled by Capability+RoleCapability" callout. No DDL changes (entity columns are EF-driven).
+  - FE (modified):
+    - `src/domain/entities/auth-service/RoleDto.ts` — removed 7 fields.
+    - `src/infrastructure/gql-queries/auth-queries/RoleQuery.ts` — removed 7 fields from `ROLES_QUERY` + `ROLE_BY_ID_QUERY` selection sets.
+    - `src/infrastructure/gql-mutations/auth-mutations/RoleMutation.ts` — removed 7 variables + 7 input mappings from `CREATE_ROLE_MUTATION` and `UPDATE_ROLE_MUTATION`.
+    - `.../rolemanagement/tabs/roles/role-modal.tsx` — removed 7 form values, defaults, mapping, the `Data Scope` accordion section, and the `accessLevel` `<Select>` from the Info section.
+    - `.../rolemanagement/tabs/roles/role-card.tsx` — removed the access-level chip + `accessLevelLabel` helper.
+    - `.../rolemanagement/tabs/roles/sections/role-info-section.tsx` — removed the `accessLevel` `<Select>`; grid collapsed from 3-col to 2-col (RoleName + RoleType only).
+  - FE (deleted):
+    - `.../rolemanagement/tabs/roles/sections/role-data-scope-section.tsx` — file removed.
+- **Deviations from spec**: None — this is an explicit scope reduction per user feedback. Prompt §② Storage Model still lists the 7 dropped columns (kept for historical record); future replans should treat the data-scope axis as Capability-only.
+- **Known issues opened**: None
+- **Known issues closed**: None (the dropped columns were V1 scope, not a known issue).
+- **Next step**: (empty — COMPLETED)
+- **User actions before testing**:
+  1. Re-scaffold the EF migration if `Add_Role_RBAC_Extensions` was not yet applied: it should now produce only 7 added columns. If a previous migration was already generated with 14 columns, replace it before running `dotnet ef database update`.
+  2. Re-run the updated `RoleManagement-sqlscripts.sql`.
+  3. `pnpm dev` → re-test role create / edit flow; the modal now has 3 accordion sections (Role Info / Module & Menu Access / Restrictions) — no Data Scope section.
+
+### Session 3 — 2026-05-18 — FIX — COMPLETED
+
+- **Scope**: User requested removal of all remaining newly-added restriction columns on `Role` — IP allow-list, working-hours window, and session/idle timeouts. User reasoning verbatim: "AllowedIps buddy - so remove, then working start hrs and end hrs also will come later - remove all the newly created columns in role - later we can implement - now its not needed … because retiction ips also multiple will come and allowed ip also multiple will come. then time out also country based we can possible to configure - so evrything come as transaction table". Per follow-up clarification, **ColorHex stays** (visual metadata only, not a transaction concern, wired into role cards + color picker). Dropped 7 columns: `IpRestrictionEnabled`, `AllowedIps`, `TimeRestrictionEnabled`, `WorkingHoursStart`, `WorkingHoursEnd`, `SessionLimit`, `IdleTimeoutMinutes`. Restrictions tab/section + `UpdateRBACProfile()` method removed entirely.
+- **Files touched**:
+  - BE (modified):
+    - `Base.Domain/Models/AuthModels/Role.cs` — removed 7 props; deleted `UpdateRBACProfile()` static method (now unused); slimmed `Create()` default block to ColorHex only.
+    - `Base.Infrastructure/Data/Configurations/AuthConfigurations/RoleConfiguration.cs` — removed 7 column configs (ColorHex stays).
+    - `Base.Application/Schemas/AuthSchemas/RoleSchemas.cs` — removed 7 fields from `RoleRequestDto`.
+    - `Base.Application/Business/AuthBusiness/Roles/Commands/CreateRole.cs` — removed `ValidateStringLength(...AllowedIps, 2000)` + the `When(IpRestrictionEnabled)` + `When(TimeRestrictionEnabled)` rule blocks.
+    - `Base.Application/Business/AuthBusiness/Roles/Commands/UpdateRole.cs` — same validator cleanup + slimmed system-role partial-update block to write only Description + ColorHex.
+  - BE (sql):
+    - `sql-scripts-dyanmic/RoleManagement-sqlscripts.sql` — NOTES header now reads "1 new column (ColorHex)" and explains that session-level restrictions are deferred to transaction tables. Migration name updated `Add_Role_RBAC_Extensions` → `Add_Role_ColorHex`.
+  - FE (modified):
+    - `src/domain/entities/auth-service/RoleDto.ts` — removed 7 fields.
+    - `src/infrastructure/gql-queries/auth-queries/RoleQuery.ts` — removed 7 fields from both query selection sets.
+    - `src/infrastructure/gql-mutations/auth-mutations/RoleMutation.ts` — removed 7 GraphQL variables + 7 input mappings from `CREATE_ROLE_MUTATION` + `UPDATE_ROLE_MUTATION`.
+    - `.../rolemanagement/tabs/roles/role-modal.tsx` — `FormValues` now only `{ roleName, description, colorHex }`; removed restrictions accordion section, related state, useEffect loading, and `buildVariables()` mappings; Accordion `defaultValue` now `["info", "module"]` (was `["info", "restrictions"]`). Modal collapsed from 3 sections to 2.
+  - FE (deleted):
+    - `.../rolemanagement/tabs/roles/sections/role-restrictions-section.tsx` — file removed.
+- **Deviations from spec**: None — explicit user scope reduction. Prompt §② Storage Model still lists the dropped columns as part of the original V1 vision (kept for historical record). When restrictions get re-introduced as transaction tables (multi-IP allow-list, country-aware time windows, per-tenant idle policy), they will model separate entities, not Role columns.
+- **Known issues opened**: None
+- **Known issues closed**: None
+- **Next step**: (empty — COMPLETED)
+- **User actions before testing**:
+  1. If the `Add_Role_RBAC_Extensions` EF migration was generated against the post-Session-2 entity (7 added columns including ColorHex + 6 restriction cols), re-scaffold it as `Add_Role_ColorHex` so it produces only the single ColorHex column. If neither migration has been applied yet, just generate `Add_Role_ColorHex` fresh.
+  2. Re-run the updated `RoleManagement-sqlscripts.sql` (no DDL changes, just header notes).
+  3. `pnpm dev` → re-test role create / edit; modal now has **2 accordion sections** (Role Info / Module & Menu Access) — no Data Scope, no Restrictions.
