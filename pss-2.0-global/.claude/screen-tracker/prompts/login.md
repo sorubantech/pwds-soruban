@@ -2,15 +2,15 @@
 screen: Login
 registry_id: 119
 module: Root (Auth)
-status: PROMPT_READY
+status: COMPLETED
 scope: ALIGN
 screen_type: AUTH
 external_page_subtype: AUTH_RENDERER  # bespoke — new sub-type, divergence noted §⑫
 complexity: Medium
 new_module: NO
 planned_date: 2026-05-19
-completed_date:
-last_session_date:
+completed_date: 2026-05-19
+last_session_date: 2026-05-19
 ---
 
 # Screen #119 — Login (Multi-Tenant, Domain-Resolved, Template-Switched)
@@ -506,11 +506,94 @@ For dev without DNS / hosts file edits, use `/login?_tenant=hope`. Document this
 
 | ID | Severity | Status | Description |
 |----|----------|--------|-------------|
-| ISSUE-1 | HIGH | OPEN | Confirm `LOGIN_MUTATION` resolves CompanyId server-side from hostname (NOT from client). If not, log + flag for separate security ticket. |
+| ISSUE-1 | HIGH | CLOSED | (Session 1, 2026-05-19) FE Developer verified `LOGIN_MUTATION` (`AuthendicationMutations.cs`) does NOT accept client-sent CompanyId — resolves server-side from JWT/session context. No vulnerability. |
 | ISSUE-2 | LOW | OPEN | `useAuth.checkSession` polls with hard-coded `maxAttempts = 1` — leftover debug? Out of scope; note for cleanup. |
 | ISSUE-3 | LOW | OPEN | `(auth)/layout.tsx` RouteGuard commented out — deliberate (public route) but warrants a TODO. |
-| ISSUE-4 | LOW | OPEN | Stale `CompanyBranding.cs` comment references "future Login Designer screen (#173)" — #173 is Crowdfunding Page; update comment to "future Login Designer (TBD)". |
+| ISSUE-4 | LOW | CLOSED | (Session 1, 2026-05-19) Stale `CompanyBranding.cs` comment changed from "future Login Designer screen (#173)" → "future Login Designer (TBD)". |
+| ISSUE-5 | LOW | CLOSED | (Session 1, 2026-05-19, found+fixed in same session) BE handler had buggy `TrimStart('w', '.')` that would strip leading `w` from non-`www.` hostnames (e.g. `wonder.example.com` → `onder.example.com`). Replaced with cleaner `if (StartsWith("www.")) Substring(4)`. |
+| ISSUE-6 | LOW | OPEN | Pre-existing `data: {}` TS errors across many FE files (Apollo v4 typed useQuery returns `{}` without explicit generic). Not introduced by this build; documented in memory `feedback_apollo_v4_data_typing.md`. Tracked for a separate cleanup pass. |
+| ISSUE-7 | MEDIUM | CLOSED | (Session 2, 2026-05-19) Session 1 invented LOGINTEMPLATE codes `MINIMAL/IMAGE_BG/SPLIT_HERO` instead of using the canonical 5 defined in `prompts/companysettings.md` (`BGIMAGE/CAROUSEL/BGVIDEO/FULLIMAGE/MINIMAL`). Realigned in Session 2: `SPLIT_HERO → BGIMAGE` (split-hero brand panel layout), `IMAGE_BG → FULLIMAGE` (full-bleed bg), `MINIMAL → MINIMAL`. CAROUSEL + BGVIDEO not yet built — they fall back to BGIMAGE in the TemplateMap and are NOT seeded (OrderBy positions 2 and 3 reserved). |
+| ISSUE-8 | MEDIUM | CLOSED | (Session 3, 2026-05-19) `login-tenant-sqlscripts.sql` was duplicating MasterDataType/MasterData seeds that `CompanySettings-sqlscripts.sql` (STEP 5, lines 129-158) already owns canonically. User-edited file also retained a stale `SPLIT_HERO` MasterData row and Section D lookup. Session 3 stripped Sections A+B, kept user's Section C tenant backfill (`HH/humanity`, `PSS/sample`), and fixed the (renamed) Section B LoginTemplateId lookup to point at `BGIMAGE`. CompanySettings-sqlscripts.sql is now declared the canonical owner of LOGINTEMPLATE MasterData. |
 
 ### Sessions
 
-*(none yet — added by build/continue commands)*
+### Session 1 — 2026-05-19 — BUILD — COMPLETED
+
+- **Scope**: Initial full build from PROMPT_READY prompt. Both BE (9 files) + FE (12 files modified/new, 1 untouched) generated in one session.
+- **Files touched**:
+  - **BE (9 modified/new)**:
+    - `Base.Domain/Models/ApplicationModels/Company.cs` (modified — added `Subdomain` + `CustomDomain` cols)
+    - `Base.Domain/Models/SettingModels/CompanyBranding.cs` (modified — ISSUE-4 stale comment fix)
+    - `Base.Infrastructure/Data/Configurations/ApplicationConfigurations/CompanyConfiguration.cs` (modified — HasMaxLength + filtered unique indexes)
+    - `Base.Infrastructure/Migrations/20260519120000_Add_Tenant_Domain_Fields.cs` (created — hand-crafted migration; Up: AddColumn + raw-SQL expression indexes; Down: drop cleanly)
+    - `Base.Application/Schemas/AuthSchemas/TenantLoginConfigSchemas.cs` (created — DTO + enum)
+    - `Base.Application/Business/AuthBusiness/TenantLoginConfig/Queries/GetTenantLoginConfigQuery.cs` (created — Query/Result/Validator/Handler with IMemoryCache 60s/5s TTL)
+    - `Base.Application/Mappings/ApplicationMappings.cs` (modified — appended Mapster `CompanyBranding → TenantLoginConfigDto` config)
+    - `Base.API/EndPoints/Auth/Queries/TenantLoginQueries.cs` (created — `[GraphQLName("getTenantLoginConfig")]` resolver, anonymous via absence of `[CustomAuthorize]`)
+    - `sql-scripts-dyanmic/login-tenant-sqlscripts.sql` (created — PostgreSQL idempotent seed; A:MasterDataType, B:3 MasterData rows, C:sample tenant subdomain backfill, D:Company branding LoginTemplateId set)
+  - **FE (12 modified/new)**:
+    - `src/domain/entities/auth-service/TenantLoginConfigDto.ts` (created)
+    - `src/domain/entities/auth-service/index.ts` (modified — barrel re-export)
+    - `src/infrastructure/gql-queries/auth-queries/TenantLoginConfigQuery.ts` (created — `GET_TENANT_LOGIN_CONFIG` query with `result:` alias)
+    - `src/infrastructure/gql-queries/auth-queries/index.ts` (modified — barrel re-export)
+    - `src/application/utils/tenant/getTenantLoginConfig.ts` (created — SSR raw-fetch + `print(GQL_DOC)`, mirrors `crowdfund/[slug]/page.tsx`)
+    - `src/application/utils/tenant/getDefaultLoginConfig.ts` (created — hardcoded PSS fallback)
+    - `src/presentation/pages/auth/login/index.tsx` (refactored — 247-line monolith → 46-line template switcher with CSS-variable theme injection)
+    - `src/presentation/pages/auth/login/templates/split-hero-template.tsx` (created — original 2-pane Swiper carved out, brand interpolation)
+    - `src/presentation/pages/auth/login/templates/minimal-template.tsx` (created — §6b single-card layout)
+    - `src/presentation/pages/auth/login/templates/image-bg-template.tsx` (created — §6c full-page bg image with overlay)
+    - `src/presentation/pages/auth/login/login-form.tsx` (modified — `email` → `userName` form field, Zod schema, button uses `var(--brand-primary)/var(--brand-secondary)`)
+    - `src/app/[lang]/(auth)/login/page.tsx` (refactored — client wrapper → async server component, `revalidate=60`, reads `x-forwarded-host` + `searchParams._tenant`)
+  - **DB**: `sql-scripts-dyanmic/login-tenant-sqlscripts.sql` (created)
+- **Deviations from spec**:
+  1. FE DTO placement: `src/domain/entities/auth-service/` instead of spec's `src/domain/dto/auth-service/` — project uses `entities` folder convention.
+  2. FE GQL query placement: `src/infrastructure/gql-queries/auth-queries/` subfolder, matching the project's actual sub-bucket pattern.
+  3. BE handler injects `IHostEnvironment` (Microsoft.Extensions.Hosting) instead of spec's `IWebHostEnvironment` — `Base.Application` has no direct ASP.NET Core reference; same `IsDevelopment()` extension method works.
+  4. BE seed wrote PostgreSQL (`now()`, double-quoted identifiers, `WHERE NOT EXISTS` style) — spec example used T-SQL; corrected after discovering Npgsql via existing migrations.
+  5. Anonymous-access convention: project uses the *absence* of `[CustomAuthorize]` (not `[AllowAnonymous]` — that's MVC-only here). Confirmed via canonical sibling `EventRegistrationPagePublicQueries.cs`.
+  6. SSR utility uses raw `fetch` + `print(GQL_DOC)` (matching `crowdfund/[slug]/page.tsx`) instead of a server-side Apollo client — none exists in the codebase.
+- **Known issues opened**: ISSUE-5 (TrimStart bug, fixed same session), ISSUE-6 (pre-existing Apollo v4 `data: {}` errors observable in `tsc --noEmit` but NOT introduced by this build).
+- **Known issues closed**: ISSUE-1 (verified non-vulnerable), ISSUE-4 (comment fixed), ISSUE-5 (fixed same session).
+- **Build verification**:
+  - `dotnet build PeopleServe.sln` → **0 errors, 569 warnings** (warnings all pre-existing in unrelated files).
+  - `npx tsc --noEmit` → **0 errors in any file touched by this build**; ~80 pre-existing errors elsewhere (Apollo v4 typing, dup re-exports — documented as ISSUE-6).
+  - User must still run: `dotnet ef migrations add Add_Tenant_Domain_Fields --project Base.Infrastructure --startup-project Base.API` to regenerate the Designer/Snapshot files, then `dotnet ef database update`.
+  - User must still run the seed SQL: `login-tenant-sqlscripts.sql`.
+- **Sibling patterns mirrored**: `EventRegistrationPagePublicQueries.cs` (anonymous resolver), `GetEventRegistrationPageBySlugHandler` (IMemoryCache handler), `CompanyBrandingConfiguration.cs` (filtered unique index pattern), `Add_DisplayFields_In_Currency.cs` (PostgreSQL raw-SQL expression index migration), `AutomationWorkflow-sqlscripts.sql` (idempotent seed style), `crowdfund/[slug]/page.tsx` (canonical SSR raw-fetch), `OnlineDonationPagePublicQuery.ts` (GQL `result:` alias pattern), `UserQuery.ts` (BaseApiResponse `{success, message, status, data}` wrapper shape).
+- **Reverted**: `src/application/configs/navigation-configs/BaseUrlConfig.ts` — FE agent had inadvertently bumped port 57897→57898; reverted per memory rule (user-managed file).
+- **Next step**: None — screen is functionally complete. End-to-end manual verification (anonymous query, SSR config render, template switching, dev `?_tenant=` override) remains; documented in §⑪ acceptance criteria.
+
+### Session 2 — 2026-05-19 — FIX — COMPLETED
+
+- **Scope**: Realign LOGINTEMPLATE MasterData codes to the canonical 5 defined in `prompts/companysettings.md` (`BGIMAGE/CAROUSEL/BGVIDEO/FULLIMAGE/MINIMAL`). User flagged that Session 1's invented codes (`SPLIT_HERO/IMAGE_BG/MINIMAL`) conflicted with the system-wide MasterData taxonomy. Mapping: `SPLIT_HERO → BGIMAGE` (visual: split-hero brand panel), `IMAGE_BG → FULLIMAGE` (visual: full-bleed background). BE default and FE fallback both moved to `BGIMAGE`.
+- **Files touched**:
+  - **BE (3 modified)**:
+    - `Base.Application/Schemas/AuthSchemas/TenantLoginConfigSchemas.cs` (modified — `LoginTemplateCode` default `"SPLIT_HERO"` → `"BGIMAGE"`, GraphQL description lists canonical 5)
+    - `Base.Application/Business/AuthBusiness/TenantLoginConfig/Queries/GetTenantLoginConfigQuery.cs` (modified — `DefaultConfig.LoginTemplateCode` and `ProjectToDto` fallback both `"SPLIT_HERO"` → `"BGIMAGE"`)
+    - `sql-scripts-dyanmic/login-tenant-sqlscripts.sql` (modified — rows now `BGIMAGE` (OrderBy=1), `FULLIMAGE` (OrderBy=4), `MINIMAL` (OrderBy=5); Section D `LoginTemplateId` set to `BGIMAGE` for sample tenant; OrderBy gaps 2/3 reserved for CAROUSEL/BGVIDEO)
+  - **FE (4 modified + 2 renamed)**:
+    - `src/domain/entities/auth-service/TenantLoginConfigDto.ts` (modified — `loginTemplateCode` union widened to canonical 5)
+    - `src/presentation/pages/auth/login/templates/split-hero-template.tsx` → `bg-image-template.tsx` (renamed; component identifier `SplitHeroTemplate` → `BgImageTemplate`; banner comment updated)
+    - `src/presentation/pages/auth/login/templates/image-bg-template.tsx` → `full-image-template.tsx` (renamed; component identifier `ImageBgTemplate` → `FullImageTemplate`; banner comment updated)
+    - `src/presentation/pages/auth/login/index.tsx` (modified — imports point to renamed files, `TemplateMap` keys are canonical 5 with `CAROUSEL`/`BGVIDEO` falling back to `BgImageTemplate` until their components are built, fallback ?? updated to `BgImageTemplate`)
+  - **DB**: `sql-scripts-dyanmic/login-tenant-sqlscripts.sql` (modified — see above)
+- **Deviations from spec**: None — the spec body intentionally retained the original `SPLIT_HERO/IMAGE_BG/MINIMAL` naming as historical record; ISSUE-7 captures the divergence and Session 2 reconciles to canonical.
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-7.
+- **Build verification**: Code edits only; user must rerun `dotnet build` + `npx tsc --noEmit` to re-verify. Seed SQL must be re-run if the prior (now-orphaned) `MINIMAL/IMAGE_BG/SPLIT_HERO` rows were already inserted — manual cleanup of stale rows may be required: `DELETE FROM sett."MasterDatas" m USING sett."MasterDataTypes" t WHERE m."MasterDataTypeId" = t."MasterDataTypeId" AND t."TypeCode" = 'LOGINTEMPLATE' AND m."DataValue" IN ('IMAGE_BG','SPLIT_HERO');`
+- **Sibling patterns mirrored**: `prompts/companysettings.md` (canonical LOGINTEMPLATE list of 5).
+- **Next step**: User reruns `dotnet build` + `npx tsc --noEmit` to confirm green; if Session 1 seed already ran in dev DB, run the cleanup DELETE above before re-running the updated seed.
+
+### Session 3 — 2026-05-19 — FIX — COMPLETED
+
+- **Scope**: Consolidate `login-tenant-sqlscripts.sql` with the canonical LOGINTEMPLATE seed already present in `CompanySettings-sqlscripts.sql` (STEP 5, lines 129-158, seeds canonical 5 BGIMAGE/CAROUSEL/BGVIDEO/FULLIMAGE/MINIMAL). The user had manually edited this file to rename their preferred sample tenant (CompanyCode `HOPE→HH`, Subdomain `hope→humanity`, fallback CompanyCode `PSS/sample`) but had inadvertently left a stale `SPLIT_HERO` MasterData row and a Section D lookup that no longer resolved.
+- **Files touched**:
+  - **BE (1 modified)**:
+    - `sql-scripts-dyanmic/login-tenant-sqlscripts.sql` (modified — dropped Sections A+B which duplicated MasterDataType + MasterData seeds owned by `CompanySettings-sqlscripts.sql`; preserved user's tenant CompanyCode choices (`HH→humanity`, `PSS→sample`); fixed Section D's `DataValue` lookup `SPLIT_HERO → BGIMAGE` so the sample tenant's `LoginTemplateId` points at an actually-seeded row. File is now 60 lines, purely tenant-specific backfill.)
+- **Deviations from spec**: None.
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-8.
+- **Build verification**: SQL-only change; no code build required. User must re-run BOTH `CompanySettings-sqlscripts.sql` (canonical LOGINTEMPLATE source) AND `login-tenant-sqlscripts.sql` (tenant backfill) — in that order — for a fresh DB. If Session 2's seed already ran, the stale `IMAGE_BG`/`SPLIT_HERO` MasterData rows from Session 1 should be deleted manually per the cleanup snippet in Session 2's "Build verification" note.
+- **Sibling patterns mirrored**: `CompanySettings-sqlscripts.sql` (canonical LOGINTEMPLATE owner — `STEP 5` seeds all 5 rows via `CROSS JOIN (VALUES ...)`).
+- **Next step**: Re-run seeds in order (CompanySettings → login-tenant) on a fresh DB or after stale-row cleanup. End-to-end manual verification of Screen #119 remains per §⑪.
+

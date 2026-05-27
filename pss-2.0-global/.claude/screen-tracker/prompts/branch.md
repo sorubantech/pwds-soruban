@@ -2,14 +2,14 @@
 screen: Branch
 registry_id: 41
 module: Organization
-status: COMPLETED
+status: NEEDS_FIX
 scope: ALIGN
 screen_type: MASTER_GRID
 complexity: High
 new_module: NO
 planned_date: 2026-04-18
 completed_date: 2026-04-18
-last_session_date: 2026-04-18
+last_session_date: 2026-05-22
 ---
 
 ## Tasks
@@ -530,10 +530,13 @@ GridCode: BRANCH
 - [ ] Route `/{lang}/organizationsetup/branch` returns 404 (duplicate removed)
 
 **Functional Verification (Full E2E — MANDATORY):**
+
+> Run 1 (2026-05-21) BLOCKED — all 15 functional specs failed at `beforeEach → waitForGridReady()`. Page hangs at `<main>Loading…</main>` before the grid mounts. Root cause is FE-only and affects every item below uniformly; not annotating each line individually. See [branch.test-result.md](branch.test-result.md) Run 1 for diagnosis + verification steps.
+
 - [ ] Grid loads with 12 columns in correct order (Branch, Code, Region, Country, City, Head, Staff, Annual Target, YTD Collected, Performance, Status, Actions)
 - [ ] Country column renders emoji flag + country name
-- [ ] Performance column renders traffic-light bar with correct color (green ≥75, amber 50-75, red <50)
-- [ ] Staff count, YTD Collected, Performance % show correct per-row values
+- [~] Performance column renders traffic-light bar with correct color (green ≥75, amber 50-75, red <50)  *(SKIPPED in Run 1 — depends on YtdCollected, blocked by ISSUE-4-YTD OPEN §⑬)*
+- [~] Staff count, YTD Collected, Performance % show correct per-row values  *(SKIPPED in Run 1 — YtdCollected blocked by ISSUE-4-YTD OPEN §⑬)*
 - [ ] Search filters by branch name / code / city
 - [ ] Region / Country / Status / Performance filters narrow results
 - [ ] Add new branch → modal form shows all fields with cascading Country→State→City → save succeeds → appears in grid + widgets update
@@ -542,12 +545,12 @@ GridCode: BRANCH
 - [ ] Delete → soft-delete → row disappears → widgets update
 - [ ] FK dropdowns load data correctly (Company, Country, State cascades, City cascades, ManagerStaff)
 - [ ] Summary widgets (4) show correct values matching grid data
-- [ ] Click on branch name → side panel opens → Quick Stats render → Activity feed shows placeholder empty or 4 stub items (toast on "View All") → Staff mini-list shows top 3 or empty state
+- [ ] Click on branch name → side panel opens → Quick Stats render → Activity feed shows placeholder empty or 4 stub items (toast on "View All") → Staff mini-list shows top 3 or empty state  *(side-panel Activity feed + CRM Quick-Stat tiles SKIPPED in Run 1 — ISSUE-2 / ISSUE-4 OPEN §⑬)*
 - [ ] Side panel close works (X, overlay click, Escape)
 - [ ] Edit from side panel header opens modal
 - [ ] "View Staff" dropdown action navigates to `/{lang}/organization/staff/staff?branchId={id}`
 - [ ] "View Donations" dropdown action navigates to `/{lang}/crm/donation/globaldonation?branchId={id}`
-- [ ] Map View toggle → shows SERVICE_PLACEHOLDER card with legend + branches-by-country list
+- [~] Map View toggle → shows SERVICE_PLACEHOLDER card with legend + branches-by-country list  *(SKIPPED in Run 1 — SERVICE_PLACEHOLDER §⑫ + ISSUE-3 OPEN §⑬)*
 - [ ] Export button triggers existing ExportBranch flow with new columns in CSV
 - [ ] Permissions: buttons/actions respect BUSINESSADMIN capabilities; other roles (if any) see READ-only
 
@@ -621,3 +624,85 @@ Full UI must be built (summary cards, side panel, activity feed shell, staff min
 - **Next step**: None for this build. Outside-screen follow-ups: (1) add `BranchId` FK on `GlobalDonation` to close ISSUE-4-YTD; (2) add `BranchId` FK on Contact/Campaign/Event to close ISSUE-4; (3) wire an activity-stream service to close ISSUE-2; (4) pick a map library + add geo-coords to close ISSUE-3.
 
 **Build status**: BE `dotnet build` — GREEN (all 4 projects, 0 errors). FE `tsc --noEmit` — GREEN for Branch files (5 pre-existing errors inherited from screens #22 + dashboards/overview, unrelated).
+
+- Session 2 — 2026-05-21 — TEST — NEEDS_FIX — see [branch.test-result.md](branch.test-result.md) — 15 failures (single root cause: `<main>Loading…</main>` hang), 5 intentional skips
+- Session 3 — 2026-05-22 — TEST — INFRA_ERROR — see [branch.test-result.md](branch.test-result.md) — 15 fast-fails (auth setup never ran under `--grep @screen-41`; storageState missing → `page.goto` invalid-URL). Screen status unchanged at NEEDS_FIX; Run 1 page-hang not re-verified.
+- Session 4 — 2026-05-22 — TEST — NEEDS_FIX — see [branch.test-result.md](branch.test-result.md) — Run 3 vs IIS (FE :8080, BE :7001); auth setup PASSED; 15 chromium failures REPRODUCED Run 1 `<main>Loading…</main>` page-hang; 5 intentional skips. Root cause IDENTIFIED: spec missing module-warmup step before `page.goto(menuUrl)`.
+- Session 5 — 2026-05-22 — REGENERATE — see [branch.test-result.md](branch.test-result.md) — `/test-screen #41 --generate-only`; spec `beforeEach` patched to use `navigateToScreen(page, "ORGANIZATION", "organization/company/branch")` per updated `/test-screen` skill § Navigation constraint. Not executed — re-run with `/test-screen #41 --rerun` to verify.
+- Session 6 — 2026-05-22 — TEST — NEEDS_FIX — see [branch.test-result.md](branch.test-result.md) — Run 4 (after navigateToScreen patch) vs IIS; 1 pass (setup), 15 chromium fail at `waitForGridReady`, 5 intentional skips, 4m 24s. Page snapshot shows sidebar `<list>` STILL EMPTY after `/en/organization/dashboards/overview` warm-up → `<main>Loading…</main>` REPRODUCED. The skill's Navigation constraint assumption is incomplete; menu hydration does not fire on hard `page.goto`. Also caught a `/test-screen` meta-bug: invocations from `PSS_2.0_Frontend/` CWD silently load an empty default config (must pass `--config tests/e2e/playwright.config.ts`). Runs 4a/4b were INFRA_ERROR before Run 4c reached this real result.
+- Session 7 — 2026-05-22 — TEST — NEEDS_FIX — see [branch.test-result.md](branch.test-result.md) — Run 5 (nav-helpers Option 2 patch — wait for `nav a[href*="/organization/"]` instead of networkidle); 1 pass (setup), 15 chromium fail at `waitForModuleReady`, 5 skips, 5m 0s. Screenshot now reveals the REAL gap: the Organization dashboard PAGE rendered fine, but the sidebar is **completely empty** (no menu items at all). Two candidates: (a) `businessadmin@gmail.com`/`humanity` has no menu permissions in IIS, or (b) menu fetch only fires on post-login redirect, not on storageState-restored sessions. Blocking on user input before patching further.
+- Session 8 — 2026-05-22 — TEST — NEEDS_FIX (but first real screen pass) — see [branch.test-result.md](branch.test-result.md) — Runs 6+7. User confirmed menus DO appear manually → diagnosed via FE-code Explore: `useMenu()` skips its query if `useGlobalStore.moduleCode === ""`; cookies-only storageState restore never sets it because the user normally clicks a module in the navigator. Patched `nav-helpers.ts` to (a) seed `localStorage["global-store"]` with `{state:{moduleCode}, version:0}` via `page.addInitScript`, (b) drop the `nav` ancestor from the menu-link selector (sidebar is `<div><ul><li><a>`). Run 7 result: **2 passed** (setup + `grid loads with toolbar`) / 14 failed / 5 skipped / 7m 36s. The 14 failures are now REAL screen-level: 8× grid timeout in beforeEach (10s too tight for IIS build), 3× form-modal/FK-selector mismatches, 2× missing `branch-widgets`/`side-panel` testids, 1× 12-column assertion. Recommended next: bump `waitForGridReady` to 20s (clears 8 of 14 in one shot), then `/test-fix #41 --until-green`.
+
+### Session 9 — 2026-05-22 — UI — COMPLETED
+
+- **Scope**: Remove hardcoded `$` currency symbol, `en-US` locale, and stub-data date strings from Branch components. Make currency/number formatting tenant-aware via the existing `companySettingsFormatters` utility (CompanySettings session store #75).
+- **Files touched**:
+  - BE: None
+  - FE: `src/presentation/utils/companySettingsFormatters.ts` (modified — added `formatCompactCurrency` export with K/M for non-Indian orgs and L/Cr for Indian-grouping orgs; reuses base `formatCurrency` for symbol/code/grouping); `src/presentation/components/page-components/organization/company/branch/branch-widgets.tsx` (modified — deleted local `formatCurrency` with hardcoded `$` + `en-US`; replaced all 4 KpiCard call sites to use `formatCompactCurrency` for monetary values and `formatNumber` for counts + percentages); `src/presentation/components/page-components/organization/company/branch/branch-side-panel.tsx` (modified — deleted local `formatCurrency`; deleted `STUB_ACTIVITIES` array with hardcoded "Apr 15"/"Apr 12"/"Apr 10"/"Apr 8" dates + `$1,200` literal; replaced 4-item stub render with proper `Activity feed coming soon` dashed-border empty-state tile; swapped 6 Quick Stats tiles + Target Achievement % to `formatNumber` / `displayCompactCurrency`).
+  - DB: None
+- **Deviations from spec**: None. The §⑥ UI Blueprint already specified Variant B + KPI cards + side panel; only the implementation primitives changed. ISSUE-2 (no activity service) now renders an honest empty-state instead of fake April dates — semantically closer to the OPEN status.
+- **Known issues opened**: None.
+- **Known issues closed**: None. ISSUE-2 stays OPEN (still no activity-stream source — the stub data went away but the underlying capability gap remains).
+- **Next step**: Test failures from Session 8/Run 7 (8× grid timeout, 3× FK-selector mismatch, 2× missing testid, 1× column count) are still pending. Run `/test-fix #41 --until-green` when ready.
+
+### Session 10 — 2026-05-22 — FIX — COMPLETED
+
+- **Scope**: Three form-input fixes surfaced from manual QA of the Branch Add/Edit modal — (1) numeric fields (`annualTarget`) accepted alphabetic input in Firefox + on paste; (2) `managerStaffId` ApiSelectV3 fired no API call because the `STAFF` queryKey was missing from the static query map (fell through to `EMPTY_QUERY`); (3) introduce a generic `ui:options: { autoCaps: true }` flag on free-text inputs (so `branchCode` displays + persists as uppercase as the user types).
+- **Files touched**:
+  - BE: `PSS_2.0_Backend/PeopleServe/Services/Base/sql-scripts-dyanmic/Branch-sqlscripts.sql` (modified — added `"ui:options": { "autoCaps": true }` to the `branchCode` uiSchema block inside the BRANCH `GridFormSchema` UPDATE statement; re-run the seed against the dev DB to take effect).
+  - FE: `PSS_2.0_Frontend/src/presentation/components/custom-components/data-tables/data-table-form/dgf-widgets/api-selectv3-widget/use-api-selectv3.ts` (modified — added new `STAFF` gql query aliasing `value: staffId, label: staffName` against `staffs(...)`; registered in `queries` map alongside existing `STAFFWITHUSERID`); `PSS_2.0_Frontend/src/presentation/components/custom-components/data-tables/data-table-form/dgf-templates/base-input-template.tsx` (modified — added schema-type-driven numeric input hardening: `_onKeyDown` blocks alphabetic keystrokes for `integer`/`number` schemas, `_onChange` sanitizes paste/programmatic input to digits + single sign + single decimal; added generic `autoCaps` ui:option that uppercases value on change/blur and applies `uppercase placeholder:normal-case` Tailwind classes to the `<Input>` for visual parity).
+  - DB: None (the seed-SQL edit is the DB delivery vehicle; user re-runs `Branch-sqlscripts.sql` to apply).
+- **Deviations from spec**: None. The Spec did not pin a specific input-validation strategy for numeric fields; the new behavior is purely defensive (no rejected valid inputs). `autoCaps` is a new generic primitive available to any GridField uiSchema — opt-in only, no implicit behavior change for fields that don't set the flag.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: User must re-run `Branch-sqlscripts.sql` against the dev DB for the `branchCode` autoCaps flag to take effect (the FE feature works the moment the JSON property exists in `GridFormSchema`). Optionally roll `autoCaps: true` to other code/key fields (e.g. tax codes, currency codes) by editing their respective seed SQLs.
+
+### Session 11 — 2026-05-22 — FIX — COMPLETED
+
+- **Scope**: NRE in `branches(...)` list query after a Branch record gets its `managerStaffId` assigned. Stack trace pointed at `EntityExtensions.ToDtoList<Branch, BranchResponseDto>` → Mapster crash inside the inner `Staff → StaffResponseDto` adapter. Root cause: `Staff.StaffCategory` is declared non-nullable in both the entity (`= default!`) and the destination DTO (`StaffCategoryRequestDto StaffCategory { get; set; } = default!`). `GetBranchHandler` does `.Include(x => x.ManagerStaff)` but no `.ThenInclude(s => s.StaffCategory)`, so at runtime the manager Staff's `StaffCategory` nav is null. Mapster's convention mapping into a non-nullable destination property omits the source-null guard and dereferences null. Before the manager assignment, ManagerStaff itself was null and the outer null-safe BranchResponseDto map (`src.ManagerStaff != null ? src.ManagerStaff.Adapt<...>() : null`) short-circuited, hiding the latent bug.
+- **Files touched**:
+  - BE: `PSS_2.0_Backend/PeopleServe/Services/Base/Base.Application/Mappings/ApplicationMappings.cs` (modified — Staff→StaffResponseDto config: added 3 explicit null-safe `.Map(...)` lines for the nested DTO refs `StaffCategory` (non-nullable dest, uses `null!` forgiving assignment), `User` (nullable dest), `Company` (nullable dest); short comment documents why the override is necessary).
+  - FE: None.
+  - DB: None.
+- **Deviations from spec**: None. The fix is purely defensive — non-null cases keep producing the same projected DTOs; only the null-source path now safely emits null instead of NRE-ing.
+- **Known issues opened**: None.
+- **Known issues closed**: None directly. (This was a new runtime crash surfaced post-Session-10 manual QA, not a pre-existing ISSUE row.)
+- **Next step**: After `dotnet build` succeeds, re-test the Branch list query with an assigned manager to confirm the NRE is gone. Other consumers of Staff→StaffResponseDto that intentionally read `dto.StaffCategory.*` should already be including StaffCategory, but if any silently relied on the convention NRE to surface a missing include, they'll now see a null-ref at the read site instead — easier to diagnose.
+
+### Session 12 — 2026-05-22 — FIX — COMPLETED
+
+- **Scope**: User re-ran the Branch list after Session 11 and **still** hit `System.NullReferenceException` from `EntityExtensions.ToDtoList → ApplyGridFeatures → GetBranchHandler.Handle`. Two-layer fix: (a) wrapped the handler body in `try/catch` and rethrew as `ApplicationException` carrying the **root inner exception type + message + originating frame** so the next crash surfaces in the GraphQL error payload instead of being swallowed by Mapster's wrapper frames; (b) added `.ThenInclude(s => s!.StaffCategory)`, `.ThenInclude(s => s!.User)`, `.ThenInclude(s => s!.Company)` to the EF query so the three non-nullable Staff navs are eagerly loaded — belt-and-suspenders alongside the Session 11 Mapster null-guards, in case the user's BE hasn't picked up the mapper config change (cached compiled Mapster expression, stale assembly, etc.).
+- **Files touched**:
+  - BE: `PSS_2.0_Backend/PeopleServe/Services/Base/Base.Application/Business/ApplicationBusiness/Branches/Queries/GetBranch.cs` (modified — added try/catch around the entire handler body with root-cause-extracting rethrow; added `.ThenInclude` chains for ManagerStaff → StaffCategory / User / Company).
+  - FE: None.
+  - DB: None.
+- **Deviations from spec**: None. Two `.ThenInclude` chains add one extra JOIN each to the list query — acceptable cost (PageSize ≤ 50 typical, manager Staff per branch). If volume grows, the projection could be flattened in the EF query rather than relying on Mapster.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: User must `dotnet build` and **restart** the API process so the new IL + the Session-11 Mapster config recompile. If the NRE still surfaces, the new ApplicationException wrapper will report the **exact** inner type + originating member — paste that back here to pinpoint.
+
+
+### Session 13 — 2026-05-25 — FIX — COMPLETED
+
+- **Scope**: Same `System.NullReferenceException` resurfaced in `GetBranchByIdHandler.Handle` (the detail-drawer / edit-mode loader) for branches with a `ManagerStaffId` assigned. Root cause is identical to Session 12 — Mapster projects `branch.Adapt<BranchResponseDto>()` and walks the manager Staff's non-nullable nested nav targets (`StaffCategory`, `User`, `Company`), which weren't eager-loaded. Applied the same two-layer fix as Session 12.
+- **Files touched**:
+  - BE: `PSS_2.0_Backend/PeopleServe/Services/Base/Base.Application/Business/ApplicationBusiness/Branches/Queries/GetBranchById.cs` (modified — added `.ThenInclude(s => s!.StaffCategory)`, `.ThenInclude(s => s!.User)`, `.ThenInclude(s => s!.Company)` chains for ManagerStaff; wrapped the entire handler body in `try/catch` with root-cause-extracting `ApplicationException` rethrow naming `GetBranchByIdHandler`).
+  - FE: None.
+  - DB: None.
+- **Deviations from spec**: None. Adds 3 LEFT JOINs to the single-row detail query — negligible cost since it's `FirstOrDefaultAsync` on a PK lookup.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: `dotnet build` + restart the API process. If the NRE still surfaces from this path, the rethrow will report `GetBranchByIdHandler failed: [<TypeName>] <message> @ <Namespace>.<Class>.<Method>` — paste that back to pinpoint any remaining null source. If the user hits the same pattern on a sibling handler (e.g. an `Update*` flow that re-fetches the row before returning), apply the same Include + try/catch pattern — every code path that projects a Staff-with-non-nullable-navs through Mapster needs the eager-loads.
+
+
+### Session 14 — 2026-05-25 — UI — COMPLETED
+
+- **Scope**: User UI polish — KPI widget icon circles + status badge were using the "light tint bg + colored icon" treatment. Flipped to the inverse "solid color bg + white icon/text" treatment for stronger visual weight, per user direction "icon color set to icon bg color and icon color will be white. same for this screen badge".
+- **Files touched**:
+  - FE: `PSS_2.0_Frontend/src/presentation/components/page-components/organization/company/branch/branch-widgets.tsx` (removed the `iconColorClass` prop from `KpiCardProps` + all 4 call sites; icon now hard-coded to `text-white`; `bgClass` switched from light `bg-{color}-100 dark:bg-{color}-900/30` to solid `bg-{color}-600 dark:bg-{color}-500` for all 4 cards — blue/purple/green/amber).
+  - FE: `PSS_2.0_Frontend/src/presentation/components/page-components/organization/company/branch/branch-side-panel.tsx` (Active/Inactive status badge in header — flipped from `bg-green-100 text-green-700 …` to `bg-green-600 text-white …`; inactive variant now `bg-muted-foreground text-white`; inner status dot is now `bg-white` in both states for consistent contrast against the new solid backgrounds).
+  - BE / DB: None.
+- **Deviations from spec**: None — UI polish only, no behavioural change. Other inline icons (QuickStatTile, header `Branch Details` icon, location icons, recent-activity placeholder) intentionally **left as muted-foreground text-affordances** — they sit next to labels with no enclosing pill/circle, so the "solid bg + white icon" treatment doesn't apply.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: No build/restart required (FE-only). User can hot-reload `pnpm dev` and the 4 widget tiles + side-panel status pill will pick up the new solid-color treatment.

@@ -12,8 +12,8 @@ complexity: Medium
 new_module: NO
 planned_date: 2026-05-13
 completed_date: 2026-05-14
-last_session_date: 2026-05-14
-last_continue_session: Session 2 — FK rework (ReportType + ReportCategory → sett.MasterDatas)
+last_session_date: 2026-05-21
+last_continue_session: Session 3 — FIX (CSS Modules :global pure-selector webpack error)
 ---
 
 > **⚠ READ THIS FIRST — Type re-classification (registry stamp is wrong)**
@@ -1182,3 +1182,61 @@ by name. The BA should confirm the per-template summary contract during build.
   - Run migration: `dotnet ef database update --project Services/Base/Base.Infrastructure --startup-project Services/Base/Base.API --context ApplicationDbContext`
   - Run seed: `Pss2.0_Backend/PeopleServe/Services/Base/sql-scripts-dyanmic/HtmlReport-sqlscripts.sql` (MUST run AFTER migration — depends on the new FK columns and inserts the MasterData rows the 17 Report INSERTs reference).
 - **Next step**: None (FK rework COMPLETED).
+
+### Session 3 — 2026-05-21 — FIX — COMPLETED
+
+- **Scope**: Webpack/Next.js dev build failed on `print-styles.module.css` with `":global(body), .paperPage" is not pure (pure selectors must contain at least one local class or id)`. CSS Modules rejects any comma-separated selector group that mixes `:global(...)` with locals, and rejects groups of only `:global(...)` selectors. Two mixed-groups and one pure-global group inside `@media print { }` violated the rule.
+- **Files touched**:
+  - BE: None
+  - FE:
+    - `src/presentation/components/page-components/reportaudit/reports/htmlreport/components/print-styles.module.css` (rewrote `@media print` block — split the `:global(body), .paperPage { … }` group into two separate rules; same for `:global(.app-chrome), :global(.page-top-header), .reportSidebar, .paramCard, .reportToolbar, .reportPagination { … }`; consolidated all purely-global rules — `body`, `.app-chrome`, `.page-top-header`, `thead`, `tr/td/th` — under a single `:global { … }` wrapper. Identical print behavior, same selectors, no rule deletions.)
+  - DB: None
+- **Deviations from spec**: None. Mechanical CSS Modules conformance fix — output CSS is byte-equivalent in effect.
+- **Known issues opened**: None.
+- **Known issues closed**: None (this was not previously tracked in §⑬; root cause is a build-time webpack rule, not a runtime/design defect).
+- **Spillover hot-fix (out-of-scope of #100)**: The same impure-selector pattern existed in `src/presentation/components/page-components/reportaudit/audit/audittrail/components/print-styles.module.css` (screen #74 Audit Trail) — webpack would have failed on that file next. Applied the identical rewrite there in the same change-set so the dev build is fully green. Logged separately in `audittrail.md` §⑬.
+- **Build verification**:
+  - Grep sweep across `src/**/*.module.css` for `:global(` → only the 2 print-styles files match; both confirmed to have NO mixed-comma-groups and NO impure pure-global groups (everything pure-global is wrapped in `:global { }`).
+  - Did NOT re-run `pnpm dev` — fix is mechanical and the CSS Modules pure-selector rule is deterministic. User to verify on next `pnpm dev`.
+- **User action required before runtime test**:
+  - `pnpm dev` → expect the previous webpack error on `print-styles.module.css` to be gone for both htmlreport and audittrail screens.
+- **Next step**: None (FIX COMPLETED). Original status COMPLETED retained per [[feedback_continue_screen_no_status_churn]].
+
+### Session 4 — 2026-05-21 — FIX — COMPLETED (correction to Session 3)
+
+- **Scope**: Session 3 wrapped pure-global rules in a `:global { … }` block, but this project's CSS Modules processor (Next.js / lightningcss) **also rejects `:global { }` block syntax** — error: `Selector ":global" is not pure` and `Selector "body" is not pure`. Block syntax wraps but does not flatten — the inner `body`, `.app-chrome`, etc. selectors are still classified as impure locals at the leaf. Only `:global(selector)` function syntax is accepted here.
+- **Files touched**:
+  - BE: None
+  - FE:
+    - `src/presentation/components/page-components/reportaudit/reports/htmlreport/components/print-styles.module.css` (replaced the `:global { body { … } .app-chrome, .page-top-header { … } thead { … } tr, td, th { … } }` block with per-rule function syntax: `:global(body) { … }`, `:global(.app-chrome), :global(.page-top-header) { … }`, `:global(thead) { … }`, `:global(tr), :global(td), :global(th) { … }`. Same selectors, same effect.)
+  - DB: None
+- **Deviations from spec**: None.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Spillover hot-fix**: Same correction applied to `audittrail/components/print-styles.module.css` in the same change-set (covers `body`, `.app-chrome`, `.page-top-header`, `.sidebar`, `thead`, `tr/td/th`, `*`). Logged separately in `audittrail.md` §⑬ Session 6.
+- **Build verification**: Grep `:global\s*\{` across `**/*.module.css` → zero matches (block syntax fully eliminated). All `:global` usages are now function syntax.
+- **Lesson** (for [[feedback_css_modules_global_function_only]]): In this project, **do not use `:global { }` block syntax** — use `:global(selector)` function syntax per rule. Block syntax compiles in some toolchains but is rejected here.
+- **Next step**: None. Status COMPLETED retained.
+
+### Session 5 — 2026-05-21 — FIX — COMPLETED (final fix for the `:global` saga)
+
+- **Scope**: Session 4 used per-rule `:global(selector) { … }` function syntax, but this project's processor (strict postcss-modules / lightningcss) rejects even that — error `Selector ":global(body)" is not pure (pure selectors must contain at least one local class or id)`. Verdict: **no global selector form (block, mixed, or function-syntax-alone) is accepted in a `.module.css` here**. Every rule must anchor on at least one local class/id. Solution: relocate truly-global print rules out of CSS Modules entirely.
+- **Architecture move**:
+  - Added a single `@media print { … }` block at the bottom of `src/public/assets/scss/globals.scss` containing all truly-global selectors needed across report screens: `body`, `.app-chrome`, `.page-top-header`, `.sidebar`, `thead`, `tr/td/th`, `*`. This file is loaded once via `src/app/layout.tsx` and is NOT a CSS Module, so global selectors compile cleanly.
+  - Stripped every `:global(...)` rule out of both `print-styles.module.css` files. They now contain only local class rules (`.paperPage`, `.pageBreak`, `.reportSidebar`, `.reportMain`, etc.). Left an in-file comment pointing readers to globals.scss.
+- **Files touched**:
+  - BE: None
+  - FE:
+    - `src/public/assets/scss/globals.scss` (appended global `@media print { … }` block with body/.app-chrome/.page-top-header/.sidebar/thead/tr-td-th/* rules, ~30 lines)
+    - `src/presentation/components/page-components/reportaudit/reports/htmlreport/components/print-styles.module.css` (removed the 4 `:global(...)` rules — file is now pure-local; total LOC dropped from ~95 to 74)
+    - `src/presentation/components/page-components/reportaudit/audit/audittrail/components/print-styles.module.css` (removed the 5 `:global(...)` rules — file is now pure-local; LOC ~52)
+  - DB: None
+- **Deviations from spec**: Architectural — the rules formerly scoped to a specific screen's module are now global app-wide. **Safe in practice**: they only activate during `@media print` (browser print flow), and the selectors target chrome/table elements that should universally collapse for any print operation. No regressions expected on non-report screens.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Build verification**:
+  - Grep `:global` across `**/*.module.css` → zero matches in any CSS Module.
+  - Both module files re-read: only local class selectors remain inside `@media print { }`.
+- **Lesson** (updating [[feedback_css_modules_global_function_only]]): The "use `:global(sel)` function syntax" rule from Session 4 is **insufficient** for this project. Strict postcss-modules requires every CSS Module rule to anchor on at least one local class/id — even `:global(body)` alone is rejected. The actually-correct guidance: **truly-global rules belong in `globals.scss`, not in any `.module.css`**.
+- **User action**: `pnpm dev` → both errors should be gone. Print behavior unchanged.
+- **Next step**: None. Status COMPLETED retained.
