@@ -450,7 +450,9 @@
       "Bash(findstr /C:\"error CS\" /C:\"Build succeeded\" /C:\"Error\\(s\\)\")",
       "Bash(Select-String -Pattern \"error CS|Error\\\\\\(s\\\\\\)|Warning\\\\\\(s\\\\\\)|succeeded\")",
       "Bash(Select-Object -Last 10)",
-      "Bash(powershell -Command \"\\(Get-Content 'd:\\\\Repos\\\\PWDS\\\\pwds-soruban - Copy\\\\pss-2.0-global\\\\.claude\\\\screen-tracker\\\\prompts\\\\socialmediaintegration.md' | Measure-Object -Line\\).Lines\")"
+      "Bash(powershell -Command \"\\(Get-Content 'd:\\\\Repos\\\\PWDS\\\\pwds-soruban - Copy\\\\pss-2.0-global\\\\.claude\\\\screen-tracker\\\\prompts\\\\socialmediaintegration.md' | Measure-Object -Line\\).Lines\")",
+      "Bash(cat > *)",
+      "Bash(dotnet run *)"
     ],
     "ask": [
       "Bash(rm -rf *)",
@@ -486,7 +488,8 @@
       "d:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global\\PSS_2.0_Frontend\\src\\app\\[lang]\\setting\\publicpages\\crowdfundingpage",
       "d:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global\\PSS_2.0_Frontend\\src\\app\\[lang]\\(public)\\crowdfund\\[slug]",
       "d:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global\\PSS_2.0_Frontend\\src\\app\\[lang]\\(public)\\event",
-      "d:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global\\PSS_2.0_Frontend\\src\\app\\[lang]\\(member)\\login"
+      "d:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global\\PSS_2.0_Frontend\\src\\app\\[lang]\\(member)\\login",
+      "C:\\Users\\USER\\AppData\\Local\\Temp\\payu-dbcheck"
     ]
   }
 }
