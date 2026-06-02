@@ -13,7 +13,7 @@ complexity: Medium
 new_module: NO
 planned_date: 2026-05-10
 completed_date: 2026-05-15
-last_session_date: 2026-05-15
+last_session_date: 2026-05-28
 ---
 
 ## Tasks
@@ -824,6 +824,15 @@ Full UI must remain built (sections, masked inputs, copy-to-clipboard, action bu
 | ISSUE-8 | LOW | UX | No "Reset to Defaults" / "Export / Import Config" actions in the mockup. Skip implementing them — they were not asked for. If a future enhancement adds them, log here. | OPEN (deferred) |
 | ISSUE-9 | LOW | FE | `Sending Identity` dialog allows email outside the `sendingDomainName` (e.g. `events@ghf.org` while domain is `mail.ghf.org`). Mockup data shows mixed-domain Reply-To values (`info@ghf.org`) but From-Email always within `mail.ghf.org`. Add validation hint: warn when `fromEmail`'s domain ≠ `sendingDomainName` (verification will fail). Non-blocking. | SUPERSEDED (S1) — current FE blocks (stricter than prompt's "non-blocking warn"); kept as-is for safer behavior. BE Save validator is more permissive (allows subdomain match) — minor divergence noted, not blocking. |
 | ISSUE-10 | LOW | FE | The status banner's `lastEmailSentAt` "minutes ago" computation uses `Intl.RelativeTimeFormat("en", {numeric:"auto"})` with a `Math.round((past-now)/60000)` value, which yields a NEGATIVE integer (correct for past-relative format). Verify the output reads as "2 minutes ago" rather than "in 2 minutes" — the current arithmetic is correct but worth re-checking with a unit test. | VERIFIED (S1) — arithmetic correct (past time minus future = negative → "X minutes ago"). Unit test still TODO. |
+| ISSUE-11 | HIGH | FE | `provider-card-selector.tsx` used a non-existent / mis-shaped GraphQL query (`masterDatasByTypeCode` with `masterDataId` projected directly on `BaseApiResponseOfIEnumerableOfMasterDataResponseDto`) — runtime error at page load: `"The field masterDataId does not exist on the type BaseApiResponseOfIEnumerableOfMasterDataResponseDto."`. **Fix**: switch to the canonical `MASTERDATAS_QUERY` + `advancedFilter { id, combinator, rules: [{ id, field: "MasterDataType.TypeCode", operator: "=", value: "EMAILPROVIDER", dataType: "String" }] }` pattern. Both the outer advancedFilter AND each rule require an `id` (else BE returns `"The required input field id is missing"`). Mirrors `custom-integration-workshop.tsx` (#87). Read array from `result.data` (BaseApiResponse wrapper). | CLOSED (S2) |
+| ISSUE-12 | HIGH | BE | `GetActiveCompanyEmailProviderHandler` filtered strictly `IsDefault == true` — legacy CompanyEmailProvider rows (created via the older `CreateCompanyEmailProvider` path) have `IsDefault == false`, so an existing record in the DB was invisible to the FE (page showed "Not Configured" even though a row existed). **Fix**: relax to `CompanyId == X AND IsDeleted == false`, ordered by `IsDefault DESC, ModifiedDate DESC, CreatedDate DESC` — singleton-per-tenant returns the most relevant row whether legacy or new. | CLOSED (S3) |
+| ISSUE-13 | MED | FE | Provider card selector showed all 4 providers (SendGrid / Mailgun / AWSSES / SMTP) as fully clickable — but only SendGrid is supported in the current build. **Fix**: gate clicks by `ENABLED_PROVIDERS = { "SENDGRID" }`; non-enabled cards render with `opacity-60 cursor-not-allowed` and a "Coming soon" muted chip. Backend MasterData EMAILPROVIDER seed kept intact for catalog visibility. | CLOSED (S3) |
+| ISSUE-14 | HIGH | BE+FE | `GetEmailProviderStatsHandler` returned mocked constants (`dailyUsageCount=1234`, `monthlyUsageCount=28456`, `bounceRate=0.8`, `spamRate=0.02`) instead of real aggregations from EmailSendQueue. Added two new DTO fields (`MonthlyEmailCostAmount`, `RemainingMonthlySends`) and replaced the mocked logic with: daily/monthly send counts via `EmailSendQueue.SendAt` window filter (UTC), `BounceRate` from `IsBounced` flag, `SpamRate` from `IsComplained` flag, `MonthlyEmailCostAmount = SUM(EmailCost)` on current-month window, `RemainingMonthlySends = MAX(0, MonthlyEmailLimit − MonthlyUsageCount)` (null when no limit set). IP / Domain reputation kept as SERVICE_PLACEHOLDER constants — those come from the provider's API, not the DB. **Companion FE fix**: stats GQL query previously selected `dailyUsageCount` directly on `BaseApiResponse<StatsDto>` wrapper (same latent bug as ISSUE-11); wrapped in `data { ... }` and updated consumer to read `statsData?.result?.data`. Added "Remaining this month" hint to UsageBars (Card 5) and a 6th "Monthly Cost" stat tile to ReputationCards (Card 6). | CLOSED (S3) |
+| ISSUE-15 | HIGH | FE | `SENDING_DOMAIN_DNS_RECORDS_QUERY` had the same wrapper-shape bug as ISSUE-11/14 — selected `type / name / value / status` directly on `BaseApiResponseOfIEnumerableOfEmailDnsRecordDto` wrapper (BE returns `data: EmailDnsRecordDto[]` inside the wrapper). Additionally the field names were wrong: BE `EmailDnsRecordDto` uses `RecordType / RecordName / RecordValue / IsVerified`, not `Type / Name / Value / Status`. Runtime error: `"The field type does not exist on the type BaseApiResponseOfIEnumerableOfEmailDnsRecordDto"`. **Fix**: wrap query selection in `data { recordType, recordName, recordValue, isVerified }`; update `dns-records-table.tsx` to read `data?.result?.data`, rename row fields, swap `record.status === "Verified"` for `record.isVerified` boolean check. | CLOSED (S4) |
+| ISSUE-16 | MED | UI | Page rendered in a `max-w-5xl` centered column with tight spacing — felt narrow and dated on wide monitors. **Fix**: full-width container (`w-full px-4 sm:px-6 lg:px-8`); cards upgraded to `rounded-xl shadow-sm hover:shadow-md` with gradient header strip + tinted icon pill; status banner gets gradient bg + circular icon badge; page body picks up subtle `bg-gradient-to-b from-muted/20` for depth; sticky footer becomes `backdrop-blur-sm shadow-lg` and follows the new full-width container. | CLOSED (S5) |
+| ISSUE-17 | MED | FE | Monthly Cost tile hardcoded a `$` prefix — incorrect for tenants whose CompanyEmailProvider is configured with a non-USD billing currency, and offered no equivalent in the tenant's display currency. **Fix**: render the value in the **provider's configured currency** (`CompanyEmailProvider.Currency` → `currencyCode + currencySymbol`); if the provider currency ≠ company base currency, query `currentFxRate(fromCurrencyId, toCurrencyId)` (direct-pair per `[[feedback-fx-direct-pair]]`) and render the company-currency equivalent as a `≈ X` secondary line in the StatCard `detail`. Falls back to "FX rate unavailable" on pair miss (never USD-pivots). Falls back to company base currency when provider currency is unset. Added `currencySymbol` to `currency { ... }` selection in both active + by-id queries. | CLOSED (S5) |
+| ISSUE-18 | LOW | UI | Provider cards used generic Phosphor glyphs (`ph:paper-plane-tilt`, `ph:envelope-circle-check`, `ph:cloud`) with tinted backgrounds instead of the real brand marks. **Fix**: switch to Iconify's `logos:` set (full-color brand SVGs loaded on-demand by @iconify/react — no extra install required): SendGrid → `logos:sendgrid`, Mailgun → `logos:mailgun-icon`, AWS SES → `logos:aws`. SMTP stays generic (`ph:gear` — no brand exists). Added `iconHasNativeColor` flag to `ProviderRegistryEntry`; native-color icons render in a neutral `bg-white border-border` tile (so the brand colors read correctly) and drop the `colorClass` text-color tint. Bumped icon size from `h-6 w-6` → `h-7 w-7` for more presence in the larger card. | CLOSED (S6) |
+| ISSUE-19 | LOW | UI+Seed | Catalog expanded from 4 → 6 email providers. Added `SPARKPOST` (real SaaS provider, brand silhouette via `simple-icons:sparkpost` + orange tint) and `MAILKIT` (.NET library — not a SaaS brand, so generic `ph:envelope-simple-open` + emerald tint, description "Self-hosted .NET MailKit dispatcher"). Both remain in the "Coming soon" disabled set (only SendGrid is wired); UI just exposes the roadmap. Seed `CompanyEmailProvider-sqlscripts.sql` Step 2 extended from 4 rows → 6 rows (idempotent — `NOT EXISTS` guard means re-running adds only the missing two). Also refreshed the IconKey for SendGrid/Mailgun/AWSSES rows to the new `logos:` values for parity with the FE registry. | CLOSED (S7) |
 
 ### § Sessions
 
@@ -848,3 +857,109 @@ Full UI must remain built (sections, masked inputs, copy-to-clipboard, action bu
 - **Known issues closed**: ISSUE-1, ISSUE-2, ISSUE-3, ISSUE-5.
 - **Known issues verified (no change)**: ISSUE-6, ISSUE-7, ISSUE-10.
 - **Next step**: (none — COMPLETED). Optional follow-ups recorded in §⑫: unit tests for `SensitiveFieldMasking.MaskCredentials` + `PreserveSensitiveFields`; unit test for status-banner relative-time output. The seed Step 5c backfill should be exercised against any tenant DB whose `EMAILPROVIDERCONFIG` row was seeded by the original FLOW INSERT.
+
+### Session 2 — 2026-05-28 — FIX — COMPLETED
+
+- **Scope**: Runtime crash on page load — `MasterDatasByTypeCode` query selected `masterDataId` directly on `BaseApiResponseOfIEnumerableOfMasterDataResponseDto`, causing GraphQL field-resolution error. Switched provider catalog fetch to the canonical `MASTERDATAS_QUERY` + `advancedFilter { MasterDataType.TypeCode = "EMAILPROVIDER" }` pattern used by `custom-integration-workshop.tsx` (#87 Integration Marketplace). Mid-session follow-up: BE rejected initial fix with `"The required input field id is missing"` — `id` field is mandatory on BOTH the outer `advancedFilter` object AND each rule (matches the `#87` reference). Added `id: "1"` to both levels.
+- **Files touched**:
+  - FE: `PSS_2.0_Frontend/src/presentation/components/page-components/setting/communicationconfig/emailproviderconfig/provider-card-selector.tsx` (modified) — replaced inline `gql` with import from `MASTERDATAS_QUERY`; supplied `pageSize/pageIndex/sortDescending/sortColumn/advancedFilter` variables (with `id` on filter and rule); read providers from `result.data` (BaseApiResponse wrapper).
+- **Deviations from spec**: None.
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-11.
+- **Next step**: (none — COMPLETED). User to refresh `pnpm dev` and confirm 4 provider cards render in Card 1.
+
+### Session 3 — 2026-05-28 — FIX+UI+ENHANCE — COMPLETED
+
+- **Scope**: Triple-bundled session.
+  - (a) FIX: legacy CompanyEmailProvider record invisible because `GetActiveCompanyEmailProviderHandler` filtered strictly `IsDefault == true` — relaxed to "any non-deleted row for this tenant, prefer IsDefault=true".
+  - (b) UI: only SendGrid is supported in the current build — disabled Mailgun / AWSSES / SMTP cards with "Coming soon" chip.
+  - (c) ENHANCE: replaced mocked stats constants with real aggregations from `EmailSendQueue` (daily/monthly counts, bounce rate, spam rate, monthly cost) and added two new DTO fields (`MonthlyEmailCostAmount`, `RemainingMonthlySends`).
+- **Files touched**:
+  - BE (modified, 2):
+    - `PSS_2.0_Backend/.../NotifyBusiness/CompanyEmailProviders/Queries/GetCompanyEmailProviderStats.cs` — both handlers in this file:
+      - `GetActiveCompanyEmailProviderHandler`: dropped `IsDefault == true` filter, added `OrderByDescending(IsDefault).ThenByDescending(ModifiedDate).ThenByDescending(CreatedDate)`.
+      - `GetEmailProviderStatsHandler`: replaced 6 mocked constants with EF aggregations over `EmailSendQueues` (filtered by `CompanyEmailProviderId == providerId AND IsDeleted == false AND SendAt >= window`); uses UTC day/month boundaries per `feedback_db_utc_only`.
+    - `PSS_2.0_Backend/.../Schemas/NotifySchemas/CompanyEmailProviderSchemas.cs` — added 2 fields to `CompanyEmailProviderStatsDto`: `MonthlyEmailCostAmount` (decimal), `RemainingMonthlySends` (int?).
+  - FE (modified, 5):
+    - `PSS_2.0_Frontend/.../emailproviderconfig/provider-card-selector.tsx` — added `ENABLED_PROVIDERS = { "SENDGRID" }`; non-enabled cards render disabled with `opacity-60 cursor-not-allowed` + "Coming soon" chip; per-card interactive flag.
+    - `PSS_2.0_Frontend/.../emailproviderconfig/usage-bars.tsx` — new `remainingMonthlySends` prop; renders "Remaining this month: {N}" hint below the monthly bar.
+    - `PSS_2.0_Frontend/.../emailproviderconfig/reputation-cards.tsx` — added 6th "Monthly Cost" tile (`ph:currency-dollar`); grid changed from `xl:grid-cols-5` → `xl:grid-cols-6`.
+    - `PSS_2.0_Frontend/.../emailproviderconfig/email-provider-config-page.tsx` — `stats` now reads `statsData?.result?.data` (was `statsData?.result` — latent bug surfaced by ISSUE-11's lesson); UsageBars receives `remainingMonthlySends={stats?.remainingMonthlySends}`.
+    - `PSS_2.0_Frontend/src/infrastructure/gql-queries/notify-queries/CompanyEmailProviderQuery.ts` — `COMPANY_EMAIL_PROVIDER_STATS_QUERY` wrapped in `data { ... }` (was selecting fields on `BaseApiResponse` wrapper — same shape bug as ISSUE-11); added `dailyUsagePercentage`, `monthlyUsagePercentage`, `lastEmailSentAt`, `monthlyEmailCostAmount`, `remainingMonthlySends`.
+    - `PSS_2.0_Frontend/src/domain/entities/notify-service/CompanyEmailProviderDto.ts` — `CompanyEmailProviderStatsDto` interface extended with the 5 new optional fields (`dailyUsagePercentage`, `monthlyUsagePercentage`, `lastEmailSentAt`, `monthlyEmailCostAmount`, `remainingMonthlySends`).
+- **Deviations from spec**: None. The DTO additions are additive (no breaking changes). IP/Domain reputation remain SERVICE_PLACEHOLDER (annotated inline) since those come from the provider's API.
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-12, ISSUE-13, ISSUE-14.
+- **Verification**: `dotnet build` PASS (only pre-existing CS8601 warning unrelated to this work); `pnpm tsc --noEmit` 0 errors in the touched files.
+- **Next step**: (none — COMPLETED). User to refresh `pnpm dev` and verify:
+  - (1) Existing CompanyEmailProvider record now hydrates the form (Card 1's selected provider, Card 5's limits, Card 4's identities).
+  - (2) Only the SendGrid card is clickable; Mailgun / AWSSES / SMTP show "Coming soon" chip.
+  - (3) Card 5 shows real Daily/Monthly counts + "Remaining this month: N" hint.
+  - (4) Card 6 shows 6 tiles including "Monthly Cost: $X.XX".
+
+### Session 4 — 2026-05-28 — FIX — COMPLETED
+
+- **Scope**: Runtime crash on Card 3 (Sending Domain) — `sendingDomainDnsRecords` query had the same wrapper-shape bug as ISSUE-11/14 plus a field-name mismatch against the BE `EmailDnsRecordDto`. Surfaced after S3 once the Sending Domain card became visible.
+- **Files touched**:
+  - FE:
+    - `PSS_2.0_Frontend/src/infrastructure/gql-queries/notify-queries/CompanyEmailProviderQuery.ts` (modified) — `SENDING_DOMAIN_DNS_RECORDS_QUERY` wrapped in `data { ... }`; selection renamed `type → recordType`, `name → recordName`, `value → recordValue`, `status → isVerified` to match the BE DTO shape.
+    - `PSS_2.0_Frontend/.../emailproviderconfig/dns-records-table.tsx` (modified) — row type signature + render swapped to the new property names; `record.status === "Verified"` swapped for `record.isVerified` boolean check; reads `data?.result?.data` from the BaseApiResponse wrapper.
+- **Deviations from spec**: None.
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-15.
+- **Verification**: `pnpm tsc --noEmit` 0 errors in touched files.
+- **Next step**: (none — COMPLETED). User to refresh `pnpm dev` and confirm Card 3 (Sending Domain) renders its 4 sample DNS rows (CNAME × 3 + TXT × 1) with Verified badges.
+
+### Session 5 — 2026-05-28 — UI+ENHANCE — COMPLETED
+
+- **Scope**: Two follow-ups on top of Session 3/4. (a) Premium full-width page polish — drop `max-w-5xl`, upgrade card chrome, refine status banner & sticky footer. (b) Currency-aware Monthly Cost tile — render in the **provider's configured currency** (CompanyEmailProvider.Currency) with a `≈ X` secondary line in the **company display currency** (CompanySessionSettings) when a direct-pair FX rate exists.
+- **Files touched**:
+  - FE (modified, 4):
+    - `PSS_2.0_Frontend/.../emailproviderconfig/email-provider-config-page.tsx` —
+      - Card wrapper: `rounded-xl shadow-sm hover:shadow-md`; header strip is gradient + tinted icon pill (`h-7 w-7 rounded-md bg-primary/10`); body padding bumped to `p-5 sm:p-6`.
+      - Scroll container: full-width body with `bg-gradient-to-b from-muted/20`; container padding `px-4 sm:px-6 lg:px-8`; vertical spacing `space-y-5`; bottom padding `pb-28` to clear new footer.
+      - Status Banner: gradient bg per variant, circular icon badge, font-medium copy.
+      - Sticky footer: `backdrop-blur-sm shadow-lg` and follows the new full-width container (no more `max-w-5xl` centering).
+      - Card 6 (ReputationCards) now receives `providerCurrencyId / providerCurrencyCode / providerCurrencySymbol` from `activeProvider.currency`.
+    - `PSS_2.0_Frontend/.../emailproviderconfig/reputation-cards.tsx` —
+      - Added 3 new props for provider currency.
+      - Subscribes to `useCompanySettingsSession` for company base currency (id + code).
+      - Queries `GET_CURRENT_FX_RATE` (direct-pair) only when provider currency ≠ company currency AND cost > 0; `fetchPolicy: cache-first`.
+      - Monthly Cost value rendered via `formatCurrency(amount, { currencyCode, currencySymbol })` using provider currency. Detail line shows `≈ formatCurrency(amount × fxRate, { currencyCode: companyCurrencyCode })` when FX pair available, "FX rate unavailable" when needed but missing, or "Sum of EmailCost this month" otherwise.
+    - `PSS_2.0_Frontend/src/infrastructure/gql-queries/notify-queries/CompanyEmailProviderQuery.ts` — added `currencySymbol` to `currency { ... }` selection in both `COMPANY_EMAIL_PROVIDER_ACTIVE_QUERY` and `COMPANYEMAILPROVIDER_BY_ID_QUERY`.
+- **Deviations from spec**: None. Layout change is purely visual; functional API surface unchanged.
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-16, ISSUE-17.
+- **Verification**: `pnpm tsc --noEmit` 0 errors in touched files.
+- **Next step**: (none — COMPLETED). User to refresh `pnpm dev` and verify:
+  - (1) Page now fills the full viewport width with comfortable side padding.
+  - (2) Cards have a noticeably richer chrome (rounded-xl + shadow + gradient header strip + icon pill).
+  - (3) Monthly Cost tile shows the value in the provider's currency (e.g. `$12.34` for USD-configured providers); if the company base currency differs and a direct-pair FX rate exists, the StatCard detail reads `≈ ₹1,025.45` (or equivalent).
+  - (4) If the FX pair is missing the detail reads "FX rate unavailable" (never falls back to USD-triangulation per `[[feedback-fx-direct-pair]]`).
+
+### Session 6 — 2026-05-28 — UI — COMPLETED
+
+- **Scope**: Replaced generic Phosphor provider icons with real brand marks from Iconify's full-color `logos:` set.
+- **Files touched**:
+  - FE (modified, 2):
+    - `PSS_2.0_Frontend/.../emailproviderconfig/provider-registry.ts` — icon mappings swapped: SendGrid → `logos:sendgrid`, Mailgun → `logos:mailgun-icon`, AWS SES → `logos:aws`. SMTP retained `ph:gear` (no brand). Added `iconHasNativeColor: boolean` field to `ProviderRegistryEntry` interface so the card-selector knows whether to apply `colorClass` text-color tint (false for native-color SVGs).
+    - `PSS_2.0_Frontend/.../emailproviderconfig/provider-card-selector.tsx` — icon tile branches on `entry.iconHasNativeColor`: native-color brand SVGs render in a neutral `border border-border bg-white` tile (so brand colors read), monochrome glyphs use the existing `bgClass` + `colorClass` combo. Icon size bumped `h-6 w-6` → `h-7 w-7`.
+- **Deviations from spec**: None. Iconify icons load on-demand from the API (the codebase already uses this pattern for `ph:` — no `@iconify/json` install needed).
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-18.
+- **Verification**: `pnpm tsc --noEmit` 0 errors in touched files.
+- **Next step**: (none — COMPLETED). User to refresh `pnpm dev` and confirm Card 1 shows the real SendGrid / Mailgun / AWS brand marks (each in their native colors on a white tile) plus the generic gear for SMTP.
+
+### Session 7 — 2026-05-28 — UI+Seed — COMPLETED
+
+- **Scope**: Expanded provider catalog from 4 → 6. Added SparkPost (real SaaS, brand silhouette + orange tint) and MailKit (.NET library — not a SaaS, generic envelope + emerald tint, description "Self-hosted .NET MailKit dispatcher"). Both stay in the "Coming soon" disabled set (only SendGrid is wired); UI just publishes the roadmap.
+- **Files touched**:
+  - FE (modified, 1):
+    - `PSS_2.0_Frontend/.../emailproviderconfig/provider-registry.ts` — added `SPARKPOST` entry (`simple-icons:sparkpost`, `text-orange-600`, `bg-orange-50`, "High-deliverability transactional email", "Up to 100K/month") and `MAILKIT` entry (`ph:envelope-simple-open`, `text-emerald-600`, `bg-emerald-50`, "Self-hosted .NET MailKit dispatcher", "Self-hosted").
+  - DB (modified, 1):
+    - `PSS_2.0_Backend/.../sql-scripts-dyanmic/CompanyEmailProvider-sqlscripts.sql` — Step 2 VALUES block extended from 4 → 6 rows; refreshed `IconKey` for SendGrid/Mailgun/AWSSES to the new `logos:` values for parity with the FE registry (`logos:sendgrid`, `logos:mailgun-icon`, `logos:aws`). Header comment also bumped 4 → 6 row count. INSERT remains idempotent via `NOT EXISTS` per `DataValue`, so re-runs add only the two new rows on existing DBs.
+- **Deviations from spec**: None. New providers do not change ENABLED_PROVIDERS set — only SendGrid remains clickable.
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-19.
+- **Verification**: `pnpm tsc --noEmit` 0 errors in touched files.
+- **Next step**: (none — COMPLETED). User to (1) re-run `CompanyEmailProvider-sqlscripts.sql` on the dev DB to seed the 2 new EMAILPROVIDER rows, then (2) refresh `pnpm dev` to confirm 6 cards render in Card 1 (only SendGrid clickable; SparkPost / MailKit + the original Mailgun / AWS SES / SMTP show "Coming soon").

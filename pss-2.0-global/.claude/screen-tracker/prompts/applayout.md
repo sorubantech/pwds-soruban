@@ -2,7 +2,7 @@
 screen: AppLayout
 registry_id: 121
 module: Layout (root)
-status: PROMPT_READY
+status: PARTIALLY_COMPLETED
 scope: ALIGN
 screen_type: CONFIG
 config_subtype: SETTINGS_PAGE
@@ -10,7 +10,7 @@ complexity: High
 new_module: NO
 planned_date: 2026-05-19
 completed_date:
-last_session_date:
+last_session_date: 2026-05-19
 ---
 
 # AppLayout — Application Shell Alignment (#121)
@@ -503,7 +503,16 @@ Per the FleetView memory policy: prefer **Sonnet** over Opus for FE-Developer sp
 - [x] Compute file manifest
 - [x] Document service-placeholder for notification count
 
-### Generation
+### Generation — Session 1 (Settings hydration + per-user override) — DONE
+- [x] Write idempotent seed SQL for SettingGroup + 9 OrganizationSettings with CanUserOverride=true
+- [x] BE: extend `GetSettingGroupByCodeHandler` to filter `UserSettings` by current user
+- [x] FE: add CREATE / UPDATE / DELETE `UserSettingMutation`
+- [x] FE: add `useUpsertUserSetting` hook
+- [x] FE: extend `IThemeCustomizerSTORE` with per-user `userSettings` map + setters
+- [x] FE: update `useThemeCustomization` to apply 3-tier resolution (user > org current > org default)
+- [x] FE: rewire `ThemeCustomize` save → UserSettings; reset → DELETE user rows
+
+### Generation — Session 2 (Visual restyle) — PENDING
 - [ ] Lock `Config.sidebarType = "classic"` + add Zustand migration
 - [ ] Apply CSS custom-property tokens (header height, sidebar width, accent, etc.)
 - [ ] Restyle Header → teal gradient + logo + role badge + notification + avatar+user-info
@@ -529,10 +538,41 @@ Per the FleetView memory policy: prefer **Sonnet** over Opus for FE-Developer sp
 
 ## Known Issues
 
-_None at planning time. Issues raised during build sessions go here._
+| Issue ID | Status | Description |
+|----------|--------|-------------|
+| ISSUE-1 | OPEN | Visual restyle from §⑥ deferred — header gradient, 280 px classic sidebar, accordion sections, footer logout, cross-module menu aggregation NOT yet applied. Existing chrome (DashCode template) still renders. |
+| ISSUE-2 | OPEN | DB seed `app-layout-themecustomizer.sql` written but NOT yet applied to live database. Must be run manually before per-user override flow can be tested. |
+| ISSUE-3 | OPEN | BUSINESSADMIN role capability for `USERSETTING` menu (CREATE/MODIFY/DELETE) not verified. If missing, ThemeCustomizer save will 401. Confirm via `auth.RoleCapability` rows for MenuId=440 before testing. |
 
 ---
 
 ## Build Log
 
-_Appended by `/build-screen` and `/continue-screen`. Empty at planning time._
+### § Sessions
+
+### Session 1 — 2026-05-19 — BUILD — PARTIAL
+
+- **Scope**: Initial settings hydration + per-user override wiring (Phase A of two-phase plan). Visual restyle from §⑥ deferred to Session 2.
+- **User directive override**: prompt was registered as ALIGN / no-entity, but user supplied `settings-records.sql` + directive "render based on these settings, user can overwrite". Scope expanded to seed-the-settings + wire per-user override layer, while keeping `[[feedback-align-no-entity-changes]]` honored (no new tables/columns, only seed data + one handler tweak + FE wiring).
+- **Files touched**:
+  - BE: `Pss2.0_Backend/.../SettingBusiness/SettingGroups/Queries/GetSettingGroupByCode.cs` (modified — inject `IHttpContextAccessor`, filter `UserSettings` by current user).
+  - FE: `src/infrastructure/gql-mutations/setting-mutations/UserSettingMutation.ts` (created — CREATE/UPDATE/DELETE).
+  - FE: `src/infrastructure/gql-mutations/setting-mutations/index.ts` (modified — export new mutations).
+  - FE: `src/presentation/hooks/useThemeCustomizer/useUpsertUserSetting.ts` (created — upsert+delete hook).
+  - FE: `src/presentation/hooks/useThemeCustomizer/index.ts` (modified — export new hook).
+  - FE: `src/presentation/hooks/useThemeCustomizer/useThemeCutomization.ts` (modified — 3-tier resolution: user > org current > org default).
+  - FE: `src/application/stores/theme-stores/themecustomizer-istore.ts` (modified — add `userSettings` map + setters).
+  - FE: `src/application/stores/theme-stores/themecustomizer-store.ts` (modified — store impl).
+  - FE: `src/presentation/components/layout-components/customizer/theme-customizer.tsx` (modified — save → UserSettings; reset → DELETE).
+  - FE: `src/domain/entities/setting-service/UserSettingDto.ts` (modified — `userId` made optional; server resolves from JWT).
+  - DB: `.claude/screen-tracker/seed-scripts/app-layout-themecustomizer.sql` (created — idempotent seed, NOT yet applied to live DB).
+- **Deviations from spec**:
+  - Original prompt §② said "no entity / no save / no GQL / no migration". Session 1 still adds NO entity / NO migration, but DOES seed existing tables (`sett.SettingGroups`, `sett.OrganizationSettings`) and DOES persist user overrides via the existing `sett.UserSettings` table + existing `createUserSetting`/`updateUserSetting`/`deleteUserSetting` mutations. Existing FE customizer was already partially wired to OrgSettings; this session retargets save path to UserSettings.
+  - Original prompt §⑥ visual restyle (teal gradient header, 280 px classic sidebar, accordion sections, footer logout, cross-module menu aggregation) is NOT in this session — intentionally deferred per user scope decision.
+- **Known issues opened**: ISSUE-1, ISSUE-2, ISSUE-3 (see Known Issues table above).
+- **Known issues closed**: None.
+- **Verification**:
+  - `dotnet build` Base.Application — 0 errors (513 unrelated warnings, pre-existing).
+  - `pnpm tsc --noEmit` — 0 errors in any changed file (filtered grep confirms). Pre-existing project errors elsewhere not introduced by this session.
+  - End-to-end manual smoke deferred until seed is applied to live DB.
+- **Next step**: Apply `.claude/screen-tracker/seed-scripts/app-layout-themecustomizer.sql` to the live DB; verify ThemeCustomizer renders + saves a per-user override; then resume Session 2 for visual restyle from §⑥.
