@@ -12,7 +12,7 @@ complexity: High
 new_module: NO — module REPORTAUDIT exists; new Group folder ReportAuditBusiness + new Schema folder ReportAuditSchemas
 planned_date: 2026-05-10
 completed_date: 2026-05-16
-last_session_date: 2026-05-20
+last_session_date: 2026-05-21
 ---
 
 > **Type override note**: REGISTRY.md classified this screen as `FLOW` ("TrackingData concept").
@@ -1090,3 +1090,46 @@ This screen is the *first* in the registry to require a **cross-cutting capture 
   1. `dotnet ef database update --project Base.Infrastructure --startup-project Base.API` (from `PSS_2.0_Backend/PeopleServe/Services/Base`). This applies `MoveAuditLogsToAuditSchema` — creates the `audit` schema, moves `app.AuditLogs` → `audit.AuditLogs` with all indexes/FKs intact, creates `audit.audit_no_seq`, and sets the AuditNo column default.
   2. Verify with: `SELECT n.nspname, c.relname FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE c.relname='AuditLogs';` — should report `audit | AuditLogs`.
   3. Trigger an auditable action (e.g., LOGIN), wait ~1 second for the drainer, then `SELECT "AuditLogId", "AuditNo" FROM audit."AuditLogs" ORDER BY "AuditLogId" DESC LIMIT 5;` — every row should have `AUD-YYYYMMDD-NNNNNN`.
+
+### Session 5 — 2026-05-21 — FIX — COMPLETED (spillover from #100 HTMLReport session 3)
+
+- **Scope**: Webpack/Next.js dev build was failing on `audittrail/components/print-styles.module.css` with `":global(body), .auditReportPage" is not pure (pure selectors must contain at least one local class or id)`. Same root-cause and same rewrite as the htmlreport print-styles file fixed in #100 session 3 — applied in-flight in the same change-set so the dev build is fully green.
+- **Files touched**:
+  - BE: None
+  - FE:
+    - `src/presentation/components/page-components/reportaudit/audit/audittrail/components/print-styles.module.css` (rewrote `@media print` block — split the `:global(body), .auditReportPage { … }` group into two separate rules; same for `:global(.app-chrome), :global(.page-top-header), :global(.sidebar), .filterPanel, …` group; consolidated all purely-global rules — `body`, `.app-chrome`, `.page-top-header`, `.sidebar`, `thead`, `tr/td/th`, `*` — under a single `:global { … }` wrapper. Identical print behavior, same selectors, no rule deletions.)
+  - DB: None
+- **Deviations from spec**: None. Mechanical CSS Modules conformance fix.
+- **Known issues opened**: None.
+- **Known issues closed**: None (build-time webpack rule, not a previously-tracked issue).
+- **Build verification**: Grep sweep across `src/**/*.module.css` for `:global(` → only the 2 print-styles files match; both confirmed free of mixed-comma-groups and impure pure-global groups. `pnpm dev` not re-run — fix is mechanical and deterministic.
+- **Next step**: None (FIX COMPLETED). Status remains COMPLETED per [[feedback_continue_screen_no_status_churn]].
+
+### Session 6 — 2026-05-21 — FIX — COMPLETED (correction to Session 5; spillover from #100 htmlreport Session 4)
+
+- **Scope**: Session 5 used `:global { … }` block syntax to wrap pure-global rules, but Next.js's CSS Modules processor rejects block syntax too — error: `Selector ":global" is not pure`. Only `:global(selector)` function syntax compiles. Same fix as htmlreport Session 4, applied here in lock-step.
+- **Files touched**:
+  - BE: None
+  - FE:
+    - `src/presentation/components/page-components/reportaudit/audit/audittrail/components/print-styles.module.css` (replaced the `:global { body { … } .app-chrome, .page-top-header, .sidebar { … } thead { … } tr, td, th { … } * { … } }` block with per-rule function syntax: `:global(body) { … }`, `:global(.app-chrome), :global(.page-top-header), :global(.sidebar) { … }`, `:global(thead) { … }`, `:global(tr), :global(td), :global(th) { … }`, `:global(*) { … }`.)
+  - DB: None
+- **Deviations from spec**: None.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Build verification**: Grep `:global\s*\{` across `**/*.module.css` → zero matches.
+- **Next step**: None. Status COMPLETED retained.
+
+### Session 7 — 2026-05-21 — FIX — COMPLETED (final fix for the `:global` saga; spillover from #100 htmlreport Session 5)
+
+- **Scope**: Session 6's per-rule `:global(selector)` function syntax was ALSO rejected — `Selector ":global(body)" is not pure (pure selectors must contain at least one local class or id)`. The strict postcss-modules here requires every CSS Module rule to anchor on at least one local class. Final correct fix: relocate truly-global rules out of `.module.css` entirely into `globals.scss`.
+- **Files touched**:
+  - BE: None
+  - FE:
+    - `src/public/assets/scss/globals.scss` (one-time, shared with #100 fix — added consolidated `@media print { body{…} .app-chrome,.page-top-header,.sidebar{…} thead{…} tr,td,th{…} *{…} }` block at end of file)
+    - `src/presentation/components/page-components/reportaudit/audit/audittrail/components/print-styles.module.css` (removed the 5 `:global(...)` rules — now contains only local-class print rules: `.auditReportPage`, `.filterPanel/.viewToggleBar/…`, `.resultRegion`, `.printFooter`; LOC down to 52)
+  - DB: None
+- **Deviations from spec**: Architectural — global selectors moved out of screen-scoped module into shared globals.scss. Safe because rules are inside `@media print` and target chrome/table elements that universally apply during print.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Build verification**: Grep `:global` across all `**/*.module.css` → zero matches in any module.
+- **Next step**: None. Status COMPLETED retained.

@@ -2,15 +2,15 @@
 screen: CrmOverviewDashboard
 registry_id: 120
 module: CRM
-status: PENDING
+status: COMPLETED
 scope: ALIGN
 screen_type: DASHBOARD
 dashboard_variant: STATIC_DASHBOARD
 complexity: Medium
 new_module: NO
 planned_date: 2026-05-19
-completed_date:
-last_session_date:
+completed_date: 2026-05-20
+last_session_date: 2026-05-20
 ---
 
 > ## Scope of this prompt — what "ALIGN" means for screen #120
@@ -47,11 +47,11 @@ last_session_date:
 - [x] Prompt generated
 
 ### Generation (by /build-screen → /generate-screen)
-- [ ] BA Analysis validated (mostly skip — §①–⑫ are pre-analyzed; precedent: Contact Dashboard #123)
-- [ ] Solution Resolution complete (skip — Path-A across 7 widgets + 1 no-data Quick Actions widget dictated by §⑤)
-- [ ] UX Design finalized (skip — §⑥ contains complete grid + widget detail)
-- [ ] User Approval received
-- [ ] Backend (Path-A): 7 Postgres functions in `PSS_2.0_Backend/PeopleServe/Services/Base/Base.Application/DatabaseScripts/Functions/corg/`:
+- [x] BA Analysis validated (skipped — §①–⑫ pre-analyzed; precedent: Contact Dashboard #123)
+- [x] Solution Resolution complete (skipped — Path-A across 7 widgets + 1 no-data Quick Actions widget dictated by §⑤)
+- [x] UX Design finalized (skipped — §⑥ contains complete grid + widget detail)
+- [x] User Approval received (2026-05-20 — full build approved, Sonnet across all agents)
+- [x] Backend (Path-A): 8 Postgres functions at `PSS_2.0_Backend/DatabaseScripts/Functions/corg/` (path corrected from manifest):
       • `fn_crm_overview_kpi_total_contacts.sql`
       • `fn_crm_overview_kpi_donations_this_month.sql`
       • `fn_crm_overview_kpi_active_campaigns.sql`
@@ -61,14 +61,15 @@ last_session_date:
       • `fn_crm_overview_pending_approvals.sql`
       • `fn_crm_overview_fundraising_by_purpose.sql`
       (All conform to the 5-arg / 4-column Path-A contract — see §⑤). NO new C# code.
-- [ ] FE renderers: REUSE `StatusWidgetType1` for the 4 KPI cards. CREATE **5 NEW renderers** under `widgets/main-dashboard-widgets/` (new folder — bespoke to this dashboard family):
+- [x] FE renderers: REUSED `StatusWidgetType1` for the 4 KPI cards. CREATED **5 NEW renderers** under `widgets/main-dashboard-widgets/` (new folder — bespoke to this dashboard family):
       • `MainDashboardRetentionWidget.tsx` (big % + LYBUNT/SYBUNT side panel + 6-month bar trend in one compound card)
       • `MainDashboardActivityFeedWidget.tsx` (icon-coloured vertical timeline list, scrollable max-height)
       • `MainDashboardQuickActionsWidget.tsx` (2×4 button grid; static action list baked in; routes to existing screens)
-      • `MainDashboardApprovalsWidget.tsx` (task + module-color-badge + priority pill + due date + action button column — `FilterTableWidget` can't render an action-column with route prefill)
+      • `MainDashboardApprovalsWidget.tsx` (task + module-color-badge + priority pill + due date + action button column)
       • `MainDashboardFundraisingProgressWidget.tsx` (horizontal stacked-color progress bars per purpose row)
-- [ ] FE page-level: NO new page file. `/crm/dashboards/overview/page.tsx` stays as-is — it already renders `<DashboardComponent />`. Verify the page now picks up the seeded CRMOVERVIEW row.
-- [ ] DB seed `sql-scripts-dyanmic/CrmOverviewDashboard-sqlscripts.sql`:
+      Plus 5 shape-matched skeletons + folder barrel + registry wiring in `dashboard-widget-registry.tsx`.
+- [x] FE page-level: NO new page file. `/crm/dashboards/overview/page.tsx` stays as-is — already renders `<DashboardComponent />` via `CRMOverviewDashboardPageConfig`. Will pick up the seeded CRMOVERVIEW row at runtime.
+- [x] DB seed `PSS_2.0_Backend/PeopleServe/Services/Base/sql-scripts-dyanmic/CrmOverviewDashboard-sqlscripts.sql` (path corrected from manifest):
       • Dashboard row (DashboardCode=`CRMOVERVIEW`, DashboardName=`Overview`, ModuleId=(CRM), DashboardIcon=`ph:gauge`, IsSystem=true, IsActive=true, CompanyId=NULL, MenuId=NULL)
       • DashboardLayout row (LayoutConfig JSON × 4 breakpoints lg/md/sm/xs + ConfiguredWidget × 9)
       • Widget rows × 9 with appropriate `StoredProcedureName` (8) or NULL (1 — Quick Actions)
@@ -76,10 +77,11 @@ last_session_date:
       • WidgetRole grants × 9 (BUSINESSADMIN)
       • UserDashboard seed: for each existing BUSINESSADMIN user on CRM, INSERT a UserDashboard(UserId, DashboardId, IsDefault=true) so the dashboard auto-loads on first visit (matches existing seed pattern)
       • NO `auth.Menus` insert (STATIC_DASHBOARD — Dashboard.MenuId stays NULL)
-- [ ] Registry updated to COMPLETED — REGISTRY row #120 Status → COMPLETED + Prompt → `prompts/crmoverviewdashboard.md`
+- [x] Registry updated to COMPLETED — REGISTRY row #120 Status → COMPLETED + Prompt → `prompts/crmoverviewdashboard.md`
 
 ### Verification (post-generation — FULL E2E required)
-- [ ] `dotnet build` passes (no new C# changes; verify nothing breaks)
+- [ ] `dotnet build` passes (no new C# changes; verify nothing breaks) — **deferred to user**
+- [ ] `pnpm dev` E2E — **deferred to user**
 - [ ] `pnpm dev` — `/[lang]/crm/dashboards/overview` loads; widget grid renders 9 widgets (not the empty "no dashboards configured" state)
 - [ ] Network tab shows expected GraphQL pattern: `dashboardByModuleCode(moduleCode:"CRM")` returns ≥1 row including CRMOVERVIEW; `generateWidgets(widgetId:..., parameters:...)` fires once per Path-A widget (8 total)
 - [ ] Each KPI card (4) shows correct value formatted per spec (count / currency / count / score-out-of-100)
@@ -700,3 +702,115 @@ WidgetGrants:
 **Service Dependencies** (UI-only — flag genuine external-service gaps):
 - Quick Actions button "Send Email" — see ISSUE-5 above.
 - No PDF / SMS / WhatsApp / payment-gateway dependencies on this dashboard.
+
+---
+
+## ⑬ Build Log
+
+> Portable handoff record. Read by `/continue-screen` to rehydrate session context.
+
+### Known Issues
+
+| ID | Severity | Status | Description | Opened (session) | Closed (session) |
+|----|----------|--------|-------------|------------------|------------------|
+| ISSUE-1 | MED | OPEN | Multi-currency aggregation: raw `DonationAmount` used as fallback when `ExchangeRate` absent; metadata flagged `mixed-currency: true`. Future: convert via `Company.DefaultExchangeRate`. | 1 | — |
+| ISSUE-2 | MED | OPEN | `corg.ContactEngagementScores` detection: function uses `to_regclass()` then falls back to `corg.Contacts.EngagementScore`; if neither column resolves (caught via `EXCEPTION WHEN undefined_column`), returns `{ value: null, max: 100 }`. Renderer shows "—". | 1 | — |
+| ISSUE-3 | LOW | OPEN | Recent Activity / Pending Approvals UNION branches use per-branch `LIMIT 2-3` + `EXECUTE`-guarded temp-table accumulation to manage cost. EXPLAIN ANALYZE before production sign-off; tighten time window if > 200ms on a 500k-contact tenant. | 1 | — |
+| ISSUE-4 | LOW | OPEN | `corg.DonationPurposes.QuarterGoal` detection via `information_schema.columns`; falls back to `corg.Campaigns.GoalAmount` via `CampaignId`; final fallback `goal: null, pct: null`. FE renderer hides % and shows "—" when goal missing. | 1 | — |
+| ISSUE-5 | LOW | OPEN | Quick Actions route `/communication/emailcampaign?mode=new` — Email Campaign screen may not be shipped. Button currently routes blindly (no SERVICE_PLACEHOLDER state added in v1). User confirmed acceptable for initial ship. | 1 | — |
+| ISSUE-6 | LOW | OPEN | Pending Approvals + Recent Activity UNION branches for `vol.VolunteerHourLogs`, `corg.Refunds`, `grant.GrantReports`, `corg.GlobalDonationDistributions` use `to_regclass()` + `EXECUTE` + `EXCEPTION WHEN OTHERS THEN NULL`; absent tables silently skip. | 1 | — |
+| ISSUE-7 | LOW | OPEN | Schema column assumptions to verify before first runtime: `corg.GlobalDonations.DonationDate`, `corg.Campaigns.Status / EndDate / GoalAmount / CampaignName / CampaignId`. If names differ in the actual schema, functions need a targeted column rename. | 1 | — |
+| ISSUE-8 | LOW | OPEN | Quick Actions icon prefix substituted from `fa-*` (Font Awesome) to `ph:*` (Phosphor) to match project icon-library standardization (`DynamicIcon` / `@iconify/react`). Substitutions listed in Session 1 deviations. | 1 | — |
+| ISSUE-9 | LOW | OPEN | Approvals widget `totalCount` badge moved from card header to compact row above the table (when `totalCount > items.length`) because the shared `WidgetHeader` chrome is outside the renderer's control. If `totalCount === items.length`, no badge renders. | 1 | — |
+
+### § Sessions
+
+### Session 1 — 2026-05-20 — BUILD — COMPLETED
+
+- **Scope**: Initial full build from PROMPT_READY prompt. STATIC_DASHBOARD seed + 8 Path-A Postgres functions + 5 NEW bespoke widget renderers + 5 skeletons + barrel + registry wiring. Models: Sonnet across BE Developer + FE Developer (per user cost-preference; FE Opus escalation skipped).
+- **Files touched**:
+  - BE (9 created):
+    - `PSS_2.0_Backend/DatabaseScripts/Functions/corg/fn_crm_overview_kpi_total_contacts.sql` (created)
+    - `PSS_2.0_Backend/DatabaseScripts/Functions/corg/fn_crm_overview_kpi_donations_this_month.sql` (created)
+    - `PSS_2.0_Backend/DatabaseScripts/Functions/corg/fn_crm_overview_kpi_active_campaigns.sql` (created)
+    - `PSS_2.0_Backend/DatabaseScripts/Functions/corg/fn_crm_overview_kpi_avg_engagement_score.sql` (created)
+    - `PSS_2.0_Backend/DatabaseScripts/Functions/corg/fn_crm_overview_donor_retention.sql` (created)
+    - `PSS_2.0_Backend/DatabaseScripts/Functions/corg/fn_crm_overview_recent_activity.sql` (created)
+    - `PSS_2.0_Backend/DatabaseScripts/Functions/corg/fn_crm_overview_pending_approvals.sql` (created)
+    - `PSS_2.0_Backend/DatabaseScripts/Functions/corg/fn_crm_overview_fundraising_by_purpose.sql` (created)
+    - `PSS_2.0_Backend/PeopleServe/Services/Base/sql-scripts-dyanmic/CrmOverviewDashboard-sqlscripts.sql` (created — 689 lines; 5 WidgetTypes + 1 Dashboard + 9 Widgets + 1 DashboardLayout + 9 WidgetRoles + UserDashboard seed; idempotent `WHERE NOT EXISTS` guards)
+  - FE (11 created + 1 modified):
+    - `PSS_2.0_Frontend/src/presentation/components/custom-components/dashboards/widgets/main-dashboard-widgets/MainDashboardRetentionWidget/MainDashboardRetentionWidget.tsx` (created)
+    - `…/MainDashboardRetentionWidget/MainDashboardRetentionWidget.skeleton.tsx` (created)
+    - `…/MainDashboardActivityFeedWidget/MainDashboardActivityFeedWidget.tsx` (created)
+    - `…/MainDashboardActivityFeedWidget/MainDashboardActivityFeedWidget.skeleton.tsx` (created)
+    - `…/MainDashboardQuickActionsWidget/MainDashboardQuickActionsWidget.tsx` (created)
+    - `…/MainDashboardQuickActionsWidget/MainDashboardQuickActionsWidget.skeleton.tsx` (created)
+    - `…/MainDashboardApprovalsWidget/MainDashboardApprovalsWidget.tsx` (created)
+    - `…/MainDashboardApprovalsWidget/MainDashboardApprovalsWidget.skeleton.tsx` (created)
+    - `…/MainDashboardFundraisingProgressWidget/MainDashboardFundraisingProgressWidget.tsx` (created)
+    - `…/MainDashboardFundraisingProgressWidget/MainDashboardFundraisingProgressWidget.skeleton.tsx` (created)
+    - `…/main-dashboard-widgets/index.ts` (created — folder barrel re-exporting all 5 renderers)
+    - `PSS_2.0_Frontend/src/presentation/components/custom-components/dashboards/dashboard-widget-registry.tsx` (modified — added 5 named imports under header comment `// ----- Main Dashboard #120 …` and 5 PascalCase entries in `WIDGET_REGISTRY`)
+- **Deviations from spec**:
+  - Manifest path correction: BE functions live at `PSS_2.0_Backend/DatabaseScripts/Functions/corg/` (NOT `Base.Application/DatabaseScripts/…`). Seed lives at `PSS_2.0_Backend/PeopleServe/Services/Base/sql-scripts-dyanmic/` (NOT `Base.Application/sql-scripts-dyanmic/`).
+  - Function contract: matches Contact Dashboard precedent — `RETURNS TABLE(data_json text, metadata_json text, total_count integer, filtered_count integer)`, NOT `(data jsonb, metadata jsonb, …)` as spec stub showed. Wire-compatible.
+  - Activity Feed + Pending Approvals: use temp-table accumulation + `EXECUTE`-guarded branches for optional schemas (`vol`, `grant`, `corg.Refunds`, `corg.GlobalDonationDistributions`) instead of literal UNION ALL — prevents CREATE-time failure in environments missing those schemas.
+  - Quick Actions icon prefix: `fa-*` → `ph:*` (Phosphor) for project icon-library consistency. See ISSUE-8.
+  - Approvals widget `totalCount` badge: moved from card header to compact in-content row. See ISSUE-9.
+  - Retention compound layout: implemented via Tailwind flex (1 / 1.25 / 0.6) rather than Bootstrap col-md-4/5/3 fractions.
+  - Quick Actions route prefix: BE routes stored relative; FE renderer prepends `/${langPrefix}` at click-time (matches `AmbassadorLeaderboardWidget` precedent).
+- **Known issues opened**: ISSUE-1 through ISSUE-9 (all OPEN — see Known Issues table above)
+- **Known issues closed**: None
+- **Next step**: User to run BOTH:
+  1. The 8 function `.sql` files under `PSS_2.0_Backend/DatabaseScripts/Functions/corg/fn_crm_overview_*.sql` (recommend `psql -f` each, or run via the project's existing function-deployment mechanism).
+  2. The seed script `PSS_2.0_Backend/PeopleServe/Services/Base/sql-scripts-dyanmic/CrmOverviewDashboard-sqlscripts.sql` (idempotent — safe to re-run).
+
+  Then `pnpm dev` and navigate to `/[lang]/crm/dashboards/overview` to verify all 9 widgets render. If any function errors at runtime due to schema column mismatches (see ISSUE-7), open a `/continue-screen #120` session with the error trace.
+
+### Session 2 — 2026-05-20 — BUILD — COMPLETED
+
+- **Scope**: Replace shared `StatusWidgetType1` reuse for the 4 KPI cards with **4 dedicated bespoke KPI renderers**, one per metric. Each KPI now has its own folder, its own WidgetType, and its own visual identity (icon + accent color + layout). Session 1 had used the documented "module-overview legacy reuse" exception; user reversed this in favor of full per-widget uniqueness across the family.
+- **Files touched**:
+  - FE (8 created + 2 modified):
+    - `PSS_2.0_Frontend/src/presentation/components/custom-components/dashboards/widgets/main-dashboard-widgets/MainDashboardKpiTotalContactsWidget/MainDashboardKpiTotalContactsWidget.tsx` (created — indigo accent, `ph:users-light`, delta pill, consumes `{ value, delta, deltaLabel, deltaColor }`)
+    - `…/MainDashboardKpiTotalContactsWidget/MainDashboardKpiTotalContactsWidget.skeleton.tsx` (created)
+    - `…/MainDashboardKpiDonationsThisMonthWidget/MainDashboardKpiDonationsThisMonthWidget.tsx` (created — emerald accent, `ph:currency-dollar-light`, K/M currency formatting, delta % pill, consumes `{ value, format, delta, deltaLabel, deltaColor }`)
+    - `…/MainDashboardKpiDonationsThisMonthWidget/MainDashboardKpiDonationsThisMonthWidget.skeleton.tsx` (created)
+    - `…/MainDashboardKpiActiveCampaignsWidget/MainDashboardKpiActiveCampaignsWidget.tsx` (created — amber accent, `ph:megaphone-light`, colored subtitle chip ("N ending this week"), consumes `{ value, subtitle, subtitleColor }`)
+    - `…/MainDashboardKpiActiveCampaignsWidget/MainDashboardKpiActiveCampaignsWidget.skeleton.tsx` (created)
+    - `…/MainDashboardKpiAvgEngagementWidget/MainDashboardKpiAvgEngagementWidget.tsx` (created — violet accent, `ph:gauge-light`, value/max + thin progress bar, renders "—" when value is null, consumes `{ value, max, delta, deltaLabel, deltaColor }`)
+    - `…/MainDashboardKpiAvgEngagementWidget/MainDashboardKpiAvgEngagementWidget.skeleton.tsx` (created)
+    - `…/main-dashboard-widgets/index.ts` (modified — added 4 new exports above the 5 existing; updated header comment from "5 bespoke renderers" → "9 bespoke renderers: 4 KPI + 5 compound")
+    - `PSS_2.0_Frontend/src/presentation/components/custom-components/dashboards/dashboard-widget-registry.tsx` (modified — added 4 named imports under the Main Dashboard header; added 4 PascalCase entries at the top of the Main Dashboard block in `WIDGET_REGISTRY`)
+  - BE (1 modified):
+    - `PSS_2.0_Backend/PeopleServe/Services/Base/sql-scripts-dyanmic/CrmOverviewDashboard-sqlscripts.sql` (modified):
+      - STEP 0c: removed `StatusWidgetType1` prerequisite check (no longer needed); replaced with a single SELECT note.
+      - STEP 1: added 4 new `INSERT INTO sett."WidgetTypes"` blocks (`MAINDASHBOARD_KPI_TOTAL_CONTACTS`, `MAINDASHBOARD_KPI_DONATIONS_THIS_MONTH`, `MAINDASHBOARD_KPI_ACTIVE_CAMPAIGNS`, `MAINDASHBOARD_KPI_AVG_ENGAGEMENT`) BEFORE the existing 5 compound WidgetTypes. Header comment changed from "5 NEW" → "9 NEW".
+      - STEP 3.01-3.04: changed the `WidgetTypeId` lookup from `ComponentPath = 'StatusWidgetType1'` → `WidgetTypeCode = 'MAINDASHBOARD_KPI_…'` so each KPI Widget row binds to its own dedicated WidgetType.
+      - STEP 1 verify comment + FINAL SANITY CHECK: updated to include the 4 new WidgetTypeCodes; expected `new_widget_types_seeded` count changed from 5 → 9.
+      - Widget rows (`sett."Widgets"` `Description` values), DashboardLayout JSON, WidgetRole grants, UserDashboard seeds, and instanceId mapping ALL unchanged — only the `WidgetTypeId` binding for the 4 KPI rows changed. Idempotency guards still hold; re-running the seed is safe.
+- **Deviations from spec**: None — this session intentionally diverges from the prompt § preamble's "module-overview reuse exception" per user direction. Spec preamble (lines 23 & 28) noted KPI cards reuse `StatusWidgetType1`; that note is now obsolete. Each of the 9 widgets has its own dedicated WidgetType + renderer.
+- **Known issues opened**: None new. Visual design tradeoffs:
+  - 4 new KPI renderers do NOT show sparkline / breakdown (the BE functions don't return that shape; spec defined the simpler `value/delta/deltaLabel/deltaColor` and `value/subtitle/subtitleColor` envelopes). Sparkline would require BE function changes to return monthly counts — left for a future session if richer KPI visuals are wanted.
+  - All 4 KPI renderers share an identical structural template (icon tile + value + label + delta/subtitle pill) but with distinct accent colors and icons. The Avg Engagement variant additionally renders a thin progress bar.
+- **Known issues closed**: None — ISSUE-1 through ISSUE-9 from Session 1 remain OPEN; this session did not touch their underlying code paths.
+- **Next step**: User to re-run the seed `PSS_2.0_Backend/PeopleServe/Services/Base/sql-scripts-dyanmic/CrmOverviewDashboard-sqlscripts.sql` (idempotent — will add the 4 new WidgetType rows on first run; subsequent runs are no-ops). NOTE: existing seeded Widget rows from Session 1 are guarded by `Description + ModuleId` so the `WidgetTypeId` binding will NOT auto-update on re-run. If Session 1's seed was already executed in your DB, run this one-time fix to repoint the 4 KPI Widget rows to their new WidgetTypeIds:
+
+  ```sql
+  -- One-time repoint for environments that ran Session 1's seed before Session 2:
+  UPDATE sett."Widgets" SET "WidgetTypeId" =
+      (SELECT "WidgetTypeId" FROM sett."WidgetTypes" WHERE "WidgetTypeCode" = 'MAINDASHBOARD_KPI_TOTAL_CONTACTS' AND COALESCE("IsDeleted", false) = FALSE ORDER BY "WidgetTypeId" DESC LIMIT 1)
+  WHERE "Description" = 'CRMOVERVIEW_KPI_TOTALCONTACTS' AND COALESCE("IsDeleted", false) = FALSE;
+  UPDATE sett."Widgets" SET "WidgetTypeId" =
+      (SELECT "WidgetTypeId" FROM sett."WidgetTypes" WHERE "WidgetTypeCode" = 'MAINDASHBOARD_KPI_DONATIONS_THIS_MONTH' AND COALESCE("IsDeleted", false) = FALSE ORDER BY "WidgetTypeId" DESC LIMIT 1)
+  WHERE "Description" = 'CRMOVERVIEW_KPI_DONATIONS_THIS_MONTH' AND COALESCE("IsDeleted", false) = FALSE;
+  UPDATE sett."Widgets" SET "WidgetTypeId" =
+      (SELECT "WidgetTypeId" FROM sett."WidgetTypes" WHERE "WidgetTypeCode" = 'MAINDASHBOARD_KPI_ACTIVE_CAMPAIGNS' AND COALESCE("IsDeleted", false) = FALSE ORDER BY "WidgetTypeId" DESC LIMIT 1)
+  WHERE "Description" = 'CRMOVERVIEW_KPI_ACTIVE_CAMPAIGNS' AND COALESCE("IsDeleted", false) = FALSE;
+  UPDATE sett."Widgets" SET "WidgetTypeId" =
+      (SELECT "WidgetTypeId" FROM sett."WidgetTypes" WHERE "WidgetTypeCode" = 'MAINDASHBOARD_KPI_AVG_ENGAGEMENT' AND COALESCE("IsDeleted", false) = FALSE ORDER BY "WidgetTypeId" DESC LIMIT 1)
+  WHERE "Description" = 'CRMOVERVIEW_KPI_AVG_ENGAGEMENT' AND COALESCE("IsDeleted", false) = FALSE;
+  ```
+
+  Then `pnpm dev` and navigate to `/[lang]/crm/dashboards/overview` — each of the 4 KPI cards should now render with its own unique icon (users / dollar / megaphone / gauge) and accent color (indigo / emerald / amber / violet).
