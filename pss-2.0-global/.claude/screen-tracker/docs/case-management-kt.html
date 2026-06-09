@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Case Management — Knowledge Transfer</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root{
+    --teal:#0e7490; --teal-600:#0e7490; --teal-700:#155e75; --teal-50:#ecfeff;
+    --ink:#0f172a; --slate:#475569; --line:#e2e8f0; --bg:#f8fafc;
+    --green:#16a34a; --blue:#2563eb; --amber:#d97706; --emerald:#059669; --gray:#64748b; --red:#dc2626;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink); background:var(--bg); line-height:1.6; font-size:15px;
+  }
+  /* ---------- layout ---------- */
+  .wrap{display:flex; max-width:1180px; margin:0 auto; gap:28px; padding:0 20px;}
+  nav.toc{
+    position:sticky; top:0; align-self:flex-start; height:100vh; overflow:auto;
+    width:230px; flex:none; padding:28px 16px; background:#111827;
+    border-right:1px solid #000;
+  }
+  nav.toc h4{font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:#9ca3af; margin:0 0 10px; padding:0 14px;}
+  nav.toc a{
+    display:block; padding:9px 14px; margin:2px 0; border-radius:8px;
+    color:#d1d5db; text-decoration:none; font-size:14px; font-weight:500;
+  }
+  nav.toc a:hover{background:#fff; color:#111827;}
+  main{flex:1; min-width:0; padding:36px 0 90px;}
+  /* ---------- header ---------- */
+  .hero{
+    background:linear-gradient(135deg,var(--teal-700),var(--teal-600));
+    color:#fff; border-radius:16px; padding:34px 36px; margin-bottom:34px;
+  }
+  .hero h1{margin:0 0 8px; font-size:30px; letter-spacing:-.02em;}
+  .hero p{margin:0; opacity:.92; font-size:16px; max-width:640px;}
+  .hero .tags{margin-top:18px; display:flex; gap:8px; flex-wrap:wrap;}
+  .hero .tags span{background:rgba(255,255,255,.16); padding:5px 12px; border-radius:20px; font-size:12.5px; font-weight:600;}
+  /* ---------- sections ---------- */
+  section{margin-bottom:54px; scroll-margin-top:20px;}
+  h2{
+    font-size:23px; letter-spacing:-.01em; margin:0 0 6px; padding-bottom:10px;
+    border-bottom:2px solid var(--line); display:flex; align-items:center; gap:11px;
+  }
+  h2 .num{
+    background:var(--teal); color:#fff; width:30px; height:30px; border-radius:8px;
+    display:inline-flex; align-items:center; justify-content:center; font-size:15px; flex:none;
+  }
+  h3{font-size:17px; margin:26px 0 10px; color:var(--teal-700);}
+  .lead{color:var(--slate); margin:6px 0 18px; font-size:15.5px;}
+  p{margin:10px 0;}
+  /* ---------- cards ---------- */
+  .card{background:#fff; border:1px solid var(--line); border-radius:12px; padding:20px 22px; margin:16px 0;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  .note{border-left:4px solid var(--teal); background:var(--teal-50); padding:13px 18px; border-radius:0 8px 8px 0; margin:16px 0;}
+  .warn{border-left:4px solid var(--amber); background:#fffbeb; padding:13px 18px; border-radius:0 8px 8px 0; margin:16px 0;}
+  /* ---------- step list ---------- */
+  .steps{list-style:none; padding:0; margin:18px 0; counter-reset:s;}
+  .steps>li{
+    position:relative; padding:14px 18px 14px 58px; margin:10px 0; background:#fff;
+    border:1px solid var(--line); border-radius:10px; counter-increment:s;
+  }
+  .steps>li::before{
+    content:counter(s); position:absolute; left:16px; top:14px; width:28px; height:28px;
+    background:var(--teal); color:#fff; border-radius:50%; display:flex; align-items:center;
+    justify-content:center; font-weight:700; font-size:14px;
+  }
+  .steps>li b{color:var(--teal-700);}
+  /* ---------- tables ---------- */
+  table{width:100%; border-collapse:collapse; margin:14px 0; font-size:13.5px; background:#fff;
+    border:1px solid var(--line); border-radius:10px; overflow:hidden;}
+  th{background:#f1f5f9; text-align:left; padding:10px 12px; font-weight:600; color:var(--ink); font-size:12.5px;
+    text-transform:uppercase; letter-spacing:.03em;}
+  td{padding:10px 12px; border-top:1px solid var(--line); vertical-align:top;}
+  tr:hover td{background:#fafcff;}
+  code{background:#f1f5f9; padding:2px 6px; border-radius:5px; font-size:12.5px; font-family:"SF Mono",Consolas,monospace; color:var(--teal-700);}
+  .req{color:var(--red); font-weight:700;}
+  /* ---------- badges ---------- */
+  .b{display:inline-block; padding:3px 11px; border-radius:20px; font-size:12px; font-weight:700; color:#fff;}
+  .b.open{background:var(--green)} .b.prog{background:var(--blue)} .b.pend{background:var(--amber)}
+  .b.res{background:var(--emerald)} .b.closed{background:var(--gray)} .b.over{background:var(--red)}
+  /* =================================================================
+     ANIMATED FLOW — the moving beneficiary pipeline
+  ================================================================= */
+  .stage-wrap{background:#0b3a47; border-radius:16px; padding:34px 30px 26px; margin:22px 0; color:#e0f2fe; overflow:hidden;}
+  .stage-wrap h3{color:#7dd3fc; margin-top:0;}
+  .track{position:relative; height:150px; margin:30px 0 12px;}
+  /* the rail */
+  .rail{position:absolute; top:96px; left:4%; right:4%; height:6px; background:rgba(255,255,255,.14); border-radius:4px;}
+  .rail-fill{position:absolute; top:0; left:0; height:100%; width:0; background:linear-gradient(90deg,#22d3ee,#38bdf8);
+    border-radius:4px; animation:fill 20s ease-in-out infinite;}
+  @keyframes fill{
+    0%{width:4%} 12%{width:8%} 20%{width:30%} 36%{width:34%}
+    44%{width:52%} 60%{width:56%} 68%{width:74%} 84%{width:78%} 92%{width:96%} 100%{width:96%}
+  }
+  /* stage nodes */
+  .node{position:absolute; top:74px; transform:translateX(-50%); text-align:center; width:120px;}
+  .node .dot{width:18px; height:18px; border-radius:50%; background:#0b3a47; border:3px solid #38bdf8; margin:0 auto 8px;
+    box-shadow:0 0 0 4px rgba(56,189,248,.15);}
+  .node .lbl{font-size:12.5px; font-weight:700; color:#bae6fd;}
+  .node .dt{font-size:11px; color:#7dd3fc; opacity:.8;}
+  .node:nth-child(2){left:6%} .node:nth-child(3){left:31%} .node:nth-child(4){left:53%}
+  .node:nth-child(5){left:75%} .node:nth-child(6){left:96%}
+  /* the moving avatar */
+  .avatar{position:absolute; top:48px; transform:translateX(-50%); animation:travel 20s ease-in-out infinite; z-index:5;}
+  .avatar .face{width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg,#fbbf24,#f59e0b);
+    display:flex; align-items:center; justify-content:center; font-size:20px; box-shadow:0 6px 16px rgba(0,0,0,.35);
+    border:2px solid #fff;}
+  .avatar .name{margin-top:5px; font-size:11px; font-weight:700; color:#fff; background:rgba(0,0,0,.3);
+    padding:1px 7px; border-radius:10px; white-space:nowrap; text-align:center;}
+  @keyframes travel{
+    0%{left:6%} 12%{left:6%} 20%{left:31%} 36%{left:31%}
+    44%{left:53%} 60%{left:53%} 68%{left:75%} 84%{left:75%} 92%{left:96%} 100%{left:96%}
+  }
+  /* communication ping bubbles */
+  .comms{position:relative; min-height:52px; margin-top:8px;}
+  .ping{position:absolute; left:50%; transform:translateX(-50%); top:0; opacity:0;
+    background:#155e75; border:1px solid #22d3ee; color:#e0f7fa; padding:7px 14px; border-radius:20px;
+    font-size:12.5px; font-weight:600; white-space:nowrap; box-shadow:0 4px 14px rgba(0,0,0,.3);}
+  .ping1{animation:show 20s ease-in-out infinite;}
+  .ping2{animation:show 20s ease-in-out infinite; animation-delay:-16s;}
+  .ping3{animation:show 20s ease-in-out infinite; animation-delay:-12s;}
+  .ping4{animation:show 20s ease-in-out infinite; animation-delay:-7s;}
+  .ping5{animation:show 20s ease-in-out infinite; animation-delay:-2s;}
+  @keyframes show{0%,3%{opacity:0; transform:translateX(-50%) translateY(8px)}
+    6%,16%{opacity:1; transform:translateX(-50%) translateY(0)}
+    19%,100%{opacity:0; transform:translateX(-50%) translateY(-8px)}}
+  .legend{display:flex; gap:18px; flex-wrap:wrap; margin-top:18px; font-size:12px; color:#bae6fd;}
+  .legend b{color:#fff;}
+  .mermaid{background:#fff; border:1px solid var(--line); border-radius:12px; padding:20px; margin:18px 0; text-align:center;}
+  /* ---------- print ---------- */
+  @media print{
+    nav.toc{display:none} .wrap{display:block} main{padding:0}
+    .stage-wrap{background:#fff; color:#0f172a; border:1px solid var(--line);}
+    .stage-wrap h3{color:var(--teal-700)} .node .lbl,.node .dt{color:var(--ink)}
+    .avatar,.ping,.legend{display:none} section{page-break-inside:avoid}
+    .hero{background:var(--teal-700)!important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    a{color:var(--ink); text-decoration:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- =================== SIDEBAR =================== -->
+  <nav class="toc">
+    <h4>Contents</h4>
+    <a href="#intro">Overview</a>
+    <a href="#flow">① Start → End Flow</a>
+    <a href="#diagram">② Live Flow + Example</a>
+    <a href="#tests">③ Test Cases</a>
+    <a href="#data">④ Entity Tables</a>
+  </nav>
+
+  <!-- =================== MAIN =================== -->
+  <main>
+
+    <div class="hero" id="intro">
+      <h1>Case Management — Knowledge Transfer</h1>
+      <p>How a beneficiary's case is opened, worked, communicated, and closed — explained simply so a new team member can start testing on day one.</p>
+      <div class="tags">
+        <span>Module: CRM · Case Management</span>
+        <span>Screen #50 · FLOW</span>
+        <span>5-status lifecycle</span>
+      </div>
+    </div>
+
+    <p class="lead">
+      <b>What is it?</b> Case Management is where social workers <b>intake a beneficiary's problem</b> (a child needing tutoring, a medical issue, housing aid…),
+      <b>track the work</b> done on it (notes, action plans, referrals to outside organisations), and finally <b>close it with an outcome</b>.
+      Each <b>Case</b> links one <b>Beneficiary</b> to one delivery <b>Program</b>, an owning <b>Staff</b> member, a <b>Priority</b> and a <b>Category</b>.
+    </p>
+    <p class="lead">This guide has only four parts: <b>① the flow</b>, <b>② a live animated example</b>, <b>③ the test cases</b>, and <b>④ the data tables</b>. Nothing else to memorise.</p>
+
+
+    <!-- ============================================================
+         SECTION 1 — START TO END FLOW
+    ============================================================ -->
+    <section id="flow">
+      <h2><span class="num">1</span> The Flow — Start to End</h2>
+      <p class="lead">Every case walks the same straight line. Five real statuses, plus one that is only <i>calculated</i>, never saved.</p>
+
+      <h3>The five statuses</h3>
+      <table>
+        <tr><th>Status</th><th>Meaning</th><th>Who moves it</th></tr>
+        <tr><td><span class="b open">Open</span></td><td>Just created. Sitting in the queue, work not started.</td><td>Auto-set when the case is created</td></tr>
+        <tr><td><span class="b prog">In Progress</span></td><td>A case worker is actively working it — visiting, calling, delivering services.</td><td>Staff → "Update Status"</td></tr>
+        <tr><td><span class="b pend">Pending</span></td><td>Waiting on someone <i>else</i> — usually an external referral response.</td><td>Staff → "Update Status"</td></tr>
+        <tr><td><span class="b res">Resolved</span></td><td>The need is met. Ready to wrap up.</td><td>Staff → "Update Status"</td></tr>
+        <tr><td><span class="b closed">Closed</span></td><td>Final. Outcome + closure summary recorded. Read-only.</td><td>Staff → "Close Case" modal</td></tr>
+      </table>
+
+      <div class="warn">
+        <b>⚠ The 6th badge — <span class="b over">Overdue</span> — is NOT a real status.</b> It is <b>calculated on the fly</b>: any case that is still
+        <span class="b open">Open</span>/<span class="b prog">In Progress</span>/<span class="b pend">Pending</span> <b>and</b> whose <code>Follow-up Date</code> is in the past
+        shows up red. The stored status never changes. When you test, remember: setting a follow-up date in the past makes the row turn red — that's correct behaviour, not a bug.
+      </div>
+
+      <h3>The journey in plain words</h3>
+      <ol class="steps">
+        <li><b>Intake.</b> Staff clicks <b>+ New Case</b>, picks the beneficiary, writes a title + description, sets priority &amp; assigned staff. On save the system auto-stamps a code (<code>CASE-0042</code>), sets status <span class="b open">Open</span>, and records today as the opened date.</li>
+        <li><b>Casework.</b> Staff opens the case file and works it — adds <b>Notes</b> (home visits, phone calls), builds an <b>Action Plan</b> (tasks with owners + due dates), and moves the status to <span class="b prog">In Progress</span>.</li>
+        <li><b>Referral (if needed).</b> If outside help is required, staff raises a <b>Referral</b> (auto-coded <code>REF-0007</code>) to an external organisation — <b>consent must be ticked</b> before it can be sent — and parks the case as <span class="b pend">Pending</span> until they respond.</li>
+        <li><b>Resolution.</b> Once the response is in and the need is met, status goes back to <span class="b prog">In Progress</span> and then <span class="b res">Resolved</span>.</li>
+        <li><b>Closure.</b> Staff clicks <b>Close Case</b>, picks an <b>Outcome</b> and writes a required <b>Closure Summary</b> (optionally a post-close follow-up + lessons learned). The case becomes <span class="b closed">Closed</span> and read-only.</li>
+      </ol>
+
+      <div class="note">
+        <b>Communication happens along the way.</b> A welcome message to the guardian at intake, the referral hand-off to the partner org, the response coming back, and a closure note at the end — these touchpoints are shown live in the next section.
+      </div>
+
+      <h3>State diagram</h3>
+      <pre class="mermaid">
+stateDiagram-v2
+    direction LR
+    [*] --> Open: + New Case
+    Open --> InProgress: start work
+    InProgress --> Pending: await referral
+    Pending --> InProgress: response received
+    InProgress --> Resolved: need met
+    Pending --> Resolved: need met
+    Resolved --> Closed: Close Case (outcome + summary)
+    Closed --> [*]
+    Closed --> Open: Reopen
+      </pre>
+    </section>
+
+
+    <!-- ============================================================
+         SECTION 2 — ANIMATED FLOW DIAGRAM WITH EXAMPLE
+    ============================================================ -->
+    <section id="diagram">
+      <h2><span class="num">2</span> Live Flow — Watch One Beneficiary</h2>
+      <p class="lead">Meet <b>Aisha Bibi</b>, a 9-year-old orphan with a suspected vision problem in the <i>Orphan Sponsorship</i> program.
+      Watch her case <code>CASE-0042</code> travel the pipeline below — the messages that pop up are the real communication touchpoints.</p>
+
+      <div class="stage-wrap">
+        <h3>👧 CASE-0042 · Aisha Bibi — moving through the pipeline</h3>
+
+        <div class="track">
+          <div class="avatar"><div class="face">👧</div><div class="name">Aisha</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">OPEN</div><div class="dt">02 May · Intake</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">IN PROGRESS</div><div class="dt">05 May · Home visit</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">PENDING</div><div class="dt">10 May · Referral</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">IN PROGRESS</div><div class="dt">18 May · Reply</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">RESOLVED → CLOSED</div><div class="dt">23 May</div></div>
+          <div class="rail"><div class="rail-fill"></div></div>
+        </div>
+
+        <div class="comms">
+          <div class="ping ping1">📩 Welcome SMS to guardian — "Aisha's case is now open (CASE-0042)"</div>
+          <div class="ping ping2">🏠 Home-visit note logged + 3-task action plan created</div>
+          <div class="ping ping3">📨 Referral REF-0007 sent → City Eye Hospital (consent ✔)</div>
+          <div class="ping ping4">📞 Hospital replies — eye exam booked, glasses approved</div>
+          <div class="ping ping5">✅ Closure note + feedback request sent to guardian</div>
+        </div>
+
+        <div class="legend">
+          <span>🟡 <b>Aisha</b> = the beneficiary moving through her case</span>
+          <span>🔵 <b>Nodes</b> = the status at each step</span>
+          <span>💬 <b>Bubbles</b> = communication sent at that moment</span>
+        </div>
+      </div>
+      <p style="text-align:center; color:var(--slate); font-size:13px;">↑ The animation loops. Each pause = a real stage; each bubble = a message going out or coming in.</p>
+
+      <h3>The same story, step by step</h3>
+      <table>
+        <tr><th>When</th><th>Status</th><th>What the case worker did</th><th>Communication</th><th>Test ref</th></tr>
+        <tr>
+          <td>02 May</td><td><span class="b open">Open</span></td>
+          <td>Created the case: beneficiary = Aisha, title "Vision problem — needs eye care", priority <b>High</b>, assigned to Fatima (staff). System made code <code>CASE-0042</code>.</td>
+          <td>📩 Welcome SMS to guardian</td><td>C1</td>
+        </tr>
+        <tr>
+          <td>05 May</td><td><span class="b prog">In&nbsp;Progress</span></td>
+          <td>Added a <b>Home Visit</b> note. Built a 3-item <b>Action Plan</b> (school chat, eye-camp booking, guardian counselling). Status → In Progress.</td>
+          <td>🏠 Internal note feed updated</td><td>CN5 · C5b</td>
+        </tr>
+        <tr>
+          <td>10 May</td><td><span class="b pend">Pending</span></td>
+          <td>Raised <b>Referral REF-0007</b> to City Eye Hospital. <b>Consent ticked</b> → Send enabled. Status → Pending (waiting on hospital).</td>
+          <td>📨 Referral hand-off to partner</td><td>CR1 · CR2</td>
+        </tr>
+        <tr>
+          <td>18 May</td><td><span class="b prog">In&nbsp;Progress</span></td>
+          <td>Hospital responded — exam done, glasses approved. Logged response on the referral. Status → In Progress.</td>
+          <td>📞 Partner response recorded</td><td>CR3</td>
+        </tr>
+        <tr>
+          <td>23 May</td><td><span class="b res">Resolved</span> → <span class="b closed">Closed</span></td>
+          <td>Marked Resolved, then <b>Close Case</b>: Outcome = <i>Resolved</i>, wrote the required <b>Closure Summary</b>. Case locked read-only.</td>
+          <td>✅ Closure + feedback to guardian</td><td>C5 · C6</td>
+        </tr>
+      </table>
+
+      <div class="warn">
+        <b>↪ The "Overdue" twist (test this!).</b> Suppose on <b>10 May</b> Fatima set Aisha's follow-up date to <b>08 May</b> (already passed) and went on leave.
+        Aisha's row instantly turns <b>red</b> with an <span class="b over">Overdue</span> badge — even though the saved status is still <span class="b pend">Pending</span>.
+        The moment someone sets a future follow-up date, the red clears. Nothing about the stored status ever changed. → tests <b>CO1–CO3</b>.
+      </div>
+
+      <h3>Communication sequence (who talks to whom)</h3>
+      <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor G as Guardian
+    participant S as Case Worker (Fatima)
+    participant C as Case System
+    participant H as City Eye Hospital
+    S->>C: Create CASE-0042 (Open)
+    C-->>G: Welcome SMS
+    S->>C: Add home-visit note + action plan (In Progress)
+    S->>C: Raise Referral REF-0007 (consent ok)
+    C-->>H: Referral sent (Pending)
+    H-->>S: Reply - exam booked, glasses approved
+    S->>C: Record response (In Progress, then Resolved)
+    S->>C: Close Case (Outcome + Summary)
+    C-->>G: Closure note + feedback request
+      </pre>
+    </section>
+
+
+    <!-- ============================================================
+         SECTION 3 — TEST CASES
+    ============================================================ -->
+    <section id="tests">
+      <h2><span class="num">3</span> Test Cases</h2>
+      <p class="lead">Run these in order. IDs match the references in the example above. <span class="req">Required</span> fields must block save when empty.</p>
+
+      <h3>Case lifecycle</h3>
+      <table>
+        <tr><th>ID</th><th>Scenario</th><th>Steps</th><th>Expected result</th></tr>
+        <tr><td>C1</td><td>Create a case</td><td>+ New Case → fill beneficiary, title, description, priority, assigned staff → Save</td><td>Code auto-set <code>CASE-NNNN</code>, status <span class="b open">Open</span>, opened date = today, lands on detail page</td></tr>
+        <tr><td>C2</td><td>Required-field guard</td><td>+ New Case → leave Title (or Beneficiary/Priority/Staff) empty → Save</td><td>Save blocked, field flagged red. <span class="req">Title, Description, Beneficiary, Priority, Assigned Staff</span> are mandatory</td></tr>
+        <tr><td>C3</td><td>Edit a case</td><td>Open case → Edit → change priority → Save</td><td>Returns to detail, change persisted</td></tr>
+        <tr><td>C4</td><td>Status transitions</td><td>Update Status: Open → In Progress → Pending → In Progress → Resolved</td><td>Badge updates each time; a "Status changed…" note appears automatically in the Notes feed</td></tr>
+        <tr><td>C5</td><td>Close a case</td><td>Resolved case → Close Case → pick Outcome + write Closure Summary → Confirm</td><td>Status <span class="b closed">Closed</span>, closed date set, case becomes read-only, action buttons hide</td></tr>
+        <tr><td>C6</td><td>Close guard</td><td>Close Case → leave Outcome or Closure Summary empty → Confirm</td><td>Blocked — both are <span class="req">required</span></td></tr>
+        <tr><td>C7</td><td>Reopen</td><td>Closed case → Reopen</td><td>Returns to <span class="b open">Open</span>; outcome/summary cleared; notes &amp; action items kept</td></tr>
+        <tr><td>C8</td><td>Reassign</td><td>Reassign → pick new staff → confirm</td><td>Assigned staff changes; auto note "Reassigned from X to Y" appears</td></tr>
+      </table>
+
+      <h3>Overdue (the calculated badge)</h3>
+      <table>
+        <tr><th>ID</th><th>Scenario</th><th>Steps</th><th>Expected result</th></tr>
+        <tr><td>CO1</td><td>Becomes overdue</td><td>On an Open/In Progress/Pending case, set Follow-up Date to a past date</td><td>Row turns red, <span class="b over">Overdue</span> badge shows — but stored status is unchanged</td></tr>
+        <tr><td>CO2</td><td>Clears overdue</td><td>Set Follow-up Date to a future date</td><td>Red clears immediately; badge reverts to real status</td></tr>
+        <tr><td>CO3</td><td>Closed is never overdue</td><td>Close a case that had a past follow-up date</td><td>No red tint — Closed/Resolved cases are excluded from the overdue calc</td></tr>
+      </table>
+
+      <h3>Notes, action plan &amp; referrals</h3>
+      <table>
+        <tr><th>ID</th><th>Scenario</th><th>Steps</th><th>Expected result</th></tr>
+        <tr><td>CN5</td><td>Add a note</td><td>Notes tab → Add Note → pick type (e.g. Home Visit) + content → Add</td><td>Note appears at top of feed with author avatar + type badge</td></tr>
+        <tr><td>CN2</td><td>Notify supervisor</td><td>Add Note with "Notify supervisor" ticked</td><td>Toast "Supervisor notification queued…" (placeholder — no real send yet)</td></tr>
+        <tr><td>C5b</td><td>Add action item</td><td>Action Plan tab → Add → description + responsible + status; toggle "Recurring"</td><td>Item added; when Recurring is on, the Target Date field hides</td></tr>
+        <tr><td>CR1</td><td>Raise a referral</td><td>Referrals tab → New Referral → fill org + reason → tick <b>Consent</b> → Send</td><td>Referral added, auto code <code>REF-NNNN</code>, status Pending</td></tr>
+        <tr><td>CR2</td><td>Consent guard</td><td>New Referral with Consent left unticked</td><td><b>Send button stays disabled</b> until consent is ticked</td></tr>
+        <tr><td>CR3</td><td>Referral response</td><td>Open a referral → record the partner's response</td><td>Response saved; referral status can move to Accepted/Completed</td></tr>
+      </table>
+
+      <h3>Grid, filters &amp; KPIs</h3>
+      <table>
+        <tr><th>ID</th><th>Scenario</th><th>Expected result</th></tr>
+        <tr><td>CG1</td><td>KPI cards</td><td>Four cards show live counts: Open (with priority split), Overdue (oldest days), Closed this month (avg days), Referrals pending</td></tr>
+        <tr><td>CG2</td><td>Status / priority chips</td><td>Clicking a chip filters the grid instantly</td></tr>
+        <tr><td>CG3</td><td>Search</td><td>Search by case code, beneficiary name, title, or description all match</td></tr>
+        <tr><td>CG4</td><td>"My Cases" toggle</td><td>Grid filters to cases assigned to the logged-in staff member</td></tr>
+        <tr><td>CG5</td><td>Row → detail</td><td>Clicking a row opens the read-only case file with the 5 tabs</td></tr>
+      </table>
+
+      <div class="note"><b>Placeholders (don't fail these):</b> file uploads, Print/Export-PDF/Share/Archive, Escalate, and Send Reminders are <b>UI-only</b> — they show a "coming soon" toast on purpose. The button must render and the toast must appear; that <i>is</i> the pass condition.</div>
+    </section>
+
+
+    <!-- ============================================================
+         SECTION 4 — ENTITY TABLES DESIGN
+    ============================================================ -->
+    <section id="data">
+      <h2><span class="num">4</span> Entity Tables — Data Design</h2>
+      <p class="lead">One parent (<b>Case</b>) and four children, all in the <code>case</code> database schema. The "History" tab is built on the fly — it has no table.</p>
+
+      <h3>How the tables relate</h3>
+      <pre class="mermaid">
+erDiagram
+    BENEFICIARY ||--o{ CASE : "has cases"
+    PROGRAM ||--o{ CASE : "delivers"
+    STAFF ||--o{ CASE : "owns / assigned"
+    CASE ||--o{ CASE_NOTE : "1 : many"
+    CASE ||--o{ CASE_ACTION_ITEM : "1 : many"
+    CASE ||--o{ CASE_REFERRAL : "1 : many"
+    CASE ||--o{ CASE_DOCUMENT : "1 : many"
+    CASE {
+        int CaseId PK
+        string CaseCode "CASE-NNNN"
+        int BeneficiaryId FK
+        int ProgramId FK
+        int AssignedStaffId FK
+        int StatusId "Open..Closed"
+        date FollowUpDate "drives Overdue"
+    }
+    CASE_NOTE {
+        int CaseNoteId PK
+        int CaseId FK
+        string Content
+    }
+    CASE_ACTION_ITEM {
+        int CaseActionItemId PK
+        int CaseId FK
+        string ActionDescription
+    }
+    CASE_REFERRAL {
+        int CaseReferralId PK
+        int CaseId FK
+        bool ConsentGiven
+    }
+    CASE_DOCUMENT {
+        int CaseDocumentId PK
+        int CaseId FK
+        string FileName
+    }
+      </pre>
+
+      <h3>① <code>case.Cases</code> — the parent</h3>
+      <table>
+        <tr><th>Column</th><th>Type</th><th>Req</th><th>Notes</th></tr>
+        <tr><td>CaseId</td><td>int</td><td>PK</td><td>Primary key</td></tr>
+        <tr><td>CaseCode</td><td>string(30)</td><td class="req">✔</td><td>Auto <code>CASE-NNNN</code>, unique per company</td></tr>
+        <tr><td>CaseTitle</td><td>string(200)</td><td class="req">✔</td><td>Short title</td></tr>
+        <tr><td>Description</td><td>string(2000)</td><td class="req">✔</td><td>Full background</td></tr>
+        <tr><td>BeneficiaryId</td><td>int</td><td class="req">✔</td><td>FK → who is helped</td></tr>
+        <tr><td>ProgramId</td><td>int?</td><td>—</td><td>FK → delivery program</td></tr>
+        <tr><td>PriorityId</td><td>int</td><td class="req">✔</td><td>Critical / High / Medium / Low</td></tr>
+        <tr><td>CategoryId</td><td>int?</td><td>—</td><td>Educational / Medical / Housing …</td></tr>
+        <tr><td>StatusId</td><td>int</td><td class="req">✔</td><td>Open / InProgress / Pending / Resolved / Closed. <b>Overdue is NOT stored.</b></td></tr>
+        <tr><td>AssignedStaffId</td><td>int</td><td class="req">✔</td><td>FK → case owner</td></tr>
+        <tr><td>BranchId</td><td>int?</td><td>—</td><td>FK → field office</td></tr>
+        <tr><td>OpenedDate</td><td>date</td><td class="req">✔</td><td>Defaults to today</td></tr>
+        <tr><td>FollowUpDate</td><td>date?</td><td>—</td><td>Past date + open status ⇒ <b>Overdue</b></td></tr>
+        <tr><td>IsExternalReferral</td><td>bool</td><td class="req">✔</td><td>If true → ReferralTo required</td></tr>
+        <tr><td>ReferralTo / ReferralNotes</td><td>string?</td><td>—</td><td>Conditional on the flag above</td></tr>
+        <tr><td>ClosedDate</td><td>date?</td><td>—</td><td>Set on close</td></tr>
+        <tr><td>CaseOutcomeId</td><td>int?</td><td>—</td><td>Required <i>at</i> close</td></tr>
+        <tr><td>ClosureSummary</td><td>string?(2000)</td><td>—</td><td>Required <i>at</i> close</td></tr>
+        <tr><td>ClosureFollowUpDate / LessonsLearned</td><td>—</td><td>—</td><td>Optional, from Close modal</td></tr>
+      </table>
+
+      <div class="grid2">
+        <div class="card">
+          <h3 style="margin-top:0">② <code>case.CaseNotes</code></h3>
+          <p style="color:var(--slate); font-size:14px">The activity feed — every visit, call, or update.</p>
+          <table>
+            <tr><th>Column</th><th>Notes</th></tr>
+            <tr><td>CaseNoteId</td><td>PK</td></tr>
+            <tr><td>CaseId</td><td>FK → parent</td></tr>
+            <tr><td>NoteTypeId</td><td>Home Visit / Phone Call / Milestone …</td></tr>
+            <tr><td>Content <span class="req">✔</span></td><td>Note body</td></tr>
+            <tr><td>AuthorStaffId</td><td>Auto = current user</td></tr>
+            <tr><td>NotifySupervisor</td><td>Placeholder toast</td></tr>
+            <tr><td>AttachmentUrl/Name</td><td>Placeholder (no upload yet)</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">③ <code>case.CaseActionItems</code></h3>
+          <p style="color:var(--slate); font-size:14px">The action plan — tasks with owners &amp; due dates.</p>
+          <table>
+            <tr><th>Column</th><th>Notes</th></tr>
+            <tr><td>CaseActionItemId</td><td>PK</td></tr>
+            <tr><td>CaseId</td><td>FK → parent</td></tr>
+            <tr><td>ActionSequence</td><td>Display order</td></tr>
+            <tr><td>ActionDescription <span class="req">✔</span></td><td>What to do</td></tr>
+            <tr><td>ResponsibleStaffId <span class="req">✔</span></td><td>Owner</td></tr>
+            <tr><td>TargetDate</td><td>Hidden when Recurring</td></tr>
+            <tr><td>ActionStatusId <span class="req">✔</span></td><td>Done / Pending / Recurring …</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">④ <code>case.CaseReferrals</code></h3>
+          <p style="color:var(--slate); font-size:14px">Hand-offs to external organisations.</p>
+          <table>
+            <tr><th>Column</th><th>Notes</th></tr>
+            <tr><td>CaseReferralId</td><td>PK</td></tr>
+            <tr><td>CaseId</td><td>FK → parent</td></tr>
+            <tr><td>ReferralCode</td><td>Auto <code>REF-NNNN</code></td></tr>
+            <tr><td>ReferTo <span class="req">✔</span></td><td>Org / provider</td></tr>
+            <tr><td>Reason <span class="req">✔</span></td><td>Why referred</td></tr>
+            <tr><td>ReferralStatusId</td><td>Pending → Accepted → Completed</td></tr>
+            <tr><td>ConsentGiven <span class="req">✔</span></td><td><b>Must be true to send</b></td></tr>
+            <tr><td>Response</td><td>Reply received</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">⑤ <code>case.CaseDocuments</code></h3>
+          <p style="color:var(--slate); font-size:14px">File attachments — metadata only for now.</p>
+          <table>
+            <tr><th>Column</th><th>Notes</th></tr>
+            <tr><td>CaseDocumentId</td><td>PK</td></tr>
+            <tr><td>CaseId</td><td>FK → parent</td></tr>
+            <tr><td>FileName <span class="req">✔</span></td><td>e.g. report.pdf</td></tr>
+            <tr><td>FileSizeBytes / MimeType</td><td>From the picker</td></tr>
+            <tr><td>FilePathUrl</td><td>Placeholder — storage pending</td></tr>
+            <tr><td>UploadedByStaffId</td><td>Auto = current user</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="note">
+        <b>History tab = no table.</b> It is assembled at read-time from the case's own dates, its notes, status changes, and action-item updates — merged into one timeline. Nothing to seed or test as storage; just verify the events show in order.
+      </div>
+
+      <h3>Lookup values (MasterData seeds)</h3>
+      <table>
+        <tr><th>Type</th><th>Values</th></tr>
+        <tr><td><code>CASEPRIORITY</code></td><td>Critical · High · Medium · Low</td></tr>
+        <tr><td><code>CASESTATUS</code></td><td>Open · In Progress · Pending · Resolved · Closed <i>(no Overdue!)</i></td></tr>
+        <tr><td><code>CASECATEGORY</code></td><td>Educational Support · Medical · Housing · Legal · Nutrition · Protection · Psychosocial · Livelihood · Referral · Other</td></tr>
+        <tr><td><code>CASENOTETYPE</code></td><td>Case Note · Home Visit · Phone Call · Service Delivered · Referral Update · Milestone · Status Change · Case Opened</td></tr>
+        <tr><td><code>CASEACTIONSTATUS</code></td><td>Done · Recurring · Pending · In Progress · Contingent</td></tr>
+        <tr><td><code>CASEREFERRALSTATUS</code></td><td>Pending · Awaiting Response · Accepted · Rejected · Completed</td></tr>
+        <tr><td><code>CASEOUTCOME</code></td><td>Resolved · Partially Resolved · Unresolved · Referred Out · Graduated · Beneficiary Exited</td></tr>
+      </table>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  mermaid.initialize({ startOnLoad:true, theme:'base', securityLevel:'loose',
+    themeVariables:{ primaryColor:'#ecfeff', primaryBorderColor:'#0e7490', primaryTextColor:'#0f172a',
+      lineColor:'#0e7490', fontFamily:'-apple-system,Segoe UI,Roboto,sans-serif' } });
+</script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 screen: OnlineDonationPage
 registry_id: 10
 module: Setting (Public Pages)
-status: COMPLETED
+status: IN_PROGRESS
 scope: FULL
 screen_type: EXTERNAL_PAGE
 external_page_subtype: DONATION_PAGE
@@ -10,8 +10,8 @@ complexity: High
 new_module: NO
 planned_date: 2026-05-08
 completed_date: 2026-05-08
-last_session_date: 2026-06-01
-last_session: 33
+last_session_date: 2026-06-02
+last_session: 35
 ---
 
 ## Tasks

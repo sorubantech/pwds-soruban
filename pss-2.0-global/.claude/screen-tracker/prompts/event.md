@@ -9,7 +9,7 @@ complexity: High
 new_module: NO — app schema + ApplicationModels group already exist
 planned_date: 2026-04-20
 completed_date: 2026-04-21
-last_session_date: 2026-04-21
+last_session_date: 2026-06-04
 ---
 
 ## Tasks
@@ -896,3 +896,107 @@ Every SERVICE_PLACEHOLDER renders the full UI component with a toast-only handle
 - **Known issues opened**: None new — all 17 pre-flagged ISSUEs from planning were addressed or carried forward with documented SERVICE_PLACEHOLDERs.
 - **Known issues closed**: ISSUE-1 (EventName added), ISSUE-2 (EventCode added + filtered unique index), ISSUE-3 (PostpondedToDate → PostponedToDate via RenameColumn), ISSUE-7 (RelatedCampaignId FK added), ISSUE-8 (EVENTS_QUERY extended with relatedCampaign), ISSUE-17 (EVENTSTATUS rows carry ColorHex in DataSetting). Remaining ISSUEs (4/9/10/11/12/13/15/16 + 5/6 deferred) tracked via SERVICE_PLACEHOLDERs until #46 Event Ticketing lands.
 - **Next step**: User to run (1) `dotnet ef database update` to apply migration `20260421120000_EventAlignMockup`; (2) execute `Event-sqlscripts.sql` in the DB; (3) `pnpm dev` and walk the full E2E per §⑪ (grid + 4 KPI widgets + calendar toggle + 5-tab form create/edit + dashboard read + Publish/Cancel/Duplicate workflows).
+
+### Session 2 — 2026-06-02 — UI — COMPLETED
+
+- **Scope**: Replace the hand-rolled per-screen `EventDataTable` (custom TanStack table) on the index list view with the shared **FlowDataTableContainer** (canonical FlowGrid), per the "reuse existing grids — never fork" convention. Reference screen: `allcontacts` (`crm/contact/contact/index-page.tsx`). Modes (add/read/edit/delete/toggle) now come from the shared grid + existing `EventPage` dispatcher.
+- **Files touched**:
+  - BE: None.
+  - FE:
+    - `src/presentation/components/page-components/crm/event/event/index-page.tsx` (rewritten — now uses `FlowDataTableStoreProvider` + `useFlowInitializeColumns()` + `useFlowInitializeData()` + `<FlowDataTableContainer showHeader={false} />`. Status-chip selection is converted to a `TAdvanceFilter` (`eventStatusCode = <chip>`) and pushed to the flow store via `initialAdvancedFilter` (Provider seed) + JSON-deduped `setAdvanceFilter`/`setPageIndex` sync — mirrors the contact pattern. KPI widgets, status chips, and list/calendar toggle preserved unchanged.)
+    - `src/presentation/components/page-components/crm/event/event/event-data-table.tsx` (**deleted** via `git rm` — the dead hand-rolled grid; no remaining references; barrel never exported it).
+  - DB: None.
+- **Deviations from spec**:
+  - Grid columns are now DB-driven from the seeded EVENT grid config (Grid + 10 GridFields from Session 1) and rendered through the registered cell renderers (event-name / event-mode-badge / event-status-badge / event-venue / event-capacity-progress), instead of the inline `ColumnDef[]` the custom table hard-coded.
+  - **Row-click destination simplified**: the old custom table sent DRAFT rows → `?mode=edit` and others → `?mode=read` (`decideRowClickMode`). The shared grid uses per-row action buttons (View/Edit/Delete/Toggle) + the `+New Event` button, all navigating via `?mode=...&id=` (Add→new, View→read, Edit→edit). Draft rows are edited via the row Edit action rather than a status-conditional row click. Behaviour is standard-grid-consistent; no functional capability lost.
+- **Known issues opened**: None.
+- **Known issues closed**: None (this is a UI refactor; the OPEN SERVICE_PLACEHOLDER issues are unaffected). Note: ISSUE-15 (calendar view) and the KPI widgets are untouched and still functional.
+- **Verification**: `npx tsc --noEmit` — 0 errors across `components/page-components/crm/event/**`. Runtime E2E (grid load via seeded EVENT config, chip filter refetch, add/view/edit/delete navigation) to be confirmed by user with `pnpm dev` (requires the Session-1 migration + `Event-sqlscripts.sql` already applied so the EVENT grid config + GridFields exist).
+- **Next step**: COMPLETED. If the grid renders empty columns at runtime, confirm `Event-sqlscripts.sql` (Grid + 10 GridFields) has been seeded — the shared FlowGrid reads columns from that config, unlike the old hard-coded table.
+
+### Session 3 — 2026-06-03 — ENHANCEMENT — Org-unit hierarchy (Parent Org Unit)
+
+- **Scope**: Repurpose the Event form's "Organizational Unit" field into a nullable **"Parent Org Unit"** picker and make each Event a node in the `app.OrganizationalUnits` recursive tree. On create, the BE auto-creates the event's own org-unit node (UnitType = `EVENT`) and sets `Event.OrganizationalUnitId` to it; the form-selected parent flows into that node's `ParentUnitId`. (User clarifications: 3 unit types `EVENT`/`CAMPAIGN`/`DONATIONPURPOSE` already exist in the runtime DB; **Event-only** scope this session; keep the 1..4 `HierarchyLevel` check constraint; on delete/deactivate — block when the node has active children, else soft-delete both event + node.)
+- **Model**: `Event.OrganizationalUnitId` stays **required** (own node). The repurposed form field maps to the new DTO field `ParentOrganizationalUnitId` (nullable). Response keeps `organizationalUnit` (own node); edit pre-fills the field from `organizationalUnit.parentUnitId`.
+- **Files touched**:
+  - BE:
+    - `EventSchemas.cs` — `EventRequestDto.OrganizationalUnitId` `int`→`int?` (server-managed) + new `ParentOrganizationalUnitId int?`. (`OrganizationalEventResponseDto` left unchanged.)
+    - `CreateEvent.cs` — validator: drop OrganizationalUnitId FK check, add nullable `ParentOrganizationalUnitId` FK check. Handler: new `BuildOwnOrganizationalUnitAsync` resolves the `EVENT` UNITTYPE master-data id, validates parent (company-scoped, not deleted) + depth (≤4), builds the own node (UnitName = EventName≤100, UnitCode = EventCode), attaches via `newEvent.OrganizationalUnit` so EF inserts node→event in one SaveChanges.
+    - `UpdateEvent.cs` — validator swap (same). `MapScalars` no longer overwrites `OrganizationalUnitId`. New `SyncOwnOrganizationalUnitAsync` re-parents the existing node (cycle guard walks ancestor chain; depth ≤4; keeps UnitName in sync); lazily creates a node for legacy events that lack one.
+    - `DeleteEvent.cs` — block with a clear message when the node has active child units ("already mapped"); otherwise soft-delete **both** event and node (`IsActive=false, IsDeleted=true`). (Previously only set `IsDeleted=true` on the event.)
+    - `ToggleEvent.cs` — block **deactivation** when the node has active children (mirrors delete).
+  - DB seed:
+    - `Event-sqlscripts.sql` — new idempotent STEP 9c seeds UNITTYPE master-data `EVENT`/`CAMPAIGN`/`DONATIONPURPOSE` (`WHERE NOT EXISTS`; no-op if already present). Requires the `UNITTYPE` MasterDataType (from `OrganizationalUnit-sqlscripts.sql`).
+  - FE:
+    - `EventDto.ts` — `organizationalUnitId?` now optional/nullable + new `parentOrganizationalUnitId?`.
+    - `EventQuery.ts` — `EVENT_BY_ID_QUERY` `organizationalUnit { … parentUnitId }` (for edit pre-fill).
+    - `basic-info-tab.tsx` — field relabelled "Parent Org Unit", `required` dropped, hint added, clearable.
+    - `event-form-page.tsx` — removed `organizationalUnitId` from required/step-complete/`buildErrors`; edit pre-fill reads `rec.organizationalUnit?.parentUnitId`; `buildPayload` sends `parentOrganizationalUnitId` (omits server-managed `organizationalUnitId`).
+- **Assumption to confirm**: the EVENT unit-type `DataValue` is **`'EVENT'`** (under `MasterDataType.TypeCode='UNITTYPE'`). The handler resolves by this string and the new seed defines it. If your existing rows use a different DataValue, tell me and I'll adjust both ends.
+- **Side effect (noted, not changed)**: the grid column `EVENT_ORGANIZATIONALUNIT` shows the own node's `unitName` (= event name), now somewhat redundant with the Name column. Left as-is; can be re-pointed to the parent's name if desired.
+- **Migration note**: no schema change (entity `OrganizationalUnitId` stays non-nullable). Re-run `Event-sqlscripts.sql` to seed the unit types (no-op if present). Legacy events without an own node get one lazily created on their next Update.
+- **Verification**: BE `dotnet build Base.Application` → **0 errors** (pre-existing warnings only). FE `npx tsc --noEmit` → **0 errors**. Runtime (create nests under selected parent; edit re-parents; delete/deactivate guard) to be confirmed by user with `pnpm dev`.
+
+### Session 4 — 2026-06-03 — FIX — Event Status = system-managed + parent-picker scope (FE only)
+
+- **Event Status is no longer a manual field.** It was a *required dropdown*; now it's a **read-only colored badge** that reflects the lifecycle: DRAFT on create → advanced only by actions (Publish / Complete / Cancel). The colored background is the dynamic indicator, not an editable input.
+  - `basic-info-tab.tsx` — replaced the "Event Status" `SelectField` with a read-only badge (`STATUS_BADGE`/`STATUS_LABEL` maps mirroring the index-page chip colors; code via `statusCodeById`, default DRAFT). Destructure swapped `statuses` → `statusCodeById`.
+  - `event-form-page.tsx` — removed `eventStatusId` from `requiredFields`/`errorKeys`/`isStepComplete`/`buildErrors`. `buildPayload` now `statusOverride || form.eventStatusId || DRAFT` (`||` not `??`, since a new event's id is `0`) → new events persist as DRAFT; edits preserve the loaded status; lifecycle actions still pass `statusOverride`.
+- **Parent-picker scope fix** (`use-event-dropdowns.ts`) — `orgUnits` was hard-filtered to `unitType === 'SU'` (old geographic model), so the new Parent Org Unit picker showed **no** Event/Campaign/DonationPurpose nodes. Broadened to those three types; labels now suffixed with the type, e.g. `Annual Gala (Event)`.
+- **Verification**: FE `npx tsc --noEmit` → **0 errors**. BE untouched (the Create/Update validators already required a valid `EventStatusId`, which the DRAFT default satisfies).
+
+### Session 5 — 2026-06-04 — FIX — Tenant currency + full-width on the read-mode view (FE only)
+
+- **Scope**: NEW bug (not in pre-flagged Known Issues). The read-mode **view page** (`event-dashboard-page.tsx`, rendered by `view-page.tsx` when `crudMode === "read"`) hardcoded a `$` symbol for all monetary values and constrained its content to a centered `max-w-7xl` column instead of filling the canvas like the form/index pages.
+- **Files touched**:
+  - BE: None.
+  - DB: None.
+  - FE:
+    - `event-dashboard-page.tsx` — (1) the local `formatCurrency(n)` helper (hardcoded `$` + K/M scaling) now delegates to the canonical `formatCompactCurrency` from `@/presentation/utils/companySettingsFormatters`, which reads the tenant's company-session currency (`baseCurrencyCode` + `currencyDisplayFormat`) and honors Indian L/Cr grouping. All ~10 call sites (ticket sold amount, avg ticket price, donations pledged, post-event donations, ticket-type Price/Revenue cells, revenue-summary ticket/donations/auction/total) inherit the company currency with **no call-site changes** — same name/signature preserved. Reference precedent: `event-widgets.tsx` already used `formatCompactCurrency` on this same screen. (2) Content wrapper `mx-auto max-w-7xl` → `w-full max-w-full`, matching `event-form-page.tsx` (line 602) and `index-page.tsx` (line 193). The empty-state / loading / check-in-panel containers were left centered (intentional).
+- **Deviations from spec**: None. (§⑥ blueprint is currency-agnostic; this aligns the read view with the tenant currency-formatting convention already used elsewhere.)
+- **Known issues opened**: None. (Noted, not fixed: the **form** tabs `settings-tab.tsx` suggested-amount pills and `registration-tab.tsx` ticket prices still render a literal `$` prefix in input adornments — left as-is to keep this session's surface to the read-mode view the user pointed at; can be folded into a follow-up if desired.)
+- **Known issues closed**: None (this is a NEW bug fix outside the pre-flagged ISSUE table).
+- **Verification**: FE `npx tsc --noEmit` → **0 errors** in `event-dashboard-page.tsx` + `companySettingsFormatters`. Runtime (open any event in read mode → amounts show the org currency symbol/code per CompanySettings, dashboard spans full width) to be confirmed by user with `pnpm dev`. Requires the CompanySettings session store (#75) to be populated — it already drives the KPI widget currency on the index page.
+
+### Session 6 — 2026-06-04 — UI — Read-view actions alignment + solid icon/badge treatment (FE only)
+
+- **Scope**: Two UI polish requests on the read-mode **view page** (`event-dashboard-page.tsx`): (1) the secondary action row (Publish / Send Reminder / Check-in Mode / More) rendered left-aligned under the page header — move it to the right end; (2) apply the app-wide [[solid-icon-bg-white-foreground]] convention to the icon/badge areas (accent = SOLID background, icon/text WHITE).
+- **Files touched**:
+  - BE / DB: None.
+  - FE:
+    - `event-dashboard-page.tsx` —
+      - `headerActions` wrapper `flex items-center gap-2` → `flex w-full items-center justify-end gap-2` so the action buttons sit at the right end of the header's children row (PageHeader renders `children` in a full-width `mt-2` row).
+      - `ACCENT_CLASSES` (6 KPI-card icon chips: teal/emerald/blue/purple/amber/pink) — `iconBg` light tint (`bg-*-100 dark:bg-*-900/30`) → **solid** (`bg-*-600`, amber `bg-*-500`); `iconColor` (`text-*-700 dark:text-*-300`) → `text-white`.
+      - `STATUS_CONFIG` (5 lifecycle status badges: DRAFT/PUBLISHED/INPROGRESS/COMPLETED/CANCELLED) — `pill` light tint → **full solid pill** (`bg-*-500/600 text-white`); `dot` → `bg-white` so it reads on the solid pill.
+- **Deviations from spec**: None. (Aligns the read view with the [[solid-icon-bg-white-foreground]] convention already mandated for KPI icons + status/mode badges app-wide.)
+- **Note (not changed)**: the index-page status chips (`index-page.tsx`) still use the older tinted palette referenced by Session 4; this session only touched the read-mode dashboard the user pointed at. The neutral/muted mode + date + countdown chips were left as informational (non-accent) chips. The "More actions" dropdown menu-item icons stay `text-muted-foreground` (menu rows, not badge/icon chips).
+- **Known issues opened / closed**: None.
+- **Verification**: FE `npx tsc --noEmit` → **0 errors** in `event-dashboard-page.tsx`. Visual confirmation (actions right-aligned; KPI icon chips + status badge render solid with white glyphs) pending user `pnpm dev`.
+- **Follow-up (same session)**: extended the solid-status treatment to the **calendar view** (`event-calendar-view.tsx`) — the per-day event chips' `STATUS_CHIP` map (DRAFT/PUBLISHED/UPCOMING/INPROGRESS/COMPLETED/CANCELLED) went from tinted (`bg-*-100 text-*-800`) to **full solid** (`bg-amber-500`/`bg-*-600` + `text-white`), matching the dashboard `STATUS_CONFIG` colors. The toolbar legend dots were already solid `bg-*-500` and left unchanged. `npx tsc --noEmit` → 0 errors.
+- **Calendar premium UI polish (same session)** (`event-calendar-view.tsx`, presentation-only — no logic/query changes): outer container `rounded-lg`→`rounded-xl` + `shadow-sm`; toolbar gets a gradient bar + a **segmented prev/next navigator** (bordered pill, replaces two outline buttons), larger `text-base` month title, Today button gains a crosshair icon; legend dots enlarged with soft ring halos and solid `-600/-500` colors. Weekday header: bolder uppercase `tracking-widest`, weekend columns (Sun/Sat) dimmed. Day cells: min-height `96px`→`112px`, right border removed on every 7th cell (`[&:nth-child(7n)]:border-r-0`), subtle weekend tint, `hover:bg-primary/[0.04]`, **today** cell highlighted via inset primary ring + tint, date number rendered as a rounded badge (solid primary for today), per-day event **count badge** revealed on cell hover. Event chips: `rounded-md` with `shadow-sm` + hover lift (`-translate-y-px`, `shadow-md`, `brightness-110`). Skeletons updated to match. `npx tsc --noEmit` → 0 errors.
+
+### Session 7 — 2026-06-04 — UI — Uniform form fields on the Ticket Type form (FE only)
+
+- **Scope**: Make every input on the **Add/Edit/Duplicate Ticket Type** form (`eventticketing/ticket-form-card.tsx`) use the app-wide canonical form-field components, matching the Contact-create form reference, per [[reuse-canonical-form-fields]]. The form previously hand-rolled each field with raw `Input`/`Select`/`Textarea` primitives wrapped in local `SectionLabel` + `FieldError` helpers + per-field `Controller`s.
+- **Files touched**:
+  - BE / DB: None.
+  - FE:
+    - `eventticketing/ticket-form-card.tsx` —
+      - Imports: dropped `Input`/`Label`/`Select*`/`Textarea` from `common-components` (kept `Button`/`Skeleton`/`Switch`); added `FormDatePicker`/`FormInput`/`FormSelect`/`FormTextarea` (+ `SelectOption` type) from `@/presentation/components/custom-components/form-fields`.
+      - Removed the local `SectionLabel` and `FieldError` helpers (the canonical components render their own label + RHF error text) and dropped the now-unused `errors` from `formState`.
+      - Added three `useMemo` `SelectOption[]` adapters: `pricingTypeOptions` / `visibilityOptions` (MasterData → `{value: masterDataId, label: dataName}`) and `currencyOptions` (`{value: currencyId, label: "CODE — Name"}`).
+      - Field conversions (all RHF `control`-bound, so field names + zod schema unchanged): Ticket Name → `FormInput`; Pricing Type / Currency / Visibility → `FormSelect` (searchable, `loading` wired to each query); Description → `FormTextarea`; Price / Group Size / Qty Available / Min·Max Per Order → `FormInput type="number"`; **Sale Start/End Date** → `FormDatePicker` (replaces native `type="date"` inputs). The discount toggle stays a `Switch` (no canonical FormSwitch exists); the conditional Discount Code input is now a label-less `FormInput`.
+      - Schema: `saleStartDate`/`saleEndDate` gained `.nullable()` (the `FormDatePicker` emits `null` on clear; `onSubmit` + the cross-field refines already treat falsy as "no date", and `dateFormat="yyyy-MM-dd"` matches the existing `.slice(0,10)` prefill + ISO writeback).
+- **Deviations from spec**: None. Field set, labels, validation, and the create/update payload are unchanged — this is a component-uniformity refactor only.
+- **Known issues opened / closed**: None.
+- **Runtime fix (same session)**: "Add Ticket" click threw `Cannot destructure property 'getFieldState' of useFormContext(...) as it is null`. The canonical `FormLabel`/`FormControl`/`FormItem` read `useFormContext()` via `useFormField`, which is `null` without a `FormProvider`. The old bare `Controller` fields didn't need one; the `Form*` components do. Fix: captured the full `useForm()` return as `form` (still destructuring `control`/`handleSubmit`/etc. from it) and wrapped the `<form>` element in `<Form {...form}>` (the `FormProvider` re-export from `common-components`), mirroring the Contact reference (`parent-form.tsx:665`).
+- **Verification**: FE `npx tsc --noEmit` → **0 errors** in `ticket-form-card.tsx`. Runtime (open an event → Tickets → Add/Edit ticket; form renders, dropdowns searchable, date pickers open calendars, save round-trips) to be confirmed by user with `pnpm dev`.
+
+#### Follow-up enhancements (same session — all FE, `ticket-form-card.tsx`)
+
+- **Helper text on confusing fields**: added `helperText` to Pricing Type, Qty Available, Min/Max Per Order, Visibility, and the Sale Start/End dates so staff understand each field's purpose. Clear/obvious fields (Ticket Name, Description, Price) left without helper text to avoid noise.
+- **Dynamic Group Size label**: the conditional Group Size field now relabels per pricing type — **"Group Size (Table)"** (helper "Seats per table…", placeholder "e.g., 10 seats") when `PER_TABLE`, **"Group Size (Group)"** (helper "People per group…", placeholder "e.g., 5 people") when `PER_GROUP`. Computed via `isPerTable`/`groupSizeLabel`/`groupSizeHelper`/`groupSizePlaceholder` right after `needsGroupSize`.
+- **Currency locked to org base currency (#75)**: removed the `CURRENCIES_QUERY` dropdown entirely. Currency now reads from the **company session settings store** (`useCompanySettingsSession` → `baseCurrencyId` / `baseCurrencyCode` / `baseCurrencyName`); `currencyOptions` is a single derived option (`"CODE — Name"`) so the disabled select always displays it (the earlier "value not displayed" bug was the async currencies list not resolving the label). The `<FormSelect name="currencyId">` is now `disabled` with helper "Set by your organization's base currency — applies to all tickets." `currencyId` is seeded to `baseCurrencyId` on add **and** edit/duplicate prefill (`baseCurrencyId || t.currencyId`), so every ticket bills in the tenant currency. Payload unchanged (`currencyId`).
+- **Sale-window validation against event start (UX)**: the zod schema is now built per-event via `buildTicketSchema(eventBounds)` (base object `ticketBaseSchema` + `.refine()` chain; `TicketFormData` inferred from the base). The form fetches the event via `EVENT_BY_ID_QUERY` (`cache-first`) to derive `eventBounds = { startMs, startLabel }` (tenant-formatted via `formatDate`), `useMemo`'d into the resolver — RHF 7.72 reassigns `control._options` each render so the rebuilt resolver takes effect once the event loads. New rules + inline messages: **Sale Start** must be before the event start (`Sales must open before the event starts (<date>)`); **Sale End** must be before the event start (`Sales must close before the event starts (<date>)`); **Sale End ≥ Sale Start** (relaxed from `>` to `>=` to allow a one-day window); plus an added **Max Per Order ≤ Qty Available** rule. Sale-date `helperText` also now names the event start date so the rule is visible before submit.
+- **Event context banner**: a slim strip between the form header and body shows the selected event's **name (+ code), date range (start → end), and venue** (or virtual platform when `eventModeCode === "VIRTUAL"`) — gives staff context for which event they're ticketing and surfaces the start date the sale window validates against. Skeleton while the event loads.
+- **Verification**: FE `npx tsc --noEmit` → **0 errors** in `ticket-form-card.tsx` after each change.

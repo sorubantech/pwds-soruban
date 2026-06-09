@@ -9,7 +9,8 @@ complexity: High
 new_module: NO — uses existing `app` schema / ApplicationModels group (DbContext=ContactDbContext per Event #40 precedent)
 planned_date: 2026-04-20
 completed_date: 2026-04-21
-last_session_date: 2026-04-21
+last_session_date: 2026-06-09
+spec_revision: 2026-06-08 — adds nullable EventTicket.EventTemplateId FK + per-ticket "Ticket Template" selector in the Card 3 form. Depends on #176 EventTicketTemplate (provides the `app.EventTicketTemplates` table + `eventTicketTemplates` GQL query). BUILT 2026-06-09 (Session 3 — ISSUE-21 CLOSED) once #176 BE landed; BE compiles 0-err, FE tsc 0-err. EF migration for the new column/FK is user-run. See §⑫ "SPEC REVISION 2026-06-08" block + §⑬ Session 3.
 ---
 
 ## Tasks
@@ -106,6 +107,7 @@ Business: Event Ticketing is a single-page **configuration console** for one Eve
 | MaxPerOrder | int | — | NO | — | Default 10 |
 | VisibilityId | int | — | YES | com.MasterDatas | typeCode=`EVENTTICKETVISIBILITY` (PUBLIC / HIDDEN / PASSWORD) |
 | DiscountCode | string | 50 | NO | — | Optional promo code |
+| EventTemplateId | int | — | NO | app.EventTicketTemplates | **#46 SPEC REVISION 2026-06-08** — per-ticket ticket/receipt template (chosen in Card 3 form). **Nullable.** FK → #176 `EventTicketTemplate.EventTicketTemplateId`. Intra-context (both in `app`/ContactDbContext), so a plain EF FK + navigation. NULL = no template assigned (delivery resolves no artifact). |
 | StatusId | int | — | YES | com.MasterDatas | typeCode=`EVENTTICKETSTATUS` (ONSALE / SOLDOUT / PAUSED / EXPIRED) |
 | SortOrder | int | — | NO | — | Display order within event (default 0) |
 
@@ -195,6 +197,9 @@ Business: Event Ticketing is a single-page **configuration console** for one Eve
 | StatusId (EventTicket) | MasterData (typeCode=EVENTTICKETSTATUS) | `…/ComModels/MasterData.cs` | `GetMasterDataByTypeCode` | MasterDataName | MasterDataResponseDto |
 | StatusId (EventRegistration) | MasterData (typeCode=EVENTREGSTATUS) | `…/ComModels/MasterData.cs` | `GetMasterDataByTypeCode` | MasterDataName | MasterDataResponseDto |
 | QuestionTypeId | MasterData (typeCode=EVENTQUESTIONTYPE) | `…/ComModels/MasterData.cs` | `GetMasterDataByTypeCode` | MasterDataName | MasterDataResponseDto |
+| EventTemplateId (EventTicket) | EventTicketTemplate (**#176**) | `PSS_2.0_Backend/.../Base.Domain/Models/ApplicationModels/EventTicketTemplate.cs` | `eventTicketTemplates` (paginated list — use for the selector; filter to ACTIVE status) | EventTicketTemplateName | EventTicketTemplateResponseDto |
+
+**Note on EventTemplateId FK (added 2026-06-08)**: This FK targets the **#176 EventTicketTemplate** entity, which must exist before #46's revised build compiles. Both entities live in `app` schema / `ContactDbContext`, so this is an ordinary intra-context EF FK with a navigation property — no cross-DbContext plumbing. The Card 3 selector sources its options from the `eventTicketTemplates` query (NOT a MasterData lookup). If #176 is not yet built, the BE FK + FE selector are blocked — see ISSUE-21.
 
 **Note on Event query**: The existing query is `getEvents` (GraphQL field name — lowercase `g`), NOT the standard `GetAllEventList`. Returns `PaginatedApiResponse<IEnumerable<EventResponseDto>>`. Event display uses `shortDescription` (there is **no `EventName` field** on the Event entity). The event-selector dropdown in this screen must use `getEvents` and render `shortDescription` as the label.
 
@@ -213,6 +218,7 @@ Business: Event Ticketing is a single-page **configuration console** for one Eve
 **Required Field Rules (EventTicket):**
 - TicketName, EventId, PricingTypeId, CurrencyId, Price, QuantityAvailable, VisibilityId, StatusId are mandatory
 - `GroupSize` REQUIRED when `PricingTypeId` resolves to PER_TABLE or PER_GROUP
+- `EventTemplateId` is **OPTIONAL/nullable** (added 2026-06-08). When set, it must reference an existing, non-deleted `EventTicketTemplate` for the same Company (validate via `ValidateForeignKeyRecord`). When NULL, the ticket has no assigned receipt/ticket artifact and delivery resolves nothing. Editing/removing the selection just nulls the FK — no cascade.
 
 **Required Field Rules (EventRegistration):**
 - EventId, EventTicketId, RegistrantName, RegistrantEmail, Quantity, TotalAmount, StatusId mandatory
@@ -441,6 +447,7 @@ Rendered only when `ticketFormOpen === true`. Header shows "Add Ticket Type" or 
 | 5 | — | (Order limits) | 2-column | always expanded | MinPerOrder, MaxPerOrder |
 | 6 | — | Benefits | full-width | always expanded | Benefits checklist (dynamic) |
 | 7 | — | (Visibility + Discount) | 2-column | always expanded | Visibility, Discount Code (toggle + input) |
+| 7b | 🎟️ | Ticket Template *(SPEC REVISION 2026-06-08)* | full-width | always expanded | EventTemplate selector (optional, single select) |
 | 8 | — | (Action row) | flex-end | — | [Cancel] [Save Ticket Type] |
 
 **Field Widget Mapping**:
@@ -460,6 +467,7 @@ Rendered only when `ticketFormOpen === true`. Header shows "Add Ticket Type" or 
 | Benefits[] | 6 | **checklist widget** (dynamic array) | — | — | Each row: checkbox + text + remove; [+ Add Benefit] link at bottom; `IsIncluded` bool + `BenefitText` string per row |
 | VisibilityId | 7 | select (MasterData EVENTTICKETVISIBILITY) | — | required | Options: Public / Hidden / Password protected |
 | DiscountCode | 7 | **toggle + text** | "e.g., EARLYVIP20" | max 50 | Input hidden unless toggle on |
+| EventTemplateId | 7b | select (Select/ApiSelect from `eventTicketTemplates`) | "Select a ticket / receipt template (optional)" | optional | **#46 SPEC REVISION 2026-06-08** — per-ticket template. Options from **#176 EventTicketTemplate** list (ACTIVE only); label = `eventTicketTemplateName`, value = `eventTicketTemplateId`. Include a "— None —" clear option (nulls the FK). On patch, set both `eventTemplateId` + display `eventTemplateName` per [[feedback_fk_picker_must_patch_display_fields]]. Optional inline "Preview" link can open the chosen template (reuses #176's iframe preview) — mark SERVICE-optional, not required for this revision. |
 
 **Special Form Widgets**:
 
@@ -859,13 +867,14 @@ GridCode: EVENTTICKETING
 | getEventRegistrationById | EventRegistrationResponseDto | eventRegistrationId |
 | getAllEventCustomQuestionList | [EventCustomQuestionResponseDto] | eventId |
 | getEventSettingByEventId | EventSettingResponseDto | eventId (returns default row if not present) |
+| eventTicketTemplates *(from #176)* | [EventTicketTemplateResponseDto] | request: { pageSize, pageIndex, … } — **reused** by the Card 3 template selector; filter to ACTIVE. Do NOT re-declare this query; import #176's existing GQL per [[feedback_reuse_canonical_gql_query]]. |
 
 **Mutations:**
 
 | GQL Field | Input | Returns |
 |-----------|-------|---------|
-| createEventTicket | EventTicketRequestDto (with benefits[]) | int |
-| updateEventTicket | EventTicketRequestDto | int |
+| createEventTicket | EventTicketRequestDto (with benefits[] + **nullable `eventTemplateId`** — SPEC REVISION 2026-06-08) | int |
+| updateEventTicket | EventTicketRequestDto (incl. **nullable `eventTemplateId`**) | int |
 | deleteEventTicket | eventTicketId | int (fails if soldCount > 0) |
 | toggleEventTicket | eventTicketId | int (IsActive toggle) |
 | pauseEventTicket | eventTicketId | int (Status ONSALE→PAUSED) |
@@ -907,6 +916,8 @@ GridCode: EVENTTICKETING
 | visibilityId | number | FK |
 | visibilityCode | string | — |
 | discountCode | string \| null | — |
+| **eventTemplateId** | number \| null | **SPEC REVISION 2026-06-08** — FK → EventTicketTemplate (#176); nullable |
+| **eventTemplateName** | string \| null | **SPEC REVISION 2026-06-08** — projected from `EventTicketTemplate.EventTicketTemplateName` (join); response-only display field — add to FE `toRequest()` discard list per [[feedback_response_only_fields_leak_into_request]] |
 | statusId | number | FK |
 | statusCode | string | ONSALE / SOLDOUT / PAUSED / EXPIRED |
 | statusName | string | — |
@@ -1054,6 +1065,24 @@ GridCode: EVENTTICKETING
 
 > **Consumer**: All agents — things that are easy to get wrong.
 
+**🔶 SPEC REVISION 2026-06-08 — EventTicket.EventTemplateId FK + Card 3 template selector (PENDING BUILD):**
+- This is a **delta on the already-COMPLETED #46 build** — only the items below are new. Everything else in this prompt is already built (see §⑬ Sessions 1–2). Do NOT regenerate the existing 5-entity stack.
+- **Dependency gate**: #176 **EventTicketTemplate** must be built FIRST. It creates `app.EventTicketTemplates` (the FK target) and exposes the `eventTicketTemplates` GQL query (the selector's option source). If #176 is not yet `COMPLETED`, this revision is blocked — see ISSUE-21.
+- **BE delta** (minimal surface):
+  - Add nullable `EventTemplateId` (int?) + `EventTicketTemplate` navigation to `EventTicket.cs`.
+  - `EventTicketConfiguration.cs`: configure the FK (`OnDelete(DeleteBehavior.SetNull)` or `Restrict` — do NOT cascade; nulling on template delete is preferred).
+  - `EventTicketSchemas.cs`: add `EventTemplateId` (nullable) to **Request** DTO; add `EventTemplateId` + projected `EventTemplateName` to **Response** DTO.
+  - `CreateEventTicket` / `UpdateEventTicket`: map the new field; `ValidateForeignKeyRecord` only when non-null.
+  - `GetAllEventTicket` / `GetEventTicketById`: project `EventTemplateName` via the `EventTicketTemplate` join.
+  - **No new endpoints, no new commands/queries** — the selector reuses #176's `eventTicketTemplates` query.
+- **FE delta** (minimal surface):
+  - `ticket-form-card.tsx`: add the §⑥ section **7b** "Ticket Template" selector (single-select, optional, with a "— None —" clear option). Source options from #176's existing `eventTicketTemplates` query (filter ACTIVE). On select, patch BOTH `eventTemplateId` + `eventTemplateName` ([[feedback_fk_picker_must_patch_display_fields]]).
+  - `EventTicketDto.ts`: add `eventTemplateId: number | null` + `eventTemplateName: string | null`.
+  - `EventTicketMutation.ts` request mapper / `toRequest()`: include `eventTemplateId`; **discard** `eventTemplateName` (response-only) per [[feedback_response_only_fields_leak_into_request]] and strip `__typename` per [[feedback_apollo_typename_strip_on_round_trip]].
+  - Optional (nice-to-have, not required): an inline "Preview" affordance that opens the chosen template using #176's iframe preview component.
+- **Migration**: a NEW migration adds the `EventTemplateId` column + FK to `app.EventTickets`. **User runs it manually** per [[feedback_user_creates_migrations]] — agent only makes entity/config changes that compile. (Bundle with #176's migration if both are built in the same pass.)
+- **Out of scope (unchanged)**: delivery (payment-success → email with the rendered template) remains a SERVICE_PLACEHOLDER / separate feature. This revision only persists the *mapping* (which template a ticket uses).
+
 **NON-STANDARD FLOW PATTERN:**
 - This FLOW screen is a **single-page composite configuration screen**, NOT the standard 3-mode grid→form→detail workflow.
 - There is **NO `view-page.tsx` with `?mode=new|edit|read`**. All CRUD happens inline within the main page.
@@ -1144,6 +1173,7 @@ Full UI must be built (buttons, forms, modals, panels, cards, interactions). Onl
 | ISSUE-18 | S1 | LOW | BE | Tenant scoping via `Event.CompanyId = HttpContext.CompanyId` NOT added to queries (matches existing Event query precedent — also unscoped). Follow-up: add company scoping across all Event-family queries together in a single cross-cutting refactor. | OPEN |
 | ISSUE-19 | S1 | LOW | FE | Event selector uses shadcn `<Select>` (not `ApiSelectV2`). ApiSelectV2 is RJSF-schema-tied; page header is not RJSF-driven. Fed from `EVENTS_QUERY` (pageSize=100, sorted by StartDate desc). Label `shortDescription \|\| eventName`. Acceptable deviation. | OPEN |
 | ISSUE-20 | S1 | LOW | FE | In entity-operations.ts, `EVENTREG`/`EVENTCQ`/`EVENTSETTING` map unused slots (e.g., `toggle` on EventSetting) to safe no-op mutations. This screen calls mutations directly rather than through the operations registry, so the mapping mismatch is not user-visible. Clean up if other screens start consuming these ops. | OPEN |
+| ISSUE-21 | Spec-rev 2026-06-08 | HIGH | BE/FE/DB | **SPEC REVISION:** add nullable `EventTicket.EventTemplateId` FK → #176 EventTicketTemplate + per-ticket "Ticket Template" selector in Card 3 (§⑥ section 7b). BE: entity field + EF config FK (SetNull, no cascade) + Request/Response DTO fields + Create/Update mapping + GetAll/GetById projection of `EventTemplateName`; FE: section-7b selector sourced from #176 `eventTicketTemplates` query + DTO fields. Migration is user-run. | CLOSED (session 3) — built 2026-06-09 once #176 BE landed (entity/config/schemas/seed all present). BE temp-build 0 errors; FE tsc 0 errors. EF migration (new `EventTemplateId` column + FK) is user-run per [[feedback_user_creates_migrations]]. |
 
 ### § Sessions
 
@@ -1182,3 +1212,49 @@ Full UI must be built (buttons, forms, modals, panels, cards, interactions). Onl
 - **Known issues closed**: ISSUE-1, ISSUE-2, ISSUE-3, ISSUE-4, ISSUE-7, ISSUE-8, ISSUE-12, ISSUE-13, ISSUE-14, ISSUE-15 (10 resolved).
 - **Testing Agent validation (2026-04-21)**: All 10 checks PASS — FK & DbContext registration, handler/endpoint wiring, DTO field alignment, GQL query/mutation alignment, Variant B compliance (`ScreenHeader` imported, no `FlowDataTable` page shell, empty state + 6 cards conditionally rendered), cell renderer triple-registration, UI uniformity (0 inline hex / 0 inline px / 0 raw "Loading..."), route stub replaced, DB seed idempotent + counts correct.
 - **Next step**: N/A (COMPLETED). User must: (a) run `dotnet ef migrations add AddEventTicketingEntities -c ApplicationDbContext` + `dotnet ef database update`; (b) execute `sql-scripts-dyanmic/EventTicketing-sqlscripts.sql`; (c) run E2E per §⑪ acceptance criteria.
+
+### Session 2 — 2026-06-04 — UI — COMPLETED
+
+- **Scope**: Premium UI polish pass across the whole screen — solid accent icon chips (bg-primary + white foreground), full-solid status/reg badges, info-pill refinement, removal of unwanted top whitespace above the title, full responsive coverage (xs→xl), and conversion of the entire icon set from Phosphor (`ph:*`) to Lucide (`lucide:*`) via Iconify.
+- **Files touched**:
+  - BE: None
+  - FE (all under `components/page-components/crm/event/eventticketing/`):
+    - `index.tsx` — root wrapper dropped `py-4 sm:py-6` (the top gap above the title) → `gap-3 overflow-x-hidden sm:gap-4` to match the canonical Auction Management sibling shell; empty-state icon → solid primary rounded-2xl chip (white icon); responsive paddings/gaps.
+    - `summary-bar.tsx` — StatTile icon chips `bg-primary/10 text-primary` → solid `bg-primary text-primary-foreground` w/ shadow; reg-status pill → full-solid (`bg-emerald-600/red-600 text-white`); calendar/venue info pills given border + accent icon; tile grid responsive (`grid-cols-2 sm:grid-cols-4`).
+    - `ticket-types-card.tsx` — STATUS_STYLES pills → full-solid (emerald-600/amber-500/slate-500/slate-400 + white); card-header icon → solid chip; delete AlertDialog title → solid destructive chip; card → `rounded-xl shadow-sm`; responsive header padding.
+    - `ticket-form-card.tsx` — header icon → solid chip (now mode-aware: pencil/copy/circle-plus); event-context lead icon → solid mini-chip; Benefits section icon → solid chip; card → `rounded-xl ring-1 ring-primary/5 shadow`.
+    - `public-preview-card.tsx` — header icon → solid chip; banner-placeholder icon → solid chip; card → `rounded-xl shadow-sm`; URL hint hidden until `lg`.
+    - `registrants-card.tsx` — header icon → solid chip; cancel AlertDialog title → solid destructive chip; card → `rounded-xl shadow-sm`; responsive header padding.
+    - `registrant-edit-modal.tsx` — dialog title icon → solid chip.
+    - `benefit-checklist-widget.tsx` — icon set converted to Lucide (no structural change).
+    - **Icon set migration**: 58 `ph:*` tokens → `lucide:*` across all 8 files (e.g. `ph:ticket-duotone`→`lucide:ticket`, `ph:warning-duotone`→`lucide:triangle-alert`, `ph:dots-three-vertical-bold`→`lucide:ellipsis-vertical`, `ph:caret-*`→`lucide:chevron-*`, `ph:x-circle-duotone`→`lucide:circle-x`, `ph:spinner-gap/circle-notch`→`lucide:loader-circle`). 0 `ph:` tokens remain. Aligns with the app standard (`ScreenHeader` already uses `lucide:*`). Icons resolve on-demand via `@iconify/react` (no offline bundle).
+  - DB: None
+- **Deviations from spec**: None — purely visual polish within the §⑥ blueprint; no fields, FKs, modes, or flows changed. Shared `ScreenHeader` and shared cell renderers (InlineProgressCell / CheckinToggleCell) intentionally left untouched.
+- **Known issues opened**: None
+- **Known issues closed**: None (this was a polish pass, not a fix for a tracked issue)
+- **Next step**: empty (COMPLETED). Pre-existing OPEN issues from S1 (migration, SERVICE_PLACEHOLDERs, etc.) are unaffected.
+
+### Session 3 — 2026-06-09 — ENHANCE — COMPLETED
+
+- **Scope**: Built the 2026-06-08 SPEC REVISION (ISSUE-21) — integrate #176 EventTicketTemplate into #46 as a nullable per-ticket FK + Card 3 §⑥-7b "Ticket Template" selector. Unblocked because #176's BE (entity `EventTicketTemplate.cs`, EF config, schemas, `EventTicketTemplate-sqlscripts.sql` seed) is now present in the backend. Minimal delta — did NOT regenerate the existing 5-entity stack.
+- **Files touched**:
+  - BE (7 modified):
+    - `Base.Domain/Models/ApplicationModels/EventTicket.cs` — `+ int? EventTemplateId` + `virtual EventTicketTemplate?` nav.
+    - `Base.Infrastructure/Data/Configurations/ApplicationConfigurations/EventTicketConfiguration.cs` — FK `HasOne(EventTicketTemplate).WithMany().HasForeignKey(EventTemplateId).OnDelete(SetNull)` (no cascade — nulls FK on template delete).
+    - `Base.Application/Schemas/ApplicationSchemas/EventTicketSchemas.cs` — `+ EventTemplateId` on Request DTO; `+ EventTemplateName` (projected, response-only) on Response DTO.
+    - `Base.Application/Mappings/ApplicationMappings.cs` — added `.Map(EventTemplateName, src.EventTicketTemplate.EventTicketTemplateName)` to the `EventTicket→EventTicketResponseDto` Mapster config (EF-translates to LEFT JOIN under ProjectToType).
+    - `…/EventTickets/Commands/CreateEventTicket.cs` + `UpdateEventTicket.cs` — `ValidateForeignKeyRecord<EventTicketTemplate,int?>(…)` (helper short-circuits to true when null, so the optional FK passes when unset); Update handler also maps `entity.EventTemplateId = dto.EventTemplateId` in its explicit scalar block (Create uses `Adapt`, auto-mapped).
+    - `…/EventTickets/Queries/GetAllEventTicket.cs` + `GetEventTicketById.cs` — `.Include(x => x.EventTicketTemplate)` for the projection.
+  - FE (4 modified, all in PSS_2.0_Frontend):
+    - `src/domain/entities/contact-service/EventTicketDto.ts` — `+ eventTemplateId?: number|null` (request) + `eventTemplateName?: string|null` (response).
+    - `src/infrastructure/gql-queries/contact-queries/EventTicketQuery.ts` — added `eventTemplateId` + `eventTemplateName` to BOTH the list (`allEventTicketList`) and `eventTicketById` selection sets.
+    - `…/eventticketing/ticket-form-card.tsx` — imported `EVENT_TICKET_TEMPLATES_QUERY` (#176); added `eventTemplateId` to zod schema + INITIAL (default `0` = None); new `templatesQ` query (pageSize 200) + `templateOptions` memo (ACTIVE-only via `statusName==='ACTIVE'`, prepended `{value:0,label:"— None —"}`); edit/duplicate `reset()` seeds `eventTemplateId: t.eventTemplateId ?? 0` (template carries through Duplicate); §⑥ Section 7b `FormSelect` rendered between Section 7 and Actions (solid `lucide:ticket` chip); onSubmit payload maps `eventTemplateId: form.eventTemplateId > 0 ? id : null` (0/None → null).
+  - DB: None this session. (#176's own seed already present; no new MasterData for #46.)
+- **Deviations from spec**: 
+  - Form models "None" as the sentinel value `0` (not `null`) so the shadcn `FormSelect` reliably renders the "— None —" row instead of a blank placeholder; the onSubmit payload coerces `0 → null` so the BE/DB still store NULL. Net contract unchanged.
+  - No explicit `eventTemplateName` display-field patch on select ([[feedback_fk_picker_must_patch_display_fields]] N/A here) — this form has no preview/variant renderer reading `eventTemplateName`; the `FormSelect` shows the option label directly. The request payload is built field-by-field (never from the response DTO), so no `__typename` / response-field-leak round-trip risk either.
+  - Template option list is ACTIVE-only per §⑥; a ticket referencing a since-deactivated template would show the placeholder until reassigned (acceptable, matches spec intent).
+- **Verification**: BE `dotnet build` — the in-place build reported 8 MSB3021/MSB3027 **file-lock** errors only (running Base.API/VS held the output DLLs); a clean rebuild to a temp output dir → **Build succeeded, 0 Errors** (614 pre-existing warnings). FE `npx tsc --noEmit` → **0 errors** (no EventTicket/ticket-form-card diagnostics).
+- **Known issues opened**: None
+- **Known issues closed**: ISSUE-21 (CLOSED session 3).
+- **Next step**: **USER ACTION** — run the EF migration adding the `EventTemplateId` column + FK to `app.EventTickets` (`dotnet ef migrations add AddEventTicketEventTemplateFk -c ApplicationDbContext` then `database update`) per [[feedback_user_creates_migrations]]; then E2E the Card 3 selector (pick a template → Save → reopen Edit shows it; "— None —" → Save stores NULL). Delivery (payment-success → rendered-template email) remains a separate SERVICE_PLACEHOLDER feature, out of scope.

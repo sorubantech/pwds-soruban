@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Event Management — Knowledge Transfer</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root{
+    --rose:#db2777; --rose-600:#db2777; --rose-700:#be185d; --rose-50:#fdf2f8;
+    --ink:#0f172a; --slate:#475569; --line:#e2e8f0; --bg:#f8fafc;
+    --draft:#d97706; --published:#7c3aed; --live:#16a34a; --completed:#2563eb; --cancelled:#dc2626;
+    --onsale:#16a34a; --soldout:#64748b; --paused:#d97706;
+    --confirmed:#16a34a; --pending:#d97706; --waitlist:#64748b;
+    --red:#dc2626; --green:#16a34a; --amber:#d97706;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink); background:var(--bg); line-height:1.6; font-size:15px;
+  }
+  /* ---------- layout ---------- */
+  .wrap{display:flex; max-width:1180px; margin:0 auto; gap:28px; padding:0 20px;}
+  nav.toc{
+    position:sticky; top:0; align-self:flex-start; height:100vh; overflow:auto;
+    width:230px; flex:none; padding:28px 16px; background:#111827; border-right:1px solid #000;
+  }
+  nav.toc h4{font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:#9ca3af; margin:0 0 10px; padding:0 14px;}
+  nav.toc a{
+    display:block; padding:9px 14px; margin:2px 0; border-radius:8px;
+    color:#d1d5db; text-decoration:none; font-size:14px; font-weight:500;
+  }
+  nav.toc a:hover{background:#fff; color:#111827;}
+  main{flex:1; min-width:0; padding:36px 0 90px;}
+  /* ---------- header ---------- */
+  .hero{
+    background:linear-gradient(135deg,var(--rose-700),var(--rose-600));
+    color:#fff; border-radius:16px; padding:34px 36px; margin-bottom:34px;
+  }
+  .hero h1{margin:0 0 8px; font-size:30px; letter-spacing:-.02em;}
+  .hero p{margin:0; opacity:.94; font-size:16px; max-width:680px;}
+  .hero .tags{margin-top:18px; display:flex; gap:8px; flex-wrap:wrap;}
+  .hero .tags span{background:rgba(255,255,255,.16); padding:5px 12px; border-radius:20px; font-size:12.5px; font-weight:600;}
+  /* ---------- sections ---------- */
+  section{margin-bottom:54px; scroll-margin-top:20px;}
+  h2{
+    font-size:23px; letter-spacing:-.01em; margin:0 0 6px; padding-bottom:10px;
+    border-bottom:2px solid var(--line); display:flex; align-items:center; gap:11px;
+  }
+  h2 .num{
+    background:var(--rose); color:#fff; width:30px; height:30px; border-radius:8px;
+    display:inline-flex; align-items:center; justify-content:center; font-size:15px; flex:none;
+  }
+  h3{font-size:17px; margin:26px 0 10px; color:var(--rose-700);}
+  .lead{color:var(--slate); margin:6px 0 18px; font-size:15.5px;}
+  p{margin:10px 0;}
+  /* ---------- cards ---------- */
+  .card{background:#fff; border:1px solid var(--line); border-radius:12px; padding:20px 22px; margin:16px 0;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  .note{border-left:4px solid var(--rose); background:var(--rose-50); padding:13px 18px; border-radius:0 8px 8px 0; margin:16px 0;}
+  .warn{border-left:4px solid var(--amber); background:#fffbeb; padding:13px 18px; border-radius:0 8px 8px 0; margin:16px 0;}
+  /* ---------- step list ---------- */
+  .steps{list-style:none; padding:0; margin:18px 0; counter-reset:s;}
+  .steps>li{
+    position:relative; padding:14px 18px 14px 58px; margin:10px 0; background:#fff;
+    border:1px solid var(--line); border-radius:10px; counter-increment:s;
+  }
+  .steps>li::before{
+    content:counter(s); position:absolute; left:16px; top:14px; width:28px; height:28px;
+    background:var(--rose); color:#fff; border-radius:50%; display:flex; align-items:center;
+    justify-content:center; font-weight:700; font-size:14px;
+  }
+  .steps>li b{color:var(--rose-700);}
+  /* ---------- tables ---------- */
+  table{width:100%; border-collapse:collapse; margin:14px 0; font-size:13.5px; background:#fff;
+    border:1px solid var(--line); border-radius:10px; overflow:hidden;}
+  th{background:#f1f5f9; text-align:left; padding:10px 12px; font-weight:600; color:var(--ink); font-size:12.5px;
+    text-transform:uppercase; letter-spacing:.03em;}
+  td{padding:10px 12px; border-top:1px solid var(--line); vertical-align:top;}
+  tr:hover td{background:#fafcff;}
+  code{background:#f1f5f9; padding:2px 6px; border-radius:5px; font-size:12.5px; font-family:"SF Mono",Consolas,monospace; color:var(--rose-700);}
+  .req{color:var(--red); font-weight:700;}
+  /* ---------- badges ---------- */
+  .b{display:inline-block; padding:3px 11px; border-radius:20px; font-size:12px; font-weight:700; color:#fff; white-space:nowrap;}
+  .b.draft{background:var(--draft)} .b.published{background:var(--published)} .b.live{background:var(--live)}
+  .b.completed{background:var(--completed)} .b.cancelled{background:var(--cancelled)}
+  .b.onsale{background:var(--onsale)} .b.soldout{background:var(--soldout)} .b.paused{background:var(--paused)}
+  .b.confirmed{background:var(--confirmed)} .b.pending{background:var(--pending)} .b.waitlist{background:var(--waitlist)}
+  /* =================================================================
+     ANIMATED FLOW — the moving event build-and-run pipeline (7 stages)
+  ================================================================= */
+  .stage-wrap{background:#4a044e; border-radius:16px; padding:34px 24px 26px; margin:22px 0; color:#fbe8f4; overflow:hidden;}
+  .stage-wrap h3{color:#f9a8d4; margin-top:0;}
+  .track{position:relative; height:150px; margin:30px 0 12px;}
+  .rail{position:absolute; top:96px; left:3%; right:3%; height:6px; background:rgba(255,255,255,.14); border-radius:4px;}
+  .rail-fill{position:absolute; top:0; left:0; height:100%; width:0; background:linear-gradient(90deg,#f472b6,#fbcfe8);
+    border-radius:4px; animation:fill 28s ease-in-out infinite;}
+  @keyframes fill{
+    0%{width:4%} 10%{width:6%} 12%{width:20%} 22%{width:22%} 24%{width:35%} 34%{width:36%}
+    36%{width:49%} 46%{width:50%} 48%{width:64%} 58%{width:65%} 60%{width:79%} 70%{width:80%}
+    72%{width:96%} 100%{width:96%}
+  }
+  .node{position:absolute; top:74px; transform:translateX(-50%); text-align:center; width:92px;}
+  .node .dot{width:16px; height:16px; border-radius:50%; background:#4a044e; border:3px solid #f472b6; margin:0 auto 8px;
+    box-shadow:0 0 0 4px rgba(244,114,182,.16);}
+  .node .lbl{font-size:11px; font-weight:700; color:#fbcfe8; line-height:1.2;}
+  .node .dt{font-size:10px; color:#f9a8d4; opacity:.85;}
+  .node:nth-child(2){left:4%} .node:nth-child(3){left:19%} .node:nth-child(4){left:34%}
+  .node:nth-child(5){left:49%} .node:nth-child(6){left:64%} .node:nth-child(7){left:79%} .node:nth-child(8){left:96%}
+  .avatar{position:absolute; top:46px; transform:translateX(-50%); animation:travel 28s ease-in-out infinite; z-index:5;}
+  .avatar .face{width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#f472b6,#db2777);
+    display:flex; align-items:center; justify-content:center; font-size:19px; box-shadow:0 6px 16px rgba(0,0,0,.4);
+    border:2px solid #fff;}
+  .avatar .name{margin-top:5px; font-size:10.5px; font-weight:700; color:#fff; background:rgba(0,0,0,.35);
+    padding:1px 7px; border-radius:10px; white-space:nowrap; text-align:center;}
+  @keyframes travel{
+    0%{left:4%} 10%{left:4%} 12%{left:19%} 22%{left:19%} 24%{left:34%} 34%{left:34%}
+    36%{left:49%} 46%{left:49%} 48%{left:64%} 58%{left:64%} 60%{left:79%} 70%{left:79%}
+    72%{left:96%} 100%{left:96%}
+  }
+  .comms{position:relative; min-height:50px; margin-top:8px;}
+  .ping{position:absolute; left:50%; transform:translateX(-50%); top:0; opacity:0;
+    background:#831843; border:1px solid #f472b6; color:#fce7f3; padding:7px 14px; border-radius:20px;
+    font-size:12.5px; font-weight:600; white-space:nowrap; box-shadow:0 4px 14px rgba(0,0,0,.35); text-align:center;}
+  .ping1{animation:show 28s ease-in-out infinite; animation-delay:0s;}
+  .ping2{animation:show 28s ease-in-out infinite; animation-delay:4s;}
+  .ping3{animation:show 28s ease-in-out infinite; animation-delay:8s;}
+  .ping4{animation:show 28s ease-in-out infinite; animation-delay:12s;}
+  .ping5{animation:show 28s ease-in-out infinite; animation-delay:16s;}
+  .ping6{animation:show 28s ease-in-out infinite; animation-delay:20s;}
+  .ping7{animation:show 28s ease-in-out infinite; animation-delay:24s;}
+  @keyframes show{0%,3%{opacity:0; transform:translateX(-50%) translateY(8px)}
+    5%,12%{opacity:1; transform:translateX(-50%) translateY(0)}
+    14%,100%{opacity:0; transform:translateX(-50%) translateY(-8px)}}
+  .legend{display:flex; gap:18px; flex-wrap:wrap; margin-top:18px; font-size:12px; color:#fbcfe8;}
+  .legend b{color:#fff;}
+  .mermaid{background:#fff; border:1px solid var(--line); border-radius:12px; padding:20px; margin:18px 0; text-align:center;}
+  /* ---------- screen-map strip ---------- */
+  .map{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin:18px 0;}
+  @media(max-width:760px){.map{grid-template-columns:1fr 1fr}}
+  .map .m{background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px; text-align:center;}
+  .map .m .ic{font-size:26px;}
+  .map .m h4{margin:8px 0 4px; font-size:14px; color:var(--rose-700);}
+  .map .m p{margin:0; font-size:12.5px; color:var(--slate); line-height:1.45;}
+  .map .m .sn{display:inline-block; margin-top:8px; background:var(--rose-50); color:var(--rose-700);
+    font-size:11px; font-weight:700; padding:2px 9px; border-radius:12px;}
+  /* ---------- print ---------- */
+  @media print{
+    nav.toc{display:none} .wrap{display:block} main{padding:0}
+    .stage-wrap{background:#fff; color:#0f172a; border:1px solid var(--line);}
+    .stage-wrap h3{color:var(--rose-700)} .node .lbl,.node .dt{color:var(--ink)}
+    .avatar,.ping,.legend{display:none} section{page-break-inside:avoid}
+    .hero{background:var(--rose-700)!important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    a{color:var(--ink); text-decoration:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- =================== SIDEBAR =================== -->
+  <nav class="toc">
+    <h4>Contents</h4>
+    <a href="#intro">Overview</a>
+    <a href="#flow">① Start → End Flow</a>
+    <a href="#diagram">② Live Flow + Example</a>
+    <a href="#tests">③ Test Cases</a>
+    <a href="#data">④ Entity Tables</a>
+  </nav>
+
+  <!-- =================== MAIN =================== -->
+  <main>
+
+    <div class="hero" id="intro">
+      <h1>Event Management — Knowledge Transfer</h1>
+      <p>How an event goes from an empty draft to a published, ticket-selling, check-in-ready event — across four screens that snap together — explained simply so a new team member can start testing on day one.</p>
+      <div class="tags">
+        <span>Module: CRM · Events</span>
+        <span>Event #40 · Ticketing #46</span>
+        <span>Ticket Template #176</span>
+        <span>Reg Page #169</span>
+        <span>+ Payment Gateways</span>
+      </div>
+    </div>
+
+    <p class="lead">
+      <b>What is it?</b> Event Management is how the NGO runs real-world and virtual events — a charity gala, a walkathon, a webinar.
+      An organiser <b>creates the event</b> (what, when, where), <b>adds the tickets</b> people can buy, <b>designs the e-ticket</b> attendees receive,
+      <b>publishes a public registration page</b>, and then watches <b>registrations and payments</b> come in — right up to <b>checking guests in</b> at the door
+      and <b>closing the event</b>. It is not one screen but <b>four that work as a chain</b>, with payment gateways handling the money for paid tickets.
+    </p>
+    <p class="lead">This guide has only four parts: <b>① the flow</b>, <b>② a live animated example</b>, <b>③ the test cases</b>, and <b>④ the data tables</b>. Nothing else to memorise.</p>
+
+    <div class="map">
+      <div class="m"><div class="ic">📅</div><h4>Event</h4><p>The core event — name, date, venue, mode, organiser.</p><span class="sn">Screen #40</span></div>
+      <div class="m"><div class="ic">🎫</div><h4>Ticketing</h4><p>Ticket types &amp; prices + the people who registered.</p><span class="sn">Screen #46</span></div>
+      <div class="m"><div class="ic">🎨</div><h4>Ticket Template</h4><p>The e-ticket / receipt design attendees receive.</p><span class="sn">Screen #176</span></div>
+      <div class="m"><div class="ic">🌐</div><h4>Registration Page</h4><p>The public page where attendees sign up &amp; pay.</p><span class="sn">Screen #169</span></div>
+    </div>
+
+
+    <!-- ============================================================
+         SECTION 1 — START TO END FLOW
+    ============================================================ -->
+    <section id="flow">
+      <h2><span class="num">1</span> The Flow — Start to End</h2>
+      <p class="lead">An event has its own <b>5-status lifecycle</b>, but reaching "live" means building the chain across all four screens first.</p>
+
+      <h3>The event's five statuses</h3>
+      <table>
+        <tr><th>Status</th><th>Meaning</th><th>What moves it on</th></tr>
+        <tr><td><span class="b draft">Draft</span></td><td>Being built. Not visible to the public, can't take registrations.</td><td>Fill required fields → <b>Save &amp; Publish</b></td></tr>
+        <tr><td><span class="b published">Published</span></td><td>Live and visible. The registration page is open and tickets can sell.</td><td>The start date arrives</td></tr>
+        <tr><td><span class="b live">In Progress</span></td><td>The event is happening right now. Check-in is active.</td><td><i>Derived</i> — never a stored value</td></tr>
+        <tr><td><span class="b completed">Completed</span></td><td>Finished. Read-only; feeds post-event analytics.</td><td>Terminal (after <b>Complete Event</b>)</td></tr>
+        <tr><td><span class="b cancelled">Cancelled</span></td><td>Called off. No registrations processed.</td><td>Terminal (needs a <b>Cancellation Reason</b>)</td></tr>
+      </table>
+
+      <div class="warn">
+        <b>⚠ Two things testers always trip on.</b>
+        <b>① "In Progress" is calculated, never saved</b> — the event shows In&nbsp;Progress automatically when <code>now</code> is between Start and End dates and it is Published. You won't find it as a stored status.
+        <b>② Cancelled &amp; Completed are dead ends</b> — once there, an event can't go back. Cancelling <span class="req">requires a Cancellation Reason</span>.
+      </div>
+
+      <h3>The journey in plain words (across the four screens)</h3>
+      <ol class="steps">
+        <li><b>Create the event.</b> <span class="b draft">#40</span> Organiser clicks <b>+ New Event</b>, fills name, mode (In-person / Virtual / Hybrid), category, org unit, dates &amp; venue, then <b>Saves as Draft</b>. System auto-stamps a code (<code>GALA-2026</code>).</li>
+        <li><b>Add the tickets.</b> <span class="b draft">#46</span> On the Ticketing screen the organiser defines <b>ticket types</b> — e.g. "VIP Table" $5,000, "Standard Seat" $250 — each with a price, quantity and sale window.</li>
+        <li><b>Design the e-ticket.</b> <span class="b draft">#176</span> A reusable <b>Ticket Template</b> (built in the rich-text editor) decides what the e-ticket / receipt looks like, using merge fields like <code>{{RegistrantName}}</code> and <code>{{EventName}}</code>. Each ticket type can point at one.</li>
+        <li><b>Configure &amp; publish the page.</b> <span class="b published">#169</span> The <b>Registration Page</b> gets a public <b>slug</b> (<code>/event/charity-gala-2026</code>), branding, and a payment gateway for paid tickets. Publishing flips the event to <span class="b published">Published</span> and the page to <b>Active</b>.</li>
+        <li><b>Attendees register &amp; pay.</b> A visitor lands on the public page, picks tickets, fills the form, and pays through the gateway. Each purchase creates an <b>EventRegistration</b> and sends the e-ticket.</li>
+        <li><b>Run the event.</b> <span class="b live">In&nbsp;Progress</span> On the day, staff use <b>QR check-in</b> to mark attendees as arrived.</li>
+        <li><b>Close it.</b> <span class="b completed">#40</span> <b>Complete Event</b> locks everything read-only and opens post-event analytics.</li>
+      </ol>
+
+      <h3>Event lifecycle state diagram</h3>
+      <pre class="mermaid">
+stateDiagram-v2
+    direction LR
+    [*] --> Draft: + New Event
+    Draft --> Published: Save &amp; Publish (all required fields)
+    Published --> InProgress: now between Start &amp; End (derived)
+    InProgress --> Completed: Complete Event
+    Published --> Completed: Complete Event
+    Published --> Cancelled: Cancel (needs Reason)
+    Draft --> Cancelled: Cancel (needs Reason)
+    Completed --> [*]
+    Cancelled --> [*]
+      </pre>
+
+      <h3>Two smaller cycles a tester must know</h3>
+      <div class="grid2">
+        <div class="card">
+          <h4 style="margin-top:0; color:var(--rose-700)">A registration's life (#46 / #169)</h4>
+          <p style="color:var(--slate); font-size:14px; margin-top:4px">What happens to one attendee after they hit "Register".</p>
+          <pre class="mermaid">
+stateDiagram-v2
+    direction LR
+    [*] --> Pending: free + needs approval
+    [*] --> PendingPayment: paid ticket
+    PendingPayment --> Confirmed: gateway success
+    Pending --> Confirmed: admin approves
+    [*] --> Waitlist: over capacity
+    Waitlist --> Confirmed: a seat frees up
+    Confirmed --> Cancelled: cancel (frees seat)
+    Confirmed --> [*]: checked in
+          </pre>
+        </div>
+        <div class="card">
+          <h4 style="margin-top:0; color:var(--rose-700)">The registration page's life (#169)</h4>
+          <p style="color:var(--slate); font-size:14px; margin-top:4px">The public page has its own status, separate from the event.</p>
+          <pre class="mermaid">
+stateDiagram-v2
+    direction LR
+    [*] --> PageDraft: configure
+    PageDraft --> PagePublished: Publish
+    PagePublished --> PageActive: open date reached
+    PageActive --> PageClosed: full / end date / event over
+    PageClosed --> PageArchived: Archive
+    PageArchived --> [*]
+          </pre>
+        </div>
+      </div>
+      <div class="note"><b>In plain words:</b> a paid registration sits at <b>Pending Payment</b> until the gateway confirms, then becomes <b>Confirmed</b> and the e-ticket sends. If the ticket type is sold out, the visitor goes to the <b>Waitlist</b> and is promoted when someone cancels. Meanwhile the <b>page</b> auto-flips from Published → Active when its open date arrives, and to Closed when capacity is hit or the event ends.</div>
+    </section>
+
+
+    <!-- ============================================================
+         SECTION 2 — ANIMATED FLOW DIAGRAM WITH EXAMPLE
+    ============================================================ -->
+    <section id="diagram">
+      <h2><span class="num">2</span> Live Flow — Watch One Event</h2>
+      <p class="lead">Follow <b>GALA-2026 — "Annual Charity Gala 2026"</b>, an in-person fundraiser organised by <b>Fatima</b>, with VIP Tables ($5,000) and Standard Seats ($250).
+      Watch it being built across the four screens, go live, take a paid registration from attendee <b>Layla</b>, and finish at check-in. The bubbles are the real communication touchpoints.</p>
+
+      <div class="stage-wrap">
+        <h3>🎟️ GALA-2026 · Annual Charity Gala — from draft to doors open</h3>
+
+        <div class="track">
+          <div class="avatar"><div class="face">🎟️</div><div class="name">GALA-2026</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">CREATE EVENT</div><div class="dt">#40 · 02 Mar</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">ADD TICKETS</div><div class="dt">#46 · 05 Mar</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">E-TICKET TEMPLATE</div><div class="dt">#176 · 07 Mar</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">REG PAGE</div><div class="dt">#169 · 09 Mar</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">PUBLISHED</div><div class="dt">10 Mar</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">REGISTER + PAY</div><div class="dt">18 Mar</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">CHECK-IN · DONE</div><div class="dt">20 Apr</div></div>
+          <div class="rail"><div class="rail-fill"></div></div>
+        </div>
+
+        <div class="comms">
+          <div class="ping ping1">📝 Event drafted — "Annual Charity Gala 2026"</div>
+          <div class="ping ping2">🎫 Tickets added — VIP Table $5,000 · Standard $250</div>
+          <div class="ping ping3">🎨 E-ticket template designed &amp; activated</div>
+          <div class="ping ping4">🌐 Page configured — /event/charity-gala-2026</div>
+          <div class="ping ping5">🚀 Published — registration is now open</div>
+          <div class="ping ping6">💳 Layla registered 2 seats — paid $500 via gateway</div>
+          <div class="ping ping7">✅ Layla checked in — event completed</div>
+        </div>
+
+        <div class="legend">
+          <span>🎟️ <b>GALA-2026</b> = the event moving from draft to done</span>
+          <span>🌸 <b>Nodes</b> = the screen / milestone at each step</span>
+          <span>💬 <b>Bubbles</b> = a message or money moving at that moment</span>
+        </div>
+      </div>
+      <p style="text-align:center; color:var(--slate); font-size:13px;">↑ The animation loops. Each pause = a real step; each bubble = an email, a payment, or a check-in.</p>
+
+      <h3>The same story, step by step</h3>
+      <table>
+        <tr><th>When</th><th>Screen</th><th>What the organiser did</th><th>Communication / money</th><th>Test ref</th></tr>
+        <tr>
+          <td>02 Mar</td><td><span class="b draft">Event #40</span></td>
+          <td>Created the event: name, In-person mode, venue "Grand Hyatt Dubai", dates, org unit. Saved as Draft → code <code>GALA-2026</code>.</td>
+          <td>📝 Internal — draft created</td><td>E1</td>
+        </tr>
+        <tr>
+          <td>05 Mar</td><td><span class="b draft">Ticketing #46</span></td>
+          <td>Added two ticket types: <b>VIP Table</b> $5,000 (10 tables) and <b>Standard Seat</b> $250 (300 seats), each ON SALE.</td>
+          <td>🎫 Tickets defined</td><td>T1 · T2</td>
+        </tr>
+        <tr>
+          <td>07 Mar</td><td><span class="b draft">Template #176</span></td>
+          <td>Built the "Gala E-Ticket" template in the editor with <code>{{RegistrantName}}</code>, <code>{{EventName}}</code>, set it <b>Active</b>, linked it on the Standard ticket.</td>
+          <td>🎨 E-ticket ready</td><td>TT1 · TT2</td>
+        </tr>
+        <tr>
+          <td>09 Mar</td><td><span class="b draft">Reg Page #169</span></td>
+          <td>Set slug <code>/event/charity-gala-2026</code>, brand colours, chose the payment gateway + methods, enabled donations.</td>
+          <td>🌐 Page configured</td><td>RP1 · RP2</td>
+        </tr>
+        <tr>
+          <td>10 Mar</td><td><span class="b published">Published</span></td>
+          <td>Clicked <b>Publish</b>: event → <span class="b published">Published</span>, page → Active, public URL now live.</td>
+          <td>🚀 Registration open</td><td>RP3</td>
+        </tr>
+        <tr>
+          <td>18 Mar</td><td><span class="b published">Public page</span></td>
+          <td>Attendee <b>Layla</b> picked 2 Standard Seats, filled the form, paid <b>$500</b> through the gateway.</td>
+          <td>💳 Paid → Confirmed → e-ticket sent</td><td>P1 · P2 · T5</td>
+        </tr>
+        <tr>
+          <td>20 Apr</td><td><span class="b live">In Progress → Completed</span></td>
+          <td>On gala night staff scanned Layla's QR → checked in. After the event, <b>Complete Event</b> locked it read-only.</td>
+          <td>✅ Checked in · event closed</td><td>T7 · E4</td>
+        </tr>
+      </table>
+
+      <div class="warn">
+        <b>↪ The "payment" branch (test this carefully!).</b> When Layla pays, the registration is created as <span class="b pending">Pending Payment</span> — <b>not</b> Confirmed.
+        It only becomes <span class="b confirmed">Confirmed</span> (and the e-ticket sends) when the <b>gateway callback</b> reports success. If the ticket were sold out, she'd land on the
+        <span class="b waitlist">Waitlist</span> instead. → test <b>P1 · P2 · P3</b>.
+      </div>
+
+      <h3>Communication sequence (who talks to whom)</h3>
+      <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant O as Organiser (Fatima)
+    participant S as Event System
+    participant V as Attendee (Layla)
+    participant G as Payment Gateway
+    O->>S: Create event + tickets + template
+    O->>S: Configure &amp; Publish reg page
+    S-->>V: Public page is live (/event/charity-gala-2026)
+    V->>S: Pick 2 Standard Seats + submit form
+    S->>G: Start payment $500
+    G-->>S: Payment success (callback)
+    S-->>V: Confirmed + e-ticket email
+    V->>S: Show QR at door
+    O->>S: Check in + Complete Event
+      </pre>
+    </section>
+
+
+    <!-- ============================================================
+         SECTION 3 — TEST CASES
+    ============================================================ -->
+    <section id="tests">
+      <h2><span class="num">3</span> Test Cases</h2>
+      <p class="lead">Run these in order — they follow GALA-2026. IDs match the references above. <span class="req">Required</span> fields must block save when empty.</p>
+
+      <h3>Event lifecycle (#40)</h3>
+      <table>
+        <tr><th>ID</th><th>Scenario</th><th>Steps</th><th>Expected result</th></tr>
+        <tr><td>E1</td><td>Create an event</td><td>+ New Event → name, mode, category, org unit, start date → Save as Draft</td><td>Code auto-set <code>GALA-2026</code> (or <code>EVT-NNN</code>), status <span class="b draft">Draft</span>, lands on detail</td></tr>
+        <tr><td>E2</td><td>Required-field &amp; publish guard</td><td>Save &amp; Publish with End date / Venue (in-person) / Capacity missing</td><td>Publish blocked, fields flagged. Venue required only for In-person/Hybrid; virtual URL required for Virtual/Hybrid</td></tr>
+        <tr><td>E3</td><td>Mode toggles fields</td><td>Switch mode In-person → Virtual → Hybrid</td><td>Venue section hides for Virtual; Virtual-meeting section hides for In-person; Hybrid shows both</td></tr>
+        <tr><td>E4</td><td>Complete event</td><td>Published/In-Progress event → Complete Event</td><td>Status <span class="b completed">Completed</span>, fields locked read-only</td></tr>
+        <tr><td>E5</td><td>Cancel guard</td><td>Cancel Event → leave Cancellation Reason empty → confirm</td><td>Blocked — <span class="req">Reason required</span>. With a reason → <span class="b cancelled">Cancelled</span>, terminal</td></tr>
+        <tr><td>E6</td><td>"In Progress" is derived</td><td>Publish an event whose Start ≤ now ≤ End</td><td>Grid/detail show <span class="b live">In&nbsp;Progress</span> automatically — it is never a stored status</td></tr>
+      </table>
+
+      <h3>Ticketing &amp; registrations (#46)</h3>
+      <table>
+        <tr><th>ID</th><th>Scenario</th><th>Steps</th><th>Expected result</th></tr>
+        <tr><td>T1</td><td>Add a ticket type</td><td>Ticketing → Add Ticket → name, pricing type, currency, price, quantity, visibility → Save</td><td>Code <code>EVT-TKT-NNNN</code>, status <span class="b onsale">On Sale</span>, appears in ticket grid</td></tr>
+        <tr><td>T2</td><td>Group pricing guard</td><td>Set pricing type = Per Table/Per Group, leave Group Size empty</td><td>Blocked — <span class="req">Group Size required</span> for table/group pricing</td></tr>
+        <tr><td>T3</td><td>Sale-window rule</td><td>Set Sale End before Sale Start</td><td>Blocked — end must be after start</td></tr>
+        <tr><td>T4</td><td>Auto Sold Out</td><td>Sell tickets until SoldCount = QuantityAvailable</td><td>Status auto-shows <span class="b soldout">Sold Out</span> (computed on read, not stored)</td></tr>
+        <tr><td>T5</td><td>Register an attendee</td><td>Registrants → Add → name, email, ticket, quantity</td><td>Registration <code>EVT-REG-NNNN</code> created; capacity check applies; total amount snapshotted</td></tr>
+        <tr><td>T6</td><td>Waitlist on full</td><td>Register against a sold-out ticket with waitlist enabled</td><td>Registration lands <span class="b waitlist">Waitlist</span>; cancelling a confirmed one promotes the oldest waitlisted</td></tr>
+        <tr><td>T7</td><td>Check-in toggle</td><td>Registrants grid → tick the Check-in box</td><td><code>CheckedIn=true</code>, CheckedInDate stamped; untick clears it</td></tr>
+        <tr><td>T8</td><td>Delete-with-sales guard</td><td>Delete a ticket type that has non-cancelled registrations</td><td>Blocked — must pause/archive instead (can't orphan sold tickets)</td></tr>
+      </table>
+
+      <h3>Ticket template (#176)</h3>
+      <table>
+        <tr><th>ID</th><th>Scenario</th><th>Steps</th><th>Expected result</th></tr>
+        <tr><td>TT1</td><td>Create a template</td><td>+ New Template → name, subject, body with placeholders → Save</td><td>Code <code>EVT-TMPL-NNNN</code>, status <span class="b draft">Draft</span>; live preview renders with sample values</td></tr>
+        <tr><td>TT2</td><td>Placeholder panel scope</td><td>Open the placeholder chips</td><td>Shows only <code>EntityType='EventTicket'</code> tokens (EventName, RegistrantName, TotalAmount, OrderNumber …) — no other entities</td></tr>
+        <tr><td>TT3</td><td>Activate to use it</td><td>Toggle status Draft → Active</td><td>Only <b>Active</b> templates appear in the #46 ticket-form template selector</td></tr>
+        <tr><td>TT4</td><td>Card-grid preview</td><td>Open the template list</td><td>Each card shows an iframe HTML thumbnail; search + status filter work above the grid</td></tr>
+      </table>
+
+      <h3>Registration page &amp; payment (#169 + gateways)</h3>
+      <table>
+        <tr><th>ID</th><th>Scenario</th><th>Steps</th><th>Expected result</th></tr>
+        <tr><td>RP1</td><td>Configure the page</td><td>Reg Page → set slug, colours, template, payment gateway + methods, donation toggle</td><td>Saves on the 1:1 <code>EventRegistrationPages</code> row; slug unique per tenant</td></tr>
+        <tr><td>RP2</td><td>Publish guard</td><td>Publish with no ticket avenue (no capacity &amp; no available ticket) or a Cancelled event</td><td>Blocked by publish validation; needs ≥1 ticket avenue + an OG image + valid dates</td></tr>
+        <tr><td>RP3</td><td>Public page renders</td><td>Visit <code>/event/charity-gala-2026</code> anonymously (right tenant host)</td><td>SSR page renders hero, tickets, form; Draft pages 404, Archived pages 410. Query: <code>getEventRegistrationPageBySlug</code></td></tr>
+        <tr><td>RP4</td><td>Page auto-status</td><td>Page Published with a future open date → wait until open date</td><td>Auto-flips Published → Active; flips to Closed when capacity met / end date passes / event cancelled</td></tr>
+        <tr><td>P1</td><td>Paid registration → pending</td><td>Public page → pick 2 Standard Seats → pay</td><td>Registration created <span class="b pending">Pending Payment</span>; FE redirected to gateway; <b>not</b> Confirmed yet</td></tr>
+        <tr><td>P2</td><td>Gateway callback confirms</td><td>Complete payment at the gateway</td><td><code>confirmEventRegistration</code> flips it <span class="b confirmed">Confirmed</span>; e-ticket (the #176 template) emails to the attendee</td></tr>
+        <tr><td>P3</td><td>Free-ticket flow</td><td>Register for a $0 ticket</td><td>No gateway hop; goes straight to Confirmed (or Pending if approval required) + confirmation email</td></tr>
+      </table>
+
+      <h3>Grid, calendar &amp; KPIs (#40)</h3>
+      <table>
+        <tr><th>ID</th><th>Scenario</th><th>Expected result</th></tr>
+        <tr><td>G1</td><td>KPI cards</td><td>Four widgets: Upcoming Events, Total Registrations / Capacity %, Event Revenue (YTD), Avg Attendance Rate</td></tr>
+        <tr><td>G2</td><td>Status filter chips</td><td>All / Upcoming / In Progress / Completed / Cancelled / Draft each filter the grid with a count badge</td></tr>
+        <tr><td>G3</td><td>List ⇄ Calendar</td><td>Toggle to a month calendar; events show as colour-coded chips by status; click → dashboard</td></tr>
+        <tr><td>G4</td><td>Capacity bar</td><td>"Registered" column shows a progress bar (green ≥70%, amber 40–70%, red &lt;40%)</td></tr>
+        <tr><td>G5</td><td>Row → dashboard</td><td>Clicking a row opens the read-mode dashboard (hero progress + KPIs + ticket table + registrants + check-in mode)</td></tr>
+      </table>
+
+      <div class="note"><b>Placeholders (don't fail these):</b> file/image uploads, QR-code image generation, actual email send (it enqueues + toasts), and revenue/attendance figures that depend on un-built pieces are <b>UI-only</b> on purpose — they render and show a "coming soon" / "queued" toast. That <i>is</i> the pass condition.</div>
+    </section>
+
+
+    <!-- ============================================================
+         SECTION 4 — ENTITY TABLES DESIGN
+    ============================================================ -->
+    <section id="data">
+      <h2><span class="num">4</span> Entity Tables — Data Design</h2>
+      <p class="lead">One core <b>Event</b> (schema <code>app</code>) with a fan of children, plus three sibling tables that power the other screens: <b>EventTickets</b> + <b>EventRegistrations</b> (#46), <b>EventTicketTemplates</b> (#176) and the 1:1 <b>EventRegistrationPages</b> (#169).</p>
+
+      <h3>How the tables relate</h3>
+      <pre class="mermaid">
+erDiagram
+    ORG_UNIT ||--o{ EVENT : "hosts"
+    EVENT ||--|| EVENT_REG_PAGE : "1 : 1 public page"
+    EVENT ||--o{ EVENT_TICKET : "ticket types"
+    EVENT ||--o{ EVENT_REGISTRATION : "attendees"
+    EVENT_TICKET ||--o{ EVENT_REGISTRATION : "sold as"
+    EVENT_TICKET ||--o{ EVENT_TICKET_BENEFIT : "perks"
+    EVENT_TICKET_TEMPLATE ||--o{ EVENT_TICKET : "e-ticket design"
+    EVENT ||--o{ EVENT_SPEAKER : "line-up"
+    EVENT ||--o{ EVENT_CUSTOM_QUESTION : "extra form fields"
+    EVENT ||--|| EVENT_SETTING : "1 : 1 settings"
+    EVENT {
+        int EventId PK
+        string EventCode "GALA-2026"
+        int EventModeId "In-person/Virtual/Hybrid"
+        int EventStatusId "Draft..Cancelled"
+        date StartDate
+    }
+    EVENT_REG_PAGE {
+        int EventRegistrationPageId PK
+        int EventId FK "1:1"
+        string Slug "unique per tenant"
+        string PageStatus "EVENTREGPAGESTATUS"
+        int CompanyPaymentGatewayId FK
+    }
+    EVENT_TICKET {
+        int EventTicketId PK
+        int EventId FK
+        decimal Price
+        int QuantityAvailable
+        int EventTemplateId FK "nullable"
+    }
+    EVENT_REGISTRATION {
+        int EventRegistrationId PK
+        int EventTicketId FK
+        decimal TotalAmount
+        bool CheckedIn
+        int StatusId "Pending..Confirmed"
+    }
+    EVENT_TICKET_TEMPLATE {
+        int EventTicketTemplateId PK
+        string Subject
+        string HtmlContent
+        int StatusId "Draft/Active/Inactive"
+    }
+      </pre>
+
+      <h3>① <code>app.Events</code> — the core (key columns)</h3>
+      <table>
+        <tr><th>Column</th><th>Type</th><th>Req</th><th>Notes</th></tr>
+        <tr><td>EventId</td><td>int</td><td>PK</td><td>Primary key</td></tr>
+        <tr><td>EventCode</td><td>string(50)</td><td class="req">✔</td><td>Auto from name (e.g. <code>GALA-2026</code>), else <code>EVT-NNN</code>; unique per company</td></tr>
+        <tr><td>EventName</td><td>string(200)</td><td class="req">✔</td><td>Display title</td></tr>
+        <tr><td>EventModeId</td><td>int</td><td class="req">✔</td><td>FK → In-person / Virtual / Hybrid</td></tr>
+        <tr><td>EventCategoryId</td><td>int</td><td class="req">✔</td><td>FK → Gala / Walkathon / Webinar …</td></tr>
+        <tr><td>OrganizationalUnitId</td><td>int</td><td class="req">✔</td><td>FK → org unit hosting the event</td></tr>
+        <tr><td>EventStatusId</td><td>int</td><td class="req">✔</td><td>Draft / Published / Completed / Cancelled (In-Progress derived)</td></tr>
+        <tr><td>StartDate / EndDate</td><td>datetime</td><td class="req">✔*</td><td>End &gt; Start; End required to publish</td></tr>
+        <tr><td>TimezoneId</td><td>int?</td><td>—</td><td>Required to publish</td></tr>
+        <tr><td>VenueName / Address</td><td>string?</td><td>—</td><td>Required for In-person / Hybrid</td></tr>
+        <tr><td>VirtualPlatform / VirtualMeetingUrl</td><td>string?</td><td>—</td><td>Required for Virtual / Hybrid</td></tr>
+        <tr><td>Capacity</td><td>int?</td><td>—</td><td>Required if registration required</td></tr>
+        <tr><td>CancellationReason</td><td>string?</td><td>—</td><td>Required <i>at</i> Cancel</td></tr>
+        <tr><td>RelatedCampaignId</td><td>int?</td><td>—</td><td>FK → campaign (revenue attribution)</td></tr>
+        <tr><td>LinkedDonationPurposeId</td><td>int?</td><td>—</td><td>Required if Accept Donations on</td></tr>
+      </table>
+      <p style="color:var(--slate); font-size:13px;">+ ShortDescription, DetailedAgendaHtml, banner/share images, registration window dates, reminder &amp; confirmation toggles, ConfirmationTemplateId.</p>
+
+      <div class="grid2">
+        <div class="card">
+          <h3 style="margin-top:0">② <code>app.EventTickets</code> <span class="b" style="background:var(--rose)">#46</span></h3>
+          <p style="color:var(--slate); font-size:14px">A ticket <b>type</b> for sale (not a person).</p>
+          <table>
+            <tr><th>Column</th><th>Notes</th></tr>
+            <tr><td>EventTicketId</td><td>PK</td></tr>
+            <tr><td>EventId</td><td>FK → parent event</td></tr>
+            <tr><td>TicketName <span class="req">✔</span></td><td>Unique per event</td></tr>
+            <tr><td>PricingTypeId <span class="req">✔</span></td><td>Per Person / Table / Group</td></tr>
+            <tr><td>Price · CurrencyId <span class="req">✔</span></td><td>0 = complimentary</td></tr>
+            <tr><td>QuantityAvailable <span class="req">✔</span></td><td>Drives Sold Out</td></tr>
+            <tr><td>EventTemplateId</td><td>Nullable FK → #176 (SetNull)</td></tr>
+            <tr><td>StatusId</td><td>On Sale / Sold Out / Paused / Expired</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">③ <code>app.EventRegistrations</code> <span class="b" style="background:var(--rose)">#46</span></h3>
+          <p style="color:var(--slate); font-size:14px">One attendee (or guest) who registered.</p>
+          <table>
+            <tr><th>Column</th><th>Notes</th></tr>
+            <tr><td>EventRegistrationId</td><td>PK · code <code>EVT-REG-NNNN</code></td></tr>
+            <tr><td>EventId · EventTicketId <span class="req">✔</span></td><td>What they bought</td></tr>
+            <tr><td>ContactId</td><td>Nullable — guests allowed</td></tr>
+            <tr><td>RegistrantName / Email <span class="req">✔</span></td><td>Denormalised for guests</td></tr>
+            <tr><td>Quantity · TotalAmount <span class="req">✔</span></td><td>Snapshot at purchase</td></tr>
+            <tr><td>CheckedIn · CheckedInDate</td><td>Set on QR check-in</td></tr>
+            <tr><td>StatusId</td><td>Pending / Confirmed / Cancelled / Waitlist</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">④ <code>app.EventRegistrationPages</code> <span class="b" style="background:var(--rose)">#169</span></h3>
+          <p style="color:var(--slate); font-size:14px">The public page config — <b>1:1</b> with the event.</p>
+          <table>
+            <tr><th>Column</th><th>Notes</th></tr>
+            <tr><td>EventRegistrationPageId</td><td>PK</td></tr>
+            <tr><td>EventId <span class="req">✔</span></td><td>FK → event (1:1, cascade)</td></tr>
+            <tr><td>Slug <span class="req">✔</span></td><td>Unique per tenant; in the public URL</td></tr>
+            <tr><td>PageStatus <span class="req">✔</span></td><td>Draft / Published / Active / Closed / Archived</td></tr>
+            <tr><td>PrimaryColorHex / AccentColorHex</td><td>Page branding</td></tr>
+            <tr><td>CompanyPaymentGatewayId</td><td>FK → gateway for paid tickets</td></tr>
+            <tr><td>EnabledPaymentMethodsJson</td><td>UPI / Card / Wallet …</td></tr>
+            <tr><td>OnlineDonationPageId</td><td>FK → links the Donate button</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">⑤ <code>app.EventTicketTemplates</code> <span class="b" style="background:var(--rose)">#176</span></h3>
+          <p style="color:var(--slate); font-size:14px">The reusable e-ticket / receipt design.</p>
+          <table>
+            <tr><th>Column</th><th>Notes</th></tr>
+            <tr><td>EventTicketTemplateId</td><td>PK · code <code>EVT-TMPL-NNNN</code></td></tr>
+            <tr><td>EventTicketTemplateName <span class="req">✔</span></td><td>Display name</td></tr>
+            <tr><td>Subject <span class="req">✔</span></td><td>Ticket-email subject (placeholders ok)</td></tr>
+            <tr><td>HtmlContent <span class="req">✔</span></td><td>TipTap rich HTML body</td></tr>
+            <tr><td>StatusId <span class="req">✔</span></td><td>Draft / Active / Inactive</td></tr>
+            <tr><td>CompanyId</td><td>Company-level (not per-event)</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0">⑥ The smaller event children (all FK → <code>app.Events</code>)</h3>
+        <table>
+          <tr><th>Table</th><th>Purpose</th></tr>
+          <tr><td><code>EventTicketBenefits</code></td><td>The perks listed under a ticket type (FK → EventTicket, cascade)</td></tr>
+          <tr><td><code>EventSpeakers</code></td><td>Speaker roster — name, role, bio, photo</td></tr>
+          <tr><td><code>EventCustomQuestions</code></td><td>Extra registration-form questions (text/dropdown/checkbox …)</td></tr>
+          <tr><td><code>EventSettings</code></td><td><b>1:1</b> per event — registration open, waitlist, approval, reminders, QR check-in</td></tr>
+          <tr><td><code>EventRegistrationFormFields</code></td><td>Which form fields show; FullName + Email auto-seeded &amp; locked</td></tr>
+          <tr><td><code>EventSuggestedAmounts</code></td><td>Donation chips shown during registration</td></tr>
+          <tr><td><code>EventGalleryPhotos</code></td><td>Post-event photo gallery (upload is a placeholder)</td></tr>
+          <tr><td><code>EventCommunicationTriggers</code></td><td>Seeded automation rules (read-only in UI for now)</td></tr>
+        </table>
+      </div>
+
+      <div class="note">
+        <b>Where the money piece lives.</b> Paid tickets route through a <b>Company Payment Gateway</b> (the #10 provider pattern — Braintree / Razorpay / PayU). The registration page holds the <code>CompanyPaymentGatewayId</code> + enabled methods; on submit the system starts a payment, and a <b>gateway callback</b> flips the registration from Pending Payment to Confirmed.
+      </div>
+
+      <h3>Lookup values (MasterData seeds)</h3>
+      <table>
+        <tr><th>Type</th><th>Values</th></tr>
+        <tr><td><code>EVENTSTATUS</code></td><td>Draft · Published · In&nbsp;Progress · Completed · Cancelled <i>(colour per row)</i></td></tr>
+        <tr><td><code>EVENTMODE</code></td><td>In-person · Virtual · Hybrid</td></tr>
+        <tr><td><code>EVENTCATEGORY</code></td><td>Gala · Walkathon · Webinar · Volunteer Drive · Community Gathering · Awards · Workshop · Religious · Other</td></tr>
+        <tr><td><code>EVENTPRICINGTYPE</code></td><td>Per Person · Per Table · Per Group</td></tr>
+        <tr><td><code>EVENTTICKETSTATUS</code></td><td>On Sale · Sold Out · Paused · Expired</td></tr>
+        <tr><td><code>EVENTTICKETVISIBILITY</code></td><td>Public · Hidden · Password</td></tr>
+        <tr><td><code>EVENTREGSTATUS</code></td><td>Pending · Confirmed · Cancelled · Waitlist <i>(+ Pending Payment / Refunded on the public flow)</i></td></tr>
+        <tr><td><code>EVENTQUESTIONTYPE</code></td><td>Text · Dropdown · Checkbox · Radio · Number · Date</td></tr>
+        <tr><td><code>EVENTTEMPLATESTATUS</code></td><td>Draft · Active · Inactive</td></tr>
+        <tr><td><code>EVENTREGPAGESTATUS</code></td><td>Draft · Published · Active · Closed · Archived <i>(UPPERCASE codes)</i></td></tr>
+        <tr><td><code>EVENTREGPAGETEMPLATE</code></td><td>Standard · Image Focus · Video Focus · Minimal</td></tr>
+      </table>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  mermaid.initialize({ startOnLoad:true, theme:'base', securityLevel:'loose',
+    themeVariables:{ primaryColor:'#fdf2f8', primaryBorderColor:'#db2777', primaryTextColor:'#0f172a',
+      lineColor:'#db2777', fontFamily:'-apple-system,Segoe UI,Roboto,sans-serif' } });
+</script>
+</body>
+</html>

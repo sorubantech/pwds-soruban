@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grant Management — Knowledge Transfer</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root{
+    --indigo:#4f46e5; --indigo-600:#4f46e5; --indigo-700:#4338ca; --indigo-50:#eef2ff;
+    --ink:#0f172a; --slate:#475569; --line:#e2e8f0; --bg:#f8fafc;
+    --prospect:#6366f1; --appln:#8b5cf6; --review:#f59e0b; --approved:#22c55e;
+    --active:#0369a1; --reporting:#e11d48; --closed:#64748b; --red:#dc2626; --green:#16a34a; --amber:#d97706;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink); background:var(--bg); line-height:1.6; font-size:15px;
+  }
+  /* ---------- layout ---------- */
+  .wrap{display:flex; max-width:1180px; margin:0 auto; gap:28px; padding:0 20px;}
+  nav.toc{
+    position:sticky; top:0; align-self:flex-start; height:100vh; overflow:auto;
+    width:230px; flex:none; padding:28px 16px; background:#111827; border-right:1px solid #000;
+  }
+  nav.toc h4{font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:#9ca3af; margin:0 0 10px; padding:0 14px;}
+  nav.toc a{
+    display:block; padding:9px 14px; margin:2px 0; border-radius:8px;
+    color:#d1d5db; text-decoration:none; font-size:14px; font-weight:500;
+  }
+  nav.toc a:hover{background:#fff; color:#111827;}
+  main{flex:1; min-width:0; padding:36px 0 90px;}
+  /* ---------- header ---------- */
+  .hero{
+    background:linear-gradient(135deg,var(--indigo-700),var(--indigo-600));
+    color:#fff; border-radius:16px; padding:34px 36px; margin-bottom:34px;
+  }
+  .hero h1{margin:0 0 8px; font-size:30px; letter-spacing:-.02em;}
+  .hero p{margin:0; opacity:.92; font-size:16px; max-width:660px;}
+  .hero .tags{margin-top:18px; display:flex; gap:8px; flex-wrap:wrap;}
+  .hero .tags span{background:rgba(255,255,255,.16); padding:5px 12px; border-radius:20px; font-size:12.5px; font-weight:600;}
+  /* ---------- sections ---------- */
+  section{margin-bottom:54px; scroll-margin-top:20px;}
+  h2{
+    font-size:23px; letter-spacing:-.01em; margin:0 0 6px; padding-bottom:10px;
+    border-bottom:2px solid var(--line); display:flex; align-items:center; gap:11px;
+  }
+  h2 .num{
+    background:var(--indigo); color:#fff; width:30px; height:30px; border-radius:8px;
+    display:inline-flex; align-items:center; justify-content:center; font-size:15px; flex:none;
+  }
+  h3{font-size:17px; margin:26px 0 10px; color:var(--indigo-700);}
+  .lead{color:var(--slate); margin:6px 0 18px; font-size:15.5px;}
+  p{margin:10px 0;}
+  /* ---------- cards ---------- */
+  .card{background:#fff; border:1px solid var(--line); border-radius:12px; padding:20px 22px; margin:16px 0;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  .note{border-left:4px solid var(--indigo); background:var(--indigo-50); padding:13px 18px; border-radius:0 8px 8px 0; margin:16px 0;}
+  .warn{border-left:4px solid var(--amber); background:#fffbeb; padding:13px 18px; border-radius:0 8px 8px 0; margin:16px 0;}
+  /* ---------- step list ---------- */
+  .steps{list-style:none; padding:0; margin:18px 0; counter-reset:s;}
+  .steps>li{
+    position:relative; padding:14px 18px 14px 58px; margin:10px 0; background:#fff;
+    border:1px solid var(--line); border-radius:10px; counter-increment:s;
+  }
+  .steps>li::before{
+    content:counter(s); position:absolute; left:16px; top:14px; width:28px; height:28px;
+    background:var(--indigo); color:#fff; border-radius:50%; display:flex; align-items:center;
+    justify-content:center; font-weight:700; font-size:14px;
+  }
+  .steps>li b{color:var(--indigo-700);}
+  /* ---------- tables ---------- */
+  table{width:100%; border-collapse:collapse; margin:14px 0; font-size:13.5px; background:#fff;
+    border:1px solid var(--line); border-radius:10px; overflow:hidden;}
+  th{background:#f1f5f9; text-align:left; padding:10px 12px; font-weight:600; color:var(--ink); font-size:12.5px;
+    text-transform:uppercase; letter-spacing:.03em;}
+  td{padding:10px 12px; border-top:1px solid var(--line); vertical-align:top;}
+  tr:hover td{background:#fafcff;}
+  code{background:#f1f5f9; padding:2px 6px; border-radius:5px; font-size:12.5px; font-family:"SF Mono",Consolas,monospace; color:var(--indigo-700);}
+  .req{color:var(--red); font-weight:700;}
+  /* ---------- badges ---------- */
+  .b{display:inline-block; padding:3px 11px; border-radius:20px; font-size:12px; font-weight:700; color:#fff; white-space:nowrap;}
+  .b.prospect{background:var(--prospect)} .b.appln{background:var(--appln)} .b.review{background:var(--review)}
+  .b.approved{background:var(--approved)} .b.active{background:var(--active)} .b.reporting{background:var(--reporting)}
+  .b.closed{background:var(--closed)} .b.rej{background:var(--red)}
+  /* =================================================================
+     ANIMATED FLOW — the moving grant pipeline (7 stages)
+  ================================================================= */
+  .stage-wrap{background:#1e1b4b; border-radius:16px; padding:34px 24px 26px; margin:22px 0; color:#e0e7ff; overflow:hidden;}
+  .stage-wrap h3{color:#a5b4fc; margin-top:0;}
+  .track{position:relative; height:150px; margin:30px 0 12px;}
+  .rail{position:absolute; top:96px; left:3%; right:3%; height:6px; background:rgba(255,255,255,.14); border-radius:4px;}
+  .rail-fill{position:absolute; top:0; left:0; height:100%; width:0; background:linear-gradient(90deg,#818cf8,#c4b5fd);
+    border-radius:4px; animation:fill 28s ease-in-out infinite;}
+  @keyframes fill{
+    0%{width:4%} 10%{width:6%} 12%{width:20%} 22%{width:22%} 24%{width:35%} 34%{width:36%}
+    36%{width:49%} 46%{width:50%} 48%{width:64%} 58%{width:65%} 60%{width:79%} 70%{width:80%}
+    72%{width:96%} 100%{width:96%}
+  }
+  .node{position:absolute; top:74px; transform:translateX(-50%); text-align:center; width:90px;}
+  .node .dot{width:16px; height:16px; border-radius:50%; background:#1e1b4b; border:3px solid #818cf8; margin:0 auto 8px;
+    box-shadow:0 0 0 4px rgba(129,140,248,.15);}
+  .node .lbl{font-size:11.5px; font-weight:700; color:#c7d2fe; line-height:1.2;}
+  .node .dt{font-size:10px; color:#a5b4fc; opacity:.8;}
+  .node:nth-child(2){left:4%} .node:nth-child(3){left:19%} .node:nth-child(4){left:34%}
+  .node:nth-child(5){left:49%} .node:nth-child(6){left:64%} .node:nth-child(7){left:79%} .node:nth-child(8){left:96%}
+  .avatar{position:absolute; top:46px; transform:translateX(-50%); animation:travel 28s ease-in-out infinite; z-index:5;}
+  .avatar .face{width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#38bdf8,#0ea5e9);
+    display:flex; align-items:center; justify-content:center; font-size:19px; box-shadow:0 6px 16px rgba(0,0,0,.4);
+    border:2px solid #fff;}
+  .avatar .name{margin-top:5px; font-size:10.5px; font-weight:700; color:#fff; background:rgba(0,0,0,.35);
+    padding:1px 7px; border-radius:10px; white-space:nowrap; text-align:center;}
+  @keyframes travel{
+    0%{left:4%} 10%{left:4%} 12%{left:19%} 22%{left:19%} 24%{left:34%} 34%{left:34%}
+    36%{left:49%} 46%{left:49%} 48%{left:64%} 58%{left:64%} 60%{left:79%} 70%{left:79%}
+    72%{left:96%} 100%{left:96%}
+  }
+  .comms{position:relative; min-height:50px; margin-top:8px;}
+  .ping{position:absolute; left:50%; transform:translateX(-50%); top:0; opacity:0;
+    background:#312e81; border:1px solid #818cf8; color:#e0e7ff; padding:7px 14px; border-radius:20px;
+    font-size:12.5px; font-weight:600; white-space:nowrap; box-shadow:0 4px 14px rgba(0,0,0,.35); text-align:center;}
+  .ping1{animation:show 28s ease-in-out infinite; animation-delay:0s;}
+  .ping2{animation:show 28s ease-in-out infinite; animation-delay:4s;}
+  .ping3{animation:show 28s ease-in-out infinite; animation-delay:8s;}
+  .ping4{animation:show 28s ease-in-out infinite; animation-delay:12s;}
+  .ping5{animation:show 28s ease-in-out infinite; animation-delay:16s;}
+  .ping6{animation:show 28s ease-in-out infinite; animation-delay:20s;}
+  .ping7{animation:show 28s ease-in-out infinite; animation-delay:24s;}
+  @keyframes show{0%,3%{opacity:0; transform:translateX(-50%) translateY(8px)}
+    5%,12%{opacity:1; transform:translateX(-50%) translateY(0)}
+    14%,100%{opacity:0; transform:translateX(-50%) translateY(-8px)}}
+  .legend{display:flex; gap:18px; flex-wrap:wrap; margin-top:18px; font-size:12px; color:#c7d2fe;}
+  .legend b{color:#fff;}
+  .mermaid{background:#fff; border:1px solid var(--line); border-radius:12px; padding:20px; margin:18px 0; text-align:center;}
+  /* ---------- print ---------- */
+  @media print{
+    nav.toc{display:none} .wrap{display:block} main{padding:0}
+    .stage-wrap{background:#fff; color:#0f172a; border:1px solid var(--line);}
+    .stage-wrap h3{color:var(--indigo-700)} .node .lbl,.node .dt{color:var(--ink)}
+    .avatar,.ping,.legend{display:none} section{page-break-inside:avoid}
+    .hero{background:var(--indigo-700)!important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    a{color:var(--ink); text-decoration:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- =================== SIDEBAR =================== -->
+  <nav class="toc">
+    <h4>Contents</h4>
+    <a href="#intro">Overview</a>
+    <a href="#flow">① Start → End Flow</a>
+    <a href="#diagram">② Live Flow + Example</a>
+    <a href="#tests">③ Test Cases</a>
+    <a href="#data">④ Entity Tables</a>
+  </nav>
+
+  <!-- =================== MAIN =================== -->
+  <main>
+
+    <div class="hero" id="intro">
+      <h1>Grant Management — Knowledge Transfer</h1>
+      <p>How a grant travels from a funding prospect, through application and approval, into an active funded project with reports — explained simply so a new team member can start testing on day one.</p>
+      <div class="tags">
+        <span>Module: CRM · Grants</span>
+        <span>Screen #62 · FLOW</span>
+        <span>7-stage pipeline</span>
+        <span>+ Funder Reports #63</span>
+      </div>
+    </div>
+
+    <p class="lead">
+      <b>What is it?</b> Grant Management tracks money the NGO applies for from big institutional funders (foundations, governments, multilaterals).
+      A Grants officer logs a <b>prospect</b>, drafts and submits an <b>application</b>, waits for the funder's <b>decision</b>, and once <b>approved</b> runs the
+      funded project — receiving money in <b>tranches</b>, spending against a <b>budget</b>, and sending <b>reports</b> back to the funder until the grant is <b>closed</b>.
+      Each <b>Grant</b> links a <b>Funder</b> (an organisation contact), a managing <b>Branch</b>, a <b>Currency</b>, and an assigned grant <b>manager</b>.
+    </p>
+    <p class="lead">This guide has only four parts: <b>① the flow</b>, <b>② a live animated example</b>, <b>③ the test cases</b>, and <b>④ the data tables</b>. Nothing else to memorise.</p>
+
+
+    <!-- ============================================================
+         SECTION 1 — START TO END FLOW
+    ============================================================ -->
+    <section id="flow">
+      <h2><span class="num">1</span> The Flow — Start to End</h2>
+      <p class="lead">A grant moves through <b>7 main stages</b> (shown as a kanban pipeline on screen). Three "off-ramp" stages handle the bad endings.</p>
+
+      <h3>The seven main stages</h3>
+      <table>
+        <tr><th>Stage</th><th>Meaning</th><th>What unlocks the next move</th></tr>
+        <tr><td><span class="b prospect">Prospect</span></td><td>A funding opportunity we're eyeing. Nothing submitted yet.</td><td>Draft the application</td></tr>
+        <tr><td><span class="b appln">Application</span></td><td>We've submitted our proposal to the funder.</td><td>Requires an <b>Executive Summary</b>; stamps the Submitted date</td></tr>
+        <tr><td><span class="b review">Under Review</span></td><td>Funder acknowledged receipt and is evaluating.</td><td>Funder gives a decision</td></tr>
+        <tr><td><span class="b approved">Approved</span></td><td>We won it! Award amount confirmed.</td><td>Requires <b>Awarded Amount</b>; stamps Decision date</td></tr>
+        <tr><td><span class="b active">Active</span></td><td>Project is running. Money flows in, expenses go out.</td><td>Requires <b>Funder Grant Number</b> + Start/End dates</td></tr>
+        <tr><td><span class="b reporting">Reporting</span></td><td>In the reporting window — reports due to the funder.</td><td>All deliverables + reports done</td></tr>
+        <tr><td><span class="b closed">Closed</span></td><td>Finished and signed off. Read-only.</td><td>Terminal</td></tr>
+      </table>
+
+      <div class="warn">
+        <b>⚠ The three off-ramps.</b> A grant can also end early:
+        <span class="b rej">Rejected</span> (funder said no — needs a <b>Rejection Reason</b>),
+        <span class="b" style="background:#ea580c">On Hold</span> (paused while Active),
+        and <span class="b" style="background:#64748b">Cancelled</span> (we withdrew before it went Active). These are real saved stages, not calculated.
+      </div>
+
+      <h3>The journey in plain words</h3>
+      <ol class="steps">
+        <li><b>Log the prospect.</b> Officer clicks <b>+ New Grant Application</b>, fills funder + grant details + budget lines + milestones, and <b>Saves as Draft</b>. The system auto-stamps a code (<code>GRT-012</code>) and the grant sits in <span class="b prospect">Prospect</span>.</li>
+        <li><b>Submit.</b> Officer clicks <b>Submit Application</b> → stage moves to <span class="b appln">Application</span>, the submitted date is stamped, and the proposal goes to the funder.</li>
+        <li><b>Wait for review.</b> Once the funder acknowledges, stage moves to <span class="b review">Under Review</span>.</li>
+        <li><b>Decision.</b> If we win, <b>Approve</b> records the <b>Awarded Amount</b> and moves it to <span class="b approved">Approved</span>. If we lose, <b>Reject</b> with a reason ends it at <span class="b rej">Rejected</span>.</li>
+        <li><b>Activate.</b> <b>Activate Grant</b> records the funder's grant number + project dates → stage <span class="b active">Active</span>. Now money can be received as <b>tranches</b> and expenses logged against the budget.</li>
+        <li><b>Report.</b> During the grant, the officer submits <b>Funder Reports</b> (see the report cycle below). Stage shows <span class="b reporting">Reporting</span> when a report window is open.</li>
+        <li><b>Close.</b> <b>Close Grant</b> wraps it up → <span class="b closed">Closed</span> and read-only.</li>
+      </ol>
+
+      <h3>Pipeline state diagram</h3>
+      <pre class="mermaid">
+stateDiagram-v2
+    direction LR
+    [*] --> Prospect: + New Grant
+    Prospect --> Application: Submit (needs Exec Summary)
+    Application --> UnderReview: funder acknowledged
+    UnderReview --> Approved: Approve (needs Awarded Amount)
+    UnderReview --> Rejected: Reject (needs Reason)
+    Approved --> Active: Activate (needs Grant No + dates)
+    Active --> Reporting: report window open
+    Active --> OnHold: Put On Hold
+    Reporting --> Closed: Close Grant
+    Active --> Closed: Close Grant
+    Prospect --> Cancelled: Cancel
+    Application --> Cancelled: Cancel
+    Closed --> [*]
+      </pre>
+
+      <h3>The Funder Report cycle (screen #63)</h3>
+      <p class="lead">Once a grant is Active, each report the officer sends the funder runs its own little loop:</p>
+      <pre class="mermaid">
+stateDiagram-v2
+    direction LR
+    [*] --> Draft: create report
+    Draft --> Submitted: Submit to Funder
+    Submitted --> Accepted: funder accepts
+    Submitted --> RevisionRequested: funder asks for changes
+    RevisionRequested --> Draft: reopen &amp; fix
+    Accepted --> [*]
+      </pre>
+      <div class="note"><b>In plain words:</b> a report starts as <b>Draft</b>, gets <b>Submitted</b> to the funder, and either comes back <b>Accepted</b> (done) or with a <b>Revision Requested</b> — which drops it back to Draft so the officer can fix and resubmit. Submitting on time is what feeds the grant's <b>Compliance Rate</b>.</div>
+    </section>
+
+
+    <!-- ============================================================
+         SECTION 2 — ANIMATED FLOW DIAGRAM WITH EXAMPLE
+    ============================================================ -->
+    <section id="diagram">
+      <h2><span class="num">2</span> Live Flow — Watch One Grant</h2>
+      <p class="lead">Follow <b>GRT-012 — "Clean Water Initiative"</b>, a $500,000 application to the <b>Gates Foundation</b>, managed by officer <b>Omar</b>.
+      Watch it travel the full pipeline below — the messages that pop up are the real communication touchpoints with the funder.</p>
+
+      <div class="stage-wrap">
+        <h3>💧 GRT-012 · Clean Water Initiative — moving through the pipeline</h3>
+
+        <div class="track">
+          <div class="avatar"><div class="face">💧</div><div class="name">GRT-012</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">PROSPECT</div><div class="dt">10 Jan</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">APPLICATION</div><div class="dt">01 Feb</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">UNDER REVIEW</div><div class="dt">14 Feb</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">APPROVED</div><div class="dt">20 Mar</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">ACTIVE</div><div class="dt">01 Apr</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">REPORTING</div><div class="dt">30 Jun</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">CLOSED</div><div class="dt">31 Dec</div></div>
+          <div class="rail"><div class="rail-fill"></div></div>
+        </div>
+
+        <div class="comms">
+          <div class="ping ping1">📝 Prospect logged — drafting Letter of Intent</div>
+          <div class="ping ping2">📤 Application submitted via Gates Foundation portal</div>
+          <div class="ping ping3">📬 Funder acknowledged — proposal under review</div>
+          <div class="ping ping4">🎉 Approval letter received — $500,000 awarded</div>
+          <div class="ping ping5">💰 First tranche received — $300,000</div>
+          <div class="ping ping6">📊 Q1 progress + financial report submitted</div>
+          <div class="ping ping7">✅ Final report accepted — grant closed</div>
+        </div>
+
+        <div class="legend">
+          <span>🔵 <b>GRT-012</b> = the grant moving through its lifecycle</span>
+          <span>🟣 <b>Nodes</b> = the pipeline stage at each step</span>
+          <span>💬 <b>Bubbles</b> = communication with the funder at that moment</span>
+        </div>
+      </div>
+      <p style="text-align:center; color:var(--slate); font-size:13px;">↑ The animation loops. Each pause = a real stage; each bubble = a message to or from the funder.</p>
+
+      <h3>The same story, step by step</h3>
+      <table>
+        <tr><th>When</th><th>Stage</th><th>What the grant officer did</th><th>Funder communication</th><th>Test ref</th></tr>
+        <tr>
+          <td>10 Jan</td><td><span class="b prospect">Prospect</span></td>
+          <td>Created the grant: funder = Gates Foundation, title "Clean Water Initiative", requested <b>$500,000</b>, budget lines + 3 milestones. Saved as Draft → code <code>GRT-012</code>.</td>
+          <td>📝 Internal — drafting LOI</td><td>G1</td>
+        </tr>
+        <tr>
+          <td>01 Feb</td><td><span class="b appln">Application</span></td>
+          <td>Filled the Executive Summary, clicked <b>Submit Application</b>. Submitted date stamped.</td>
+          <td>📤 Proposal sent to funder</td><td>G2 · G3</td>
+        </tr>
+        <tr>
+          <td>14 Feb</td><td><span class="b review">Under Review</span></td>
+          <td>Funder acknowledged receipt. Moved stage to Under Review.</td>
+          <td>📬 Acknowledgement received</td><td>G4</td>
+        </tr>
+        <tr>
+          <td>20 Mar</td><td><span class="b approved">Approved</span></td>
+          <td>Won it! Clicked <b>Approve</b>, entered <b>Awarded Amount $500,000</b>. Decision date stamped.</td>
+          <td>🎉 Approval letter</td><td>G5</td>
+        </tr>
+        <tr>
+          <td>01 Apr</td><td><span class="b active">Active</span></td>
+          <td>Clicked <b>Activate Grant</b>: entered Funder Grant No <code>BMGF-2025-4567</code> + project dates. Then <b>Record Tranche</b> $300,000.</td>
+          <td>💰 First tranche received</td><td>G6 · G7</td>
+        </tr>
+        <tr>
+          <td>30 Jun</td><td><span class="b reporting">Reporting</span></td>
+          <td>Created a Funder Report (Draft → <b>Submit to Funder</b>). Logged expenses against the budget.</td>
+          <td>📊 Q1 report submitted</td><td>GR1 · GR2</td>
+        </tr>
+        <tr>
+          <td>31 Dec</td><td><span class="b closed">Closed</span></td>
+          <td>Final report accepted by funder. Clicked <b>Close Grant</b> → locked read-only.</td>
+          <td>✅ Final report accepted</td><td>GR3 · G8</td>
+        </tr>
+      </table>
+
+      <div class="warn">
+        <b>↪ The "rejection" branch (test this too!).</b> If on <b>20 Mar</b> the Gates Foundation had declined, Omar would click <b>Reject</b> instead — and the screen
+        <b>forces a Rejection Reason</b> before it lets the grant move to <span class="b rej">Rejected</span>. No reason typed = no save. The grant never reaches Active. → test <b>G9</b>.
+      </div>
+
+      <h3>Communication sequence (who talks to whom)</h3>
+      <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant O as Grant Officer (Omar)
+    participant S as Grant System
+    participant F as Gates Foundation
+    O->>S: Create GRT-012 (Prospect, $500k)
+    O->>S: Submit Application
+    S-->>F: Proposal sent
+    F-->>O: Acknowledgement (Under Review)
+    F-->>O: Approval letter ($500k awarded)
+    O->>S: Approve + Activate (Grant No, dates)
+    F-->>S: First tranche $300,000
+    O->>S: Record tranche + log expenses
+    O->>S: Submit Q1 report
+    S-->>F: Report sent
+    F-->>O: Final report accepted
+    O->>S: Close Grant
+      </pre>
+    </section>
+
+
+    <!-- ============================================================
+         SECTION 3 — TEST CASES
+    ============================================================ -->
+    <section id="tests">
+      <h2><span class="num">3</span> Test Cases</h2>
+      <p class="lead">Run these in order. IDs match the references in the example above. <span class="req">Required</span> fields must block save when empty.</p>
+
+      <h3>Grant pipeline</h3>
+      <table>
+        <tr><th>ID</th><th>Scenario</th><th>Steps</th><th>Expected result</th></tr>
+        <tr><td>G1</td><td>Create a grant</td><td>+ New Grant → fill funder, title, requested amount, currency, type, branch → Save as Draft</td><td>Code auto-set <code>GRT-NNN</code>, stage <span class="b prospect">Prospect</span>, lands on detail page</td></tr>
+        <tr><td>G2</td><td>Required-field guard</td><td>+ New Grant → leave Title / Funder / Requested Amount / Currency / Type / Branch empty → Save</td><td>Save blocked, fields flagged. These are mandatory at every stage</td></tr>
+        <tr><td>G3</td><td>Submit application</td><td>Draft grant → fill Executive Summary → Submit Application</td><td>Stage → <span class="b appln">Application</span>, Submitted date stamped. Submitting <i>without</i> Exec Summary is blocked</td></tr>
+        <tr><td>G4</td><td>Move to Under Review</td><td>Application grant → Update Stage → Under Review</td><td>Stage badge updates; a Timeline entry is added</td></tr>
+        <tr><td>G5</td><td>Approve</td><td>Under Review → Approve → enter Awarded Amount → confirm</td><td>Stage <span class="b approved">Approved</span>, Decision date stamped. <span class="req">Awarded Amount required</span></td></tr>
+        <tr><td>G6</td><td>Activate</td><td>Approved → Activate Grant → enter Funder Grant No + Start/End dates → confirm</td><td>Stage <span class="b active">Active</span>. <span class="req">Grant No + dates required</span>; EndDate must be ≥ StartDate</td></tr>
+        <tr><td>G7</td><td>Record tranche</td><td>Active grant → Record Tranche → amount + note</td><td>Timeline shows "tranche received"; stage unchanged; appears in funding history</td></tr>
+        <tr><td>G8</td><td>Close</td><td>Active/Reporting grant → Close Grant</td><td>Stage <span class="b closed">Closed</span>, fields locked read-only, most actions hidden</td></tr>
+        <tr><td>G9</td><td>Reject guard</td><td>Under Review → Reject → leave Reason empty → confirm</td><td>Blocked — <span class="req">Rejection Reason required</span>. With a reason, stage → <span class="b rej">Rejected</span></td></tr>
+      </table>
+
+      <h3>Funder reports (screen #63)</h3>
+      <table>
+        <tr><th>ID</th><th>Scenario</th><th>Steps</th><th>Expected result</th></tr>
+        <tr><td>GR1</td><td>Create + submit a report</td><td>Active grant → Reports tab → Add Report → fill → Submit to Funder</td><td>Report goes Draft → <span class="b appln">Submitted</span>; feeds the grant's Next Report Due / Compliance</td></tr>
+        <tr><td>GR2</td><td>Revision requested</td><td>Submitted report → Request Revision (with funder feedback)</td><td>Report → Revision Requested; reopening drops it back to Draft to edit + resubmit</td></tr>
+        <tr><td>GR3</td><td>Accept a report</td><td>Submitted report → Accept</td><td>Report → <span class="b approved">Accepted</span>; on-time acceptance lifts the Compliance Rate</td></tr>
+      </table>
+
+      <h3>Budget, milestones &amp; attachments</h3>
+      <table>
+        <tr><th>ID</th><th>Scenario</th><th>Steps</th><th>Expected result</th></tr>
+        <tr><td>GB1</td><td>Budget auto-total</td><td>Form → Budget section → add/remove budget lines</td><td>Total recomputes live; warns if the sum differs from Requested/Awarded amount</td></tr>
+        <tr><td>GB2</td><td>Admin cap warning</td><td>Add an "Admin" budget line &gt; 10% of total</td><td>Amber/red warning "Admin costs at X% — limit 10%" appears (non-blocking)</td></tr>
+        <tr><td>GM1</td><td>Milestones</td><td>Form → Milestones section → add rows (title + target date)</td><td>Rows save; show on the detail Objectives table with progress + status</td></tr>
+        <tr><td>GA1</td><td>Attachment checklist</td><td>Form → Attachments → see 5 required-doc rows + Add custom</td><td>Each row shows uploaded / not-uploaded status; Upload is a <b>placeholder toast</b></td></tr>
+      </table>
+
+      <h3>Grid, pipeline view &amp; KPIs</h3>
+      <table>
+        <tr><th>ID</th><th>Scenario</th><th>Expected result</th></tr>
+        <tr><td>GG1</td><td>Pipeline vs Table</td><td>Toggle between Kanban Pipeline (7 columns, default) and Table list; both show the same grants</td></tr>
+        <tr><td>GG2</td><td>KPI cards</td><td>Four cards: Active Grants (+funded total), Pipeline Value, Upcoming Deadlines (next report), Compliance Rate (+overdue)</td></tr>
+        <tr><td>GG3</td><td>Filters</td><td>Stage / Funder / Amount Range / Branch selects filter the list</td></tr>
+        <tr><td>GG4</td><td>Card / row → detail</td><td>Clicking a kanban card or table row opens the detail with Quick-Stats + 5 tabs</td></tr>
+        <tr><td>GG5</td><td>Quick stats</td><td>Detail header shows Funded / Spent (+bar) / Remaining / Period / Next Report Due</td></tr>
+      </table>
+
+      <div class="note"><b>Placeholders (don't fail these):</b> file uploads, rich-text formatting on the 4 narrative fields, Add Expense (until #63 ships its expense entity), Excel/PDF export, Print/Share/Duplicate are <b>UI-only</b> — they render and show a "coming soon" toast on purpose. That <i>is</i> the pass condition.</div>
+    </section>
+
+
+    <!-- ============================================================
+         SECTION 4 — ENTITY TABLES DESIGN
+    ============================================================ -->
+    <section id="data">
+      <h2><span class="num">4</span> Entity Tables — Data Design</h2>
+      <p class="lead">One parent (<b>Grant</b>) and five children, all in the <code>grant</code> database schema. Stage history drives the Timeline tab; Expenses &amp; Reports live in screen #63.</p>
+
+      <h3>How the tables relate</h3>
+      <pre class="mermaid">
+erDiagram
+    CONTACT ||--o{ GRANT : "funder"
+    BRANCH ||--o{ GRANT : "managing branch"
+    STAFF ||--o{ GRANT : "assigned manager"
+    GRANT ||--o{ GRANT_BUDGET_LINE : "1 : many"
+    GRANT ||--o{ GRANT_MILESTONE : "1 : many"
+    GRANT ||--o{ GRANT_IMPL_BRANCH : "many : many"
+    GRANT ||--o{ GRANT_ATTACHMENT : "1 : many"
+    GRANT ||--o{ GRANT_STAGE_HISTORY : "1 : many"
+    GRANT {
+        int GrantId PK
+        string GrantCode "GRT-NNN"
+        int FunderContactId FK
+        decimal RequestedAmount
+        decimal AwardedAmount
+        int StageId "Prospect..Closed"
+    }
+    GRANT_BUDGET_LINE {
+        int GrantBudgetLineId PK
+        int GrantId FK
+        decimal BudgetedAmount
+    }
+    GRANT_MILESTONE {
+        int GrantMilestoneId PK
+        int GrantId FK
+        date TargetDate
+    }
+    GRANT_IMPL_BRANCH {
+        int GrantImplementingBranchId PK
+        int GrantId FK
+        int BranchId FK
+    }
+    GRANT_ATTACHMENT {
+        int GrantAttachmentId PK
+        int GrantId FK
+        bool IsUploaded
+    }
+    GRANT_STAGE_HISTORY {
+        int GrantStageHistoryId PK
+        int GrantId FK
+        decimal AmountReceived
+    }
+      </pre>
+
+      <h3>① <code>grant.Grants</code> — the parent (key columns)</h3>
+      <table>
+        <tr><th>Column</th><th>Type</th><th>Req</th><th>Notes</th></tr>
+        <tr><td>GrantId</td><td>int</td><td>PK</td><td>Primary key</td></tr>
+        <tr><td>GrantCode</td><td>string(50)</td><td class="req">✔</td><td>Auto <code>GRT-NNN</code>, unique per company</td></tr>
+        <tr><td>GrantTitle</td><td>string(200)</td><td class="req">✔</td><td>Project title</td></tr>
+        <tr><td>FunderContactId</td><td>int</td><td class="req">✔</td><td>FK → funder organisation</td></tr>
+        <tr><td>RequestedAmount</td><td>decimal</td><td class="req">✔</td><td>Amount applied for</td></tr>
+        <tr><td>AwardedAmount</td><td>decimal?</td><td>—</td><td>Required <i>at</i> Approve/Active</td></tr>
+        <tr><td>CurrencyId</td><td>int</td><td class="req">✔</td><td>USD / EUR / GBP / AED / INR</td></tr>
+        <tr><td>GrantTypeId</td><td>int</td><td class="req">✔</td><td>Project / Operating / Capital / Research / Emergency</td></tr>
+        <tr><td>BranchId</td><td>int</td><td class="req">✔</td><td>FK → managing branch</td></tr>
+        <tr><td>StageId</td><td>int</td><td class="req">✔</td><td>Prospect → Closed (+ Rejected/OnHold/Cancelled)</td></tr>
+        <tr><td>PriorityId</td><td>int?</td><td>—</td><td>Low / Medium / High / Critical</td></tr>
+        <tr><td>AssignedStaffId</td><td>int?</td><td>—</td><td>FK → grant manager</td></tr>
+        <tr><td>FunderGrantNumber</td><td>string?</td><td>—</td><td>Required <i>at</i> Activate</td></tr>
+        <tr><td>StartDate / EndDate</td><td>date?</td><td>—</td><td>Project period; End ≥ Start</td></tr>
+        <tr><td>RejectionReason</td><td>string?</td><td>—</td><td>Required <i>at</i> Reject</td></tr>
+        <tr><td>NextReportDueDate</td><td>date?</td><td>—</td><td>Drives the Upcoming-Deadlines KPI</td></tr>
+        <tr><td>ExecutiveSummary</td><td>string?</td><td>—</td><td>Required to leave Prospect</td></tr>
+        <tr><td>TotalSpent</td><td>decimal</td><td>—</td><td>Cached sum of expenses (from #63)</td></tr>
+        <tr><td>ComplianceRate</td><td>int?</td><td>—</td><td>% reports submitted on time</td></tr>
+      </table>
+      <p style="color:var(--slate); font-size:13px;">+ narrative fields (Problem / Solution / Outcomes / Sustainability), funder contact details, reporting frequencies, AuditRequired, InternalNotes.</p>
+
+      <div class="grid2">
+        <div class="card">
+          <h3 style="margin-top:0">② <code>grant.GrantBudgetLines</code></h3>
+          <p style="color:var(--slate); font-size:14px">The budget — one row per cost category.</p>
+          <table>
+            <tr><th>Column</th><th>Notes</th></tr>
+            <tr><td>GrantBudgetLineId</td><td>PK</td></tr>
+            <tr><td>GrantId</td><td>FK → parent</td></tr>
+            <tr><td>Category <span class="req">✔</span></td><td>Construction / Staff / Admin …</td></tr>
+            <tr><td>BudgetedAmount <span class="req">✔</span></td><td>Planned cost</td></tr>
+            <tr><td>SpentAmount</td><td>Cached from expenses</td></tr>
+            <tr><td>IsAdminCategory</td><td>Drives 10% admin-cap warning</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">③ <code>grant.GrantMilestones</code></h3>
+          <p style="color:var(--slate); font-size:14px">Deliverables &amp; targets over the project.</p>
+          <table>
+            <tr><th>Column</th><th>Notes</th></tr>
+            <tr><td>GrantMilestoneId</td><td>PK</td></tr>
+            <tr><td>GrantId</td><td>FK → parent</td></tr>
+            <tr><td>MilestoneTitle <span class="req">✔</span></td><td>e.g. "Phase 1: Assessment"</td></tr>
+            <tr><td>TargetDate <span class="req">✔</span></td><td>When it's due</td></tr>
+            <tr><td>TargetValue / ProgressValue</td><td>e.g. 50 wells, 30 done</td></tr>
+            <tr><td>StatusCode</td><td>NotStarted / OnTrack / AtRisk / Completed</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">④ <code>grant.GrantImplementingBranches</code></h3>
+          <p style="color:var(--slate); font-size:14px">Which field offices deliver the grant (many-to-many).</p>
+          <table>
+            <tr><th>Column</th><th>Notes</th></tr>
+            <tr><td>GrantImplementingBranchId</td><td>PK</td></tr>
+            <tr><td>GrantId</td><td>FK → parent</td></tr>
+            <tr><td>BranchId</td><td>FK → branch</td></tr>
+            <tr><td>(GrantId, BranchId)</td><td>Unique together</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">⑤ <code>grant.GrantAttachments</code></h3>
+          <p style="color:var(--slate); font-size:14px">Required-document checklist + custom uploads.</p>
+          <table>
+            <tr><th>Column</th><th>Notes</th></tr>
+            <tr><td>GrantAttachmentId</td><td>PK</td></tr>
+            <tr><td>GrantId</td><td>FK → parent</td></tr>
+            <tr><td>DocumentTypeCode <span class="req">✔</span></td><td>ORG_CERT / AUDIT_FS / … / CUSTOM</td></tr>
+            <tr><td>DocumentName <span class="req">✔</span></td><td>Label per row</td></tr>
+            <tr><td>IsRequired / IsUploaded</td><td>Drives checklist state</td></tr>
+            <tr><td>FileUrl</td><td>Placeholder — upload pending</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0">⑥ <code>grant.GrantStageHistories</code> — drives the Timeline tab</h3>
+        <table>
+          <tr><th>Column</th><th>Notes</th></tr>
+          <tr><td>GrantStageHistoryId</td><td>PK</td></tr>
+          <tr><td>GrantId</td><td>FK → parent</td></tr>
+          <tr><td>FromStageId / ToStageId</td><td>The move (From is null on the first row)</td></tr>
+          <tr><td>TransitionDate</td><td>When it happened</td></tr>
+          <tr><td>ActorStaffId</td><td>Who triggered it</td></tr>
+          <tr><td>AmountReceived</td><td>Set when the row records a <b>tranche</b> disbursement</td></tr>
+          <tr><td>Notes</td><td>e.g. "First tranche received — $300,000"</td></tr>
+        </table>
+      </div>
+
+      <div class="note">
+        <b>Expenses &amp; Funder Reports = screen #63.</b> The Budget tab's spent figures and the Reports tab come from the separate <b>Grant Report</b> screen (#63). On the Grant screen they show as read-only summaries (or an empty state if #63 isn't built yet).
+      </div>
+
+      <h3>Lookup values (MasterData seeds)</h3>
+      <table>
+        <tr><th>Type</th><th>Values</th></tr>
+        <tr><td><code>GRANTSTAGE</code></td><td>Prospect · Application · Under Review · Approved · Active · Reporting · Closed · Rejected · On Hold · Cancelled <i>(colour per row)</i></td></tr>
+        <tr><td><code>GRANTTYPE</code></td><td>Project · Operating/General · Capital · Research · Emergency</td></tr>
+        <tr><td><code>GRANTPRIORITY</code></td><td>Low · Medium · High · Critical</td></tr>
+        <tr><td><code>GRANTPURPOSE</code></td><td>Clean Water · Education · Healthcare · Orphan Care · Food Security · Women Empowerment · Community Development</td></tr>
+        <tr><td><code>GRANTREPORTINGFREQ</code></td><td>Monthly · Quarterly · Semi-Annual · Annual</td></tr>
+      </table>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  mermaid.initialize({ startOnLoad:true, theme:'base', securityLevel:'loose',
+    themeVariables:{ primaryColor:'#eef2ff', primaryBorderColor:'#4f46e5', primaryTextColor:'#0f172a',
+      lineColor:'#4f46e5', fontFamily:'-apple-system,Segoe UI,Roboto,sans-serif' } });
+</script>
+</body>
+</html>

@@ -1,0 +1,258 @@
+<!--
+  ============================================================
+  EVENT TICKET TEMPLATES — professional, ready-to-paste designs (Screen #176)
+  ============================================================
+  HOW TO USE
+    • Paste ONE ticket block (a single <table>…</table>) into the Template Content editor.
+    • Each block is a self-contained artifact — no <html>/<head>/<body> page chrome
+      (the Live Preview renders it raw, exactly as a ticket).
+    • Table-based + inline styles → renders consistently in the editor, email clients, and PDF.
+
+  TOKENS — Event + EventRegistration columns
+    Event            : {{EventName}} {{EventCode}} {{StartDate}} {{EndDate}}
+                       {{VenueName}} {{VenueAddress}} {{VenueCity}} {{MapLink}} {{BannerImageUrl}}
+    EventRegistration: {{EventRegistrationCode}} {{RegistrantName}} {{RegistrantEmail}}
+                       {{RegistrantPhone}} {{Quantity}} {{TotalAmount}} {{RegisteredDate}} {{QRCodeToken}}
+    Ticket type      : {{TicketName}}  (resolved from EventRegistration → EventTicket.TicketName)
+
+  QR CODE
+    The <img> src points at api.qrserver.com and encodes {{QRCodeToken}}. Swap for your own
+    QR service if preferred; the token value is substituted at send-time.
+
+  DESIGNS
+    1. Aurora Pass        — gradient hero, glassy detail grid, QR stub  (vibrant / modern)
+    2. Black-Tie Gala     — dark + gold, serif headline                (premium / formal)
+    3. Boarding Pass      — airline-style with perforated tear stub      (playful / familiar)
+    4. Minimal Mono       — clean, lots of whitespace, single accent     (corporate / understated)
+    5. Festival Wristband — bold color band, big QR                      (casual / energetic)
+  ============================================================
+-->
+
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- 1 ── AURORA PASS — gradient hero + glassy detail grid       -->
+<!-- ════════════════════════════════════════════════════════ -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:100%;margin:0 auto;border-collapse:separate;font-family:'Segoe UI',Helvetica,Arial,sans-serif;background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(79,70,229,0.18);">
+  <!-- Hero -->
+  <tr>
+    <td style="background:linear-gradient(135deg,#6d28d9 0%,#4f46e5 50%,#0ea5e9 100%);padding:30px 32px 26px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr>
+          <td style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#c7d2fe;font-weight:600;">Admit One · E-Ticket</td>
+          <td align="right" style="font-size:11px;letter-spacing:1px;color:#c7d2fe;font-family:'Courier New',monospace;">{{EventCode}}</td>
+        </tr>
+      </table>
+      <div style="font-size:28px;line-height:1.15;font-weight:800;color:#ffffff;margin:10px 0 6px;">{{EventName}}</div>
+      <div style="margin:2px 0 8px;"><span style="display:inline-block;background:rgba(255,255,255,0.18);color:#ffffff;font-size:12px;font-weight:700;letter-spacing:0.5px;padding:4px 12px;border-radius:999px;">{{TicketName}}</span></div>
+      <div style="font-size:14px;color:#e0e7ff;">{{StartDate}}</div>
+    </td>
+  </tr>
+  <!-- Detail grid -->
+  <tr>
+    <td style="padding:24px 32px 8px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="font-size:13px;">
+        <tr>
+          <td valign="top" style="width:50%;padding:0 12px 18px 0;">
+            <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#94a3b8;margin-bottom:3px;">Attendee</div>
+            <div style="font-size:16px;font-weight:700;color:#0f172a;">{{RegistrantName}}</div>
+            <div style="font-size:12px;color:#64748b;">{{RegistrantEmail}}</div>
+          </td>
+          <td valign="top" style="width:50%;padding:0 0 18px 0;">
+            <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#94a3b8;margin-bottom:3px;">Venue</div>
+            <div style="font-size:14px;font-weight:600;color:#0f172a;">{{VenueName}}</div>
+            <div style="font-size:12px;color:#64748b;">{{VenueAddress}}, {{VenueCity}}</div>
+            <a href="{{MapLink}}" style="font-size:12px;color:#4f46e5;text-decoration:none;font-weight:600;">Get directions →</a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <!-- QR + booking stub -->
+  <tr>
+    <td style="padding:8px 32px 28px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;">
+        <tr>
+          <td valign="middle" align="center" style="width:128px;padding:16px;">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=104x104&margin=0&data={{QRCodeToken}}" alt="QR code" width="104" height="104" style="display:block;border-radius:8px;" />
+          </td>
+          <td valign="middle" style="padding:16px 16px 16px 4px;font-size:13px;color:#334155;line-height:1.6;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+              <tr>
+                <td style="padding-bottom:8px;"><span style="color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Booking</span><br /><strong style="font-family:'Courier New',monospace;">{{EventRegistrationCode}}</strong></td>
+                <td style="padding-bottom:8px;"><span style="color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Qty</span><br /><strong>{{Quantity}}</strong></td>
+              </tr>
+              <tr>
+                <td><span style="color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Total Paid</span><br /><strong style="color:#4f46e5;font-size:15px;">{{TotalAmount}}</strong></td>
+                <td><span style="color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Booked</span><br /><strong>{{RegisteredDate}}</strong></td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+      <div style="text-align:center;font-size:11px;color:#94a3b8;margin-top:14px;">Present this QR code at the entrance. Non-transferable.</div>
+    </td>
+  </tr>
+</table>
+
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- 2 ── BLACK-TIE GALA — dark + gold, serif headline           -->
+<!-- ════════════════════════════════════════════════════════ -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:100%;margin:28px auto 0;border-collapse:separate;font-family:Georgia,'Times New Roman',serif;background:#0b0f1a;border:1px solid #1f2937;border-radius:14px;overflow:hidden;">
+  <tr>
+    <td style="border-bottom:1px solid #b9952e;padding:30px 36px 22px;text-align:center;">
+      <div style="font-family:'Segoe UI',Arial,sans-serif;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#cba135;">Invitation · Admit One</div>
+      <div style="font-size:30px;line-height:1.2;color:#f5e6c8;font-weight:400;margin:14px 0 8px;">{{EventName}}</div>
+      <div style="margin-bottom:10px;"><span style="display:inline-block;font-family:'Segoe UI',Arial,sans-serif;border:1px solid #b9952e;color:#cba135;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:4px 14px;border-radius:999px;">{{TicketName}}</span></div>
+      <div style="font-family:'Segoe UI',Arial,sans-serif;font-size:13px;letter-spacing:1px;color:#9ca3af;">{{StartDate}}</div>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:26px 36px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="font-family:'Segoe UI',Arial,sans-serif;">
+        <tr>
+          <td valign="top" style="width:62%;color:#e5e7eb;font-size:13px;line-height:1.8;">
+            <div style="color:#cba135;font-size:10px;letter-spacing:2px;text-transform:uppercase;">Guest of Honour</div>
+            <div style="font-size:19px;color:#ffffff;font-family:Georgia,serif;margin-bottom:14px;">{{RegistrantName}}</div>
+            <div style="color:#cba135;font-size:10px;letter-spacing:2px;text-transform:uppercase;">Venue</div>
+            <div style="margin-bottom:2px;">{{VenueName}}</div>
+            <div style="color:#9ca3af;">{{VenueAddress}}, {{VenueCity}}</div>
+            <a href="{{MapLink}}" style="color:#cba135;text-decoration:none;font-size:12px;">View map →</a>
+          </td>
+          <td valign="top" align="center" style="width:38%;">
+            <div style="background:#ffffff;border-radius:10px;padding:8px;display:inline-block;">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=0&data={{QRCodeToken}}" alt="QR code" width="120" height="120" style="display:block;" />
+            </div>
+            <div style="color:#6b7280;font-size:10px;letter-spacing:1px;font-family:'Courier New',monospace;margin-top:8px;">{{EventRegistrationCode}}</div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td style="border-top:1px solid #1f2937;background:#0f1420;padding:16px 36px;font-family:'Segoe UI',Arial,sans-serif;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="font-size:12px;color:#9ca3af;">
+        <tr>
+          <td>Seats: <strong style="color:#f5e6c8;">{{Quantity}}</strong></td>
+          <td align="center">Ref: <strong style="color:#f5e6c8;">{{EventCode}}</strong></td>
+          <td align="right">Total: <strong style="color:#cba135;">{{TotalAmount}}</strong></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- 3 ── BOARDING PASS — airline style + perforated tear stub   -->
+<!-- ════════════════════════════════════════════════════════ -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:100%;margin:28px auto 0;border-collapse:separate;font-family:'Segoe UI',Helvetica,Arial,sans-serif;background:#ffffff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;box-shadow:0 6px 18px rgba(2,132,199,0.12);">
+  <tr>
+    <!-- Main coupon -->
+    <td valign="top" style="width:68%;padding:0;border-right:2px dashed #cbd5e1;">
+      <div style="background:#0284c7;padding:16px 24px;">
+        <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#bae6fd;font-weight:600;">Event Boarding Pass</div>
+        <div style="font-size:20px;font-weight:800;color:#ffffff;margin-top:4px;">{{EventName}}</div>
+        <div style="font-size:12px;color:#bae6fd;margin-top:3px;letter-spacing:0.5px;">Class · {{TicketName}}</div>
+      </div>
+      <div style="padding:20px 24px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="font-size:13px;color:#334155;">
+          <tr>
+            <td style="padding-bottom:14px;width:55%;"><div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#94a3b8;">Passenger</div><div style="font-size:16px;font-weight:700;color:#0f172a;">{{RegistrantName}}</div></td>
+            <td style="padding-bottom:14px;"><div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#94a3b8;">Date</div><div style="font-weight:600;">{{StartDate}}</div></td>
+          </tr>
+          <tr>
+            <td><div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#94a3b8;">Gate / Venue</div><div style="font-weight:600;">{{VenueName}}</div><div style="font-size:12px;color:#64748b;">{{VenueCity}}</div></td>
+            <td><div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#94a3b8;">Seats</div><div style="font-weight:600;">{{Quantity}}</div></td>
+          </tr>
+        </table>
+      </div>
+    </td>
+    <!-- Tear stub -->
+    <td valign="top" align="center" style="width:32%;background:#f0f9ff;padding:20px 14px;">
+      <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#0369a1;font-weight:700;margin-bottom:10px;">Boarding</div>
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=112x112&margin=0&data={{QRCodeToken}}" alt="QR code" width="112" height="112" style="display:block;margin:0 auto;border-radius:8px;background:#ffffff;padding:5px;" />
+      <div style="font-family:'Courier New',monospace;font-size:11px;color:#0369a1;margin-top:10px;">{{EventRegistrationCode}}</div>
+      <div style="font-size:11px;color:#64748b;margin-top:8px;">Total {{TotalAmount}}</div>
+    </td>
+  </tr>
+</table>
+
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- 4 ── MINIMAL MONO — clean, whitespace, single accent        -->
+<!-- ════════════════════════════════════════════════════════ -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="560" style="width:560px;max-width:100%;margin:28px auto 0;border-collapse:separate;font-family:'Segoe UI',Helvetica,Arial,sans-serif;background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;">
+  <tr><td style="height:5px;background:#111827;padding:0;font-size:0;line-height:0;">&nbsp;</td></tr>
+  <tr>
+    <td style="padding:32px 36px 8px;">
+      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#9ca3af;">Ticket · {{EventCode}}</div>
+      <div style="font-size:24px;font-weight:700;color:#111827;margin:8px 0 4px;letter-spacing:-0.5px;">{{EventName}}</div>
+      <div style="font-size:14px;color:#6b7280;">{{StartDate}} — {{EndDate}}</div>
+      <div style="margin-top:10px;"><span style="display:inline-block;background:#111827;color:#ffffff;font-size:11px;font-weight:600;letter-spacing:0.5px;padding:3px 11px;border-radius:4px;">{{TicketName}}</span></div>
+    </td>
+  </tr>
+  <tr><td style="padding:18px 36px 0;"><div style="border-top:1px solid #f3f4f6;"></div></td></tr>
+  <tr>
+    <td style="padding:18px 36px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="font-size:13px;color:#374151;line-height:1.6;">
+        <tr>
+          <td valign="top" style="width:60%;">
+            <div style="margin-bottom:14px;"><span style="color:#9ca3af;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Name</span><br /><strong style="font-size:15px;color:#111827;">{{RegistrantName}}</strong></div>
+            <div style="margin-bottom:14px;"><span style="color:#9ca3af;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Location</span><br />{{VenueName}}<br /><span style="color:#6b7280;">{{VenueAddress}}, {{VenueCity}}</span></div>
+            <div><span style="color:#9ca3af;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Booking</span> &nbsp;<strong style="font-family:'Courier New',monospace;">{{EventRegistrationCode}}</strong> &nbsp;·&nbsp; Qty <strong>{{Quantity}}</strong> &nbsp;·&nbsp; <strong>{{TotalAmount}}</strong></div>
+          </td>
+          <td valign="top" align="right" style="width:40%;">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=128x128&margin=0&data={{QRCodeToken}}" alt="QR code" width="128" height="128" style="display:block;margin-left:auto;border:1px solid #e5e7eb;border-radius:8px;" />
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- 5 ── FESTIVAL WRISTBAND — bold color band, big QR           -->
+<!-- ════════════════════════════════════════════════════════ -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:100%;margin:28px auto 0;border-collapse:separate;font-family:'Trebuchet MS','Segoe UI',Arial,sans-serif;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 8px 24px rgba(236,72,153,0.20);">
+  <tr>
+    <td style="background:linear-gradient(90deg,#f43f5e 0%,#ec4899 45%,#f97316 100%);padding:26px 30px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr>
+          <td>
+            <div style="font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#ffe4e6;font-weight:700;">★ Festival Pass ★</div>
+            <div style="font-size:26px;font-weight:800;color:#ffffff;margin-top:6px;text-shadow:0 1px 2px rgba(0,0,0,0.15);">{{EventName}}</div>
+            <div style="font-size:13px;font-weight:700;color:#ffe4e6;margin-top:4px;letter-spacing:0.5px;">{{TicketName}}</div>
+          </td>
+          <td align="right" valign="top">
+            <span style="display:inline-block;background:rgba(255,255,255,0.22);color:#ffffff;font-size:12px;font-weight:700;padding:6px 12px;border-radius:999px;">×{{Quantity}}</span>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:24px 30px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr>
+          <td valign="middle" align="center" style="width:150px;">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=130x130&margin=0&color=ec4899&data={{QRCodeToken}}" alt="QR code" width="130" height="130" style="display:block;border-radius:12px;" />
+          </td>
+          <td valign="middle" style="padding-left:22px;font-size:14px;color:#1f2937;line-height:1.7;">
+            <div style="font-size:18px;font-weight:800;color:#be185d;">{{RegistrantName}}</div>
+            <div style="color:#6b7280;font-size:13px;margin-bottom:10px;">{{RegistrantEmail}}</div>
+            <div>📅 {{StartDate}}</div>
+            <div>📍 {{VenueName}}, {{VenueCity}}</div>
+            <div style="margin-top:10px;font-size:12px;color:#9ca3af;font-family:'Courier New',monospace;">{{EventRegistrationCode}} · {{TotalAmount}}</div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td style="background:#fff1f2;padding:12px 30px;text-align:center;font-size:11px;color:#be185d;font-weight:600;letter-spacing:0.5px;">
+      Scan at entry · Keep this pass handy all weekend
+    </td>
+  </tr>
+</table>
