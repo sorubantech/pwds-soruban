@@ -9,7 +9,134 @@ complexity: High
 new_module: NO — app schema + ApplicationModels group already exist
 planned_date: 2026-04-20
 completed_date: 2026-04-21
-last_session_date: 2026-06-04
+last_session_date: 2026-06-12
+revision: "Consolidation (re-planned 2026-06-10) — #40 Event becomes the HOST of a 4-tab screen that ABSORBS #46 Event Ticketing + #169 Event Registration Page as embedded tabs. Final tabs: 1 Basic Info / 2 Venue & Schedule / 3 Ticketing (#46) / 4 Registration Page (#169). The old 'Content & Speakers' tab is FOLDED INTO tab 4 (banner/agenda/speakers/gallery — #169 already owns Branding/Speakers/Gallery cards). PER-TAB Save (no composite mutation): tabs 1-2 save Event; tab 3 = #46 inline CRUD; tab 4 = #169 editor's own Save. Tabs 3 & 4 enabled only after the Event exists (1:1 dependency). #46 + #169 standalone menus seeded IsLeastMenu=false + old routes redirect into the #40 tab (#77/#78/#167 absorption pattern). See §⓪ CONSOLIDATION REVISION (authoritative delta). Status reset COMPLETED→PROMPT_READY for the consolidation build."
+---
+
+## ⓪ CONSOLIDATION REVISION (2026-06-10 — AUTHORITATIVE DELTA)
+
+> **This block OVERRIDES the older §②/③/⑥/⑧/⑩/⑪ wherever they conflict.** The original #40 was a 3-tab Event wizard (Basic / Venue / Content & Speakers) after #169 was extracted to its own screen+table. This revision turns #40 into the **HOST of a 4-tab consolidated screen** that absorbs #46 Event Ticketing and #169 Event Registration Page as embedded tabs. Build agents: treat §⓪ as the source of truth for tab structure, save model, embedding mechanics, and wiring. Where §⓪ is silent, the older sections still apply.
+>
+> **Scope = FE-heavy + thin BE/seed.** No new entities. No new composite mutation. Both absorbed screens are already `eventId`-prop-driven, so this is primarily a host-shell + embed + menu/route reconciliation.
+
+### ⓪.1 Final tab structure (4 tabs)
+
+| Tab | Title | Source | Persists to | Save trigger | Gating |
+|-----|-------|--------|-------------|--------------|--------|
+| 1 | Basic Info | existing `BasicInfoTab` | `app.Events` (Event mutation) | host sticky-footer **Save as Draft / Save & Publish** | always |
+| 2 | Venue & Schedule | existing `VenueScheduleTab` | `app.Events` (Event mutation) | host sticky-footer (shared with tab 1) | always |
+| 3 | Ticketing | **#46 embedded** (`EventTicketingContent` cards) | `app.EventTickets` etc. via #46's own mutations | #46 inline per-card CRUD (Add/Edit/Save inside the cards) | **enabled only after Event exists** (`!isAdd && recordId > 0`) |
+| 4 | Registration Page | **#169 editor embedded** (`EventRegistrationPageEditorPage`) — **absorbs old Content & Speakers** | `app.EventRegistrationPages` + Event child collections via `updateEventRegistrationPageSetup` | #169 editor's **own Save** (surfaced inside the tab) | **enabled only after Event exists** |
+
+- The old **Content & Speakers tab is REMOVED** as a standalone tab. Its four concerns (banner image, detailed agenda HTML, speakers[], galleryPhotos[]) move into **tab 4**: #169 already renders Card 8 (Branding & banner), Card 10 (Speakers), Card 11 (Gallery) over the **same Event child collections**. The only field with no #169 home is **`detailedAgendaHtml`** — add it to the #169 editor (new small card "Event Agenda" OR a field on the Branding card). See §⓪.5 reconciliation.
+
+### ⓪.2 Save model — PER-TAB (user-locked, no composite mutation)
+
+- **Tabs 1–2 (Event):** keep the existing host sticky-footer **Save as Draft / Save & Publish** + validation summary + dirty guard. These persist the Event via `CREATE_EVENT_MUTATION` / `UPDATE_EVENT_MUTATION` exactly as today.
+- **Tab 3 (#46):** uses #46's existing inline CRUD — each card saves itself through #46's mutations. No host Save involved.
+- **Tab 4 (#169):** uses the #169 editor's existing `updateEventRegistrationPageSetup` flow with its own Save button. No host Save involved.
+- **Host sticky footer visibility:** show the Event Save/Publish footer **only on tabs 1–2**. On tabs 3–4 hide it (the embedded screens own their saves) to avoid two competing Save buttons. The footer's `readOnly`/`canSave` logic stays unchanged for tabs 1–2.
+- **Dirty tracking:** the host's `isDirty` (Event form) and the #169 store's independent `dirtyFields` set are **separate**. Each tab's unsaved-changes state is owned by that tab. The host unsaved-changes dialog should only consider Event-form dirtiness (tabs 1–2). The #169 editor's own `beforeunload` guard must be **suppressed when embedded** (see ⓪.4) so it doesn't fire for the whole host page.
+
+### ⓪.3 Tab gating — Event-exists dependency (1:1)
+
+- #46 and #169 are both keyed by `eventId` and are **1:1 on an existing Event**. In **add mode** (no `recordId` yet) tabs 3 & 4 cannot load.
+- Render tabs 3 & 4 as **disabled** (greyed step circle, not clickable) while `isAdd || !recordId`. Show an inline empty-state inside each: *"Save the event first to configure ticketing / the registration page."*
+- After the first successful create, the host already switches the URL to `?mode=edit&id={newId}` (see [event-form-page.tsx:508-511](../../PSS_2.0_Frontend/src/presentation/components/page-components/crm/event/event/event-form-page.tsx#L508-L511)) — tabs 3 & 4 become enabled immediately, no reload.
+
+### ⓪.4 FE embedding mechanics (both screens are already `eventId`-prop-driven)
+
+**#46 Event Ticketing → Tab 3:**
+- Component: `EventTicketingContent` is currently **internal** to `…/crm/event/eventticketing/index.tsx`. **Export it** (or add a thin `EventTicketingTab({ eventId }: { eventId: number })` wrapper in the same folder) that calls `useEventTicketingStore().setSelectedEventId(eventId)` on mount and renders the card grid directly.
+- **Drop** the event-selector `<Select>` in `headerActions` and the `?eventId=` URL-sync `useEffect` ([index.tsx:77-118](../../PSS_2.0_Frontend/src/presentation/components/page-components/crm/event/event/eventticketing/index.tsx)) — `eventId` comes from the host form, not the URL.
+- All 5 cards (`SummaryBar`, `TicketTypesCard`, `TicketFormCard`, `RegistrantsCard`, `PublicPreviewCard`) already accept `eventId` as a plain prop — re-compose them inside the tab.
+- Reset the singleton `useEventTicketingStore` on mount/unmount (`reset()`) so a previously-open event's inline-form state doesn't leak.
+
+**#169 Reg Page editor → Tab 4:**
+- Component: `EventRegistrationPageEditorPage` **already takes `eventId: number` as a prop** ([editor-page.tsx:74-76](../../PSS_2.0_Frontend/src/presentation/components/page-components/setting/publicpages/eventregpage/editor-page.tsx#L74-L76)). Render `<EventRegistrationPageEditorPage eventId={recordId} />` directly in the tab.
+- Add an `embedded?: boolean` prop to the editor. When `embedded`:
+  - **hide** its top "Back" button and the standalone page chrome,
+  - **suppress** the `beforeunload` guard ([editor-page.tsx:378-386](../../PSS_2.0_Frontend/src/presentation/components/page-components/setting/publicpages/eventregpage/editor-page.tsx#L378-L386)),
+  - keep its **Save** button (it's the tab-4 save), but render it inline within the tab body, and
+  - make its archive/lifecycle actions that call `router.push(…eventregpage)` no-op or stay-in-tab.
+- The editor self-loads via `GetEventRegistrationPageById($eventId)` — no extra plumbing.
+
+**Host (`event-form-page.tsx`):**
+- Extend `EVENT_STEPS` from 3 → 4 entries: keep `1 Basic Info`, `2 Venue & Schedule`; replace old `3 Content & Speakers` with `3 Ticketing` and add `4 Registration Page`. Update the `EventStepId` type, `FIELD_TAB` map, `isStepComplete`, and `stepHasErrors` accordingly (tabs 3 & 4 have no host-validated fields — they self-validate).
+- Add `<TabsContent value="3">` → Ticketing tab; `<TabsContent value="4">` → Reg Page tab. Both wrapped in the Event-exists gate.
+- Step navigator (the numbered circle stepper) renders 4 steps; tabs 3 & 4 show a lock/disabled state until the Event exists.
+
+### ⓪.5 Field-ownership reconciliation (Event mutation vs #169 setup mutation)
+
+Because tab 4 now owns banner/agenda/speakers/gallery, prevent **double-write conflicts**:
+- The Event `buildPayload` ([event-form-page.tsx:395-470](../../PSS_2.0_Frontend/src/presentation/components/page-components/crm/event/event/event-form-page.tsx#L395-L470)) currently sends `speakers`, `galleryPhotos`, `bannerImageUrl`, `detailedAgendaHtml`. After consolidation these are **edited in tab 4** via `updateEventRegistrationPageSetup` (which already reuses `UpsertSpeakers`/`UpsertGalleryPhotos` from `UpdateEvent.cs`). **Stop sending `speakers`/`galleryPhotos` from the Event form's tabs-1-2 Save** (remove from `buildPayload`, or send them unchanged-as-loaded so they're not wiped). Decision for Solution Resolver: cleanest = drop them from the host payload entirely so tab 4 is the single writer.
+- `bannerImageUrl`: #169 Card 8 already edits the page banner. Confirm whether banner lives on `app.Events.BannerImageUrl` or `app.EventRegistrationPages` — if the former, route the tab-4 banner edit through the setup mutation (it already upserts Event fields) and drop it from the host payload.
+- `detailedAgendaHtml`: lives on `app.Events`. Add it to the #169 setup input + `UpdateEventRegistrationPageSetup` handler so tab 4 persists it, then drop it from the host payload. (Thin BE delta: 1 DTO field + 1 input field + 1 handler line + Mapster.)
+- Net BE work: small — extend `EventRegistrationPageSetupInput`/`…SetupDto` + handler with `detailedAgendaHtml` (and banner if Event-owned); no new entity, no new mutation.
+
+### ⓪.6 Menu / route reconciliation (HIDE + redirect — #77/#78/#167 pattern)
+
+- **Hide standalone menus:** in the seed scripts set `IsLeastMenu=false` on the `EVENTTICKET` menu ([EventTicketing-sqlscripts.sql](../../PSS_2.0_Backend/PeopleServe/Services/Base/sql-scripts-dyanmic/EventTicketing-sqlscripts.sql)) and the `EVENTREGPAGE` menu ([event-reg-page-sqlscripts.sql](../../PSS_2.0_Backend/PeopleServe/Services/Base/sql-scripts-dyanmic/event-reg-page-sqlscripts.sql)). They disappear from the sidebar but their **MenuCapabilities + BUSINESSADMIN role grants stay** (capability cascade preserved). Idempotent `UPDATE … WHERE MenuCode IN ('EVENTTICKET','EVENTREGPAGE')`.
+- **Redirect old routes into the host tab** (preserve bookmarked/legacy URLs):
+  - `crm/event/eventticketing/page.tsx` (`?eventId=X`) → redirect to `crm/event/event?mode=edit&id=X&tab=3` (or list if no eventId).
+  - `setting/publicpages/eventregpage/page.tsx` (`?id=X` = eventId) → redirect to `crm/event/event?mode=edit&id=X&tab=4` (or list if no id).
+  - Implement as a thin client redirect in each `page.tsx` (read the param, `router.replace(...)`). Keep the original components on disk (still imported by the host tabs).
+- **Host deep-link:** the host should read a `?tab=` query param on mount and set `activeTab` so the redirects land on the right tab. Add `tab` to the existing `?mode=&id=` URL handling in `event-form-page.tsx`.
+- **Capability gates inside the tabs:** #46 gates on `menuCode:"EVENTTICKET"`, #169 on `menuCode:"EVENTREGPAGE"` — keep those `useAccessCapability` checks so a BUSINESSADMIN without the absorbed capability sees the tab disabled. (Cascade seeding keeps BUSINESSADMIN granted.)
+
+### ⓪.7 File manifest (consolidation)
+
+**FE — MODIFY (host):**
+- `…/crm/event/event/event-form-page.tsx` — 3→4 tabs, gating, `?tab=` handling, per-tab footer visibility, drop speakers/gallery/banner/agenda from `buildPayload`.
+- `…/crm/event/event/form-tabs/index.ts` + `types.ts` — export the 4-tab set; old `ContentSpeakersTab` retired from the wizard (component may be reused inside tab 4 for agenda, or deleted).
+
+**FE — MODIFY (absorbed #46):**
+- `…/crm/event/eventticketing/index.tsx` — export `EventTicketingContent` or add `EventTicketingTab({eventId})` wrapper; remove selector + URL-sync when embedded.
+- `…/crm/event/eventticketing/eventticketing-store.ts` — ensure `reset()` exists for mount/unmount.
+- `src/app/[lang]/crm/event/eventticketing/page.tsx` — redirect stub.
+
+**FE — MODIFY (absorbed #169):**
+- `…/setting/publicpages/eventregpage/editor-page.tsx` — add `embedded?` prop (hide back/chrome, suppress beforeunload, inline Save), add **Event Agenda** card/field, persist `detailedAgendaHtml` (+ banner if Event-owned) via setup input.
+- `…/setting/publicpages/eventregpage/cards/` — optional new `agenda` card OR field on `8-branding-seo-card.tsx`.
+- `src/app/[lang]/setting/publicpages/eventregpage/page.tsx` — redirect stub.
+- `EventRegistrationPageDto.ts` + `EventRegistrationPageQuery.ts` + `EventRegistrationPageMutation.ts` — add `detailedAgendaHtml` (+ banner) to setup DTO/input + GetById selection.
+
+**BE — MODIFY (thin):**
+- `EventRegistrationPageSchemas.cs` — `+detailedAgendaHtml` on SetupDto + SetupInput (+ banner if Event-owned).
+- `UpdateEventRegistrationPageSetup.cs` — persist `detailedAgendaHtml` onto the Event row (reuses the existing Event-field upsert path).
+- `GetEventRegistrationPageById.cs` — project `detailedAgendaHtml`.
+- Mapster (`ApplicationMappings.cs`) — if a new field needs an explicit map.
+
+**DB seed — MODIFY:**
+- `EventTicketing-sqlscripts.sql` — `UPDATE … IsLeastMenu=false WHERE MenuCode='EVENTTICKET'`.
+- `event-reg-page-sqlscripts.sql` — `UPDATE … IsLeastMenu=false WHERE MenuCode='EVENTREGPAGE'`.
+
+**Migration:** none required (no new columns) unless banner ownership forces one — `detailedAgendaHtml` already exists on `app.Events`.
+
+### ⓪.8 Acceptance criteria (consolidation)
+
+- [ ] Host Event screen shows **4 tabs**: Basic Info / Venue & Schedule / Ticketing / Registration Page.
+- [ ] In **add mode**, tabs 3 & 4 are disabled with a "Save the event first" empty-state; tabs 1–2 work.
+- [ ] After creating an Event (Save as Draft), tabs 3 & 4 become enabled in place (URL flips to `?mode=edit&id=…`).
+- [ ] **Tab 3** renders the #46 ticketing cards for the host event (no selector dropdown); Add/Edit/Delete ticket works and refreshes inline.
+- [ ] **Tab 4** renders the #169 editor for the host event; its own Save persists; banner/speakers/gallery/**agenda** edit and save here.
+- [ ] Host **Save as Draft / Save & Publish** footer is visible only on tabs 1–2; hidden on tabs 3–4.
+- [ ] Saving the Event on tabs 1–2 does **not** wipe speakers/gallery/banner/agenda (single-writer = tab 4).
+- [ ] Old route `crm/event/eventticketing?eventId=X` **redirects** to `…/event?mode=edit&id=X&tab=3`.
+- [ ] Old route `setting/publicpages/eventregpage?id=X` **redirects** to `…/event?mode=edit&id=X&tab=4`.
+- [ ] `EVENTTICKET` and `EVENTREGPAGE` menus **no longer appear in the sidebar** but BUSINESSADMIN still has their capabilities (cascade intact).
+- [ ] No regression: tabs 1–2 validation summary, dirty guard, publish flow unchanged.
+- [ ] FE `npx tsc --noEmit` clean; BE `dotnet build` PASS.
+
+### ⓪.9 Open issues / risks (consolidation)
+
+- **CR-ISSUE-1** — Singleton Zustand stores (`useEventTicketingStore`, `useEventRegistrationPageStore`) are global; mounting them in host tabs requires mount/unmount `reset()`/`hydrate()` discipline so switching between events (or host↔tab) doesn't leak state. Verify on event-switch.
+- **CR-ISSUE-2** — Banner ownership ambiguity: confirm whether `BannerImageUrl` is on `app.Events` or `app.EventRegistrationPages` before deciding the single writer (drives whether a tiny BE/migration touch is needed). Resolver verifies in entity before build.
+- **CR-ISSUE-3** — `detailedAgendaHtml` relocation: it stays on `app.Events`; tab 4 writes it through the setup mutation's Event-field upsert. Confirm `UpdateEventRegistrationPageSetup` already touches the Event row (it does for speakers/gallery) so no new write path is needed.
+- **CR-ISSUE-4** — Two independent dirty/`beforeunload` guards (host Event form + #169 editor). The embedded `#169` guard MUST be suppressed or the whole host page double-prompts. Covered by the `embedded` prop (⓪.4).
+- **CR-ISSUE-5** — #46 capability menuCode is `EVENTTICKET` (not `EVENTTICKETING`); #169 has **no** entity-operations block (custom editor, gated only via `useAccessCapability("EVENTREGPAGE")`). Keep both gate keys when embedding.
+- **CR-ISSUE-6** — `?tab=` deep-link + redirect ordering: the host must apply `?tab=` AFTER the record loads, else the gate flips the user back to tab 1. Set `activeTab` from `?tab=` once `loadingRecord` resolves.
+
 ---
 
 ## Tasks
@@ -807,6 +934,8 @@ Every SERVICE_PLACEHOLDER renders the full UI component with a toast-only handle
 | ISSUE-15 | Planning (2026-04-20) | Medium | FE Index | Calendar view — same query, different render; click chip → read mode | OPEN |
 | ISSUE-16 | Planning (2026-04-20) | Medium | FE Infra | Radio-card-group component — may need creation if not in registry | OPEN |
 | ISSUE-17 | Planning (2026-04-20) | Low | DB Seed | EventStatus 5-color palette must be seeded on MasterData rows | RESOLVED (Session 1 — DataSetting "bg/fg" per row) |
+| ISSUE-18 | Build (2026-06-10) | Low | FE Cleanup | `form-tabs/content-speakers-tab.tsx` is now dead (retired from the wizard by the consolidation; banner/agenda/speakers/gallery live in Tab 4 / #169). Still on disk + exported by the `form-tabs/index.ts` barrel but imported by nothing. Delete in a future cleanup pass. | OPEN |
+| ISSUE-19 | Build (2026-06-10) | Low | Arch | Two-writer overlap on `ShowCountdown`: editable both in host Tab 2 (Schedule) and Tab 4 / #169 RegistrantExperienceCard. Last-save-wins on a single bool; harmless. Host `MapRegistrationPage` deliberately still writes `ShowCountdown` + `SendLinkTimingCode` (the only two page fields the host tabs own); everything else on the page row is single-written by Tab 4. | CLOSED (session 11) |
 
 ### § Sessions
 
@@ -1000,3 +1129,230 @@ Every SERVICE_PLACEHOLDER renders the full UI component with a toast-only handle
 - **Sale-window validation against event start (UX)**: the zod schema is now built per-event via `buildTicketSchema(eventBounds)` (base object `ticketBaseSchema` + `.refine()` chain; `TicketFormData` inferred from the base). The form fetches the event via `EVENT_BY_ID_QUERY` (`cache-first`) to derive `eventBounds = { startMs, startLabel }` (tenant-formatted via `formatDate`), `useMemo`'d into the resolver — RHF 7.72 reassigns `control._options` each render so the rebuilt resolver takes effect once the event loads. New rules + inline messages: **Sale Start** must be before the event start (`Sales must open before the event starts (<date>)`); **Sale End** must be before the event start (`Sales must close before the event starts (<date>)`); **Sale End ≥ Sale Start** (relaxed from `>` to `>=` to allow a one-day window); plus an added **Max Per Order ≤ Qty Available** rule. Sale-date `helperText` also now names the event start date so the rule is visible before submit.
 - **Event context banner**: a slim strip between the form header and body shows the selected event's **name (+ code), date range (start → end), and venue** (or virtual platform when `eventModeCode === "VIRTUAL"`) — gives staff context for which event they're ticketing and surfaces the start date the sale window validates against. Skeleton while the event loads.
 - **Verification**: FE `npx tsc --noEmit` → **0 errors** in `ticket-form-card.tsx` after each change.
+
+### Session 8 — 2026-06-10 — BUILD (CONSOLIDATION) — COMPLETED
+
+- **Scope**: The §⓪ CONSOLIDATION REVISION — turn #40 into the **4-tab host** that absorbs **#46 Event Ticketing** (Tab 3) and the **#169 Registration Page editor** (Tab 4). Old "Content & Speakers" tab retired (its banner/agenda/speakers/gallery are owned by Tab 4 / #169). FE-heavy + surgical BE guard + 2 seed flips. No new entities/mutations/migration. Agents: ONE `frontend-developer` (Sonnet) for the #169 `embedded` prop; everything else done directly in the main session.
+- **Files touched**:
+  - BE (1 — modified):
+    - `Base.Application/.../Events/Commands/UpdateEvent.cs` — **decoupled the host Event save from Tab-3/Tab-4-owned data** so a tabs-1-2 Save can't wipe what those tabs persist: (a) null-guard the 4 child upserts (`UpsertSpeakers`/`UpsertRegistrationFormFields`/`UpsertCommunicationTriggers`/`UpsertGalleryPhotos` early-return when the dto collection is `null` = "leave untouched"); (b) null-guard `BannerImageUrl`/`DetailedAgendaHtml` in `MapScalars`; (c) `MapRegistrationPage` is now **create-only** — it lazily creates a missing page row (legacy events) but, for an existing row, only writes the two host-owned page fields `ShowCountdown` + `SendLinkTimingCode` (Tab 2) and leaves everything else for Tab 4 / #169.
+  - DB seed (2 — modified):
+    - `EventTicketing-sqlscripts.sql` — INSERT literal `IsLeastMenu` `true`→`false` + new idempotent `UPDATE … SET IsLeastMenu=false WHERE MenuCode='EVENTTICKETING'` (forces hide for already-seeded DBs). MenuCapabilities + BUSINESSADMIN grants untouched (cascade preserved). NB: the seeded code is `EVENTTICKETING`, not the FE gate's `EVENTTICKET`.
+    - `event-reg-page-sqlscripts.sql` — INSERT literal `true`→`false` and the existing upsert `UPDATE … IsLeastMenu` flipped `true`→`false`.
+  - FE (5 — modified):
+    - `crm/event/event/event-form-page.tsx` (host) — `EVENT_STEPS` 3→4 (`1 Basic Info / 2 Venue & Schedule / 3 Ticketing / 4 Registration Page`; tabs 3-4 carry `gated:true`). Removed the `ContentSpeakersTab` import + its `<TabsContent value="3">`. Added gated `<TabsContent>` for tab 3 (`<EventTicketingTab eventId={recordId} …/>`) and tab 4 (`<EventRegistrationPageEditorPage eventId={recordId} embedded/>`), each wrapped in an Event-exists gate (`eventExists = recordId > 0 && !isAdd`) with a `GatedTabEmptyState` ("Save the event first…"). Step navigator shows a lock + "Save event first" sublabel + disabled click for gated tabs while `!eventExists`. `?tab=` deep-link applied AFTER the record loads (CR-ISSUE-6) + add-mode snap-back to tab 1. Sticky Save/Publish footer + validation summary + why-disabled hint now gated on `!isEmbedTab` (visible only on tabs 1-2). `buildPayload` now sends `null` for `speakers`/`registrationFormFields`/`communicationTriggers`/`galleryPhotos` and `bannerImageUrl`/`detailedAgendaHtml` (single-writer = Tab 4); removed the now-unused `stripTypename` helper.
+    - `crm/event/eventticketing/index.tsx` (#46) — added exported `EventTicketingTab({ eventId, canCreate?, canUpdate?, canDelete? })`: drives the singleton `useEventTicketingStore` off the prop (`setSelectedEventId` on mount, `reset()` on unmount → no state leak between events), renders the 5 cards directly with NO `ScreenHeader`/event-selector. Standalone `EventTicketingIndex` + selector left intact for the (now redirect-only) route.
+    - `setting/publicpages/eventregpage/editor-page.tsx` (#169) — added `embedded?: boolean` prop (via the Sonnet FE agent): when embedded, hides the standalone `<header>`+Back, suppresses the `beforeunload` guard, renders an inline Save/Publish action bar at the top of the cards column, and no-ops the lifecycle `router.push`. Non-embedded path byte-for-byte unchanged.
+    - `app/[lang]/crm/event/eventticketing/page.tsx` — replaced with a thin client redirect: `?eventId=X` → `crm/event/event?mode=edit&id=X&tab=3` (else event list).
+    - `app/[lang]/setting/publicpages/eventregpage/page.tsx` — replaced with a thin client redirect: `?id=X` → `crm/event/event?mode=edit&id=X&tab=4` (else event list).
+- **Deviations from spec**:
+  - §⓪.5 anticipated only an FE buildPayload change + possible `detailedAgendaHtml` BE delta. In practice **`detailedAgendaHtml`/banner relocation was already complete** (BE SetupInput/handler + FE DTO/GQL all already carried it; `BannerImageUrl` lives on `app.Events` and the #169 setup handler already writes it). So zero delta there — instead the real risk was the host's `UpdateEvent` **wiping** Tab-4-owned data; fixed with the surgical guards above (user-approved "Surgical BE guards" option).
+  - `content-speakers-tab.tsx` retired from the wizard but left on disk + barrel (dead code) — see ISSUE-18.
+  - `MapRegistrationPage` keeps writing `ShowCountdown` + `SendLinkTimingCode` because those two page fields are still edited in host Tab 2 — see ISSUE-19.
+- **Known issues opened**: ISSUE-18 (dead `content-speakers-tab.tsx`), ISSUE-19 (`ShowCountdown` two-writer overlap — harmless).
+- **Known issues closed**: None (the consolidation doesn't touch the #46-dependent SERVICE_PLACEHOLDER set; #46 itself is now embedded, so its real registrant/ticket data flows in Tab 3).
+- **Verification**: BE `dotnet build Base.Application` → **0 errors** (541 pre-existing warnings). FE `npx tsc --noEmit` → **0 errors** project-wide. All edits confirmed in the `pwds-soruban - Copy` working copy (no sibling-worktree drift); `BaseUrlConfig.ts` left as the user manages it. Runtime E2E per §⓪.8 to be walked by the user with `pnpm dev` (requires re-running the two seed scripts to hide the absorbed menus).
+- **Next step**: COMPLETED. User to (1) re-run `EventTicketing-sqlscripts.sql` + `event-reg-page-sqlscripts.sql` so the two menus disappear from the sidebar; (2) `pnpm dev` and verify §⓪.8 — 4 tabs, add-mode gating, tab 3 ticketing for the host event (no selector), tab 4 reg-page editor + Save, footer hidden on tabs 3-4, no wipe of speakers/gallery/banner/agenda on a tabs-1-2 save.
+
+#### Follow-up (same session) — physical consolidation + dead-route removal (FE only)
+
+User asked to physically move the absorbed UI into the Event location and delete the legacy routes outright (no redirect stubs). Decisions: keep #46 where it is (`crm/event/eventticketing/` — already a sibling), move #169 only; user handles the menu/DB removal, so seed scripts were left as-is.
+- **Moved** (git-tracked as 18 renames): `setting/publicpages/eventregpage/` → **`crm/event/eventregpage/`** (`editor-page.tsx`, `eventregpage-store.ts`, 12 cards, 6 components). Cards/components use relative imports → survived the move; the one ESCAPING relative import (`9-payment-gateway-card.tsx` → `../../onlinedonationpage/components/api-single-select`) was repointed to an absolute `@/…/setting/publicpages/onlinedonationpage/…` path.
+- **Deleted (dead after route removal)**: `eventregpage-root.tsx` (dispatcher), `list-page.tsx` (standalone list), the folder `index.ts` barrel.
+- **Deleted routes** (replaced the Session-8 redirect stubs with full removal): `app/[lang]/crm/event/eventticketing/` and `app/[lang]/setting/publicpages/eventregpage/`.
+- **Deleted orphaned PageConfig wrappers** + trimmed barrels: `pages/crm/event/eventticketing.tsx` (− export in `pages/crm/event/index.ts`), `pages/setting/publicpages/eventregpage.tsx` (− export in `pages/setting/publicpages/index.ts`), and `page-components/setting/publicpages/index.ts` (− `export * from "./eventregpage"`).
+- **Repointed imports**: host `event-form-page.tsx` (editor now `@/…/crm/event/eventregpage/editor-page`); `eventticketing/public-preview-card.tsx` (`editorToPublicDto` from the new path); editor-page's two non-embedded `router.push` back/archive targets → `/${lang}/crm/event/event`.
+- **Repointed 4 dashboard drill-downs** (`event-analytics-widgets/*`) that pushed to the now-deleted `/crm/event/eventticketing?eventId=` → `/crm/event/event?mode=edit&id=…&tab=3` (the `&tab=registrants`/`&ticketTypeId=` #46-internal params dropped — host doesn't honor them).
+- **Verification**: FE `npx tsc --noEmit` → **0 errors**; final grep for `crm/event/eventticketing` / `setting/publicpages/eventregpage` / the deleted PageConfig exports → **0 matches**. BE untouched. NB: the public registration page (`(public)/event/[slug]`) imports the SEPARATE `page-components/public/eventregpage/` tree — unaffected by the admin-folder move.
+
+### Session 9 — 2026-06-10 — ENHANCEMENT — Cross-tab publish gates + real status transition
+
+- **Scope**: Wire the absorbed tabs' state INTO the Event publish flow. Three asks: (a) the registration page (Tab 4) must be published before the Event can publish; (b) at least one ticket (Tab 3) must exist; (c) "Save & Publish" must actually flip the Event status (it was staying DRAFT).
+- **Root cause of (c)**: the consolidated host form's "Save & Publish" routed through `UPDATE_EVENT` with a *client-resolved* PUBLISHED id — if `statusIdByCode.get("PUBLISHED")` was empty it silently fell back to the current status. The dedicated, server-authoritative `publishEvent` command (resolves PUBLISHED server-side + validates) was only wired to the read-mode dashboard button, never to the in-form button.
+- **Files touched**:
+  - BE (1 — modified): `Base.Application/.../Events/Commands/PublishEvent.cs` — after the existing required-field checks, added a `blockers` list with two cross-tab gates: **(a)** resolve the 1:1 `RegistrationPage.PageStatusId` → `DataValue` and require it to be `PUBLISHED` or `ACTIVE`; **(b)** `EventTickets.AnyAsync(t => t.EventId == … && t.IsDeleted != true)`. Combined throw now reads "Cannot publish event. Missing required fields: …. <blocker sentences>". The status flip itself (`entity.EventStatusId = PUBLISHED`) was already correct.
+  - FE (1 — modified): `crm/event/event/event-form-page.tsx` — imported `PUBLISH_EVENT_MUTATION` + `useMutation` (`publishing` folded into `saving`). **Split the save path**: `handleSave()` is now draft-only (creates/updates preserving DRAFT/current status — no more forced PUBLISHED via update); new `handlePublish()` persists pending tab-1-2 edits first (only if dirty, keeping current status), then calls `publishEvent({ eventId })`, sets `eventStatusId`←PUBLISHED on success, and surfaces the BE blocker via a new `publishError` banner ("Can't publish yet") + toast. "Save & Publish" button now `onClick={handlePublish}` and is **only rendered when `eventExists`** (edit mode) — add mode shows Draft only, since the gates require a saved event with tabs 3-4 populated. `publishError` clears on any field edit.
+- **Deviations from spec**: ticket gate is "≥1 non-deleted ticket (any status)" — the literal ask. (The reg-page's OWN publish-gate already enforces the stricter ONSALE+PUBLIC-or-capacity rule, so duplicating it here would be redundant.) Reg-page gate accepts both PUBLISHED and its auto-advanced ACTIVE state.
+- **Known issues opened**: None. **Known issues closed**: None.
+- **Verification**: BE `dotnet build Base.Application` → **0 errors** (557 pre-existing warnings). FE `npx tsc --noEmit` → **0 errors**. Runtime walk by user: in edit mode, publishing a DRAFT event with no published reg page / no ticket should now show the blocker; once Tab 4 is published + a ticket exists, Save & Publish flips the status badge to PUBLISHED.
+- **Next step**: COMPLETED.
+
+### Session 10 — 2026-06-10 — UI/ENHANCEMENT — Registrants → "Event Tracking" drill-in; drop public-preview from Tab 3
+
+- **Scope**: Two asks on the consolidated Ticketing tab (Tab 3). (1) Remove the right-column **"Public Registration Page Preview"** card — no longer needed. (2) Relocate the **Registrants** grid out of Tab 3 into a dedicated, reusable destination. Decision (user, AskUserQuestion): **drill-in route + Event-grid row action** (NOT a new menu screen), and **remove Registrants from Tab 3** entirely.
+- **Files touched** (FE only):
+  - `eventticketing/index.tsx` (modified) — dropped `PublicPreviewCard` from BOTH layouts (embedded `EventTicketingTab` + standalone `EventTicketingContent`), flattened the old 12-col grid (left col-8 / right col-4 sticky preview) to a full-width stack; removed `RegistrantsCard` from both. Tab 3 is now purely ticket setup (Summary + Ticket Types + Add/Edit Form).
+  - `eventticketing/public-preview-card.tsx` (DELETED) — orphaned after the above; only `index.tsx` referenced it.
+  - `event/event-tracking-page.tsx` (created) — `EventTrackingPage({ eventId })`: back header + reused `SummaryBar` (ticket KPI snapshot) + reused `RegistrantsCard` (full attendee console). Capabilities via `useAccessCapability("EVENT")`; resets the singleton `useEventTicketingStore` on mount/unmount so a prior event's registrant filter state can't leak.
+  - `event/event-tracking-action.tsx` (created) — `EventTrackingAction({ event })`: extra grid row action (ph:users-three icon, "Event tracking" tooltip) navigating to `?mode=track&id=X`. Mirrors the View option's button/tooltip styling.
+  - `event/index-page.tsx` (modified) — registers the action into the shared FlowGrid via `setCustomRowActions((row) => <EventTrackingAction event={row} />)` in a `useEffect`, cleared to `null` on unmount.
+  - `event/event-page.tsx` (modified) — dispatcher gained a `mode=track` branch (`crudMode="track"` — the store's `crudMode` is a plain `string`, no union change) rendering `<EventTrackingPage eventId={recordId} />`.
+- **Reuse**: `RegistrantsCard` + `SummaryBar` are imported verbatim from the `eventticketing/` folder — zero re-build of the registrants console (search / ticket filter / check-in toggle / edit / cancel / QR / pagination all intact).
+- **Capability gate (new `EVENTTRACKING` cap)**: follows the standard READ/CREATE/MODIFY format (PrayerRequests `APPROVE`/`REPLY_*` precedent). DB (`Event-sqlscripts.sql`, modified): STEP 1b idempotently inserts the special `EVENTTRACKING` row into `auth."Capabilities"` (IsSpecial=true, OrderBy 40); STEP 2 MenuCapabilities IN-list += `EVENTTRACKING` (now 9); STEP 3 RoleCapabilities IN-list (BUSINESSADMIN) += `EVENTTRACKING` (now 8, HasAccess=true). FE: `useCapability.ts` maps `EVENTTRACKING`→`canEventTracking`; `TCapability.ts` adds `canEventTracking?`. The Event grid only registers the "Event Tracking" row action when `canEventTracking` (else `setCustomRowActions(null)`); `event-tracking-page.tsx` hard-gates direct `?mode=track` URLs with `LayoutLoader`/`DefaultAccessDenied`. No new BE authorization — the drill-in reuses already-authorized EventRegistration/EventTicket queries.
+- **Deviations from spec**: none. **Known issues opened**: dead store fields `previewDevice`/`setPreviewDevice` in `eventticketing-store.ts` (only the deleted PublicPreviewCard used them) — harmless, left in place. **Known issues closed**: None.
+- **Files touched (capability addon)**: BE `Event-sqlscripts.sql` (modified); FE `useCapability.ts`, `TCapability.ts`, `event/index-page.tsx`, `event/event-tracking-page.tsx` (modified).
+- **Verification**: FE `npx tsc --noEmit` → **0 errors**. No BE code changes (seed only — user runs it).
+- **Next step**: COMPLETED. Registrants reachable ONLY via the Event grid's "Event Tracking" row action → `?mode=track&id=X`, itself gated on the new `EVENTTRACKING` capability. **User must run `Event-sqlscripts.sql`** (STEP 1b/2/3) so BUSINESSADMIN gets the cap, else the action won't render.
+
+### Session 11 — 2026-06-11 — UI — COMPLETED
+
+- **Scope**: 9-item UI/UX polish pass across the consolidated 4-tab Event screen (host tabs 1-2 + embedded Tab 3 Ticketing + Tab 4 #169 Registration Page editor). All UI/in-scope — no Spec change. Removing the duplicate countdown control (item 5) also closes the long-standing two-writer overlap (ISSUE-19).
+- **Files touched**:
+  - BE (1 — modified):
+    - `Base.Application/.../Events/Commands/UpdateEvent.cs` — `MapRegistrationPage` existing-page branch **no longer writes `ShowCountdown`** (item 5). Tab 4 / #169 RegistrantExperience card is now the SINGLE writer of the page countdown; the host's `SendLinkTimingCode` write stays. Closes ISSUE-19. (The lazy-create branch still seeds it once for legacy events — harmless.) No schema/migration change.
+  - FE (7 — modified):
+    - `crm/event/event/event-form-page.tsx` — **item 6**: completed step circles + connectors + sublabels now render GREEN (emerald, with a check) while the active step keeps the primary accent + focus ring; replaced the bare 3-block loading skeleton with a premium layout-matching skeleton (step navigator → guide banner → section card). **item 2**: added a unified `FormNotice` helper (clean card + colored left-accent stripe, no saturated full-bg wash) and migrated the validation summary, publish blocker, why-disabled and publish-readiness hints onto it, grouped in one `space-y-3` block. **item 3**: the tabs-1-2 sticky footer is now a detached, centered, `rounded-full` floating action pill (`pointer-events-none` wrapper so it never blocks content; buttons `size="sm"` + `rounded-full`; `flex-wrap` for xs). Added `ReactNode` import.
+    - `crm/event/event/form-tabs/venue-schedule-tab.tsx` — **item 5**: removed the "Show Countdown" `Toggle` (+ its now-unused import); Timezone select stays in the schedule grid.
+    - `crm/event/eventregpage/components/section-card.tsx` — **items 1 + 8**: section header now uses the host's solid primary icon chip + WHITE glyph (was a `bg-muted/50` bar + colored icon) so tabs 1-4 headers read uniform; card badges are full-solid pills with white text (was light-tint). Body padding `p-3.5 sm:p-4`.
+    - `crm/event/eventregpage/components/status-bar.tsx` — **item 1**: `STATUS_CHIP` page-status pills converted from light-tint to full-solid bg + white text/dot.
+    - `crm/event/eventregpage/components/live-preview.tsx` — **item 9**: preview now scales to FIT the measured pane width via a `ResizeObserver` callback ref (desktop = faithful browser-window shot at fit-zoom; mobile = a 390px phone frame with bezel ring), clamped so it never overflows the embedded Tab-4 pane nor shrinks to a thumbnail. Template-code + Preview badges made solid (item 1).
+    - `crm/event/eventregpage/components/announcement-audience-section.tsx` — **item 7**: the native `<select>` saved-filter picker → canonical `FormSelect`.
+    - `crm/event/eventregpage/editor-page.tsx` — **item 1**: `SaveStatus` (Saving/Unsaved/Saved) pills converted to full-solid bg + white text.
+  - DB: None.
+- **Item 4 (responsive)**: audited xl/lg/md/sm/xs across the screen — host tabs (`md:grid-cols-2`, mode cards `sm:grid-cols-3`), Tab-3 ticketing (`grid-cols-2 sm:grid-cols-4`, `hidden sm:inline` button labels), Tab-4 editor (`lg:flex-row` stack, cards `sm:grid-cols-2`) and the new floating pill (`flex-wrap`) were already responsive; the real defect was the live-preview overflowing the narrow embedded pane, fixed by the fit-to-pane scaling in item 9. Step navigator already hides labels < sm. No further changes needed.
+- **Item 7 scope note**: only ONE native dropdown existed in Tab 4 (the saved-filter `<select>`) — converted. All other Tab-4 dropdowns already used `SelectField`/`FormSelect`; date pickers already route through the host `TextField`→`FormDateTimePicker` wrapper. Remaining raw `<input>`s are checkboxes (reminder channels, payment methods, form-field require/visible) and modal type-to-confirm text fields — not dropdowns/date-pickers, left as-is.
+- **Deviations from spec**: None. The host `Event.ShowCountdown` scalar is still sent in the Event payload (the event-level field); only the duplicate PAGE-level write was removed (item 5 decision: "FE field + stop BE writing it").
+- **Known issues opened**: None. **Known issues closed**: ISSUE-19 (ShowCountdown two-writer overlap — host no longer writes the page field).
+- **Verification**: FE `npx tsc --noEmit` → **0 errors** project-wide. BE `dotnet build Base.Application` → **0 errors** (539 pre-existing warnings). All edits confirmed in the `pwds-soruban - Copy` working copy (no agents spawned → no sibling-worktree drift). Runtime visual confirmation (green ticks, floating pill, solid badges/headers, preview desktop/mobile fit, countdown gone from Tab 2) pending user `pnpm dev`.
+- **Next step**: COMPLETED.
+
+### Session 12 — 2026-06-11 — ENHANCEMENT — Event Unpublish + lock-when-live — COMPLETED
+
+- **Scope**: Add the missing reverse of the consolidation-#40 publish flow. There was no way to take a PUBLISHED event back to editable, so the registration page could never be edited after going live. Now: PUBLISHED event → **Unpublish** → event DRAFT + page cascaded to ReadyToPublish (offline) → "Cancel Ready to Publish" (existing) → DRAFT → editable. Plus: while the event is PUBLISHED, **all fields across every tab are locked** (read-only) and the only actions are Unpublish (host) and the page's operational buttons (Preview / Close Early / Archive / Resend / Reset Branding).
+- **Files touched**:
+  - BE (2):
+    - `Base.Application/.../Events/Commands/UnpublishEvent.cs` (created) — `UnpublishEventCommand`: validates event is PUBLISHED → DRAFT (resolves EVENTSTATUS/DRAFT row, mirrors PublishEvent/CancelEvent). **Cascade**: registration page Published/Active → **ReadyToPublish** (the symmetric inverse of PublishEvent's ReadyToPublish→Published cascade — NOT Draft, so the existing Unlock/"Cancel Ready to Publish" step still completes the path to editing). Registrations preserved; PagePublishedAt left intact (republish uses `??=`). Public page goes offline because the BySlug handler serves only {Published, Active, Closed}.
+    - `Base.API/.../Mutations/EventMutations.cs` (modified) — `UnpublishEvent(eventId)` GraphQL mutation, placed right after `PublishEvent`.
+  - FE (3):
+    - `gql-mutations/contact-mutations/EventMutation.ts` (modified) — `UNPUBLISH_EVENT_MUTATION` (selects `eventId/statusCode/pageStatusCode`).
+    - `crm/event/event/event-form-page.tsx` (modified) — destructured `statusCodeById` from `useEventDropdowns`; derived `eventPublished` from the loaded `eventStatusId`; added `unpublishEvent` hook (folded into `saving`) + `handleUnpublish` (success → toast, `bumpRefresh()`, optimistically set status → DRAFT). **Floating pill is now status-aware**: PUBLISHED → renders ONLY "Unpublish"; otherwise the existing Cancel / Save as Draft / Save & Publish trio. Publish-readiness hint suppressed while published. **Lock-when-live**: tabs 1-2 `readOnly={readOnly || eventPublished}`; tab 3 ticketing `canCreate/Update/Delete={canEdit && !eventPublished}`. Added a **full-screen centered progress overlay** (fixed `inset-0`, backdrop-blur, card with ping/pulse icon + spinner) shown while `publishing || unpublishing` — distinct copy for "Publishing event…" vs "Unpublishing event…".
+    - `crm/event/eventregpage/editor-page.tsx` (modified, #169) — `locked` extended from `isReadyToPublish` to `isReadyToPublish || liveLocked` where `liveLocked = isPublished || isActive`; the existing `<fieldset disabled={locked}>` now greys out every page field when live, and the embedded Save gained `|| locked`. Split the frozen banner: ReadyToPublish keeps the violet "Unlock to make changes" + Cancel-Ready-to-Publish button; new emerald **"This page is live — unpublish the event to edit"** banner for Published/Active (no unlock button — Unlock only accepts ReadyToPublish). Operational actions (Preview / Resend / Close Early / Archive / Reset Branding) are NOT gated by `locked` → stay live, per the requirement.
+  - DB: None.
+- **Deviations from spec**: The pre-existing standalone `UnpublishEventRegistrationPageCommand` (Published/Active → **Draft**) is left intact but is NOT what the event-level Unpublish uses — the cascade targets **ReadyToPublish** to keep the publish/unpublish path symmetric (so "Cancel Ready to Publish" remains the single unlock step). No schema/migration change; both transitions reuse seeded EVENTSTATUS / EVENTREGPAGESTATUS rows.
+- **Known issues opened**: None. **Known issues closed**: None.
+- **Verification**: BE `dotnet build Base.API` → **0 errors** (632 pre-existing warnings). FE `npx tsc --noEmit` → **0 errors** (no event-file errors). Edits confirmed in the `pwds-soruban - Copy` working copy (no agents spawned). Runtime confirmed by user: Unpublish renders and flips state. Lock-when-live behavior pending user `pnpm dev` re-check.
+- **Next step**: COMPLETED.
+
+### Session 13 — 2026-06-11 — UI — COMPLETED
+
+- **Scope**: Second 11-item UI/UX polish batch on the 4-tab Event screen (disabled-field colour bug, label/section uniformity, template & URL field differentiation, reminders coming-soon, payment-gateway dropdown swap, floating-pill scroll animation, locked-banner de-emphasis). All UI/in-scope — no Spec change, no BE change. One shared field component (`FormInput`) fixed at source (app-wide disabled-state bug). 3 disjoint Tab-4 card items (4/5/10) done by a background `frontend-developer` (Sonnet); the rest in the main session.
+- **Files touched** (FE only — 9):
+  - `custom-components/form-fields/FormInput.tsx` — **items 1 + 12** (app-wide bug fix): standalone-mode disabled state used `disabled:bg-default-700` (near-black) → rendered every disabled standalone FormInput (incl. the locked URL-slug field and all Event-tab Text inputs) as a BLACK field. Changed to `disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed`. The RHF-control branch never had the bug. Affects the whole app's standalone FormInputs, not just Event.
+  - `crm/event/event/form-tabs/fields.tsx` — **item 8**: `SectionHeader` rebuilt as a STRONG solid-primary header bar (white icon-chip + white title) instead of the old border-bottom + chip; added a new `FormSectionCard` (card shell + the same strong header) so host tabs match the Tab-4 cards. **item 2**: standalone `FieldWrapper` label already canonical; kept. **item 6**: new `UrlField` ({kind:"image"|"link"}) — image kind shows an image icon prefix + live thumbnail preview; link kind shows a link icon prefix + an "Open link" affordance.
+  - `crm/event/event/form-tabs/basic-info-tab.tsx` — **item 8**: wrapped the tab in `FormSectionCard`; **item 2**: 3 inline `<label>`s (Event Code / Event Mode / Event Status) aligned to the canonical `text-[11px] font-medium text-foreground sm:text-xs`.
+  - `crm/event/event/form-tabs/venue-schedule-tab.tsx` — **item 8**: Schedule / Venue / Virtual sections converted from bare `<section>`+`SectionHeader` to `FormSectionCard` (uniform border/radius/header/spacing). **item 6**: Map Link + Meeting URL → `UrlField kind="link"`.
+  - `crm/event/eventregpage/components/section-card.tsx` — **item 8**: `SectionCard` header → strong solid-primary bar (white chip + title) matching the host `FormSectionCard`; badges read as solid pills on the bar. **item 2**: `CardField` label aligned to the canonical token; hints/errors responsive.
+  - `crm/event/eventregpage/components/page-template-picker.tsx` — **item 3**: wrapped the tiles in a differentiated dashed tinted panel (`border-dashed border-primary/30 bg-primary/[0.04]`); shrank each tile ~30% (sketch `h-[72px]`→`h-[50px]`, tighter padding/label, grid up to `lg:grid-cols-5`); added a per-tile hover **Preview** eye button (selects the template so the right-pane live preview renders that exact layout).
+  - `crm/event/eventregpage/cards/8-branding-seo-card.tsx` — **item 6**: Banner Image URL + Share Image URL → `UrlField kind="image"` (thumbnail preview).
+  - `crm/event/event/event-form-page.tsx` — **item 7**: the floating action pill now hides (slide-down + fade) WHILE scrolling and springs back ~280ms after scroll stops (capture-phase scroll listener so it catches inner-container scroll too); pill given a stronger `shadow-xl ring-1`.
+  - Background-agent (Sonnet) — 3 files: `cards/7-communications-card.tsx` (**item 4**: Reminder sub-section dimmed `opacity-60 pointer-events-none`, solid "Coming soon" pill, Switch/timing/channels disabled); `cards/9-payment-gateway-card.tsx` (**item 5**: replaced `ApiSingleSelect` with the canonical `SelectField` — same component as "Reminder Timing" — fed by `COMPANYPAYMENTGATEWAYS_QUERY` via useQuery); `eventregpage/editor-page.tsx` (**item 10**: "Ready to publish… locked" banner background de-tinted `bg-violet-50`→`bg-card`, neutral border/buttons, lock icon kept).
+- **Item 9 (how-to, no code)**: answered in chat — distinguish transport/network failure (Apollo `error.networkError`, no `graphQLErrors`, often `Failed to fetch`/status 0/5xx) from a real API error (HTTP 200 with `result.success === false` + `errorDetails`, or `error.graphQLErrors[]`). Offered to add a shared `getRequestError()` normalizer if wanted (not implemented).
+- **Deviations / interpretations**:
+  - "Strong" section header = SOLID primary bar + white text (per the user's repeated solid-accent preference); applied uniformly to host tabs (`FormSectionCard`) and Tab-4 cards (`SectionCard`).
+  - Item 3 "preview option per template" = a per-tile eye that selects the template so the existing right-pane live preview renders it (no per-template public route exists to open standalone).
+  - Item 6 URL differentiation demonstrated on the two obvious image URLs (banner/share) + two navigation URLs (map link / meeting URL); the `UrlField` component is reusable for the rest.
+- **Known issues opened / closed**: None.
+- **Verification**: FE `npx tsc --noEmit` → **0 errors** project-wide (covers both main-session and background-agent edits). No BE changes this session. All edits + the agent's edits confirmed in the `pwds-soruban - Copy` working copy (`ApiSingleSelect` fully removed from card 9; "Coming soon"/gateway markers present) — no sibling-worktree drift. Runtime visual confirmation (no black disabled fields, strong uniform headers, floating-pill scroll animation, template panel + smaller tiles, URL thumbnails, reminders disabled, neutral locked banner) pending user `pnpm dev`.
+- **Next step**: COMPLETED.
+
+### Session 14 — 2026-06-11 — FIX — COMPLETED
+
+- **Scope**: Index-page **Revenue / Capacity / Remaining** columns came up empty for every event, and the **Event Revenue (YTD)** KPI widget never reflected registrant amounts. Two root causes, both backend; FE (renderers + grid columns + widget) was already correct and bound to the right fields.
+  1. `GetEvent` grid handler hard-coded the computed columns: `RegisteredCount = 0`, `EventRevenue = 0m`, `WaitlistCount = 0` (leftover `// TODO: wire to #46` placeholders). Revenue/registered/waitlist were therefore always blank. **Capacity** was additionally broken because the field moved off `Event` → `EventRegistrationPage` (#169), so Mapster's auto-projection produced `null` → the capacity progress renderer showed "No capacity set", and Remaining (capacity − registered) couldn't compute.
+  2. `GetEventSummary` revenue KPI summed `TotalAmount` only for `EVENTREGSTATUS = CONFIRMED` registrations, so it read 0 whenever registrations weren't explicitly confirmed — inconsistent with the grid/dashboard.
+- **Files touched** (BE only — 2):
+  - `Base.Application/Business/ApplicationBusiness/Events/Queries/GetEvent.cs` (modified) — replaced the hard-coded placeholder block with real per-event aggregation over the current grid page's event ids, mirroring `GetEventDashboardById` (EVENTREGSTATUS code set): RegisteredCount = Σ Quantity (non-cancelled), EventRevenue = Σ TotalAmount (non-cancelled), WaitlistCount = Σ Quantity (WAITLIST). Capacity pulled explicitly from `EventRegistrationPages.Capacity` per event (since it no longer lives on `Event`); CapacityFillPct recomputed from the real capacity. "Remaining" is derived client-side from capacity − registered, so it now resolves.
+  - `Base.Application/Business/ApplicationBusiness/Events/Queries/GetEventSummary.cs` (modified) — EventRevenueYtd changed from CONFIRMED-only to the same **non-cancelled** basis as the grid/dashboard; removed the now-unused `confirmedStatusId` lookup; refreshed the handler doc (no longer a SERVICE_PLACEHOLDER).
+- **Revenue semantics (answer to the user's question)**: revenue is recognised **when a registration is recorded** (any non-cancelled registration's `TotalAmount`), **not** after the event completes. The YTD widget scopes to events whose `StartDate` falls in the current calendar year; the grid Revenue column is per-event lifetime. Both now use the identical non-cancelled basis, so the KPI, the grid column, and the per-event dashboard agree.
+- **Deviations from spec**: None. Standardised the revenue basis to non-cancelled across summary + grid + dashboard for internal consistency (previously summary used CONFIRMED-only).
+- **Known issues opened / closed**: None.
+- **Verification**: BE build deferred to the user (their standing request). No FE changes — `event-revenue-renderer.tsx` / `event-capacity-progress.tsx` / `event-widgets.tsx` already bound to `eventRevenue` / `capacity` / `registeredCount` / `capacityFillPct` / `eventRevenueYtd`.
+- **Next step**: COMPLETED (user builds BE → columns + KPI populate).
+
+### Session 15 — 2026-06-12 — FIX — COMPLETED
+
+- **Scope**: A PUBLISHED event whose `EndDate` has passed still showed **Published** (event badge) and the registration page still showed **Published/Active** — neither moved to a "completed" state. Root cause: the screen displays status via a read-time **computed** rule (ISSUE-10 convention — status is derived, never persisted), and the code only computed `PUBLISHED → INPROGRESS` while the event was running; the **`COMPLETED` branch was never added**, so past events fell through to the persisted `PUBLISHED`. The standalone `CompleteEvent` command/mutation exists but is wired to nothing (no button/job). The reg-page badge had no date logic at all. **User chose computed display** (no persisted write / no background job) to stay consistent with how INPROGRESS already works.
+- **Files touched**:
+  - BE (3 — modified): extended the existing computed-status block to add `PUBLISHED && EndDate < now → COMPLETED` (ahead of the INPROGRESS branch), display-only — stored `EventStatusId` stays PUBLISHED:
+    - `Base.Application/.../Events/Queries/GetEvent.cs` (grid badge)
+    - `Base.Application/.../Events/Queries/GetEventById.cs` (form load)
+    - `Base.Application/.../Events/Queries/GetEventDashboardById.cs` (dashboard/view badge)
+  - FE (2 — modified):
+    - `crm/event/eventregpage/editor-page.tsx` (#169 Tab 4) — compute `eventEnded` from `page.endDate`; `endedClosed = eventEnded && (isPublished || isActive)` surfaces the page status as **CLOSED** (passed to `EventRegStatusBar` via a new `displayStatus`), adds `endedClosed` to `locked` so a finished event's page stays read-only, and shows a new orange **"This event has ended — registration is closed"** banner (the live "unpublish to edit" banner is suppressed once ended).
+    - `crm/event/event/form-tabs/basic-info-tab.tsx` — the Basic Info "Event Status" chip now computes the displayed code locally from the date window (mirrors the BE: PUBLISHED → COMPLETED when past EndDate, INPROGRESS while running), finishing the COMPLETED/INPROGRESS labels+colours that were already defined in the file. Lock logic in `event-form-page.tsx` (`eventPublished`) still keys off the persisted status — unchanged.
+  - DB: None.
+- **Where the user now sees COMPLETED**: events grid (`GetEvent`→`eventStatusCode`), calendar view, dashboard/view page (`GetEventDashboardById`), Basic Info status chip, and Tab-4 reg-page status bar (as **CLOSED**, with the ended banner + locked fields).
+- **Deviations from spec**: None. Pure read-time computation, consistent with the existing INPROGRESS convention (ISSUE-10) — no persisted status change, no migration, no background job. The public registration guard already independently blocks late sign-ups via `RegistrationEndDate`; this change is display/lock only.
+- **Known issues opened / closed**: None. (The unused `CompleteEvent` command/mutation is left intact — it would only be needed if the team later switches to a persisted-transition model.)
+- **Verification**: FE `npx tsc --noEmit` → **0 errors** project-wide. BE `dotnet build Base.Application` → **0 errors**. Edits confirmed in the `pwds-soruban - Copy` working copy (no agents spawned → no sibling-worktree drift). Runtime visual confirmation (grid/dashboard/form show "Completed", Tab-4 page shows "Closed" + ended banner + locked) pending user `pnpm dev`.
+- **Next step**: COMPLETED.
+- **⚠ SUPERSEDED by Session 16** — the user then required a **real persisted DB transition via a button**, not a computed display. The computed-COMPLETED display added here was **reverted** in S16 (BE 3 handlers back to INPROGRESS-only; basic-info chip back to persisted-derived; reg-page editor switched from computed `endedClosed` to real persisted `CLOSED`).
+
+### Session 16 — 2026-06-12 — ENHANCEMENT — Persisted "Mark as Completed" button + page cascade — COMPLETED
+
+- **Scope**: Replace S15's computed-only "Completed" display with a real, **button-driven persisted transition**. User requirement: when a PUBLISHED event's `EndDate` has passed, the host floating pill must show a **"Mark as Completed"** button (and **hide Unpublish**); Unpublish stays only while the event is still upcoming/running (`PUBLISHED && !ended`). Clicking Complete writes `EVENTSTATUS=COMPLETED` to the DB **and** cascades the registration page → `CLOSED`, then the action becomes a disabled "Completed" pill. Wires the pre-existing (but un-triggered) `CompleteEvent` command + `COMPLETE_EVENT_MUTATION` to the UI; adds the page cascade.
+- **Files touched**:
+  - BE (1 — modified):
+    - `Base.Application/.../Events/Commands/CompleteEvent.cs` — added the registration-page cascade: on completion, if `RegistrationPage` status is `PUBLISHED` **or** `ACTIVE` → set `PageStatusId` to `CLOSED` (via `EventRegistrationPageStatuses.ResolveIdAsync`; the built-in `CloseEventRegistrationPageCommand` only closes from `ACTIVE`, so the cascade is inline). Added `Include(RegistrationPage).ThenInclude(PageStatus)` + the `EventRegistrationPages` using. The validator/guard already allowed `PUBLISHED && EndDate < now`. No schema change. (Mutation `completeEvent` + FE `COMPLETE_EVENT_MUTATION` already existed.)
+  - BE (3 — REVERTED S15): `GetEvent.cs` / `GetEventById.cs` / `GetEventDashboardById.cs` computed-status blocks restored to **INPROGRESS-only** (no computed COMPLETED) — the badge now reflects the real persisted status, which flips only when the button is clicked.
+  - FE (3 — modified):
+    - `crm/event/event/event-form-page.tsx` — imported + hooked `COMPLETE_EVENT_MUTATION` (`completing` folded into `saving`); added `handleComplete` (success → toast + `bumpRefresh()` + optimistic `eventStatusId → COMPLETED`). New derivations: `eventCompleted`, `eventEnded` (`form.endDate < now`), `eventLocked = eventPublished || eventCompleted`. **Floating pill** rewired: `eventCompleted` → disabled **"Completed"** pill; `eventPublished && eventEnded` → **"Mark as Completed"**; `eventPublished && !eventEnded` → **"Unpublish"**; else the Cancel/Save/Publish trio. **Lock-when-live extended to lock-when-completed**: tabs 1-2 `readOnly` + Tab-3 ticketing `canCreate/Update/Delete` + the publish-readiness hint now key off `eventLocked` (was `eventPublished`). Progress overlay gained a third "Completing event…" state (emerald + check glyph).
+    - `crm/event/event/form-tabs/basic-info-tab.tsx` — **REVERTED S15**: status chip back to persisted-derived (`statusCodeById.get(eventStatusId)`); the COMPLETED label/colour already defined there now lights up once the DB row is COMPLETED.
+    - `crm/event/eventregpage/editor-page.tsx` — **REVERTED S15 computed `endedClosed`** → real `isClosed = pageStatus === "CLOSED"`; `locked` now includes `isClosed`; status bar gets the raw `page.pageStatus` again; banner reworded to "Registration is closed." (fires for any CLOSED page — completion cascade or Close Early).
+  - DB: None (EVENTSTATUS/COMPLETED + EVENTREGPAGESTATUS/CLOSED already seeded).
+- **Behaviour summary**: DRAFT → (Save & Publish) → PUBLISHED → while upcoming/running shows **Unpublish** → once `EndDate` passes shows **Mark as Completed** → click persists **COMPLETED** (+ page **CLOSED**) → pill disabled "Completed", whole event locked, Tab-4 page locked w/ "Registration is closed" banner. Badge everywhere (grid/dashboard/form/calendar) now shows the real persisted COMPLETED.
+- **Deviations from spec**: Completion is **manual** (admin clicks the button), not an automatic date sweep — matches the user's explicit instruction. The standalone background-sweep option remains unbuilt. `CompleteEvent` keeps its optional `EventSummary` param (FE sends `null`).
+- **Known issues opened / closed**: None.
+- **Verification**: BE `dotnet build Base.Application` → **0 errors**. FE `npx tsc --noEmit` → **0 errors** project-wide. Edits confirmed in the `pwds-soruban - Copy` working copy (no agents spawned). Runtime (button swap on past-end-date, DB flip to COMPLETED, page → CLOSED + locked) pending user `pnpm dev`.
+- **Next step**: COMPLETED.
+
+### Session 17 — 2026-06-12 — ENHANCEMENT — Completed event: lock ALL Tab-4 actions + hide public page — COMPLETED
+
+- **Scope**: Two follow-ups to the S16 completion flow. (1) When the event is completed, **every DB-affecting action inside the event must be disabled** — not just the form fields. The Tab-4 (#169) operational buttons (Resend Announcement, Reset Branding, Archive, Save; Close Early/Ready/Unlock only render for other statuses) were still live (S12 deliberately kept them live for *live* events). (2) Once completed, the **public registration page must not be shown** to visitors.
+- **Files touched**:
+  - FE (1 — modified): `crm/event/eventregpage/editor-page.tsx` — new `eventCompletedLock = isClosed && eventOver` (event over AND its page CLOSED = the host "Mark as Completed" cascade; a page closed *early* on a still-upcoming event is NOT treated as completed, so it keeps its management actions). `locked` now folds in `eventCompletedLock` (instead of bare `isClosed`). Disabled when `eventCompletedLock`: **Resend Announcement** (both header + embedded bars), **Reset Branding** + **Archive** `DropdownMenuItem`s (both bars). **Save** already gated by `locked`; **Preview** intentionally stays enabled. Banner reworded → "This event is completed. The registration page is closed, hidden from the public, and all actions are locked."
+  - BE (1 — modified): `Base.Application/.../EventRegistrationPages/PublicQueries/GetEventRegistrationPageBySlug.cs` — added `.Include(e => e.EventStatus)` (both the primary and the Dev slug-fallback query) and, right after the page-status resolve, a guard: **if the EVENT status is `COMPLETED` → return `(null, false)` (404, page hidden)**. Gated on event status (not page status) so a `CLOSED`-early page on an upcoming event still renders its "registration closed" public view. (Public registration was already blocked for CLOSED pages by `InitiateEventRegistration`'s status gate — no change needed there.)
+  - DB: None.
+- **Page "completed" status note**: `EVENTREGPAGESTATUS` has no `COMPLETED` value — the lifecycle terminal for registration is `CLOSED` (then optionally `ARCHIVED`). The completion cascade (S16) sets the page to **CLOSED**; the admin Tab-4 chip shows "Closed" with the new "event is completed" banner, and the public page is hidden via the event-status 404 above. No new page-status row was added.
+- **Deviations from spec**: Public hide is a hard 404 (`null` result → caller's not-found), not an "event has ended" landing page — matches the user's "we don't show". The 60s BySlug memory-cache means the hide can lag ≤60s after completion.
+- **Known issues opened / closed**: None.
+- **Verification**: BE `dotnet build Base.Application` → **0 errors**. FE `npx tsc --noEmit` → **0 errors** project-wide. Edits confirmed in the `pwds-soruban - Copy` working copy (no agents spawned). Runtime (Tab-4 Resend/Reset/Archive greyed when completed; public slug 404s) pending user `pnpm dev`.
+- **Next step**: COMPLETED.
+
+### Session 18 — 2026-06-12 — FIX — Registration trend collapses to a single bar — COMPLETED
+
+- **Scope**: The view/dashboard "Registration trend" widget rendered only one bar (e.g. all on Jun 11) even though `EventRegistrations` rows have varying registration dates. Root cause: the trend grouped by `CreatedDate` (the EF row insert/seed timestamp — all rows imported together share the same instant → one bucket), not the attendee's actual `RegisteredDate`.
+- **Files touched**:
+  - BE (1 — modified): `Base.Application/.../Events/Queries/GetEventDashboardById.cs` — trend `GroupBy(r => r.CreatedDate!.Value.Date)` → `GroupBy(r => r.RegisteredDate.Date)`. Dropped the now-unneeded `r.CreatedDate != null` filter (`RegisteredDate` is a non-nullable `DateTime`). Non-cancelled `Quantity`-sum logic unchanged.
+  - FE / DB: None.
+- **Deviations from spec**: None.
+- **Known issues opened / closed**: None.
+- **Verification**: BE `dotnet build Base.Application` → **0 errors**. Runtime (multi-day trend bars) pending user `pnpm dev`.
+- **Next step**: COMPLETED.
+
+### Session 19 — 2026-06-12 — FIX — Dashboard view: capacity 0, empty registrants, completed-event action lock, toolbar layout — COMPLETED
+
+- **Scope**: Six related view-page (read-mode dashboard) defects. (1) "Registration Progress" showed `810 / 0 capacity` — capacity 0; (2) "Spots left" = 0; (3) "Reg closes" = "—"; (4) Registrants list rendered an empty placeholder despite 810 real registrations; (5) a COMPLETED event still enabled DB-affecting actions (Send Reminder, Archive); (6) Send Reminder + "More actions" sat in a full-width row *below* the header (big empty band) instead of beside the existing Edit button in the top toolbar.
+- **Root causes**: (1–3) After #169 the Event entity no longer carries `Capacity` / `RegistrationEndDate` (moved to `app.EventRegistrationPages`), so `entity.Adapt<EventResponseDto>()` left `eventDto.Capacity = 0` and `RegistrationEndDate = null`; the dashboard handler also read `RegistrationPage.Capacity` (a page-level cap the user never set — real cap = sum of #46 ticket `QuantityAvailable` = 900). (4) `Registrants` was a hardcoded `new List<RegistrantDto>()` SERVICE_PLACEHOLDER from before #46 existed; the FE table was a static empty-state. (5) The view-page actions had no terminal-status guard. (6) `FlowFormPageHeader` renders `children` in a `mt-2` block below the header; only its built-in Edit/Save lives in the top-right `rightContent`.
+- **Files touched**:
+  - BE (1 — modified): `Base.Application/.../Events/Queries/GetEventDashboardById.cs` — capacity now `pageCapacity > 0 ? pageCapacity : Σ ticket.QuantityAvailable`; set `eventDto.Capacity` + `eventDto.RegistrationEndDate` from `entity.RegistrationPage` so the FE hero/`Reg closes` render real values; **populated `Registrants`** from `EventRegistrations` (Include `Status`, non-deleted, ticket-scoped, newest-first → `RegistrantDto` w/ name/email/ticketName/status/registeredDate/amountPaid). Spots-left/fill-pct now derive from the corrected capacity.
+  - FE (4 — modified): `gql-queries/contact-queries/EventQuery.ts` — added a `registrants { … }` selection to `EVENT_DASHBOARD_BY_ID_QUERY`. `crm/event/event/event-registrants-table.tsx` — rewritten from static placeholder to a real searchable table (name/email/ticket/status pill/registered/amount) driven by a `registrants` prop, with a "No registrations yet" empty-state. `crm/event/event/event-dashboard-page.tsx` — pass `registrants={dashboard.registrants}`; added `eventTerminal = COMPLETED||CANCELLED` and gated **Send Reminder** (hidden) + **Archive** (disabled) on it (Cancel already disabled for those statuses; Export read-only stays live); moved `headerActions` from `children` into the new `headerActions` toolbar slot and dropped its `w-full justify-end` wrapper. `custom-components/page-header/PageHeader.tsx` (**shared**) — added optional `headerActions?: ReactNode` prop to `FlowFormPageHeader`, rendered in `rightContent` left of the built-in Edit/Save button (additive, default-undefined → no impact on other screens).
+  - DB: None.
+- **Deviations from spec**: None. Capacity-source precedence (page cap → ticket-sum) is a sensible fallback, not a spec change.
+- **Known issues opened / closed**: None.
+- **Verification**: BE `dotnet build Base.Application` → **0 errors**. FE `npx tsc --noEmit` → **0 errors** project-wide. Runtime (capacity 810/900, spots 90, reg-closes date, populated registrants table, completed-event greyed actions, toolbar layout) pending user `pnpm dev`.
+- **Next step**: COMPLETED.
+
+### Session 20 — 2026-06-12 — FIX — Dashboard registrants: replace all-rows-one-page table with server-paginated RegistrantsCard — COMPLETED
+
+- **Scope**: Session 19 populated the dashboard's registrants by embedding the **entire** registrant list in the `eventDashboardById` payload and rendering it on a single page with client-side search. For an 810-registrant event that means one heavy query + 810 DOM rows, no real pagination. User: "Registrants get all query … currently we render with search pagination so it's retrieved all the records and shown in single page — it's not correct so change it" and pointed at the track page (`crm/event/event?mode=track&id=13`) as the correct pattern.
+- **Root cause**: The dashboard forked its own registrants table instead of reusing the existing server-paginated console. The #46 Ticketing module already ships `RegistrantsCard` (used by `EventTrackingPage` at `?mode=track`), which drives off `useEventTicketingStore` and queries `getAllEventRegistrationList` (BE `EventRegistrationQueries` → `GridFeatureRequest`: pageSize 20 + searchTerm + ticket filter, server-sorted by `RegisteredDate desc`) with prev/next pagination, check-in toggle, edit & cancel.
+- **Fix**: Reuse `RegistrantsCard` in the read-mode dashboard; stop embedding registrants in the dashboard payload entirely. Honors the reuse-existing-grids rule (never fork a per-screen grid).
+- **Files touched**:
+  - BE (1 — modified): `Base.Application/.../Events/Queries/GetEventDashboardById.cs` — removed the full `EventRegistrations` projection (the Session-19 block); `Registrants` left as an empty list (the dedicated paginated endpoint serves the list now). Dashboard query no longer reads all registrant rows.
+  - FE (3 — modified, 1 — deleted): `event-dashboard-page.tsx` — render `<RegistrantsCard eventId={recordId} canUpdate={canEdit && !eventTerminal} canDelete={canDelete && !eventTerminal} />` in place of the bespoke table; reset the singleton ticketing store on mount/unmount (mirrors `EventTrackingPage`) so a prior event's search/filter/page can't leak; added `canDelete` from `capability`. `EventQuery.ts` — dropped the `registrants { … }` selection from `EVENT_DASHBOARD_BY_ID_QUERY`. `crm/event/event/index.ts` — removed the `EventRegistrantsTable` export. **Deleted** `crm/event/event/event-registrants-table.tsx` (the Session-19 bespoke table, now dead).
+  - DB: None.
+- **Deviations from spec**: None. Completed-event lock (Session 19 rule 5) carried forward — terminal events pass `canUpdate=false`/`canDelete=false` so the card's edit/cancel actions are hidden (the inline check-in toggle remains, matching the track-page console).
+- **Known issues opened / closed**: None.
+- **Verification**: BE `dotnet build Base.Application` → **0 errors**. FE `npx tsc --noEmit` → **0 errors** project-wide. Runtime (paginated 20/page, server search + ticket filter, prev/next over 810 rows, no full-list payload) pending user `pnpm dev`.
+- **Next step**: COMPLETED.

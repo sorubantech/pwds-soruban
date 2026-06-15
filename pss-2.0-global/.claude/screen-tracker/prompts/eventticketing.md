@@ -11,6 +11,7 @@ planned_date: 2026-04-20
 completed_date: 2026-04-21
 last_session_date: 2026-06-09
 spec_revision: 2026-06-08 — adds nullable EventTicket.EventTemplateId FK + per-ticket "Ticket Template" selector in the Card 3 form. Depends on #176 EventTicketTemplate (provides the `app.EventTicketTemplates` table + `eventTicketTemplates` GQL query). BUILT 2026-06-09 (Session 3 — ISSUE-21 CLOSED) once #176 BE landed; BE compiles 0-err, FE tsc 0-err. EF migration for the new column/FK is user-run. See §⑫ "SPEC REVISION 2026-06-08" block + §⑬ Session 3.
+consolidation_note: "2026-06-10 — This screen is being ABSORBED as TAB 3 of the #40 Event host screen (see prompts/event.md §⓪ CONSOLIDATION REVISION — AUTHORITATIVE). `EventTicketingContent` cards get embedded driven by host `eventId` (selector dropdown dropped); the standalone EVENTTICKET menu → IsLeastMenu=false; route `crm/event/eventticketing` redirects into `crm/event/event?…&tab=3`. Build via /build-screen #40, NOT #46. This screen's own files stay on disk (imported by the host tab)."
 ---
 
 ## Tasks

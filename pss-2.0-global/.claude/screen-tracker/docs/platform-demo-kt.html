@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PSS 2.0 — Product KT &amp; Demo Plan</title>
+<style>
+  :root{
+    --rose:#db2777; --rose-600:#db2777; --rose-700:#be185d; --rose-50:#fdf2f8; --rose-100:#fce7f3;
+    --ink:#0f172a; --slate:#475569; --line:#e2e8f0; --bg:#f8fafc;
+    --internal:#7c3aed; --mgmt:#2563eb; --done:#16a34a; --prog:#d97706; --todo:#94a3b8;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink); background:var(--bg); line-height:1.6; font-size:15px;}
+  /* ---------- layout ---------- */
+  .wrap{display:flex; max-width:1200px; margin:0 auto; gap:28px; padding:0 20px;}
+  nav.toc{position:sticky; top:0; align-self:flex-start; height:100vh; overflow:auto;
+    width:236px; flex:none; padding:28px 16px; background:#111827; border-right:1px solid #000;}
+  nav.toc h4{font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:#9ca3af; margin:0 0 10px; padding:0 14px;}
+  nav.toc a{display:block; padding:9px 14px; margin:2px 0; border-radius:8px;
+    color:#d1d5db; text-decoration:none; font-size:14px; font-weight:500;}
+  nav.toc a:hover{background:#fff; color:#111827;}
+  main{flex:1; min-width:0; padding:36px 0 90px;}
+  /* ---------- header ---------- */
+  .hero{background:linear-gradient(135deg,var(--rose-700),var(--rose-600));
+    color:#fff; border-radius:16px; padding:34px 36px; margin-bottom:34px;}
+  .hero h1{margin:0 0 8px; font-size:30px; letter-spacing:-.02em;}
+  .hero p{margin:0; opacity:.94; font-size:16px; max-width:720px;}
+  .hero .tags{margin-top:18px; display:flex; gap:8px; flex-wrap:wrap;}
+  .hero .tags span{background:rgba(255,255,255,.16); padding:5px 12px; border-radius:20px; font-size:12.5px; font-weight:600;}
+  /* ---------- sections ---------- */
+  section{margin-bottom:54px; scroll-margin-top:20px;}
+  h2{font-size:23px; letter-spacing:-.01em; margin:0 0 6px; padding-bottom:10px;
+    border-bottom:2px solid var(--line); display:flex; align-items:center; gap:11px;}
+  h2 .num{background:var(--rose); color:#fff; width:30px; height:30px; border-radius:8px;
+    display:inline-flex; align-items:center; justify-content:center; font-size:15px; flex:none;}
+  h3{font-size:16px; margin:24px 0 10px; color:var(--rose-700); text-transform:uppercase; letter-spacing:.04em; font-weight:700;}
+  .lead{color:var(--slate); margin:6px 0 18px; font-size:15.5px;}
+  p{margin:10px 0;}
+  /* ---------- cards / notes ---------- */
+  .card{background:#fff; border:1px solid var(--line); border-radius:12px; padding:20px 22px; margin:16px 0;}
+  .grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
+  @media(max-width:820px){.grid3{grid-template-columns:1fr}}
+  .note{border-left:4px solid var(--rose); background:var(--rose-50); padding:13px 18px; border-radius:0 8px 8px 0; margin:16px 0;}
+  .warn{border-left:4px solid var(--prog); background:#fffbeb; padding:13px 18px; border-radius:0 8px 8px 0; margin:16px 0;}
+  /* ---------- tables ---------- */
+  table{width:100%; border-collapse:collapse; margin:14px 0; font-size:13.5px; background:#fff;
+    border:1px solid var(--line); border-radius:10px; overflow:hidden;}
+  th{background:#f1f5f9; text-align:left; padding:10px 12px; font-weight:600; color:var(--ink); font-size:12.5px;
+    text-transform:uppercase; letter-spacing:.03em;}
+  td{padding:10px 12px; border-top:1px solid var(--line); vertical-align:top;}
+  tr:hover td{background:#fafcff;}
+  code{background:#f1f5f9; padding:2px 6px; border-radius:5px; font-size:12.5px; font-family:"SF Mono",Consolas,monospace; color:var(--rose-700);}
+  /* ---------- badges ---------- */
+  .b{display:inline-block; padding:3px 11px; border-radius:20px; font-size:12px; font-weight:700; color:#fff; white-space:nowrap;}
+  .b.internal{background:var(--internal)} .b.mgmt{background:var(--mgmt)} .b.done{background:var(--done)}
+  .b.prog{background:var(--prog)} .b.todo{background:var(--todo)}
+  .pill{display:inline-block; padding:2px 10px; border-radius:12px; font-size:11px; font-weight:700;
+    background:var(--rose-50); color:var(--rose-700); margin:3px 5px 3px 0;}
+  /* =================================================================
+     UNIFORM ACCORDION — used for BOTH Platform Features and Business Modules
+  ================================================================= */
+  .acc-tools{display:flex; gap:8px; margin:10px 0 12px;}
+  .acc-tools button{background:#fff; border:1px solid var(--line); border-radius:8px; padding:6px 13px;
+    font-size:12.5px; font-weight:700; color:var(--rose-700); cursor:pointer; transition:.15s;}
+  .acc-tools button:hover{background:var(--rose-50); border-color:var(--rose);}
+  .acc{display:flex; flex-direction:column; gap:10px; margin:6px 0 0;}
+  .acc-item{background:#fff; border:1px solid var(--line); border-radius:12px; overflow:hidden; transition:border-color .2s, box-shadow .2s;}
+  .acc-item.open{border-color:var(--rose); box-shadow:0 6px 22px rgba(219,39,119,.09);}
+  .acc-head{display:flex; align-items:center; gap:14px; width:100%; padding:15px 18px; cursor:pointer;
+    background:none; border:none; text-align:left; font:inherit; color:inherit;}
+  .acc-head:hover{background:var(--rose-50);}
+  .acc-head .ic{font-size:22px; flex:none; width:30px; text-align:center;}
+  .acc-head .ht{flex:1; min-width:0;}
+  .acc-head .ht h4{margin:0; font-size:15.5px; color:var(--ink);}
+  .acc-item.open .acc-head .ht h4{color:var(--rose-700);}
+  .acc-head .ht p{margin:2px 0 0; font-size:12.5px; color:var(--slate);}
+  .acc-head .cnt{flex:none; font-size:11px; font-weight:700; background:var(--rose-50); color:var(--rose-700);
+    padding:4px 10px; border-radius:12px; white-space:nowrap;}
+  .tick{flex:none; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:13px; font-weight:800; line-height:1;}
+  .tick.done{background:var(--done); color:#fff;}
+  .tick.prog{background:var(--prog); color:#fff;}
+  .tick.todo{background:#fff; border:2px solid var(--line); color:transparent;}
+  .acc-head .chev{flex:none; color:var(--slate); transition:transform .25s; font-size:12px;}
+  .acc-item.open .acc-head .chev{transform:rotate(90deg);}
+  .acc-body{max-height:0; overflow:hidden; transition:max-height .32s ease;}
+  .acc-item.open .acc-body{max-height:1600px;}
+  .acc-body-inner{padding:2px 22px 20px 62px; border-top:1px solid var(--line); margin-top:-1px; padding-top:14px;}
+  .acc-body-inner .desc{font-size:13.5px; color:var(--slate); margin:0 0 12px;}
+  /* functionality checklist (shared) */
+  .feat{list-style:none; padding:0; margin:0;}
+  .feat li{position:relative; padding:7px 0 7px 24px; font-size:13.5px; line-height:1.45; border-top:1px solid var(--line);}
+  .feat li:first-child{border-top:none;}
+  .feat li::before{content:"✓"; position:absolute; left:2px; top:7px; color:#fff; background:var(--rose);
+    width:15px; height:15px; border-radius:50%; font-size:9px; font-weight:800; text-align:center; line-height:15px;}
+  .feat li b{color:var(--ink);}
+  .scrlabel{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--slate); margin:14px 0 6px;}
+  /* =================================================================
+     DEMO SCHEDULE — vertical timeline with green-tick completion
+  ================================================================= */
+  .tl-legend{display:flex; gap:18px; flex-wrap:wrap; margin:8px 0 18px; font-size:12.5px; color:var(--slate);}
+  .tl-legend .k{display:flex; align-items:center; gap:7px;}
+  .tl-legend .dot{width:18px; height:18px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
+    font-size:10px; font-weight:800; color:#fff;}
+  .timeline{position:relative; margin:18px 0 0; padding:2px 0;}
+  .timeline::before{content:""; position:absolute; left:20px; top:10px; bottom:10px; width:3px; background:var(--line); border-radius:2px;}
+  .tl-item{position:relative; padding:0 0 16px 56px; min-height:42px;}
+  .tl-marker{position:absolute; left:9px; top:0; width:26px; height:26px; border-radius:50%; background:#fff;
+    border:3px solid var(--line); display:flex; align-items:center; justify-content:center;
+    font-size:13px; font-weight:800; color:transparent; z-index:1;}
+  .tl-item.done .tl-marker{background:var(--done); border-color:var(--done); color:#fff;}
+  .tl-item.prog .tl-marker{background:var(--prog); border-color:var(--prog); color:#fff;}
+  .tl-card{background:#fff; border:1px solid var(--line); border-radius:12px; padding:13px 16px;}
+  .tl-item.done .tl-card{border-color:var(--done);}
+  .tl-item.prog .tl-card{border-color:var(--prog); box-shadow:0 4px 16px rgba(217,119,6,.1);}
+  .tl-top{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .tl-idx{font-size:12px; font-weight:800; color:var(--todo);}
+  .tl-name{font-size:15px; font-weight:700; color:var(--ink); flex:1; min-width:160px;}
+  .tl-dates{display:flex; gap:26px; margin-top:9px; flex-wrap:wrap;}
+  .tl-dates .d b{display:block; font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--slate); font-weight:800;}
+  .tl-dates .d span{font-size:13px; color:var(--ink); font-weight:600;}
+  .tl-dates .d span.tbd{color:var(--todo); font-style:italic; font-weight:500;}
+  .tl-dates .d span.dn{color:var(--done); font-weight:700;}
+  .tl-dates .d .in{color:var(--internal);} .tl-dates .d .mg{color:var(--mgmt);}
+  /* ---------- demo cadence rail ---------- */
+  .stage-wrap{background:#3b0764; border-radius:16px; padding:34px 24px 26px; margin:22px 0; color:#ede9fe; overflow:hidden;}
+  .stage-wrap h3{color:#c4b5fd; margin-top:0;}
+  .track{position:relative; height:150px; margin:30px 0 12px;}
+  .rail{position:absolute; top:96px; left:3%; right:3%; height:6px; background:rgba(255,255,255,.14); border-radius:4px;}
+  .rail-fill{position:absolute; top:0; left:0; height:100%; width:0; background:linear-gradient(90deg,#a78bfa,#ddd6fe);
+    border-radius:4px; animation:fill 16s ease-in-out infinite;}
+  @keyframes fill{0%{width:4%} 18%{width:26%} 20%{width:26%} 44%{width:50%} 46%{width:50%}
+    70%{width:74%} 72%{width:74%} 96%{width:96%} 100%{width:96%}}
+  .node{position:absolute; top:74px; transform:translateX(-50%); text-align:center; width:120px;}
+  .node .ndot{width:16px; height:16px; border-radius:50%; background:#3b0764; border:3px solid #a78bfa; margin:0 auto 8px;
+    box-shadow:0 0 0 4px rgba(167,139,250,.16);}
+  .node .lbl{font-size:11px; font-weight:700; color:#ddd6fe; line-height:1.2;}
+  .node .dt{font-size:10px; color:#c4b5fd; opacity:.9;}
+  .node:nth-child(2){left:4%} .node:nth-child(3){left:27%} .node:nth-child(4){left:50%}
+  .node:nth-child(5){left:73%} .node:nth-child(6){left:96%}
+  .avatar{position:absolute; top:46px; transform:translateX(-50%); animation:travel 16s ease-in-out infinite; z-index:5;}
+  .avatar .face{width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#a78bfa,#7c3aed);
+    display:flex; align-items:center; justify-content:center; font-size:19px; box-shadow:0 6px 16px rgba(0,0,0,.4); border:2px solid #fff;}
+  .avatar .name{margin-top:5px; font-size:10.5px; font-weight:700; color:#fff; background:rgba(0,0,0,.35);
+    padding:1px 7px; border-radius:10px; white-space:nowrap; text-align:center;}
+  @keyframes travel{0%{left:4%} 18%{left:27%} 20%{left:27%} 44%{left:50%} 46%{left:50%}
+    70%{left:73%} 72%{left:73%} 96%{left:96%} 100%{left:96%}}
+  .legend{display:flex; gap:18px; flex-wrap:wrap; margin-top:18px; font-size:12px; color:#ddd6fe;}
+  .legend b{color:#fff;}
+  /* ---------- fullscreen modal ---------- */
+  .fs-host{position:relative;}
+  .fs-btn{position:absolute; top:10px; right:10px; z-index:8; width:34px; height:34px; cursor:pointer;
+    border-radius:9px; border:1px solid rgba(255,255,255,.4); background:rgba(0,0,0,.42); color:#fff;
+    font-size:15px; line-height:1; display:flex; align-items:center; justify-content:center; transition:.16s;}
+  .fs-btn:hover{background:var(--rose); border-color:var(--rose); transform:scale(1.08);}
+  .fs-canvas .fs-btn{display:none;}
+  .fs-modal{position:fixed; inset:0; z-index:1000; background:rgba(15,23,42,.86);
+    -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); display:none; flex-direction:column;}
+  .fs-modal.open{display:flex;}
+  .fs-toolbar{display:flex; align-items:center; gap:9px; padding:11px 16px; background:#111827; color:#fff; flex:none;}
+  .fs-toolbar .fs-title{font-size:14px; font-weight:700; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .fs-toolbar button{background:rgba(255,255,255,.12); color:#fff; border:1px solid rgba(255,255,255,.26);
+    border-radius:8px; min-width:38px; height:34px; padding:0 11px; cursor:pointer; font-size:15px; font-weight:700; transition:.15s;}
+  .fs-toolbar button:hover{background:var(--rose); border-color:var(--rose);}
+  .fs-toolbar .fs-zoomval{font-size:12.5px; min-width:50px; text-align:center; opacity:.85; font-variant-numeric:tabular-nums;}
+  .fs-toolbar .fs-close{margin-left:6px;}
+  .fs-viewport{flex:1; overflow:hidden; position:relative; cursor:grab; display:flex; align-items:center; justify-content:center;}
+  .fs-viewport.grabbing{cursor:grabbing;}
+  .fs-canvas{transform-origin:center center; will-change:transform;}
+  .fs-canvas>*{margin:0 !important; max-width:none !important; width:auto;}
+  .fs-canvas .stage-wrap{width:min(92vw,1100px);}
+  .fs-hint{position:absolute; bottom:14px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,.55);
+    color:#ddd6fe; font-size:12px; font-weight:600; padding:6px 15px; border-radius:20px; pointer-events:none;}
+  /* ---------- print ---------- */
+  @media print{
+    nav.toc{display:none} .wrap{display:block} main{padding:0}
+    .acc-body{max-height:none !important} .acc-tools,.fs-btn{display:none}
+    .stage-wrap{background:#fff; color:#0f172a; border:1px solid var(--line);}
+    .avatar,.legend{display:none} section{page-break-inside:avoid}
+    .fs-modal{display:none !important}
+    .hero{background:var(--rose-700)!important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    a{color:var(--ink); text-decoration:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- =================== SIDEBAR =================== -->
+  <nav class="toc">
+    <h4>Contents</h4>
+    <a href="#agenda">Agenda</a>
+    <a href="#cadence">① Demo Cadence</a>
+    <a href="#features">② Platform Features</a>
+    <a href="#modules">③ Business Modules</a>
+    <a href="#schedule">④ Demo Schedule</a>
+  </nav>
+
+  <!-- =================== MAIN =================== -->
+  <main>
+
+    <div class="hero">
+      <h1>PSS 2.0 — Product KT &amp; Demo Plan</h1>
+      <p>One place to see <b>everything the platform does</b> — the cross-cutting features every screen shares, and each business module as a complete demo unit. Click any row to expand its functionalities. Built so a new team member can learn the product, and so we can run the weekly demos: <b>internal on Friday, management the following Monday</b>.</p>
+      <div class="tags">
+        <span>12 platform features</span>
+        <span>18 business demos</span>
+        <span>Internal → Friday</span>
+        <span>Management → Monday</span>
+      </div>
+    </div>
+
+    <!-- =================== AGENDA =================== -->
+    <section id="agenda">
+      <h2><span class="num">≡</span> Agenda</h2>
+      <p class="lead">This document does two jobs: it is the <b>product knowledge transfer</b> (what we built), and it is the <b>demo backlog</b> (what we show, and when). Everything is presented the same way — expandable rows for the lists, a timeline for the schedule, one colour system throughout.</p>
+      <div class="grid3">
+        <div class="card" style="text-align:center">
+          <div style="font-size:30px">🧩</div>
+          <h4 style="color:var(--rose-700); margin:8px 0 4px">Platform features</h4>
+          <p style="font-size:13px; color:var(--slate); margin:0">Expand a feature to read its functionalities — grid, advanced filter, search, dashboards, payments, comms.</p>
+        </div>
+        <div class="card" style="text-align:center">
+          <div style="font-size:30px">🏢</div>
+          <h4 style="color:var(--rose-700); margin:8px 0 4px">Business modules</h4>
+          <p style="font-size:13px; color:var(--slate); margin:0">Expand a business to see what it does &amp; its screens. Each one is <b>a single demo</b>.</p>
+        </div>
+        <div class="card" style="text-align:center">
+          <div style="font-size:30px">📅</div>
+          <h4 style="color:var(--rose-700); margin:8px 0 4px">Demo rhythm</h4>
+          <p style="font-size:13px; color:var(--slate); margin:0">Show internally <b>Friday</b> → polish over the weekend → present to management <b>Monday</b>.</p>
+        </div>
+      </div>
+      <div class="note" style="margin-top:18px">
+        <b>Colour key (used everywhere):</b>
+        <span class="b done" style="margin-left:4px">✓ Done</span>
+        <span class="b prog">In progress</span>
+        <span class="b todo">Not started</span> ·
+        <span class="b internal">Internal demo</span>
+        <span class="b mgmt">Management demo</span>
+      </div>
+    </section>
+
+    <!-- =================== SECTION 1 — DEMO CADENCE =================== -->
+    <section id="cadence">
+      <h2><span class="num">1</span> The Demo Cadence — how a module reaches management</h2>
+      <p class="lead">Every business module travels the same weekly track. It is first shown to the team in the <b>Friday internal demo</b>; feedback is fixed over the weekend; then it is presented in the <b>management demo on the following Monday</b>.</p>
+
+      <div class="stage-wrap">
+        <h3>🔁 One module, one week — from Friday internal demo to Monday sign-off</h3>
+        <div class="track">
+          <div class="avatar"><div class="face">📦</div><div class="name">a module</div></div>
+          <div class="node"><div class="ndot"></div><div class="lbl">BUILD / READY</div><div class="dt">Mon → Thu</div></div>
+          <div class="node"><div class="ndot"></div><div class="lbl">INTERNAL DEMO</div><div class="dt">Friday</div></div>
+          <div class="node"><div class="ndot"></div><div class="lbl">POLISH</div><div class="dt">Sat / Sun</div></div>
+          <div class="node"><div class="ndot"></div><div class="lbl">MANAGEMENT DEMO</div><div class="dt">Monday</div></div>
+          <div class="node"><div class="ndot"></div><div class="lbl">SIGNED OFF</div><div class="dt">→ next module</div></div>
+          <div class="rail"><div class="rail-fill"></div></div>
+        </div>
+        <div class="legend">
+          <span>📦 <b>The module</b> moving through the week</span>
+          <span>🟣 <b>Internal demo</b> = Friday dry run</span>
+          <span>🔵 <b>Management demo</b> = Monday presentation</span>
+        </div>
+      </div>
+      <p style="text-align:center; color:var(--slate); font-size:13px;">↑ Click <b>⛶</b> for full screen. The rule: <b>whatever we demo internally on Friday is what we present to management the next Monday.</b></p>
+
+      <h3>The cadence in plain words</h3>
+      <table>
+        <tr><th>When</th><th>Event</th><th>Audience</th><th>Purpose</th></tr>
+        <tr><td>Mon → Thu</td><td>Build / make ready</td><td>Dev team</td><td>Finish the module so it is demo-able</td></tr>
+        <tr><td><b>Friday</b></td><td><span class="b internal">Internal Demo</span></td><td>Internal team</td><td>Dry run — catch gaps, agree the story, list fixes</td></tr>
+        <tr><td>Sat / Sun</td><td>Polish</td><td>Dev team</td><td>Apply internal-demo feedback over the weekend</td></tr>
+        <tr><td><b>Monday</b></td><td><span class="b mgmt">Management Demo</span></td><td>Management</td><td>Present the finished module for sign-off</td></tr>
+      </table>
+      <div class="warn"><b>The dependency to remember:</b> a module only goes to a <span class="b mgmt">Monday Management Demo</span> after it has passed the <span class="b internal">Friday Internal Demo</span> three days before. The schedule below pairs each module's two dates that way.</div>
+    </section>
+
+    <!-- =================== SECTION 2 — PLATFORM FEATURES (ACCORDION) =================== -->
+    <section id="features">
+      <h2><span class="num">2</span> Platform Features — what every screen shares</h2>
+      <p class="lead">Cross-cutting capabilities that power all modules. Click a feature to expand its functionalities. A <span style="color:var(--done); font-weight:700">green ✓</span> means it is built &amp; in the product today; hollow = on the roadmap.</p>
+      <div class="acc-tools" data-acc="features">
+        <button data-act="expand">⊕ Expand all</button>
+        <button data-act="collapse">⊖ Collapse all</button>
+      </div>
+      <div class="acc" id="acc-features">
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">🔎</span><span class="ht"><h4>Advanced Data Grid</h4><p>The table every list screen is built on</p></span><span class="cnt">6 functions</span><span class="tick done">✓</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">A single configurable grid component reused on every list screen — never forked per screen.</p>
+            <ul class="feat">
+              <li><b>Sorting</b> — single &amp; multi-column sort</li>
+              <li><b>Column control</b> — show/hide, reorder, resize, per-user saved layout</li>
+              <li><b>Pagination</b> — server-side paging &amp; page-size selection</li>
+              <li><b>Row actions</b> — inline edit / delete / toggle, driven by primary key config</li>
+              <li><b>Export</b> — CSV / Excel of the current view</li>
+              <li><b>Alternate views</b> — card grids &amp; month calendars where it fits</li>
+            </ul>
+          </div></div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">🧮</span><span class="ht"><h4>Advanced Filter / Query Builder</h4><p>Multi-condition filtering &amp; saved audiences</p></span><span class="cnt">5 functions</span><span class="tick done">✓</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">A reusable filter builder that is EF-translatable and shared by grids and audience selection.</p>
+            <ul class="feat">
+              <li><b>Conditions</b> — multiple rules with field-type-aware operators</li>
+              <li><b>AND / OR groups</b> — nested logic</li>
+              <li><b>Saved filters</b> — reusable named filters (campaign library)</li>
+              <li><b>Grid bookmarks</b> — per-user saved grid filters</li>
+              <li><b>Audience reuse</b> — same builder powers email/campaign targeting + live counts</li>
+            </ul>
+          </div></div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">🔭</span><span class="ht"><h4>Global Search</h4><p>Find any record from one box</p></span><span class="cnt">2 functions</span><span class="tick done">✓</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">App-wide quick search across key entities.</p>
+            <ul class="feat">
+              <li><b>Cross-entity search</b> — contacts, donations, events &amp; more</li>
+              <li><b>Jump-to-record</b> — open the result directly</li>
+            </ul>
+          </div></div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">📊</span><span class="ht"><h4>Dashboards &amp; Widgets</h4><p>Configurable KPI dashboards</p></span><span class="cnt">4 functions</span><span class="tick done">✓</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">Each module has a dashboard built from configurable widgets.</p>
+            <ul class="feat">
+              <li><b>Dashboard layouts</b> — arrangeable per module</li>
+              <li><b>Widget types &amp; properties</b> — KPI cards, charts, lists</li>
+              <li><b>Role visibility</b> — widget-by-role (Widget Role)</li>
+              <li><b>KPI cards</b> — live metrics per business</li>
+            </ul>
+          </div></div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">📣</span><span class="ht"><h4>Communication Engine</h4><p>Email · SMS · WhatsApp · Notifications</p></span><span class="cnt">4 functions</span><span class="tick done">✓</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">One messaging engine across every channel, with typed merge tokens.</p>
+            <ul class="feat">
+              <li><b>Channels</b> — Email, SMS, WhatsApp, in-app Notification</li>
+              <li><b>Templates &amp; campaigns</b> — reusable templates, bulk campaigns, analytics</li>
+              <li><b>Placeholder definitions</b> — typed merge tokens per entity</li>
+              <li><b>Per-tenant providers</b> — company-level provider config (primary → fallback)</li>
+            </ul>
+          </div></div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">📥</span><span class="ht"><h4>Import &amp; Data Quality</h4><p>Bring data in cleanly</p></span><span class="cnt">2 functions</span><span class="tick done">✓</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">Getting external data in without creating duplicates.</p>
+            <ul class="feat">
+              <li><b>Bulk import</b> — CSV/Excel with field mapping</li>
+              <li><b>Duplicate detection &amp; merge</b></li>
+            </ul>
+          </div></div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">🌐</span><span class="ht"><h4>Public Pages (SSR)</h4><p>Branded public-facing pages</p></span><span class="cnt">4 functions</span><span class="tick todo">✓</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">Server-rendered public pages resolved per tenant by host, with their own branding.</p>
+            <ul class="feat">
+              <li><b>Slug + host resolution</b> — per-tenant routing, unique slug</li>
+              <li><b>Branding</b> — colours, logo, OG/share image</li>
+              <li><b>Page types</b> — donation, event reg, P2P/crowdfunding, prayer, volunteer, member portal</li>
+              <li><b>Lifecycle</b> — Draft / Published / Active / Closed / Archived</li>
+            </ul>
+          </div></div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">💳</span><span class="ht"><h4>Payments &amp; Money</h4><p>Gateways, receipts, multi-currency</p></span><span class="cnt">5 functions</span><span class="tick todo">✓</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">A provider-pattern payment layer plus the money-handling around it.</p>
+            <ul class="feat">
+              <li><b>Gateway providers</b> — Braintree · Razorpay · PayU (pluggable)</li>
+              <li><b>Company gateways</b> — per-tenant gateway + enabled methods</li>
+              <li><b>Pending → Confirmed</b> — gateway callback confirms the payment</li>
+              <li><b>Receipts &amp; tax</b> — numbering, tax config, refunds, reconciliation</li>
+              <li><b>Multi-currency</b> — currency master + conversion</li>
+            </ul>
+          </div></div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">⚡</span><span class="ht"><h4>Automation Workflows</h4><p>Trigger-based actions</p></span><span class="cnt">2 functions</span><span class="tick todo">✓</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">Rules that fire actions on events in the system.</p>
+            <ul class="feat">
+              <li><b>Triggers</b> — on record/state changes</li>
+              <li><b>Actions</b> — send comms, update data, queue jobs (Hangfire)</li>
+            </ul>
+          </div></div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">📜</span><span class="ht"><h4>Documents &amp; Certificates</h4><p>Generate &amp; print from templates</p></span><span class="cnt">2 functions</span><span class="tick todo">✓</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">Templated document &amp; certificate generation.</p>
+            <ul class="feat">
+              <li><b>Certificate pipeline</b> — template → process → print</li>
+              <li><b>Document types</b> — managed document categories</li>
+            </ul>
+          </div></div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">🛡️</span><span class="ht"><h4>Foundation &amp; Governance</h4><p>Tenancy, access, master data, audit</p></span><span class="cnt">5 functions</span><span class="tick todo">✓</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">The platform plumbing every module sits on.</p>
+            <ul class="feat">
+              <li><b>Multi-tenant</b> — every record company-scoped</li>
+              <li><b>Access control</b> — users, roles, capabilities, role-capability, governance</li>
+              <li><b>Org hierarchy</b> — company, branches, organizational units, staff</li>
+              <li><b>Master data &amp; region</b> — country → state → district → city → locality → pincode</li>
+              <li><b>Audit trail &amp; integrations</b> — change history, accounting/social/API/marketplace</li>
+            </ul>
+          </div></div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">🤖</span><span class="ht"><h4>AI Intelligence</h4><p>Scores, predictions, ask-your-data</p></span><span class="cnt">6 functions</span><span class="tick todo">✓</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">The intelligence layer that surfaces insight and drafts content. <b>Last in line</b> — across both platform and business.</p>
+            <ul class="feat">
+              <li><b>Engagement / generosity scoring</b></li>
+              <li><b>Churn prediction</b></li>
+              <li><b>Action board</b> — next-best actions</li>
+              <li><b>AI draft</b> — generate communication copy</li>
+              <li><b>Ask your data</b> — natural-language reporting</li>
+              <li><b>Predictive analytics</b></li>
+            </ul>
+          </div></div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =================== SECTION 3 — BUSINESS MODULES (ACCORDION) =================== -->
+    <section id="modules">
+      <h2><span class="num">3</span> Business Modules — each one is a demo</h2>
+      <p class="lead">Every row is <b>one complete business</b> and therefore <b>one demo unit</b>, listed in demo order. Expand it to read what it does, its functionalities and its screens. The tick shows status: <span style="color:var(--done); font-weight:700">✓ done</span> · <span style="color:var(--prog); font-weight:700">in progress</span> · hollow = not started.</p>
+      <div class="acc-tools" data-acc="modules">
+        <button data-act="expand">⊕ Expand all</button>
+        <button data-act="collapse">⊖ Collapse all</button>
+      </div>
+      <div class="acc" id="acc-modules">
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">👥</span><span class="ht"><h4>Contacts &amp; Households</h4><p>The single source of truth for people</p></span><span class="cnt">7 screens</span><span class="tick done">✓</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">Every person and family in one place — the backbone every other module links to. <b>Built.</b></p>
+            <ul class="feat">
+              <li><b>Contact record</b> — individuals &amp; organisations, custom fields</li>
+              <li><b>Types &amp; sources</b> — classify how contacts came in</li>
+              <li><b>Tags &amp; segmentation</b> — group &amp; target</li>
+              <li><b>Family / household linking</b></li>
+              <li><b>Duplicate detection &amp; merge</b></li>
+              <li><b>Import</b> — bulk with field mapping</li>
+            </ul>
+            <div class="scrlabel">Screens</div>
+            <div><span class="pill">All Contacts</span><span class="pill">Contact Types</span><span class="pill">Sources</span><span class="pill">Tags &amp; Segmentation</span><span class="pill">Family Management</span><span class="pill">Duplicate Detection</span><span class="pill">Import</span></div>
+          </div></div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">📣</span><span class="ht"><h4>Communication</h4><p>All outbound messaging</p></span><span class="cnt">8 screens</span><span class="tick done">✓</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">Reach contacts across every channel from templates and campaigns. <b>Built &amp; demoed.</b></p>
+            <ul class="feat">
+              <li><b>Email</b> — templates, campaigns, analytics, keywords</li>
+              <li><b>WhatsApp</b> — templates, campaigns, conversations</li>
+              <li><b>SMS</b> — templates &amp; campaigns</li>
+              <li><b>Notifications</b> — templates &amp; centre</li>
+              <li><b>Automation workflows</b></li>
+              <li><b>Placeholder definitions &amp; saved filters</b></li>
+            </ul>
+            <div class="scrlabel">Screens</div>
+            <div><span class="pill">Email Templates</span><span class="pill">Email Campaigns</span><span class="pill">Analytics</span><span class="pill">WhatsApp</span><span class="pill">SMS</span><span class="pill">Notifications</span><span class="pill">Automation</span><span class="pill">Saved Filters</span></div>
+          </div></div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">📅</span><span class="ht"><h4>Events &amp; Ticketing</h4><p>Real-world &amp; virtual events, tickets, auctions</p></span><span class="cnt">5 screens</span><span class="tick prog">●</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">Run a charity gala or webinar end-to-end: build the event, sell tickets, take registrations &amp; payments, run an auction, check guests in. <b>KT doc ready — demo kicks off this week.</b></p>
+            <ul class="feat">
+              <li><b>Event lifecycle</b> — Draft → Published → In Progress → Completed / Cancelled</li>
+              <li><b>Modes</b> — In-person / Virtual / Hybrid</li>
+              <li><b>Ticketing</b> — types, pricing, sale windows, capacity, waitlist</li>
+              <li><b>E-ticket templates</b> &amp; public registration page (slug, branding, payments)</li>
+              <li><b>Auction</b> — items, silent/live bidding, reserve, winners &amp; payment</li>
+              <li><b>Run &amp; track</b> — QR check-in, KPIs, analytics</li>
+            </ul>
+            <div class="scrlabel">Screens</div>
+            <div><span class="pill">Events</span><span class="pill">Event Ticketing</span><span class="pill">Auction Management</span><span class="pill">Event Reg Page</span><span class="pill">Event Analytics</span></div>
+          </div></div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">💰</span><span class="ht"><h4>Donations</h4><p>The core money-in engine</p></span><span class="cnt">8 screens</span><span class="tick todo">✓</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">Capture every gift — one-off or recurring, cash, cheque or in-kind — with reconciliation and refunds.</p>
+            <ul class="feat">
+              <li><b>All donations</b> — direct entry, against purpose/campaign</li>
+              <li><b>Recurring donations</b> — schedules &amp; webhook management</li>
+              <li><b>Cheque tracking</b> &amp; <b>in-kind donations</b></li>
+              <li><b>Pledges</b> — promised giving &amp; fulfilment</li>
+              <li><b>Bulk upload</b></li>
+              <li><b>Reconciliation &amp; refunds</b></li>
+            </ul>
+            <div class="scrlabel">Screens</div>
+            <div><span class="pill">All Donations</span><span class="pill">Recurring</span><span class="pill">Cheque Tracking</span><span class="pill">In-Kind</span><span class="pill">Pledges</span><span class="pill">Bulk Upload</span><span class="pill">Reconciliation</span><span class="pill">Refunds</span></div>
+          </div></div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">🎖️</span><span class="ht"><h4>Membership</h4><p>Tiered membership &amp; renewals</p></span><span class="cnt">5 screens</span><span class="tick todo">✓</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">Run a membership programme with tiers, enrolment and renewals plus a member portal.</p>
+            <ul class="feat">
+              <li><b>Member list</b> &amp; <b>enrolment</b></li>
+              <li><b>Tiers &amp; plans</b></li>
+              <li><b>Renewals</b></li>
+              <li><b>Member portal</b> — public self-service page</li>
+            </ul>
+            <div class="scrlabel">Screens</div>
+            <div><span class="pill">Member List</span><span class="pill">Enroll</span><span class="pill">Tiers &amp; Plans</span><span class="pill">Renewals</span><span class="pill">Member Portal</span></div>
+          </div></div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">🎓</span><span class="ht"><h4>Grants</h4><p>Apply for, track &amp; report funding</p></span><span class="cnt">4 screens</span><span class="tick todo">✓</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">Manage incoming grant funding from application to funder reporting.</p>
+            <ul class="feat">
+              <li><b>All grants</b> — pipeline view</li>
+              <li><b>New application</b></li>
+              <li><b>Grant calendar</b> — deadlines &amp; milestones</li>
+              <li><b>Funder reports</b></li>
+            </ul>
+            <div class="scrlabel">Screens</div>
+            <div><span class="pill">All Grants</span><span class="pill">New Application</span><span class="pill">Grant Calendar</span><span class="pill">Funder Reports</span></div>
+          </div></div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">🧑‍⚕️</span><span class="ht"><h4>Case Management</h4><p>Beneficiaries, cases &amp; programs</p></span><span class="cnt">4 screens</span><span class="tick todo">✓</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">Track the people the NGO serves and the programmes that deliver to them.</p>
+            <ul class="feat">
+              <li><b>Beneficiary list</b> &amp; <b>registration</b></li>
+              <li><b>Case list</b> — track individual cases</li>
+              <li><b>Program management</b></li>
+            </ul>
+            <div class="scrlabel">Screens</div>
+            <div><span class="pill">Beneficiary List</span><span class="pill">Register Beneficiary</span><span class="pill">Case List</span><span class="pill">Program Management</span></div>
+          </div></div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">📦</span><span class="ht"><h4>Field Collection</h4><p>On-the-ground cash collection</p></span><span class="cnt">6 screens</span><span class="tick todo">✓</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">Ambassadors collecting donations in the field, with receipt books and distribution.</p>
+            <ul class="feat">
+              <li><b>Ambassador list</b> &amp; <b>performance</b></li>
+              <li><b>Record collection</b> — log field donations</li>
+              <li><b>Collection list</b> &amp; <b>distribution</b></li>
+              <li><b>Receipt books</b> — issue &amp; track</li>
+            </ul>
+            <div class="scrlabel">Screens</div>
+            <div><span class="pill">Ambassador List</span><span class="pill">Record Collection</span><span class="pill">Collection List</span><span class="pill">Receipt Books</span><span class="pill">Distribution</span><span class="pill">Performance</span></div>
+          </div></div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">🙏</span><span class="ht"><h4>Prayer Requests</h4><p>Intake, review &amp; respond</p></span><span class="cnt">3 screens</span><span class="tick todo">✓</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">Faith-based intake flow for prayer requests with a review &amp; reply queue.</p>
+            <ul class="feat">
+              <li><b>Request entry</b></li>
+              <li><b>Review reply</b></li>
+              <li><b>Reply queue</b></li>
+            </ul>
+            <div class="scrlabel">Screens</div>
+            <div><span class="pill">Request Entry</span><span class="pill">Review Reply</span><span class="pill">Reply Queue</span></div>
+          </div></div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">🌐</span><span class="ht"><h4>Public Pages</h4><p>Every public-facing page</p></span><span class="cnt">6 screens</span><span class="tick todo">✓</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">All the SSR public pages in one demo — donation, event, P2P, prayer, volunteer, member.</p>
+            <ul class="feat">
+              <li><b>Online donation page</b></li>
+              <li><b>Event registration page</b></li>
+              <li><b>P2P campaign pages</b></li>
+              <li><b>Prayer request, volunteer registration, member portal</b></li>
+            </ul>
+            <div class="scrlabel">Screens</div>
+            <div><span class="pill">Online Donation</span><span class="pill">Event Reg</span><span class="pill">P2P Pages</span><span class="pill">Prayer Request</span><span class="pill">Volunteer Reg</span><span class="pill">Member Portal</span></div>
+          </div></div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">📊</span><span class="ht"><h4>Dashboards &amp; Reports</h4><p>Cross-module analytics &amp; reporting</p></span><span class="cnt">7 screens</span><span class="tick todo">✓</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">The dashboards per module plus the full reporting engine.</p>
+            <ul class="feat">
+              <li><b>Module dashboards</b> — contact, donation, communication, volunteer, case…</li>
+              <li><b>Report catalog</b> &amp; <b>custom report builder</b></li>
+              <li><b>PowerBI &amp; HTML reports</b></li>
+              <li><b>Scheduled &amp; generated reports</b></li>
+            </ul>
+            <div class="scrlabel">Screens</div>
+            <div><span class="pill">Module Dashboards</span><span class="pill">Report Catalog</span><span class="pill">Custom Builder</span><span class="pill">PowerBI</span><span class="pill">HTML Reports</span><span class="pill">Scheduled</span><span class="pill">Generate</span></div>
+          </div></div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">🛡️</span><span class="ht"><h4>Access Control &amp; Foundation</h4><p>Users, roles, governance, master data</p></span><span class="cnt">9 screens</span><span class="tick todo">✓</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">The security &amp; reference-data backbone of the platform.</p>
+            <ul class="feat">
+              <li><b>Users &amp; roles</b>, <b>capabilities</b>, role-capability, governance</li>
+              <li><b>Company &amp; branches</b>, staff &amp; categories</li>
+              <li><b>Region hierarchy</b> &amp; <b>masters</b> (currency, bank, gender, language…)</li>
+              <li><b>Master data &amp; types</b></li>
+              <li><b>Audit trail</b></li>
+            </ul>
+            <div class="scrlabel">Screens</div>
+            <div><span class="pill">Users &amp; Roles</span><span class="pill">Capabilities</span><span class="pill">Governance</span><span class="pill">Company &amp; Branches</span><span class="pill">Staff</span><span class="pill">Region</span><span class="pill">Masters</span><span class="pill">Master Data</span><span class="pill">Audit Trail</span></div>
+          </div></div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">🤝</span><span class="ht"><h4>P2P &amp; Crowdfunding</h4><p>Supporters raising on your behalf</p></span><span class="cnt">4 screens</span><span class="tick todo">✓</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">Peer-to-peer and crowdfunding campaigns with company gift matching.</p>
+            <ul class="feat">
+              <li><b>P2P campaigns</b> — umbrella fundraising drives</li>
+              <li><b>P2P fundraisers</b> — individual supporter pages</li>
+              <li><b>Crowdfunding</b> — goal-based public pages</li>
+              <li><b>Matching gifts</b> — employer match records &amp; settings</li>
+            </ul>
+            <div class="scrlabel">Screens</div>
+            <div><span class="pill">P2P Campaigns</span><span class="pill">P2P Fundraisers</span><span class="pill">Crowdfunding</span><span class="pill">Matching Gifts</span></div>
+          </div></div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">🙋</span><span class="ht"><h4>Volunteers</h4><p>Recruit, schedule &amp; track time</p></span><span class="cnt">5 screens</span><span class="tick todo">✓</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">Manage the volunteer lifecycle from sign-up to logged hours.</p>
+            <ul class="feat">
+              <li><b>Volunteer list</b> &amp; <b>registration</b></li>
+              <li><b>Scheduling</b> — assign to shifts/events</li>
+              <li><b>Hour tracking</b></li>
+              <li><b>Donor conversion</b> — turn volunteers into donors</li>
+            </ul>
+            <div class="scrlabel">Screens</div>
+            <div><span class="pill">Volunteer List</span><span class="pill">Register</span><span class="pill">Scheduling</span><span class="pill">Hour Tracking</span><span class="pill">Donor Conversion</span></div>
+          </div></div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">📜</span><span class="ht"><h4>Certificates</h4><p>Generate &amp; print certificates</p></span><span class="cnt">3 screens</span><span class="tick todo">✓</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">Produce certificates (e.g. tax/appreciation) from templates.</p>
+            <ul class="feat">
+              <li><b>Certificate template</b></li>
+              <li><b>Process certificates</b> — generate in bulk</li>
+              <li><b>Print certificates</b></li>
+            </ul>
+            <div class="scrlabel">Screens</div>
+            <div><span class="pill">Certificate Template</span><span class="pill">Process</span><span class="pill">Print</span></div>
+          </div></div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">🏛️</span><span class="ht"><h4>Organization &amp; Campaigns</h4><p>Org units, campaigns, purposes</p></span><span class="cnt">5 screens</span><span class="tick todo">✓</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">The structural data that donations, events and grants attribute against.</p>
+            <ul class="feat">
+              <li><b>Organizational units</b> — the org tree</li>
+              <li><b>Campaigns</b> — fundraising campaigns</li>
+              <li><b>Donation purpose / category / group</b></li>
+            </ul>
+            <div class="scrlabel">Screens</div>
+            <div><span class="pill">Organizational Units</span><span class="pill">Campaigns</span><span class="pill">Donation Purpose</span><span class="pill">Category</span><span class="pill">Group</span></div>
+          </div></div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">⚙️</span><span class="ht"><h4>Settings &amp; Config</h4><p>The admin surface behind every module</p></span><span class="cnt">11 screens</span><span class="tick todo">✓</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">Where admins configure payments, comms, donations, grids, widgets and integrations.</p>
+            <ul class="feat">
+              <li><b>Payment / Communication / Donation / Membership / Data config</b></li>
+              <li><b>Grid management &amp; field settings</b></li>
+              <li><b>Dashboard &amp; widget config</b></li>
+              <li><b>Org settings</b> — tenant-scoped settings (branding, login)</li>
+              <li><b>Integration &amp; document config</b></li>
+            </ul>
+            <div class="scrlabel">Screens</div>
+            <div><span class="pill">Payment Config</span><span class="pill">Communication Config</span><span class="pill">Donation Config</span><span class="pill">Membership Config</span><span class="pill">Data Config</span><span class="pill">Grid Management</span><span class="pill">Dashboard &amp; Widget</span><span class="pill">Org Settings</span><span class="pill">Integration</span><span class="pill">Document</span></div>
+          </div></div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-head"><span class="ic">🤖</span><span class="ht"><h4>AI Intelligence</h4><p>Scores, predictions, ask-your-data</p></span><span class="cnt">6 screens</span><span class="tick todo">✓</span><span class="chev">▶</span></button>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p class="desc">The AI surface that ranks contacts, predicts behaviour and answers questions. <b>Demoed last</b> — after every business module.</p>
+            <ul class="feat">
+              <li><b>Engagement scores</b> &amp; <b>churn prediction</b></li>
+              <li><b>Action board</b> — recommended actions</li>
+              <li><b>AI draft</b> — content generation</li>
+              <li><b>Ask your data</b> &amp; <b>predictive analytics</b></li>
+            </ul>
+            <div class="scrlabel">Screens</div>
+            <div><span class="pill">Engagement Scores</span><span class="pill">Churn Prediction</span><span class="pill">Action Board</span><span class="pill">AI Draft</span><span class="pill">Ask Your Data</span><span class="pill">Predictive Analytics</span></div>
+          </div></div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =================== SECTION 4 — DEMO SCHEDULE (TIMELINE) =================== -->
+    <section id="schedule">
+      <h2><span class="num">4</span> Demo Schedule — the timeline</h2>
+      <p class="lead">The backlog laid out by date. Each item carries its pair of dates — the <span class="b internal">Friday internal demo</span> and the <span class="b mgmt">Monday management demo</span> three days later. When a demo is delivered, its marker turns into a <b style="color:var(--done)">green ✓</b>. <b>Events starts this week.</b></p>
+
+      <div class="tl-legend">
+        <span class="k"><span class="dot" style="background:var(--done)">✓</span> Demo completed</span>
+        <span class="k"><span class="dot" style="background:var(--prog)">●</span> This week / next up</span>
+        <span class="k"><span class="dot" style="background:#fff; border:2px solid var(--line); color:transparent">○</span> Not started</span>
+      </div>
+
+      <div class="timeline">
+
+        <div class="tl-item done">
+          <div class="tl-marker">✓</div>
+          <div class="tl-card">
+            <div class="tl-top"><span class="tl-idx">✓</span><span class="tl-name">👥 Contacts &amp; Households</span><span class="b done">Demo completed</span></div>
+            <div class="tl-dates"><div class="d"><b>Internal demo</b><span class="dn">✓ done</span></div><div class="d"><b>Management demo</b><span class="dn">✓ done</span></div></div>
+          </div>
+        </div>
+
+        <div class="tl-item done">
+          <div class="tl-marker">✓</div>
+          <div class="tl-card">
+            <div class="tl-top"><span class="tl-idx">✓</span><span class="tl-name">📣 Communication</span><span class="b done">Demo completed</span></div>
+            <div class="tl-dates"><div class="d"><b>Internal demo</b><span class="dn">✓ done</span></div><div class="d"><b>Management demo</b><span class="dn">✓ done</span></div></div>
+          </div>
+        </div>
+
+        <div class="tl-item prog">
+          <div class="tl-marker">●</div>
+          <div class="tl-card">
+            <div class="tl-top"><span class="tl-idx">01</span><span class="tl-name">📅 Events &amp; Ticketing</span><span class="b prog">This week · next up</span></div>
+            <div class="tl-dates"><div class="d"><b>Internal demo</b><span class="in">Fri 12 Jun 2026</span></div><div class="d"><b>Management demo</b><span class="mg">Mon 15 Jun 2026</span></div></div>
+          </div>
+        </div>
+
+        <div class="tl-item todo">
+          <div class="tl-marker">✓</div>
+          <div class="tl-card">
+            <div class="tl-top"><span class="tl-idx">02</span><span class="tl-name">💰 Donations</span><span class="b todo">Scheduled</span></div>
+            <div class="tl-dates"><div class="d"><b>Internal demo</b><span class="in">Fri 19 Jun 2026</span></div><div class="d"><b>Management demo</b><span class="mg">Mon 22 Jun 2026</span></div></div>
+          </div>
+        </div>
+
+        <div class="tl-item todo">
+          <div class="tl-marker">✓</div>
+          <div class="tl-card">
+            <div class="tl-top"><span class="tl-idx">03</span><span class="tl-name">🎖️ Membership</span><span class="b todo">Scheduled</span></div>
+            <div class="tl-dates"><div class="d"><b>Internal demo</b><span class="in">Fri 26 Jun 2026</span></div><div class="d"><b>Management demo</b><span class="mg">Mon 29 Jun 2026</span></div></div>
+          </div>
+        </div>
+
+        <div class="tl-item todo">
+          <div class="tl-marker">✓</div>
+          <div class="tl-card">
+            <div class="tl-top"><span class="tl-idx">04</span><span class="tl-name">🎓 Grants</span><span class="b todo">Scheduled</span></div>
+            <div class="tl-dates"><div class="d"><b>Internal demo</b><span class="in">Fri 03 Jul 2026</span></div><div class="d"><b>Management demo</b><span class="mg">Mon 06 Jul 2026</span></div></div>
+          </div>
+        </div>
+
+        <div class="tl-item todo">
+          <div class="tl-marker">✓</div>
+          <div class="tl-card">
+            <div class="tl-top"><span class="tl-idx">05</span><span class="tl-name">🧑‍⚕️ Case Management</span><span class="b todo">Scheduled</span></div>
+            <div class="tl-dates"><div class="d"><b>Internal demo</b><span class="in">Fri 10 Jul 2026</span></div><div class="d"><b>Management demo</b><span class="mg">Mon 13 Jul 2026</span></div></div>
+          </div>
+        </div>
+
+        <div class="tl-item todo">
+          <div class="tl-marker">✓</div>
+          <div class="tl-card">
+            <div class="tl-top"><span class="tl-idx">06</span><span class="tl-name">📦 Field Collection</span><span class="b todo">Scheduled</span></div>
+            <div class="tl-dates"><div class="d"><b>Internal demo</b><span class="in">Fri 17 Jul 2026</span></div><div class="d"><b>Management demo</b><span class="mg">Mon 20 Jul 2026</span></div></div>
+          </div>
+        </div>
+
+        <div class="tl-item todo">
+          <div class="tl-marker">✓</div>
+          <div class="tl-card">
+            <div class="tl-top"><span class="tl-idx">07</span><span class="tl-name">🙏 Prayer Requests</span><span class="b todo">Scheduled</span></div>
+            <div class="tl-dates"><div class="d"><b>Internal demo</b><span class="in">Fri 24 Jul 2026</span></div><div class="d"><b>Management demo</b><span class="mg">Mon 27 Jul 2026</span></div></div>
+          </div>
+        </div>
+
+        <div class="tl-item todo">
+          <div class="tl-marker">✓</div>
+          <div class="tl-card">
+            <div class="tl-top"><span class="tl-idx">08</span><span class="tl-name">🌐 Public Pages</span><span class="b todo">Scheduled</span></div>
+            <div class="tl-dates"><div class="d"><b>Internal demo</b><span class="in">Fri 31 Jul 2026</span></div><div class="d"><b>Management demo</b><span class="mg">Mon 03 Aug 2026</span></div></div>
+          </div>
+        </div>
+
+        <div class="tl-item todo">
+          <div class="tl-marker">✓</div>
+          <div class="tl-card">
+            <div class="tl-top"><span class="tl-idx">09</span><span class="tl-name">📊 Dashboards &amp; Reports</span><span class="b todo">Scheduled</span></div>
+            <div class="tl-dates"><div class="d"><b>Internal demo</b><span class="in">Fri 07 Aug 2026</span></div><div class="d"><b>Management demo</b><span class="mg">Mon 10 Aug 2026</span></div></div>
+          </div>
+        </div>
+
+        <div class="tl-item todo">
+          <div class="tl-marker">✓</div>
+          <div class="tl-card">
+            <div class="tl-top"><span class="tl-idx">10</span><span class="tl-name">🛡️ Access Control &amp; Foundation</span><span class="b todo">Scheduled</span></div>
+            <div class="tl-dates"><div class="d"><b>Internal demo</b><span class="in">Fri 14 Aug 2026</span></div><div class="d"><b>Management demo</b><span class="mg">Mon 17 Aug 2026</span></div></div>
+          </div>
+        </div>
+
+        <div class="tl-item todo">
+          <div class="tl-marker">✓</div>
+          <div class="tl-card">
+            <div class="tl-top"><span class="tl-idx">11</span><span class="tl-name">🤝 P2P &amp; Crowdfunding</span><span class="b todo">Scheduled</span></div>
+            <div class="tl-dates"><div class="d"><b>Internal demo</b><span class="in">Fri 21 Aug 2026</span></div><div class="d"><b>Management demo</b><span class="mg">Mon 24 Aug 2026</span></div></div>
+          </div>
+        </div>
+
+        <div class="tl-item todo">
+          <div class="tl-marker">✓</div>
+          <div class="tl-card">
+            <div class="tl-top"><span class="tl-idx">12</span><span class="tl-name">🙋 Volunteers</span><span class="b todo">Scheduled</span></div>
+            <div class="tl-dates"><div class="d"><b>Internal demo</b><span class="in">Fri 28 Aug 2026</span></div><div class="d"><b>Management demo</b><span class="mg">Mon 31 Aug 2026</span></div></div>
+          </div>
+        </div>
+
+        <div class="tl-item todo">
+          <div class="tl-marker">✓</div>
+          <div class="tl-card">
+            <div class="tl-top"><span class="tl-idx">13</span><span class="tl-name">📜 Certificates</span><span class="b todo">Scheduled</span></div>
+            <div class="tl-dates"><div class="d"><b>Internal demo</b><span class="in">Fri 04 Sep 2026</span></div><div class="d"><b>Management demo</b><span class="mg">Mon 07 Sep 2026</span></div></div>
+          </div>
+        </div>
+
+        <div class="tl-item todo">
+          <div class="tl-marker">✓</div>
+          <div class="tl-card">
+            <div class="tl-top"><span class="tl-idx">14</span><span class="tl-name">🏛️ Organization &amp; Campaigns</span><span class="b todo">Scheduled</span></div>
+            <div class="tl-dates"><div class="d"><b>Internal demo</b><span class="in">Fri 11 Sep 2026</span></div><div class="d"><b>Management demo</b><span class="mg">Mon 14 Sep 2026</span></div></div>
+          </div>
+        </div>
+
+        <div class="tl-item todo">
+          <div class="tl-marker">✓</div>
+          <div class="tl-card">
+            <div class="tl-top"><span class="tl-idx">15</span><span class="tl-name">⚙️ Settings &amp; Config</span><span class="b todo">Scheduled</span></div>
+            <div class="tl-dates"><div class="d"><b>Internal demo</b><span class="in">Fri 18 Sep 2026</span></div><div class="d"><b>Management demo</b><span class="mg">Mon 21 Sep 2026</span></div></div>
+          </div>
+        </div>
+
+        <div class="tl-item todo">
+          <div class="tl-marker">✓</div>
+          <div class="tl-card">
+            <div class="tl-top"><span class="tl-idx">16</span><span class="tl-name">🤖 AI Intelligence</span><span class="b todo">Scheduled · last</span></div>
+            <div class="tl-dates"><div class="d"><b>Internal demo</b><span class="in">Fri 25 Sep 2026</span></div><div class="d"><b>Management demo</b><span class="mg">Mon 28 Sep 2026</span></div></div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="note" style="margin-top:22px">
+        <b>How this runs:</b> each Friday the next module gets its <span class="b internal">internal demo</span>; the weekend is for fixes; the following Monday is its <span class="b mgmt">management demo</span>. When a demo is delivered, flip its marker to <b style="color:var(--done)">✓</b>. <b>AI Intelligence is intentionally last</b>, on both the platform and business side.
+      </div>
+      <p style="color:var(--slate); font-size:13px;">Tell me when a demo is delivered (or if priorities shift) and I'll re-flow the dates — keeping the <b>Friday → Monday</b> rule.</p>
+    </section>
+
+  </main>
+</div>
+
+<!-- ===== accordion (Features + Modules) + fullscreen zoom/drag modal ===== -->
+<script>
+(function(){
+  document.querySelectorAll('.acc-head').forEach(function(head){
+    head.addEventListener('click',function(){ head.parentElement.classList.toggle('open'); });
+  });
+  document.querySelectorAll('.acc-tools').forEach(function(tools){
+    var target=document.getElementById('acc-'+tools.getAttribute('data-acc'));
+    if(!target) return;
+    tools.querySelectorAll('button').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var open=btn.getAttribute('data-act')==='expand';
+        target.querySelectorAll('.acc-item').forEach(function(it){ it.classList.toggle('open',open); });
+      });
+    });
+  });
+})();
+</script>
+<script>
+(function(){
+  var modal=document.createElement('div');
+  modal.className='fs-modal';
+  modal.innerHTML=
+    '<div class="fs-toolbar">'+
+      '<span class="fs-title"></span>'+
+      '<button class="fs-out" title="Zoom out">−</button>'+
+      '<span class="fs-zoomval">100%</span>'+
+      '<button class="fs-in" title="Zoom in">+</button>'+
+      '<button class="fs-fit" title="Reset zoom &amp; position">↻ Fit</button>'+
+      '<button class="fs-close" title="Close (Esc)">✕ Close</button>'+
+    '</div>'+
+    '<div class="fs-viewport"><div class="fs-canvas"></div>'+
+      '<div class="fs-hint">Scroll to zoom · drag to move · Esc to close</div></div>';
+  document.body.appendChild(modal);
+  var titleEl=modal.querySelector('.fs-title'), zoomVal=modal.querySelector('.fs-zoomval'),
+      viewport=modal.querySelector('.fs-viewport'), canvas=modal.querySelector('.fs-canvas'),
+      scale=1, tx=0, ty=0, placeholder=null, hostEl=null;
+  function apply(){ canvas.style.transform='translate('+tx+'px,'+ty+'px) scale('+scale+')'; zoomVal.textContent=Math.round(scale*100)+'%'; }
+  function reset(){ scale=1; tx=0; ty=0; apply(); }
+  function zoom(d){ scale=Math.min(5, Math.max(0.3, scale+d)); apply(); }
+  function open(el, title){ hostEl=el; placeholder=document.createComment('fs-slot');
+    el.parentNode.insertBefore(placeholder, el); canvas.appendChild(el);
+    titleEl.textContent=title||'Diagram'; modal.classList.add('open'); reset(); }
+  function close(){ if(placeholder && hostEl){ placeholder.parentNode.insertBefore(hostEl, placeholder); placeholder.parentNode.removeChild(placeholder); }
+    placeholder=null; hostEl=null; modal.classList.remove('open'); }
+  modal.querySelector('.fs-in').addEventListener('click',function(){ zoom(0.2); });
+  modal.querySelector('.fs-out').addEventListener('click',function(){ zoom(-0.2); });
+  modal.querySelector('.fs-fit').addEventListener('click',reset);
+  modal.querySelector('.fs-close').addEventListener('click',close);
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape' && modal.classList.contains('open')) close(); });
+  viewport.addEventListener('wheel',function(e){ e.preventDefault(); zoom(e.deltaY<0?0.12:-0.12); },{passive:false});
+  var dragging=false, sx=0, sy=0;
+  viewport.addEventListener('mousedown',function(e){ if(e.target.closest('button')) return; dragging=true; sx=e.clientX-tx; sy=e.clientY-ty; viewport.classList.add('grabbing'); });
+  window.addEventListener('mousemove',function(e){ if(!dragging) return; tx=e.clientX-sx; ty=e.clientY-sy; apply(); });
+  window.addEventListener('mouseup',function(){ dragging=false; viewport.classList.remove('grabbing'); });
+  function attach(){
+    document.querySelectorAll('.stage-wrap').forEach(function(el){
+      if(el.classList.contains('fs-host')) return;
+      el.classList.add('fs-host');
+      var btn=document.createElement('button');
+      btn.className='fs-btn'; btn.type='button'; btn.title='Open full screen'; btn.innerHTML='⛶';
+      btn.addEventListener('click',function(ev){ ev.stopPropagation(); open(el,'🔁 Demo Cadence — Friday internal → Monday management'); });
+      el.appendChild(btn);
+    });
+  }
+  if(document.readyState==='complete') attach(); else window.addEventListener('load',attach);
+})();
+</script>
+</body>
+</html>

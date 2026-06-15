@@ -10,7 +10,7 @@ complexity: High
 new_module: NO
 planned_date: 2026-05-12
 completed_date: 2026-05-12
-last_session_date: 2026-05-12
+last_session_date: 2026-06-12
 ---
 
 > ## ⚠ Non-standard MENU_DASHBOARD — event-scoped, parented under CRM_EVENT (not CRM_DASHBOARDS)
@@ -910,6 +910,105 @@ WidgetGrants:                               # BUSINESSADMIN on all 13
 - **Known issues closed**: ISSUE-27 (NEW + CLOSED same session — widget data-load failure).
 - **Next step**: Re-deploy the 13 patched Postgres functions (`DatabaseScripts/Functions/app/fn_event_analytics_*.sql`) — the loader picks them up on app startup, but the 13 functions must be re-run for the guard fix to take effect even though the live path (eventId present) no longer goes through that branch. Then reload `/{lang}/crm/event/eventanalytics?eventId=<N>` and confirm widgets render with real data.
 
+### Session 4 — 2026-06-12 — UI + FIX — COMPLETED
+
+- **Scope**: Two in-scope items from the user — (a) make the page header uniform with the canonical app pattern (Auction Management #48 reference), and (b) bind all currency on the screen to the **tenant's company currency** from `CompanySessionSettings` (#75) instead of the per-event / `EventTicket`-derived code with USD fallback (multi-tenant: each company displays its own configured currency everywhere).
+- **Files touched**:
+  - BE: none.
+  - FE:
+    - `PSS_2.0_Frontend/src/app/[lang]/crm/event/eventanalytics/event-analytics-page-config.tsx` — replaced the bespoke inline header (custom breadcrumb-button + `<h1>`/`<p>` + below-title selector + inline action row) with the canonical `<ScreenHeader>` (`@/presentation/components/custom-components/page-header`), the same component Auction Management #48 uses. `title="Post-Event Analytics"`, `description`, `icon="ph:chart-line-up"`, 3-crumb `breadcrumbs` (Home → Events → Post-Event Analytics), and `headerActions` slot now holds the `EventSelector` + Export/Print/Share buttons (unchanged button markup, just relocated). Print-hide preserved via `className="event-analytics-no-print"` on ScreenHeader. Removed now-unused `useRouter`/`handleBack` (breadcrumb `href` handles back-nav). `EventOverviewBar`, empty-state, and `<MenuDashboardComponent hideHeader filterContext={{eventId}}>` unchanged.
+    - `PSS_2.0_Frontend/src/presentation/components/custom-components/dashboards/widgets/event-analytics-widgets/_shared.tsx` — `formatCurrency` rewritten to delegate to the app-wide tenant-aware `formatCurrency` from `@/presentation/utils/companySettingsFormatters` (reads `baseCurrencyCode` + `numberFormat` + `currencyDisplayFormat` from the CompanySettings session store). Single chokepoint → fixes all 7 currency-rendering widgets (Total/Ticket/Auction/CostPerAttendee KPIs, Revenue Breakdown, ROI Table, YoY Table) in one edit. The legacy `code` arg is retained-but-ignored (renamed `_code`) so call-sites compile unchanged; company base currency always wins. `maximumFractionDigits/minimumFractionDigits: 0` preserves the prior whole-number display; null/NaN still renders "—".
+  - DB: none.
+- **Deviations from spec**: §⑥ originally specified a bespoke page header with the event selector below the title; replaced with the shared `<ScreenHeader>` for app-wide uniformity (the user's explicit request, citing Auction Management #48). Currency display now binds the company base currency instead of the BE row's per-event currency code — supersedes the §⑤ "EventTicket.CurrencyId → Currencies, USD fallback" display strategy. The SQL functions still project `currencyCode` (harmless; FE no longer reads it for display).
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-22 (per-event currency / `Event.CurrencyId` absence is now moot for display — screen binds the tenant's company base currency via CompanySessionSettings).
+- **Validation results**:
+  - ✅ `pnpm tsc --noEmit`: 0 errors in `event-analytics-page-config.tsx` and `_shared.tsx` (full project type-check completed; no new errors introduced).
+  - ⏳ `pnpm dev` browser verification deferred to user — confirm (1) header renders uniform with Auction Management (icon chip + title + info tooltip + breadcrumb + right-aligned selector/actions), (2) all money values across the 7 widgets render in the logged-in company's currency + number format (test with a non-USD tenant, e.g. INR lakh-grouping).
+- **Next step**: COMPLETED.
+
+### Session 5 — 2026-06-12 — FIX — COMPLETED
+
+- **Scope**: Product decision — Event Analytics is **Post-Event** analytics, so the event-selector must list **only `COMPLETED` events** (restores the original §⑥ intent that Session 2 had dropped under ISSUE-26). Reverts the Session-2 "show all events" deviation per explicit user request.
+- **Files touched**:
+  - BE: none.
+  - FE:
+    - `PSS_2.0_Frontend/src/app/[lang]/crm/event/eventanalytics/event-selector.tsx` — re-introduced the completed-only filter: `completedEvents = allEvents.filter(e => e.eventStatusCode === "COMPLETED")` (canonical value, same string the overview-bar badge keys on). Dropdown list + current-event lookup + empty-state now use `completedEvents`; empty-state copy → "No completed events yet."
+    - `PSS_2.0_Frontend/src/app/[lang]/crm/event/eventanalytics/event-analytics-page-config.tsx` — no-event empty-state copy: "Choose an event…" → "Choose a completed event…".
+  - DB: none.
+- **Deviations from spec**: None — this re-aligns with §⑥. Note this re-introduces the ISSUE-26 failure mode: if the tenant has **zero** events in `COMPLETED` status, the dropdown shows "No completed events yet." and the screen has nothing to analyze — this is now the **intended** behavior, not a bug. (Seeded dev data may need an event flipped to `COMPLETED` to exercise the screen.)
+- **Known issues opened**: None.
+- **Known issues closed**: None. (ISSUE-26 stays CLOSED-by-history; this session deliberately reverses the fix it applied, per product decision — documented here rather than reopening.)
+- **Validation results**:
+  - ✅ `pnpm tsc --noEmit`: 0 errors in `event-selector.tsx` / `event-analytics-page-config.tsx`.
+  - ⏳ `pnpm dev`: user to confirm only completed events appear in the dropdown (ensure at least one event is in `COMPLETED` status in the dev DB).
+- **Next step**: COMPLETED.
+
+### Session 6 — 2026-06-12 — FIX — COMPLETED (pending DB redeploy + user verify)
+
+- **Scope**: User reported (on a COMPLETED event, 900 seats / 810 sold) that **all widgets show empty/zero** and **Total Revenue throws `42703: column e.Go…`**. Reviewed all 13 Path-A SQL functions against verified entity columns + seeded MasterData values. Found four real defects:
+  1. **`e."GoalAmount"` does not exist** on `app."Events"` (goal/target column lives only on Campaign / OnlineDonationPage / CrowdFund) → `42703 undefined_column` crash = the Total Revenue error.
+  2. **Auction filter case mismatch** — functions filtered `DataValue = 'SILENT'/'LIVE'` but `AUCTIONTYPE` is seeded as **`'Silent'/'Live'`** (Pascal) → auction revenue always 0.
+  3. **Reg-status filter too narrow** — hardcoded `TypeCode='EVENTREGSTATUS'` + `DataValue IN ('CONFIRMED','CHECKEDIN')`. `'CHECKEDIN'` is **not** a status value (check-in is the `er."CheckedInDate"` field), and registrations may carry the **other** status system (`EVENTREGISTRATIONSTATUS`/`'Confirmed'` Pascal — #169 public flow) → ticket-revenue + registered counts silently return 0. (Root [[project_dual_event_reg_status_systems]].)
+  4. **`'NOSHOW'`** DataValue doesn't exist → no-show column always 0.
+- **Files touched** (BE / DB — all 13 are `PSS_2.0_Backend/DatabaseScripts/Functions/app/fn_event_analytics_*.sql`):
+  - `fn_event_analytics_kpi_total_revenue.sql` — removed the non-existent `e."GoalAmount"` lookup (goal now fixed 0); reg-status filter → `TypeCode IN ('EVENTREGSTATUS','EVENTREGISTRATIONSTATUS')` + `UPPER(DataValue)='CONFIRMED'`.
+  - `fn_event_analytics_kpi_ticket_revenue.sql` — both status filters (revenue + ticket-type count) made dual-type + case-insensitive CONFIRMED.
+  - `fn_event_analytics_kpi_auction_revenue.sql` — `'SILENT'/'LIVE'` → `UPPER(DataValue)='SILENT'/'LIVE'`.
+  - `fn_event_analytics_kpi_attendance.sql` — registered count → dual-type + `UPPER(DataValue) <> 'CANCELLED'` (= "sold" seats; attended still derived from `CheckedInDate`).
+  - `fn_event_analytics_revenue_breakdown.sql` — ticket rows dual-type CONFIRMED; auction `CASE UPPER(...)` + `UPPER(DataValue) IN ('SILENT','LIVE')` + `GROUP BY UPPER(...)`.
+  - `fn_event_analytics_attendance_by_ticket.sql` — dual-type + `UPPER(DataValue) <> 'CANCELLED'`; no-show now `COUNT(CheckedInDate IS NULL)` (real no-show) instead of phantom `'NOSHOW'`.
+  - `fn_event_analytics_roi.sql` — ticket-revenue filter dual-type + case-insensitive CONFIRMED.
+  - `fn_event_analytics_yoy_comparison.sql` — `EVENTSTATUS` completed match → `UPPER(DataValue)='COMPLETED'`; current-year ticket-revenue filter dual-type + case-insensitive CONFIRMED.
+  - (cost_per_attendee, new_donors, donor_engagement, feedback_panel, checkin_timeline — no status/column defects; unchanged.)
+  - FE: none. BE C#: none.
+- **Deviations from spec**: §⑤/§②D assumed `Event.GoalAmount` (stale — column never existed); Total Revenue KPI now renders with no goal-progress (goalProgressPct 0). Closes the display side of ISSUE-22's sibling assumption. Status JOINs intentionally widened to BOTH event-reg status systems for robustness.
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-25 (MasterData TypeCode/DataValue values now verified against seeds — `EVENTREGSTATUS`={PENDING,CONFIRMED,CANCELLED,WAITLIST}, `EVENTSTATUS` Completed=`COMPLETED`, `AUCTIONTYPE`={Silent,Live} — and functions made tolerant of both reg-status systems + case).
+- **Validation results**:
+  - ✅ Static review: zero remaining `e."GoalAmount"`, `'CHECKEDIN'`, `'NOSHOW'`, or uppercase `'SILENT'/'LIVE'` literal mismatches across all 13 functions (grep-verified).
+  - ⏳ **REQUIRED — user must re-deploy the patched Postgres functions** (restart the app so the `DatabaseScripts/Functions/app/*.sql` loader re-applies them, or run them manually). The fixes do nothing until the live DB functions are replaced.
+  - ⏳ Then reload `/{lang}/crm/event/eventanalytics?eventId=<the completed event>`.
+- **Next step**: After redeploy, confirm Total Revenue no longer errors and revenue/attendance widgets populate. **Diagnostic if still zero**: if the Attendance KPI shows ~810 *registered* but revenue is still 0, then those registrations are non-cancelled but **not `CONFIRMED`** (likely `PENDING`) — tell me and I'll widen the revenue filter to non-cancelled too. If auction revenue is 0, confirm the event actually has `AuctionItems` with a winner.
+
+### Session 7 — 2026-06-12 — FIX (verified vs live DB) — COMPLETED (2 functions await redeploy)
+
+- **Scope**: User reported widgets still 0 after Session 6. Connected to the live dev DB (read-only diagnostics) to verify against real data instead of inferring, then corrected two further bugs the data exposed and added per-function manual-verification SELECTs.
+- **Live-DB findings** (event = **#13 "Great Charity Day"**, Company 3, COMPLETED, capacity 875, 808 regs):
+  - **Registrations use `EVENTREGISTRATIONSTATUS` / `'Confirmed'` (Pascal), NOT `EVENTREGSTATUS`** → confirms Session 6's dual-system + case-insensitive widening was exactly right. 806 Confirmed = **₹1,201,000** ticket revenue; 2 PendingPayment.
+  - Auction: Silent 28 winners ₹65,910 + Live 21 winners ₹58,060 = **₹123,970** (seeded `'Silent'/'Live'` Pascal — Session 6 casing fix needed).
+  - Currency = **INR**. **`CheckedInDate` is NULL for every registration** → attendance/check-in-timeline/donor-engagement/new-donors legitimately show 0 "attended" (seed-data gap, NOT a code bug).
+  - Verified the corrected functions return: total **₹1,324,970**, ticket ₹1,201,000, auction ₹123,970, roi net ₹1,300,270, registered 808.
+  - Also found `total_revenue` + `ticket_revenue` **were not deployed at all** on the live DB (only 10 of 13 functions existed) — applying the files created them.
+- **Two further fixes (this session)**:
+  1. `fn_event_analytics_revenue_breakdown.sql` — auction `CASE` `ELSE` branch referenced raw `ms."DataValue"` while `GROUP BY UPPER(ms."DataValue")` → `42803 must appear in GROUP BY`. Changed ELSE to `UPPER(ms."DataValue")`.
+  2. `fn_event_analytics_yoy_comparison.sql` — (a) the trend block did `ORDER BY e."StartDate"` over non-grouped aggregate SUMs (`42803`); replaced with a jsonb computation over the already-built per-year array. (b) the `per_year` CTE LEFT-JOINed `EventRegistrations × AuctionItems` on the same event → **cartesian fan-out** inflating revenue to ₹184M; rewrote each metric as an independent scalar subquery.
+- **Also added**: a commented `-- MANUAL VERIFICATION` SELECT block at the bottom of all 13 `fn_event_analytics_*.sql` files (raw computation + a `SELECT data_json FROM app.fn_…('{"eventId":13}'::jsonb,0,10,0,3)` call) so values can be checked by hand. (No separate verification file — per user.)
+- **Files touched**: BE/DB only — all 13 `fn_event_analytics_*.sql` (verification comments); functional fixes in `revenue_breakdown` + `yoy_comparison` (this session) on top of Session 6's 8 files. FE/C#: none.
+- **Deviations from spec**: none beyond Session 6.
+- **Known issues opened**: **ISSUE-28 (MED, DATA)** — no registration has `CheckedInDate` set in seed data, so all check-in-derived widgets (Attendance "attended", Check-in Timeline, Donor Engagement first-time/returning, New Donors) show 0 until check-in data is seeded/recorded. Not a code defect.
+- **Known issues closed**: none additional (ISSUE-25 already closed S6).
+- **Validation results**:
+  - ✅ All 13 functions verified returning correct values directly against the live DB (after applying the corrected files), EXCEPT the two fixed THIS session.
+  - ⏳ **`revenue_breakdown` + `yoy_comparison` still need (re)applying to the live DB** — their latest fixes are on disk only (the bulk re-apply was interrupted). Restart the backend (loader re-applies `Functions/app/*.sql`) or run those two files. All other functions are already live.
+- **Next step**: Apply the 2 remaining function files, reload `…/eventanalytics?eventId=13`. Revenue/auction/ROI/attendance-registered will show real INR values; attended-based widgets stay 0 until check-in data exists (ISSUE-28).
+
+### Session 8 — 2026-06-12 — FIX + UI (root-cause found) — COMPLETED
+
+- **ROOT CAUSE of "all widgets show 0"**: the event-analytics helper `useWidgetFirstRow` (in `event-analytics-widgets/_shared.tsx`) read `data.result.data[0]` — but `GENERATE_WIDGETS_QUERY` returns `result.data` as the **pagination envelope** whose rows live at `result.data.data[].values[].{key,value}` (every `value` a STRING per `WidgetResult.SetDataFromJson` → `prop.Value.ToString()`). Indexing the envelope with `[0]` was always `undefined`, so EVERY widget rendered 0/empty regardless of the SQL. Fixed by mirroring the canonical `ambassador-performance` helper: read `result.data.data`, take `[0]`, reduce `.values` into a flat record, JSON-parsing each string (numbers, `True`/`False` → bool, nested arrays/objects like attendance `rows`/`total`, breakdown `rows`, donor `items`, yoy `years`/`trends`). This single fix repaired all 13 widgets. Verified live: event #13 → total ₹1,324,970, ticket ₹1,201,000, auction ₹123,970.
+- **DB verification (live, event #13 / company 3)**: registrations are `EVENTREGISTRATIONSTATUS`/`'Confirmed'`; check-in data now exists (≈727 attended); auction `'Silent'/'Live'`. Confirmed Session-6/7 SQL fixes are correct. Re-applied the 2 pending functions (`revenue_breakdown` ELSE-GROUP-BY fix, `yoy` cartesian + trend fix) to the DB → yoy now ₹1,325,970 (was ₹184M).
+- **User-reported follow-ups (this session)**:
+  1. **Crash `Cannot read properties of undefined (reading 'toFixed')`** (donor engagement widget): the `avg_engagement` item has no `percent`. Guarded `EventDonorEngagementListWidget` to only render `(percent%)` when it's a number.
+  2. **ROI "Cost per $ Raised"**: hardcoded `$` → now the tenant currency code (`EventRoiTableWidget` reads `baseCurrencyCode` from CompanySessionSettings; label + value use it).
+  3. **Attendance Analysis → chart**: rewrote `EventAttendanceTableWidget` from an HTML table to an ApexCharts grouped **horizontal bar** (Registered vs Attended per ticket type) + a compact totals strip. Same `useWidgetFirstRow` data.
+  4. **Revenue Breakdown height −40%**: reduced the widget's grid `h` (lg/xl 6→4 minH 5→3; md/sm/xs 8→5) in both the seed (`EventAnalytics-sqlscripts.sql`, all 5 breakpoints) and the live `sett."DashboardLayouts"` row (dashboard 41). Grid vertical-compacts (no `compactType` set) so widgets below close the gap automatically.
+  5. Same as (1).
+- **Debug aid added** (per user request): gated console logging in `useWidgetFirstRow` — enable with `localStorage.setItem("EA_DEBUG","1")` (or `window.EA_DEBUG=true`); logs params sent, raw envelope, flattened row per widget. Off by default.
+- **Files touched**: FE — `event-analytics-widgets/_shared.tsx` (data extraction fix + debug), `EventDonorEngagementListWidget.tsx`, `EventRoiTableWidget.tsx`, `EventAttendanceTableWidget.tsx` (table→chart). DB/seed — `EventAnalytics-sqlscripts.sql` (layout h), live `DashboardLayouts` UPDATE + re-applied `revenue_breakdown`+`yoy` functions. C#: none.
+- **Validation**: ✅ `tsc --noEmit` clean for all changed widgets. ✅ All 13 functions verified returning correct values live for event #13.
+- **Known issues opened**: None. **Closed**: the "all widgets 0" FE data-path bug (was undocumented).
+- **Next step**: COMPLETED. ISSUE-28 (check-in data) is now moot — check-in data exists for event #13. If other tenants/events lack check-ins, attendance "attended" will legitimately read 0.
+
 ### § Known Issues Table
 
 | ID         | Severity | Status | Description |
@@ -935,9 +1034,10 @@ WidgetGrants:                               # BUSINESSADMIN on all 13
 | ISSUE-19   | MED      | OPEN   | Full E2E checklist (Section ⑪) — `dotnet build` + `pnpm dev` + functional walkthrough deferred to verification session |
 | ISSUE-20   | LOW      | OPEN   | Cross-currency YoY years — no `⚠` indicator yet (FE TODO) |
 | ISSUE-21   | LOW      | OPEN   | EventOverviewBar fetches `eventById` separately — 1 extra round-trip (acceptable for MVP) |
-| ISSUE-22   | LOW      | OPEN   | `Event.CurrencyId` column does not exist; currency resolved via EventTicket fallback to USD |
+| ISSUE-22   | LOW      | CLOSED (session 4) | `Event.CurrencyId` absence is moot for display — screen now binds the tenant's company base currency (CompanySessionSettings #75) for all money values, not the per-event/EventTicket-derived code |
 | ISSUE-23   | LOW      | OPEN   | DashboardIcon `ph:` prefix is double-prepended when MenuDashboardComponent renders its own header — EventAnalytics avoids this via `hideHeader` |
 | ISSUE-24   | LOW      | OPEN   | Seed md/xs LayoutConfig widths don't match MenuDashboardComponent's cols.md/xs values (functionally clamped by react-grid-layout) |
-| ISSUE-25   | LOW      | OPEN   | MasterDataType TypeCodes (`EVENTREGSTATUS`/`EVENTSTATUS`/`AUCTIONTYPE`) inferred — verify against actual seeded values |
+| ISSUE-25   | LOW      | CLOSED (session 6) | MasterData codes verified vs seeds: `EVENTREGSTATUS`={PENDING,CONFIRMED,CANCELLED,WAITLIST}, `EVENTSTATUS` completed=`COMPLETED`, `AUCTIONTYPE`={Silent,Live}. Functions fixed: removed phantom `'CHECKEDIN'`/`'NOSHOW'`, corrected auction `'SILENT'/'LIVE'`→case-insensitive, and widened reg-status JOINs to both `EVENTREGSTATUS`+`EVENTREGISTRATIONSTATUS` (case-insensitive). Also removed non-existent `Event.GoalAmount` (was the 42703 crash). |
 | ISSUE-26   | MED      | CLOSED (session 2) | Event-selector dropdown filtered out all rows when no events had `eventStatusCode='COMPLETED'` — fix: removed COMPLETED-only filter, show all events |
+| ISSUE-28   | MED      | OPEN (data)   | No registration has `CheckedInDate` set in seed data → all check-in-derived widgets (Attendance "attended", Check-in Timeline, Donor Engagement first-time/returning, New Donors) render 0. Not a code defect — needs check-in data seeded/recorded. (Verified against live DB, event #13, Session 7.) |
 | ISSUE-27   | HIGH     | CLOSED (session 3) | All 13 widgets failed with `Error parsing data JSON` — eventId was dropped before reaching BE (FE spread parsed params as undeclared GraphQL variables) AND SQL guard returned `'{}'` (object) instead of `'[]'` (array) into a `JArray.Parse` call. Fixed both layers — `_shared.tsx` now serializes to `parameters: JSON.stringify(parsed)`; all 13 SQL functions return `'[]'::text` on guard. |

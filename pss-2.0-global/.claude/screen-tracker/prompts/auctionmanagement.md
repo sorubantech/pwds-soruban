@@ -9,7 +9,7 @@ complexity: High
 new_module: NO — reuses Application (ApplicationModels) group
 planned_date: 2026-04-20
 completed_date: 2026-04-21
-last_session_date: 2026-05-12
+last_session_date: 2026-06-11
 ---
 
 ## Tasks
@@ -1064,7 +1064,7 @@ Full UI must be built for all above (buttons, modals, toasts). Only the external
 | ISSUE-19 | 1 | LOW | Schema | `AuctionItem.SortOrder` auto-increments on Create (max+1); gap-rebalance on delete not performed (no perf impact). | OPEN |
 | ISSUE-20 | 1 | LOW | Query | `GetAuctionSummary.uniqueBidders` distinct-BidderContactId across all event items could be slow on thousands-of-bid events — add summary view if profiler shows. | OPEN |
 | ISSUE-21 | 1 | LOW | Mapping | Mapster AuctionItem → ResponseDto uses `.Map(dest.Photos, src.AuctionItemPhotos)` via `new`-keyword shadowing; works but could be consolidated. | OPEN |
-| ISSUE-22 | 1 | MED | FE | Auction Items grid is bespoke (not FlowDataTable) because `auctionItemsByEvent(eventAuctionId, searchText, categoryId, statusId, ...)` signature doesn't match FlowDataTable's `request: { pageSize, pageIndex, sortColumn, advancedFilter }` envelope. Visual-language matched via card framing + tokens + skeleton. Migrate if generic context-scoped FlowDataTable variant lands. | OPEN |
+| ISSUE-22 | 1 | MED | FE | Auction Items grid is bespoke (not FlowDataTable) because `auctionItemsByEvent(eventAuctionId, searchText, categoryId, statusId, ...)` signature doesn't match FlowDataTable's `request: { pageSize, pageIndex, sortColumn, advancedFilter }` envelope. Visual-language matched via card framing + tokens + skeleton. Migrate if generic context-scoped FlowDataTable variant lands. | RESOLVED (session 3) — both grids migrated to shared FlowDataTable; event-scope passed via `setExtraVariables({eventAuctionId})` (Flow supports extra vars alongside the `request:` envelope — the original premise was outdated). Winners table got a new paged BE query `auctionWinnersGrid` + gridCode AUCTIONWINNER. |
 | ISSUE-23 | 1 | LOW | FE | `BidsCountLink` renderer dispatches a DOM `CustomEvent` (`AUCTION_VIEW_BIDS_EVENT`) instead of importing Zustand store (avoids circular import global renderer registry ↔ page store). Works for single-mounted page. | OPEN |
 | ISSUE-24 | 1 | LOW | FE | `auction-category-badge` renderer has defensive fa-* → ph:* map alongside ph:* direct-pass-through; remove fa-* legacy map after seed stability confirmed. | OPEN |
 | ISSUE-25 | 1 | LOW | FE | CollectPaymentModal passes `collectedDate` as ISO String; BE mutation expects DateTime. HotChocolate's default scalar coercion handles ISO strings; confirm at runtime. | OPEN |
@@ -1135,3 +1135,52 @@ Full UI must be built for all above (buttons, modals, toasts). Only the external
 - **Known issues opened**: None.
 - **Known issues closed**: ISSUE-1 (drift safety net in place — moved to RESOLVED in the Known Issues table).
 - **Next step**: None for this fix. Other OPEN issues (ISSUE-4..6 service placeholders, ISSUE-17 EF migration, ISSUE-22 grid migration, etc.) remain as intentionally-deferred items consistent with the original Session 1 build.
+
+### Session 3 — 2026-06-11 — ENHANCE — COMPLETED
+
+- **Scope**: Migrate BOTH bespoke console tables (Auction Items + Winners & Payment) to the shared **FlowDataTable**, using its custom-action injection (`setCustomRowActions`) for all row actions and adding **per-action capabilities**. Resolves ISSUE-22. User chose FlowDataTable over AdvancedDataTable (recommended) because Flow has `setExtraVariables` (clean `eventAuctionId` scoping) + `setCustomRowActions` (inject actions without editing shared core files) — matches the sibling `crm/event/event` grid.
+- **Files touched**:
+  - BE (3 modified, 1 created):
+    - `Schemas/ApplicationSchemas/AuctionItemSchemas.cs` — added flat `DonorDisplay` to `AuctionItemResponseDto` (grid donor column; auto-added to sort columns via PropertyNameHelper).
+    - `Business/ApplicationBusiness/AuctionItems/Queries/GetAuctionItems.cs` — set `it.DonorDisplay = DonorContactName ?? DonorName` in post-projection.
+    - `Business/ApplicationBusiness/AuctionItems/Queries/GetAuctionWinnersGrid.cs` (CREATED) — paged Flow query for the Winners grid: pre-projects `AuctionItem → AuctionWinnerRowDto` then `ApplyGridFeatures<AuctionWinnerRowDto,AuctionWinnerRowDto>` (identity projection) so search/sort/paging run on the flat winner DTO.
+    - `EndPoints/Application/Queries/AuctionItemQueries.cs` — added `AuctionWinnersGrid([AsParameters] GridFeatureRequest request, int eventAuctionId)` endpoint → GQL `auctionWinnersGrid`. (HC auto-discovers — no wiring.)
+  - DB seed (1 modified): `sql-scripts-dyanmic/AuctionManagement-sqlscripts.sql` — appended STEP 12: (a) UPDATE AUCTIONITEM `sett.Fields` keys → `categoryName`/`donorDisplay`/`statusName` (the original speculative keys never matched the DTO because the screen had gone bespoke); (b) swapped the AUCTIONITEM status column's wrong boolean `status-badge` renderer → `auction-item-status-badge`; (c) registered 6 custom capabilities (VIEWBIDS/PAUSERESUME/LOWERRESERVE/COLLECTPAYMENT/OVERRIDEWINNER/REAUCTION, IsSpecial); (d) hidden `AUCTIONITEM` capability-menu (gridCode === menuCode) + MenuCapabilities + RoleCapabilities BUSINESSADMIN; (e) `AUCTIONWINNER` menu + sett.Grids + 5 Fields + 5 GridFields + capabilities.
+  - FE (created 7, modified 9, deleted 2):
+    - Renderers (created): `shared-cell-renderers/auction-item-status-badge.tsx`, `auction-winning-bid.tsx`, `auction-payment-status.tsx` (+ barrel `index.ts`); registered in flow + advanced + basic `component-column.tsx` registries.
+    - Capability flags: `hooks/useInitialRendering/useCapability.ts` (+6 flags/results), `domain/types/auth-types/TCapability.ts` (+6 `can*`).
+    - Queries: `gql-queries/contact-queries/AuctionItemQuery.ts` — items query +flat `categoryName`/`statusName`/`donorDisplay`; new `AUCTION_WINNERS_GRID_QUERY` (Flow envelope).
+    - Config: `data-table-configs/contact-service-entity-operations.ts` — AUCTIONITEM `primaryKey:"auctionItemId"`; new AUCTIONWINNER entry.
+    - Page (created): `auction-items-grid-section.tsx`, `auction-item-row-actions.tsx`, `winners-grid-section.tsx`, `winner-row-actions.tsx`. `index-page.tsx` swapped bespoke grids → new sections.
+    - Deleted: `auction-items-grid.tsx`, `winners-payment-table.tsx`.
+- **Deviations from spec**: None to §⑥ layout/fields. Implementation substrate changed from bespoke → shared FlowDataTable (the canonical "reuse existing grids" rule). Capability granularity is a session decision: Edit/Remove/Toggle reuse standard MODIFY/DELETE/TOGGLE; Receipt + Send-Invoice (placeholders) gate under READ/COLLECTPAYMENT to avoid cap explosion. Donor grid column is now flat `text-truncate` (`donorDisplay`) — lost the inline donor-contact deep-link in the grid (secondary; winner/bidder links elsewhere unchanged).
+- **Gotchas handled**:
+  - First-fetch race: the items/winners queries declare `$eventAuctionId: Int!` but `setExtraVariables` runs in an effect AFTER the Flow data hook captures its variables → first fetch would miss the required var. Fixed by gating `useFlowInitializeData()` behind a child component that mounts only once `extraVariables` is applied (a `ready` flag).
+  - Capability resolution keys off `menuCode === gridCode`, so AUCTIONITEM/AUCTIONWINNER each needed their OWN capability-bearing menu (not the visible AUCTIONMANAGEMENT menu).
+  - AUCTIONITEM seed field-keys/status-renderer were speculative/wrong (screen never used the Flow grid) — reconciled in STEP 12.
+  - Cross-store refresh bridge: page-store `bumpRefresh()` → each section effect mirrors `refreshToken` into the Flow store's `setRefresh(true)`; row actions call BOTH (KPIs/feed + grid).
+- **Verification**: FE `npx tsc --noEmit` → 0 errors. BE compiles (only MSB3021/3026 DLL-copy locks because the API was running in VS — zero CS errors). DB seed is idempotent (NOT EXISTS / IS DISTINCT FROM guards).
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-22 (both grids migrated to shared FlowDataTable).
+- **Next step**: USER MUST (1) re-apply `AuctionManagement-sqlscripts.sql` (adds AUCTIONWINNER grid/fields, fixes AUCTIONITEM keys+renderer, seeds the 6 new capabilities + AUCTIONITEM/AUCTIONWINNER menus); (2) rebuild + restart Base.API so the `auctionWinnersGrid` GQL field is live; (3) hard-refresh FE. Without the seed, the grids render with no columns and row actions are capability-hidden.
+
+### Session 4 — 2026-06-11 — FIX — COMPLETED
+
+- **Scope**: Correct a Session-3 architecture bug found by the user: both grids rendered IDENTICAL columns/data. Root cause — `useFlowDataTableStore` is a **global Zustand singleton** (`create()`), NOT per-provider; two `FlowDataTableStoreProvider`s on one page write to the SAME store, so the second grid overwrites the first. Flow was never the right substrate for two grids on one page (every other screen has exactly one). Pivoted both grids to **AdvancedDataTable**, whose store IS context-scoped (`datatable-context.tsx` → `createContext` + per-provider `useAdvancedDataTableStore()` ref). Also fixed: the embedded grid showed AdvancedDataTable's built-in PAGE header (title + breadcrumb + fullscreen) — wrong for a console sub-grid.
+- **Files touched** (FE only — BE + seed from Session 3 reused UNCHANGED):
+  - Advanced core (additive, backward-compatible — other grids ignore the new optionals):
+    - `domain/types/data-table-types/TDataTable.ts` — `TDataTableProps` +`extraVariables` +`customRowActions` +`refreshSignal` +`showHeader`.
+    - `stores/.../advanced-datatable-istore.ts` + `advanced-datatable-store.ts` — +`extraVariables`/`customRowActions` state + setters (defaults null, cleared in reset).
+    - `advanced/datatable-context.tsx` — provider accepts + **seeds** extraVariables/customRowActions at init (before children mount → first fetch carries scope, no missing-var race).
+    - `advanced/index.tsx` — `AdvancedDataTable` forwards the new props; Inner effects sync updates + `refreshSignal`→`setRefresh`; threads `showHeader` (default true) → `<DataTableContainer showHeader=.../>`.
+    - `advanced/data-table-fetch-data.tsx` — merge `...(extraVariables ?? {})` into query vars.
+    - `advanced/data-table-column-cells/action-column-cell.tsx` — render `{customRowActions && customRowActions(row.original)}` after standard actions.
+    - `advanced/data-table-column-builder.tsx` — `shouldShowActionColumn` also true when `customRowActions` present (so the Winners grid, which has only READ + custom caps + enableView:false, still shows its action column).
+  - Screen:
+    - `auction-items-grid-section.tsx` + `winners-grid-section.tsx` — rewritten to `<AdvancedDataTable gridCode … extraVariables customRowActions refreshSignal showHeader={false} />` (no Flow provider, no `ready`-gating needed — provider seeds scope at init).
+    - `auction-item-row-actions.tsx` + `winner-row-actions.tsx` — `setRefresh` now from `useAdvancedDataTableStoreFromContext` (they render inside the Advanced provider).
+- **Deviations from spec**: None. Supersedes Session 3's FlowDataTable choice — both grids are still the canonical shared grid, just the context-scoped (Advanced) variant. Note: the BE endpoints/queries (`auctionItemsByEvent`, `auctionWinnersGrid`) + the entire DB seed are identical to Session 3 (Advanced consumes the same `request:` envelope + extra vars).
+- **Why Advanced now, Flow before**: Flow has `setExtraVariables`/`setCustomRowActions` but a GLOBAL store (one grid/page). Advanced has a per-instance store (multi-grid/page) but lacked those two hooks — so I ported them in (additive). Best of both, and it matches the user's original "advanced grid" request.
+- **Verification**: FE `npx tsc --noEmit` → 0 errors. Advanced-core changes are additive/optional → existing AdvancedDataTable screens unaffected (verified `showHeader` defaults true, new store fields default null).
+- **Known issues opened**: None. **Known issues closed**: None (ISSUE-22 already closed in Session 3).
+- **Next step**: Same manual steps as Session 3 (apply seed + restart Base.API + hard-refresh FE).

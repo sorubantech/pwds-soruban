@@ -146,12 +146,77 @@
   .map .m p{margin:0; font-size:12.5px; color:var(--slate); line-height:1.45;}
   .map .m .sn{display:inline-block; margin-top:8px; background:var(--rose-50); color:var(--rose-700);
     font-size:11px; font-weight:700; padding:2px 9px; border-radius:12px;}
+  /* ---------- feature checklist ---------- */
+  .featgrp{padding:18px 20px;}
+  .featgrp h4{margin:0 0 6px; font-size:14.5px; color:var(--rose-700); display:flex; align-items:center; gap:8px;}
+  .feat{list-style:none; padding:0; margin:6px 0 0;}
+  .feat li{position:relative; padding:7px 0 7px 24px; font-size:13.5px; line-height:1.45; border-top:1px solid var(--line);}
+  .feat li:first-child{border-top:none;}
+  .feat li::before{content:"✓"; position:absolute; left:2px; top:7px; color:#fff; background:var(--rose);
+    width:15px; height:15px; border-radius:50%; font-size:9px; font-weight:800; text-align:center; line-height:15px;}
+  .feat li b{color:var(--ink);}
+  /* ---------- interactive event-setup walk-through ---------- */
+  .setup-wrap{padding-top:24px;}
+  .setup-bar{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; margin-bottom:6px;}
+  .switch-box{display:flex; align-items:center; gap:10px; font-size:12.5px; font-weight:700; color:#fbcfe8;}
+  .switch{position:relative; display:inline-block; width:46px; height:24px;}
+  .switch input{opacity:0; width:0; height:0;}
+  .slider{position:absolute; inset:0; background:rgba(255,255,255,.22); border-radius:24px; transition:.3s; cursor:pointer;}
+  .slider::before{content:""; position:absolute; height:18px; width:18px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.3s;}
+  .switch input:checked + .slider{background:var(--green);}
+  .switch input:checked + .slider::before{transform:translateX(22px);}
+  .nav-btns{display:flex; gap:8px;}
+  .nav-btns button{background:rgba(255,255,255,.12); color:#fce7f3; border:1px solid #f472b6; padding:7px 15px;
+    border-radius:20px; font-size:13px; font-weight:700; cursor:pointer; transition:.18s;}
+  .nav-btns button:hover:not(:disabled){background:#f472b6; color:#4a044e;}
+  .nav-btns button:disabled{opacity:.32; cursor:not-allowed;}
+  .setup-coin{animation:none; transition:left .55s cubic-bezier(.45,.05,.3,1);}
+  .setup-fill{animation:none; width:0; transition:width .55s cubic-bezier(.45,.05,.3,1);}
+  .snode{cursor:pointer;}
+  .snode .lbl{transition:color .2s;}
+  .snode .dot{transition:transform .25s, background .25s, box-shadow .25s;}
+  .snode.done .dot{background:#f9a8d4; border-color:#fbcfe8;}
+  .snode.on .dot{background:#f472b6; transform:scale(1.35); box-shadow:0 0 0 6px rgba(244,114,182,.32);}
+  .snode.on .lbl{color:#fff;}
+  .setup-caption{background:rgba(0,0,0,.26); border:1px solid #f472b6; border-radius:12px; padding:14px 18px;
+    margin-top:16px; font-size:13.5px; color:#fce7f3; line-height:1.55; min-height:54px;}
+  .setup-caption .step-i{display:inline-block; background:#f472b6; color:#4a044e; font-weight:800; font-size:11px;
+    padding:2px 9px; border-radius:10px; margin-right:8px;}
+  .setup-caption b{color:#fff;}
+  /* ---------- fullscreen diagram / flow modal ---------- */
+  .fs-host{position:relative;}
+  .fs-btn{position:absolute; top:10px; right:10px; z-index:8; width:34px; height:34px; cursor:pointer;
+    border-radius:9px; border:1px solid rgba(255,255,255,.4); background:rgba(0,0,0,.42); color:#fff;
+    font-size:15px; line-height:1; display:flex; align-items:center; justify-content:center; transition:.16s;}
+  .fs-btn:hover{background:var(--rose); border-color:var(--rose); transform:scale(1.08);}
+  .mermaid.fs-host .fs-btn{background:rgba(219,39,119,.9); border-color:var(--rose);}
+  .setup-wrap.fs-host .setup-bar{padding-right:46px;}
+  .fs-canvas .fs-btn{display:none;}            /* hide the per-section button once it's inside the modal */
+  .fs-modal{position:fixed; inset:0; z-index:1000; background:rgba(15,23,42,.86);
+    -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); display:none; flex-direction:column;}
+  .fs-modal.open{display:flex;}
+  .fs-toolbar{display:flex; align-items:center; gap:9px; padding:11px 16px; background:#111827; color:#fff; flex:none;}
+  .fs-toolbar .fs-title{font-size:14px; font-weight:700; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .fs-toolbar button{background:rgba(255,255,255,.12); color:#fff; border:1px solid rgba(255,255,255,.26);
+    border-radius:8px; min-width:38px; height:34px; padding:0 11px; cursor:pointer; font-size:15px; font-weight:700; transition:.15s;}
+  .fs-toolbar button:hover{background:var(--rose); border-color:var(--rose);}
+  .fs-toolbar .fs-zoomval{font-size:12.5px; min-width:50px; text-align:center; opacity:.85; font-variant-numeric:tabular-nums;}
+  .fs-toolbar .fs-close{margin-left:6px;}
+  .fs-viewport{flex:1; overflow:hidden; position:relative; cursor:grab; display:flex; align-items:center; justify-content:center;}
+  .fs-viewport.grabbing{cursor:grabbing;}
+  .fs-canvas{transform-origin:center center; will-change:transform;}
+  .fs-canvas>*{margin:0 !important; max-width:none !important; width:auto;}
+  .fs-canvas .stage-wrap{width:min(90vw,1080px);}
+  .fs-canvas .mermaid{background:#fff;}
+  .fs-hint{position:absolute; bottom:14px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,.55);
+    color:#fbcfe8; font-size:12px; font-weight:600; padding:6px 15px; border-radius:20px; pointer-events:none;}
   /* ---------- print ---------- */
   @media print{
     nav.toc{display:none} .wrap{display:block} main{padding:0}
     .stage-wrap{background:#fff; color:#0f172a; border:1px solid var(--line);}
     .stage-wrap h3{color:var(--rose-700)} .node .lbl,.node .dt{color:var(--ink)}
-    .avatar,.ping,.legend{display:none} section{page-break-inside:avoid}
+    .avatar,.ping,.legend,.setup-bar,.setup-caption,.fs-btn{display:none} section{page-break-inside:avoid}
+    .fs-modal{display:none !important}
     .hero{background:var(--rose-700)!important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
     a{color:var(--ink); text-decoration:none}
   }
@@ -163,8 +228,10 @@
   <!-- =================== SIDEBAR =================== -->
   <nav class="toc">
     <h4>Contents</h4>
+    <a href="#agenda">Agenda</a>
     <a href="#intro">Overview</a>
     <a href="#flow">① Start → End Flow</a>
+    <a href="#setup">⚙ Event Setup (interactive)</a>
     <a href="#diagram">② Live Flow + Example</a>
     <a href="#tests">③ Test Cases</a>
     <a href="#data">④ Entity Tables</a>
@@ -173,32 +240,89 @@
   <!-- =================== MAIN =================== -->
   <main>
 
-    <div class="hero" id="intro">
+    <div class="hero">
       <h1>Event Management — Knowledge Transfer</h1>
       <p>How an event goes from an empty draft to a published, ticket-selling, check-in-ready event — across four screens that snap together — explained simply so a new team member can start testing on day one.</p>
       <div class="tags">
         <span>Module: CRM · Events</span>
         <span>Event #40 · Ticketing #46</span>
         <span>Ticket Template #176</span>
-        <span>Reg Page #169</span>
+        <span>Reg Page #169 · Auction #48</span>
         <span>+ Payment Gateways</span>
       </div>
     </div>
+
+    <!-- =================== AGENDA / MENU =================== -->
+    <section id="agenda">
+      <h2><span class="num">≡</span> Agenda</h2>
+      <p class="lead">Think of this like a meeting agenda — here is everything the Event Management module does, grouped as discussion topics.</p>
+
+      <div class="note" style="margin-top:0">
+        <b>In one line:</b> create an event → sell tickets → take registrations &amp; payments → run an auction → check guests in → track and communicate — all in one module.
+      </div>
+
+      <h3>Feature checklist — what the screens actually do</h3>
+      <div class="grid2">
+        <div class="card featgrp">
+          <h4>🏗️ Build the event <span class="b" style="background:var(--rose); font-size:10px">#40</span></h4>
+          <ul class="feat">
+            <li><b>Event setup</b> — name, category, dates, venue &amp; host org-unit</li>
+            <li><b>Lifecycle</b> — Draft → Published → In&nbsp;Progress → Completed / Cancelled, with publish guards</li>
+            <li><b>Three modes</b> — In-person / Virtual / Hybrid (fields adapt to the mode)</li>
+            <li><b>Event content</b> — speakers, custom questions, suggested amounts, photo gallery</li>
+          </ul>
+        </div>
+        <div class="card featgrp">
+          <h4>🎟️ Sell &amp; register <span class="b" style="background:var(--rose); font-size:10px">#46 · #169</span></h4>
+          <ul class="feat">
+            <li><b>Ticket types &amp; pricing</b> — per person / table / group, quantity, sale windows</li>
+            <li><b>Registrations</b> — sign-up, capacity checks, waitlist &amp; auto-promotion</li>
+            <li><b>Public registration page</b> — branding, unique slug, enabled payment methods</li>
+            <li><b>Online payments</b> — gateway checkout, Pending&nbsp;Payment → Confirmed</li>
+          </ul>
+        </div>
+        <div class="card featgrp">
+          <h4>🔨 Run the event <span class="b" style="background:var(--rose); font-size:10px">#48 · #176</span></h4>
+          <ul class="feat">
+            <li><b>E-ticket / receipt template</b> — rich-text editor, placeholders, activate to use</li>
+            <li><b>QR check-in</b> — mark attendees as arrived on event day</li>
+            <li><b>Auction</b> — items, silent / live bidding, reserve prices</li>
+            <li><b>Winners &amp; payment</b> — settle winners, record manual payment</li>
+          </ul>
+        </div>
+        <div class="card featgrp">
+          <h4>📊 Track &amp; communicate <span class="b" style="background:var(--rose); font-size:10px">#40</span></h4>
+          <ul class="feat">
+            <li><b>KPIs</b> — upcoming events, registrations, revenue, attendance rate</li>
+            <li><b>Calendar &amp; grid</b> — month calendar, status filters, capacity bars</li>
+            <li><b>Email communications</b> — announcements, confirmations, post-event feedback</li>
+            <li><b>Insights</b> — revenue &amp; capacity tracking per event</li>
+          </ul>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- =================== OVERVIEW =================== -->
+    <section id="intro">
+      <h2><span class="num">▸</span> Overview</h2>
 
     <p class="lead">
       <b>What is it?</b> Event Management is how the NGO runs real-world and virtual events — a charity gala, a walkathon, a webinar.
       An organiser <b>creates the event</b> (what, when, where), <b>adds the tickets</b> people can buy, <b>designs the e-ticket</b> attendees receive,
       <b>publishes a public registration page</b>, and then watches <b>registrations and payments</b> come in — right up to <b>checking guests in</b> at the door
-      and <b>closing the event</b>. It is not one screen but <b>four that work as a chain</b>, with payment gateways handling the money for paid tickets.
+      and <b>closing the event</b>. It is not one screen but <b>a chain that work together</b>, with payment gateways handling the money for paid tickets.
+      Many fundraising events also run an <b>auction</b> (#48) — items donors bid on during the gala — which lives <i>inside</i> the event as its own sub-screen.
     </p>
     <p class="lead">This guide has only four parts: <b>① the flow</b>, <b>② a live animated example</b>, <b>③ the test cases</b>, and <b>④ the data tables</b>. Nothing else to memorise.</p>
 
     <div class="map">
       <div class="m"><div class="ic">📅</div><h4>Event</h4><p>The core event — name, date, venue, mode, organiser.</p><span class="sn">Screen #40</span></div>
       <div class="m"><div class="ic">🎫</div><h4>Ticketing</h4><p>Ticket types &amp; prices + the people who registered.</p><span class="sn">Screen #46</span></div>
-      <div class="m"><div class="ic">🎨</div><h4>Ticket Template</h4><p>The e-ticket / receipt design attendees receive.</p><span class="sn">Screen #176</span></div>
       <div class="m"><div class="ic">🌐</div><h4>Registration Page</h4><p>The public page where attendees sign up &amp; pay.</p><span class="sn">Screen #169</span></div>
+      <div class="m"><div class="ic">🔨</div><h4>Auction</h4><p>Items donors bid on during the event — silent or live.</p><span class="sn">Screen #48</span></div>
     </div>
+    </section>
 
 
     <!-- ============================================================
@@ -206,7 +330,7 @@
     ============================================================ -->
     <section id="flow">
       <h2><span class="num">1</span> The Flow — Start to End</h2>
-      <p class="lead">An event has its own <b>5-status lifecycle</b>, but reaching "live" means building the chain across all four screens first.</p>
+      <p class="lead">An event has its own <b>5-status lifecycle</b>, but reaching "live" means filling in all <b>four tabs of the event screen</b> first.</p>
 
       <h3>The event's five statuses</h3>
       <table>
@@ -224,66 +348,63 @@
         <b>② Cancelled &amp; Completed are dead ends</b> — once there, an event can't go back. Cancelling <span class="req">requires a Cancellation Reason</span>.
       </div>
 
-      <h3>The journey in plain words (across the four screens)</h3>
+      <h3>The journey in plain words (one screen, four tabs)</h3>
+      <div class="note" style="margin-top:0">
+        What used to be three screens — <b>Event #40</b>, <b>Ticketing #46</b> and <b>Registration Page #169</b> — is now <b>one screen with four tabs</b>.
+        You work left → right; each tab <b>saves on its own</b>, and <b>tabs 3 &amp; 4 unlock only after the event exists</b> (i.e. once Tab 1 is saved).
+        The <b>e-ticket template (#176)</b> and the <b>auction (#48)</b> stay as their own screens.
+      </div>
       <ol class="steps">
-        <li><b>Create the event.</b> <span class="b draft">#40</span> Organiser clicks <b>+ New Event</b>, fills name, mode (In-person / Virtual / Hybrid), category, org unit, dates &amp; venue, then <b>Saves as Draft</b>. System auto-stamps a code (<code>GALA-2026</code>).</li>
-        <li><b>Add the tickets.</b> <span class="b draft">#46</span> On the Ticketing screen the organiser defines <b>ticket types</b> — e.g. "VIP Table" $5,000, "Standard Seat" $250 — each with a price, quantity and sale window.</li>
-        <li><b>Design the e-ticket.</b> <span class="b draft">#176</span> A reusable <b>Ticket Template</b> (built in the rich-text editor) decides what the e-ticket / receipt looks like, using merge fields like <code>{{RegistrantName}}</code> and <code>{{EventName}}</code>. Each ticket type can point at one.</li>
-        <li><b>Configure &amp; publish the page.</b> <span class="b published">#169</span> The <b>Registration Page</b> gets a public <b>slug</b> (<code>/event/charity-gala-2026</code>), branding, and a payment gateway for paid tickets. Publishing flips the event to <span class="b published">Published</span> and the page to <b>Active</b>.</li>
-        <li><b>Attendees register &amp; pay.</b> A visitor lands on the public page, picks tickets, fills the form, and pays through the gateway. Each purchase creates an <b>EventRegistration</b> and sends the e-ticket.</li>
-        <li><b>Run the event.</b> <span class="b live">In&nbsp;Progress</span> On the day, staff use <b>QR check-in</b> to mark attendees as arrived.</li>
-        <li><b>Close it.</b> <span class="b completed">#40</span> <b>Complete Event</b> locks everything read-only and opens post-event analytics.</li>
+        <li><b>Tab 1 — Event basics.</b> <span class="b draft">Draft</span> Name, mode (In-person / Virtual / Hybrid), category, dates &amp; host org-unit. <b>Save</b> creates the event as Draft with an auto code (<code>GALA-2026</code>) — and unlocks the remaining tabs. <i>(Existing structure — unchanged.)</i></li>
+        <li><b>Tab 2 — Venue &amp; details.</b> Where it happens (venue address or virtual meeting link), schedule and description. <i>(Existing structure — unchanged.)</i></li>
+        <li><b>Tab 3 — Ticket configuration.</b> Define <b>ticket types</b> &amp; prices — "VIP Table" $5,000, "Standard Seat" $250 — each with quantity and a sale window. Each ticket can point at an <b>e-ticket template</b> (designed separately in #176). <i>(Was screen #46.)</i></li>
+        <li><b>Tab 4 — Registration page setup.</b> <span class="b published">→ Published</span> The public <b>slug</b> (<code>/event/charity-gala-2026</code>), branding, payment gateway &amp; methods — <b>plus the event content</b> (speakers, custom questions, suggested amounts) that used to sit on the old tab&nbsp;3. <i>(Was screen #169 + the old content tab.)</i></li>
+        <li><b>Publish.</b> <span class="b published">Published</span> Publishing flips the event to <span class="b published">Published</span> and the page to <b>Active</b>; the public URL goes live.</li>
+        <li><b>Attendees register &amp; pay.</b> A visitor on the public page picks tickets, fills the form and pays through the gateway. Each purchase creates an <b>EventRegistration</b> and sends the e-ticket.</li>
+        <li><b>Run the event.</b> <span class="b live">In&nbsp;Progress</span> On the day, staff use <b>QR check-in</b> to mark attendees as arrived. An <b>auction (#48)</b> may run alongside — see its own section.</li>
+        <li><b>Close it.</b> <span class="b completed">Completed</span> <b>Complete Event</b> locks everything read-only and opens post-event analytics.</li>
       </ol>
 
-      <h3>Event lifecycle state diagram</h3>
-      <pre class="mermaid">
-stateDiagram-v2
-    direction LR
-    [*] --> Draft: + New Event
-    Draft --> Published: Save &amp; Publish (all required fields)
-    Published --> InProgress: now between Start &amp; End (derived)
-    InProgress --> Completed: Complete Event
-    Published --> Completed: Complete Event
-    Published --> Cancelled: Cancel (needs Reason)
-    Draft --> Cancelled: Cancel (needs Reason)
-    Completed --> [*]
-    Cancelled --> [*]
-      </pre>
+      <div class="note"><b>In plain words:</b> a paid registration sits at <b>Pending Payment</b> until the gateway confirms, then becomes <b>Confirmed</b> and the e-ticket sends. If the ticket type is sold out, the visitor goes to the <b>Waitlist</b> and is promoted when someone cancels. Meanwhile the <b>page</b> auto-flips from Published → Active when its open date arrives, and to Closed when capacity is hit or the event ends.</div>
+      <p style="color:var(--slate); font-size:13.5px;">The <b>auction (#48)</b> is a separate screen that runs alongside an event — its items, bidding and winner flow are covered in the test cases and entity tables, not in this build flow.</p>
+    </section>
 
-      <h3>Two smaller cycles a tester must know</h3>
-      <div class="grid2">
-        <div class="card">
-          <h4 style="margin-top:0; color:var(--rose-700)">A registration's life (#46 / #169)</h4>
-          <p style="color:var(--slate); font-size:14px; margin-top:4px">What happens to one attendee after they hit "Register".</p>
-          <pre class="mermaid">
-stateDiagram-v2
-    direction LR
-    [*] --> Pending: free + needs approval
-    [*] --> PendingPayment: paid ticket
-    PendingPayment --> Confirmed: gateway success
-    Pending --> Confirmed: admin approves
-    [*] --> Waitlist: over capacity
-    Waitlist --> Confirmed: a seat frees up
-    Confirmed --> Cancelled: cancel (frees seat)
-    Confirmed --> [*]: checked in
-          </pre>
+
+    <!-- ============================================================
+         SECTION — INTERACTIVE EVENT SETUP WALK-THROUGH
+    ============================================================ -->
+    <section id="setup">
+      <h2><span class="num">⚙</span> Event Setup — Step by Step</h2>
+      <p class="lead">The full build, start to end, as movable steps. Flip the switch to <b>Auto</b> and it walks itself; leave it on <b>Manual</b> and you drive — click any node, or step <b>◀ Back / Forward ▶</b> to slide the coin along the board, one square at a time.</p>
+
+      <div class="stage-wrap setup-wrap">
+        <div class="setup-bar">
+          <div class="switch-box">
+            <span>Manual</span>
+            <label class="switch"><input type="checkbox" id="autoToggle"><span class="slider"></span></label>
+            <span>Auto</span>
+          </div>
+          <div class="nav-btns">
+            <button id="prevBtn">◀ Back</button>
+            <button id="nextBtn">Forward ▶</button>
+            <button id="resetBtn">↻ Reset</button>
+          </div>
         </div>
-        <div class="card">
-          <h4 style="margin-top:0; color:var(--rose-700)">The registration page's life (#169)</h4>
-          <p style="color:var(--slate); font-size:14px; margin-top:4px">The public page has its own status, separate from the event.</p>
-          <pre class="mermaid">
-stateDiagram-v2
-    direction LR
-    [*] --> PageDraft: configure
-    PageDraft --> PagePublished: Publish
-    PagePublished --> PageActive: open date reached
-    PageActive --> PageClosed: full / end date / event over
-    PageClosed --> PageArchived: Archive
-    PageArchived --> [*]
-          </pre>
+
+        <div class="track setup-track" id="setupTrack">
+          <div class="avatar setup-coin" id="setupCoin"><div class="face">🎟️</div><div class="name">you are here</div></div>
+          <div class="rail"><div class="rail-fill setup-fill" id="setupFill"></div></div>
+        </div>
+
+        <div class="setup-caption" id="setupCaption"></div>
+
+        <div class="legend">
+          <span>🟢 <b>Auto</b> = the coin advances on its own every ~2s and loops</span>
+          <span>🖐 <b>Manual</b> = click a node, or use ◀ / ▶ to move one step</span>
+          <span>🎟️ <b>The coin</b> = where you are in the setup right now</span>
         </div>
       </div>
-      <div class="note"><b>In plain words:</b> a paid registration sits at <b>Pending Payment</b> until the gateway confirms, then becomes <b>Confirmed</b> and the e-ticket sends. If the ticket type is sold out, the visitor goes to the <b>Waitlist</b> and is promoted when someone cancels. Meanwhile the <b>page</b> auto-flips from Published → Active when its open date arrives, and to Closed when capacity is hit or the event ends.</div>
+      <p style="text-align:center; color:var(--slate); font-size:13px;">↑ Same shape as the live flow below — but here <b>you</b> drive the piece. Tabs 1→4 build the event, then it publishes, sells, runs and closes.</p>
     </section>
 
 
@@ -447,6 +568,20 @@ sequenceDiagram
         <tr><td>P3</td><td>Free-ticket flow</td><td>Register for a $0 ticket</td><td>No gateway hop; goes straight to Confirmed (or Pending if approval required) + confirmation email</td></tr>
       </table>
 
+      <h3>Auction (#48)</h3>
+      <table>
+        <tr><th>ID</th><th>Scenario</th><th>Steps</th><th>Expected result</th></tr>
+        <tr><td>A1</td><td>Add an auction item</td><td>Auction console (pick event) → Add Item → name, description, type (Silent/Live), starting bid, bid increment → Save</td><td>Item appears <span class="b onsale">Active</span> in the grid; SortOrder auto-set; an <code>EventAuction</code> is created if first item</td></tr>
+        <tr><td>A2</td><td>Open bidding guard</td><td>Open Bidding with no items</td><td>Blocked — need ≥1 item. With items → bidding status <b>Open</b>, items cascade to Active</td></tr>
+        <tr><td>A3</td><td>Place a valid bid</td><td>View Bids → enter amount ≥ current high + increment, pick bidder</td><td>Bid recorded; <b>Current Bid</b> &amp; <b>Bids</b> count update atomically; prior top bid is no longer "highest"</td></tr>
+        <tr><td>A4</td><td>Low-bid rejection</td><td>Place a bid below <code>current high + increment</code> (or below starting bid for the first bid)</td><td>Blocked — increment rule enforced</td></tr>
+        <tr><td>A5</td><td>Reserve not met</td><td>Top bid stays below the item's Reserve Price</td><td>Item shows <span class="b paused" style="background:var(--amber)">Below Reserve</span>; a bid that meets reserve flips it back to <span class="b onsale">Active</span></td></tr>
+        <tr><td>A6</td><td>Pause / resume</td><td>Pause an active item, then resume</td><td>Goes <span class="b soldout">Paused</span> (no new bids) → back to Active. Paused items survive Close Bidding unchanged</td></tr>
+        <tr><td>A7</td><td>Close &amp; resolve winners</td><td>Close Bidding for the event</td><td>Each item ≥ reserve → <span class="b completed" style="background:#7c3aed">Won</span> (winner + winning amount set, payment <span class="b pending">Awaiting</span>); below reserve / no bids → <span class="b cancelled">No Winner</span></td></tr>
+        <tr><td>A8</td><td>Collect payment</td><td>Winners panel → Collect → method text + date</td><td>Payment status <span class="b pending">Awaiting</span> → <span class="b confirmed">Paid</span>. Send Invoice / Receipt only toast (placeholders)</td></tr>
+        <tr><td>A9</td><td>Re-auction</td><td>On a Won / No-Winner item → Re-auction</td><td>Resets to <span class="b onsale">Active</span>, clears winner &amp; high bid, but <b>keeps bid history</b> (flagged invalid, not deleted)</td></tr>
+      </table>
+
       <h3>Grid, calendar &amp; KPIs (#40)</h3>
       <table>
         <tr><th>ID</th><th>Scenario</th><th>Expected result</th></tr>
@@ -466,7 +601,7 @@ sequenceDiagram
     ============================================================ -->
     <section id="data">
       <h2><span class="num">4</span> Entity Tables — Data Design</h2>
-      <p class="lead">One core <b>Event</b> (schema <code>app</code>) with a fan of children, plus three sibling tables that power the other screens: <b>EventTickets</b> + <b>EventRegistrations</b> (#46), <b>EventTicketTemplates</b> (#176) and the 1:1 <b>EventRegistrationPages</b> (#169).</p>
+      <p class="lead">One core <b>Event</b> (schema <code>app</code>) with a fan of children, plus three sibling tables that power the other screens: <b>EventTickets</b> + <b>EventRegistrations</b> (#46), <b>EventTicketTemplates</b> (#176), the 1:1 <b>EventRegistrationPages</b> (#169), and the auction trio <b>EventAuctions / AuctionItems / AuctionBids</b> (#48).</p>
 
       <h3>How the tables relate</h3>
       <pre class="mermaid">
@@ -481,6 +616,9 @@ erDiagram
     EVENT ||--o{ EVENT_SPEAKER : "line-up"
     EVENT ||--o{ EVENT_CUSTOM_QUESTION : "extra form fields"
     EVENT ||--|| EVENT_SETTING : "1 : 1 settings"
+    EVENT ||--o| EVENT_AUCTION : "0 or 1 auction"
+    EVENT_AUCTION ||--o{ AUCTION_ITEM : "items"
+    AUCTION_ITEM ||--o{ AUCTION_BID : "bids"
     EVENT {
         int EventId PK
         string EventCode "GALA-2026"
@@ -514,6 +652,26 @@ erDiagram
         string Subject
         string HtmlContent
         int StatusId "Draft/Active/Inactive"
+    }
+    EVENT_AUCTION {
+        int EventAuctionId PK
+        int EventId FK "1:1 unique"
+        int BiddingStatusId "NotStarted/Open/Closed"
+    }
+    AUCTION_ITEM {
+        int AuctionItemId PK
+        int EventAuctionId FK
+        decimal StartingBid
+        decimal ReservePrice "nullable"
+        decimal CurrentHighBid "cached"
+        int StatusId "Active..NoWinner"
+    }
+    AUCTION_BID {
+        int AuctionBidId PK
+        int AuctionItemId FK
+        int BidderContactId FK
+        decimal Amount
+        bool IsCurrentHighest
     }
       </pre>
 
@@ -613,6 +771,46 @@ erDiagram
         </table>
       </div>
 
+      <h3>⑦ The auction tables <span class="b" style="background:var(--rose)">#48</span></h3>
+      <p class="lead">An auction is <b>0 or 1 per event</b>. One <code>EventAuction</code> holds the bidding switch; each <code>AuctionItem</code> is a lot; each <code>AuctionBid</code> is one bid. The high bid and bid count are <b>cached</b> on the item for speed.</p>
+      <div class="grid2">
+        <div class="card">
+          <h3 style="margin-top:0"><code>app.EventAuctions</code> + <code>AuctionItems</code></h3>
+          <p style="color:var(--slate); font-size:14px">The auction (1:1 with the event) and its lots.</p>
+          <table>
+            <tr><th>Column</th><th>Notes</th></tr>
+            <tr><td>EventAuctionId</td><td>PK</td></tr>
+            <tr><td>EventId <span class="req">✔</span></td><td>FK → event (<b>UNIQUE</b> — one auction per event)</td></tr>
+            <tr><td>BiddingStatusId</td><td>Not Started / Open / Closed</td></tr>
+            <tr><td colspan="2" style="background:#fafcff; font-weight:600; color:var(--rose-700)">AuctionItem (one lot)</td></tr>
+            <tr><td>AuctionItemId</td><td>PK · FK EventAuctionId, EventId</td></tr>
+            <tr><td>ItemName <span class="req">✔</span></td><td>Unique per event</td></tr>
+            <tr><td>AuctionTypeId <span class="req">✔</span></td><td>Silent / Live</td></tr>
+            <tr><td>StartingBid · BidIncrement <span class="req">✔</span></td><td>Floor + step (default 100)</td></tr>
+            <tr><td>ReservePrice</td><td>Nullable — below it ⇒ Below Reserve / No Winner</td></tr>
+            <tr><td>CurrentHighBid · BidsCount</td><td><b>Cached</b> aggregates (kept atomic)</td></tr>
+            <tr><td>StatusId</td><td>Active / Below Reserve / Paused / Won / No Winner</td></tr>
+            <tr><td>WinnerContactId · WinningBidAmount</td><td>Set on Won</td></tr>
+            <tr><td>PaymentStatusId</td><td>Awaiting / Paid (manual collection)</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0"><code>app.AuctionBids</code></h3>
+          <p style="color:var(--slate); font-size:14px">One row per bid — the audit trail behind the cached high bid.</p>
+          <table>
+            <tr><th>Column</th><th>Notes</th></tr>
+            <tr><td>AuctionBidId</td><td>PK</td></tr>
+            <tr><td>AuctionItemId <span class="req">✔</span></td><td>FK → the lot</td></tr>
+            <tr><td>BidderContactId <span class="req">✔</span></td><td>FK → contact who bid</td></tr>
+            <tr><td>Amount <span class="req">✔</span></td><td>Must beat current high + increment</td></tr>
+            <tr><td>BidDate</td><td>Server UTC on insert</td></tr>
+            <tr><td>IsCurrentHighest</td><td>True for the top bid (one per item)</td></tr>
+            <tr><td>IsValid</td><td>False after a re-auction — history kept, not deleted</td></tr>
+          </table>
+          <p style="color:var(--slate); font-size:13px; margin-top:10px">+ <code>AuctionItemPhotos</code> — up to 6 images per lot (upload is a placeholder).</p>
+        </div>
+      </div>
+
       <div class="note">
         <b>Where the money piece lives.</b> Paid tickets route through a <b>Company Payment Gateway</b> (the #10 provider pattern — Braintree / Razorpay / PayU). The registration page holds the <code>CompanyPaymentGatewayId</code> + enabled methods; on submit the system starts a payment, and a <b>gateway callback</b> flips the registration from Pending Payment to Confirmed.
       </div>
@@ -631,6 +829,11 @@ erDiagram
         <tr><td><code>EVENTTEMPLATESTATUS</code></td><td>Draft · Active · Inactive</td></tr>
         <tr><td><code>EVENTREGPAGESTATUS</code></td><td>Draft · Published · Active · Closed · Archived <i>(UPPERCASE codes)</i></td></tr>
         <tr><td><code>EVENTREGPAGETEMPLATE</code></td><td>Standard · Image Focus · Video Focus · Minimal</td></tr>
+        <tr><td><code>AUCTIONTYPE</code></td><td>Silent · Live</td></tr>
+        <tr><td><code>AUCTIONBIDDINGSTATUS</code></td><td>Not Started · Open · Closed</td></tr>
+        <tr><td><code>AUCTIONITEMSTATUS</code></td><td>Active · Below Reserve · Paused · Won · No Winner · Closed</td></tr>
+        <tr><td><code>AUCTIONPAYMENTSTATUS</code></td><td>Awaiting · Paid · No Payment</td></tr>
+        <tr><td><code>AUCTIONITEMCATEGORY</code></td><td>Travel · Dining · Art · Sports · Fashion · Experience · Tech · Other</td></tr>
       </table>
     </section>
 
@@ -641,6 +844,175 @@ erDiagram
   mermaid.initialize({ startOnLoad:true, theme:'base', securityLevel:'loose',
     themeVariables:{ primaryColor:'#fdf2f8', primaryBorderColor:'#db2777', primaryTextColor:'#0f172a',
       lineColor:'#db2777', fontFamily:'-apple-system,Segoe UI,Roboto,sans-serif' } });
+</script>
+
+<!-- ===== interactive event-setup walk-through (auto-play / manual stepper) ===== -->
+<script>
+(function(){
+  var STEPS=[
+    {lbl:'TAB 1 · BASICS', dt:'Event #40', title:'Tab 1 — Event basics', badge:['Draft','draft'],
+     text:'Name, mode (In-person / Virtual / Hybrid), category, dates &amp; host org-unit. <b>Save</b> creates the event as Draft with an auto code (GALA-2026) — and unlocks the remaining tabs.'},
+    {lbl:'TAB 2 · VENUE', dt:'same screen', title:'Tab 2 — Venue &amp; details', badge:null,
+     text:'Where it happens — venue address or virtual meeting link — plus schedule and description. <i>Existing structure, unchanged.</i>'},
+    {lbl:'TAB 3 · TICKETS', dt:'was #46', title:'Tab 3 — Ticket configuration', badge:null,
+     text:'Define ticket types &amp; prices — VIP Table $5,000, Standard Seat $250 — each with quantity and a sale window. A ticket can point at an e-ticket template (#176).'},
+    {lbl:'TAB 4 · REG PAGE', dt:'was #169', title:'Tab 4 — Registration page setup', badge:null,
+     text:'Public slug, branding, payment gateway &amp; methods — <b>plus the event content</b> (speakers, custom questions, suggested amounts) folded in from the old content tab.'},
+    {lbl:'PUBLISH', dt:'go live', title:'Publish', badge:['Published','published'],
+     text:'Publishing flips the event to Published and the page to Active; the public URL goes live and tickets can sell.'},
+    {lbl:'REGISTER + PAY', dt:'attendees', title:'Attendees register &amp; pay', badge:null,
+     text:'A visitor picks tickets, fills the form and pays through the gateway. Each purchase creates an EventRegistration (Pending Payment → Confirmed) and sends the e-ticket.'},
+    {lbl:'RUN · CHECK-IN', dt:'event day', title:'Run the event', badge:['In Progress','live'],
+     text:'On the day, staff use QR check-in to mark attendees as arrived. An auction (#48) may run alongside as its own separate screen.'},
+    {lbl:'COMPLETE', dt:'close', title:'Close it', badge:['Completed','completed'],
+     text:'<b>Complete Event</b> locks everything read-only and opens post-event analytics. Done — start to end.'}
+  ];
+  var track=document.getElementById('setupTrack');
+  if(!track) return;
+  var coin=document.getElementById('setupCoin'),
+      fill=document.getElementById('setupFill'),
+      cap=document.getElementById('setupCaption'),
+      auto=document.getElementById('autoToggle'),
+      prev=document.getElementById('prevBtn'),
+      next=document.getElementById('nextBtn'),
+      reset=document.getElementById('resetBtn'),
+      rail=track.querySelector('.rail'),
+      N=STEPS.length, cur=0, timer=null;
+  function pos(i){ return 5 + i*90/(N-1); }
+  STEPS.forEach(function(s,i){
+    var n=document.createElement('div');
+    n.className='node snode';
+    n.style.left=pos(i)+'%';
+    n.innerHTML='<div class="dot"></div><div class="lbl">'+s.lbl+'</div><div class="dt">'+s.dt+'</div>';
+    n.addEventListener('click',function(){ setAuto(false); go(i); });
+    track.insertBefore(n, rail);
+  });
+  function render(){
+    coin.style.left=pos(cur)+'%';
+    fill.style.width=(cur/(N-1)*100)+'%';
+    var nodes=track.querySelectorAll('.snode');
+    nodes.forEach(function(n,i){ n.classList.toggle('on', i===cur); n.classList.toggle('done', i<cur); });
+    var s=STEPS[cur],
+        badge=s.badge ? ' <span class="b '+s.badge[1]+'">'+s.badge[0]+'</span>' : '';
+    cap.innerHTML='<span class="step-i">'+(cur+1)+' / '+N+'</span> <b>'+s.title+'</b>'+badge+' — '+s.text;
+    var manual=!auto.checked;
+    prev.disabled = !manual || cur===0;
+    next.disabled = !manual || cur===N-1;
+  }
+  function go(i){ cur=(i%N+N)%N; render(); }
+  function setAuto(on){
+    auto.checked=on;
+    if(timer){ clearInterval(timer); timer=null; }
+    if(on){ timer=setInterval(function(){ cur=(cur+1)%N; render(); }, 1900); }
+    render();
+  }
+  prev.addEventListener('click',function(){ if(cur>0) go(cur-1); });
+  next.addEventListener('click',function(){ if(cur<N-1) go(cur+1); });
+  reset.addEventListener('click',function(){ setAuto(false); go(0); });
+  auto.addEventListener('change',function(){ setAuto(auto.checked); });
+  render();
+})();
+</script>
+
+<!-- ===== fullscreen modal — zoom + drag, shared by every diagram / flow section ===== -->
+<script>
+(function(){
+  // build the modal shell once
+  var modal=document.createElement('div');
+  modal.className='fs-modal';
+  modal.innerHTML=
+    '<div class="fs-toolbar">'+
+      '<span class="fs-title"></span>'+
+      '<button class="fs-out" title="Zoom out">−</button>'+
+      '<span class="fs-zoomval">100%</span>'+
+      '<button class="fs-in" title="Zoom in">+</button>'+
+      '<button class="fs-fit" title="Reset zoom &amp; position">↻ Fit</button>'+
+      '<button class="fs-close" title="Close (Esc)">✕ Close</button>'+
+    '</div>'+
+    '<div class="fs-viewport">'+
+      '<div class="fs-canvas"></div>'+
+      '<div class="fs-hint">Scroll to zoom · drag to move · Esc to close</div>'+
+    '</div>';
+  document.body.appendChild(modal);
+
+  var titleEl=modal.querySelector('.fs-title'),
+      zoomVal=modal.querySelector('.fs-zoomval'),
+      viewport=modal.querySelector('.fs-viewport'),
+      canvas=modal.querySelector('.fs-canvas'),
+      scale=1, tx=0, ty=0, placeholder=null, hostEl=null;
+
+  function apply(){
+    canvas.style.transform='translate('+tx+'px,'+ty+'px) scale('+scale+')';
+    zoomVal.textContent=Math.round(scale*100)+'%';
+  }
+  function reset(){ scale=1; tx=0; ty=0; apply(); }
+  function zoom(d){ scale=Math.min(5, Math.max(0.3, scale+d)); apply(); }
+
+  function open(el, title){
+    hostEl=el;
+    placeholder=document.createComment('fs-slot');     // remember the element's home
+    el.parentNode.insertBefore(placeholder, el);
+    canvas.appendChild(el);                            // MOVE the real node (keeps its listeners)
+    titleEl.textContent=title||'Diagram';
+    modal.classList.add('open');
+    reset();
+  }
+  function close(){
+    if(placeholder && hostEl){
+      placeholder.parentNode.insertBefore(hostEl, placeholder);
+      placeholder.parentNode.removeChild(placeholder);
+    }
+    placeholder=null; hostEl=null;
+    modal.classList.remove('open');
+  }
+
+  modal.querySelector('.fs-in').addEventListener('click',function(){ zoom(0.2); });
+  modal.querySelector('.fs-out').addEventListener('click',function(){ zoom(-0.2); });
+  modal.querySelector('.fs-fit').addEventListener('click',reset);
+  modal.querySelector('.fs-close').addEventListener('click',close);
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape' && modal.classList.contains('open')) close(); });
+
+  // wheel = zoom
+  viewport.addEventListener('wheel',function(e){ e.preventDefault(); zoom(e.deltaY<0?0.12:-0.12); },{passive:false});
+
+  // drag = pan
+  var dragging=false, sx=0, sy=0;
+  viewport.addEventListener('mousedown',function(e){
+    if(e.target.closest('.snode')||e.target.closest('button')||e.target.closest('.switch')) return; // let the interactive controls work
+    dragging=true; sx=e.clientX-tx; sy=e.clientY-ty; viewport.classList.add('grabbing');
+  });
+  window.addEventListener('mousemove',function(e){ if(!dragging) return; tx=e.clientX-sx; ty=e.clientY-sy; apply(); });
+  window.addEventListener('mouseup',function(){ dragging=false; viewport.classList.remove('grabbing'); });
+
+  function titleFor(el){
+    if(el.classList.contains('setup-wrap')) return '⚙ Event Setup — Step by Step';
+    if(el.classList.contains('stage-wrap')) return '🎫 Live Flow — GALA-2026';
+    if(el.classList.contains('mermaid')){
+      var t=(el.textContent||'').trim();
+      if(t.indexOf('sequenceDiagram')===0) return '💬 Communication sequence';
+      if(t.indexOf('erDiagram')===0) return '🗂 Entity relationships';
+    }
+    return 'Diagram';
+  }
+
+  // attach a ⛶ fullscreen button to every diagram / flow container.
+  // run on load so Mermaid has already replaced its <pre> content with the SVG.
+  function attach(){
+    var hosts=document.querySelectorAll('.stage-wrap, .mermaid');
+    for(var i=0;i<hosts.length;i++){
+      (function(el){
+        if(el.classList.contains('fs-host')) return;
+        el.classList.add('fs-host');
+        var btn=document.createElement('button');
+        btn.className='fs-btn'; btn.type='button'; btn.title='Open full screen'; btn.innerHTML='⛶';
+        btn.addEventListener('click',function(ev){ ev.stopPropagation(); open(el, titleFor(el)); });
+        el.appendChild(btn);
+      })(hosts[i]);
+    }
+  }
+  if(document.readyState==='complete') attach();
+  else window.addEventListener('load',attach);
+})();
 </script>
 </body>
 </html>

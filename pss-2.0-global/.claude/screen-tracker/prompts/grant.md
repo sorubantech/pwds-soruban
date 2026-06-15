@@ -1089,4 +1089,25 @@ Full UI must be built (buttons, forms, modals, tabs, kanban board). Only the han
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
 
-{No sessions recorded yet — filled in after /build-screen completes.}
+### Session 0 — 2026-04-26 — BUILD — COMPLETED (retroactive entry)
+
+- **Scope**: Initial full build of Grant (#62) — `grant` schema bootstrap + 6 entities + 9 commands + 4 queries + 22 FE files + DB seed. (Build Log was not written at the time; reconstructed from frontmatter `completed_date` + registry notes.)
+- **Files touched**: (retroactive — not recorded; canonical owned-file list is Section ⑧ File Manifest)
+- **Deviations from spec**: see the 16 pre-flagged ISSUEs in § Known Issues (all SERVICE_PLACEHOLDERs / deferrals from planning).
+- **Known issues opened**: ISSUE-1 … ISSUE-16 (at planning).
+- **Known issues closed**: None.
+- **Next step**: None (shipped COMPLETED).
+
+### Session 1 — 2026-06-12 — PLAN (handoff) — COMPLETED
+
+- **Scope**: Planned the **Grant Expense logging** sub-feature (closes ISSUE-1 + ISSUE-6). Produced shareable handoff docs for the developer who built #62/#63 — NO code changes this session. This is a **Spec change** (new `grant.GrantExpenses` table) → next step is `/plan-screens #62` then `/build-screen #62`.
+- **Files touched**:
+  - DOCS: `.claude/screen-tracker/docs/grant-expense-feature-plan.md` (feature plan / change request), `.claude/screen-tracker/docs/grant-expense-table-design.md` (table DDL + per-file change list + GraphQL contract)
+  - BE: None (planning only)
+  - FE: None (planning only)
+- **Deviations from spec**: None — documents the intended additive change; does not alter existing behavior.
+- **Known issues opened**: None.
+- **Known issues closed**: None (ISSUE-1/6 remain OPEN until the feature is built; now have a concrete design — see docs).
+- **Next step**: Run `/plan-screens #62` to fold `GrantExpense` into Sections ②/⑥/⑧, then `/build-screen #62`. Developer runs `dotnet ef migrations add Add_GrantExpense` manually.
+
+> **Why the "Add Expense" button is a no-op today**: it fires a static toast (`grant-detail.tsx` ~line 167 + ~748) that wrongly blames GrantReport #63. The real gap is the missing `GrantExpense` table — see the two design docs above. The Budget tab table already renders per-line Spent/Remaining from `GrantBudgetLine.SpentAmount`, which nothing writes to yet; this feature supplies the write-path.

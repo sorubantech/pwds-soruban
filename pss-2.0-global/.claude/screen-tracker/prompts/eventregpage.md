@@ -2,7 +2,7 @@
 screen: EventRegistrationPage
 registry_id: 169
 module: Setting (Public Pages)
-status: COMPLETED
+status: IN_PROGRESS
 scope: FULL
 screen_type: EXTERNAL_PAGE
 external_page_subtype: DONATION_PAGE
@@ -10,9 +10,10 @@ complexity: High
 new_module: NO
 planned_date: 2026-05-13
 completed_date: 2026-06-08
-last_session_date: 2026-06-08
-revision: "Wave 3 (re-planned 2026-06-08) — Event Email Communication subsystem: (1) donor announcement on Publish [bulk EmailSendJob pipeline, AnnouncementSentAt guard], (2) per-registration payment-success + tickets emails [fire-on-action, SendEmailByTemplateKeyAsync], (3) post-event feedback + reminders via ONE daily Hangfire RecurringJob 'event-communication-dispatcher' [ReminderSentAt/FeedbackSentAt guards]. EventCommunicationTrigger becomes the live policy gate. +4 cols on app.EventRegistrationPages (AnnouncementSentAt/ReminderSentAt/FeedbackSentAt/FeedbackUrl). See §⓪′ REVISION block (authoritative delta). Status reset COMPLETED→PROMPT_READY for the Wave-3 build. ───── Wave 2 (re-planned 2026-06-04) — payment-gateway config + page-template FK + ODP-link Donate button + Speakers/Gallery CRUD + Coming-Soon toggles. See §⓪ REVISION block."
+last_session_date: 2026-06-11
+revision: "Wave 4 (re-planned 2026-06-11) — Registrant Field-Model Redesign + ContactCode persistence (resolves ISSUE-38). Fixes 4 breakages (B1 seed only FULLNAME+EMAIL; B2 GQL fieldName:fieldLabel feeds label not code; B3 canonical-code drift; B4 handler drops 6 system fields + ContactCode). 9 canonical PascalCase codes (FULLNAME→FirstName+LastName); seed all 9 on create + idempotent backfill SQL; both queries select fieldCode+fieldLabel; +10 Provided* columns on app.EventRegistrations (ODP OnlineDonationStaging parity) incl ProvidedContactCode; Card 5 keys off fieldCode; Custom Questions → Coming Soon. NO new tables. User-owned migration. See §⓪″ REVISION block (authoritative delta). Status COMPLETED→PROMPT_READY for the Wave-4 build. ───── Wave 3 (re-planned 2026-06-08) — Event Email Communication subsystem: (1) donor announcement on Publish [bulk EmailSendJob pipeline, AnnouncementSentAt guard], (2) per-registration payment-success + tickets emails [fire-on-action, SendEmailByTemplateKeyAsync], (3) post-event feedback + reminders via ONE daily Hangfire RecurringJob 'event-communication-dispatcher' [ReminderSentAt/FeedbackSentAt guards]. EventCommunicationTrigger becomes the live policy gate. +4 cols on app.EventRegistrationPages (AnnouncementSentAt/ReminderSentAt/FeedbackSentAt/FeedbackUrl). See §⓪′ REVISION block (authoritative delta). Status reset COMPLETED→PROMPT_READY for the Wave-3 build. ───── Wave 2 (re-planned 2026-06-04) — payment-gateway config + page-template FK + ODP-link Donate button + Speakers/Gallery CRUD + Coming-Soon toggles. See §⓪ REVISION block."
 mockup_status: TBD — §⑥ blueprint derived from sibling prompts (#172 volunteerregpage + #173 crowdfundingpage) and the existing `organization/event-form.html` (Registration tab + Settings tab) + `organization/event-ticketing.html`. **Validate §⑥ with user before /build-screen.**
+consolidation_note: "2026-06-10 — The #169 ADMIN EDITOR (`EventRegistrationPageEditorPage`, already `eventId`-prop-driven) is being EMBEDDED as TAB 4 of the #40 Event host screen (see prompts/event.md §⓪ CONSOLIDATION REVISION — AUTHORITATIVE). It ABSORBS the old Event 'Content & Speakers' concerns (banner/agenda/speakers/gallery — #169 already owns Branding/Speakers/Gallery cards; +`detailedAgendaHtml` added). Editor gains an `embedded?` prop (hide back/chrome, suppress beforeunload, inline Save). Standalone EVENTREGPAGE menu → IsLeastMenu=false; route `setting/publicpages/eventregpage` redirects into `crm/event/event?…&tab=4`. The PUBLIC page `(public)/event/[slug]` is UNAFFECTED (stays standalone). Build via /build-screen #40, NOT #169. This screen's editor files stay on disk (imported by the host tab)."
 ---
 
 ## Tasks
@@ -317,6 +318,120 @@ Seed 4 rows into `notify."EmailTemplates"` (idempotent `WHERE NOT EXISTS`, `now(
 - **NEW-ISSUE-34** — EmailTemplates are global (lookup ignores `CompanyId`); per-tenant template overrides are a future follow-up.
 - **NEW-ISSUE-35** — Job tracking (⓪′.8b): transactional Flows 2/3 write a *completed* `EmailSendJob` tracking row but SEND via `SendEmailByTemplateKeyAsync` (the executor's recipient providers don't fit arbitrary non-Contact registrant emails). Secondary option: extend the executor with an explicit-recipient provider so the `EmailSendJob` row IS the send uniformly — Solution Resolver decides; record the choice in the Session entry.
 - **NEW-ISSUE-36** — Future **role-based "Jobs" screen** (tenant jobs `IsSystem=false` + system jobs `IsSystem=true`) is NOT built in this wave — only the `IsSystem` flag + tracking rows are produced. The screen + its role-gating are separate planned work.
+
+---
+
+## ⓪″ REVISION — Build Wave 4 (re-planned 2026-06-11) — Registrant Field-Model Redesign + ContactCode persistence — AUTHORITATIVE DELTA
+
+> **This block is ADDITIVE — it does NOT supersede Waves 2/3 (§⓪, §⓪′).** It resolves **ISSUE-38**: the public registrant form-field model is broken end-to-end so that today only First/Last/Email render and only Name/Email/Phone persist. Build agents treat §⓪″ as the source of truth for everything registrant-form-field related; where silent, §⓪′ then §⓪ then the base sections apply.
+>
+> **Scope of this wave**: FOCUSED FE+BE (1 seed rewrite, 1 GQL-alias fix in 2 queries, 1 entity +10 cols, 1 handler write-block, ~3 FE files, 1 admin-card declutter). **NO new tables, NO custom-answer entity.** **User runs the EF migration manually** ([[feedback_user_creates_migrations]]) — agent makes only compiling entity/config/code changes + a user-run backfill SQL.
+>
+> **All decisions below were locked with the user (2026-06-11) — do NOT re-litigate.** Canonical pattern mirrored from **ODP OnlineDonationPage #10** (`OnlineDonationStaging.Provided*` columns) per the user's explicit "ODP parity" choice. ContactCode itself was already built in **Session 27** (validator + handler resolution + FE input); Wave 4 completes the field model **around** it and adds the `Provided*` persistence columns.
+
+### ⓪″.1 The four breakages (root cause — verified this session)
+
+| # | Layer | Defect | Fix |
+|---|-------|--------|-----|
+| **B1** | Seed (`CreateEvent.cs:138-169`) | Only `FULLNAME` + `EMAIL` rows are ever created; the other 7 never exist, so admin Card 5 + the public form have nothing to show. | Seed **all 9 canonical rows** on event create (§⓪″.2) + backfill existing events (§⓪″.6). |
+| **B2** | GQL (both queries) | `registrationFormFields { fieldName: fieldLabel }` feeds the FE the human **label** ("Full Name") where every FE consumer matches a stable **code**. Multi-word labels never match → field hidden. | Select **`fieldCode` + `fieldLabel`** (drop the misleading `fieldName: fieldLabel` alias); FE keys logic off `fieldCode`, displays `fieldLabel` (§⓪″.4). |
+| **B3** | Canonical codes | FE speaks **PascalCase** (`FirstName`/`LastName`/`Organization`…); DB seeds **UPPERCASE** (`FULLNAME`/`EMAIL`); `FULLNAME` has no FE equivalent at all. | Standardize on **PascalCase 9** (§⓪″.2); `FULLNAME` → split into `FirstName` + `LastName`. |
+| **B4** | Persist (`InitiateEventRegistration.cs:352-373`) | Handler writes only `RegistrantName/RegistrantEmail/RegistrantPhone`. `Organization/Dietary/Accessibility/Tshirt/Emergency` + `ContactCode` are on the request DTO but **dropped** (no columns). `CustomAnswers[]` likewise dropped. | Add **10 `Provided*` columns** (ODP parity) + populate them in the handler (§⓪″.3, §⓪″.5). Custom answers → **Coming Soon** (§⓪″.7). |
+
+> **What is ALREADY correct (do not touch):** the `InitiateEventRegistrationRequestDto` already carries `ContactCode, FirstName, LastName, Email, Phone, Organization, DietaryRequirements, AccessibilityNeeds, TshirtSize, EmergencyContact, CustomAnswers[]` (Session 27 + base). The public `registrant-fields.tsx` already renders the 9 fields by `FIELD_ORDER` and matches server config **case-insensitively** (`fieldKey.toLowerCase()` vs `fieldName.toLowerCase()`), and `registration-form.tsx` already sends them + `contactCode`. So once B2 feeds the **code** instead of the label, the public form lights up the optional fields with **zero further FE form changes**. The FE work is the DTO/query rename + Card 5 declutter only.
+
+### ⓪″.2 Canonical registrant field set (the 9 — PascalCase `FieldCode`)
+
+Seed these 9 `app.EventRegistrationFormFields` rows on every event create (replace the 2-row `FULLNAME`/`EMAIL` block). `EventRegistrationFormField` columns: `FieldCode, FieldLabel, IsEnabled, IsRequired, IsSystem, SortOrder, CompanyId` (no schema change to this table).
+
+| Sort | `FieldCode` | `FieldLabel` | `IsSystem` | `IsEnabled` (default) | `IsRequired` (default) | Locked in Card 5? |
+|------|-------------|--------------|------------|-----------------------|------------------------|-------------------|
+| 1 | `FirstName` | First Name | **true** | true | true | **YES** (req+vis disabled-on) |
+| 2 | `LastName` | Last Name | **true** | true | true | **YES** |
+| 3 | `Email` | Email | **true** | true | true | **YES** |
+| 4 | `Phone` | Phone | false | false | false | no (admin toggles) |
+| 5 | `Organization` | Organization / Company | false | false | false | no |
+| 6 | `DietaryRequirements` | Dietary Requirements | false | false | false | no |
+| 7 | `AccessibilityNeeds` | Accessibility Needs | false | false | false | no |
+| 8 | `TshirtSize` | T-shirt Size | false | false | false | no |
+| 9 | `EmergencyContact` | Emergency Contact | false | false | false | no |
+
+**`IsSystem` = the lock signal (LOCKED, important):** only the 3 identity fields are `IsSystem=true`. The existing GQL alias `isLocked: isSystem` (Session 3) then keeps Card 5's lock logic correct (only First/Last/Email get disabled checkboxes). The 6 optional fields are `IsSystem=false` so the admin can freely toggle Visible/Required. **Do NOT** set `IsSystem=true` on the 6 optional rows — that would lock them and defeat the toggle. ContactCode is **NOT** a form-field row (it's the always-on leading input built in Session 27).
+
+### ⓪″.3 Storage delta on `app.EventRegistrations` (10 new `Provided*` columns — ODP parity)
+
+Entity `Base.Domain/Models/ApplicationModels/EventRegistration.cs`; config `Base.Infrastructure/Data/Configurations/ApplicationConfigurations/EventRegistrationConfiguration.cs` (verify exact path on build; mirror the sibling config in that folder). Append after `RegistrantPhone`. **Mirror `OnlineDonationStaging.Provided*` exactly** ([[feedback_mirror_sibling_table_fk_columns]] — copy the sibling, don't overthink):
+
+> **⚠ SUPERSEDED by Session 30 (ISSUE-41 fix):** the 4 name/email/phone rows below (`ProvidedFirstName/LastName/Email/Phone`) were **removed** — they duplicated `RegistrantName` (= FirstName + LastName) / `RegistrantEmail` / `RegistrantPhone`. Only **6** columns ship: `ProvidedContactCode`, `ProvidedOrganization`, `ProvidedDietaryRequirements`, `ProvidedAccessibilityNeeds`, `ProvidedTshirtSize`, `ProvidedEmergencyContact`. The handler sets `RegistrantName = $"{FirstName} {LastName}".Trim()`, `RegistrantEmail = Email`, `RegistrantPhone = Phone`.
+
+| Column | Type | EF mapping | Source (`req.*`) |
+|--------|------|-----------|------------------|
+| `ProvidedContactCode` | `string?` | `.HasMaxLength(50)` | `ContactCode` (the code the registrant typed — NULL when blank) |
+| ~~`ProvidedFirstName`~~ | — | removed (S30) | → `RegistrantName` |
+| ~~`ProvidedLastName`~~ | — | removed (S30) | → `RegistrantName` |
+| ~~`ProvidedEmail`~~ | — | removed (S30) | → `RegistrantEmail` |
+| ~~`ProvidedPhone`~~ | — | removed (S30) | → `RegistrantPhone` |
+| `ProvidedOrganization` | `string?` | `.HasMaxLength(200)` | `Organization` |
+| `ProvidedDietaryRequirements` | `string?` | `.HasMaxLength(500)` | `DietaryRequirements` |
+| `ProvidedAccessibilityNeeds` | `string?` | `.HasMaxLength(500)` | `AccessibilityNeeds` |
+| `ProvidedTshirtSize` | `string?` | `.HasMaxLength(20)` | `TshirtSize` |
+| `ProvidedEmergencyContact` | `string?` | `.HasMaxLength(200)` | `EmergencyContact` |
+
+> **Keep the existing `RegistrantName/RegistrantEmail/RegistrantPhone` columns** — they're the denormalized display used by the admin grid, the Wave-3 emails, and the registration code. `RegistrantName` stays the concatenation `"{FirstName} {LastName}".Trim()`. The `Provided*` columns are the granular capture alongside it (ODP keeps only `Provided*` because it has no `RegistrantName`; events established `RegistrantName` first, so we keep both). **No FK columns** in this delta — these are plain string captures.
+
+### ⓪″.4 GQL alias fix (B2) — both queries + DTO + 2 consumers
+
+- **`infrastructure/gql-queries/public-queries/EventRegistrationPagePublicQuery.ts`** (~line 72-76) and **`infrastructure/gql-queries/application-queries/EventRegistrationPageQuery.ts`** (~line 156-162): change the `registrationFormFields` selection from `fieldName: fieldLabel` to select **both** `fieldCode` and `fieldLabel` (keep `isRequired`, `isVisible: isEnabled`, `isLocked: isSystem`, `sortOrder`). The BE `EventRegistrationFormFieldResponseDto` already exposes `fieldCode` + `fieldLabel` (Session 3) — no BE query change.
+- **`domain/entities/application-service/EventRegistrationPageDto.ts`** `ErpRegistrationFormFieldDto` (line 136): replace `fieldName: string` with `fieldCode: string` + `fieldLabel?: string`.
+- **`cards/5-registrant-experience-card.tsx`**: `LOCKED_FIELDS.has(f.fieldName)` → `…has(f.fieldCode)`; display `{f.fieldLabel ?? FIELD_DISPLAY[f.fieldCode] ?? f.fieldCode}` (prefer the admin-saved label, fall back to the friendly map). `FIELD_DISPLAY` keys are already PascalCase codes — keep them.
+- **`public/eventregpage/components/registrant-fields.tsx`**: the `visibleFieldNames`/`requiredFieldNames` sets are built from `f.fieldName.toLowerCase()` → change to `f.fieldCode.toLowerCase()`. The `RegistrantFieldValues`/`FIELD_ORDER` keys stay camelCase (case-insensitive match already handles `Organization`↔`organization`). **No other registrant-form change** (Session 27 logic stands).
+- **`components/live-preview.tsx`** (if it reads `fieldName`): same `fieldName`→`fieldCode` rename. Grep before editing.
+- tsc-invisible defect class — verify by **runtime**, not just `tsc` ([[feedback_reuse_canonical_gql_query]]): after the fix, enabling "Organization" in Card 5 must make it appear on the public form.
+
+### ⓪″.5 Handler write-block (B4) — `InitiateEventRegistration.cs`
+
+In the `new EventRegistration { … }` initializer (≈ lines 352-373), **after** `RegistrantPhone = req.Phone,`, add the 10 `Provided*` assignments from `req.*` (the **effective** values — i.e. after the ContactCode override block at lines 149-189 has run, so `ProvidedFirstName/LastName/Email` carry the resolved Contact identity; `ProvidedContactCode = req.ContactCode`). No other handler logic changes; the ContactCode resolution, capacity tx, payment row, and Wave-3 email enqueue all stay as-is.
+
+### ⓪″.6 Existing-event backfill (user-owned — schema migration + data SQL)
+
+Two user-run artifacts (agent writes them; agent does NOT run `dotnet ef` — [[feedback_user_creates_migrations]], [[project_postgresql_db]]):
+
+1. **EF migration** (user-generated): the 10 `Provided*` columns on `app.EventRegistrations` (all nullable — additive, no default backfill needed since historical registrations legitimately have NULL granular fields).
+2. **Idempotent backfill SQL** `sql-scripts-dyanmic/EventRegistrationPage-formfields-backfill.sql` (mirror an existing dynamic seed's idempotent `WHERE NOT EXISTS` + `now()` + double-quoted identifiers): for **every existing `app."Events"`**, ensure the 9 canonical `EventRegistrationFormFields` rows exist (insert each missing row by `FieldCode`, mirroring §⓪″.2 defaults + the event's `CompanyId`). Then **soft-disable the legacy `FULLNAME` row** (`UPDATE … SET "IsEnabled"=false, "IsDeleted"=true WHERE "FieldCode"='FULLNAME'`) so it stops rendering — its identity role is now `FirstName`+`LastName`. Leave a legacy `EMAIL` row alone only if no `Email` row exists; otherwise soft-disable the duplicate. **This SQL is required** — without it, already-created events keep their broken 2-row config.
+
+### ⓪″.7 Custom Questions → Coming Soon (user decision 2026-06-11)
+
+The entire **custom-question** sub-feature (admin "+ Add Custom Field" config in Card 5 **and** the dropped `CustomAnswers[]` capture) moves to **Coming Soon** — same treatment QR Check-in / Post-Event Survey already got (Card 12 `12-coming-soon-card.tsx`).
+
+- **`cards/5-registrant-experience-card.tsx`**: remove the "Custom Questions" list + "+ Add Custom Field" editor block (lines ~159-255). Card 5 becomes Form-Fields-table + the Show-Countdown toggle only.
+- **`cards/12-coming-soon-card.tsx`**: add a "Custom Registration Questions" row to the Coming-Soon list (disabled/teaser, consistent with the existing QR/Survey rows).
+- **No DB change**: keep the `EventCustomQuestion` entity + its GQL (dead config, like `EventCommunicationTrigger` was pre-Wave-3). Do **NOT** create an `EventRegistrationCustomAnswers` table — custom-answer persistence is explicitly deferred.
+- The public form already does not collect custom answers, so no public change. `req.CustomAnswers` stays accepted-but-unpersisted (harmless; documented).
+
+### ⓪″.8 Admin surfacing — DEFERRED (NEW-ISSUE-40)
+
+The newly-captured `Provided*` fields are **stored** this wave (the firm requirement) but **not surfaced** in the admin registrations grid/detail — that surface lives in #46 EventTicketing / #137's registration list (a different screen's territory), and adding columns there is out of this screen's scope. Tracked as **NEW-ISSUE-40**. (Decision delegated to agent by the user 2026-06-11; chose store-now / surface-later to respect screen boundaries.)
+
+### ⓪″.9 File-manifest delta (additions over §⑧ / §⓪.7 / §⓪′.8)
+
+- **BE MODIFY**: `Events/Commands/CreateEvent.cs` (replace the 2-row seed helper with the 9-row set — extract a small `private static IEnumerable<EventRegistrationFormField> BuildDefaultFormFields(int companyId)` mirroring §⓪″.2); `EventRegistration.cs` (+10 `Provided*` props); `EventRegistrationConfiguration.cs` (10 `.HasMaxLength` lines); `EventRegistrationPages/PublicMutations/InitiateEventRegistration.cs` (10 `Provided*` assignments in the initializer). **No** EF migration file (user-run).
+- **DB (user-run)**: 1 EF migration (10 cols on `app.EventRegistrations`); 1 backfill SQL `sql-scripts-dyanmic/EventRegistrationPage-formfields-backfill.sql` (§⓪″.6).
+- **FE MODIFY**: `EventRegistrationPageDto.ts` (`fieldCode`+`fieldLabel`); `public-queries/EventRegistrationPagePublicQuery.ts` + `application-queries/EventRegistrationPageQuery.ts` (alias fix); `cards/5-registrant-experience-card.tsx` (fieldCode rename + Custom-Questions removal); `cards/12-coming-soon-card.tsx` (add teaser row); `public/eventregpage/components/registrant-fields.tsx` (fieldCode match); `components/live-preview.tsx` (fieldCode, if referenced). Reuse canonical form fields/grids ([[feedback_reuse_canonical_form_fields]], [[feedback_reuse_existing_grids]]); strip `__typename` on any round-trip the setup save touches ([[feedback_apollo_typename_strip_on_round_trip]]).
+
+### ⓪″.10 Acceptance criteria delta
+
+- A **new** event create seeds **9** `EventRegistrationFormFields` rows (First/Last/Email enabled+required+system-locked; Phone/Organization/Dietary/Accessibility/Tshirt/Emergency present, disabled by default, toggleable).
+- Existing events, after the backfill SQL, also have the 9 rows; the legacy `FULLNAME` row is soft-disabled.
+- Admin Card 5 shows all 9 by friendly label, locks only First/Last/Email, lets the admin toggle Visible/Required on the other 6; Custom-Questions config is gone from Card 5 and appears as a Coming-Soon teaser in Card 12.
+- Enabling "Organization" (and any optional field) in Card 5 makes it **render on the public form** (B2 fix proven at runtime, not just tsc).
+- A public registration persists every supplied field into the matching `app.EventRegistrations.Provided*` column, including `ProvidedContactCode`. ContactCode path stores the **resolved** identity in `ProvidedFirstName/LastName/Email` + the typed code in `ProvidedContactCode` + sets `ContactId` (Session 27 behavior intact).
+- `dotnet build` Base.Application + Base.Infrastructure = 0 errors; `npx tsc --noEmit` = exit 0. (Persistence itself requires the user's migration + the backfill SQL + API restart.)
+
+### ⓪″.11 New ISSUEs opened by this re-plan
+
+- **NEW-ISSUE-39** — Custom-question config + `CustomAnswers[]` capture moved to **Coming Soon**; `EventCustomQuestion` stays dead config, no `EventRegistrationCustomAnswers` table built. Revisit when the custom-question sub-feature is scheduled.
+- **NEW-ISSUE-40** — Admin surfacing of the new `Provided*` registrant fields (grid/detail/export) is **deferred** — belongs to #46/#137's registration list, not this screen. Data is stored + query-ready.
+- **NEW-ISSUE-41** — `RegistrantName` (concat) + `ProvidedFirstName/LastName` are now **dual-stored**; if a future cleanup wants a single source, collapse `RegistrantName` into a computed projection. Low priority (back-compat with Wave-3 emails + grid).
 
 ---
 
@@ -1598,6 +1713,10 @@ This screen is `NEW` scope by default (no existing FE / no existing handlers). H
 | ISSUE-34 | OPEN | **Wave-3 (§⓪′).** EmailTemplates resolve by `EmailTemplateCode`+`ModuleId`+`IsActive` ONLY — NOT tenant-scoped. One global row per code serves all tenants. Per-tenant template overrides = future follow-up. | re-plan(W3) | — |
 | ISSUE-35 | OPEN | **Wave-3 (§⓪′.8b).** Job tracking: transactional Flows 2/3 SEND via `SendEmailByTemplateKeyAsync` + write a *completed* `EmailSendJob` tracking row (`IsSystem=true`); they do NOT route through `IEmailExecutorService` (its recipient providers need Contacts/Segments, registrants are arbitrary emails). Secondary option = explicit-recipient provider so the EmailSendJob row IS the send. Resolver decides + records. | re-plan(W3) | — |
 | ISSUE-36 | OPEN | **Wave-3 (§⓪′.8b).** Role-based **Jobs screen** (tenant jobs `IsSystem=false` + system jobs `IsSystem=true`) is FUTURE work — this wave only adds the `notify.EmailSendJobs.IsSystem` column + writes tracking rows. The screen + role-gating are planned separately. | re-plan(W3) | — |
+| ISSUE-38 | CLOSED (session 29) | **(S27) ROUTED → (S28 plan) DESIGNED → (S29) BUILT per §⓪″ Wave 4.** Registrant form-field model broken end-to-end (only first/last/email render; only Name/Email/Phone persist). Four breakages: B1 seed only `FULLNAME`+`EMAIL`; B2 GQL `fieldName: fieldLabel` feeds label where FE matches code; B3 canonical-code drift (FE PascalCase vs DB UPPERCASE; no `FULLNAME` FE equiv); B4 handler drops Organization/Dietary/Accessibility/Tshirt/Emergency + ContactCode (no columns). **Design (locked 2026-06-11):** 9 canonical PascalCase codes (`FULLNAME`→`FirstName`+`LastName`); seed all 9 on create + backfill SQL; select `fieldCode`+`fieldLabel` in both queries; add 10 `Provided*` columns to `app.EventRegistrations` (ODP `OnlineDonationStaging` parity) incl `ProvidedContactCode`; Card 5 keys off `fieldCode`; Custom Questions → Coming Soon (NEW-ISSUE-39); admin surfacing deferred (NEW-ISSUE-40). Full blueprint: §⓪″.1-.11. User-owned migration. | 27 | — |
+| ISSUE-39 | OPEN (Coming Soon) | Custom-question config + `CustomAnswers[]` capture deferred to Coming Soon (Card 12). `EventCustomQuestion` stays dead config; no `EventRegistrationCustomAnswers` table. See §⓪″.7. | 28 | — |
+| ISSUE-40 | OPEN | Admin surfacing of new `Provided*` registrant fields (grid/detail/export) deferred — belongs to #46/#137 registration list, not this screen. Data stored + query-ready. See §⓪″.8. | 28 | — |
+| ISSUE-41 | CLOSED (session 30) | **Resolved by removing the dual-store.** Dropped the redundant `ProvidedFirstName/LastName/Email/Phone` columns — `RegistrantName` (= FirstName + LastName) / `RegistrantEmail` / `RegistrantPhone` are now the single source for name/email/phone. Only the 6 extra capture columns (`ProvidedContactCode`/`Organization`/`DietaryRequirements`/`AccessibilityNeeds`/`TshirtSize`/`EmergencyContact`) remain. | 28 | 30 |
 | ISSUE-37 | OPEN | **Wave-3 (§⓪′.8b, S24).** `EmailSendQueue.ContactId` is **NOT NULL with an FK constraint**, so the child tracking-row write for a registrant who is NOT a linked Contact (arbitrary `RegistrantEmail`) fails the FK. Flow-2/3 wrap the tracking write in try/catch → the row is silently skipped but **the actual email still sends** (via `SendEmailByTemplateKeyAsync`). Net effect: rolling-parent `EmailSendJob` rows are created, but non-Contact registrants get no child receipt row (the future Jobs screen undercounts them). This is the anticipated NEW-ISSUE-35 "nullable `ContactId` on the queue" refinement — fix = make `EmailSendQueue.ContactId` nullable (user-owned migration) so every send writes a receipt uniformly. | 24 | — |
 
 > **PLANNING NOTE (2026-06-04)**: Screen re-planned to Wave 2 via `/plan-screens #169`. Status reset COMPLETED→PROMPT_READY. The authoritative delta is **§⓪ REVISION** at the top of this file — build agents read §⓪ as the source of truth over the older §②/③/⑥/⑧/⑩/⑪. Next: `/build-screen #169` to implement Wave 2. The next build session appends "Session 4" below.
@@ -2114,3 +2233,83 @@ This screen is `NEW` scope by default (no existing FE / no existing handlers). H
 - **Decisions/precedence**: SavedFilterId wins over inline json; both null ⇒ all donors (legacy behavior preserved). Saved-filter changes never re-trigger a send; only publish/resend dispatches. AggregationFilterJson on saved filters is NOT applied in V1 (FilterJson only — covers city/state 360° rules); deferred.
 - **Known issues opened**: None new. (ISSUE-37 tracking-receipt FK limitation still open, unrelated.)
 - **Next step**: None. Runtime: admin builds/picks a CONTACT filter; publish dialog previews count; announcement targets donor∩filter. User runs the EF migration for the 2 new columns.
+
+### Session 27 — 2026-06-11 — ENHANCE — COMPLETED
+
+- **Scope**: Add a **ContactCode** shortcut to the public event registration form (ODP parity — mirrors `InitiateOnlineDonation.ContactCode`). A returning attendee types their Contact Code → name/email are no longer required, the server resolves the Contact and overwrites the typed identity with the Contact's authoritative First/Last/PrimaryEmail, and stamps `EventRegistration.ContactId`. Blank code → original contract (name+email required). **NO schema change** (`EventRegistration.ContactId` already existed; was never set before this session).
+- **Investigation (user asked to verify the "etc fields" flow)**: Traced the full FE↔BE round-trip and found the registrant form-field model is broken end-to-end — see **ISSUE-38** (opened, ROUTED to `/plan-screens #169`). Short version: only `FULLNAME`+`EMAIL` codes are seeded; admin Card 5 + public form expect 9 different codes; GQL aliases `fieldName: fieldLabel` so multi-word fields never match; and Organization/Dietary/Accessibility/Tshirt/Emergency are sent by the form but **dropped** by the handler (no columns). Fixing that = canonical-code redesign + seeding + new columns = a Spec change, so it was split out (user decision 2026-06-11: "Re-plan field model, build ContactCode now").
+- **Decision (user-approved)**: Exact ODP parity, with one event-specific tightening — because events have no staff-resolution staging buffer, an **unknown ContactCode is REJECTED** (`CONTACT_CODE_NOT_FOUND`) rather than silently falling through to an anonymous registration (which would create a nameless row).
+- **Files touched**:
+  - BE MODIFY (3):
+    - `Base.Application/Schemas/ApplicationSchemas/EventRegistrationPageSchemas.cs` — `InitiateEventRegistrationRequestDto` +`ContactCode` (string?, nullable).
+    - `Base.Application/Business/ApplicationBusiness/EventRegistrationPages/PublicMutations/InitiateEventRegistration.cs` — validator: First/Last/Email `.NotEmpty().When(ContactCode is blank)` + Email format-checks only when typed + `ContactCode` MaxLength(50); handler: resolve Contact by `(CompanyId, ContactCode, IsActive, !IsDeleted)` with primary-email projection (mirror ODP), reject unknown code, overwrite req identity, set `ContactId = resolvedContactId` on the new `EventRegistration` row.
+  - FE MODIFY (2):
+    - `public/eventregpage/components/registrant-fields.tsx` — `RegistrantFieldValues` +`contactCode`; render a full-width Contact Code field + "or" divider (dims when filled) above the grid; required asterisks on the locked core fields drop when a code is present.
+    - `public/eventregpage/components/registration-form.tsx` — `INITIAL_REGISTRANT` +`contactCode`; `validate()` skips first/last/email + server-required form-field checks when a code is present (email format still validates if typed); `contactCode` added to the Initiate mutation payload.
+  - No GQL document change (mutation spreads the typed `InitiateEventRegistrationRequestDtoInput`); no migration; no DB seed.
+- **Verification**: BE `dotnet build Base.Application` = **exit 0**. FE `npx tsc --noEmit` = **0 errors** (whole project).
+- **Deviations from spec**: Unknown ContactCode rejects (vs ODP's soft-fallthrough) — justified by events having no staging/resolution step.
+- **Known issues opened**: **ISSUE-38** (registrant field-model redesign — ROUTED to `/plan-screens #169`).
+- **Known issues closed**: None.
+- **Next step**: Run `/plan-screens #169` to design the registrant field-model redesign (canonical codes + seeding + persistence columns) per ISSUE-38. ContactCode itself is complete; runtime-verify by registering with a known Contact Code (name/email left blank → registration carries that Contact's identity + ContactId) and a bogus code (→ clear rejection).
+
+### Session 28 — 2026-06-11 — PLAN (`/plan-screens`) — COMPLETED
+
+- **Scope**: Designed the registrant field-model redesign (ISSUE-38) → authoritative **§⓪″ Build Wave 4** delta. No code written (planning only).
+- **Deep analysis done**: read `EventRegistration.cs`, `EventRegistrationFormField.cs`, `EventCustomQuestion.cs`, `CreateEvent.cs` (seed), `InitiateEventRegistration.cs` (handler + request DTO), both event GQL queries, Card 5, `registrant-fields.tsx`, and the **ODP canonical mirror** `OnlineDonationStaging.cs` (the `Provided*` column pattern the user chose).
+- **Root cause nailed (4 breakages)**: B1 seed only `FULLNAME`+`EMAIL`; B2 GQL `fieldName: fieldLabel` feeds the human label where every FE consumer matches a stable code; B3 canonical-code drift (FE PascalCase vs DB UPPERCASE, no `FULLNAME` FE equiv); B4 handler drops the 6 extra system fields + ContactCode (no columns) — though the **request DTO already carries them all** (the gap is purely seed + alias + persistence, NOT the request contract).
+- **Decisions locked with user (2026-06-11)**:
+  - Custom-question config + `CustomAnswers[]` capture → **Coming Soon** (Card 12); NO `EventRegistrationCustomAnswers` table (NEW-ISSUE-39).
+  - Capture **+ store** the 9 system fields + ContactCode (firm requirement); admin surfacing **deferred** to #46/#137 (NEW-ISSUE-40, agent-decided per user delegation).
+  - Persistence = **ODP `Provided*` parity** (10 string columns on `app.EventRegistrations`, incl `ProvidedContactCode`); keep `RegistrantName/Email/Phone` (NEW-ISSUE-41 dual-store note).
+  - 9 canonical **PascalCase** codes; `FULLNAME`→`FirstName`+`LastName`; only First/Last/Email `IsSystem=true` (locked).
+- **Files touched**: `.claude/screen-tracker/prompts/eventregpage.md` (added §⓪″.1-.11 authoritative delta; ISSUE-38 → DESIGNED; +ISSUE-39/40/41; frontmatter `status` COMPLETED→PROMPT_READY + Wave-4 `revision`). `REGISTRY.md` (status + note).
+- **Known issues opened**: NEW-ISSUE-39, NEW-ISSUE-40, NEW-ISSUE-41. **Closed**: None (ISSUE-38 → DESIGNED, not yet built).
+- **Next step**: Run **`/build-screen #169`** (or `/continue-screen #169`) to execute §⓪″ Wave 4. Build order: (1) BE seed rewrite + entity +10 `Provided*` cols + config + handler write-block; (2) FE DTO/query alias fix + Card 5 fieldCode rename & Custom-Questions removal + Card 12 teaser; (3) user runs the EF migration + the `EventRegistrationPage-formfields-backfill.sql`. Verify at **runtime** (enable "Organization" in Card 5 → it must render on the public form; register → `Provided*` columns populate).
+
+### Session 29 — 2026-06-11 — BUILD — COMPLETED
+
+- **Scope**: Executed §⓪″ Build Wave 4 (registrant field-model redesign + ContactCode persistence — resolves ISSUE-38). Fixed all 4 breakages (B1 seed / B2 GQL alias / B3 canonical codes / B4 handler persist) plus the Custom-Questions → Coming-Soon move. Surgical FE+BE delta — edited directly (not via agents) given the locked, precise spec.
+- **Files touched**:
+  - BE: `Base.Domain/.../ApplicationModels/EventRegistration.cs` (modified — +10 `Provided*` props after `RegistrantPhone`); `Base.Infrastructure/.../ApplicationConfigurations/EventRegistrationConfiguration.cs` (modified — 10 `.HasMaxLength` lines mirroring ODP lengths); `Base.Application/.../Events/Commands/CreateEvent.cs` (modified — B1: replaced the 2-row `FULLNAME`/`EMAIL` seed with a 9-row loop over new `private static BuildDefaultFormFields(int companyId)` helper, caller-supplied fields still win by FieldCode); `Base.Application/.../EventRegistrationPages/PublicMutations/InitiateEventRegistration.cs` (modified — B4: 10 `Provided*` assignments from the effective `req.*` after the ContactCode override).
+  - FE: `domain/entities/application-service/EventRegistrationPageDto.ts` (modified — `ErpRegistrationFormFieldDto`: `fieldName` → `fieldCode` + `fieldLabel?`); `infrastructure/gql-queries/public-queries/EventRegistrationPagePublicQuery.ts` + `infrastructure/gql-queries/application-queries/EventRegistrationPageQuery.ts` (modified — B2: select `fieldCode` + `fieldLabel`, dropped the `fieldName: fieldLabel` alias); `crm/event/eventregpage/cards/5-registrant-experience-card.tsx` (rewritten — keys off `fieldCode`, displays `fieldLabel ?? FIELD_DISPLAY[fieldCode]`, removed the entire Custom-Questions editor + now-unused imports/state); `crm/event/eventregpage/cards/12-coming-soon-card.tsx` (modified — added "Custom Registration Questions" teaser row); `public/eventregpage/components/registrant-fields.tsx` (modified — `visible/requiredFieldNames` now built from `f.fieldCode.toLowerCase()`); `public/eventregpage/components/registration-form.tsx` (modified — required-field validation keys off `fieldCode`, message uses `fieldLabel`). `live-preview.tsx` — no change (does not reference `fieldName`).
+  - DB (user-run): `sql-scripts-dyanmic/EventRegistrationPage-formfields-backfill.sql` (created — idempotent: inserts missing canonical rows per existing event via CROSS JOIN VALUES + `WHERE NOT EXISTS` case-insensitive on FieldCode; soft-disables legacy `FULLNAME`; keeps legacy `EMAIL` which satisfies canonical `Email` case-insensitively). **EF migration NOT authored** — user generates + runs it for the 10 `Provided*` columns on `app."EventRegistrations"` ([[feedback_user_creates_migrations]]).
+- **Verification**: `dotnet build Base.Application` (transitively Domain + Infrastructure) = **0 errors** (555 pre-existing warnings). `npx tsc --noEmit` (full FE) = **exit 0**, no eventregpage/registrant errors. Request DTO field names confirmed to match the handler assignments (ContactCode/FirstName/LastName/Email/Phone/Organization/DietaryRequirements/AccessibilityNeeds/TshirtSize/EmergencyContact). **Persistence + runtime field-render require the user's EF migration + the backfill SQL + API restart** (tsc-invisible defect class per [[feedback_reuse_canonical_gql_query]] — runtime-verify B2: enable "Organization" in Card 5 → must render on the public form).
+- **Deviations from spec**: None. (Bonus over §⓪″.4: also fixed the same `fieldName`→`fieldCode` consumer in `registration-form.tsx`'s required-field validation, which the delta's "grep before editing" note implies but didn't enumerate — without it the required-field check matched on label and tsc would break.)
+- **Known issues opened**: None new (ISSUE-39/40/41 already opened S28 stay OPEN — deferred by design).
+- **Known issues closed**: **ISSUE-38** (built per §⓪″ Wave 4).
+- **Next step (user)**: (1) `dotnet ef migrations add Add_EventRegistration_ProvidedFields` + `dotnet ef database update` for the 10 nullable `Provided*` columns; (2) run `EventRegistrationPage-formfields-backfill.sql` against existing events; (3) restart API + `pnpm dev`; (4) runtime-verify: enable "Organization" in admin Card 5 → renders on the public `/event/{slug}` form; submit a registration → `app."EventRegistrations".Provided*` columns populate (incl `ProvidedContactCode`); ContactCode path stores resolved identity in `ProvidedFirstName/LastName/Email` + sets `ContactId`.
+  > **Superseded by Session 30** — the migration is now for only **6** `Provided*` columns (the 4 name/email/phone duplicates were dropped) and there is no longer an `EarlyBirdDeadline` column. See S30 for the corrected migration + verification steps.
+
+### Session 30 — 2026-06-11 — FIX — COMPLETED
+
+- **Scope**: Two user-requested cleanups on the registrant + page-setup model. (a) Removed the 4 redundant `Provided*` columns added in S29 — `ProvidedFirstName/LastName/Email/Phone` duplicated `RegistrantName` (= FirstName + LastName) / `RegistrantEmail` / `RegistrantPhone`, which already hold those values; kept only the 6 genuinely-new capture columns. (b) Removed the unused `EarlyBirdDeadline` field from the registration-page-setup entity and its full BE+FE plumbing (no early-bird *pricing* feature was ever wired; `EventTicketType.EarlyBirdPrice` is a separate ticketing field and was left intact). Surgical, edited directly — no migration run ([[feedback_user_creates_migrations]]). Zero-cost because the S29 `Provided*` migration had not yet been run.
+- **Files touched**:
+  - BE (Provided* dedup): `Base.Domain/.../EventRegistration.cs` (−4 props); `Base.Infrastructure/.../EventRegistrationConfiguration.cs` (−4 `.HasMaxLength`); `Base.Application/.../EventRegistrationPages/PublicMutations/InitiateEventRegistration.cs` (−4 assignments; `RegistrantName/Email/Phone` already carried name/email/phone).
+  - BE (EarlyBirdDeadline removal): `Base.Domain/.../EventRegistrationPage.cs` (−1 prop); `Base.Application/Schemas/ApplicationSchemas/EventRegistrationPageSchemas.cs` (−3 DTO props) + `EventSchemas.cs` (−1); `Base.Application/Mappings/ApplicationMappings.cs` (−1 Mapster `.Map`); `Events/Commands/CreateEvent.cs`, `UpdateEvent.cs`, `DuplicateEvent.cs` (−1 each); `EventRegistrationPages/Queries/GetEventRegistrationPageById.cs`, `PublicQueries/GetEventRegistrationPageBySlug.cs`, `Commands/UpdateEventRegistrationPageSetup.cs` (−1 each); `sql-scripts-dyanmic/EventRegistrationPage-table-backfill.sql` (−`EarlyBirdDeadline` from the INSERT col-list + SELECT).
+  - FE (EarlyBirdDeadline removal): `domain/entities/application-service/EventRegistrationPageDto.ts` (−3 fields), `domain/entities/contact-service/EventDto.ts` (−1); `infrastructure/gql-queries/{public-queries/EventRegistrationPagePublicQuery.ts, application-queries/EventRegistrationPageQuery.ts, contact-queries/EventQuery.ts}` (−1 selection each); `crm/event/eventregpage/cards/4-registration-window-card.tsx` (removed the "Early Bird Deadline" date picker + comment); `crm/event/event/form-tabs/types.ts` (−type field + initial); `crm/event/event/event-form-page.tsx` (−load mapping + −save payload); `crm/event/eventregpage/editor-page.tsx` + `components/live-preview.tsx` (−1 each).
+- **Verification**: `dotnet build Base.Application` (transitively Domain + Infrastructure) = **0 errors** (555 pre-existing warnings). `npx tsc --noEmit` (full FE) = **exit 0**, no event/eventregpage errors. Source greps confirm zero remaining `EarlyBirdDeadline`/`earlyBirdDeadline` and zero stray `ProvidedFirstName/LastName/Email/Phone` outside EF migration history and the unrelated `fund.OnlineDonationStaging` table.
+- **Deviations from spec**: Supersedes the S29 ODP-`Provided*`-parity decision for name/email/phone — at the user's direction those 3 fields reuse the existing `Registrant*` columns instead of being mirrored. The remaining 6 `Provided*` columns are unchanged.
+- **Known issues opened**: None.
+- **Known issues closed**: **ISSUE-41** (dual-store removed).
+- **Next step (user)**: (1) `dotnet ef migrations add Cleanup_EventRegistration_ProvidedFields_And_EarlyBirdDeadline` then `dotnet ef database update` — the migration now (a) adds only the **6** `Provided*` columns on `app."EventRegistrations"` (`ProvidedContactCode`/`ProvidedOrganization`/`ProvidedDietaryRequirements`/`ProvidedAccessibilityNeeds`/`ProvidedTshirtSize`/`ProvidedEmergencyContact`) and (b) **drops** `app."EventRegistrationPages"."EarlyBirdDeadline"`. (If S29's migration was already generated but not applied, delete it and regenerate so the snapshot reflects the 6-column shape.) (2) run `EventRegistrationPage-formfields-backfill.sql`; (3) restart API + `pnpm dev`; (4) runtime-verify as in S29 — `Provided*` populate (incl `ProvidedContactCode`); the Registration-Window card no longer shows an Early Bird Deadline input.
+
+### Session 31 — 2026-06-11 — ENHANCE — Lock-when-live (host Event Unpublish) — COMPLETED
+
+- **Scope**: Cross-screen with #40 Event (primary Build Log entry: `event.md` Session 12). The host Event gained an **Unpublish** action (PUBLISHED → DRAFT, cascading this page Published/Active → **ReadyToPublish**). This session's #169-owned change: `crm/event/eventregpage/editor-page.tsx` now locks ALL page fields while the page is **live** (Published/Active), not only ReadyToPublish.
+- **Files touched**:
+  - FE: `crm/event/eventregpage/editor-page.tsx` — `locked = isReadyToPublish || liveLocked` (`liveLocked = isPublished || isActive`); the existing `<fieldset disabled={locked}>` now also greys out fields when live; embedded Save gained `|| locked`; split the frozen banner into the violet ReadyToPublish "Unlock" variant + a new emerald **"This page is live — unpublish the event to edit"** variant (no unlock button, since Unlock only accepts ReadyToPublish; **bg fill removed per user — border + text only**). Operational actions (Preview / Resend / Close Early / Archive / Reset Branding) stay live.
+  - BE: none in this file's scope (the Unpublish command + cascade live on the Event side — see `event.md` S12 / `Events/Commands/UnpublishEvent.cs`).
+- **Deviations from spec**: None. **Known issues opened/closed**: None.
+- **Verification**: FE `npx tsc --noEmit` → **0 errors**. BE `dotnet build Base.API` (Event-side) → **0 errors**. Runtime lock-when-live pending user `pnpm dev`.
+- **Next step**: COMPLETED.
+
+### Session 32 — 2026-06-11 — FIX — COMPLETED
+
+- **Scope**: Runtime error `The field 'unlockEventRegistrationPage' does not exist on the type 'Mutation'` (also affected `markEventRegistrationPageReadyToPublish`). Root cause: the consolidation #40 command **handlers** (`UnlockEventRegistrationPageCommand`, `MarkEventRegistrationPageReadyToPublishCommand`) existed in `Base.Application` but were never exposed as GraphQL endpoints in `Base.API`, so HotChocolate had no such Mutation fields. FE was already correct.
+- **Files touched**:
+  - BE: `Base.API/EndPoints/Application/Mutations/EventRegistrationPageMutations.cs` (modified) — registered `MarkEventRegistrationPageReadyToPublish` (→ `BaseApiResponse<EventRegistrationPagePublishResultDto>`, mirrors Publish) and `UnlockEventRegistrationPage` (→ `BaseApiResponse<bool>`, mirrors Unpublish); class-doc updated 6→8 methods.
+  - FE: none (mutation defs + handlers in `editor-page.tsx` / `EventRegistrationPageMutation.ts` were already correct).
+- **Deviations from spec**: None. **Known issues opened/closed**: None.
+- **Verification**: BE build deferred to user (their request). FE unchanged.
+- **Next step**: User builds BE → Unlock / Mark-Ready resolve.
