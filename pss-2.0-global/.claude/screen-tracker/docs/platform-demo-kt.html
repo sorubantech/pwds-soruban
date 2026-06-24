@@ -174,6 +174,13 @@
   .fs-canvas .stage-wrap{width:min(92vw,1100px);}
   .fs-hint{position:absolute; bottom:14px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,.55);
     color:#ddd6fe; font-size:12px; font-weight:600; padding:6px 15px; border-radius:20px; pointer-events:none;}
+  /* ---------- internal-demo action items ---------- */
+  .actions{list-style:none; counter-reset:a; padding:0; margin:8px 0 0;}
+  .actions li{position:relative; padding:11px 14px 11px 48px; margin:8px 0; background:#fff; border:1px solid var(--line);
+    border-radius:10px; counter-increment:a; font-size:13.5px; line-height:1.5;}
+  .actions li::before{content:counter(a); position:absolute; left:12px; top:10px; width:26px; height:26px;
+    background:var(--prog); color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px;}
+  .actions li b{color:var(--rose-700);}
   /* ---------- print ---------- */
   @media print{
     nav.toc{display:none} .wrap{display:block} main{padding:0}
@@ -197,6 +204,7 @@
     <a href="#features">② Platform Features</a>
     <a href="#modules">③ Business Modules</a>
     <a href="#schedule">④ Demo Schedule</a>
+    <a href="#notes">⑤ Internal Demo Notes</a>
   </nav>
 
   <!-- =================== MAIN =================== -->
@@ -768,8 +776,9 @@
         <div class="tl-item prog">
           <div class="tl-marker">●</div>
           <div class="tl-card">
-            <div class="tl-top"><span class="tl-idx">01</span><span class="tl-name">📅 Events &amp; Ticketing</span><span class="b prog">This week · next up</span></div>
-            <div class="tl-dates"><div class="d"><b>Internal demo</b><span class="in">Fri 12 Jun 2026</span></div><div class="d"><b>Management demo</b><span class="mg">Mon 15 Jun 2026</span></div></div>
+            <div class="tl-top"><span class="tl-idx">01</span><span class="tl-name">📅 Events &amp; Ticketing</span><span class="b prog">Internal ✓ · Mgmt Mon 15 Jun</span></div>
+            <div class="tl-dates"><div class="d"><b>Internal demo</b><span class="dn">✓ Fri 12 Jun 2026</span></div><div class="d"><b>Management demo</b><span class="mg">Mon 15 Jun 2026</span></div></div>
+            <div style="margin-top:9px; font-size:12.5px; color:var(--slate);">📝 Internal demo done — 9 follow-up items captured in <a href="#notes" style="color:var(--rose-700); font-weight:700">⑤ Internal Demo Notes</a>.</div>
           </div>
         </div>
 
@@ -899,6 +908,32 @@
         <b>How this runs:</b> each Friday the next module gets its <span class="b internal">internal demo</span>; the weekend is for fixes; the following Monday is its <span class="b mgmt">management demo</span>. When a demo is delivered, flip its marker to <b style="color:var(--done)">✓</b>. <b>AI Intelligence is intentionally last</b>, on both the platform and business side.
       </div>
       <p style="color:var(--slate); font-size:13px;">Tell me when a demo is delivered (or if priorities shift) and I'll re-flow the dates — keeping the <b>Friday → Monday</b> rule.</p>
+    </section>
+
+    <!-- =================== SECTION 5 — INTERNAL DEMO NOTES =================== -->
+    <section id="notes">
+      <h2><span class="num">⑤</span> Internal Demo Notes</h2>
+      <p class="lead">Action items captured during the internal demos — <b>follow-up enhancements</b> to productise before / alongside the management demo.</p>
+
+      <div class="card">
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:4px;">
+          <span style="font-size:22px">📅</span>
+          <h3 style="margin:0; text-transform:none; letter-spacing:0; font-size:17px;">Event Management — Internal Demo Summary</h3>
+          <span class="b done" style="margin-left:auto">✓ Internal demo completed</span>
+        </div>
+        <p style="font-size:13px; color:var(--slate); margin:2px 0 6px;">Held <b>Fri 12 Jun 2026</b> · 9 enhancement points raised for the Event Management module, to be taken forward.</p>
+        <ol class="actions">
+          <li><b>Receipt download</b> — a downloadable receipt on the registration-success page after a successful registration.</li>
+          <li><b>Ticket cancellation &amp; refund mechanism</b> — cancellation flow with configurable <b>cancellation time periods</b> and <b>charges</b> (refund rules per window).</li>
+          <li><b>Event postpone</b> — reschedule an event to new dates without losing existing registrations.</li>
+          <li><b>Event waiting list service</b> — waitlist with auto-promotion when seats free up.</li>
+          <li><b>Volunteer service integration</b> — link volunteers to the event: <b>working hours, attendance &amp; availability</b>.</li>
+          <li><b>Check-in &amp; attendance tracking with QR code</b> — QR-based check-in and live attendance tracking.</li>
+          <li><b>Event hosting &amp; general services tracking</b> — VIP personal support, food &amp; accommodation, welcome members, etc.</li>
+          <li><b>Auction commission functionality</b> — commission calculation on auction winnings.</li>
+          <li><b>Auction management with on-field bidding integration</b> — bring live on-field (in-room) bidding into auction management.</li>
+        </ol>
+      </div>
     </section>
 
   </main>

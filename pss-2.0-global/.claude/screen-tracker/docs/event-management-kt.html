@@ -183,6 +183,29 @@
   .setup-caption .step-i{display:inline-block; background:#f472b6; color:#4a044e; font-weight:800; font-size:11px;
     padding:2px 9px; border-radius:10px; margin-right:8px;}
   .setup-caption b{color:#fff;}
+  /* ---------- worked example: one real event day ---------- */
+  .ex-hero{background:linear-gradient(135deg,#4a044e,var(--rose-700)); color:#fff; border-radius:14px; padding:22px 24px; margin:16px 0 22px;}
+  .ex-hero h3{color:#f9a8d4; margin:0 0 6px;}
+  .ex-hero p{margin:0; opacity:.92; font-size:14px;}
+  .ex-hero .tags{margin-top:14px; display:flex; gap:8px; flex-wrap:wrap;}
+  .ex-hero .tags span{background:rgba(255,255,255,.16); padding:4px 11px; border-radius:20px; font-size:12px; font-weight:700;}
+  .ex-slot{display:flex; gap:14px; align-items:flex-start; padding:14px 0; border-top:1px solid var(--line);}
+  .ex-slot:first-child{border-top:none;}
+  .ex-time{flex:none; width:138px; font-size:12.5px; font-weight:700; color:var(--rose-700); background:var(--rose-50);
+    border:1px solid #fbcfe8; border-radius:9px; padding:7px 10px; text-align:center; line-height:1.35;}
+  .ex-body{flex:1; min-width:0;}
+  .ex-body h4{margin:0 0 6px; font-size:15px; color:var(--ink); display:flex; align-items:center; gap:8px;}
+  .ex-pills{display:flex; gap:7px; flex-wrap:wrap; margin-top:4px;}
+  .ex-pill{display:inline-block; background:#f1f5f9; border:1px solid var(--line); color:var(--slate);
+    padding:4px 11px; border-radius:16px; font-size:12.5px; font-weight:600;}
+  .ex-num{flex:none; width:24px; height:24px; border-radius:50%; background:var(--rose); color:#fff;
+    font-size:12px; font-weight:800; display:inline-flex; align-items:center; justify-content:center;}
+  .ex-auc .ex-num{background:#7c3aed;}
+  .ex-auc .ex-time{color:#5b21b6; background:#f5f3ff; border-color:#ddd6fe;}
+  .ex-map{width:100%; border-collapse:collapse; margin-top:8px; font-size:13.5px;}
+  .ex-map th,.ex-map td{text-align:left; padding:8px 12px; border-bottom:1px solid var(--line);}
+  .ex-map th{background:#fafcff; color:var(--rose-700); font-size:12px; text-transform:uppercase; letter-spacing:.04em;}
+  .ex-map td code{font-size:12.5px;}
   /* ---------- fullscreen diagram / flow modal ---------- */
   .fs-host{position:relative;}
   .fs-btn{position:absolute; top:10px; right:10px; z-index:8; width:34px; height:34px; cursor:pointer;
@@ -235,6 +258,7 @@
     <a href="#diagram">② Live Flow + Example</a>
     <a href="#tests">③ Test Cases</a>
     <a href="#data">④ Entity Tables</a>
+    <a href="#example">⑤ Worked Example — A Real Event Day</a>
   </nav>
 
   <!-- =================== MAIN =================== -->
@@ -835,6 +859,117 @@ erDiagram
         <tr><td><code>AUCTIONPAYMENTSTATUS</code></td><td>Awaiting · Paid · No Payment</td></tr>
         <tr><td><code>AUCTIONITEMCATEGORY</code></td><td>Travel · Dining · Art · Sports · Fashion · Experience · Tech · Other</td></tr>
       </table>
+    </section>
+
+    <!-- =================== WORKED EXAMPLE =================== -->
+    <section id="example">
+      <h2><span class="num">5</span> Worked Example — A Real Event Day</h2>
+      <p class="lead">To make the model concrete, here is one full charity event as it would be set up in the module — a single parent <b>Event</b> running a day-long schedule of <b>sub-events</b>, with two <b>charity auctions</b> running inside it.</p>
+
+      <div class="ex-hero">
+        <h3>🤝 Community Care Day 2026</h3>
+        <p>A one-day in-person fundraising event — one <code>app.Events</code> record (mode <b>In-person</b>, category <b>Community Gathering</b>) that hosts the 8 timed activities and 2 auctions below.</p>
+        <div class="tags">
+          <span>📅 One event day</span>
+          <span>🕖 07:00 AM → 08:00 PM</span>
+          <span>🎟️ 8 sub-events</span>
+          <span>🔨 2 charity auctions</span>
+        </div>
+      </div>
+
+      <h3>The day's schedule — 8 sub-events</h3>
+      <p style="color:var(--slate); font-size:13.5px; margin-top:0">Each row below is one timed activity on the agenda; the chips are what happens inside it.</p>
+      <div class="card">
+        <div class="ex-slot">
+          <div class="ex-time">07:00 – 08:30 AM</div>
+          <div class="ex-body">
+            <h4><span class="ex-num">1</span> Charity Marathon</h4>
+            <div class="ex-pills"><span class="ex-pill">5K Community Run</span><span class="ex-pill">Fundraising Pledges</span><span class="ex-pill">Finisher Medals</span></div>
+          </div>
+        </div>
+        <div class="ex-slot">
+          <div class="ex-time">09:00 AM – 03:00 PM</div>
+          <div class="ex-body">
+            <h4><span class="ex-num">2</span> Blood Donation Camp</h4>
+            <div class="ex-pills"><span class="ex-pill">Blood Donation Registration</span><span class="ex-pill">Health Screening</span><span class="ex-pill">Donor Appreciation Certificates</span></div>
+          </div>
+        </div>
+        <div class="ex-slot">
+          <div class="ex-time">09:00 AM – 04:00 PM</div>
+          <div class="ex-body">
+            <h4><span class="ex-num">3</span> Health Checkup Camp</h4>
+            <div class="ex-pills"><span class="ex-pill">Basic Health Screening</span><span class="ex-pill">Diabetes Check</span><span class="ex-pill">Blood Pressure Check</span><span class="ex-pill">Nutrition Counseling</span></div>
+          </div>
+        </div>
+        <div class="ex-slot">
+          <div class="ex-time">10:00 AM – 12:00 PM</div>
+          <div class="ex-body">
+            <h4><span class="ex-num">4</span> Children's Art Competition</h4>
+            <div class="ex-pills"><span class="ex-pill">Drawing Competition</span><span class="ex-pill">Painting Contest</span><span class="ex-pill">Theme: "A Better Community"</span></div>
+          </div>
+        </div>
+        <div class="ex-slot">
+          <div class="ex-time">10:00 AM – 05:00 PM</div>
+          <div class="ex-body">
+            <h4><span class="ex-num">5</span> Food Donation Drive</h4>
+            <div class="ex-pills"><span class="ex-pill">Food Collection</span><span class="ex-pill">Volunteer Packaging</span><span class="ex-pill">Distribution Planning</span></div>
+          </div>
+        </div>
+        <div class="ex-slot">
+          <div class="ex-time">11:00 AM – 03:00 PM</div>
+          <div class="ex-body">
+            <h4><span class="ex-num">6</span> Volunteer Recruitment Fair</h4>
+            <div class="ex-pills"><span class="ex-pill">Volunteer Registration</span><span class="ex-pill">NGO Booths</span><span class="ex-pill">Community Service Opportunities</span></div>
+          </div>
+        </div>
+        <div class="ex-slot">
+          <div class="ex-time">05:00 – 06:30 PM</div>
+          <div class="ex-body">
+            <h4><span class="ex-num">7</span> Live Music for Charity</h4>
+            <div class="ex-pills"><span class="ex-pill">Local Artists Performance</span><span class="ex-pill">Cultural Programs</span><span class="ex-pill">Community Celebration</span></div>
+          </div>
+        </div>
+        <div class="ex-slot">
+          <div class="ex-time">06:30 – 07:00 PM</div>
+          <div class="ex-body">
+            <h4><span class="ex-num">8</span> Community Champion Awards</h4>
+            <div class="ex-pills"><span class="ex-pill">Volunteer Awards</span><span class="ex-pill">Donor Recognition</span><span class="ex-pill">Community Impact Awards</span></div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Charity auctions running inside the event <span class="b" style="background:#7c3aed">#48</span></h3>
+      <p style="color:var(--slate); font-size:13.5px; margin-top:0">These map to the auction tables — one <code>EventAuction</code> per event holds the bidding switch; each lot below is an <code>AuctionItem</code>.</p>
+      <div class="card ex-auc">
+        <div class="ex-slot">
+          <div class="ex-time">01:00 – 05:00 PM<br><b>Silent</b></div>
+          <div class="ex-body">
+            <h4><span class="ex-num">9</span> Silent Charity Auction</h4>
+            <p style="margin:0 0 8px; color:var(--slate); font-size:13.5px">Guests browse auction items throughout the day and place bids using the event app or the auction desk.</p>
+            <div class="ex-pills"><span class="ex-pill">Local Artist Paintings</span><span class="ex-pill">Handcrafted Products</span><span class="ex-pill">Gift Hampers</span><span class="ex-pill">Restaurant Vouchers</span><span class="ex-pill">Weekend Resort Stay</span><span class="ex-pill">Premium Electronics</span></div>
+          </div>
+        </div>
+        <div class="ex-slot">
+          <div class="ex-time">07:00 – 08:00 PM<br><b>Live</b></div>
+          <div class="ex-body">
+            <h4><span class="ex-num">10</span> Live Charity Auction</h4>
+            <p style="margin:0; color:var(--slate); font-size:13.5px">An exciting live auction hosted by a professional auctioneer, where participants compete for exclusive items and experiences.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <b>How this maps to the data model.</b> The whole day is <b>one</b> <code>app.Events</code> row; the 8 activities and 2 auctions describe what runs inside it.
+        <table class="ex-map">
+          <tr><th>In this example</th><th>Where it lives in the module</th></tr>
+          <tr><td>Community Care Day 2026 (the day)</td><td><code>app.Events</code> — one event, In-person / Community Gathering</td></tr>
+          <tr><td>The 8 timed activities &amp; their items</td><td>Agenda content — <code>DetailedAgendaHtml</code> + <code>EventCustomQuestions</code> per activity sign-up</td></tr>
+          <tr><td>Entry / participation tickets</td><td><code>app.EventTickets</code> (#46) — e.g. Marathon entry, General entry</td></tr>
+          <tr><td>People who signed up &amp; paid</td><td><code>app.EventRegistrations</code> (#46) — checked in by QR on the day</td></tr>
+          <tr><td>Silent + Live auctions</td><td><code>app.EventAuctions</code> (#48) — the bidding switch (1 per event)</td></tr>
+          <tr><td>The 6 silent lots + live lots</td><td><code>app.AuctionItems</code> (Silent / Live) → bids in <code>app.AuctionBids</code></td></tr>
+        </table>
+      </div>
     </section>
 
   </main>

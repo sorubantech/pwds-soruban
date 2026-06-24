@@ -9,7 +9,7 @@ complexity: High
 new_module: YES — `case` schema (first time creation; shares schema with Program #51 and Beneficiary #49)
 planned_date: 2026-04-21
 completed_date: 2026-04-24
-last_session_date: 2026-04-24
+last_session_date: 2026-06-22
 ---
 
 ## Tasks
@@ -1033,4 +1033,104 @@ Full UI must be built (buttons, forms, modals, panels, interactions). Only the h
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
 
-{No sessions recorded yet — filled in after /build-screen completes.}
+### Session 0 — 2026-04-24 — BUILD — COMPLETED
+
+- **Scope**: Initial build of the Case FLOW screen (retroactive entry — Build Log was not populated at build time; synthesized from frontmatter `completed_date`).
+- **Files touched**: (retroactive — not recorded) — see Section ⑧ File Manifest for the canonical file set.
+- **Deviations from spec**: (not recorded)
+- **Known issues opened**: None
+- **Known issues closed**: None
+- **Next step**: None (build marked COMPLETED on 2026-04-24)
+
+### Session 1 — 2026-06-17 — UI — COMPLETED
+
+- **Scope**: Remove the redundant header/toolbar "Export" button from the Case list page — the grid already provides export via `enableExport: true`.
+- **Files touched**:
+  - BE: None
+  - FE: `PSS_2.0_Frontend/src/presentation/components/page-components/crm/casemanagement/caselist/case/index-page.tsx` (removed `headerActions` Export button + `handleExport` placeholder callback + now-unused `Button`/`Icon`/`toast` imports; grid `enableExport: true` left intact)
+  - DB: None
+- **Deviations from spec**: None — Section ⑥ blueprint did not mandate a separate header Export; the header button was a placeholder (toast only). Grid export remains the single export affordance.
+- **Known issues opened**: None
+- **Known issues closed**: None
+- **Next step**: None
+
+### Session 2 — 2026-06-18 — UI — COMPLETED
+
+- **Scope**: De-duplicate the Case **detail (read) view** — case + beneficiary details were rendered **twice**: once as a non-card header text block under the title, and again in the Summary card below. Removed the non-card header duplicate; kept the Summary card as the single source. Preserved the **overdue** follow-up indicator (which only lived in the removed header) by adding it to the card's Follow-up row so no information was lost.
+- **Files touched**:
+  - BE: None
+  - FE: `caselist/case/view-page.tsx` — removed the two header meta `<div>` blocks (Beneficiary link / Program / Priority / Status, and Assigned / Opened / Follow-up·Overdue) under the `<h1>`; kept the `<h1>` title (the card renders no title). Card Follow-up `<Row>` now renders overdue styling (`text-destructive` + "· Overdue") via `caseRecord.isOverdue`, mirroring the old header.
+  - DB: None
+- **Deviations from spec**: None — purely removes a visual duplication; all fields remain available in the Summary card.
+- **Design decision (delegated)**: user left the follow-up "mark done" affordance to my discretion → **not added** this pass (the rolling `FollowUpDate` model already works via reschedule/clear; widening surface unwarranted). Only preserved overdue visibility in the card.
+- **Known issues opened**: None
+- **Known issues closed**: None
+- **Verification**: FE `npx tsc --noEmit` clean on the touched file (`view-page.tsx`). Header now shows only the title; Summary card retains all case/beneficiary details + overdue follow-up.
+
+### Session 3 — 2026-06-22 — ENHANCE — COMPLETED
+
+- **Scope**: New-case intake now derives its context from the selected beneficiary. (1) **Program** dropdown is limited to the programs the beneficiary is **enrolled in** (not all programs). (2) **Assigned Staff** defaults to the beneficiary's assigned case worker. (3) **Branch** defaults to the beneficiary's branch. (4) **Priority** defaults from the beneficiary's priority. All four apply on **new** cases only; editing keeps the case's saved values. All remain user-overridable.
+- **FE only** `caselist/case/case-form.tsx`:
+  - Watches `beneficiaryId` → lazy `BENEFICIARY_BY_ID_QUERY` (cache-first) for the selected beneficiary's `programEnrollments` + `assignedStaffId`/`branchId`/`priorityName`.
+  - **Program** field switched from `FormSearchableSelect`(PROGRAMS_QUERY, all programs) → **`FormSelect`** with `options` built from the beneficiary's enrollments; disabled until a beneficiary is chosen; loading/empty states ("Select a beneficiary first" / "No enrolled programs" / helper "This beneficiary isn't enrolled in any program yet."). On beneficiary switch, a stale program not in the new enrolment set is cleared (add mode).
+  - **Staff/Branch** inherited via `setValue` from the beneficiary (same entity types — `app.Staff` / `app.Branches` — so a direct id copy is correct). Ref-keyed so it fires once per beneficiary pick, never clobbers later manual edits.
+  - **Priority gotcha**: beneficiary Priority is sourced from `VULNERABILITYLEVEL` masterdata ([beneficiary-form.tsx] uses `VULN_FILTER`), but the case Priority uses `CASEPRIORITY` — **different MasterData pools, different ids**. Both pools share the same value codes (LOW/MEDIUM/HIGH/CRITICAL), so priority is mapped **by code/name** (match `casePriorityOptions.dataValue`/`dataName` against `beneficiary.priorityName`, uppercased) → CASEPRIORITY `masterDataId`, NEVER by raw id (raw id points at the wrong pool — same class as the UPPERCASE silent-read bugs). Runs in its own effect that waits for the CASEPRIORITY options to load.
+  - Helper text added to Staff/Branch/Priority noting the beneficiary-default behaviour.
+- **Files touched**: FE: `caselist/case/case-form.tsx`. BE/DB: none — all four target existing case fields (`programId`/`assignedStaffId`/`branchId`/`priorityId`); no schema/mutation change.
+- **Deviations from spec**: None.
+- **Known issues opened/closed**: None.
+- **Verification**: FE `npx tsc --noEmit` clean. Runtime not smoke-tested — recommend: New Case → pick a beneficiary → Program list shows only that beneficiary's enrolled programs; Staff/Branch/Priority pre-fill from the beneficiary; switch beneficiary → values re-derive and a now-invalid program clears; edit an existing case → its saved values are preserved (no overwrite).
+- **Next step**: None.
+- **Next step**: None. (Outstanding from a pre-compaction session: the R1–R6 UI fixes were applied but never given their own Build Log entry — can be reconstructed from transcript if an audit trail is needed.)
+
+### Session 4 — 2026-06-22 — ENHANCE (Spec change — user-authorized) — COMPLETED (⚠ needs BE build + migration by user)
+
+- **Scope**: Workstream A of the case-mgmt workflow re-architecture — the Case becomes the intervention workspace. Two new detail tabs: **Service Log** and **Milestones**, slotted right after Action Plan (final tab order: Notes → Action Plan → **Service Log** → **Milestones** → Referrals → Documents → History). Service logs link to the case's **action-plan items**; milestones link to the program's **outcome metrics**. See [[project_case_workflow_rearchitecture]].
+- **Key design facts**: `BeneficiaryServiceLog` and `BeneficiaryMilestone` already carry a nullable `CaseId` (migration `Add_CaseId_To_BeneficiaryService_And_Milestone`, 2026-06-17). They previously persisted ONLY nested under `UpdateBeneficiary` and read only as beneficiary children. This session gave both **standalone CRUD** (mirroring `CaseActionItem`) + a by-case read folded into `getCaseById`. Two NEW nullable FKs added: `BeneficiaryServiceLog.CaseActionItemId` (→ CaseActionItem) and `BeneficiaryMilestone.ProgramOutcomeMetricId` (→ ProgramOutcomeMetric, PK is `Id`).
+- **Files touched**:
+  - BE: entities `BeneficiaryServiceLog.cs` / `BeneficiaryMilestone.cs` / `Case.cs` (added child collections); configs `BeneficiaryServiceLogConfiguration.cs` / `BeneficiaryMilestoneConfiguration.cs`; DTOs `BeneficiarySchemas.cs` (req: `CaseActionItemId`/`ProgramOutcomeMetricId`; resp display: `actionDescription`/`outcomeMetricName`) + `CaseSchemas.cs` (`CaseServiceLogs`/`CaseMilestones` on CaseResponseDto); `GetCaseById.cs` (projects both child collections filtered to this case); NEW CQRS folders `Business/CaseBusiness/BeneficiaryServiceLogs/` + `BeneficiaryMilestones/` (Create/Update/Delete/Toggle/GetAll-by-case/GetById); NEW GraphQL `Case/Mutations/BeneficiaryServiceLogMutations.cs` + `BeneficiaryMilestoneMutations.cs` + `Case/Queries/*`.
+  - FE: NEW `caselist/case/tabs/service-log-tab.tsx` + `milestones-tab.tsx`; `view-page.tsx` (TABS + render); `case-store.ts` (tab-keys `service-log`/`milestones` + add-flags); `CaseQuery.ts` (`caseServiceLogs`/`caseMilestones` on `CASE_BY_ID_QUERY`); `CaseMutation.ts` (6 new mutations); `case-service/BeneficiaryDto.ts` + `CaseDto.ts` (types). Milestone outcome-picker reads `PROGRAM_BY_ID_QUERY.outcomeMetrics` and prefills title/target.
+  - DB: NONE applied — **user owns the migration**.
+- **GraphQL ops added**: `createBeneficiaryServiceLog`/`update`/`delete` + `allBeneficiaryServiceLogsList(request, caseId, isActive)` (+ milestone equivalents); `getCaseById` now returns `caseServiceLogs`/`caseMilestones`. Create/update use single wrapped arg `beneficiaryServiceLog:`/`beneficiaryMilestone:` (`…RequestDtoInput!`); `BaseApiResponse<int>` → bare `data`.
+- **Deviations from spec**: None.
+- **Known issues opened/closed**: None.
+- **Verification**: FE combined `npx tsc --noEmit` clean (both A+B FE coexist). BE NOT built (user builds). Runtime pending BE build + migration.
+- **Migration the user must author**: add `case."BeneficiaryServiceLogs".CaseActionItemId int NULL` FK→`CaseActionItems(CaseActionItemId)` ON DELETE RESTRICT; add `case."BeneficiaryMilestones".ProgramOutcomeMetricId int NULL` FK→`ProgramOutcomeMetrics(Id)` ON DELETE RESTRICT. Both nullable, no data backfill.
+- **Next step**: Beneficiary Programs & Services tab → read-only rollup across cases (the "beneficiary becomes rollup" half of the case-only decision) is NOT yet done — logging now works on the case, but beneficiary-level inline create wasn't stripped. Track as a follow-up.
+
+### Session 5 — 2026-06-22 — FIX — COMPLETED
+
+- **Scope**: Runtime crash when opening the add form on Case → Service Log / Milestones tabs: "A `<Select.Item />` must have a value prop that is not an empty string." Both tabs had a Radix `<SelectItem value="">— None —</SelectItem>` for the optional Action-Plan-Item / Program-Outcome picker; Radix reserves `""` for the cleared state.
+- **Fix**: switched the "None" item to a `"none"` sentinel — `value` falls back to `"none"` and `onValueChange` maps `"none"`→`undefined`, so the optional link still clears with no crash.
+- **Files touched**: FE: `caselist/case/tabs/service-log-tab.tsx`, `caselist/case/tabs/milestones-tab.tsx`. BE/DB: none.
+- **Deviations from spec**: None.
+- **Known issues opened/closed**: None.
+- **Verification**: FE `npx tsc --noEmit` clean (exit 0). Reported by user from runtime.
+- **Next step**: None.
+
+### Session 6 — 2026-06-22 — UI/FIX — COMPLETED
+
+- **Scope**: Three detail-tab polish items raised by user. (1) **Service Log currency** — was hardcoded "USD" (label "Amount (USD)" + `formatCents` `currency:"USD"`); now uses the **tenant base currency**. (2) **Action Plan responsible staff** — now defaults to the **case's assigned staff**. (3) **Recurring duplication** — Action Plan had BOTH an `isRecurring` switch AND a "Recurring" value in the CASEACTIONSTATUS dropdown (confusing); kept the switch, removed the status value.
+- **How**:
+  - Currency: `formatCents` → `formatCurrency(cents/100,…)` from `@/presentation/utils/companySettingsFormatters` (reads CompanySettings session — code/symbol + number format); amount label → `Amount ({baseCurrencyCode})` via `useCompanySettingsSession`. Canonical hook `useCompanyCurrency` (auctionmanagement) was the alt; used the pure util to avoid an extra CURRENCY_BY_ID round-trip.
+  - Default staff: `ActionPlanTab` gained `defaultStaffId`/`defaultStaffName` props (view-page passes `caseRecord.assignedStaffId`/`assignedStaffName`); `responsibleStaffId` initial state + `resetForm` seed to it; `initialOption` feeds the picker label (also covers edit via `editingItem.responsibleStaff*`) so no fetch round-trip; helper text added.
+  - Recurring: added a 2nd rule to `ACTION_STATUS_FILTER` — `{ field:"dataValue", operator:"!=", value:"RECURRING", dataType:"String" }` (same pattern as `globaldonation/donation-form.tsx`). Status now = Done/Pending/InProgress/Contingent only; recurrence owned solely by the switch (orthogonal — a recurring action can still be In Progress). `!=` op confirmed supported BE-side.
+- **Files touched**: FE: `caselist/case/tabs/service-log-tab.tsx`, `caselist/case/tabs/action-plan-tab.tsx`, `caselist/case/view-page.tsx`. BE/DB: none.
+- **Deviations from spec**: None. (Legacy action items saved with status=Recurring would show blank in the status picker on edit since it's now filtered out — acceptable; edit is currently disabled and the feature is new.)
+- **Known issues opened/closed**: None.
+- **Verification**: FE `npx tsc --noEmit` clean (exit 0). Smoke after BE build: Service Log amount renders in tenant currency + label shows its code; new Action Item pre-selects the case's assigned staff; Action Status dropdown no longer lists "Recurring".
+- **Next step**: None.
+
+### Session 7 — 2026-06-23 — ENHANCE (fund-aware Service Log) — COMPLETED (⚠ needs BE build + 1 migration by user)
+
+- **Scope**: Make the Case → Service Log disbursement fund-aware. Implements the disburse-cap that the Fund Allocation #177 redesign deferred to "the Service Log save". When a program is selected on the add/edit form: show the program **money pool** (Transferred − Used = Available), **hard-block** an amount above Available (pool = real cash, FE + BE), and let the worker pick a **Program Service** whose `CostPerUnit` is the **per-beneficiary defined amount** — a **warn-only** soft cap (worker can save with approval). Selected-service detail (defined/used/remaining + type + funding flow) shown for UX.
+- **Design decisions** (user delegated both): service link = add `ProgramServiceId` FK (correct path, needs migration); cap behaviour = pool hard-block + per-service warn (real-world split).
+- **Files touched**:
+  - BE: `Base.Domain/Models/CaseModels/BeneficiaryServiceLog.cs` (modified — `ProgramServiceId` int? + nav), `Base.Infrastructure/.../BeneficiaryServiceLogConfiguration.cs` (modified — FK SetNull), `Base.Application/Schemas/CaseSchemas/BeneficiarySchemas.cs` (modified — `ProgramServiceId` on Request, `ProgramServiceName` on Response, new `ServiceLogFundingContextDto` + `ServiceLogServiceOptionDto`), `Base.Application/Mappings/CaseMappings.cs` (modified — map `ProgramServiceName`, ignore nav), `Base.Application/.../BeneficiaryServiceLogs/ServiceLogFundingGuard.cs` (created — pool hard cap, throws BadRequestException), `.../GetFundingContextQuery/GetServiceLogFundingContext.cs` (created — query+DTO), `Base.API/.../Queries/BeneficiaryServiceLogQueries.cs` (modified — `GetServiceLogFundingContext` endpoint → GQL `serviceLogFundingContext`), Create/Update handlers (modified — guard call + ProgramService FK validate), GetAll/GetById + `Cases/GetByIdQuery/GetCaseById.cs` (modified — include ProgramService nav + map name).
+  - FE: `domain/entities/case-service/BeneficiaryDto.ts` (modified — DTO fields + 2 context interfaces), `infrastructure/gql-queries/case-queries/ServiceLogFundingContextQuery.ts` (created) + `index.ts` (export), `infrastructure/gql-queries/case-queries/CaseQuery.ts` (modified — caseServiceLogs gains `programServiceId`/`programServiceName`), `caselist/case/tabs/service-log-tab.tsx` (rewritten — pool strip, service picker, service-detail card, hard/soft cap validation, new "Linked Service" grid column).
+  - DB: none (no seed — `ProgramServiceId` is a real FK; user adds the migration).
+- **Deviations from spec**: None.
+- **Known issues opened**: ISSUE-7 (OPEN) — pool **Used** and per-service **Already used** read 0 until amount-bearing service-log rows exist for the program; verify against a case that has real disbursements. Pool cap only engages when a **program** is set on the log (no program ⇒ no pool to charge, BE skips the guard).
+- **Known issues closed**: None.
+- **Verification**: FE `npx tsc --noEmit` clean (exit 0). BE not built here (user builds).
+- **Next step**: User builds BE → adds migration (`case.BeneficiaryServiceLogs.ProgramServiceId` nullable int FK → `case.ProgramServices.Id`, ON DELETE SET NULL) → reopens a case in `mode=read` → Service Log tab → select program (pool strip appears) → pick a service (detail card) → try an over-pool amount (Save blocks) and an over-service amount (amber warn, still saves).

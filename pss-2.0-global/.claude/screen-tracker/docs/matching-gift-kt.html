@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matching Gift — Knowledge Transfer</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root{
+    --indigo:#4f46e5; --indigo-600:#4f46e5; --indigo-700:#4338ca; --indigo-50:#eef2ff;
+    --violet:#7c3aed;
+    --ink:#0f172a; --slate:#475569; --line:#e2e8f0; --bg:#f8fafc;
+    --eligible:#d97706; --submitted:#2563eb; --approved:#059669; --received:#16a34a; --rejected:#dc2626; --expired:#64748b;
+    --red:#dc2626; --green:#16a34a; --amber:#d97706;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink); background:var(--bg); line-height:1.6; font-size:15px;
+  }
+  /* ---------- layout ---------- */
+  .wrap{display:flex; max-width:1180px; margin:0 auto; gap:28px; padding:0 20px;}
+  nav.toc{
+    position:sticky; top:0; align-self:flex-start; height:100vh; overflow:auto;
+    width:230px; flex:none; padding:28px 16px; background:#0c1420; border-right:1px solid #000;
+  }
+  nav.toc h4{font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:#94a3b8; margin:0 0 10px; padding:0 14px;}
+  nav.toc a{
+    display:block; padding:9px 14px; margin:2px 0; border-radius:8px;
+    color:#cbd5e1; text-decoration:none; font-size:14px; font-weight:500;
+  }
+  nav.toc a:hover{background:#fff; color:#0c1420;}
+  main{flex:1; min-width:0; padding:36px 0 90px;}
+  /* ---------- header ---------- */
+  .hero{
+    background:linear-gradient(135deg,var(--indigo-700),var(--violet));
+    color:#fff; border-radius:16px; padding:34px 36px; margin-bottom:34px;
+  }
+  .hero h1{margin:0 0 8px; font-size:30px; letter-spacing:-.02em;}
+  .hero p{margin:0; opacity:.94; font-size:16px; max-width:680px;}
+  .hero .tags{margin-top:18px; display:flex; gap:8px; flex-wrap:wrap;}
+  .hero .tags span{background:rgba(255,255,255,.16); padding:5px 12px; border-radius:20px; font-size:12.5px; font-weight:600;}
+  /* ---------- sections ---------- */
+  section{margin-bottom:54px; scroll-margin-top:20px;}
+  h2{
+    font-size:23px; letter-spacing:-.01em; margin:0 0 6px; padding-bottom:10px;
+    border-bottom:2px solid var(--line); display:flex; align-items:center; gap:11px;
+  }
+  h2 .num{
+    background:var(--indigo); color:#fff; width:30px; height:30px; border-radius:8px;
+    display:inline-flex; align-items:center; justify-content:center; font-size:15px; flex:none;
+  }
+  h3{font-size:17px; margin:26px 0 10px; color:var(--indigo-700);}
+  .lead{color:var(--slate); margin:6px 0 18px; font-size:15.5px;}
+  p{margin:10px 0;}
+  /* ---------- cards ---------- */
+  .card{background:#fff; border:1px solid var(--line); border-radius:12px; padding:20px 22px; margin:16px 0;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  .note{border-left:4px solid var(--indigo); background:var(--indigo-50); padding:13px 18px; border-radius:0 8px 8px 0; margin:16px 0;}
+  .warn{border-left:4px solid var(--amber); background:#fffbeb; padding:13px 18px; border-radius:0 8px 8px 0; margin:16px 0;}
+  /* ---------- step list ---------- */
+  .steps{list-style:none; padding:0; margin:18px 0; counter-reset:s;}
+  .steps>li{
+    position:relative; padding:14px 18px 14px 58px; margin:10px 0; background:#fff;
+    border:1px solid var(--line); border-radius:10px; counter-increment:s;
+  }
+  .steps>li::before{
+    content:counter(s); position:absolute; left:16px; top:14px; width:28px; height:28px;
+    background:var(--indigo); color:#fff; border-radius:50%; display:flex; align-items:center;
+    justify-content:center; font-weight:700; font-size:14px;
+  }
+  .steps>li b{color:var(--indigo-700);}
+  /* ---------- tables ---------- */
+  table{width:100%; border-collapse:collapse; margin:14px 0; font-size:13.5px; background:#fff;
+    border:1px solid var(--line); border-radius:10px; overflow:hidden;}
+  th{background:#f1f5f9; text-align:left; padding:10px 12px; font-weight:600; color:var(--ink); font-size:12.5px;
+    text-transform:uppercase; letter-spacing:.03em;}
+  td{padding:10px 12px; border-top:1px solid var(--line); vertical-align:top;}
+  tr:hover td{background:#fafcff;}
+  code{background:#f1f5f9; padding:2px 6px; border-radius:5px; font-size:12.5px; font-family:"SF Mono",Consolas,monospace; color:var(--indigo-700);}
+  .req{color:var(--red); font-weight:700;}
+  /* ---------- badges ---------- */
+  .b{display:inline-block; padding:3px 11px; border-radius:20px; font-size:12px; font-weight:700; color:#fff; white-space:nowrap;}
+  .b.eligible{background:var(--eligible)} .b.submitted{background:var(--submitted)} .b.approved{background:var(--approved)}
+  .b.received{background:var(--received)} .b.rejected{background:var(--rejected)} .b.expired{background:var(--expired)}
+  /* =================================================================
+     ANIMATED FLOW — the moving matching-gift pipeline (7 stages)
+  ================================================================= */
+  .stage-wrap{background:#1e1b4b; border-radius:16px; padding:34px 24px 26px; margin:22px 0; color:#e0e7ff; overflow:hidden;}
+  .stage-wrap h3{color:#a5b4fc; margin-top:0;}
+  .track{position:relative; height:150px; margin:30px 0 12px;}
+  .rail{position:absolute; top:96px; left:3%; right:3%; height:6px; background:rgba(255,255,255,.14); border-radius:4px;}
+  .rail-fill{position:absolute; top:0; left:0; height:100%; width:0; background:linear-gradient(90deg,#818cf8,#c7d2fe);
+    border-radius:4px; animation:fill 28s ease-in-out infinite;}
+  @keyframes fill{
+    0%{width:4%} 10%{width:6%} 12%{width:20%} 22%{width:22%} 24%{width:35%} 34%{width:36%}
+    36%{width:49%} 46%{width:50%} 48%{width:64%} 58%{width:65%} 60%{width:79%} 70%{width:80%}
+    72%{width:96%} 100%{width:96%}
+  }
+  .node{position:absolute; top:74px; transform:translateX(-50%); text-align:center; width:92px;}
+  .node .dot{width:16px; height:16px; border-radius:50%; background:#1e1b4b; border:3px solid #818cf8; margin:0 auto 8px;
+    box-shadow:0 0 0 4px rgba(129,140,248,.16);}
+  .node .lbl{font-size:11px; font-weight:700; color:#c7d2fe; line-height:1.2;}
+  .node .dt{font-size:10px; color:#a5b4fc; opacity:.85;}
+  .node:nth-child(2){left:4%} .node:nth-child(3){left:19%} .node:nth-child(4){left:34%}
+  .node:nth-child(5){left:49%} .node:nth-child(6){left:64%} .node:nth-child(7){left:79%} .node:nth-child(8){left:96%}
+  .avatar{position:absolute; top:46px; transform:translateX(-50%); animation:travel 28s ease-in-out infinite; z-index:5;}
+  .avatar .face{width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#818cf8,#4338ca);
+    display:flex; align-items:center; justify-content:center; font-size:19px; box-shadow:0 6px 16px rgba(0,0,0,.4);
+    border:2px solid #fff;}
+  .avatar .name{margin-top:5px; font-size:10.5px; font-weight:700; color:#fff; background:rgba(0,0,0,.35);
+    padding:1px 7px; border-radius:10px; white-space:nowrap; text-align:center;}
+  @keyframes travel{
+    0%{left:4%} 10%{left:4%} 12%{left:19%} 22%{left:19%} 24%{left:34%} 34%{left:34%}
+    36%{left:49%} 46%{left:49%} 48%{left:64%} 58%{left:64%} 60%{left:79%} 70%{left:79%}
+    72%{left:96%} 100%{left:96%}
+  }
+  .comms{position:relative; min-height:50px; margin-top:8px;}
+  .ping{position:absolute; left:50%; transform:translateX(-50%); top:0; opacity:0;
+    background:#312e81; border:1px solid #818cf8; color:#e0e7ff; padding:7px 14px; border-radius:20px;
+    font-size:12.5px; font-weight:600; white-space:nowrap; box-shadow:0 4px 14px rgba(0,0,0,.35); text-align:center;}
+  .ping1{animation:show 28s ease-in-out infinite; animation-delay:0s;}
+  .ping2{animation:show 28s ease-in-out infinite; animation-delay:4s;}
+  .ping3{animation:show 28s ease-in-out infinite; animation-delay:8s;}
+  .ping4{animation:show 28s ease-in-out infinite; animation-delay:12s;}
+  .ping5{animation:show 28s ease-in-out infinite; animation-delay:16s;}
+  .ping6{animation:show 28s ease-in-out infinite; animation-delay:20s;}
+  .ping7{animation:show 28s ease-in-out infinite; animation-delay:24s;}
+  @keyframes show{0%,3%{opacity:0; transform:translateX(-50%) translateY(8px)}
+    5%,12%{opacity:1; transform:translateX(-50%) translateY(0)}
+    14%,100%{opacity:0; transform:translateX(-50%) translateY(-8px)}}
+  .legend{display:flex; gap:18px; flex-wrap:wrap; margin-top:18px; font-size:12px; color:#a5b4fc;}
+  .legend b{color:#fff;}
+  .mermaid{background:#fff; border:1px solid var(--line); border-radius:12px; padding:20px; margin:18px 0; text-align:center;}
+  /* ---------- screen-map strip ---------- */
+  .map{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin:18px 0;}
+  @media(max-width:760px){.map{grid-template-columns:1fr 1fr}}
+  .map .m{background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px; text-align:center;}
+  .map .m .ic{font-size:26px;}
+  .map .m h4{margin:8px 0 4px; font-size:14px; color:var(--indigo-700);}
+  .map .m p{margin:0; font-size:12.5px; color:var(--slate); line-height:1.45;}
+  .map .m .sn{display:inline-block; margin-top:8px; background:var(--indigo-50); color:var(--indigo-700);
+    font-size:11px; font-weight:700; padding:2px 9px; border-radius:12px;}
+  /* ---------- feature checklist ---------- */
+  .featgrp{padding:18px 20px;}
+  .featgrp h4{margin:0 0 6px; font-size:14.5px; color:var(--indigo-700); display:flex; align-items:center; gap:8px;}
+  .feat{list-style:none; padding:0; margin:6px 0 0;}
+  .feat li{position:relative; padding:7px 0 7px 24px; font-size:13.5px; line-height:1.45; border-top:1px solid var(--line);}
+  .feat li:first-child{border-top:none;}
+  .feat li::before{content:"✓"; position:absolute; left:2px; top:7px; color:#fff; background:var(--indigo);
+    width:15px; height:15px; border-radius:50%; font-size:9px; font-weight:800; text-align:center; line-height:15px;}
+  .feat li b{color:var(--ink);}
+  /* ---------- interactive walk-through ---------- */
+  .setup-wrap{padding-top:24px;}
+  .setup-bar{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; margin-bottom:6px;}
+  .switch-box{display:flex; align-items:center; gap:10px; font-size:12.5px; font-weight:700; color:#a5b4fc;}
+  .switch{position:relative; display:inline-block; width:46px; height:24px;}
+  .switch input{opacity:0; width:0; height:0;}
+  .slider{position:absolute; inset:0; background:rgba(255,255,255,.22); border-radius:24px; transition:.3s; cursor:pointer;}
+  .slider::before{content:""; position:absolute; height:18px; width:18px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.3s;}
+  .switch input:checked + .slider{background:var(--green);}
+  .switch input:checked + .slider::before{transform:translateX(22px);}
+  .nav-btns{display:flex; gap:8px;}
+  .nav-btns button{background:rgba(255,255,255,.12); color:#e0e7ff; border:1px solid #818cf8; padding:7px 15px;
+    border-radius:20px; font-size:13px; font-weight:700; cursor:pointer; transition:.18s;}
+  .nav-btns button:hover:not(:disabled){background:#818cf8; color:#1e1b4b;}
+  .nav-btns button:disabled{opacity:.32; cursor:not-allowed;}
+  .setup-coin{animation:none; transition:left .55s cubic-bezier(.45,.05,.3,1);}
+  .setup-fill{animation:none; width:0; transition:width .55s cubic-bezier(.45,.05,.3,1);}
+  .snode{cursor:pointer;}
+  .snode .lbl{transition:color .2s;}
+  .snode .dot{transition:transform .25s, background .25s, box-shadow .25s;}
+  .snode.done .dot{background:#a5b4fc; border-color:#c7d2fe;}
+  .snode.on .dot{background:#818cf8; transform:scale(1.35); box-shadow:0 0 0 6px rgba(129,140,248,.32);}
+  .snode.on .lbl{color:#fff;}
+  .setup-caption{background:rgba(0,0,0,.26); border:1px solid #818cf8; border-radius:12px; padding:14px 18px;
+    margin-top:16px; font-size:13.5px; color:#e0e7ff; line-height:1.55; min-height:54px;}
+  .setup-caption .step-i{display:inline-block; background:#818cf8; color:#1e1b4b; font-weight:800; font-size:11px;
+    padding:2px 9px; border-radius:10px; margin-right:8px;}
+  .setup-caption b{color:#fff;}
+  /* ---------- worked example ---------- */
+  .ex-hero{background:linear-gradient(135deg,#1e1b4b,var(--indigo-700)); color:#fff; border-radius:14px; padding:22px 24px; margin:16px 0 22px;}
+  .ex-hero h3{color:#a5b4fc; margin:0 0 6px;}
+  .ex-hero p{margin:0; opacity:.92; font-size:14px;}
+  .ex-hero .tags{margin-top:14px; display:flex; gap:8px; flex-wrap:wrap;}
+  .ex-hero .tags span{background:rgba(255,255,255,.16); padding:4px 11px; border-radius:20px; font-size:12px; font-weight:700;}
+  .ex-slot{display:flex; gap:14px; align-items:flex-start; padding:14px 0; border-top:1px solid var(--line);}
+  .ex-slot:first-child{border-top:none;}
+  .ex-time{flex:none; width:150px; font-size:12.5px; font-weight:700; color:var(--indigo-700); background:var(--indigo-50);
+    border:1px solid #c7d2fe; border-radius:9px; padding:7px 10px; text-align:center; line-height:1.35;}
+  .ex-body{flex:1; min-width:0;}
+  .ex-body h4{margin:0 0 6px; font-size:15px; color:var(--ink); display:flex; align-items:center; gap:8px;}
+  .ex-pills{display:flex; gap:7px; flex-wrap:wrap; margin-top:4px;}
+  .ex-pill{display:inline-block; background:#f1f5f9; border:1px solid var(--line); color:var(--slate);
+    padding:4px 11px; border-radius:16px; font-size:12.5px; font-weight:600;}
+  .ex-num{flex:none; width:24px; height:24px; border-radius:50%; background:var(--indigo); color:#fff;
+    font-size:12px; font-weight:800; display:inline-flex; align-items:center; justify-content:center;}
+  .ex-map{width:100%; border-collapse:collapse; margin-top:8px; font-size:13.5px;}
+  .ex-map th,.ex-map td{text-align:left; padding:8px 12px; border-bottom:1px solid var(--line);}
+  .ex-map th{background:#fafcff; color:var(--indigo-700); font-size:12px; text-transform:uppercase; letter-spacing:.04em;}
+  .ex-map td code{font-size:12.5px;}
+  /* ---------- progress bar (worked example) ---------- */
+  .pbar{height:9px; background:#f1f5f9; border-radius:6px; overflow:hidden; margin:6px 0;}
+  .pbar>span{display:block; height:100%; background:linear-gradient(90deg,var(--indigo),#818cf8); border-radius:6px;}
+  .pbar.met>span{background:linear-gradient(90deg,#16a34a,#4ade80);}
+  /* ---------- fullscreen diagram / flow modal ---------- */
+  .fs-host{position:relative;}
+  .fs-btn{position:absolute; top:10px; right:10px; z-index:8; width:34px; height:34px; cursor:pointer;
+    border-radius:9px; border:1px solid rgba(255,255,255,.4); background:rgba(0,0,0,.42); color:#fff;
+    font-size:15px; line-height:1; display:flex; align-items:center; justify-content:center; transition:.16s;}
+  .fs-btn:hover{background:var(--indigo); border-color:var(--indigo); transform:scale(1.08);}
+  .mermaid.fs-host .fs-btn{background:rgba(79,70,229,.9); border-color:var(--indigo);}
+  .setup-wrap.fs-host .setup-bar{padding-right:46px;}
+  .fs-canvas .fs-btn{display:none;}
+  .fs-modal{position:fixed; inset:0; z-index:1000; background:rgba(15,23,42,.86);
+    -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); display:none; flex-direction:column;}
+  .fs-modal.open{display:flex;}
+  .fs-toolbar{display:flex; align-items:center; gap:9px; padding:11px 16px; background:#0c1420; color:#fff; flex:none;}
+  .fs-toolbar .fs-title{font-size:14px; font-weight:700; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .fs-toolbar button{background:rgba(255,255,255,.12); color:#fff; border:1px solid rgba(255,255,255,.26);
+    border-radius:8px; min-width:38px; height:34px; padding:0 11px; cursor:pointer; font-size:15px; font-weight:700; transition:.15s;}
+  .fs-toolbar button:hover{background:var(--indigo); border-color:var(--indigo);}
+  .fs-toolbar .fs-zoomval{font-size:12.5px; min-width:50px; text-align:center; opacity:.85; font-variant-numeric:tabular-nums;}
+  .fs-toolbar .fs-close{margin-left:6px;}
+  .fs-viewport{flex:1; overflow:hidden; position:relative; cursor:grab; display:flex; align-items:center; justify-content:center;}
+  .fs-viewport.grabbing{cursor:grabbing;}
+  .fs-canvas{transform-origin:center center; will-change:transform;}
+  .fs-canvas>*{margin:0 !important; max-width:none !important; width:auto;}
+  .fs-canvas .stage-wrap{width:min(90vw,1080px);}
+  .fs-canvas .mermaid{background:#fff;}
+  .fs-hint{position:absolute; bottom:14px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,.55);
+    color:#a5b4fc; font-size:12px; font-weight:600; padding:6px 15px; border-radius:20px; pointer-events:none;}
+  /* ---------- print ---------- */
+  @media print{
+    nav.toc{display:none} .wrap{display:block} main{padding:0}
+    .stage-wrap{background:#fff; color:#0f172a; border:1px solid var(--line);}
+    .stage-wrap h3{color:var(--indigo-700)} .node .lbl,.node .dt{color:var(--ink)}
+    .avatar,.ping,.legend,.setup-bar,.setup-caption,.fs-btn{display:none} section{page-break-inside:avoid}
+    .fs-modal{display:none !important}
+    .hero{background:var(--indigo-700)!important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    a{color:var(--ink); text-decoration:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- =================== SIDEBAR =================== -->
+  <nav class="toc">
+    <h4>Contents</h4>
+    <a href="#agenda">Agenda</a>
+    <a href="#intro">Overview</a>
+    <a href="#screens">The Four Tabs</a>
+    <a href="#flow">① Start → End Flow</a>
+    <a href="#walk">⚙ Lifecycle Walk-through</a>
+    <a href="#diagram">② Live Flow + Example</a>
+    <a href="#surfaces">③ The Tabs in Detail</a>
+    <a href="#data">④ Entity Tables</a>
+    <a href="#status">⑤ Statuses &amp; Lookups</a>
+    <a href="#example">⑥ Worked Example</a>
+  </nav>
+
+  <main>
+
+    <!-- =================== HERO =================== -->
+    <div class="hero">
+      <h1>Matching Gift</h1>
+      <p>Many employers double or triple their staff's charitable gifts — Microsoft 1:1 up to $15k/yr, Apple 3:1, ExxonMobil 3:1. When the NGO surfaces that, a donor's gift can be matched at <b>zero extra cost to the donor</b>. This screen is the operations hub: curate corporate programmes, track every match from <i>Eligible</i> to <i>Received</i>, give donors a self-service employer search, and configure auto-detection &amp; reminders.</p>
+      <div class="tags">
+        <span>🤝 #11 · Fundraising (P2P)</span>
+        <span>4 tabs · 3 entities</span>
+        <span>schema <code style="color:#fff;background:rgba(255,255,255,.18)">fund</code></span>
+      </div>
+    </div>
+
+    <!-- =================== AGENDA =================== -->
+    <section id="agenda">
+      <h2><span class="num">≡</span> Agenda</h2>
+      <p class="lead">Everything the Matching Gift screen does, grouped as discussion topics — one card per tab.</p>
+
+      <div class="note" style="margin-top:0">
+        <b>In one line:</b> a donor gives → the NGO matches them to their employer's programme → tracks the match <span class="b eligible">Eligible</span> → <span class="b submitted">Submitted</span> → <span class="b approved">Approved</span> → <span class="b received">Received</span> → the matched dollars arrive, <b>doubling or tripling the original gift</b>.
+      </div>
+
+      <h3>Feature checklist — what the four tabs actually do</h3>
+      <div class="grid2">
+        <div class="card featgrp">
+          <h4>🏢 Curate companies <span class="b" style="background:var(--indigo); font-size:10px">Tab 1</span></h4>
+          <ul class="feat">
+            <li><b>Master CRUD</b> — every corporate programme: ratio, min, yearly cap, eligibility, submission steps</li>
+            <li><b>Full-page view-page</b> — code-driven FORM (5 sections) + read-only DETAIL profile</li>
+            <li><b>Donor count</b> per company + "View Donors" jump straight into the Tracker</li>
+            <li><b>Guarded delete</b> — blocked while matches exist; toggle inactive instead</li>
+          </ul>
+        </div>
+        <div class="card featgrp">
+          <h4>✅ Track matches <span class="b" style="background:var(--indigo); font-size:10px">Tab 2</span></h4>
+          <ul class="feat">
+            <li><b>Lifecycle grid</b> — donation, donor, amount, company, match amount, status, dates</li>
+            <li><b>6 status chips</b> — All / Eligible / Submitted / Approved / Received / Rejected / Expired</li>
+            <li><b>Inline status action bar</b> — Mark Submitted / Approved / Received / Rejected, state-guarded</li>
+            <li><b>Resubmit</b> a rejected match → clones a fresh Eligible row</li>
+          </ul>
+        </div>
+        <div class="card featgrp">
+          <h4>🧭 Donor guidance <span class="b" style="background:var(--indigo); font-size:10px">Tab 3</span></h4>
+          <ul class="feat">
+            <li><b>Employer search widget</b> — donor types their employer, sees ratio / cap / how-to-submit</li>
+            <li><b>Embed code</b> — copyable iframe snippet to drop the widget on any site</li>
+            <li><b>Auto-notification settings</b> — reminder toggle, template, timing, follow-up</li>
+            <li><b>Shared with Tab 4</b> — both bind the same <code>MatchingGiftSettings</code> row</li>
+          </ul>
+        </div>
+        <div class="card featgrp">
+          <h4>⚙️ Configure <span class="b" style="background:var(--indigo); font-size:10px">Tab 4</span></h4>
+          <ul class="feat">
+            <li><b>7 org-level toggles</b> — auto-detect, reminders, separate revenue, widget placement, year-end</li>
+            <li><b>Upsert</b> — one row per tenant; Save commits all of Tab 3 + Tab 4 at once</li>
+            <li><b>4 KPIs above all tabs</b> — Eligible / Submitted / Received / Unclaimed potential</li>
+            <li><b>Minimum-for-reminder</b> threshold so trivial gifts don't trigger emails</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================== OVERVIEW =================== -->
+    <section id="intro">
+      <h2><span class="num">▸</span> Overview</h2>
+      <p class="lead">A matching gift is an employer's promise to match an employee's charitable donation. The NGO's job is to <b>surface that money</b> — let donors discover their eligibility, and chase each match through to the bank. It's "free" revenue the donor already unlocked simply by giving.</p>
+
+      <div class="grid2">
+        <div class="card">
+          <h3 style="margin-top:0">One screen, three entities</h3>
+          <p style="font-size:14px; color:var(--slate); margin-top:0">
+            <b>MatchingCompany</b> is the curated catalogue of corporate programmes (Tab 1). <b>MatchingGift</b> is one tracked opportunity tying a donation to a company (Tab 2). <b>MatchingGiftSettings</b> is the single per-tenant config row (Tabs 3 &amp; 4).
+          </p>
+          <p style="font-size:14px; color:var(--slate)">
+            All three live under schema <code>fund</code>, under <b>one</b> menu with four tabs. The screen <i>consumes</i> existing entities — <code>GlobalDonation</code>, <code>Contact</code>, <code>EmailTemplate</code> — as FK sources; it doesn't recreate them.
+          </p>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">The match math</h3>
+          <p style="font-size:14px; color:var(--slate); margin-top:0">
+            When a match is created, the amount is computed once and frozen:
+          </p>
+          <ul class="feat">
+            <li><code>MatchAmount = DonationAmount × MatchRatio</code> — snapshotted at create</li>
+            <li>If the company later changes its ratio, existing matches <b>keep</b> their original figure</li>
+            <li><code>MinimumDonation</code> gates eligibility; <code>MaximumPerYearPerEmployee</code> caps the yearly total</li>
+            <li>Ratio is stored <code>decimal(4,2)</code> (1.0, 2.0, 3.0) and shown "1:1", "2:1", "3:1"</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="note">
+        <b>Why it matters.</b> A $500 gift to a Microsoft (1:1) employee becomes $1,000 for the cause; to an ExxonMobil (3:1) employee, $2,000 of match on top. The donor pays nothing extra — the NGO just has to <i>know</i> the programme exists, <i>tell</i> the donor, and <i>file</i> the paperwork. This screen does all three.
+      </div>
+    </section>
+
+    <!-- =================== THE FOUR TABS MAP =================== -->
+    <section id="screens">
+      <h2><span class="num">▦</span> The Four Tabs at a Glance</h2>
+      <p class="lead">One menu (<code>crm/p2pfundraising/matchinggift</code>), four tabs sharing one set of KPIs. Each tab owns one job; three hidden child menus back the capability checks.</p>
+
+      <div class="map">
+        <div class="m">
+          <div class="ic">🏢</div>
+          <h4>Matching Companies</h4>
+          <p>Master grid of corporate programmes — ratio, caps, eligibility, submission steps. FORM + DETAIL view-pages.</p>
+          <span class="sn">Tab 1 · MATCHINGCOMPANY</span>
+        </div>
+        <div class="m">
+          <div class="ic">✅</div>
+          <h4>Matching Tracker</h4>
+          <p>Lifecycle grid of individual matches — 6 status chips, inline status action bar, resubmit.</p>
+          <span class="sn">Tab 2 · MATCHINGGIFTRECORD</span>
+        </div>
+        <div class="m">
+          <div class="ic">🧭</div>
+          <h4>Donor Guidance</h4>
+          <p>Employer-search widget + embed code + auto-reminder settings the donor self-serves.</p>
+          <span class="sn">Tab 3 · public-facing</span>
+        </div>
+        <div class="m">
+          <div class="ic">⚙️</div>
+          <h4>Settings</h4>
+          <p>7 org-level toggles &amp; thresholds — one upsert row per tenant; commits Tab 3 too.</p>
+          <span class="sn">Tab 4 · MATCHINGGIFTSETTINGS</span>
+        </div>
+      </div>
+
+      <div class="note">
+        <b>How they hand off.</b> A company's <b>"View Donors"</b> row action (Tab 1) deep-links to <b>Tab 2</b> filtered to that company (<code>?tab=tracker&amp;matchingCompanyId={id}</code>). A Tracker row opens its <b>detail</b> with the inline status bar (<code>?tab=tracker&amp;mode=read&amp;id={id}</code>). The reminder template chosen in <b>Tab 3</b> is the same field saved by <b>Tab 4</b> — both write one <code>MatchingGiftSettings</code> row. The 4 KPIs sit above every tab and refresh after any mutation.
+      </div>
+    </section>
+
+    <!-- =================== ① START → END FLOW =================== -->
+    <section id="flow">
+      <h2><span class="num">1</span> The Flow — Start to End</h2>
+      <p class="lead">The whole matching-gift journey, in order. The admin curates the programme, a donation lands, a match record is born, the donor files with the employer, the employer approves, the funds arrive — and the original gift is doubled.</p>
+
+      <ol class="steps">
+        <li><b>Curate the programme.</b> In Tab 1, add the donor's employer — Microsoft, ratio <b>1:1</b>, cap $15,000/yr, eligibility (full-time), submission URL &amp; steps. This is reference data, curated once and reused for every employee.</li>
+        <li><b>A donation lands.</b> A donor gives (e.g. $500 via the donation flow). If <b>Auto-detect employer</b> is on and their contact record names a matching company, the screen flags the match opportunity; otherwise an admin links it manually.</li>
+        <li><b>Match created.</b> <span class="b eligible">Eligible</span> A <code>MatchingGift</code> row is born tying the <code>GlobalDonation</code> to the <code>MatchingCompany</code>. The donation amount is snapshotted and <code>MatchAmount = $500 × 1.0 = $500</code> is computed and stored.</li>
+        <li><b>Donor submits to employer.</b> <span class="b submitted">Submitted</span> The donor files the match request on the employer's giving portal (the NGO can send a reminder email — a service placeholder). Admin marks it Submitted with the date; <code>ExpectedDate</code> is set.</li>
+        <li><b>Employer approves.</b> <span class="b approved">Approved</span> The employer green-lights the match. Admin marks Approved; <code>ApprovedDate</code> stamped. (Or the employer declines → <span class="b rejected">Rejected</span> with a reason ≥ 10 chars.)</li>
+        <li><b>Funds received.</b> <span class="b received">Received</span> The matched cheque arrives. Admin marks Received; <code>ReceivedDate</code> stamped and the <code>MatchAmount</code> now counts in the "Matches Received" KPI. Terminal state.</li>
+        <li><b>Off-path outcomes.</b> A match left too long, or past the yearly cap, can go <span class="b expired">Expired</span>. A <span class="b rejected">Rejected</span> match can be <b>Resubmitted</b> — that clones a fresh <span class="b eligible">Eligible</span> row to try again.</li>
+      </ol>
+
+      <div class="note"><b>In plain words:</b> the company catalogue is built once; from then on every eligible donation spawns a match record that the team walks through four states. The only money that actually moves is the employer's cheque at "Received" — everything before it is tracking and nudging so that cheque doesn't get forgotten.</div>
+    </section>
+
+    <!-- =================== ⚙ INTERACTIVE WALK-THROUGH =================== -->
+    <section id="walk">
+      <h2><span class="num">⚙</span> Lifecycle Walk-through — Step by Step</h2>
+      <p class="lead">The full match journey as movable steps. Flip the switch to <b>Auto</b> and it walks itself; leave it on <b>Manual</b> and you drive — click any node, or step <b>◀ Back / Forward ▶</b> to slide the coin along the board.</p>
+
+      <div class="stage-wrap setup-wrap">
+        <div class="setup-bar">
+          <div class="switch-box">
+            <span>Manual</span>
+            <label class="switch"><input type="checkbox" id="autoToggle"><span class="slider"></span></label>
+            <span>Auto</span>
+          </div>
+          <div class="nav-btns">
+            <button id="prevBtn">◀ Back</button>
+            <button id="nextBtn">Forward ▶</button>
+            <button id="resetBtn">↻ Reset</button>
+          </div>
+        </div>
+
+        <div class="track setup-track" id="setupTrack">
+          <div class="avatar setup-coin" id="setupCoin"><div class="face">🤝</div><div class="name">you are here</div></div>
+          <div class="rail"><div class="rail-fill setup-fill" id="setupFill"></div></div>
+        </div>
+
+        <div class="setup-caption" id="setupCaption"></div>
+
+        <div class="legend">
+          <span>🟢 <b>Auto</b> = the coin advances on its own every ~2s and loops</span>
+          <span>🖐 <b>Manual</b> = click a node, or use ◀ / ▶ to move one step</span>
+          <span>🤝 <b>The coin</b> = where this match is in its lifecycle right now</span>
+        </div>
+      </div>
+      <p style="text-align:center; color:var(--slate); font-size:13px;">↑ Same shape as the live flow below — but here <b>you</b> drive the piece, from curating the company all the way to the matched cheque.</p>
+    </section>
+
+    <!-- =================== ② LIVE FLOW + EXAMPLE =================== -->
+    <section id="diagram">
+      <h2><span class="num">2</span> Live Flow — Watch One Match</h2>
+      <p class="lead">Follow <b>Sarah Johnson's $500 gift</b>, matched <b>1:1 by Microsoft</b>. Watch the admin curate Microsoft, the donation land, the match record open as <i>Eligible</i>, Sarah file with her employer, Microsoft approve, the cheque arrive — and Sarah's $500 become <b>$1,000</b> for the cause. The bubbles are the real touchpoints.</p>
+
+      <div class="stage-wrap">
+        <h3>🤝 Sarah Johnson × Microsoft — from curate to matched cheque</h3>
+
+        <div class="track">
+          <div class="avatar"><div class="face">🤝</div><div class="name">Match</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">CURATE</div><div class="dt">Tab 1 · Microsoft 1:1</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">DONATION</div><div class="dt">$500 lands</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">ELIGIBLE</div><div class="dt">match created</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">SUBMITTED</div><div class="dt">Mar 15</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">APPROVED</div><div class="dt">Apr 20</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">RECEIVED</div><div class="dt">May 1</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">DOUBLED</div><div class="dt">$1,000 total</div></div>
+          <div class="rail"><div class="rail-fill"></div></div>
+        </div>
+
+        <div class="comms">
+          <div class="ping ping1">🏢 Microsoft curated — ratio 1:1, cap $15,000/yr</div>
+          <div class="ping ping2">💳 Sarah donates $500 — auto-detect flags her employer</div>
+          <div class="ping ping3">🟡 Match created — Eligible, MatchAmount $500</div>
+          <div class="ping ping4">📨 Marked Submitted — Sarah filed on Microsoft's portal (Mar 15)</div>
+          <div class="ping ping5">🟢 Microsoft approved the match (Apr 20)</div>
+          <div class="ping ping6">💰 Cheque received — $500 match in the bank (May 1)</div>
+          <div class="ping ping7">🎉 Gift doubled — $500 + $500 = $1,000 for the cause</div>
+        </div>
+
+        <div class="legend">
+          <span>🤝 <b>Match</b> = one MatchingGift record moving through its life</span>
+          <span>🌊 <b>Nodes</b> = the status / action at each step</span>
+          <span>💬 <b>Bubbles</b> = a donation, a status change or a reminder at that moment</span>
+        </div>
+      </div>
+      <p style="text-align:center; color:var(--slate); font-size:13px;">↑ The animation loops. Each pause = a real step; each bubble = a donation, a status change, or a reminder email.</p>
+
+      <h3>The match hand-off — from donation to matched cheque</h3>
+      <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor Donor
+    participant Don as fund.GlobalDonation
+    participant Det as Auto-detect
+    participant MG as fund.MatchingGift
+    participant Emp as Employer portal
+    participant KPI as KPI roll-up
+    Donor->>Don: Gives $500
+    Don->>Det: Employer on contact record?
+    Det->>MG: Create match — ELIGIBLE, MatchAmount = $500 × 1.0
+    Note over MG: Send Reminder = SERVICE_PLACEHOLDER (toast only)
+    Donor->>Emp: Files match request
+    Emp-->>MG: Mark SUBMITTED (date) → APPROVED → RECEIVED
+    MG->>MG: UpdateMatchingGiftStatus guards every transition
+    MG->>KPI: Received MatchAmount counts in "Matches Received"
+    Note over KPI: Rejected? → ResubmitMatchingGift clones a fresh ELIGIBLE
+      </pre>
+    </section>
+
+    <!-- =================== ③ THE TABS IN DETAIL =================== -->
+    <section id="surfaces">
+      <h2><span class="num">3</span> The Tabs in Detail</h2>
+      <p class="lead">What each tab looks like and does. A master grid (Tab 1), a lifecycle tracker (Tab 2), a donor self-service widget (Tab 3), and a settings form (Tab 4) — under 4 KPIs.</p>
+
+      <h3>📊 The 4 KPIs — above every tab</h3>
+      <table>
+        <tr><th>KPI</th><th>Computes</th><th>Subtitle</th></tr>
+        <tr><td><b>Matching-Eligible Donations</b></td><td><code>SUM(DonationAmount)</code> where status ∈ Eligible/Submitted/Approved/Received</td><td>"234 donations"</td></tr>
+        <tr><td><b>Matches Submitted</b></td><td><code>SUM(MatchAmount)</code> where status ∈ Submitted/Approved/Received</td><td>"112 submitted"</td></tr>
+        <tr><td><b>Matches Received</b></td><td><code>SUM(MatchAmount)</code> where status = Received</td><td>"89 received"</td></tr>
+        <tr><td><b>Unclaimed Potential</b></td><td><code>SUM(MatchAmount)</code> where status = Eligible</td><td>"122 not yet submitted"</td></tr>
+      </table>
+      <p style="color:var(--slate); font-size:13px;">All four come from <code>GetMatchingGiftSummary</code> (no args, tenant-scoped) and refresh after every create / status-change / delete. "Unclaimed Potential" is the headline number — money sitting on the table because no one has filed yet.</p>
+
+      <h3>🏢 Tab 1 — Matching Companies</h3>
+      <div class="grid2">
+        <div class="card">
+          <h4 style="margin-top:0; color:var(--indigo-700)">The grid</h4>
+          <ul class="feat">
+            <li><b>8 columns</b> — Company, Match Ratio ("3:1"), Min, Max/yr, Guidelines, Donors, Status, Actions</li>
+            <li><b>Search</b> by company name (server-side)</li>
+            <li><b>Donor count</b> — distinct donors matched to this company</li>
+            <li><b>Row actions</b> — View · Edit · View Donors · Toggle · Delete (guarded)</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4 style="margin-top:0; color:var(--indigo-700)">FORM &amp; DETAIL view-pages</h4>
+          <ul class="feat">
+            <li><b>Code-driven FORM</b> (not RJSF) — 5 sections: Basic, Match Limits, Eligibility, Submission, Contact &amp; Notes</li>
+            <li><b>URL modes</b> — <code>?tab=companies&amp;mode=new|edit|read&amp;id={id}</code></li>
+            <li><b>DETAIL</b> — 2-col read-only profile: programme overview, how-to-submit, matched-donors sidebar</li>
+            <li><b>Delete guard</b> — blocked if matches exist ("Toggle to inactive instead")</li>
+          </ul>
+        </div>
+      </div>
+      <div class="note" style="margin-top:0">The eligibility flags (Full-time / Part-time / Retirees / Spouses) render as an inline chip group on the FORM and collapse to a joined label ("Full-time, Retirees") in the grid &amp; detail. The "View Donors" action and the DETAIL sidebar both jump into <b>Tab 2</b> pre-filtered to this company.</div>
+
+      <h3>✅ Tab 2 — Matching Tracker</h3>
+      <div class="note" style="margin-top:0">The tracker grid lists every individual match. Rows still <span class="b eligible" style="font-size:10px">Eligible</span> get an amber highlight (action needed). A full-row click opens the <b>tracker detail</b> with an <b>inline status action bar</b> that replaced the old mini-modal — each button fires <code>UpdateMatchingGiftStatus</code> with an inline date (and, for Reject, a reason ≥ 10 chars).</div>
+      <table>
+        <tr><th>Column</th><th>Shows</th></tr>
+        <tr><td><b>Donation</b></td><td>Receipt number ("RCP-2026-0892") → links to the <code>GlobalDonation</code></td></tr>
+        <tr><td><b>Donor · Amount · Company</b></td><td>Donor name, the original gift, the matching company</td></tr>
+        <tr><td><b>Match Amount</b></td><td>"$500" or bold "$1,500 (3:1)" when the ratio isn't 1:1</td></tr>
+        <tr><td><b>Status</b></td><td>6-variant badge — amber / blue / emerald / green / red / slate</td></tr>
+        <tr><td><b>Submitted · Expected</b></td><td>Key dates, or "—"</td></tr>
+        <tr><td><b>Actions</b></td><td>View · Send Reminder (placeholder); status moves live in the detail action bar</td></tr>
+      </table>
+      <p style="color:var(--slate); font-size:13px;">The detail page carries a <b>status timeline</b> (which states this record passed through, with dates), a donation snapshot, the matching-programme card, donor profile sidebar and an activity log derived from the date columns. A <b>status-flow diagram</b> sits in the grid footer. Tab 2 LIST also offers Company / date-range / donor-search filters.</p>
+
+      <h3>🧭 Tab 3 — Donor Guidance</h3>
+      <div class="grid2">
+        <div class="card">
+          <h4 style="margin-top:0; color:var(--indigo-700)">Employer search + embed</h4>
+          <ul class="feat">
+            <li><b>"Does your employer match?"</b> — type an employer, see ratio / min / max / eligibility</li>
+            <li><b>How-to-submit</b> steps + CTA to the employer's giving portal</li>
+            <li><b>Embed code</b> — copyable iframe snippet (<code>matching-gifts/widget/org-{companyId}</code>)</li>
+            <li><b>"Request your employer be added"</b> link — placeholder toast</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4 style="margin-top:0; color:var(--indigo-700)">Auto-notification settings</h4>
+          <ul class="feat">
+            <li><b>Auto-send reminder</b> toggle + <b>reminder template</b> (EmailTemplate select)</li>
+            <li><b>Reminder timing</b> — Immediately / 1 / 3 / 7 days after the donation</li>
+            <li><b>Follow-up</b> if not submitted — toggle + days (default 14)</li>
+            <li>Bound to the same <code>MatchingGiftSettings</code> row as Tab 4 — Tab 4's Save commits both</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>⚙️ Tab 4 — Settings</h3>
+      <table>
+        <tr><th>Setting</th><th>Field</th><th>Default</th></tr>
+        <tr><td>Auto-detect employer from contact record</td><td><code>autoDetectEmployer</code></td><td>true</td></tr>
+        <tr><td>Minimum donation for matching reminder</td><td><code>minimumDonationForReminder</code></td><td>$25</td></tr>
+        <tr><td>Auto-send matching reminder email (+ template)</td><td><code>autoSendReminderEnabled</code> · <code>reminderEmailTemplateId</code></td><td>true</td></tr>
+        <tr><td>Track matching gift revenue separately</td><td><code>trackRevenueSeparately</code></td><td>true</td></tr>
+        <tr><td>Show widget on donation thank-you page</td><td><code>showOnThankYouPage</code></td><td>true</td></tr>
+        <tr><td>Show widget on online donation page</td><td><code>showOnDonationPage</code></td><td>true</td></tr>
+        <tr><td>Matching gift report in year-end statement</td><td><code>includeInYearEndStatement</code></td><td>true</td></tr>
+      </table>
+      <p style="color:var(--slate); font-size:13px;">One <b>Save Settings</b> button → <code>UpsertMatchingGiftSettings</code> (one row per tenant, upsert semantics). Disabled while pristine; if Tab 3 has pending changes an unsaved-changes banner shows here.</p>
+
+      <div class="warn"><b>Service placeholders.</b> Five things have full UI but stubbed back-ends: <b>Send Reminder</b> (toast only — needs the email/automation pipeline), <b>Import Companies</b> (bulk import not wired), the <b>embed iframe widget endpoint</b> (the public widget page isn't built), <b>"Request your employer be added"</b> (no request entity), and the <b>auto-send-after-donation reminder workflow</b> (toggles persist but no background worker fires the emails yet).</div>
+    </section>
+
+    <!-- =================== ④ ENTITY TABLES =================== -->
+    <section id="data">
+      <h2><span class="num">4</span> Entity Tables — Data Design</h2>
+      <p class="lead">Three new entities under schema <code>fund</code>: <code>MatchingCompanies</code> (the catalogue), <code>MatchingGifts</code> (the tracked opportunities), and <code>MatchingGiftSettings</code> (one config row per tenant). They lean on existing <code>GlobalDonation</code>, <code>Contact</code>, <code>MasterData</code> and <code>EmailTemplate</code> as FK sources.</p>
+
+      <h3>How the tables relate</h3>
+      <pre class="mermaid">
+erDiagram
+    MATCHING_COMPANY ||--o{ MATCHING_GIFT : "employer of"
+    GLOBAL_DONATION ||--o{ MATCHING_GIFT : "matched gift"
+    CONTACT ||--o{ MATCHING_GIFT : "donor"
+    MASTER_DATA ||--o{ MATCHING_GIFT : "status"
+    EMAIL_TEMPLATE ||--o{ MATCHING_GIFT_SETTINGS : "reminder"
+    MATCHING_COMPANY {
+        int MatchingCompanyId PK
+        string MatchingCompanyName "unique per tenant"
+        decimal MatchRatio "0.5 / 1.0 / 2.0 / 3.0"
+        decimal MinimumDonation
+        decimal MaximumPerYearPerEmployee
+        bool EligibilityFullTime
+        string SubmissionUrl
+        string SubmissionProcess
+    }
+    MATCHING_GIFT {
+        int MatchingGiftId PK
+        int GlobalDonationId FK
+        int DonorContactId FK
+        int MatchingCompanyId FK
+        decimal DonationAmount "snapshot"
+        decimal MatchAmount "computed once"
+        int MatchingGiftStatusId FK "MATCHINGGIFTSTATUS"
+        date SubmittedDate
+        date ApprovedDate
+        date ReceivedDate
+        string RejectionReason
+    }
+    MATCHING_GIFT_SETTINGS {
+        int MatchingGiftSettingsId PK
+        int CompanyId "UNIQUE — one per tenant"
+        bool AutoDetectEmployer
+        bool AutoSendReminderEnabled
+        int ReminderEmailTemplateId FK
+        decimal MinimumDonationForReminder
+    }
+      </pre>
+
+      <h3>① <code>fund.MatchingCompanies</code> — the catalogue (key columns)</h3>
+      <table>
+        <tr><th>Column</th><th>Type</th><th>Req</th><th>Notes</th></tr>
+        <tr><td>MatchingCompanyId</td><td>int</td><td>PK</td><td>Primary key</td></tr>
+        <tr><td>MatchingCompanyName</td><td>string(200)</td><td class="req">✔</td><td>Unique per <code>CompanyId</code> — "Microsoft", "Apple"</td></tr>
+        <tr><td>MatchRatio</td><td>decimal(4,2)</td><td class="req">✔</td><td>0.5 / 1.0 / 2.0 / 3.0; UI shows "1:1", "3:1"</td></tr>
+        <tr><td>MinimumDonation</td><td>decimal(18,2)</td><td>—</td><td>Min eligible gift (e.g. $25)</td></tr>
+        <tr><td>MaximumPerYearPerEmployee</td><td>decimal(18,2)</td><td>—</td><td>Yearly cap per employee (e.g. $15,000)</td></tr>
+        <tr><td>EligibilityFullTime/PartTime/Retirees/Spouses</td><td>bool ×4</td><td>—</td><td>Who qualifies; FullTime defaults true</td></tr>
+        <tr><td>SubmissionUrl · SubmissionProcess</td><td>string(500) · string(2000)</td><td>—</td><td>Employer portal link + multi-line how-to steps</td></tr>
+        <tr><td>RequiredDocuments · ProcessingTime</td><td>string(1000) · string(100)</td><td>—</td><td>"Donation receipt…" · "4–6 weeks"</td></tr>
+        <tr><td>ContactEmail · Notes</td><td>string(200) · string(2000)</td><td>—</td><td>Programme contact + internal admin notes</td></tr>
+      </table>
+
+      <h3>② <code>fund.MatchingGifts</code> — the tracked opportunity (key columns)</h3>
+      <table>
+        <tr><th>Column</th><th>Type</th><th>Req</th><th>Notes</th></tr>
+        <tr><td>MatchingGiftId</td><td>int</td><td>PK</td><td>Primary key</td></tr>
+        <tr><td>GlobalDonationId</td><td>int</td><td class="req">✔</td><td>FK → <code>fund.GlobalDonations</code> — the gift being matched</td></tr>
+        <tr><td>DonorContactId</td><td>int</td><td class="req">✔</td><td>FK → <code>corg.Contacts</code> — denormalised donor for quick filter</td></tr>
+        <tr><td>MatchingCompanyId</td><td>int</td><td class="req">✔</td><td>FK → <code>fund.MatchingCompanies</code> — the employer programme</td></tr>
+        <tr><td>DonationAmount</td><td>decimal(18,2)</td><td class="req">✔</td><td>Snapshot of the gift at create</td></tr>
+        <tr><td>MatchAmount</td><td>decimal(18,2)</td><td class="req">✔</td><td><code>= DonationAmount × MatchRatio</code> — computed once, stored</td></tr>
+        <tr><td>MatchingGiftStatusId</td><td>int</td><td class="req">✔</td><td>FK → <code>com.MasterData</code> (typeCode <code>MATCHINGGIFTSTATUS</code>)</td></tr>
+        <tr><td>SubmittedDate · ApprovedDate · ReceivedDate · RejectedDate</td><td>DateTime?</td><td>—</td><td>Auto-stamped by <code>UpdateMatchingGiftStatus</code> on each transition</td></tr>
+        <tr><td>RejectionReason · ReminderSentDate · Notes</td><td>string(500) · DateTime? · string(1000)</td><td>—</td><td>Reason ≥ 10 chars when Rejected · last reminder · admin notes</td></tr>
+      </table>
+      <p style="color:var(--slate); font-size:13px;">At most <b>one active</b> (non-Rejected, non-Expired) row per <code>(GlobalDonationId, MatchingCompanyId)</code> pair.</p>
+
+      <div class="grid2">
+        <div class="card">
+          <h3 style="margin-top:0">③ <code>fund.MatchingGiftSettings</code></h3>
+          <p style="color:var(--slate); font-size:14px">One row per tenant (<code>CompanyId</code> UNIQUE) — upsert. Auto-created with defaults on first read.</p>
+          <table>
+            <tr><th>Column</th><th>Notes</th></tr>
+            <tr><td>MatchingGiftSettingsId</td><td>PK</td></tr>
+            <tr><td>AutoDetectEmployer</td><td>bool · default true</td></tr>
+            <tr><td>AutoSendReminderEnabled + ReminderEmailTemplateId</td><td>toggle + FK → <code>notify.EmailTemplates</code></td></tr>
+            <tr><td>ReminderTimingDays · FollowUpDays</td><td>0/1/3/7 · default 14 [1–90]</td></tr>
+            <tr><td>MinimumDonationForReminder</td><td>decimal · default 25</td></tr>
+            <tr><td>TrackRevenueSeparately · ShowOnThankYouPage · ShowOnDonationPage · IncludeInYearEndStatement</td><td>4 bools · all default true</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">FK sources it consumes</h3>
+          <p style="color:var(--slate); font-size:14px">No new donation / contact / template tables — it joins to what already exists.</p>
+          <table>
+            <tr><th>FK</th><th>Target · used for</th></tr>
+            <tr><td><code>GlobalDonationId</code></td><td><code>fund.GlobalDonations</code> — receipt link, donation snapshot</td></tr>
+            <tr><td><code>DonorContactId</code></td><td><code>corg.Contacts</code> — donor name &amp; profile</td></tr>
+            <tr><td><code>MatchingGiftStatusId</code></td><td><code>com.MasterData</code> — the 6 status rows</td></tr>
+            <tr><td><code>ReminderEmailTemplateId</code></td><td><code>notify.EmailTemplates</code> — reminder copy</td></tr>
+            <tr><td><code>CompanyId</code> ×3</td><td><code>app.Companies</code> — tenant scope (HttpContext)</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="note">
+        <b>Where the matched money is counted.</b> There's no junction here — the <code>MatchingGift</code> row <i>is</i> the attribution, pointing straight at the <code>GlobalDonation</code> it doubles. The KPIs and reports are pure aggregates over <code>MatchAmount</code> filtered by status:
+        <table class="ex-map">
+          <tr><th>Roll-up</th><th>Query</th></tr>
+          <tr><td>Eligible donations</td><td><code>SUM(DonationAmount)</code> where status ∈ Eligible/Submitted/Approved/Received</td></tr>
+          <tr><td>Matches received</td><td><code>SUM(MatchAmount)</code> where status = Received</td></tr>
+          <tr><td>Unclaimed potential</td><td><code>SUM(MatchAmount)</code> where status = Eligible — money not yet filed</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- =================== ⑤ STATUSES & LOOKUPS =================== -->
+    <section id="status">
+      <h2><span class="num">5</span> Statuses &amp; Lookups</h2>
+      <p class="lead">The match lifecycle is six MasterData rows (typeCode <code>MATCHINGGIFTSTATUS</code>, codes UPPERCASE). <code>UpdateMatchingGiftStatus</code> is a state machine — it auto-stamps the matching date column and rejects illegal jumps.</p>
+
+      <div class="grid2">
+        <div class="card">
+          <h3 style="margin-top:0">Match lifecycle</h3>
+          <table>
+            <tr><th>Status</th><th>Meaning</th></tr>
+            <tr><td><span class="b eligible">Eligible</span></td><td>Match identified; not yet filed with the employer (amber-highlighted in the grid)</td></tr>
+            <tr><td><span class="b submitted">Submitted</span></td><td>Donor filed the request; <code>ExpectedDate</code> set</td></tr>
+            <tr><td><span class="b approved">Approved</span></td><td>Employer green-lit the match</td></tr>
+            <tr><td><span class="b received">Received</span></td><td>Cheque in the bank — counts in KPI (terminal)</td></tr>
+            <tr><td><span class="b rejected">Rejected</span></td><td>Employer declined; reason ≥ 10 chars (resubmittable)</td></tr>
+            <tr><td><span class="b expired">Expired</span></td><td>Window passed or yearly cap exceeded (terminal)</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">Guarded transitions</h3>
+          <table>
+            <tr><th>From</th><th>→ Allowed</th></tr>
+            <tr><td><span class="b eligible">Eligible</span></td><td>Submitted · Expired</td></tr>
+            <tr><td><span class="b submitted">Submitted</span></td><td>Approved · Rejected · Expired</td></tr>
+            <tr><td><span class="b approved">Approved</span></td><td>Received · Rejected</td></tr>
+            <tr><td><span class="b received">Received</span></td><td>— (terminal)</td></tr>
+            <tr><td><span class="b rejected">Rejected</span></td><td>Resubmit → new Eligible row (clone)</td></tr>
+            <tr><td><span class="b expired">Expired</span></td><td>— (terminal)</td></tr>
+          </table>
+          <p style="color:var(--slate); font-size:12.5px; margin-bottom:0">Anything else → 400 "Cannot transition from {current} to {new}".</p>
+        </div>
+      </div>
+
+      <h3>The match math, in detail</h3>
+      <table>
+        <tr><th>Mechanic</th><th>How it works</th></tr>
+        <tr><td><b>MatchAmount</b></td><td><code>DonationAmount × MatchRatio</code>, computed at create and <b>frozen</b> — later ratio changes don't recompute existing matches</td></tr>
+        <tr><td><b>MatchRatio storage</b></td><td><code>decimal(4,2)</code>: 1.0 → "1:1", 2.0 → "2:1", 3.0 → "3:1", 0.5 → "0.5:1"</td></tr>
+        <tr><td><b>MinimumDonation</b></td><td>Gift must be ≥ this to qualify (drives auto-detect eligibility)</td></tr>
+        <tr><td><b>MaximumPerYearPerEmployee</b></td><td>Yearly cap; approaching it can auto-Expire the match. Validation: max ≥ min when both set</td></tr>
+        <tr><td><b>MinimumDonationForReminder</b></td><td>Settings threshold (default $25) — only gifts above it trigger reminder emails</td></tr>
+      </table>
+
+      <h3>Lookups &amp; menu</h3>
+      <table>
+        <tr><th>Lookup</th><th>Values</th></tr>
+        <tr><td>Status (MasterData <code>MATCHINGGIFTSTATUS</code>)</td><td>ELIGIBLE · SUBMITTED · APPROVED · RECEIVED · REJECTED · EXPIRED <span style="color:var(--slate)">(UPPERCASE)</span></td></tr>
+        <tr><td>Match ratio</td><td>0.5:1 · 1:1 · 2:1 · 3:1</td></tr>
+        <tr><td>Reminder timing</td><td>Immediately · 1 day · 3 days · 1 week after</td></tr>
+        <tr><td>Eligibility flags</td><td>Full-time · Part-time · Retirees · Spouses</td></tr>
+        <tr><td>Menu</td><td><code>MATCHINGGIFT</code> under <code>CRM_P2PFUNDRAISING</code> → <code>crm/p2pfundraising/matchinggift</code> + 3 hidden child menus (MATCHINGCOMPANY / MATCHINGGIFTRECORD / MATCHINGGIFTSETTINGS) for capability checks</td></tr>
+      </table>
+
+      <div class="warn"><b>Status is FK MasterData, not a string enum.</b> Unlike Crowdfunding's string <code>PageStatus</code>, the match status is a real <code>MasterData</code> FK (<code>MatchingGiftStatusId</code>), seeded UPPERCASE. Code that compares against PascalCase ("Eligible") silently misses — match on the <b>code</b> (ELIGIBLE) or the resolved name, the same trap noted across the case-management screens.</div>
+    </section>
+
+    <!-- =================== ⑥ WORKED EXAMPLE =================== -->
+    <section id="example">
+      <h2><span class="num">6</span> Worked Example — Two Real Matches</h2>
+      <p class="lead">To make the model concrete: the seeded company catalogue, and two donors whose gifts get matched at different ratios.</p>
+
+      <div class="ex-hero">
+        <h3>🤝 Sarah Johnson's $500 — matched 1:1 by Microsoft</h3>
+        <p>One <code>fund.MatchingGifts</code> row tying Sarah's $500 <code>GlobalDonation</code> to the Microsoft programme (ratio 1.0). <code>MatchAmount</code> frozen at <b>$500</b>; walked Eligible → Submitted (Mar 15) → Approved (Apr 20) → Received (May 1). Net result: <b>$1,000 for the cause</b>.</p>
+        <div class="tags">
+          <span>💳 Gift $500</span>
+          <span>🤝 Match $500 (1:1)</span>
+          <span>💰 Total $1,000</span>
+          <span>✅ Received May 1</span>
+        </div>
+      </div>
+
+      <h3>The match, state by state</h3>
+      <div class="card">
+        <div class="ex-slot">
+          <div class="ex-time">Eligible</div>
+          <div class="ex-body">
+            <h4><span class="ex-num">1</span> Match created <span class="b eligible" style="font-size:10px">Eligible</span></h4>
+            <div class="pbar"><span style="width:25%"></span></div>
+            <div class="ex-pills"><span class="ex-pill">Auto-detect flagged Microsoft</span><span class="ex-pill">MatchAmount = $500 × 1.0</span></div>
+          </div>
+        </div>
+        <div class="ex-slot">
+          <div class="ex-time">Submitted · Mar 15</div>
+          <div class="ex-body">
+            <h4><span class="ex-num">2</span> Filed with employer <span class="b submitted" style="font-size:10px">Submitted</span></h4>
+            <div class="pbar"><span style="width:50%"></span></div>
+            <div class="ex-pills"><span class="ex-pill">SubmittedDate stamped</span><span class="ex-pill">ExpectedDate ≈ May 15</span></div>
+          </div>
+        </div>
+        <div class="ex-slot">
+          <div class="ex-time">Approved · Apr 20</div>
+          <div class="ex-body">
+            <h4><span class="ex-num">3</span> Employer approved <span class="b approved" style="font-size:10px">Approved</span></h4>
+            <div class="pbar"><span style="width:75%"></span></div>
+            <div class="ex-pills"><span class="ex-pill">ApprovedDate stamped</span></div>
+          </div>
+        </div>
+        <div class="ex-slot">
+          <div class="ex-time">Received · May 1</div>
+          <div class="ex-body">
+            <h4><span class="ex-num">4</span> Cheque in the bank <span class="b received" style="font-size:10px">Received</span></h4>
+            <div class="pbar met"><span style="width:100%"></span></div>
+            <div class="ex-pills"><span class="ex-pill">$500 match counts in KPI</span><span class="ex-pill">Gift effectively doubled</span></div>
+          </div>
+        </div>
+      </div>
+
+      <h3>A 3:1 match &amp; the seeded catalogue</h3>
+      <div class="grid2">
+        <div class="card">
+          <h4 style="margin-top:0; color:var(--indigo-700)">A bigger multiplier <span style="color:var(--slate); font-weight:400; font-size:12px">(ExxonMobil 3:1)</span></h4>
+          <div class="ex-pills" style="flex-direction:column; align-items:stretch">
+            <span class="ex-pill" style="text-align:left">Donor gives $1,000 — employer is ExxonMobil (3:1)</span>
+            <span class="ex-pill" style="text-align:left">MatchAmount = $1,000 × 3.0 = <b style="color:var(--indigo-700)">$3,000</b></span>
+            <span class="ex-pill" style="text-align:left">Grid shows bold "$3,000 (3:1)"</span>
+            <span class="ex-pill" style="text-align:left">Total to the cause: $4,000 from one $1,000 gift</span>
+          </div>
+        </div>
+        <div class="card">
+          <h4 style="margin-top:0; color:var(--indigo-700)">Seeded companies <span style="color:var(--slate); font-weight:400; font-size:12px">(MatchingCompanies)</span></h4>
+          <div class="ex-pills" style="flex-direction:column; align-items:stretch">
+            <span class="ex-pill" style="text-align:left">Microsoft — 1:1 · cap $15,000 · full-time</span>
+            <span class="ex-pill" style="text-align:left">Google — 2:1 · min $25 · cap $10,000</span>
+            <span class="ex-pill" style="text-align:left">Apple — 3:1 · cap $7,500 · + spouses</span>
+            <span class="ex-pill" style="text-align:left">ExxonMobil — 3:1 · cap $7,500 · full-time</span>
+            <span class="ex-pill" style="text-align:left">Bank of America — 1:1 · all employee types</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <b>How this maps to the data model.</b> A curated catalogue, then one tracked row per matched gift.
+        <table class="ex-map">
+          <tr><th>In this example</th><th>Where it lives in the module</th></tr>
+          <tr><td>Microsoft / ExxonMobil programmes</td><td><code>fund.MatchingCompanies</code> rows — curated once in <b>Tab 1</b></td></tr>
+          <tr><td>Sarah's $500 gift (the donation)</td><td>Existing <code>fund.GlobalDonations</code> row — referenced, not duplicated</td></tr>
+          <tr><td>The tracked match (Eligible → Received)</td><td>One <code>fund.MatchingGifts</code> row — walked in <b>Tab 2</b></td></tr>
+          <tr><td>The $500 / $3,000 match figure</td><td><code>MatchAmount</code> — frozen <code>DonationAmount × MatchRatio</code> at create</td></tr>
+          <tr><td>"$1,000 raised", "89 received" KPIs</td><td>Aggregates over <code>MatchAmount</code> by status — no stored totals to drift</td></tr>
+          <tr><td>Auto-detect &amp; reminder behaviour</td><td>One <code>fund.MatchingGiftSettings</code> row — set in <b>Tabs 3 &amp; 4</b></td></tr>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  mermaid.initialize({ startOnLoad:true, theme:'base', securityLevel:'loose',
+    themeVariables:{ primaryColor:'#eef2ff', primaryBorderColor:'#4f46e5', primaryTextColor:'#0f172a',
+      lineColor:'#4f46e5', fontFamily:'-apple-system,Segoe UI,Roboto,sans-serif' } });
+</script>
+
+<!-- ===== interactive lifecycle walk-through (auto-play / manual stepper) ===== -->
+<script>
+(function(){
+  var STEPS=[
+    {lbl:'CURATE', dt:'Tab 1', title:'Curate the programme', badge:null,
+     text:'In Tab 1, add the donor’s employer — Microsoft, ratio <b>1:1</b>, cap $15,000/yr, eligibility, submission URL &amp; steps. Reference data, curated once and reused for every employee.'},
+    {lbl:'DONATION', dt:'$500 lands', title:'A donation lands', badge:null,
+     text:'A donor gives $500. If <b>Auto-detect employer</b> is on and their contact names a matching company, the screen flags the opportunity; otherwise an admin links it manually.'},
+    {lbl:'ELIGIBLE', dt:'match born', title:'Match created', badge:['Eligible','eligible'],
+     text:'A <code>MatchingGift</code> row ties the <code>GlobalDonation</code> to the <code>MatchingCompany</code>. The amount is snapshotted and <code>MatchAmount = $500 × 1.0 = $500</code> is computed and stored.'},
+    {lbl:'SUBMITTED', dt:'Mar 15', title:'Donor files with employer', badge:['Submitted','submitted'],
+     text:'The donor submits on the employer’s portal (the NGO can send a reminder — a service placeholder). Admin marks Submitted with the date; <code>ExpectedDate</code> is set.'},
+    {lbl:'APPROVED', dt:'Apr 20', title:'Employer approves', badge:['Approved','approved'],
+     text:'The employer green-lights the match. Admin marks Approved; <code>ApprovedDate</code> stamped. (Or the employer declines → <b>Rejected</b> with a reason ≥ 10 chars.)'},
+    {lbl:'RECEIVED', dt:'May 1', title:'Funds received', badge:['Received','received'],
+     text:'The matched cheque arrives. Admin marks Received; <code>ReceivedDate</code> stamped and the <code>MatchAmount</code> now counts in the “Matches Received” KPI. Terminal state.'},
+    {lbl:'DOUBLED', dt:'$1,000', title:'The gift is doubled', badge:null,
+     text:'Sarah’s $500 + Microsoft’s $500 = <b>$1,000</b> for the cause — at zero extra cost to the donor. A rejected match could instead be <b>Resubmitted</b>, cloning a fresh Eligible row.'}
+  ];
+  var track=document.getElementById('setupTrack');
+  if(!track) return;
+  var coin=document.getElementById('setupCoin'),
+      fill=document.getElementById('setupFill'),
+      cap=document.getElementById('setupCaption'),
+      auto=document.getElementById('autoToggle'),
+      prev=document.getElementById('prevBtn'),
+      next=document.getElementById('nextBtn'),
+      reset=document.getElementById('resetBtn'),
+      rail=track.querySelector('.rail'),
+      N=STEPS.length, cur=0, timer=null;
+  function pos(i){ return 5 + i*90/(N-1); }
+  STEPS.forEach(function(s,i){
+    var n=document.createElement('div');
+    n.className='node snode';
+    n.style.left=pos(i)+'%';
+    n.innerHTML='<div class="dot"></div><div class="lbl">'+s.lbl+'</div><div class="dt">'+s.dt+'</div>';
+    n.addEventListener('click',function(){ setAuto(false); go(i); });
+    track.insertBefore(n, rail);
+  });
+  function render(){
+    coin.style.left=pos(cur)+'%';
+    fill.style.width=(cur/(N-1)*100)+'%';
+    var nodes=track.querySelectorAll('.snode');
+    nodes.forEach(function(n,i){ n.classList.toggle('on', i===cur); n.classList.toggle('done', i<cur); });
+    var s=STEPS[cur],
+        badge=s.badge ? ' <span class="b '+s.badge[1]+'">'+s.badge[0]+'</span>' : '';
+    cap.innerHTML='<span class="step-i">'+(cur+1)+' / '+N+'</span> <b>'+s.title+'</b>'+badge+' — '+s.text;
+    var manual=!auto.checked;
+    prev.disabled = !manual || cur===0;
+    next.disabled = !manual || cur===N-1;
+  }
+  function go(i){ cur=(i%N+N)%N; render(); }
+  function setAuto(on){
+    auto.checked=on;
+    if(timer){ clearInterval(timer); timer=null; }
+    if(on){ timer=setInterval(function(){ cur=(cur+1)%N; render(); }, 1900); }
+    render();
+  }
+  prev.addEventListener('click',function(){ if(cur>0) go(cur-1); });
+  next.addEventListener('click',function(){ if(cur<N-1) go(cur+1); });
+  reset.addEventListener('click',function(){ setAuto(false); go(0); });
+  auto.addEventListener('change',function(){ setAuto(auto.checked); });
+  render();
+})();
+</script>
+
+<!-- ===== fullscreen modal — zoom + drag, shared by every diagram / flow section ===== -->
+<script>
+(function(){
+  var modal=document.createElement('div');
+  modal.className='fs-modal';
+  modal.innerHTML=
+    '<div class="fs-toolbar">'+
+      '<span class="fs-title"></span>'+
+      '<button class="fs-out" title="Zoom out">−</button>'+
+      '<span class="fs-zoomval">100%</span>'+
+      '<button class="fs-in" title="Zoom in">+</button>'+
+      '<button class="fs-fit" title="Reset zoom &amp; position">↻ Fit</button>'+
+      '<button class="fs-close" title="Close (Esc)">✕ Close</button>'+
+    '</div>'+
+    '<div class="fs-viewport">'+
+      '<div class="fs-canvas"></div>'+
+      '<div class="fs-hint">Scroll to zoom · drag to move · Esc to close</div>'+
+    '</div>';
+  document.body.appendChild(modal);
+
+  var titleEl=modal.querySelector('.fs-title'),
+      zoomVal=modal.querySelector('.fs-zoomval'),
+      viewport=modal.querySelector('.fs-viewport'),
+      canvas=modal.querySelector('.fs-canvas'),
+      scale=1, tx=0, ty=0, placeholder=null, hostEl=null;
+
+  function apply(){
+    canvas.style.transform='translate('+tx+'px,'+ty+'px) scale('+scale+')';
+    zoomVal.textContent=Math.round(scale*100)+'%';
+  }
+  function reset(){ scale=1; tx=0; ty=0; apply(); }
+  function zoom(d){ scale=Math.min(5, Math.max(0.3, scale+d)); apply(); }
+
+  function open(el, title){
+    hostEl=el;
+    placeholder=document.createComment('fs-slot');
+    el.parentNode.insertBefore(placeholder, el);
+    canvas.appendChild(el);
+    titleEl.textContent=title||'Diagram';
+    modal.classList.add('open');
+    reset();
+  }
+  function close(){
+    if(placeholder && hostEl){
+      placeholder.parentNode.insertBefore(hostEl, placeholder);
+      placeholder.parentNode.removeChild(placeholder);
+    }
+    placeholder=null; hostEl=null;
+    modal.classList.remove('open');
+  }
+
+  modal.querySelector('.fs-in').addEventListener('click',function(){ zoom(0.2); });
+  modal.querySelector('.fs-out').addEventListener('click',function(){ zoom(-0.2); });
+  modal.querySelector('.fs-fit').addEventListener('click',reset);
+  modal.querySelector('.fs-close').addEventListener('click',close);
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape' && modal.classList.contains('open')) close(); });
+
+  viewport.addEventListener('wheel',function(e){ e.preventDefault(); zoom(e.deltaY<0?0.12:-0.12); },{passive:false});
+
+  var dragging=false, sx=0, sy=0;
+  viewport.addEventListener('mousedown',function(e){
+    if(e.target.closest('.snode')||e.target.closest('button')||e.target.closest('.switch')) return;
+    dragging=true; sx=e.clientX-tx; sy=e.clientY-ty; viewport.classList.add('grabbing');
+  });
+  window.addEventListener('mousemove',function(e){ if(!dragging) return; tx=e.clientX-sx; ty=e.clientY-ty; apply(); });
+  window.addEventListener('mouseup',function(){ dragging=false; viewport.classList.remove('grabbing'); });
+
+  function titleFor(el){
+    if(el.classList.contains('setup-wrap')) return '⚙ Lifecycle Walk-through';
+    if(el.classList.contains('stage-wrap')) return '🤝 Live Flow — Sarah Johnson × Microsoft';
+    if(el.classList.contains('mermaid')){
+      var t=(el.textContent||'').trim();
+      if(t.indexOf('sequenceDiagram')===0) return '💬 Match hand-off sequence';
+      if(t.indexOf('erDiagram')===0) return '🗂 Entity relationships';
+    }
+    return 'Diagram';
+  }
+
+  function attach(){
+    var hosts=document.querySelectorAll('.stage-wrap, .mermaid');
+    for(var i=0;i<hosts.length;i++){
+      (function(el){
+        if(el.classList.contains('fs-host')) return;
+        el.classList.add('fs-host');
+        var btn=document.createElement('button');
+        btn.className='fs-btn'; btn.type='button'; btn.title='Open full screen'; btn.innerHTML='⛶';
+        btn.addEventListener('click',function(ev){ ev.stopPropagation(); open(el, titleFor(el)); });
+        el.appendChild(btn);
+      })(hosts[i]);
+    }
+  }
+  if(document.readyState==='complete') attach();
+  else window.addEventListener('load',attach);
+})();
+</script>
+</body>
+</html>

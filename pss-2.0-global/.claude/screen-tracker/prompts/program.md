@@ -9,8 +9,26 @@ complexity: High
 new_module: YES — `case` schema (CaseDbContext, ICaseDbContext, CaseMappings, DecoratorCaseModules)
 planned_date: 2026-04-21
 completed_date: 2026-04-22
-last_session_date: 2026-04-22
+last_session_date: 2026-06-19
 ---
+
+> **⚠ REDESIGN 2026-06-19 (Session 5) — read before the original spec below.**
+> Post-demo flow-connectivity rework. The field set + lifecycle changed; where the original spec and this delta disagree, **this delta wins**.
+>
+> **Added** to `case."Programs"`: `ProgramTypeId` (FK MasterData `PROGRAMTYPE` — ONGOING / FIXEDTERM; cyclical/cohort = future phase), `TargetBeneficiaries` (int? — goal reach, ≠ MaximumCapacity hard cap), and approval audit: `SubmittedByStaffId`/`SubmittedDate`/`ApprovedByStaffId`/`ApprovedDate`/`RejectionReason`.
+> **Deliberately NOT added — Branch.** A program is charity-wide (`CompanyId`); it is NOT owned by one branch. Who handles each beneficiary is per-enrollment (`BeneficiaryProgramEnrollment.AssignedStaffId` + the beneficiary's own branch), so beneficiaries spread across regions are each serviced by their assigned staff — a single program-level branch would be misleading.
+> **Removed** (free-text / dead / duplicate): `IsOngoing` (subsumed by ProgramType), `PoolFundingNote`, `FundingSources`, `AutoSuggestEnabled`, `LinkedGrantId`.
+> **Lifecycle** — `StatusId` (PROGRAMSTATUS) is now an approval lifecycle owned ONLY by new commands, never by Create/Update: `DRAFT → PENDINGAPPROVAL → ACTIVE → PAUSED → COMPLETED`, plus `REJECTED`. Create forces `DRAFT`; Update preserves status. New commands `SubmitProgramForApproval` / `ApproveProgram` (→ ACTIVE) / `RejectProgram(reason)`; perms `Sendforapproval` (submit) + `ApproveRequest` (approve/reject). **Rule:** funds may be allocated / beneficiaries enrolled only once a program is ACTIVE (approved).
+> **EndDate rule** — required only when ProgramType = FIXEDTERM; forced null when ONGOING (replaces the old IsOngoing rule).
+> **Seed** — `DatabaseScripts/Seed/seed_program_type_and_lifecycle.sql` (PROGRAMTYPE + new PROGRAMSTATUS lifecycle values, UPPERCASE). FE Status select removed (status is lifecycle-driven); approval banner added to the Program form page.
+
+> **⚠ ELIGIBILITY VERIFICATION 2026-06-19 (Session 6) — extends the criterion model.**
+> Eligibility criteria moved from a plain text condition into a **document-backed verification process**. This is **Layer 1 (Program-side configuration)** only — the per-beneficiary verification record + staff-verify screen are **Layer 2**, deferred to the Beneficiary pass (#10/#13).
+> **Added** to `case."ProgramEligibilityCriteria"`: `CriterionLabel` (string? 200 — human label), `RequiresDocument` (bool), `RequiredDocumentTypeId` (FK MasterData `ELIGIBILITYCRITERIADOCUMENTTYPE`, nullable — what proof, e.g. Birth Certificate), `VerificationMethodId` (FK MasterData `ELIGIBILITYCRITERIAVERIFICATIONMETHOD`, nullable — DOCUMENT / ATTESTATION / FIELDVISIT / AUTO), `IsMandatory` (bool, default true), `Instructions` (string? 500 — guidance to beneficiary/staff). Both new FKs `OnDelete(Restrict)`.
+> **Gating rule (Layer 2, not yet enforced):** mandatory criteria HARD-block enrollment — a beneficiary cannot reach ENROLLED/Active until every `IsMandatory` criterion is Verified. Optional criteria are advisory. Enforcement lands with the Layer-2 `BeneficiaryEligibilityVerification` record.
+> **DTO** — `ProgramEligibilityCriterionDto` gained the config fields + response-only joined names/codes (`RequiredDocumentTypeName/Code`, `VerificationMethodName/Code`); request never sends a doc type unless `RequiresDocument`.
+> **Seed** — `DatabaseScripts/Seed/seed_eligibility_verification_masterdata.sql` (NEW MasterData types `ELIGIBILITYCRITERIADOCUMENTTYPE` + `ELIGIBILITYCRITERIAVERIFICATIONMETHOD`, UPPERCASE, idempotent). Codes are eligibility-specific (a future Beneficiary document-upload type for #13 is separate).
+> **FE** — criteria table rebuilt from a flat 3-col grid into per-criterion **verification cards** (label + rule + mandatory toggle + "requires document" → document/method selects + instructions), reusing FormInput/FormSelect/FormSearchableSelect/FormCheckbox/FormTextarea.
 
 ## Tasks
 
@@ -113,7 +131,7 @@ The Program screen is the root master in the Case Management module. It defines 
 | Child Entity | Relationship | Table | Key Fields |
 |--------------|--------------|-------|------------|
 | ProgramEligibilityCriterion | 1:Many via ProgramId (cascade) | `case."ProgramEligibilityCriteria"` | Id, ProgramId, CriteriaField (string 100), OperatorCode (string 30 — `isOneOf`/`equals`/`between`/`greaterThan`/`lessThan`/`contains`), CriteriaValue (string 500), OrderBy |
-| ProgramService | 1:Many via ProgramId (cascade) | `case."ProgramServices"` | Id, ProgramId, ServiceName (string 150), FrequencyText (string 50), ProviderText (string 100), CostPerUnitText (string 100), OrderBy |
+| ProgramService | 1:Many via ProgramId (cascade) | `case."ProgramServices"` | Id, ProgramId, ServiceName (string 150), ServiceTypeId (FK MasterData PROGRAMSERVICETYPE, nullable), ProviderTypeId (FK MasterData PROGRAMSERVICEPROVIDERTYPE, nullable — the *provider TYPE*, not a named org; the named provider is per-beneficiary Layer 2), FundingFlowId (FK MasterData PROGRAMSERVICEFUNDINGFLOW, nullable), CostPerUnit (decimal 18,2 nullable), UnitOfMeasure (string 50 nullable), CurrencyId (FK Currency, nullable, SetNull), OrderBy. **Replaced** old free-text FrequencyText/ProviderText/CostPerUnitText. (Services is a pure Layer-1 catalog — no IsMandatory/Instructions: per-beneficiary service selection is a Layer-2 concern, #49.) |
 | ProgramOutcomeMetric | 1:Many via ProgramId (cascade) | `case."ProgramOutcomeMetrics"` | Id, ProgramId, MetricName (string 150), TargetText (string 100), MeasurementText (string 100), FrequencyText (string 50), OrderBy |
 | **ProgramStaff** (junction) | Many:Many Program↔Staff (cascade on Program side, restrict on Staff side) | `case."ProgramStaffs"` | Id, ProgramId, StaffId — unique composite index (ProgramId, StaffId) |
 
@@ -318,7 +336,7 @@ cardConfig:
 | 2 | Eligibility Criteria | `fa-filter` | table + footer row | Inline table (Criteria field / Operator / Value / delete-btn) with "+Add Criteria" button + "Auto-Suggest" toggle on the right of footer |
 | 3 | Capacity & Enrollment | `fa-users-cog` | 2-col + 2-col + 2-col grid | maximumCapacity (col-4 number), currentEnrollment (col-8 read-only computed: "{enrolledCount} ({capacityPercent}%)" + 8px bar), waitlistCount (col-4 read-only "{waitlistCount} beneficiaries"), enrollmentTypeId (col-4 dropdown), "Enrollment Requires" (col-4 checkbox group — requiresNeedsAssessment / requiresGuardianConsent / requiresMedicalClearance) |
 | 4 | Sponsorship Model | `fa-hand-holding-usd` | 2-col | fundingModelId (col-6 dropdown), sponsorshipAmount + sponsorshipCurrencyId (col-6 — amount input + currency select — visible when fundingModelCode ∈ {INDIVIDUAL, MIXED}), poolFundingNote (col-12 textarea — visible when fundingModelCode ∈ {POOL, MIXED}) |
-| 5 | Services Included | `fa-concierge-bell` | table | Inline table (ServiceName / FrequencyText / ProviderText / CostPerUnitText / delete-btn) + "+Add Service" footer button |
+| 5 | Services Included | `fa-concierge-bell` | config cards | Per-service **card** (mirrors Eligibility Criteria card): header (ServiceName + remove); classification grid (ServiceType / ProviderType / FundingFlow — all MasterData selects); dashed **Cost Basis** block (CostPerUnit / UnitOfMeasure / Currency) shown only when FundingFlow ≠ In-Kind. "+Add Service" footer button. Pure Layer-1 catalog (no per-service mandatory/notes). |
 | 6 | Outcome Metrics | `fa-bullseye` | table | Inline table (MetricName / TargetText / MeasurementText / FrequencyText / delete-btn) + "+Add Metric" footer button |
 | 7 | Staff & Budget | `fa-users` | 2-col | programLeadStaffId (col-6 ApiSelectV2 of Staff), programStaffs (col-6 multi-select tag picker — add Staff → chip with remove X), annualBudget + budgetCurrencyId (col-4), fundingSources (col-8 free text), linkedDonationPurposeId (col-6 ApiSelectV2 of DonationPurpose — renders as link-chip with external-link icon in read view), linkedGrantId (col-6 SERVICE_PLACEHOLDER — read-only text chip for now; see **ISSUE-4**) |
 
@@ -365,10 +383,13 @@ cardConfig:
   - `contains` → "contains"
 - AutoSuggest toggle (footer right) binds to `autoSuggestEnabled`.
 
-**Services Included Child-Grid widget spec**:
+**Services Included config-card widget spec** (Layer-1 program template — mirrors the Eligibility Criteria card):
 
-- Columns: `ServiceName` (text), `FrequencyText` (text or free-select), `ProviderText` (text), `CostPerUnitText` (text — allows free-form like "AED 1,800" or "Staff time"), delete-btn.
-- "+ Add Service" button.
+- Each service is a **card**, not a table row. Header: `ServiceName` (text) + remove button.
+- Classification grid (3-col): `ServiceTypeId` (MasterData PROGRAMSERVICETYPE), `ProviderTypeId` (MasterData PROGRAMSERVICEPROVIDERTYPE), `FundingFlowId` (MasterData PROGRAMSERVICEFUNDINGFLOW). All `<FormSearchableSelect>` with `advancedFilter` on `masterDataType.typeCode`.
+- **ProviderType is the generic *kind*** (Internal Staff / Educational Institution / …), NOT a named provider. The actual named provider (e.g. a specific school) + actual amount are captured **per beneficiary at Layer 2** (#49); the actual money transfer is Layer 3 (funding rework #4–#6). One Program service row → N beneficiaries → N named providers.
+- Dashed **Cost Basis** block (`CostPerUnit` decimal / `UnitOfMeasure` text / `CurrencyId` select) is shown **only when the selected FundingFlow code ≠ `INKIND`** (gated via a form-only `fundingFlowCode` mirror set through `onSelectOption`, same pattern as `programTypeCode`). In-kind/free services leave cost blank; FE nulls cost on submit when in-kind.
+- "+ Add Service" button. **No** per-service mandatory flag or notes/instructions field — Services is a pure Layer-1 catalog; *which* services a beneficiary receives is decided per-beneficiary at Layer 2 (#49).
 
 **Outcome Metrics Child-Grid widget spec**:
 
@@ -716,7 +737,7 @@ Seed file location: `sql-scripts-dyanmic/` (preserve repo typo — ChequeDonatio
 | staffs | `ProgramStaffDto[]` (each has staffId + staffName) | (on GetById) — for tag chip display |
 
 **Child DTO fields** (ProgramEligibilityCriterionDto): `id`, `programId`, `criteriaField`, `operatorCode`, `criteriaValue`, `orderBy`, `isActive`.
-**ProgramServiceDto**: `id`, `programId`, `serviceName`, `frequencyText`, `providerText`, `costPerUnitText`, `orderBy`, `isActive`.
+**ProgramServiceDto**: `id`, `programId`, `serviceName`, `serviceTypeId`, `serviceTypeName`/`serviceTypeCode` (response-only joined), `providerTypeId`, `providerTypeName`/`providerTypeCode` (response-only), `fundingFlowId`, `fundingFlowName`/`fundingFlowCode` (response-only), `costPerUnit`, `unitOfMeasure`, `currencyId`, `currencyCode` (response-only), `orderBy`, `isActive`. (Joined names via Mapster `.Map()` in `CaseMappings.cs`.)
 **ProgramOutcomeMetricDto**: `id`, `programId`, `metricName`, `targetText`, `measurementText`, `frequencyText`, `orderBy`, `isActive`.
 **ProgramStaffDto**: `id`, `programId`, `staffId`, `staffName`, `staffEmpId?`, `isActive`.
 
@@ -813,4 +834,322 @@ Seed file location: `sql-scripts-dyanmic/` (preserve repo typo — ChequeDonatio
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
 
-{No sessions recorded yet — filled in after /build-screen completes.}
+### Session 0 — 2026-04-22 — BUILD — COMPLETED  (retroactive — synthesized by /continue-screen 2026-06-16)
+
+- **Scope**: Initial full build of Program (#51) — `case` schema bootstrap + Program parent + 3 child 1:M (eligibility/services/metrics) + ProgramStaff junction + card-grid `program` variant + 80% RHF drawer.
+- **Files touched**: (retroactive — not recorded at build time; see §⑧ File Manifest for the canonical path list)
+- **Deviations from spec**: None recorded.
+- **Known issues opened**: ISSUE-1…10 (all SERVICE_PLACEHOLDER / UX-decision items carried from planning).
+- **Known issues closed**: None.
+- **Next step**: (build complete)
+
+### Session 1 — 2026-06-16 — ENHANCE — COMPLETED
+
+- **Scope**: Added a rich demo-data seed for the 3 demo programs' child collections (the base `Program-sqlscripts.sql` seeds the parent programs but leaves all children empty), modeled on `seed_charity_event_full.sql` (self-resolving by ProgramCode, idempotent DO blocks, `RAISE NOTICE` + verification queries + FK-safe cleanup).
+- **Files touched**:
+  - BE: `PSS_2.0_Backend/DatabaseScripts/Seed/seed_program_full.sql` (NEW) — STEP 1 eligibility criteria (10 rows), STEP 2 services (16 rows), STEP 3 outcome metrics (12 rows), STEP 4 staff junction + ProgramLeadStaffId (random staff, counts 4/3/2), + commented CLEANUP block.
+  - FE: None
+  - DB: seed script only — no schema change, no migration.
+- **Deviations from spec**: None. Seed defaults to `CompanyId = 1` (matches the base Program seed); configurable via `v_company` knob in each DO block.
+- **Known issues opened**: None.
+- **Known issues closed**: None (placeholders unchanged; this only adds demo rows).
+- **Next step**: Run `Program-sqlscripts.sql` first, then `seed_program_full.sql`. If staff junctions come up empty, the company had no `app.Staffs` rows (STEP 4 skips gracefully).
+
+### Session 2 — 2026-06-16 — ENHANCE — COMPLETED
+
+- **Scope**: Large, status-complete demo dataset across Program (#51) + Beneficiary (#49) + Case (#50). Adds programs covering the missing statuses (PAUSED/COMPLETED/PLANNED) with big budgets, ~300 beneficiaries cycling all 7 BENEFICIARYSTATUS values (+ 1 program enrollment each), and ~180 cases cycling all 5 CASESTATUS values (resolved/closed get outcome + closed date). Confirmed Beneficiary & Case entities are now BUILT (CaseModels has Beneficiary/BeneficiaryProgramEnrollment/Case + configs).
+- **Files touched**:
+  - BE: `PSS_2.0_Backend/DatabaseScripts/Seed/seed_case_management_full.sql` (NEW) — STEP A programs (7, all statuses), STEP B beneficiaries+enrollments (cycled status coverage, FK pools resolved from `com.Genders`/`com.Countries`/`app.Branches`/`app.Staffs` + MasterData), STEP C cases (cycled status coverage, ClosedDate/CaseOutcome on resolve), + verification + FK-safe CLEANUP.
+  - FE: None
+  - DB: seed only — no schema change, no migration.
+- **Deviations from spec**: None. Note: "active/failed/stopped" in the ask maps to the real `CASESTATUS` set Open/InProgress/Pending/Resolved/Closed; there is no failed/stopped status in the schema. Defaults `CompanyId=1`, `v_nben=300`, `v_ncase=180` (all configurable).
+- **Known issues opened**: None.
+- **Known issues closed**: None. (Note: now that Beneficiary #49 is built, ISSUE-1 `enrolledCount` could become a real subquery — left to the #49/#51 projection owner, not this seed-only session.)
+- **Next step**: Prereqs in order — `Program-sqlscripts.sql`, `Beneficiary-sqlscripts.sql`, `Case_Seed.sql`, then `seed_case_management_full.sql`. Requires ≥1 `app.Branches` and ≥1 `app.Staffs` row for the company (STEP B/C raise a clear notice if missing).
+
+### Session 3 — 2026-06-16 — ENHANCE — COMPLETED
+
+- **Scope**: Added a standalone, ready-to-run cleanup script that wipes everything the two demo seeds inserted (FK-safe, idempotent). Complements the commented CLEANUP blocks already inside each seed file.
+- **Files touched**:
+  - BE: `PSS_2.0_Backend/DatabaseScripts/Seed/seed_case_management_cleanup.sql` (NEW) — single DO block, order cases→enrollments→beneficiaries→program children→STEP A programs; config knobs `v_company` + `v_drop_stepA`; verification query confirms 0 remaining.
+  - FE: None
+  - DB: delete-only — no schema change.
+- **Deviations from spec**: None. Scopes strictly to `BSEED-%`/`CSEED-%` codes + the STEP A program code list + child rows on the 3 base demo programs; never touches base programs, master data, menus, or real data.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: Run `seed_case_management_cleanup.sql` to reset; set `v_drop_stepA=false` to keep the STEP A programs.
+
+### Session 4 — 2026-06-16 — FIX — COMPLETED
+
+- **Scope**: Switched all seed money to INR (no USD). Also fixed a latent bug — currency lookups used `shared."Currencies"` but the Currency entity maps to `com."Currencies"` (`[Table("Currencies", Schema = "com")]`), so the old `shared...USD` lookups were silently resolving to NULL.
+- **Files touched**:
+  - BE: `DatabaseScripts/Seed/seed_case_management_full.sql` — STEP A currency JOIN `shared/USD` → `com/INR`; rescaled program budgets to INR crore-scale (₹6.5cr–₹26cr) + monthly sponsorship to ₹6k–₹10k; beneficiary `SponsorshipAmount` range → ₹2,000–₹15,000; header schema note.
+  - BE: `PeopleServe/Services/Base/sql-scripts-dyanmic/Program-sqlscripts.sql` — Orphan currency `shared/USD` → `com/INR`; rescaled the 3 base program amounts (Orphan sponsorship ₹5,000, budget ₹3cr; Clean Water ₹5cr; Emergency ₹50L).
+  - FE/DB: none (seed-only; no schema change).
+- **Deviations from spec**: Rescaled amounts (not just the currency label) so figures read sensibly in INR and match the earlier "huge amounts" intent. All configurable in the VALUES catalog. Base programs still have no `BudgetCurrencyId` column set (out of scope — base seed never populated it); STEP A programs do set `BudgetCurrencyId = INR`.
+- **Known issues opened**: None.
+- **Known issues closed**: None (incidental: fixed the `shared` vs `com` currency-schema mismatch).
+- **Next step**: None — re-run the seeds to apply INR values (cleanup first if rows already exist).
+
+### Session 5 — 2026-06-19 — ENHANCE (Spec change) — COMPLETED
+
+- **Scope**: Post-demo flow-connectivity rework of the Program "basic info", fields, and business — first item of the 16-point internal-demo backlog (see `case.md` §⑭). Grounded in Salesforce PMM model (Program=ongoing container vs Cohort=time-boxed). Added ProgramType (Ongoing/Fixed-term), TargetBeneficiaries; added an **approval lifecycle** (Draft→Pending Approval→Active; Reject) gating fund allocation/enrollment on Active; removed disconnected/free-text/dead fields (IsOngoing, PoolFundingNote, FundingSources, AutoSuggestEnabled, LinkedGrant). See the REDESIGN delta at the top of this file for the authoritative field/lifecycle list.
+- **Files touched**:
+  - BE: `CaseModels/Program.cs`; `CaseConfigurations/ProgramConfiguration.cs`; `Schemas/CaseSchemas/ProgramSchemas.cs`; `CaseBusiness/Programs/CreateCommand/CreateProgram.cs` + `UpdateCommand/UpdateProgram.cs`; **NEW** `CaseBusiness/Programs/LifecycleCommand/ProgramLifecycle.cs` (Submit/Approve/Reject); `GetAllQuery/GetAllPrograms.cs` + `GetByIdQuery/GetProgramById.cs`; `Mappings/CaseMappings.cs`; `EndPoints/Case/Mutations/ProgramMutations.cs`.
+  - FE: `domain/entities/case-service/ProgramDto.ts`; `gql-queries/case-queries/ProgramQuery.ts`; `gql-mutations/case-mutations/ProgramMutation.ts` (+3 lifecycle mutations); `program/program-form.tsx`; `program/program-form-schemas.ts`; `program/program-form-page.tsx` (approval banner + Submit/Approve/Reject).
+  - DB: **NEW** `DatabaseScripts/Seed/seed_program_type_and_lifecycle.sql` (PROGRAMTYPE + PROGRAMSTATUS lifecycle values).
+- **Deviations from spec**: This IS the spec change (recorded as the top-of-file REDESIGN delta rather than rewriting every section in place). Cyclical/Cohort program type intentionally deferred (only it needs a new Cohort table). Approve/Reject gated on existing `Permissions.ApproveRequest`; submit on `Sendforapproval` — no new permission constant added.
+- **Verification**: FE `tsc --noEmit` clean (0 errors). BE compiled by the user (handoff per workflow). EF migration + the new seed are **user-run** (entity adds 1 required FK col `ProgramTypeId` + nullables + drops 4 cols).
+- **Known issues opened**: None new. (ISSUE-4 LinkedGrant placeholder is now removed pending the real Grant integration, backlog item #9.)
+- **Known issues closed**: None formally — but the funding-section free-text/dead fields that drove the "flow doesn't connect" demo feedback are gone.
+- **Next step**: User runs `dotnet ef migrations add` + applies it, then runs `seed_program_type_and_lifecycle.sql`. Then the deep **funding rework** (#4 sources / #5 utilization / #6 allocation) sits on top of this approval gate as the next pass.
+
+### Session 6 — 2026-06-19 — ENHANCE (Spec change) — COMPLETED
+
+- **Scope**: Backlog #1 — eligibility-criteria verification, **Layer 1 (Program-side configuration)**. Moved criteria from a flat text condition into a document-backed verification process: each criterion now carries a human label, an optional required-document type + verification method, a mandatory flag, and instructions. See the ELIGIBILITY VERIFICATION delta at the top of this file. Layer 2 (per-beneficiary verification record + staff-verify screen + the mandatory-criterion enrollment gate) is **deferred to the Beneficiary pass (#10/#13)**.
+- **Files touched**:
+  - BE: `CaseModels/ProgramEligibilityCriterion.cs` (+6 fields, +2 MasterData navs); `CaseConfigurations/ProgramEligibilityCriterionConfiguration.cs` (maxlengths + 2 Restrict FKs); `Schemas/CaseSchemas/ProgramSchemas.cs` (`ProgramEligibilityCriterionDto` config + response-only joined names/codes); `Mappings/CaseMappings.cs` (criterion entity→DTO joins + nav ignores); `GetByIdQuery/GetProgramById.cs` (ThenInclude RequiredDocumentType + VerificationMethod).
+  - FE: `domain/entities/case-service/ProgramDto.ts`; `gql-queries/case-queries/ProgramQuery.ts` (criterion selection set); `program/program-form-schemas.ts` (criterionSchema + superRefine: requiresDocument ⇒ document type); `program/program-form-page.tsx` (criteria default/submit mapping; strips response-only fields, omits doc type when !requiresDocument); `program/program-eligibility-criteria-table.tsx` (full rebuild → verification cards).
+  - DB: **NEW** `DatabaseScripts/Seed/seed_eligibility_verification_masterdata.sql` (MasterData `DOCUMENTTYPE` + `VERIFICATIONMETHOD`).
+- **Deviations from spec**: Recorded as the top-of-file ELIGIBILITY VERIFICATION delta rather than rewriting §② in place. MasterData type codes are eligibility-specific (`ELIGIBILITYCRITERIADOCUMENTTYPE` / `ELIGIBILITYCRITERIAVERIFICATIONMETHOD` — renamed by the user from the generic DOCUMENTTYPE/VERIFICATIONMETHOD). Verification method is allowed independent of requires-document (e.g. ATTESTATION / FIELDVISIT need no upload).
+- **Verification**: FE `tsc --noEmit` clean (0 errors). BE compiled by the user (handoff per workflow). EF migration + the new seed are **user-run** (adds nullable `RequiredDocumentTypeId`/`VerificationMethodId` FKs + `CriterionLabel`/`RequiresDocument`/`IsMandatory`/`Instructions` to `case."ProgramEligibilityCriteria"`).
+- **Known issues opened**: None. (Layer-2 enrollment gate is planned work, not a defect.)
+- **Known issues closed**: None.
+- **Next step**: Layer 2 in the Beneficiary pass — `BeneficiaryEligibilityVerification` record (beneficiary uploads softcopy → staff Verified/Rejected) + enforce the mandatory-criterion gate on enrollment. Run the new seed after the migration.
+
+### Session 5 — 2026-06-16 — FIX — COMPLETED
+
+- **Scope**: Services + Outcome Metrics were empty on all the STEP A programs (and any base program if `seed_program_full.sql` wasn't run). Added a self-contained STEP A2 to `seed_case_management_full.sql` that fills both child tables for all 10 demo programs, picked by the program's CATEGORY. Also converted `seed_program_full.sql` service cost labels from `$` to ₹.
+- **Files touched**:
+  - BE: `DatabaseScripts/Seed/seed_case_management_full.sql` — NEW STEP A2 block (category→service set + category→metric set for the 7 STEP A + 3 base program codes), idempotent + non-destructive (`NOT EXISTS` guard preserves seed_program_full's tailored base rows), INR costs; + per-program verification query.
+  - BE: `DatabaseScripts/Seed/seed_program_full.sql` — service `CostPerUnitText` `$…` → `₹…` (INR).
+  - FE/DB: none (seed-only).
+- **Deviations from spec**: None. STEP A2 only fills programs that have ZERO services/metrics, so it never duplicates or overwrites. Cleanup needs no change — it already deletes ProgramServices/OutcomeMetrics for the same 10 demo codes.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: Re-run `seed_case_management_full.sql` (STEP A2 runs right after STEP A). The verification query prints services/metrics counts per program — none should read 0.
+
+### Session 6 — 2026-06-16 — FIX — COMPLETED
+
+- **Scope**: STEP B beneficiary insert failed with FK violation `FK_Beneficiaries_Nationalities_NationalityId` — `NationalityId` is a FK to the real lookup table `com."Nationalities"`, NOT `sett.MasterDatas`. (The `NATIONALITY` MasterDataType seeded by Beneficiary-sqlscripts.sql is unrelated to this column.) Re-sourced `v_natl` from `com."Nationalities"`.
+- **Files touched**:
+  - BE: `DatabaseScripts/Seed/seed_case_management_full.sql` — STEP B `v_natl` now `array_agg("NationalityId") FROM com."Nationalities"` (was wrongly from sett.MasterDatas NATIONALITY).
+  - FE/DB: none.
+- **Deviations from spec**: None. Verified via BeneficiaryConfiguration that all other FKs I set are correctly sourced: MasterData-typed nav props → sett.MasterDatas; Gender/Country/Nationality → com; Branch/Staff → app. Other separate-entity FKs (Language, RelationshipToHead, State, District, etc.) left NULL (nullable).
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: Re-run STEP B + STEP C (DO blocks are transactional, so the failed STEP B rolled back fully — no partial rows). STEP A/A2 already committed.
+
+### Session 7 — 2026-06-16 — ENHANCE — COMPLETED
+
+- **Scope**: Reworked STEP B from a flat `v_nben=300` to **capacity-driven**: per program with a non-null `MaximumCapacity` ("required programs" — skips PLANNED/STANDBY whose capacity is NULL), generate a random **70–80%** of that capacity and enroll each beneficiary INTO that program → card capacity bars now read true.
+- **Files touched**:
+  - BE: `DatabaseScripts/Seed/seed_case_management_full.sql` — STEP B now loops qualifying programs (`MaximumCapacity` not null + IsActive), `v_target = floor(capacity * (0.70 + rand*0.10))`; beneficiary code `BSEED-{programId}-{seq}` so the per-program enrollment matches; config knobs `v_fill_min`/`v_fill_max` replace `v_nben`; status still cycled (all 7); enrollment verification now shows capacity + fill %.
+  - FE/DB: none.
+- **Deviations from spec**: "Required programs" interpreted as programs with a capacity set (capacity NULL → no beneficiaries). Total volume is now driven by the sum of program capacities (~8–9k beneficiaries with the current STEP A capacities, HEALTH_OUTREACH 5000 being the big driver) — tune via program `MaximumCapacity` or the fill band. Cleanup unchanged (still matches `BSEED-%`/`CSEED-%`).
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: Re-run `seed_case_management_full.sql`; the per-program verification query confirms fill % lands in ~70–80.
+
+### Session 8 — 2026-06-16 — FIX — COMPLETED
+
+- **Scope**: STEP B was looping over ALL company-1 capacity programs; restricted it to ONLY the demo programs we seed (the 10-code list), so any other pre-existing programs in `case.Programs` get no beneficiaries.
+- **Files touched**:
+  - BE: `DatabaseScripts/Seed/seed_case_management_full.sql` — added `v_codes` (7 STEP A + 3 base) in STEP B; both the `v_progcount` guard and the `FOR rec` loop now filter `AND "ProgramCode" = ANY(v_codes)`.
+  - FE/DB: none.
+- **Deviations from spec**: None. STEP A2 already scoped to the same codes; STEP C draws only from BSEED enrollments — so the whole pipeline now touches only the demo programs.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: None.
+
+### Session 9 — 2026-06-16 — FIX — COMPLETED
+
+- **Scope**: Applied STEP B's demo-program-only scoping to STEP C (cases), and made the inline cleanup block cover every table the script writes (FK-safe).
+- **Files touched**:
+  - BE: `DatabaseScripts/Seed/seed_case_management_full.sql` —
+    (1) STEP C: added the same `v_codes` (10) allow-list; the `v_npool` guard and the case-INSERT `CROSS JOIN LATERAL` beneficiary pool now JOIN `case.Programs` and filter `AND "ProgramCode" = ANY(v_codes)`, so cases can never pull in a non-demo program even from a stray BSEED row.
+    (2) Inline CLEANUP block rewritten to FK-safe full coverage: cases → enrollments → beneficiaries → STEP A2 children (`ProgramServices`, `ProgramOutcomeMetrics` on all 10 demo programs) → optional STEP A program drop (guarded by `v_drop_stepA`). Previously it omitted the STEP A2 child tables, so its commented program-delete would FK-fail.
+  - FE: none.
+- **Deviations from spec**: None.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Cleanup-coverage audit**: tables written by this script = `case.Programs`, `case.ProgramServices`, `case.ProgramOutcomeMetrics`, `case.Beneficiaries`, `case.BeneficiaryProgramEnrollments`, `case.Cases` — all covered by both the inline block and the standalone `seed_case_management_cleanup.sql` (which additionally clears `ProgramEligibilityCriteria`/`ProgramStaffs`/`ProgramLeadStaffId` from `seed_program_full.sql`).
+- **Next step**: None.
+
+### Session 10 — 2026-06-16 — FIX — COMPLETED
+
+- **Scope**: STEP C case volume was a hardcoded `v_ncase := 180` (random-with-replacement → most beneficiaries got 0 cases, a few got several, count disconnected from beneficiary volume). Made it beneficiary-driven: ~30% of the seeded beneficiary pool, each getting exactly ONE case (distinct, no duplicates).
+- **Files touched**:
+  - BE: `DatabaseScripts/Seed/seed_case_management_full.sql` — replaced `v_ncase int := 180` with config `v_case_pct numeric := 0.30`; `v_ncase` now computed = `round(v_case_pct * v_npool)`. Rewrote the case INSERT: `generate_series` + per-row random LATERAL beneficiary pick → a shuffled `pool` CTE (`row_number() OVER (ORDER BY random())`) sliced to the first `v_ncase` rows, so each chosen beneficiary appears once. Status still cycles all 5 via `rn % 5`. Updated header comments + RAISE NOTICE.
+  - FE: none.
+- **Deviations from spec**: None.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: None — `v_case_pct` is the single knob to scale case volume.
+
+### Session 11 — 2026-06-16 — FIX — COMPLETED
+
+- **Scope**: Program index capacity bar read **0% for every program**. Root cause: ENROLLMENTSTATUS `DataValue` is UPPERCASE (user standardised to `ENROLLED/WAITLISTED/GRADUATED/EXITED/SUSPENDED`), but handlers/functions compared PascalCase → counts always 0. Fixed every case-management status comparison + biased the seed so the bar reflects the fill.
+- **Files touched**:
+  - BE (handlers): `GetAllPrograms.cs` (EnrolledCount `"ENROLLED"`, WaitlistCount `"WAITLISTED"` — drives the index capacity bar); `GetProgramById.cs` (WaitlistCount `"Waitlisted"`→`"WAITLISTED"`); `Beneficiaries/UpdateCommand/UpdateBeneficiaryStatus.cs` (graduation enrollment writeback `"Graduated"`→`"GRADUATED"`); `Beneficiaries/GetByIdQuery/GetBeneficiarySummary.cs` (active-enrollment `"Enrolled"`→`"ENROLLED"`, keeps DataName fallback).
+  - BE (case dashboard PG functions, separate screen — swept since same root cause): `fn_case_dashboard_program_performance.sql`, `fn_case_dashboard_alerts.sql`, `fn_case_dashboard_cases_by_status.sql` (also switched chart label to DataName), `fn_case_dashboard_kpi_active_programs.sql`, `fn_case_dashboard_kpi_open_cases.sql` — CASESTATUS→`OPEN/INPROGRESS/PENDING/RESOLVED/CLOSED`, PROGRAMSTATUS→`ACTIVE/STANDBY`, ENROLLMENTSTATUS active→`ENROLLED`.
+  - DB seed: `seed_case_management_full.sql` STEP B — enrollment status now ~85% `ENROLLED` (resolved via `DataValue='ENROLLED'`) so the seeded 70–80% fill shows on the bar; `Beneficiary-sqlscripts.sql` ENROLLMENTSTATUS DataValues uppercased to match the DB.
+  - NOT touched (verified correct/out-of-domain): MILESTONESTATUS (`Achieved`/`InProgress` still PascalCase — C# `=="Achieved"` still works), BENEFICIARYSTATUS (abbrevs `GRD/EXT`), EVENTREGISTRATIONSTATUS (`Confirmed`/`Waitlisted`, event domain).
+- **Deviations from spec**: None.
+- **Known issues opened**: MILESTONESTATUS / BENEFICIARYSTATUS / EVENTREGISTRATIONSTATUS still mixed-case — they work today but violate the "DataValue always UPPERCASE" rule; full standardisation deferred (separate screens). See memory `reference_masterdata_datavalue_uppercase`.
+- **Known issues closed**: Capacity bar 0% on Program index.
+- **Next step (user action)**: 1) rebuild backend (handler changes); 2) re-apply the 5 changed `case/` PG function files to the DB; 3) re-run `seed_case_management_full.sql` STEP B so enrollments become mostly ENROLLED (then STEP C). Then the index bar reads ~70–80% and case-dashboard KPIs populate.
+
+### Session 12 — 2026-06-16 — ENHANCE — COMPLETED
+
+- **Scope**: Added a single, readable **manual end-to-end flow** (plain INSERTs) at the TOP of `seed_case_management_full.sql` — one full happy-path record set separate from the bulk generators, so the whole chain can be seen/demoed without volume.
+- **Files touched**:
+  - DB: `DatabaseScripts/Seed/seed_case_management_full.sql` — new "SAMPLE — ONE MANUAL END-TO-END FLOW" section before STEP A: 1 program (`DEMO_FLOW` Hope Scholarship, Education/Active/Mixed, ₹50L budget) → 3 eligibility criteria → 3 services → 2 outcome metrics → 1 staff + lead → 1 beneficiary (`DEMO_BEN-001` Aisha Khan, fully populated) → 1 enrollment (ENROLLED) → 1 case (`DEMO_CASE-001`, Medium/EducationalSupport/Open). Plain INSERTs, FKs resolved by code/first-available, every statement `NOT EXISTS`-guarded (re-runnable, no dupes). Inline per-row cleanup documented in the section header; a verification SELECT lists the whole chain. Also updated the file overview.
+- **Deviations from spec**: None.
+- **Known issues opened**: None. (Standalone `seed_case_management_cleanup.sql` is scoped to BSEED/CSEED + bulk demo codes; the DEMO_FLOW sample has its own inline cleanup block — not added to the standalone wiper by design.)
+- **Known issues closed**: None.
+- **Next step**: None.
+
+### Session 13 — 2026-06-16 — ENHANCE — COMPLETED
+
+- **Scope**: Converted the Program create/edit form from the 80% right **side-drawer (sheet)** to a **full-page, URL-routed form**, using FlowDataTable's native add/edit navigation (`?mode=new` / `?mode=edit&id=X`). Also de-duplicated the two "Add" buttons — removed the `<ScreenHeader>` "New Program" button, keeping ONLY the grid toolbar's native Add (which already routes to `?mode=new`).
+- **Files touched**:
+  - FE (new): `program-form-page.tsx` (routed full-page form — reuses `ProgramForm` + the old drawer's data-load/mutation/diff-persist logic; ScreenHeader + Back action + centered floating action pill for Cancel/Save/Delete, matching the Event form convention); `program-page.tsx` (root URL dispatcher mirroring `event/event/event-page.tsx` — reads `searchParams.mode`/`id`, sets `crudMode`/`recordId` on the global Flow store, renders index vs form; `read`→`edit` since there's no separate read-only view).
+  - FE (edited): `index-page.tsx` (removed `ProgramDrawer` + `drawerState`/`refreshKey`; card `onManage` now `router.push(?mode=edit&id=X)`; removed the "New Program" header button + the now-unused `capability` selector + `useAccessCapability`/`Button`/`Icon` imports); `program.tsx` page-config (renders `<ProgramPage capability=…>` instead of `<ProgramIndexPage>`); program-folder `index.ts` barrel (export program-page + program-form-page; drop program-drawer).
+  - FE (deleted): `program-drawer.tsx` (superseded by the routed form page).
+  - BE/DB: none.
+- **Deviations from spec**: Yes — intentional, user-requested. §⑤/§⑥ originally chose a side-drawer with "no `?mode=` URL sync (drawer is UI-local state)". This session reverses that: the form is now a URL-routed page (back/forward + deep-link friendly), consistent with the Event screen. Screen type stays MASTER_GRID; no entity/schema/FK/field changes. Card-body click and the per-row Edit both land on the same editable form page (read maps to edit). The single create entry point is now the grid toolbar Add.
+- **Known issues opened**: None.
+- **Known issues closed**: None. (The 10 planning-era OPEN issues remain cross-screen SERVICE_PLACEHOLDER / UX-decision carry-overs — untouched here.)
+- **Verification**: `npx tsc --noEmit` clean (0 errors); path-trace confirmed: grid Add → `?mode=new` → create form; card Manage / row Edit / card-click → `?mode=edit|read&id=X` → prefilled form; Save/Cancel/Delete → `router.push(pathname)` → grid remounts + refetches. Recommend a quick visual `pnpm dev` pass on `/{lang}/crm/casemanagement/programmanagement`.
+- **Next step**: None.
+
+### Session 14 — 2026-06-16 — ENHANCE — COMPLETED
+
+- **Scope**: **ProgramCode is now auto-generated** server-side via the generic **NumberSequence two-tier system** (the same one built for Receipt/GLOBALDONATION), instead of being a manual user input. FE form behaviour mirrors the Event `EventCode` field (read-only badge on edit / "auto-generated" placeholder on create — no input). Two-tier config per the user's ask: Tier 1 system default + Tier 2 per-tenant override.
+- **Pattern**: entityTypeCode `PROGRAM`; default `PROG-{YYYY}-{SEQ:000000}`, YEARLY reset; NumberColumnName `ProgramCode`; business date = StartDate. Resolution `effective = config.X ?? eligibility.DefaultX`. (See memory `reference-numbersequence-extend-new-entity`.)
+- **Files touched**:
+  - BE: `CreateProgram.cs` — validator drops `ProgramCode` required; handler now wraps insert in `CreateExecutionStrategy().ExecuteAsync` + explicit transaction and calls `NumberSequenceGenerator.GenerateAsync(db, companyId, "PROGRAM", StartDate, ct)` → assigns `ProgramCode` (advisory-lock atomic; manual txn illegal under retrying strategy). `UpdateProgram.cs` — validator drops `ProgramCode` required; handler **preserves** the stored code across `dto.Adapt(existing)` (immutable; update can never blank/overwrite it).
+  - DB seed (user-applied, no auto-loader): appended Program STEP blocks to `Base/sql-scripts-dyanmic/NumberSequenceEntityType-sqlscripts.sql` (Tier 1: `public.EntityTypes` PROGRAM row + eligibility row PROG/{PREFIX}-{YYYY}-{SEQ:000000}/YEARLY) and `NumberSequenceConfig-sqlscripts.sql` (Tier 2: CompanyId=3 inherit-defaults override row).
+  - FE: `ProgramMutation.ts` CREATE var `$programCode: String!`→`String`; `program-form-schemas.ts` `programCode` now optional (dropped min/regex/transform); `program-form.tsx` replaced the `FormInput` with a read-only `FieldRow` (hash badge on edit / magic-wand placeholder on create).
+- **Deviations from spec**: ProgramCode field §④ was a user-entered uppercase code with uniqueness check — now system-generated. Uniqueness is now guaranteed by the sequence counter (per-company unique index retained as a backstop).
+- **Action required by user**: run the two appended `*-sqlscripts.sql` blocks against the DB before creating programs — until the Tier 1 PROGRAM eligibility row exists, `GenerateAsync` throws (surfaced as InternalServerException). No EF migration needed (NumberSequence tables + `ProgramCode` column already exist).
+- **Known issues opened/closed**: None.
+- **Verification**: FE `npx tsc --noEmit` clean (0 errors); BE `Base.Application` build succeeded (0 errors). Runtime create/edit not yet smoke-tested — recommend creating one program post-seed to confirm `PROG-2026-000001`.
+- **Next step**: None.
+
+### Session 15 — 2026-06-18 — UI/ENHANCE — COMPLETED
+
+- **Scope**: Two reviewer-raised tweaks to the Program form: (1) reorder sections so **Services Included** comes before **Sponsorship Model** (define what the program provides, then how it's funded); (2) **default both currency pickers** (Sponsorship + Budget) to the company base currency on create. (A 3rd point — sharing Outcome Metrics example values — was a data/doc answer, no code.)
+- **Files touched**:
+  - FE:
+    - `program-form.tsx` — swapped Section 4 (was Sponsorship Model) ↔ Section 5 (was Services Included); imported `useCompanySettingsSession` and added a create-only `useEffect` that pre-selects `baseCurrencyId` into `sponsorshipCurrencyId` + `budgetCurrencyId` when empty (mirrors `MembershipTierForm`; skipped on edit to preserve saved values).
+    - `program-services-table.tsx` — no net change (an auto-sum footer was added then **removed** in the same session — see note below).
+  - BE / DB: None.
+- **Deviations from spec**: §⑥ section order changes (Services now precedes Sponsorship). §⑥ field-mapping already noted `sponsorshipCurrencyId` "defaults to company default currency" — now actually implemented, and extended to `budgetCurrencyId` too.
+- **Reverted in-session (auto-sum of service costs)**: briefly added a `<tfoot>` that parsed + summed numeric amounts from the free-text Cost/Unit column, then **removed it** at the user's request. Reason: services have **different frequencies** (e.g. 1 monthly + 2 half-yearly), so a flat sum of per-unit amounts is semantically meaningless. A correct rollup requires structured numeric **Amount × Frequency** columns (schema change) → parked as a `/plan-screens #51` item, NOT done here.
+- **Known issues opened/closed**: None.
+- **Verification**: FE `npx tsc --noEmit` clean on touched files (pre-revert). `program-services-table.tsx` restored to its original shape. Runtime not smoke-tested — recommend opening the Program create drawer to confirm section order + currency defaults.
+- **Next step**: None. (Optional future: structured numeric service-cost fields for a real frequency-aware budget rollup — `/plan-screens #51`.)
+
+### Session 16 — 2026-06-19 — ENHANCE — COMPLETED
+
+- **Scope**: Restructured **Services Included** from free-text into a Layer-1 structured template, mirroring the Eligibility-Criteria verification card concept. `ProgramService` free-text `FrequencyText`/`ProviderText`/`CostPerUnitText` **replaced** with: `ServiceTypeId` (PROGRAMSERVICETYPE), `ProviderTypeId` (PROGRAMSERVICEPROVIDERTYPE — the *provider TYPE*, not a named org), `FundingFlowId` (PROGRAMSERVICEFUNDINGFLOW), `CostPerUnit`+`UnitOfMeasure`+`CurrencyId` (cost basis, shown only for a paid funding flow). Picks up the structured-cost item parked in Session 15. **Post-build trim (same session, user review):** dropped the initially-included `IsMandatory` + `Instructions` from services — Services is a pure Layer-1 *catalog*; *which* services a beneficiary receives (all / a subset) is a per-beneficiary Layer-2 (#49) decision, so a program-level mandatory flag was semantically wrong and the notes box was redundant. (Eligibility-criteria `IsMandatory`/`Instructions` are untouched — correct there as a hard-block gate.) **Domain framing** (agreed with user): provider TYPE is generic (e.g. "Educational Institution"); the actual named provider (specific school) + actual amount map to the **beneficiary** at Layer 2 (#49); the actual money transfer is Layer 3 (#4–#6). One Program service row → N beneficiaries → N named providers/payments.
+- **Files touched**:
+  - BE:
+    - `Base.Domain/Models/CaseModels/ProgramService.cs` — replaced free-text props with structured FKs + cost + nav props (ServiceType/ProviderType/FundingFlow/Currency).
+    - `Base.Infrastructure/.../CaseConfigurations/ProgramServiceConfiguration.cs` — 4 new FK configs (3× MasterData Restrict, Currency SetNull); `decimal(18,2)` on CostPerUnit.
+    - `Base.Application/Schemas/CaseSchemas/ProgramSchemas.cs` — rebuilt `ProgramServiceDto` (FKs + response-only joined name/code fields).
+    - `Base.Application/Mappings/CaseMappings.cs` — added `.Map()` joined-name projection for the 4 service FKs + `.Ignore()` of the new nav props on the reverse DTO→entity config.
+    - `Programs/GetByIdQuery/GetProgramById.cs` — 4 `ThenInclude` for the new service navs.
+    - `Programs/CreateCommand/CreateProgram.cs` + `UpdateCommand/UpdateProgram.cs` — service create/sync now maps all new fields.
+    - `DatabaseScripts/Seed/seed_program_service_masterdata.sql` — **NEW**; 3 MasterData types (idempotent, UPPERCASE, ColorHex in DataSetting).
+  - FE:
+    - `program-services-table.tsx` — rewrote bare `<table>` → config **cards** (mirrors eligibility `CriterionCard`): header (name + Mandatory + remove), 3-col classification selects, dashed Cost-Basis block gated on FundingFlow ≠ INKIND, Notes textarea. Provider-type explainer line.
+    - `program-form-schemas.ts` — new `serviceSchema` (FKs + form-only `fundingFlowCode` mirror for cost gating).
+    - `gql-queries/case-queries/ProgramQuery.ts` — expanded `services` selection set.
+    - `program-form-page.tsx` — `defaultValues.services` map + `handleSubmit` services payload (nulls cost when in-kind; drops form-only `fundingFlowCode`).
+- **Latent bug fixed (adjacent)**: `CreateProgram` and `UpdateProgram.SyncEligibilityCriteria` were **dropping the eligibility verification fields** (`CriterionLabel`/`RequiresDocument`/`RequiredDocumentTypeId`/`VerificationMethodId`/`IsMandatory`/`Instructions`) on persist — they only mapped the original 3 rule fields, so the Session-(eligibility) verification config never saved on create/update. Both now map the full field set. Mirror this when touching child-collection sync.
+- **Deviations from spec**: This is a Spec change (new fields/FKs + card UI). §④ data-model row, §⑥ Section 5 + Services widget spec, and §⑪ ProgramServiceDto all updated in this file to match.
+- **Known issues opened/closed**: None (ISSUE-1…10 unchanged).
+- **User manual steps (handed off)**: (1) `dotnet build` BE. (2) Create + apply an EF migration for the `case."ProgramServices"` restructure — DROP FrequencyText/ProviderText/CostPerUnitText; ADD ServiceTypeId/ProviderTypeId/FundingFlowId (nullable FK→sett.MasterDatas), CostPerUnit (numeric 18,2), UnitOfMeasure (varchar 50), CurrencyId (nullable FK→Currency SetNull). (NO IsMandatory/Instructions — trimmed.) (3) Run `seed_program_service_masterdata.sql`.
+- **Verification**: FE `npx tsc --noEmit` clean on all touched program files. BE compile handed to user (per standing constraint). Runtime not smoke-tested — open the Program create form, add a service, pick a paid funding flow → cost block appears; pick In-Kind → it hides; save + reopen to confirm round-trip.
+- **Next step**: Layer 2 (Beneficiary #49) — per-beneficiary service record holding the *named* provider + actual amount, linked back to the Program service; Layer 3 (#4–#6) the disbursement/payment.
+
+### Session 17 — 2026-06-19 — UI/ENHANCE — COMPLETED (Phase 1 of 2)
+
+- **Scope**: Made the **Funding Model** section model-aware and connected it to the funding tracking that already exists, instead of building new tracking on the program. Codebase mapping (Explore) confirmed the "who funds + how + tracking" the user asked for is **already implemented elsewhere** and only needs linking/surfacing — same Layer-1 discipline as Services (S16): the program holds the funding *policy + link*, not a funder ledger.
+  - **Layering** (decided with user — *"you can decide"* on approach; *"Reuse Contact type"* on funder identity): **Layer 1 = Program** (`FundingModelId` INDIVIDUAL/POOL/GRANT/MIXED + sponsorship policy fields + `LinkedDonationPurposeId` bridge). **Layer 2 = actual funders/commitments** — `grant.Grants` (FunderContactId, AwardedAmount, links to program via `Grant.PurposeProgramId`), `fund.Pledges`(+PledgePayment), `fund.RecurringDonationSchedules`, `case.Beneficiaries.SponsorContactId` (per-child). **Layer 3 = money** — `fund.GlobalDonations`, `PledgePayments`, `PaymentTransactions`. Layers 2 & 3 **already exist** — adding a per-program funder sub-table was rejected as duplication.
+  - **Funder identity = `Contact.ContactBaseTypeId`** (ORGANIZATION = a company, INDIVIDUAL = a single member) — the user's "company vs single member" distinction is already modelled on Contact; **no new funder-type field**.
+- **Files touched**:
+  - FE: `program-form.tsx` —
+    - Section 5 renamed **"Sponsorship Model" → "Funding Model"** (it covers grant/pool/mixed too, not only sponsorship).
+    - **Moved** `linkedDonationPurposeId` out of Section 7 (Staff & Budget) into the Funding section — it is the *bridge* that routes pledges/recurring/pooled donations to the program, not a budget field. Gated to INDIVIDUAL/POOL/MIXED (`showDonationPurpose`); hidden for pure GRANT (grants link the other way via `Grant.PurposeProgramId`). Staff & Budget budget row collapsed 3-col → 2-col.
+    - Added `FUNDING_NOTES` per-model explainer line (info icon) stating, per model, WHO funds (Contact: Organization=company / Individual=single member), HOW (grant / pledge / recurring / pooled donation), and WHERE it's tracked (Grant module / Donations). Directly answers the user's "where does the tracking exist" without new schema.
+- **Deviations from spec**: Funding section reframed (model-aware fields + relocated bridge). No new BE fields/columns — reuses existing `fundingModelId`/`sponsorship*`/`linkedDonationPurposeId`. §⑥ Section 5 spec should be updated to "Funding Model (model-aware)" on the next spec pass.
+- **No BE / no migration this session** — pure FE reorganization of existing fields.
+- **Known issues opened/closed**: None.
+- **Verification**: JSX/logic-level only; manual smoke pending — open Program form, switch Funding Model: INDIVIDUAL/MIXED show sponsorship fields + donation-purpose + note; POOL shows donation-purpose + note; GRANT shows only the model + grant note (no sponsorship, no purpose).
+- **Next step (Phase 2 — proposed, not yet built)**: surface the existing tracking **read-only** on the program view/edit — linked Grants (`grant.Grants WHERE PurposeProgramId`), Pledges/Recurring + funds received (via `LinkedDonationPurposeId` → `fund` donations). Needs a BE rollup query (NO schema change — reads existing `grant.*`/`fund.*`). This is the "see all the tracking on the program" piece.
+
+### Session 18 — 2026-06-19 — ENHANCE (Spec change — user-authorized) — COMPLETED (pending user migration)
+
+- **Scope**: Replaced the single `Program.LinkedDonationPurposeId` FK with a **many-to-many funding-source link table** so a program can be funded by MULTIPLE grants AND/OR MULTIPLE donation purposes. Outcome of a long design interrogation: the user concluded a grant (and a donation purpose) is a **general income source** — a program is just one of the things it can fund — so the relationship is genuinely M:N and the link belongs in a junction, not as an FK on either side. **Key finding that settled it:** `Grant.PurposeProgramId` is a FK to *MasterData* (a program-*category* label), **NOT** a link to a `case.Programs` row — so there was no real grant→program link at all; the junction is the only consistent way to link grants + multiple purposes, both pointing the same direction.
+- **Design decision (committed, no amount split)**: junction is a **plain link** (no `AllocatedAmount`) — money totals still come from the existing `grant.*`/`fund.*` records via the Phase-2 rollup, consistent with the Layer-1 "link, don't re-track" discipline. The program keeps only its funding **policy** (FundingModelId, sponsorship policy, budget) + the funding-source links.
+- **New table** `case.ProgramFundingSource`: `Id`, `ProgramId` (FK→Program, **Cascade**), `GrantId?` (FK→grant.Grants, **Restrict**), `DonationPurposeId?` (FK→fund.DonationPurposes, **Restrict**), `IsActive`. Exactly one of Grant/Purpose set per row (XOR validator in Create/Update). Joined display fields: `Grant.GrantTitle`, `DonationPurpose.DonationPurposeName`.
+- **Files touched**:
+  - BE (new): `Base.Domain/Models/CaseModels/ProgramFundingSource.cs`; `Base.Infrastructure/.../CaseConfigurations/ProgramFundingSourceConfiguration.cs`.
+  - BE (edit): `Program.cs` (removed `LinkedDonationPurposeId`+nav, added `FundingSources` collection); `ProgramConfiguration.cs` (removed LinkedDonationPurpose FK); `ICaseDbContext.cs`/`CaseDbContext.cs` (DbSet); `ProgramSchemas.cs` (added `ProgramFundingSourceDto`, swapped fields on Request+Response DTOs); `CaseMappings.cs` (Ignore + projection + 2 child configs, null-guarded joins); `CreateProgram.cs` (materialize + XOR validator); `UpdateProgram.cs` (`Include` + `SyncFundingSources` full-replace + XOR validator); `GetProgramById.cs` (**removed dead `.Include(LinkedDonationPurpose)` — would not compile — and added `Include(FundingSources).ThenInclude(Grant/DonationPurpose)`** — agent had missed this query handler).
+  - FE (new): `program-grant-picker.tsx`, `program-donation-purpose-picker.tsx` (chip multi-pickers mirroring `program-staff-picker.tsx`; grants via `GET_GRANTS_QUERY`, purposes via `DONATIONPURPOSES_QUERY`).
+  - FE (edit): `program-form-schemas.ts` (drop `linkedDonationPurposeId`, add `fundingGrantIds`/`fundingDonationPurposeIds`); `program-form.tsx` (two gated pickers + name caches; grant picker GRANT/MIXED, purpose picker INDIVIDUAL/POOL/MIXED; updated FUNDING_NOTES); `program-form-page.tsx` (defaultValues split from `fundingSources`, preload chip names, handleSubmit rebuilds `fundingSources` array); `ProgramQuery.ts` (`fundingSources { id grantId grantTitle donationPurposeId donationPurposeName }`); `ProgramMutation.ts` (CREATE+UPDATE: `$fundingSources: [ProgramFundingSourceDtoInput!]`).
+- **GraphQL contract**: input `ProgramFundingSourceDtoInput { grantId, donationPurposeId }` (keeps `Dto` suffix); output `fundingSources { id grantId grantTitle donationPurposeId donationPurposeName }`.
+- **Deviations from spec**: This is a **Spec change** (new table + multi-select UI) normally routed to `/plan-screens`; user explicitly authorized planning + implementing in this session. §⑥ Section 5 + §④ data model need updating on the next spec pass (LinkedDonationPurposeId → ProgramFundingSource junction).
+- **⚠️ USER ACTION — migration required (not done; user creates migrations)**: generate an EF migration that (1) creates `case.ProgramFundingSource`, (2) **backfills** existing `case.Programs.LinkedDonationPurposeId` values into `ProgramFundingSource (ProgramId, DonationPurposeId)` BEFORE (3) dropping the `LinkedDonationPurposeId` column. FE typecheck passed; BE not built (user builds). Demo seeds referencing `LinkedDonationPurposeId` (if any) will also need updating — same outstanding-seeds caveat as S16.
+- **Known issues opened/closed**: None.
+- **Next step**: user runs build + migration; then smoke-test (create/edit a MIXED program → add 2 grants + 2 purposes → save → reopen → chips rehydrate with names). Phase-2 read-only rollup now reads the junction instead of the single FK.
+
+### Session 19 — 2026-06-22 — ENHANCE (Spec change — user-authorized) — COMPLETED (pending user migration)
+
+- **Scope**: Added **per-source fund allocation + transaction-based audit** to the funding model (supersedes S18's "plain link, no AllocatedAmount"). Each funding source (grant/donation purpose) now commits an **allocation** (amount + cadence + period) to the program, and a new **ledger** records allocation/drawdown/adjustment events from which **Allocated / Used / Remaining / #txns** are rolled up. Program-level **annual need** is auto-computed and pre-fills Annual Budget.
+- **Why S18's "no amount" was wrong for this requirement**: no money record carries program attribution today (`Grant.AwardedAmount` = whole grant; donations attach to a `DonationPurpose`, not a program; `Grant.PurposeProgramId` is a MasterData label). A pure rollup can't compute used-vs-remaining-for-this-program without stamping `ProgramId+SourceId` across the donation/grant modules — so we use an **explicit ledger** instead. Three numbers kept distinct: **Need** (computed) / **Allocation** (on the junction) / **Usage** (ledger).
+- **ProgramType drives cadence**: ONGOING (no fixed close) ⇒ allocation must be recurring (MONTHLY/ANNUAL), ONETIME blocked (BE async validator + FE zod superRefine + cadence dropdown hides One-time); FIXEDTERM may use ONETIME. EndDate nullable (open-ended) for ongoing.
+- **Schema added** (⚠️ needs migration — see below):
+  - `case.ProgramFundingSource` gains: `AllocatedAmount numeric(18,2)?`, `CurrencyId int?` (FK→com.Currencies, Restrict), `AllocationFrequencyCode varchar(20)?`, `StartDate date?`, `EndDate date?`.
+  - **New table** `case.ProgramFundingTransaction`: `Id` (identity), `FundingSourceId` (FK→ProgramFundingSource, **Cascade**), `TransactionType varchar(20)` (ALLOCATION/DRAWDOWN/ADJUSTMENT, plain code — no MasterData FK), `Amount numeric(18,2)`, `CurrencyId int?` (FK→com.Currencies, Restrict), `TransactionDate date?`, `LinkedDonationId int?`/`LinkedGrantExpenseId int?`/`LinkedPaymentTransactionId int?` (**no FK** — cross-module audit refs only), `Notes varchar(1000)?`, `IsActive`, + Entity base audit cols.
+- **Files touched**:
+  - BE (new): `Base.Domain/Models/CaseModels/ProgramFundingTransaction.cs`; `Base.Infrastructure/.../CaseConfigurations/ProgramFundingTransactionConfiguration.cs`.
+  - BE (edit): `ProgramFundingSource.cs` (allocation fields + Currency + Transactions navs); `ProgramFundingSourceConfiguration.cs` (Currency FK + Transactions HasMany Cascade + column types); `ICaseDbContext.cs`/`CaseDbContext.cs` (`ProgramFundingTransactions` DbSet); `ProgramSchemas.cs` (expanded `ProgramFundingSourceDto` w/ allocation+rollups+transactions, new `ProgramFundingTransactionDto`, `ComputedAnnualNeed` on Response); `CaseMappings.cs` (currencyCode + transactions projection + 2 txn child configs); `CreateProgram.cs` (materialize allocation+nested txns; ONGOING-cadence + txn-validity validators); `UpdateProgram.cs` (`ThenInclude(Transactions)`; **`SyncFundingSources` now DIFF-PERSIST not full-replace** so each source row keeps its identity + ledger; new `SyncFundingTransactions`; same validators); `GetProgramById.cs` (Currency+Transactions includes; per-source rollups Allocated=ΣALLOCATION+ADJUSTMENT-or-AllocatedAmount-fallback / Used=ΣDRAWDOWN / Remaining / count; `ComputeAnnualNeed` + `FrequencyToAnnualMultiplier`).
+  - FE (new): `program-funding-sources.tsx` (useFieldArray rows; pickers reused as pure adders w/ `selectedGrants={[]}` so no chips; per-row allocation grid + rollup strip + collapsible nested-field-array ledger; cadence dropdown gated by ONGOING).
+  - FE (edit): `program-form-schemas.ts` (replaced `fundingGrantIds`/`fundingDonationPurposeIds` with `fundingSources` array-of-objects incl `transactions`; XOR + ONGOING-cadence superRefine); `program-form.tsx` (removed chip pickers + name caches + dead watchers; renders `<ProgramFundingSources>`; `computedAnnualNeed` prop + "Apply" prefill on Annual Budget); `program-form-page.tsx` (defaultValues map full source rows incl txns + ids; handleSubmit sends rows with id + strips response-only fields; passes `computedAnnualNeed`); `ProgramQuery.ts` (expanded `fundingSources` selection + `transactions {…}` + `computedAnnualNeed`). `ProgramMutation.ts` UNCHANGED (variable type `[ProgramFundingSourceDtoInput!]` already covers the richer nested input).
+- **GraphQL contract**: input `ProgramFundingSourceDtoInput { id, grantId, donationPurposeId, allocatedAmount, currencyId, allocationFrequencyCode, startDate, endDate, transactions: [ProgramFundingTransactionDtoInput!] }`; `ProgramFundingTransactionDtoInput { id, transactionType, amount, currencyId, transactionDate, linkedDonationId, linkedGrantExpenseId, linkedPaymentTransactionId, notes }`. Response adds allocation fields + `currencyCode`, rollups `totalAllocated/totalUsed/remainingAmount/transactionCount`, nested `transactions`, and program-level `computedAnnualNeed`. Send-side must NOT include response-only display fields (grantTitle/donationPurposeName/currencyCode/rollups) — HC rejects unknown inputs.
+- **Deviations from spec**: Spec change (new ledger table + allocation cols + need-calc) normally routed to `/plan-screens`; user explicitly authorized implementing this session. §⑥ Section 5 + §④ data model need a spec pass.
+- **⚠️ USER ACTION — migration required (not done; user creates migrations)**: this STACKS ON TOP of S18's un-applied migration (S18's `update-database` died on a design-time `OutOfMemoryException`, not a schema error — retry from a fresh PMC / CLI). The migration must (1) ADD the 5 allocation columns to `case.ProgramFundingSource`, and (2) CREATE `case.ProgramFundingTransaction` (cols above; FK FundingSourceId Cascade, CurrencyId Restrict; LinkedXxxId columns have NO FK). No data backfill needed for S19. FE typecheck passed clean; BE not built (user builds).
+- **Known issues opened/closed**: None.
+- **Next step**: user runs build + migration; smoke-test: create a MIXED/ONGOING program → add a grant + a purpose → set allocation amount/cadence (confirm One-time is hidden for ongoing) → add an ALLOCATION + DRAWDOWN ledger row → save → reopen → rows rehydrate, rollups show Allocated/Used/Remaining, `computedAnnualNeed` "Apply" fills Annual Budget. Diff-persist check: edit an existing source's amount → its ledger rows survive (not wiped).
+
+#### Session 19 addendum (same day) — DESIGN PIVOT: allocation → separate screen (user decision)
+
+User decided (post-build): **the program create/edit form should link funding sources ONLY**; allocation amounts + cadence + period + the audit ledger move to a **separate, post-creation "Program Fund Allocation" screen** (create defines *what funds it*; operate defines *how much*, gated on the program existing/ACTIVE). The S19 BE schema (allocation cols + `ProgramFundingTransaction` ledger + rollups) is **reused as-is** by that screen — no BE schema rework.
+- **Program form is now links-only** (in-scope changes applied this session):
+  - FE: `program-funding-sources.tsx` gained a `linksOnly` prop (renders source **chips** + adders, hides allocation grid/ledger/rollups); `program-form.tsx` passes `linksOnly`; `program-form-page.tsx` `handleSubmit` sends `fundingSources` as `{ id, grantId, donationPurposeId }` only. `computedAnnualNeed` "Apply" on Annual Budget **stays** (it's a budget hint, not allocation). FE tsc clean.
+  - BE: `CreateProgram` materializes **links only** (allocation null); `UpdateProgram.SyncFundingSources` rewritten to **add/remove links and LEAVE existing rows untouched** (so a program-form save can never wipe an allocation/ledger set by the allocation screen) — removed `SyncFundingTransactions` + the `ThenInclude(Transactions)` include. The ONGOING-cadence + txn-validity validators remain but are inert for the form (no cadence/txns sent) — they'll be reused by the allocation screen's command.
+- **NOT built — new screen**: "Program Fund Allocation" (own route/menu, lifecycle-gated, reuses the full `ProgramFundingSources` card UI + new per-source allocation/ledger BE commands). → Goes through **`/plan-screens`** as a NEW screen (entry point TBD: program-grid row action vs program detail tab).
+
+#### Session 19 addendum 2 (same day) — EXPECTED amount back on the form (user decision)
+
+User refined the pivot: pure links-only left management with no view of *how much* each source should provide. So the form is now **link + EXPECTED annual amount** (the planning target), while the separate Fund Allocation screen still owns the **actual** allocation (AllocatedAmount/cadence/dates) + the ledger. Four distinct numbers now: **Need** (computed) → **Expected/source** (form) → **Allocated/source** (alloc screen) → **Used** (ledger).
+- BE: `ProgramFundingSource` +`ExpectedAnnualAmount` (numeric(18,2); config + DTO + entity). `CreateProgram` persists `ExpectedAnnualAmount`+`CurrencyId` on each link. `UpdateProgram.SyncFundingSources` now **updates ONLY ExpectedAnnualAmount+CurrencyId on existing rows** (allocation/cadence/dates/ledger still NEVER touched → alloc screen's data stays safe); new links carry their expected target. Mapster auto-maps `ExpectedAnnualAmount` (name match).
+- FE: `program-form-schemas.ts` fundingSourceSchema +`expectedAnnualAmount`. `program-funding-sources.tsx` `linksOnly` branch reworked: chips → **rows** (source label + Expected/year input + currency picker + remove) plus a **Need vs Expected total** strip (Fully covered / Short X / Over X). `needTarget` prop = `computedAnnualNeed`. `program-form.tsx` passes `needTarget`; `program-form-page.tsx` defaultValues map `expectedAnnualAmount`, handleSubmit sends `{ id, grantId, donationPurposeId, expectedAnnualAmount, currencyId }`. `ProgramQuery.ts` +`expectedAnnualAmount`. `ProgramMutation.ts` UNCHANGED (`[ProgramFundingSourceDtoInput!]` covers it). FE tsc clean.
+- **Migration (user-owned)**: stacks on S18/S19 — adds 1 nullable col `ExpectedAnnualAmount numeric(18,2)` to `case."ProgramFundingSource"`. No backfill.
+
+### Session 20 — 2026-06-22 — ENHANCE (Spec change — user-authorized) — COMPLETED (pending user migration)
+
+- **Scope**: Restructure **Outcome Metrics** from free-text → structured M&E tracking fields, mirroring how eligibility-criteria / services / funding were professionalised (user: "outcomes how to check, with document required or not, that kind of information").
+- **Model**: `case."ProgramOutcomeMetrics"` drops `TargetText`/`MeasurementText`/`FrequencyText`; adds `IndicatorTypeId` (OUTCOMEINDICATORTYPE: Output/Outcome/Impact), structured target `BaselineValue`+`TargetOperatorCode`(>=/<=/=/>/<)+`TargetValue`+`UnitOfMeasure`, `MeasurementMethodId` (OUTCOMEMEASUREMENTMETHOD), `MeasurementFrequencyId` (OUTCOMEMEASUREMENTFREQUENCY), evidence config `RequiresEvidence`+`EvidenceDocumentTypeId` (OUTCOMEEVIDENCEDOCUMENTTYPE; mirrors eligibility's RequiresDocument), `Instructions`.
+- **Files touched**:
+  - BE: `ProgramOutcomeMetric.cs` (entity + 4 MasterData navs), `ProgramOutcomeMetricConfiguration.cs` (props + 4 Restrict FKs), `ProgramSchemas.cs` (`ProgramOutcomeMetricDto` + joined response-only Name/Code), `CaseMappings.cs` (join names + ignore navs), `CreateProgram.cs` + `UpdateProgram.cs` `SyncOutcomeMetrics` (map full set; EvidenceDocumentTypeId gated on RequiresEvidence), `GetProgramById.cs` (4 ThenIncludes). New seed `DatabaseScripts/Seed/seed_outcome_metric_masterdata.sql` (4 types).
+  - FE: `program-outcome-metrics-table.tsx` (free-text table → **MetricCard** mirroring eligibility CriterionCard), `program-form-schemas.ts` (`metricSchema` structured + superRefine requiresEvidence⇒evidenceDocumentTypeId), `program-form-page.tsx` (defaultValues + submit maps), `ProgramQuery.ts` (outcomeMetrics selection). `ProgramMutation.ts` UNCHANGED (`[ProgramOutcomeMetricDtoInput!]` auto-covers).
+- **Deviations from spec**: None (extends the established Layer-1 restructure pattern).
+- **Verify**: FE `npx tsc --noEmit` clean. BE not built (user builds).
+- **Migration (user-owned)**: drop 3 text cols + add 4 nullable FK cols on `case."ProgramOutcomeMetrics"`. No backfill. Then run `seed_outcome_metric_masterdata.sql`. Demo seeds inserting old outcome cols will break (same class as the S16 list).
+- **Next step**: none — user owns migration + BE build.

@@ -2,15 +2,86 @@
 screen: MemberPortal
 registry_id: 61
 module: Setting (Public Pages) — admin setup / (Member) — member-authenticated portal
-status: COMPLETED
+status: PARTIALLY_COMPLETED     # v2 build in progress — Stage A (seeds+data) BE + branding-settings FE done (S5 2026-06-15); Stages B/C-remainder/D/E pending. Build from the "v2 RE-ARCHITECTURE" block below
 scope: FULL
-screen_type: EXTERNAL_PAGE
-external_page_subtype: MEMBER_PORTAL
+screen_type: EXTERNAL_PAGE      # v1 classification — RECLASSIFIED in v2 → CONFIG (branding via tenant OrgSettings) + authenticated in-app member area (role-menu driven)
+external_page_subtype: MEMBER_PORTAL   # v1 — ABANDONED in v2 (the portal is NOT an external/public page; it is an authenticated in-app area)
 complexity: High
 new_module: NO
 planned_date: 2026-05-14
+replan_date: 2026-06-15
 completed_date: 2026-05-14
-last_session_date: 2026-05-14
+last_session_date: 2026-06-15
+---
+
+## ⓥ2 RE-ARCHITECTURE — AUTHORITATIVE (2026-06-15)
+
+> **READ THIS FIRST.** Session 2 (ISSUE-19) found the v1 `MEMBER_PORTAL` static-external-page model is architecturally wrong. This block is the authoritative v2 spec. **Where any v1 section (§① … §⑬ Session-1) conflicts with this block, THIS BLOCK WINS.** v1 content is retained below for build-log / audit only.
+
+### A. Why v1 was wrong
+- **Nav as static booleans.** `mem.MemberPortalConfigs` encodes the member nav/sections/quick-actions as `NavDashboardEnabled` / `SectionBenefitsEnabled` / `QuickAction*Enabled` — a parallel hardcoded menu system that duplicates the app's existing role → menu → capability RBAC.
+- **Faked auth.** Member access is a `localStorage` mock (`MemberAuthGuard`, `(member)/login`, `/member-login` — ISSUE-2/17/18), not a real identity.
+- **Wrong mental model.** The portal is treated as an anonymous public funnel. It is an **authenticated in-app area** for real members.
+
+### B. Settled data model (verified against the live schema this session)
+- **`Contact.UserId`** (int?, nullable, FK → `auth.Users`, **1:1**) = the member's/volunteer's **own login**. ⟵ **UPDATED 2026-06-15 (Session 4):** this is the **RENAME** of the former `Contact.StaffUserId`. The "Assigned Staff / managed-by" concept was **DROPPED** — re-analysis found it was never used in a real WHERE-filter (the staff-scoping line was only a conditional/planned note, no live handler). There is now a **single** `User` nav on Contact (`Contact.User`), wired 1:1: `HasOne(o => o.User).WithOne(p => p.Contact).HasForeignKey<Contact>(o => o.UserId)`. No second nav, no cascade. **Migration already run by the user.**
+  - Symmetric with staff: a **staff** person = `app.Staffs` ↔ `auth.Users` via `User.StaffId` (kept — load-bearing for login); a **member/volunteer** person = `corg.Contacts` ↔ `auth.Users` via `Contact.UserId`. **No `User.ContactId`** — resolve a member from a login via `Contacts.First(c => c.UserId == userId)`.
+- **MEMBERSHIP role** — seeded, tenant-scoped via existing nullable `auth.Roles.CompanyId`. (Same pattern reused later for a VOLUNTEER role.)
+- **`User.PrimaryRoleId`** → the MEMBERSHIP role for member logins (column already exists).
+- **Type is derived, not columnar.** Member vs volunteer vs staff = (a) which domain record exists (`MemberEnrollment` / `Volunteer` / `Staff`) + (b) the RBAC role. A person who is both member & volunteer = **1 Contact, 1 User (`Contact.UserId`), 2 roles**. No per-type FK columns.
+- Staff today are NOT Contacts (separate `app.Staffs` person record with its own `User.StaffId`); they keep their existing link. Folding staff into Contacts is out of scope.
+
+### C. Locked decisions (this session)
+1. **Branding store → tenant OrgSettings.** Store member-portal branding as `ParamCode` rows in `sett.OrganizationSettings` under a **new `MEMBERPORTAL` group** (logo / accentHex / accentLightHex / welcomeCopy / footerCopy / contactEmail / donationSlug / portalStatus). Consistent with the AUTH #119 / tenant-scoped OrgSettings direction (which already replaced `CompanyBrandings`). **DROP the `mem.MemberPortalConfigs` table entirely.**
+2. **Member auth → unified branded login + role landing.** Members log in through the SAME tenant-branded login page as everyone else (AUTH #119 SSR-per-subdomain) → real NextAuth `CredentialsProvider` → the **role-based default landing page** feature (just built) routes the MEMBERSHIP role's `DefaultLandingUrl` to the portal dashboard. **REMOVE** `(member)/login`, `/member-login`, and the `MemberAuthGuard` localStorage mock.
+3. **Provisioning → enrollment-triggered "Invite to Portal."** When a `MemberEnrollment` is created/activated for a Contact, provision portal access: create a pending-invitation `User`, set `Contact.UserId`, assign the MEMBERSHIP role, email a set-password link. **Automatic** (reuse the enrollment's existing `SendWelcomeEmail` toggle slot) **and** a **manual "Invite to Portal"** action on the enrollment/contact for re-sends. Reuses #72's invite pipeline (`IsPendingInvitation` / `InvitationSentAt`). The pre-enrollment "invite to register the plan" funnel is **OUT OF SCOPE** for #61 (future member-registration page).
+4. **Nav/sections → real menus.** Member portal nav (Dashboard / Profile / Benefits / Payments / Events) become real `auth.Menus` rows under a member-portal parent, gated by MEMBERSHIP `RoleCapabilities` (`ISMENURENDER`), rendered via the existing **`GetParentChildMenu`** query in a member-branded layout (no admin sidebar). **DROP all `Nav*` / `Section*` / `QuickAction*` booleans** — per-tenant show/hide = that tenant's MEMBERSHIP role capabilities.
+5. **Route naming → `member-portal/` + bespoke `/member-login` (UPDATED 2026-06-15, Session 5 — supersedes decision 2's "unified login" for members).** The member-facing route group lives at **`(member)/member-portal/*`** (dashboard / profile / benefits / payments / events), **renamed from the original `(member)/portal/*`** so the future **`volunteer-portal/`** gets a clean, disambiguated sibling path. MEMBERSHIP `DefaultLandingUrl` = **`member-portal/dashboard`**; all 5 leaf-menu `MenuUrl`s + the `LANDINGPAGE` MasterData option carry the `member-portal/*` prefix. A bespoke **`/member-login`** page (toggle: **Member Code** OR **Email** + password) is the member entry point — NOT a redirect to staff `/login`. `MemberAuthGuard` treats `/member-login` as public; portal pages stay gated. **BE dependency:** the `login` resolver must resolve the identifier by UserName / Email / member `ContactCode` (→ `Contact.UserId` → `User`), tenant-scoped.
+
+### D. KEEP / DROP / ADD vs the v1 build
+
+| | Item |
+|---|---|
+| **DROP** | `mem.MemberPortalConfigs` table + entity + EF config + schemas + its 6 CRUD/lifecycle handlers (`GetMemberPortalConfig`, `GetMemberPortalConfigForMember`, `ValidateMemberPortalForActivate`, `UpdateMemberPortalConfig`, `ActivateMemberPortal`, `DisableMemberPortal`, `ResetMemberPortalBranding`), DbSet, mappings, decorator. · `(member)/login` + `/member-login` route + `MemberAuthGuard` + localStorage session. · The 6 boolean admin section cards (Nav Visibility / Hero / Quick Actions / Sections toggles). · Preview-banner reliance on mock token. |
+| **KEEP** | Member dashboard surface (hero membership card, payment summary) reading live from `MemberEnrollment` via `GetMyMemberEnrollment`. · Benefits / Recent Activity / Upcoming Events as SERVICE_PLACEHOLDER (ISSUE-3/5/6 unchanged). · The branding *fields themselves* (logo/colors/welcome/footer/contactEmail/donationSlug) — relocated to OrgSettings. |
+| **ADD** | `Contact.UserId` column + FK config. · MEMBERSHIP role seed + member-portal menu tree seed + MEMBERSHIP RoleCapabilities (`ISMENURENDER`). · OrgSettings `MEMBERPORTAL` ParamCode group seed + read/write via existing OrgSettings service. · `InviteMemberToPortal` provisioning command (reuses #72 invite internals) + hook into `CreateMemberEnrollment` + standalone/resend mutation. · `Role.DefaultLandingUrl` persistence (role-landing feature — **USER is building this BE**; FE done). · Member layout reads menus from `GetParentChildMenu`; member dashboard guarded by real NextAuth session (MEMBERSHIP role). |
+
+### E. v2 file-manifest delta (supersedes v1 §⑧)
+**Backend**
+- DROP all `MemberPortalConfig*` files (entity/config/schemas/queries/commands/endpoints/DbSet/mapping/decorator listed in v1 §⑧).
+- ✅ **DONE (Session 4):** `Contact.cs` → `StaffUserId` renamed to `int? UserId`, single `User? User` nav kept; `ContactConfiguration.cs` → 1:1 `HasOne(o => o.User).WithOne(p => p.Contact).HasForeignKey<Contact>(o => o.UserId)`; `User.cs` → inverse changed from `ICollection<Contact> ContactStaffs` to single `Contact? Contact`; `ContactRequestDto.UserId` renamed; `ContactImport-fn-execute.sql` staging field renamed. **User ran the migration.**
+- `GetMyMemberEnrollment.cs` → KEEP, but resolve ContactId from the **real** auth token via `Contacts.First(c => c.UserId == currentUserId).ContactId` (there is **no** `User.ContactId`; delete the v1 mock/query-arg fallback). Tenant + privilege-escalation discipline from v1 §④ still applies.
+- Provisioning: `InviteMemberToPortal.cs` command (+ wire into `CreateMemberEnrollment`/activation) reusing #72 user-invite + invite-email pipeline.
+- Seeds: MEMBERSHIP role; member-portal parent menu + 5 leaves; MEMBERSHIP RoleCapabilities; OrgSettings `MEMBERPORTAL` ParamCode rows. (User runs EF migration for `Contact.UserId` manually per house rule.)
+- Role-landing BE (`Role.DefaultLandingUrl` persist + login returns it) — **USER owns** (see role-default-landing-page spec §④).
+
+**Frontend**
+- DELETE `(member)/login`, member-login, `MemberAuthGuard`, the 4 boolean section cards.
+- Member layout (`(member)/layout.tsx` or relocated) → render nav from the role-filtered menu query (`GetParentChildMenu`), wrap in real NextAuth `SessionProvider`, guard on MEMBERSHIP role.
+- Admin branding screen → reclassify as a **CONFIG / SETTINGS_PAGE** editing the OrgSettings `MEMBERPORTAL` group (reuse the OrgSettings editor pattern from #119 / `setting/orgsettings`); drop the boolean cards, keep branding inputs + portal-status.
+- `MemberEnrollment` grid/form → add an **"Invite to Portal"** row/form action.
+- KEEP member dashboard components (hero card, payment summary, placeholders).
+
+### F. v2 acceptance (delta — supersedes v1 §⑪ where conflicting)
+- Member logs in via the standard tenant-branded login and lands on the portal dashboard via the MEMBERSHIP role's `DefaultLandingUrl` (no `(member)/login`, no localStorage session).
+- Portal nav is driven by MEMBERSHIP `RoleCapabilities` — toggling a capability adds/removes a nav item; there are NO `Nav*Enabled` booleans anywhere.
+- `Contact.UserId` links a member to their login (1:1); the former `Contact.StaffUserId` / "Assigned Staff" concept is dropped (renamed into `UserId`).
+- "Invite to Portal" provisions a `User` + MEMBERSHIP role + `Contact.UserId` + invite email; re-send works.
+- Branding edits persist to OrgSettings `MEMBERPORTAL` group and render on the member surface.
+
+### G. Issues this re-plan closes / supersedes
+- **ISSUE-1** (MEMBER_PORTAL sub-type divergence) → SUPERSEDED — sub-type abandoned; portal is an authenticated in-app area, branding is CONFIG.
+- **ISSUE-2 / 17 / 18** (member-auth mock, member-login URL, localStorage session) → SUPERSEDED by unified real auth (decision C.2).
+- **ISSUE-16** (`Permissions.Activate/Disable` missing) → MOOT — singleton lifecycle dropped; portal status is one OrgSettings ParamCode, no Activate/Disable caps.
+- **ISSUE-19** note used a stale shape (`Role.DefaultLandingMenuId` + per-user override). The feature as built uses **`Role.DefaultLandingUrl`** (string relative-route, NOT a Menu FK) with precedence `User.PrimaryRoleId` role → lowest `Role.OrderBy` role → `masterdashboard` (NO per-user override column). v2 follows the as-built shape.
+
+### H. Build sequence
+1. **(USER)** role-landing BE §④ — `Role.DefaultLandingUrl` persist + login returns it. (Role-landing FE already shipped.)
+2. ✅ `Contact.UserId` DONE (Session 4). → **NEXT:** MEMBERSHIP role + member-portal menu tree + MEMBERSHIP RoleCapabilities + OrgSettings `MEMBERPORTAL` group seeds.
+3. `InviteMemberToPortal` provisioning (+ enrollment hook).
+4. Member layout role-menu render + real-auth guard; branding admin screen on OrgSettings; "Invite to Portal" action.
+5. Verify §F for ≥2 tenants (cross-tenant isolation + a member who is also a volunteer).
+
 ---
 
 ## Tasks
@@ -913,8 +984,8 @@ Full UI must be built (6 admin cards, live preview, member portal Dashboard with
 
 | ID | Raised (session) | Severity | Area | Description | Status |
 |----|------------------|----------|------|-------------|--------|
-| ISSUE-1 | planning | HIGH | template-divergence | New MEMBER_PORTAL sub-type | OPEN |
-| ISSUE-2 | planning | HIGH | auth-infra | Member-credentials provider missing | OPEN |
+| ISSUE-1 | planning | HIGH | template-divergence | New MEMBER_PORTAL sub-type | SUPERSEDED (v2 re-plan) — sub-type abandoned |
+| ISSUE-2 | planning | HIGH | auth-infra | Member-credentials provider missing | SUPERSEDED (v2 re-plan) — unified real auth |
 | ISSUE-3 | planning | MED | data-scope | Benefits data placeholder | OPEN |
 | ISSUE-4 | planning | LOW | service | Card PDF generation missing | OPEN |
 | ISSUE-5 | planning | MED | data-scope | Activity feed placeholder | OPEN |
@@ -928,9 +999,15 @@ Full UI must be built (6 admin cards, live preview, member portal Dashboard with
 | ISSUE-13 | planning | LOW | preview-token | Admin preview token security | OPEN |
 | ISSUE-14 | planning | LOW | locale | Date locale formatting | OPEN |
 | ISSUE-15 | planning | LOW | multi-currency | Currency symbol on fees | OPEN |
-| ISSUE-16 | session 1 | MED | auth-permissions | `Permissions.Activate` / `Permissions.Disable` constants do not exist in `Permissions` static class. Activate/Disable handlers currently decorate with `Permissions.Modify` so behavior collapses to MODIFY at the CQRS layer (menu-level RoleCapabilities still seeded as ACTIVATE/DISABLE). Follow-up: add the two constants and switch decorators. | OPEN |
-| ISSUE-17 | session 1 | LOW | route-naming | Member login route is `/{lang}/member-login` (not `/{lang}/login` as spec said) because `(auth)/login` already owns `/login` for staff and Next.js route groups don't differentiate URLs. All references (auth guard, header logout, auth.ts allowlist) updated to `/member-login`. Update §⑥ M.3 + §⑫ when this prompt is referenced for v2 member-credentials work. | OPEN |
-| ISSUE-18 | session 1 | LOW | auth-shape | `(member)/layout.tsx` does NOT wrap children with NextAuth `SessionProvider` — v1 ships a localStorage-only mock session inside `MemberAuthGuard`. When ISSUE-2 lands a real member-credentials NextAuth provider, migrate guard to read from `useSession()` and remove the localStorage helper. | OPEN |
+| ISSUE-16 | session 1 | MED | auth-permissions | `Permissions.Activate` / `Permissions.Disable` constants do not exist in `Permissions` static class. Activate/Disable handlers currently decorate with `Permissions.Modify` so behavior collapses to MODIFY at the CQRS layer (menu-level RoleCapabilities still seeded as ACTIVATE/DISABLE). Follow-up: add the two constants and switch decorators. | MOOT (v2 re-plan) — singleton lifecycle dropped |
+| ISSUE-17 | session 1 | LOW | route-naming | Member login route is `/{lang}/member-login` (not `/{lang}/login` as spec said) because `(auth)/login` already owns `/login` for staff and Next.js route groups don't differentiate URLs. All references (auth guard, header logout, auth.ts allowlist) updated to `/member-login`. Update §⑥ M.3 + §⑫ when this prompt is referenced for v2 member-credentials work. | SUPERSEDED (v2 re-plan) — unified branded login |
+| ISSUE-18 | session 1 | LOW | auth-shape | `(member)/layout.tsx` does NOT wrap children with NextAuth `SessionProvider` — v1 ships a localStorage-only mock session inside `MemberAuthGuard`. When ISSUE-2 lands a real member-credentials NextAuth provider, migrate guard to read from `useSession()` and remove the localStorage helper. | SUPERSEDED (v2 re-plan) — real NextAuth session |
+| ISSUE-20 | session 3 | HIGH | data-model | **`Contact.UserId` = member's own login.** UPDATED Session 4: implemented as a **RENAME** of `Contact.StaffUserId` (Assigned-Staff concept DROPPED — never used in a real filter), single 1:1 `Contact.User` nav, no `User.ContactId`. BE code + SQL done; user ran the migration. | CLOSED (session 4) |
+| ISSUE-21 | session 3 | HIGH | rbac-seed | MEMBERSHIP role (tenant-scoped) + member-portal menu tree (parent + 5 leaves) + MEMBERSHIP RoleCapabilities (`ISMENURENDER`) must be seeded; portal nav renders via `GetParentChildMenu` (NO Nav*Enabled booleans). | PARTIAL (S6) — seed authored (S5); S6 moved menu/landing URLs → `portal/*` and wired the member header to consume `PARENTCHILD_MENU_QUERY(CRM)→MEMBERPORTAL_AREA` (static fallback). PENDING DB run + live `GetParentChildMenu` verify for a MEMBERSHIP login |
+| ISSUE-22 | session 3 | MED | branding-store | Member-portal branding moves to `sett.OrganizationSettings` `MEMBERPORTAL` ParamCode group; `mem.MemberPortalConfigs` table DROPPED. Admin screen reclassified CONFIG/SETTINGS_PAGE reusing the OrgSettings editor. | PARTIAL (S5) — OrgSettings `MEMBERPORTAL` group (8 ParamCodes) seeded via OrgSettingsDefaultSeeder + admin screen reclassified to `MemberPortalSettingsPage` (FE done, tsc clean). PENDING build+verify. Table DROP is Stage D (not yet) |
+| ISSUE-23 | session 3 | MED | provisioning | `InviteMemberToPortal` (enrollment-triggered auto + manual resend) reusing #72 invite pipeline; sets `Contact.UserId` + MEMBERSHIP role + invite email. Pre-enrollment "register the plan" funnel OUT OF SCOPE. | OPEN |
+| ISSUE-24 | session 3 | MED | dependency | v2 depends on role-landing BE (`Role.DefaultLandingUrl` persist + login returns it) — **USER building**; role-landing FE already shipped. | OPEN |
+| ISSUE-19 | session 2 | **ARCH/HIGH** | re-architecture | **Whole sub-type is wrong.** Member nav is modelled as static booleans (`NavDashboardEnabled`, `SectionBenefitsEnabled`, …) on `mem.MemberPortalConfigs` — a parallel hardcoded menu duplicating the app's role+menu+capability RBAC. Re-plan onto: members = real Users linked to their Contact (needs Contact→User provisioning; `Contact.StaffUserId` ≠ member login); seed a tenant-scoped **MEMBERSHIP role**; portal menus render via existing `GetParentChildMenu` (ISMENURENDER per role — Roles are tenant-scoped, NO CompanyId-on-Menu needed); KEEP only the branding/theme config (logo/colors/welcome/login styling/status) as a SETTING screen (not an external page; portal is an authenticated in-app area). Depends on the new **role-based default landing page** feature (Role.DefaultLandingMenuId; precedence: per-user DefaultDashboardCode → PrimaryRoleId role landing → lowest Role.OrderBy role landing → masterdashboard; login redirect today HARDCODED to MASTER_URL in `useAuth/index.ts:94`). Plan role-default-page FIRST, then re-plan #61 via `/plan-screens`. See memory `project_member_portal_rearchitecture_role_based`. | OPEN |
 
 ### § Sessions
 
@@ -954,3 +1031,49 @@ Full UI must be built (6 admin cards, live preview, member portal Dashboard with
 - **Known issues opened**: ISSUE-16 (Permissions.Activate/Disable constants missing — MED) · ISSUE-17 (member-login URL renamed — LOW) · ISSUE-18 (localStorage mock session vs NextAuth SessionProvider — LOW)
 - **Known issues closed**: None
 - **Next step**: (empty for COMPLETED — defer ISSUEs 1, 2, 3, 5, 6, 9, 16, 17, 18 to follow-up sessions)
+
+### Session 2 — 2026-06-15 — ARCH-DECISION — HANDOFF (no code change)
+
+- **Scope**: Architecture review (user-raised). Concluded the MEMBER_PORTAL static-external-page model is wrong: member nav is encoded as static booleans on `mem.MemberPortalConfigs`, duplicating the app's role+menu+capability RBAC. Decided to re-architect onto a real **MEMBERSHIP role** (members = real Users linked to their Contact; menus via existing `GetParentChildMenu` ISMENURENDER filter; Roles are already tenant-scoped so no CompanyId-on-Menu needed). KEEP only the branding/theme config (reclassified SETTING screen, not an external page). New companion feature: **role-based default landing page** (Role.DefaultLandingMenuId; precedence per-user override → PrimaryRoleId → lowest Role.OrderBy → masterdashboard; login redirect today hardcoded to MASTER_URL in `useAuth/index.ts:94`).
+- **Files touched**: None (analysis + planning only).
+- **Deviations from spec**: This is itself a Spec change — handed off to `/plan-screens` per /continue-screen guardrails.
+- **Known issues opened**: ISSUE-19 (ARCH/HIGH — re-architecture; see Known Issues table).
+- **Known issues closed**: None.
+- **Next step**: (1) `/plan-screens` the role-based default landing page feature FIRST (Role field + #70 Role screen + login redirect). (2) Then `/plan-screens #61` to re-blueprint Member Portal as branding-config SETTING screen + authenticated in-app member area driven by the MEMBERSHIP role. Status left COMPLETED until re-plan begins. See memory `project_member_portal_rearchitecture_role_based`.
+
+### Session 3 — 2026-06-15 — RE-PLAN (v2 re-architecture) — COMPLETED (no code change)
+
+- **Scope**: Re-planned #61 onto the correct architecture (see the **ⓥ2 RE-ARCHITECTURE** block at the top of this prompt — authoritative). Grounded the data model against the live schema: confirmed `Contact.StaffUserId` is FK-mapped to `auth.Users` and means "managed-by" (used for staff data-scoping), so it CANNOT be reused for member login. Settled the member↔login link as a **new `Contact.UserId`** column.
+- **Locked decisions (via user)**: (1) branding → tenant OrgSettings `MEMBERPORTAL` group, DROP `mem.MemberPortalConfigs`; (2) member auth → unified tenant-branded login + role-based default landing page (no `(member)/login`, no localStorage mock); (3) provisioning → enrollment-triggered "Invite to Portal" (auto + manual resend) reusing #72 invite pipeline, pre-enrollment funnel out of scope; (4) nav/sections → real `auth.Menus` gated by MEMBERSHIP `RoleCapabilities` via `GetParentChildMenu`, drop all boolean toggles.
+- **Files touched**: None (planning only — this prompt updated: frontmatter status → PROMPT_READY, v2 block inserted, ISSUE table updated, this entry).
+- **Deviations from spec**: v2 abandons the v1 MEMBER_PORTAL external-page model wholesale (intentional).
+- **Known issues opened**: ISSUE-20..24 (data model, RBAC seed, branding store, provisioning, role-landing dependency).
+- **Known issues closed**: ISSUE-1/2/17/18 → SUPERSEDED; ISSUE-16 → MOOT.
+- **Next step**: USER finishes role-landing BE §④ (`Role.DefaultLandingUrl` persist + login returns it). Then build v2 per the re-architecture block's build sequence (§H): `Contact.UserId` + MEMBERSHIP role/menu/RoleCapabilities + OrgSettings `MEMBERPORTAL` group → `InviteMemberToPortal` → member layout role-menu render + real-auth guard + branding settings screen → verify §F across ≥2 tenants.
+
+### Session 5 — 2026-06-15 — BUILD (v2 Stage A: seeds+data + branding FE) — PARTIAL
+
+> NOTE: Session 4 (the `Contact.StaffUserId`→`UserId` rename + user-run migration) landed earlier without its own § Sessions entry — it is recorded in the ⓥ2 block §B/§E and ISSUE-20. This is the first **code-build** session of v2. Prereqs verified live this session: `Contact.UserId` ✅, `Role.DefaultLandingUrl` + `GetUserCredential` landing-resolution ✅ (USER's role-landing BE), `GetParentChildMenu` ✅, #72 invite pipeline ✅, OrganizationSettings business layer ✅.
+
+- **Scope**: Build-sequence §H step 2 (additive seeds + data, NO v1 deletes — user chose "Stage A only") + the user-chosen FE increment (branding admin screen → OrgSettings editor). Backend build/seed-run is the USER's (they declined the in-session `dotnet build`).
+- **Files touched**:
+  - BE: `Base.Application/.../MemBusiness/MemberEnrollments/Queries/GetMyMemberEnrollment.cs` (modified — resolves ContactId from `Contact.UserId` via auth UserId claim; dropped v1 latest-active-in-tenant placeholder) · `Base.Infrastructure/Seeders/OrgSettingsDefaultSeeder.cs` (modified — new `MEMBERPORTAL` group + 8 ParamCodes: STATUS/LOGO_URL/ACCENT_HEX/ACCENT_LIGHT_HEX/WELCOME_COPY/FOOTER_COPY/CONTACT_EMAIL/DONATION_SLUG) · `Base.Application/.../OrganizationSettings/Seeders/IOrgSettingsDefaultSeeder.cs` (modified — baseline bumped ExpectedGroupCount 12→13, ExpectedSettingCount 111→119 so existing tenants re-seed).
+  - DB: `sql-scripts-dyanmic/MemberPortal-v2-rbac-seed.sql` (created — per-tenant MEMBERSHIP role w/ `DefaultLandingUrl='crm/membership/memberportal'`; global `MEMBERPORTAL_AREA` parent + 5 leaf menus MP_DASHBOARD/PROFILE/BENEFITS/PAYMENTS/EVENTS under CRM module; MenuCapabilities READ+ISMENURENDER; per-tenant MEMBERSHIP RoleCapabilities + RoleModules(CRM); `LANDINGPAGE` MasterDataType + 2 options). Idempotent. **USER runs after build.**
+  - FE: `presentation/components/page-components/setting/publicpages/memberportal/member-portal-settings-page.tsx` (created — MEMBERPORTAL-group OrgSettings editor: reuses `GET_ORGANIZATION_SETTINGS_VIEW_QUERY` + `BULK_UPDATE_ORG_SETTINGS_MUTATION` `{request:{items:[{organizationSettingId,paramCode,currentValue}]}}`, dirty-map, ColorPickerInput, status segmented toggle, lightweight live preview) · `.../memberportal/index.ts` (modified — additive export) · `presentation/pages/setting/publicpages/memberportal.tsx` (modified — wrapper now renders `MemberPortalSettingsPage`; route + `menuCode:"MEMBERPORTAL"` gate unchanged). tsc clean.
+- **Deviations from spec**: (1) Only the branding settings screen built on the FE — member-layout role-menu render + "Invite to Portal" action + all v1 deletes deferred (user scoped to Stage A / additive). (2) **`LANDINGPAGE` masterdata is seeded by THIS file** though role-landing spec §④a assigns it to the USER's role-landing BE — coordinate to avoid a double-seed (both are idempotent WHERE-NOT-EXISTS, so a collision is harmless). (3) `GetMyMemberEnrollment` resolves company via `GetCurrentUserStaffCompanyId()` (reads the `CurrentCompanyId` claim — valid for member logins despite the "Staff" name). (4) Logo field is a plain URL input (file-upload remains SERVICE_PLACEHOLDER, [[ISSUE-4]] family). (5) v1 boolean-card section files left orphaned in place (no-deletes scope) — they are no longer imported.
+- **Known issues opened**: None.
+- **Known issues closed**: None. ISSUE-21 (RBAC seed) → seed authored, PENDING DB run+verify. ISSUE-22 (branding store) → OrgSettings `MEMBERPORTAL` group + reclassified admin editor DONE on FE, PENDING build+verify.
+- **Next step**: (USER) `dotnet build` BE + run `MemberPortal-v2-rbac-seed.sql` + confirm OrgSettings reseed (first `organizationSettingsView` call reseeds to 119/13). Then resume: **Stage B** `InviteMemberToPortal` (+ `CreateMemberEnrollment` hook + resend mutation); **Stage C remainder** member layout role-menu render (`GetParentChildMenu`, real NextAuth guard) + "Invite to Portal" action on MemberEnrollment grid; **Stage D** drop v1 `MemberPortalConfig` subsystem + dead v1 FE; **Stage E** verify §F across ≥2 tenants incl. a member-who-is-also-volunteer.
+
+### Session 6 — 2026-06-15 — BUILD (v2 Stage C: login + dashboard, FE) — PARTIAL
+
+> Increment chosen by user: "setup the login + dashboard ... then later the settings configuration screen." Layout fork resolved by user → **"Reuse (member) group at /portal"** (member-branded chrome, NO admin shell; swap localStorage→NextAuth; nav→GetParentChildMenu; move seed URLs `crm/membership/memberportal*` → `portal/*`). USER owns BE build + seed run. Recon confirmed: role-landing redirect already live in `useAuth` (`router.push(/en/${defaultLandingUrl})`); unified branded login `(auth)/login` already SSR-tenant-resolves; app-wide auth is currently **soft** (RouteGuard is a no-op, middleware only does locale) so the real member gate = role-landing + server-side `GetMyMemberEnrollment` ContactId-from-token.
+
+- **Scope**: FE "login + dashboard" half of Stage C (member-layout role-menu render + real-auth guard). NO v1 deletes (kept no-deletes discipline). Branding/status-from-OrgSettings + "Invite to Portal" action deferred to later increments.
+- **Files touched**:
+  - DB: `sql-scripts-dyanmic/MemberPortal-v2-rbac-seed.sql` (modified — MEMBERSHIP `DefaultLandingUrl`, the 5 leaf menu URLs, and the `LANDINGPAGE` Member-Portal `DataValue` all moved `crm/membership/memberportal*` → `member-portal/dashboard`|`member-portal/profile`|`member-portal/benefits`|`member-portal/payments`|`member-portal/events` (Session 5 rename from `portal/*` → `member-portal/*`, matching the `(member)/member-portal/*` route group; leaves room for a future `volunteer-portal/*`). **USER re-runs.**
+  - FE: `app/[lang]/(member)/layout.tsx` (modified — comment only; guard is now real-auth) · `.../member/portal/components/member-auth-guard.tsx` (rewrote — localStorage mock → NextAuth `useSession`; unauthenticated → `/{lang}/login`; `previewToken` bypass kept; removed `get/set/clearMemberSession` + `MemberSession`) · `.../member/portal/components/member-portal-header.tsx` (rewrote nav — RBAC-driven from `PARENTCHILD_MENU_QUERY(moduleCode:"CRM")` → `MEMBERPORTAL_AREA` childMenus, ordered, with a static 5-item fallback; logout → `signOut({callbackUrl:/{lang}/login})`) · `.../member/portal/login-page.tsx` (rewrote — v1 mock member-login → redirect to unified `/login`, so legacy `/member-login` bookmarks don't 404) · `.../member/portal/dashboard-page.tsx` (modified — dropped `GET_MEMBER_PORTAL_CONFIG_FOR_MEMBER` + its `portalStatus!=='Active'→notFound` trap (v1 config defaults Disabled → would 404); renders with an all-on `DEFAULT_CONFIG`; keeps `GET_MY_MEMBER_ENROLLMENT`, ContactId resolved server-side from token). `pnpm tsc --noEmit` clean.
+- **Deviations from spec**: (1) Member-side **branding/status still uses component defaults** — the OrgSettings `MEMBERPORTAL` read is intentionally deferred to the settings-config increment (clean seam; avoids the dead-config Disabled trap now). (2) v1 `(member)/member-login` route + `login-page.tsx` component **kept as a redirect** (not deleted — no-deletes discipline); `GET_MEMBER_PORTAL_CONFIG_FOR_MEMBER` query doc + the v1 config-toggle child props left in place (orphaned). (3) Double `ApolloWrapper` in the member layout left as-is (root `[lang]/layout` already provides one — redundant but harmless). (4) MEMBERSHIP-role enforcement is **soft** — guard requires a NextAuth session; role-scoping is enforced naturally by the role-filtered menu query + the enrollment query's empty-state (matches the app's existing soft-auth posture).
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-2 / ISSUE-17 / ISSUE-18 (member-auth localStorage mock / `/member-login` URL / mock session) — CLOSED: real NextAuth session + unified `/login` + `signOut`. (Already SUPERSEDED in §G; now also code-closed on the FE.)
+- **Next step**: (USER) re-run the updated `MemberPortal-v2-rbac-seed.sql` (URLs now `portal/*`) + finish role-landing BE so `login` returns `defaultLandingUrl='portal/dashboard'`; then live-verify: MEMBERSHIP member logs in at `/login` → lands `/en/portal/dashboard` → sees hero/payment from their own enrollment, nav from `GetParentChildMenu`, Sign-out → `/login`. Then resume: **settings-config increment** = wire member-side branding/status to the OrgSettings `MEMBERPORTAL` group (replaces `DEFAULT_CONFIG`); **Stage B** `InviteMemberToPortal`; **Stage D** drop v1 `MemberPortalConfig` subsystem + the now-orphaned v1 FE (member-login route, config query, boolean-card files); **Stage E** verify §F across ≥2 tenants.

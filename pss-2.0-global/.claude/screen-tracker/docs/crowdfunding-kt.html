@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crowdfunding — Knowledge Transfer</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root{
+    --teal:#0e7490; --teal-600:#0e7490; --teal-700:#155e75; --teal-50:#ecfeff;
+    --cyan:#06b6d4;
+    --ink:#0f172a; --slate:#475569; --line:#e2e8f0; --bg:#f8fafc;
+    --draft:#d97706; --published:#7c3aed; --live:#16a34a; --goalmet:#15803d; --closed:#2563eb; --archived:#64748b;
+    --red:#dc2626; --green:#16a34a; --amber:#d97706;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink); background:var(--bg); line-height:1.6; font-size:15px;
+  }
+  /* ---------- layout ---------- */
+  .wrap{display:flex; max-width:1180px; margin:0 auto; gap:28px; padding:0 20px;}
+  nav.toc{
+    position:sticky; top:0; align-self:flex-start; height:100vh; overflow:auto;
+    width:230px; flex:none; padding:28px 16px; background:#0c1420; border-right:1px solid #000;
+  }
+  nav.toc h4{font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:#94a3b8; margin:0 0 10px; padding:0 14px;}
+  nav.toc a{
+    display:block; padding:9px 14px; margin:2px 0; border-radius:8px;
+    color:#cbd5e1; text-decoration:none; font-size:14px; font-weight:500;
+  }
+  nav.toc a:hover{background:#fff; color:#0c1420;}
+  main{flex:1; min-width:0; padding:36px 0 90px;}
+  /* ---------- header ---------- */
+  .hero{
+    background:linear-gradient(135deg,var(--teal-700),var(--cyan));
+    color:#fff; border-radius:16px; padding:34px 36px; margin-bottom:34px;
+  }
+  .hero h1{margin:0 0 8px; font-size:30px; letter-spacing:-.02em;}
+  .hero p{margin:0; opacity:.94; font-size:16px; max-width:680px;}
+  .hero .tags{margin-top:18px; display:flex; gap:8px; flex-wrap:wrap;}
+  .hero .tags span{background:rgba(255,255,255,.16); padding:5px 12px; border-radius:20px; font-size:12.5px; font-weight:600;}
+  /* ---------- sections ---------- */
+  section{margin-bottom:54px; scroll-margin-top:20px;}
+  h2{
+    font-size:23px; letter-spacing:-.01em; margin:0 0 6px; padding-bottom:10px;
+    border-bottom:2px solid var(--line); display:flex; align-items:center; gap:11px;
+  }
+  h2 .num{
+    background:var(--teal); color:#fff; width:30px; height:30px; border-radius:8px;
+    display:inline-flex; align-items:center; justify-content:center; font-size:15px; flex:none;
+  }
+  h3{font-size:17px; margin:26px 0 10px; color:var(--teal-700);}
+  .lead{color:var(--slate); margin:6px 0 18px; font-size:15.5px;}
+  p{margin:10px 0;}
+  /* ---------- cards ---------- */
+  .card{background:#fff; border:1px solid var(--line); border-radius:12px; padding:20px 22px; margin:16px 0;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  .note{border-left:4px solid var(--teal); background:var(--teal-50); padding:13px 18px; border-radius:0 8px 8px 0; margin:16px 0;}
+  .warn{border-left:4px solid var(--amber); background:#fffbeb; padding:13px 18px; border-radius:0 8px 8px 0; margin:16px 0;}
+  /* ---------- step list ---------- */
+  .steps{list-style:none; padding:0; margin:18px 0; counter-reset:s;}
+  .steps>li{
+    position:relative; padding:14px 18px 14px 58px; margin:10px 0; background:#fff;
+    border:1px solid var(--line); border-radius:10px; counter-increment:s;
+  }
+  .steps>li::before{
+    content:counter(s); position:absolute; left:16px; top:14px; width:28px; height:28px;
+    background:var(--teal); color:#fff; border-radius:50%; display:flex; align-items:center;
+    justify-content:center; font-weight:700; font-size:14px;
+  }
+  .steps>li b{color:var(--teal-700);}
+  /* ---------- tables ---------- */
+  table{width:100%; border-collapse:collapse; margin:14px 0; font-size:13.5px; background:#fff;
+    border:1px solid var(--line); border-radius:10px; overflow:hidden;}
+  th{background:#f1f5f9; text-align:left; padding:10px 12px; font-weight:600; color:var(--ink); font-size:12.5px;
+    text-transform:uppercase; letter-spacing:.03em;}
+  td{padding:10px 12px; border-top:1px solid var(--line); vertical-align:top;}
+  tr:hover td{background:#fafcff;}
+  code{background:#f1f5f9; padding:2px 6px; border-radius:5px; font-size:12.5px; font-family:"SF Mono",Consolas,monospace; color:var(--teal-700);}
+  .req{color:var(--red); font-weight:700;}
+  /* ---------- badges ---------- */
+  .b{display:inline-block; padding:3px 11px; border-radius:20px; font-size:12px; font-weight:700; color:#fff; white-space:nowrap;}
+  .b.draft{background:var(--draft)} .b.published{background:var(--published)} .b.active{background:var(--live)}
+  .b.goalmet{background:var(--goalmet)} .b.closed{background:var(--closed)} .b.archived{background:var(--archived)}
+  /* =================================================================
+     ANIMATED FLOW — the moving crowdfunding campaign pipeline (7 stages)
+  ================================================================= */
+  .stage-wrap{background:#083344; border-radius:16px; padding:34px 24px 26px; margin:22px 0; color:#e0f2fe; overflow:hidden;}
+  .stage-wrap h3{color:#67e8f9; margin-top:0;}
+  .track{position:relative; height:150px; margin:30px 0 12px;}
+  .rail{position:absolute; top:96px; left:3%; right:3%; height:6px; background:rgba(255,255,255,.14); border-radius:4px;}
+  .rail-fill{position:absolute; top:0; left:0; height:100%; width:0; background:linear-gradient(90deg,#22d3ee,#a5f3fc);
+    border-radius:4px; animation:fill 28s ease-in-out infinite;}
+  @keyframes fill{
+    0%{width:4%} 10%{width:6%} 12%{width:20%} 22%{width:22%} 24%{width:35%} 34%{width:36%}
+    36%{width:49%} 46%{width:50%} 48%{width:64%} 58%{width:65%} 60%{width:79%} 70%{width:80%}
+    72%{width:96%} 100%{width:96%}
+  }
+  .node{position:absolute; top:74px; transform:translateX(-50%); text-align:center; width:92px;}
+  .node .dot{width:16px; height:16px; border-radius:50%; background:#083344; border:3px solid #22d3ee; margin:0 auto 8px;
+    box-shadow:0 0 0 4px rgba(34,211,238,.16);}
+  .node .lbl{font-size:11px; font-weight:700; color:#a5f3fc; line-height:1.2;}
+  .node .dt{font-size:10px; color:#67e8f9; opacity:.85;}
+  .node:nth-child(2){left:4%} .node:nth-child(3){left:19%} .node:nth-child(4){left:34%}
+  .node:nth-child(5){left:49%} .node:nth-child(6){left:64%} .node:nth-child(7){left:79%} .node:nth-child(8){left:96%}
+  .avatar{position:absolute; top:46px; transform:translateX(-50%); animation:travel 28s ease-in-out infinite; z-index:5;}
+  .avatar .face{width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#22d3ee,#0e7490);
+    display:flex; align-items:center; justify-content:center; font-size:19px; box-shadow:0 6px 16px rgba(0,0,0,.4);
+    border:2px solid #fff;}
+  .avatar .name{margin-top:5px; font-size:10.5px; font-weight:700; color:#fff; background:rgba(0,0,0,.35);
+    padding:1px 7px; border-radius:10px; white-space:nowrap; text-align:center;}
+  @keyframes travel{
+    0%{left:4%} 10%{left:4%} 12%{left:19%} 22%{left:19%} 24%{left:34%} 34%{left:34%}
+    36%{left:49%} 46%{left:49%} 48%{left:64%} 58%{left:64%} 60%{left:79%} 70%{left:79%}
+    72%{left:96%} 100%{left:96%}
+  }
+  .comms{position:relative; min-height:50px; margin-top:8px;}
+  .ping{position:absolute; left:50%; transform:translateX(-50%); top:0; opacity:0;
+    background:#0c4a5e; border:1px solid #22d3ee; color:#cffafe; padding:7px 14px; border-radius:20px;
+    font-size:12.5px; font-weight:600; white-space:nowrap; box-shadow:0 4px 14px rgba(0,0,0,.35); text-align:center;}
+  .ping1{animation:show 28s ease-in-out infinite; animation-delay:0s;}
+  .ping2{animation:show 28s ease-in-out infinite; animation-delay:4s;}
+  .ping3{animation:show 28s ease-in-out infinite; animation-delay:8s;}
+  .ping4{animation:show 28s ease-in-out infinite; animation-delay:12s;}
+  .ping5{animation:show 28s ease-in-out infinite; animation-delay:16s;}
+  .ping6{animation:show 28s ease-in-out infinite; animation-delay:20s;}
+  .ping7{animation:show 28s ease-in-out infinite; animation-delay:24s;}
+  @keyframes show{0%,3%{opacity:0; transform:translateX(-50%) translateY(8px)}
+    5%,12%{opacity:1; transform:translateX(-50%) translateY(0)}
+    14%,100%{opacity:0; transform:translateX(-50%) translateY(-8px)}}
+  .legend{display:flex; gap:18px; flex-wrap:wrap; margin-top:18px; font-size:12px; color:#a5f3fc;}
+  .legend b{color:#fff;}
+  .mermaid{background:#fff; border:1px solid var(--line); border-radius:12px; padding:20px; margin:18px 0; text-align:center;}
+  /* ---------- screen-map strip ---------- */
+  .map{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin:18px 0;}
+  @media(max-width:760px){.map{grid-template-columns:1fr 1fr}}
+  .map .m{background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px; text-align:center;}
+  .map .m .ic{font-size:26px;}
+  .map .m h4{margin:8px 0 4px; font-size:14px; color:var(--teal-700);}
+  .map .m p{margin:0; font-size:12.5px; color:var(--slate); line-height:1.45;}
+  .map .m .sn{display:inline-block; margin-top:8px; background:var(--teal-50); color:var(--teal-700);
+    font-size:11px; font-weight:700; padding:2px 9px; border-radius:12px;}
+  /* ---------- feature checklist ---------- */
+  .featgrp{padding:18px 20px;}
+  .featgrp h4{margin:0 0 6px; font-size:14.5px; color:var(--teal-700); display:flex; align-items:center; gap:8px;}
+  .feat{list-style:none; padding:0; margin:6px 0 0;}
+  .feat li{position:relative; padding:7px 0 7px 24px; font-size:13.5px; line-height:1.45; border-top:1px solid var(--line);}
+  .feat li:first-child{border-top:none;}
+  .feat li::before{content:"✓"; position:absolute; left:2px; top:7px; color:#fff; background:var(--teal);
+    width:15px; height:15px; border-radius:50%; font-size:9px; font-weight:800; text-align:center; line-height:15px;}
+  .feat li b{color:var(--ink);}
+  /* ---------- interactive walk-through ---------- */
+  .setup-wrap{padding-top:24px;}
+  .setup-bar{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; margin-bottom:6px;}
+  .switch-box{display:flex; align-items:center; gap:10px; font-size:12.5px; font-weight:700; color:#a5f3fc;}
+  .switch{position:relative; display:inline-block; width:46px; height:24px;}
+  .switch input{opacity:0; width:0; height:0;}
+  .slider{position:absolute; inset:0; background:rgba(255,255,255,.22); border-radius:24px; transition:.3s; cursor:pointer;}
+  .slider::before{content:""; position:absolute; height:18px; width:18px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.3s;}
+  .switch input:checked + .slider{background:var(--green);}
+  .switch input:checked + .slider::before{transform:translateX(22px);}
+  .nav-btns{display:flex; gap:8px;}
+  .nav-btns button{background:rgba(255,255,255,.12); color:#cffafe; border:1px solid #22d3ee; padding:7px 15px;
+    border-radius:20px; font-size:13px; font-weight:700; cursor:pointer; transition:.18s;}
+  .nav-btns button:hover:not(:disabled){background:#22d3ee; color:#083344;}
+  .nav-btns button:disabled{opacity:.32; cursor:not-allowed;}
+  .setup-coin{animation:none; transition:left .55s cubic-bezier(.45,.05,.3,1);}
+  .setup-fill{animation:none; width:0; transition:width .55s cubic-bezier(.45,.05,.3,1);}
+  .snode{cursor:pointer;}
+  .snode .lbl{transition:color .2s;}
+  .snode .dot{transition:transform .25s, background .25s, box-shadow .25s;}
+  .snode.done .dot{background:#67e8f9; border-color:#a5f3fc;}
+  .snode.on .dot{background:#22d3ee; transform:scale(1.35); box-shadow:0 0 0 6px rgba(34,211,238,.32);}
+  .snode.on .lbl{color:#fff;}
+  .setup-caption{background:rgba(0,0,0,.26); border:1px solid #22d3ee; border-radius:12px; padding:14px 18px;
+    margin-top:16px; font-size:13.5px; color:#cffafe; line-height:1.55; min-height:54px;}
+  .setup-caption .step-i{display:inline-block; background:#22d3ee; color:#083344; font-weight:800; font-size:11px;
+    padding:2px 9px; border-radius:10px; margin-right:8px;}
+  .setup-caption b{color:#fff;}
+  /* ---------- worked example ---------- */
+  .ex-hero{background:linear-gradient(135deg,#083344,var(--teal-700)); color:#fff; border-radius:14px; padding:22px 24px; margin:16px 0 22px;}
+  .ex-hero h3{color:#67e8f9; margin:0 0 6px;}
+  .ex-hero p{margin:0; opacity:.92; font-size:14px;}
+  .ex-hero .tags{margin-top:14px; display:flex; gap:8px; flex-wrap:wrap;}
+  .ex-hero .tags span{background:rgba(255,255,255,.16); padding:4px 11px; border-radius:20px; font-size:12px; font-weight:700;}
+  .ex-slot{display:flex; gap:14px; align-items:flex-start; padding:14px 0; border-top:1px solid var(--line);}
+  .ex-slot:first-child{border-top:none;}
+  .ex-time{flex:none; width:150px; font-size:12.5px; font-weight:700; color:var(--teal-700); background:var(--teal-50);
+    border:1px solid #a5f3fc; border-radius:9px; padding:7px 10px; text-align:center; line-height:1.35;}
+  .ex-body{flex:1; min-width:0;}
+  .ex-body h4{margin:0 0 6px; font-size:15px; color:var(--ink); display:flex; align-items:center; gap:8px;}
+  .ex-pills{display:flex; gap:7px; flex-wrap:wrap; margin-top:4px;}
+  .ex-pill{display:inline-block; background:#f1f5f9; border:1px solid var(--line); color:var(--slate);
+    padding:4px 11px; border-radius:16px; font-size:12.5px; font-weight:600;}
+  .ex-num{flex:none; width:24px; height:24px; border-radius:50%; background:var(--teal); color:#fff;
+    font-size:12px; font-weight:800; display:inline-flex; align-items:center; justify-content:center;}
+  .ex-map{width:100%; border-collapse:collapse; margin-top:8px; font-size:13.5px;}
+  .ex-map th,.ex-map td{text-align:left; padding:8px 12px; border-bottom:1px solid var(--line);}
+  .ex-map th{background:#fafcff; color:var(--teal-700); font-size:12px; text-transform:uppercase; letter-spacing:.04em;}
+  .ex-map td code{font-size:12.5px;}
+  /* ---------- progress bar (worked example) ---------- */
+  .pbar{height:9px; background:#f1f5f9; border-radius:6px; overflow:hidden; margin:6px 0;}
+  .pbar>span{display:block; height:100%; background:linear-gradient(90deg,var(--teal),#22d3ee); border-radius:6px;}
+  .pbar.met>span{background:linear-gradient(90deg,#16a34a,#4ade80);}
+  /* ---------- fullscreen diagram / flow modal ---------- */
+  .fs-host{position:relative;}
+  .fs-btn{position:absolute; top:10px; right:10px; z-index:8; width:34px; height:34px; cursor:pointer;
+    border-radius:9px; border:1px solid rgba(255,255,255,.4); background:rgba(0,0,0,.42); color:#fff;
+    font-size:15px; line-height:1; display:flex; align-items:center; justify-content:center; transition:.16s;}
+  .fs-btn:hover{background:var(--teal); border-color:var(--teal); transform:scale(1.08);}
+  .mermaid.fs-host .fs-btn{background:rgba(14,116,144,.9); border-color:var(--teal);}
+  .setup-wrap.fs-host .setup-bar{padding-right:46px;}
+  .fs-canvas .fs-btn{display:none;}
+  .fs-modal{position:fixed; inset:0; z-index:1000; background:rgba(15,23,42,.86);
+    -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); display:none; flex-direction:column;}
+  .fs-modal.open{display:flex;}
+  .fs-toolbar{display:flex; align-items:center; gap:9px; padding:11px 16px; background:#0c1420; color:#fff; flex:none;}
+  .fs-toolbar .fs-title{font-size:14px; font-weight:700; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .fs-toolbar button{background:rgba(255,255,255,.12); color:#fff; border:1px solid rgba(255,255,255,.26);
+    border-radius:8px; min-width:38px; height:34px; padding:0 11px; cursor:pointer; font-size:15px; font-weight:700; transition:.15s;}
+  .fs-toolbar button:hover{background:var(--teal); border-color:var(--teal);}
+  .fs-toolbar .fs-zoomval{font-size:12.5px; min-width:50px; text-align:center; opacity:.85; font-variant-numeric:tabular-nums;}
+  .fs-toolbar .fs-close{margin-left:6px;}
+  .fs-viewport{flex:1; overflow:hidden; position:relative; cursor:grab; display:flex; align-items:center; justify-content:center;}
+  .fs-viewport.grabbing{cursor:grabbing;}
+  .fs-canvas{transform-origin:center center; will-change:transform;}
+  .fs-canvas>*{margin:0 !important; max-width:none !important; width:auto;}
+  .fs-canvas .stage-wrap{width:min(90vw,1080px);}
+  .fs-canvas .mermaid{background:#fff;}
+  .fs-hint{position:absolute; bottom:14px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,.55);
+    color:#a5f3fc; font-size:12px; font-weight:600; padding:6px 15px; border-radius:20px; pointer-events:none;}
+  /* ---------- print ---------- */
+  @media print{
+    nav.toc{display:none} .wrap{display:block} main{padding:0}
+    .stage-wrap{background:#fff; color:#0f172a; border:1px solid var(--line);}
+    .stage-wrap h3{color:var(--teal-700)} .node .lbl,.node .dt{color:var(--ink)}
+    .avatar,.ping,.legend,.setup-bar,.setup-caption,.fs-btn{display:none} section{page-break-inside:avoid}
+    .fs-modal{display:none !important}
+    .hero{background:var(--teal-700)!important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    a{color:var(--ink); text-decoration:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- =================== SIDEBAR =================== -->
+  <nav class="toc">
+    <h4>Contents</h4>
+    <a href="#agenda">Agenda</a>
+    <a href="#intro">Overview</a>
+    <a href="#screens">The Two Screens</a>
+    <a href="#flow">① Start → End Flow</a>
+    <a href="#walk">⚙ Campaign Walk-through</a>
+    <a href="#diagram">② Live Flow + Example</a>
+    <a href="#surfaces">③ The Surfaces in Detail</a>
+    <a href="#data">④ Entity Tables</a>
+    <a href="#status">⑤ Statuses &amp; Lookups</a>
+    <a href="#example">⑥ Worked Example</a>
+  </nav>
+
+  <main>
+
+    <!-- =================== HERO =================== -->
+    <div class="hero">
+      <h1>Crowdfunding</h1>
+      <p>The NGO runs a goal-and-deadline campaign for a specific need — build a school, fund a clinic, respond to an emergency. One public page tells the story, shows a thermometer, lists impact tiers and milestones, and takes donations directly. Admins manage the portfolio from a CRM grid; the rich page is built in a 6-tab editor and served to anonymous donors at <code style="color:#fff;background:rgba(255,255,255,.18)">/crowdfund/{slug}</code>.</p>
+      <div class="tags">
+        <span>📋 #16 · Campaign Management (CRM)</span>
+        <span>🎨 #173 · Page Editor + Public Page</span>
+        <span>schema <code style="color:#fff;background:rgba(255,255,255,.18)">fund</code></span>
+      </div>
+    </div>
+
+    <!-- =================== AGENDA =================== -->
+    <section id="agenda">
+      <h2><span class="num">≡</span> Agenda</h2>
+      <p class="lead">Everything the Crowdfunding module does, grouped as discussion topics.</p>
+
+      <div class="note" style="margin-top:0">
+        <b>In one line:</b> create a campaign → configure its public page (story, impact, milestones, design) → publish it → donors give on <code>/crowdfund/{slug}</code> → the thermometer &amp; milestones update → the goal is met → the campaign closes.
+      </div>
+
+      <h3>Feature checklist — what the screens actually do</h3>
+      <div class="grid2">
+        <div class="card featgrp">
+          <h4>📋 Manage campaigns <span class="b" style="background:var(--teal); font-size:10px">#16</span></h4>
+          <ul class="feat">
+            <li><b>Cards-grid CRM</b> — every campaign as a card with a category hero, progress bar, raised/goal &amp; donor count</li>
+            <li><b>KPI roll-up</b> — Active Campaigns, Total Raised, Total Donors, Goals Met</li>
+            <li><b>Quick-Create</b> — 8 fields ship a Draft instantly; <b>Quick-Edit</b> the basics</li>
+            <li><b>Lifecycle</b> — Publish · Unpublish · Close · Archive · Duplicate · Delete (guarded)</li>
+          </ul>
+        </div>
+        <div class="card featgrp">
+          <h4>🎨 Build the page <span class="b" style="background:var(--teal); font-size:10px">#173</span></h4>
+          <ul class="feat">
+            <li><b>6-tab editor</b> — Basic · Content · Donation Settings · Milestones · Updates · Design</li>
+            <li><b>Live preview</b> — desktop/mobile mockup updates as you type (300ms debounce)</li>
+            <li><b>Inline editors</b> — impact tiers, FAQ, milestones, updates, amount chips, section toggles</li>
+            <li><b>Wraps #16's entity</b> — no new table; reads &amp; writes the same <code>fund.CrowdFunds</code> row</li>
+          </ul>
+        </div>
+        <div class="card featgrp">
+          <h4>🌐 Public donor page <span class="b" style="background:var(--teal); font-size:10px">#173</span></h4>
+          <ul class="feat">
+            <li><b>SSR at <code>/crowdfund/{slug}</code></b> — anonymous, status-gated, OG tags via <code>generateMetadata</code></li>
+            <li><b>2-column story + sticky donate widget</b> — thermometer, milestones timeline, updates, donor wall, FAQ</li>
+            <li><b>Donate form</b> — amount chips, recurring, cover-fees, anonymous; rate-limited &amp; CSRF-protected</li>
+            <li><b>Share buttons</b> — Facebook · X · WhatsApp · LinkedIn · Copy Link</li>
+          </ul>
+        </div>
+        <div class="card featgrp">
+          <h4>💳 Donate &amp; roll-up <span class="b" style="background:var(--teal); font-size:10px">data</span></h4>
+          <ul class="feat">
+            <li><b>One gift = one <code>GlobalDonation</code></b> with <code>DonationType = 'Crowd Donation'</code></li>
+            <li><b>Junction attribution</b> — a <code>fund.CrowdFundDonations</code> row ties each gift to its campaign</li>
+            <li><b>Pure aggregates</b> — Total Raised / Donors / progress all summed from those donations</li>
+            <li><b>Auto-promote milestones</b> — a milestone flips to Reached when the total crosses its amount</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================== OVERVIEW =================== -->
+    <section id="intro">
+      <h2><span class="num">▸</span> Overview</h2>
+      <p class="lead">Crowdfunding is <b>org-led</b> fundraising: the NGO defines a concrete need, sets a goal and deadline, and collects donations on one rich public page. (Contrast with <b>P2P</b>, where supporters raise on the NGO's behalf.)</p>
+
+      <div class="grid2">
+        <div class="card">
+          <h3 style="margin-top:0">The two surfaces, one entity</h3>
+          <p style="font-size:14px; color:var(--slate); margin-top:0">
+            <b>#16</b> is the back-office: a cards-grid that creates the campaign (8-field Quick-Create), shows KPIs, and drives the lifecycle. It introduces the <code>fund.CrowdFunds</code> entity end-to-end but keeps its UI minimal.
+          </p>
+          <p style="font-size:14px; color:var(--slate)">
+            <b>#173</b> is the rich layer on top — a 6-tab editor for the full story/design, plus the donor-facing public page. It <i>wraps</i> the same entity: no new table, just more handlers and two public endpoints.
+          </p>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">Where the money flows</h3>
+          <p style="font-size:14px; color:var(--slate); margin-top:0">
+            Every gift is one <code>fund.GlobalDonation</code> row marked <code>DonationType = 'Crowd Donation'</code>. Attribution is via a junction:
+          </p>
+          <ul class="feat">
+            <li>The donate flow inserts the <code>GlobalDonation</code> <i>and</i> a <code>fund.CrowdFundDonations</code> row in one transaction</li>
+            <li>That junction row links <code>CrowdFundId ↔ GlobalDonationId</code> (one-to-one on the donation)</li>
+            <li>Totals are aggregates over the junction — <b>skip the junction insert and every total reads 0</b></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="note">
+        <b>Two screens, one feature.</b> #16 built the engine — the <code>CrowdFunds</code> entity, the summary, the Quick-Create and lifecycle. #173 is the experience on top: the 6-tab content editor and the public donor page. Nothing in #173 creates new entities — it reads and writes what #16 already ships. The "child" data (milestones, updates, impact tiers, FAQ) lives as <b>jsonb arrays on the entity itself</b>, not in separate tables.
+      </div>
+    </section>
+
+    <!-- =================== THE TWO SCREENS MAP =================== -->
+    <section id="screens">
+      <h2><span class="num">▦</span> The Two Screens at a Glance</h2>
+      <p class="lead">One CRM management grid plus one editor-and-public-page pair — they share the same <code>fund.CrowdFunds</code> row and deep-link into each other.</p>
+
+      <div class="map">
+        <div class="m">
+          <div class="ic">📋</div>
+          <h4>Crowdfunding</h4>
+          <p>CRM cards-grid — KPIs, Quick-Create, lifecycle, 560px drawer with metrics &amp; recent donors.</p>
+          <span class="sn">#16 · CRM</span>
+        </div>
+        <div class="m">
+          <div class="ic">🎨</div>
+          <h4>Crowdfunding Page</h4>
+          <p>6-tab editor with a live-preview pane — the full story, impact, milestones, updates &amp; design.</p>
+          <span class="sn">#173 · Settings</span>
+        </div>
+        <div class="m">
+          <div class="ic">🌐</div>
+          <h4>Public Donor Page</h4>
+          <p><code>/crowdfund/{slug}</code> — anonymous SSR page with thermometer, story, donate widget, donor wall.</p>
+          <span class="sn">owned by #173</span>
+        </div>
+        <div class="m">
+          <div class="ic">🗂️</div>
+          <h4>Shared Entity</h4>
+          <p><code>fund.CrowdFunds</code> (+ <code>CrowdFundDonations</code> junction) — one row both screens read &amp; write.</p>
+          <span class="sn">schema fund</span>
+        </div>
+      </div>
+
+      <div class="note">
+        <b>How they hand off.</b> From <b>#16</b>, a card's "Edit Full Setup" deep-links into <b>#173</b>'s 6-tab editor (<code>setting/publicpages/crowdfundingpage?id={id}</code>); "View Public Page" opens <code>/crowdfund/{slug}</code> in a new tab. Inside <b>#173</b>, the card-list view reuses #16's KPIs, chips and cards; clicking a card opens the editor for that campaign. Publishing in either place flips the same <code>PageStatus</code>.
+      </div>
+    </section>
+
+    <!-- =================== ① START → END FLOW =================== -->
+    <section id="flow">
+      <h2><span class="num">1</span> The Flow — Start to End</h2>
+      <p class="lead">The whole crowdfunding journey, in order. The admin creates and configures the campaign, publishes it, donors give on the public page, milestones tick over, the goal is met, and the campaign closes.</p>
+
+      <ol class="steps">
+        <li><b>Create the campaign.</b> <span class="b draft">Draft</span> In #16's Quick-Create, fill 8 fields — name, slug, goal, currency, start/end dates, donation purpose, category. Saving creates the <code>fund.CrowdFunds</code> row as Draft and opens its drawer.</li>
+        <li><b>Configure the page.</b> <span class="b draft">Draft</span> In #173's 6-tab editor, write the story, add impact tiers &amp; FAQ, set amount chips &amp; payment methods, define milestones, draft updates, and pick theme colours / section toggles — all against the same row, with a live preview.</li>
+        <li><b>Publish.</b> <span class="b published">Published</span> / <span class="b active">Active</span> Validation gates the button (name, slug, goal &gt; 0, dates, purpose, ≥1 payment method, ≥1 amount chip or custom-allowed). Publishing stamps <code>PublishedAt</code> and — if the start date has passed — auto-advances to Active. <code>/crowdfund/{slug}</code> goes live.</li>
+        <li><b>Donors give.</b> A visitor lands on the public page, picks an amount (chip or custom), optionally makes it monthly / covers fees / stays anonymous, and donates. Each gift becomes a <code>GlobalDonation</code> + a <code>CrowdFundDonations</code> junction row.</li>
+        <li><b>Milestones tick over.</b> As the total climbs, any milestone whose amount is crossed auto-flips to <b>Reached</b> (unless the admin pinned its status). The thermometer, donor wall and updates feed all refresh from the aggregates.</li>
+        <li><b>Goal met.</b> <span class="b goalmet">Goal Met</span> When Total Raised ≥ Goal, the page shows a "🎉 Goal met!" banner. What happens next is the <b>tri-state</b>: <i>Keep Accepting</i> (donations continue), <i>Auto-Close</i> (flips to GoalMet, donate disabled), or <i>Show Stretch Goal</i> (a second thermometer to the stretch amount).</li>
+        <li><b>Close.</b> <span class="b closed">Closed</span> At the end date or via "Close", the campaign goes Closed — the public page turns read-only with an "ended" banner showing the final total. Later it can be <b>Archived</b> (410 Gone) or <b>Duplicated</b> into a fresh Draft.</li>
+      </ol>
+
+      <div class="note"><b>In plain words:</b> the admin builds the story once, presses Publish, and the public page does the rest — every donation is tagged to the campaign the moment it lands, so the thermometer, milestones and donor wall are always just sums. The only ongoing job is posting updates and deciding what to do when the goal is beaten.</div>
+    </section>
+
+    <!-- =================== ⚙ INTERACTIVE WALK-THROUGH =================== -->
+    <section id="walk">
+      <h2><span class="num">⚙</span> Campaign Walk-through — Step by Step</h2>
+      <p class="lead">The full journey as movable steps. Flip the switch to <b>Auto</b> and it walks itself; leave it on <b>Manual</b> and you drive — click any node, or step <b>◀ Back / Forward ▶</b> to slide the coin along the board.</p>
+
+      <div class="stage-wrap setup-wrap">
+        <div class="setup-bar">
+          <div class="switch-box">
+            <span>Manual</span>
+            <label class="switch"><input type="checkbox" id="autoToggle"><span class="slider"></span></label>
+            <span>Auto</span>
+          </div>
+          <div class="nav-btns">
+            <button id="prevBtn">◀ Back</button>
+            <button id="nextBtn">Forward ▶</button>
+            <button id="resetBtn">↻ Reset</button>
+          </div>
+        </div>
+
+        <div class="track setup-track" id="setupTrack">
+          <div class="avatar setup-coin" id="setupCoin"><div class="face">🏫</div><div class="name">you are here</div></div>
+          <div class="rail"><div class="rail-fill setup-fill" id="setupFill"></div></div>
+        </div>
+
+        <div class="setup-caption" id="setupCaption"></div>
+
+        <div class="legend">
+          <span>🟢 <b>Auto</b> = the coin advances on its own every ~2s and loops</span>
+          <span>🖐 <b>Manual</b> = click a node, or use ◀ / ▶ to move one step</span>
+          <span>🏫 <b>The coin</b> = where you are in the campaign right now</span>
+        </div>
+      </div>
+      <p style="text-align:center; color:var(--slate); font-size:13px;">↑ Same shape as the live flow below — but here <b>you</b> drive the piece, from campaign creation all the way to close.</p>
+    </section>
+
+    <!-- =================== ② LIVE FLOW + EXAMPLE =================== -->
+    <section id="diagram">
+      <h2><span class="num">2</span> Live Flow — Watch One Campaign</h2>
+      <p class="lead">Follow <b>"Build a School in Kenya"</b>, a campaign by <b>Hope Foundation</b>. Watch the admin create it in #16, configure the page in #173, publish it, donors give on <code>/crowdfund/build-a-school-kenya</code>, a milestone tick over, the goal approach, and the campaign reach 76% of its $50,000 target. The bubbles are the real touchpoints.</p>
+
+      <div class="stage-wrap">
+        <h3>🏫 Build a School in Kenya — from create to goal</h3>
+
+        <div class="track">
+          <div class="avatar"><div class="face">🏫</div><div class="name">Campaign</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">CREATE</div><div class="dt">#16 · Quick-Create</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">CONFIGURE PAGE</div><div class="dt">#173 · 6 tabs</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">PUBLISH</div><div class="dt">go live</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">DONORS GIVE</div><div class="dt">/crowdfund/…</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">MILESTONE HIT</div><div class="dt">auto-flip</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">GOAL APPROACHES</div><div class="dt">76% · $38.4K</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">CLOSE</div><div class="dt">end date</div></div>
+          <div class="rail"><div class="rail-fill"></div></div>
+        </div>
+
+        <div class="comms">
+          <div class="ping ping1">🏗️ Campaign created — "Build a School in Kenya", goal $50,000</div>
+          <div class="ping ping2">🎨 6-tab editor — story, 5 impact tiers, milestones &amp; design configured</div>
+          <div class="ping ping3">🚀 Published — /crowdfund/build-a-school-kenya is live</div>
+          <div class="ping ping4">💳 345 donors give — $38,400 raised so far</div>
+          <div class="ping ping5">🧱 Milestone reached — "Walls Up" (50%) auto-flips to Reached</div>
+          <div class="ping ping6">📈 76% of goal — thermometer climbing toward $50,000</div>
+          <div class="ping ping7">🏁 At the end date — page read-only, final total locked</div>
+        </div>
+
+        <div class="legend">
+          <span>🏫 <b>Campaign</b> = one crowdfunding page moving through its life</span>
+          <span>🌊 <b>Nodes</b> = the screen / milestone at each step</span>
+          <span>💬 <b>Bubbles</b> = a donation, a status change or an email at that moment</span>
+        </div>
+      </div>
+      <p style="text-align:center; color:var(--slate); font-size:13px;">↑ The animation loops. Each pause = a real step; each bubble = a donation, a milestone flip, or a status change.</p>
+
+      <h3>The donation hand-off — when someone gives on the public page</h3>
+      <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor Donor
+    participant Page as Public page<br/>/crowdfund/{slug}
+    participant Pay as Payment gateway
+    participant Don as fund.GlobalDonation
+    participant Jx as fund.CrowdFundDonations
+    participant Roll as Roll-ups
+    Donor->>Page: Pick amount, cover fees?, Donate Now
+    Page->>Pay: initiateCrowdFundDonation (rate-limited, CSRF, honeypot)
+    Pay-->>Page: Confirmed (mocked token in MVP)
+    Page->>Don: Insert row (DonationType = 'Crowd Donation')
+    Page->>Jx: Insert junction row (CrowdFundId ↔ GlobalDonationId)
+    Don->>Roll: Recompute TotalRaised + TotalDonors
+    Roll->>Roll: Auto-flip milestone if TotalRaised ≥ its amount
+    Roll-->>Page: Thermometer + donor wall update
+    Note over Roll: GoalExceededBehavior decides — KeepAccepting / AutoClose / ShowStretchGoal
+      </pre>
+    </section>
+
+    <!-- =================== ③ THE SURFACES IN DETAIL =================== -->
+    <section id="surfaces">
+      <h2><span class="num">3</span> The Surfaces in Detail</h2>
+      <p class="lead">What each screen looks like and does. One CRM cards-grid (#16), one 6-tab editor and one public donor page (#173).</p>
+
+      <h3>📋 #16 — Crowdfunding management grid</h3>
+      <div class="grid2">
+        <div class="card">
+          <h4 style="margin-top:0; color:var(--teal-700)">KPIs &amp; grid</h4>
+          <ul class="feat">
+            <li><b>4 KPIs</b> — Active Campaigns, Total Raised, Total Donors, Goals Met (+ completion-rate %)</li>
+            <li><b>Search + 4 chips</b> — All / Active / Goal Met / Draft (with counts)</li>
+            <li><b>Cards grid</b> — each card: category-gradient hero, name, progress bar, raised/goal, donors, end date</li>
+            <li><b>560px drawer</b> — summary, 4 performance tiles, milestones, recent donors, latest updates, quick actions</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4 style="margin-top:0; color:var(--teal-700)">Create &amp; row actions (status-conditional)</h4>
+          <ul class="feat">
+            <li><b>Quick-Create</b> — 8 fields → a Draft; <b>Quick-Edit</b> the basics (slug locks once live)</li>
+            <li><b>Active</b> → Edit (→ #173) · View Page · Dashboard</li>
+            <li><b>Draft</b> → Edit · Preview · <b>Publish</b> · <b>Delete</b> (guards: Draft-only + no donations)</li>
+            <li><b>Goal Met / Closed / Archived</b> → View · <b>Close</b> / <b>Duplicate</b> / <b>Archive</b></li>
+          </ul>
+        </div>
+      </div>
+      <div class="note" style="margin-top:0">The card hero is colour-coded by <b>category</b> — Education (teal), Healthcare (violet), Emergency (red/amber), Environment (sky/green), Community (orange), Other (slate) — each with its own Lucide icon. The progress bar shifts colour by completeness (red &lt; 50% · amber 50–75% · green ≥ 75% · 🔥 green when ≥ 100%).</div>
+
+      <h3>🎨 #173 — The 6-tab page editor</h3>
+      <div class="note" style="margin-top:0">The editor lives at <code>setting/publicpages/crowdfundingpage</code>. A card-list view (reusing #16's KPIs/chips/cards) precedes it; opening a card switches to the tabbed editor with a <b>live-preview pane</b> (desktop/mobile, 300ms debounce). Each tab saves its own fields (partial update via <code>updateCrowdFundPage</code>); the footer carries <b>Save Draft · Preview · 🚀 Publish</b>.</div>
+      <table>
+        <tr><th>Tab</th><th>What you set</th></tr>
+        <tr><td><b>1 · Basic</b></td><td>Campaign name, slug (<code>/crowdfund/…</code> + copy), goal amount + currency, start/end dates, linked donation purpose, category (6 enum), optional org unit — same 8 fields as Quick-Create</td></tr>
+        <tr><td><b>2 · Content</b></td><td>Headline, hero image/video, rich-text story (sanitised), <b>Impact Breakdown</b> editor (amount → description rows) and <b>FAQ</b> editor (question/answer rows) → <code>ImpactBreakdownJson</code> / <code>FaqJson</code></td></tr>
+        <tr><td><b>3 · Donation Settings</b></td><td>Suggested amount chips (max 6) + Custom toggle, recurring / anonymous / cover-fees toggles, payment methods (Stripe / PayPal from <code>CompanyPaymentGateways</code>), display toggles (thermometer / donor count / donor wall), and the <b>goal-exceeded tri-state</b> (+ stretch-goal amount)</td></tr>
+        <tr><td><b>4 · Milestones</b></td><td>Ordered milestone rows — name, percentage (amount auto-computed from goal), status (Reached / In&nbsp;Progress / Upcoming) → <code>MilestonesJson</code>; server auto-promotes on donation unless admin overrode</td></tr>
+        <tr><td><b>5 · Updates</b></td><td>Progress-update feed — date, title, rich-text content; Post / Edit / Delete → <code>UpdatesJson</code> (sorted newest-first on the public page)</td></tr>
+        <tr><td><b>6 · Design</b></td><td>Theme colours (primary / accent / background), logo, font family, <b>7 section toggles</b> (impact / milestones / updates / donor wall / FAQ / share / countdown) → <code>EnabledSectionsJson</code>; collapsible <b>SEO &amp; Social</b> (OG title/desc/image, share message, robots-indexable)</td></tr>
+      </table>
+
+      <h3>🌐 #173 — The public donor page · <code>/crowdfund/{slug}</code></h3>
+      <div class="grid2">
+        <div class="card">
+          <h4 style="margin-top:0; color:var(--teal-700)">Left column — the story</h4>
+          <ul class="feat">
+            <li>Org navbar + gradient <b>hero</b> (category icon, or hero image/video)</li>
+            <li>Headline + org/category tags + rich-text story</li>
+            <li><b>Your Impact</b> tiers, <b>Milestones</b> timeline (Reached/InProgress/Upcoming)</li>
+            <li><b>Updates</b> feed, <b>Recent Supporters</b> donor wall, <b>FAQ</b> accordion — each gated by its section toggle</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4 style="margin-top:0; color:var(--teal-700)">Right column — sticky donate widget</h4>
+          <ul class="feat">
+            <li><b>Progress widget</b> — "$38,400 raised of $50,000", thermometer, "345 donors · 52 days left"</li>
+            <li><b>Donate form</b> — amount chips + Custom, make-it-monthly, cover-fees (+2.9%+$0.30), anonymous, name/email</li>
+            <li><b>Donate Now</b> → <code>initiateCrowdFundDonation</code> → gateway → thank-you state</li>
+            <li><b>Share</b> — Facebook · X · WhatsApp · LinkedIn · Copy Link</li>
+          </ul>
+        </div>
+      </div>
+      <div class="note" style="margin-top:0"><b>Status gating &amp; SSR.</b> The route is anonymous and server-rendered with <code>generateMetadata</code> for OG tags and ISR <code>revalidate: 60</code>. <span class="b draft" style="font-size:10px">Draft</span> → 404 (unless a preview-token is present, which shows a "NOT YET LIVE" banner); <span class="b active" style="font-size:10px">Active</span>/<span class="b goalmet" style="font-size:10px">Goal Met</span>/<span class="b closed" style="font-size:10px">Closed</span> render (Closed disables the form); <span class="b archived" style="font-size:10px">Archived</span> → 410 Gone. Donations are rate-limited (5/min/IP/slug), CSRF-protected and honeypot-guarded.</div>
+      <div class="warn"><b>Service placeholders.</b> Real Stripe/PayPal hand-off is stubbed — <code>initiateCrowdFundDonation</code> returns a mocked payment session until a gateway is connected in <code>companypaymentgateway</code>. Receipt email, WhatsApp donation alerts, the per-card "Dashboard" action and reCAPTCHA scoring are also stubbed (toast / log) until those services land.</div>
+    </section>
+
+    <!-- =================== ④ ENTITY TABLES =================== -->
+    <section id="data">
+      <h2><span class="num">4</span> Entity Tables — Data Design</h2>
+      <p class="lead">The whole module is <b>one</b> new entity — <code>fund.CrowdFunds</code> — plus a thin junction. There are <b>no child tables</b>: milestones, updates, impact tiers, FAQ, amount chips and section toggles all live as <b>jsonb</b> on the entity. Donations attach through <code>fund.CrowdFundDonations</code>.</p>
+
+      <h3>How the tables relate</h3>
+      <pre class="mermaid">
+erDiagram
+    CROWD_FUND ||--o{ CROWD_FUND_DONATION : "attributions"
+    GLOBAL_DONATION ||--|| CROWD_FUND_DONATION : "links 1 : 1"
+    DONATION_PURPOSE ||--o{ CROWD_FUND : "accounted to"
+    ORGANIZATIONAL_UNIT ||--o{ CROWD_FUND : "optional scope"
+    COMPANY_PAYMENT_GATEWAY ||--o{ CROWD_FUND : "gateway"
+    EMAIL_TEMPLATE ||--o{ CROWD_FUND : "4 triggers"
+    CROWD_FUND {
+        int CrowdFundId PK
+        string CampaignName
+        string Slug "unique per tenant"
+        string PageStatus "Draft..Archived"
+        decimal GoalAmount
+        string Currency
+        string CampaignCategory "Education..Other"
+        string GoalExceededBehavior "KeepAccepting/AutoClose/ShowStretchGoal"
+        jsonb ImpactBreakdownJson
+        jsonb FaqJson
+        jsonb MilestonesJson
+        jsonb UpdatesJson
+        jsonb AmountChipsJson
+        jsonb EnabledSectionsJson
+    }
+    CROWD_FUND_DONATION {
+        int CrowdFundDonationId PK
+        int CrowdFundId FK
+        int GlobalDonationId FK "unique"
+    }
+    GLOBAL_DONATION {
+        int GlobalDonationId PK
+        string DonationType "Crowd Donation"
+        decimal NetAmount
+        int ContactId FK "nullable for anon"
+    }
+      </pre>
+
+      <h3>① <code>fund.CrowdFunds</code> — the campaign (key columns)</h3>
+      <table>
+        <tr><th>Column</th><th>Type</th><th>Req</th><th>Notes</th></tr>
+        <tr><td>CrowdFundId</td><td>int</td><td>PK</td><td>Primary key</td></tr>
+        <tr><td>CampaignName</td><td>string(200)</td><td class="req">✔</td><td>Human title — "Build a School in Kenya"</td></tr>
+        <tr><td>Slug</td><td>string(100)</td><td class="req">✔</td><td>Unique per tenant <code>(CompanyId, LOWER(Slug))</code>; reserved-word list; immutable once Active + donations exist</td></tr>
+        <tr><td>PageStatus</td><td>string(20)</td><td class="req">✔</td><td>Draft / Published / Active / GoalMet / Closed / Archived — string enum, <b>not</b> MasterData</td></tr>
+        <tr><td>GoalAmount · Currency</td><td>decimal · string(3)</td><td class="req">✔</td><td>Target &amp; ISO currency (USD/EUR/GBP/INR)</td></tr>
+        <tr><td>StartDate · EndDate</td><td>DateTime</td><td class="req">✔</td><td>Window; EndDate is the soft deadline</td></tr>
+        <tr><td>DonationPurposeId</td><td>int</td><td class="req">✔</td><td>FK → <code>fund.DonationPurposes</code> — where gifts are accounted</td></tr>
+        <tr><td>CampaignCategory</td><td>string(30)</td><td class="req">✔</td><td>Education / Healthcare / Emergency / Environment / Community / Other — drives the card hero</td></tr>
+        <tr><td>GoalExceededBehavior</td><td>string(20)</td><td class="req">✔</td><td>KeepAccepting / AutoClose / ShowStretchGoal (+ <code>StretchGoalAmount</code>)</td></tr>
+        <tr><td>OrganizationalUnitId · CompanyPaymentGatewayId</td><td>int?</td><td>—</td><td>Optional scope &amp; gateway override</td></tr>
+        <tr><td>…Json columns</td><td>jsonb</td><td>—</td><td>ImpactBreakdown, Faq, Milestones, Updates, AmountChips, EnabledPaymentMethods, EnabledSections</td></tr>
+        <tr><td>…EmailTemplateId ×4 · WhatsApp…</td><td>int?</td><td>—</td><td>FK → <code>corg.EmailTemplates</code> (confirmation / milestone / goal-reached / admin) + WhatsApp alert</td></tr>
+      </table>
+      <p style="color:var(--slate); font-size:13px;">+ content (Headline, HeroImageUrl, HeroVideoUrl, StoryRichText), donation toggles (AllowCustomAmount, AllowRecurring/Anonymous/CoverFees, Min amount, Show* display flags), design (Primary/Accent/Background hex, LogoUrl, FontFamily), and SEO (OgTitle/Description/Image, DefaultShareMessage, RobotsIndexable). Two filtered indexes: unique on <code>(CompanyId, Slug)</code> and a status index.</p>
+
+      <div class="grid2">
+        <div class="card">
+          <h3 style="margin-top:0">② <code>fund.CrowdFundDonations</code></h3>
+          <p style="color:var(--slate); font-size:14px">The attribution junction — one row per gift, linking it to its campaign.</p>
+          <table>
+            <tr><th>Column</th><th>Notes</th></tr>
+            <tr><td>CrowdFundDonationId</td><td>PK</td></tr>
+            <tr><td>CrowdFundId <span class="req">✔</span></td><td>FK → <code>fund.CrowdFunds</code> (Restrict; non-unique index)</td></tr>
+            <tr><td>GlobalDonationId <span class="req">✔</span></td><td>FK → <code>fund.GlobalDonations</code> (Restrict; <b>unique</b> — one junction row per donation)</td></tr>
+          </table>
+          <p style="color:var(--slate); font-size:13px; margin-bottom:0">The public donate flow must insert this row <i>in the same transaction</i> as the <code>GlobalDonation</code>, or the campaign's totals stay at 0.</p>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">③ jsonb "children" on the entity</h3>
+          <p style="color:var(--slate); font-size:14px">No separate tables — these are edited as a unit in #173 and never queried independently.</p>
+          <table>
+            <tr><th>Json column</th><th>Shape</th></tr>
+            <tr><td><code>MilestonesJson</code></td><td><code>[{name, percentage, amount, status}]</code></td></tr>
+            <tr><td><code>UpdatesJson</code></td><td><code>[{updateDate, title, content}]</code></td></tr>
+            <tr><td><code>ImpactBreakdownJson</code></td><td><code>[{amount, description}]</code></td></tr>
+            <tr><td><code>FaqJson</code></td><td><code>[{question, answer}]</code></td></tr>
+            <tr><td><code>AmountChipsJson</code></td><td><code>[50, 100, 250, 500, 1000]</code></td></tr>
+            <tr><td><code>EnabledSectionsJson</code></td><td><code>{impact, milestones, updates, donorWall, faq, shareButtons, countdown}</code></td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="note">
+        <b>Where the money attaches.</b> Every gift is a <code>fund.GlobalDonations</code> row with <code>DonationType = 'Crowd Donation'</code>, joined to its campaign through the junction. Totals are pure aggregates:
+        <table class="ex-map">
+          <tr><th>Roll-up</th><th>Query (via the junction)</th></tr>
+          <tr><td>Campaign total raised</td><td><code>SUM(NetAmount)</code> over donations whose junction <code>CrowdFundId = X</code></td></tr>
+          <tr><td>Total donors</td><td><code>COUNT(DISTINCT ContactId)</code> over the same set (anon counted by email)</td></tr>
+          <tr><td>Is goal met (badge)</td><td><code>TotalRaised &gt;= GoalAmount</code> — computed, can diverge from stored <code>PageStatus</code></td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- =================== ⑤ STATUSES & LOOKUPS =================== -->
+    <section id="status">
+      <h2><span class="num">5</span> Statuses &amp; Lookups</h2>
+      <p class="lead">The crowdfunding lifecycle is a string enum on the entity (not MasterData). The same six states drive both screens; the public page renders or 404/410s based on them.</p>
+
+      <div class="grid2">
+        <div class="card">
+          <h3 style="margin-top:0">Campaign lifecycle</h3>
+          <table>
+            <tr><th>Status</th><th>Meaning</th></tr>
+            <tr><td><span class="b draft">Draft</span></td><td>Being built; public route 404s (preview-token shows a banner)</td></tr>
+            <tr><td><span class="b published">Published</span></td><td>Publish passed validation; live once the start date arrives</td></tr>
+            <tr><td><span class="b active">Active</span></td><td>Accepting donations (auto from Published when StartDate ≤ now)</td></tr>
+            <tr><td><span class="b goalmet">Goal Met</span></td><td>Total ≥ Goal — reached automatically (Auto-Close) or shown as a badge</td></tr>
+            <tr><td><span class="b closed">Closed</span></td><td>End date or "Close" — page read-only with final total</td></tr>
+            <tr><td><span class="b archived">Archived</span></td><td>Hidden from the list; public route returns 410 Gone</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">Lifecycle transitions (guarded)</h3>
+          <table>
+            <tr><th>Action</th><th>From → To · guard</th></tr>
+            <tr><td><b>Publish</b></td><td>Draft → Published (auto → Active if started); validation gate</td></tr>
+            <tr><td><b>Unpublish</b></td><td>Published → Draft · only if zero donations</td></tr>
+            <tr><td><b>Close</b></td><td>Active / GoalMet → Closed</td></tr>
+            <tr><td><b>Archive</b></td><td>Closed / Draft / GoalMet → Archived</td></tr>
+            <tr><td><b>Duplicate</b></td><td>any → new Draft (<code>{slug}-copy</code>, dates &amp; donations cleared)</td></tr>
+            <tr><td><b>Delete</b></td><td>Draft only · and no donations exist (soft-delete)</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <h3>The goal-exceeded tri-state</h3>
+      <table>
+        <tr><th>GoalExceededBehavior</th><th>What happens when Total ≥ Goal</th></tr>
+        <tr><td><b>KeepAccepting</b> <span style="color:var(--slate)">(default)</span></td><td>Donations keep flowing; a "🎉 Goal met!" badge shows but status stays Active</td></tr>
+        <tr><td><b>AutoClose</b></td><td>Flips <code>PageStatus</code> to GoalMet and disables the donate form</td></tr>
+        <tr><td><b>ShowStretchGoal</b></td><td>A second thermometer appears toward <code>StretchGoalAmount</code>; donations continue</td></tr>
+      </table>
+
+      <h3>Other enumerations</h3>
+      <table>
+        <tr><th>Lookup</th><th>Values</th></tr>
+        <tr><td><code>CampaignCategory</code></td><td>Education · Healthcare · Emergency · Environment · Community · Other</td></tr>
+        <tr><td>Currency</td><td>USD · EUR · GBP · INR (+ tenant default)</td></tr>
+        <tr><td>Milestone status</td><td>Reached · InProgress · Upcoming</td></tr>
+        <tr><td>Payment methods (<code>EnabledPaymentMethodsJson</code>)</td><td>stripe · paypal (Apple/Google Pay · bank transfer = future)</td></tr>
+        <tr><td>Font family</td><td>System · Georgia · Poppins · OpenSans</td></tr>
+        <tr><td>Section toggles (<code>EnabledSectionsJson</code>)</td><td>impact · milestones · updates · donorWall · faq · shareButtons · countdown</td></tr>
+        <tr><td>DonationType (MasterData)</td><td><code>Crowd Donation</code> — seeded; marks gifts attributed to a campaign</td></tr>
+      </table>
+
+      <div class="warn"><b>Badge vs stored status.</b> The "Goal Met" badge is computed live from <code>TotalRaised &gt;= GoalAmount</code>, so a campaign can show the badge while <code>PageStatus</code> is still Active (only Auto-Close, an admin Close, or a job actually mutates the status). The KPI / chip "Goal Met" count therefore includes <code>PageStatus = 'GoalMet'</code> <i>or</i> (Active/Closed with Total ≥ Goal).</div>
+    </section>
+
+    <!-- =================== ⑥ WORKED EXAMPLE =================== -->
+    <section id="example">
+      <h2><span class="num">6</span> Worked Example — A Real Campaign</h2>
+      <p class="lead">To make the model concrete, here is the seeded demo campaign as it runs in the module — one <code>fund.CrowdFunds</code> record, configured across all six tabs, live at <code>/crowdfund/build-a-school-kenya</code>.</p>
+
+      <div class="ex-hero">
+        <h3>🏫 Build a School in Kenya — by Hope Foundation</h3>
+        <p>One <code>fund.CrowdFunds</code> row, category <b>Education</b>, goal <b>$50,000</b>, behaviour <b>Show Stretch Goal</b> ($75,000). Promoted to <b>Active</b> in the seed for E2E. All sections enabled except the countdown timer.</p>
+        <div class="tags">
+          <span>🎯 Goal $50,000</span>
+          <span>💗 Raised $38,400 (76.8%)</span>
+          <span>👥 345 donors</span>
+          <span>🗓️ 01 Mar → 30 Jun 2026 · 52 days left</span>
+        </div>
+      </div>
+
+      <h3>The milestones on this campaign</h3>
+      <p style="color:var(--slate); font-size:13.5px; margin-top:0">Each row is one entry in <code>MilestonesJson</code>; the amount is auto-computed from the percentage of the $50,000 goal.</p>
+      <div class="card">
+        <div class="ex-slot">
+          <div class="ex-time">25% · $12,500</div>
+          <div class="ex-body">
+            <h4><span class="ex-num">1</span> Foundation Laid <span class="b goalmet" style="font-size:10px">Reached</span></h4>
+            <div class="pbar met"><span style="width:100%"></span></div>
+            <div class="ex-pills"><span class="ex-pill">Auto-flipped when total crossed $12,500</span></div>
+          </div>
+        </div>
+        <div class="ex-slot">
+          <div class="ex-time">50% · $25,000</div>
+          <div class="ex-body">
+            <h4><span class="ex-num">2</span> Walls Up <span class="b goalmet" style="font-size:10px">Reached</span></h4>
+            <div class="pbar met"><span style="width:100%"></span></div>
+            <div class="ex-pills"><span class="ex-pill">Auto-flipped when total crossed $25,000</span></div>
+          </div>
+        </div>
+        <div class="ex-slot">
+          <div class="ex-time">75% · $37,500</div>
+          <div class="ex-body">
+            <h4><span class="ex-num">3</span> Roof &amp; Interiors <span class="b active" style="font-size:10px">In Progress</span></h4>
+            <div class="pbar"><span style="width:90%"></span></div>
+            <div class="ex-pills"><span class="ex-pill">$38,400 of $37,500 — just crossed, awaiting next sync</span></div>
+          </div>
+        </div>
+        <div class="ex-slot">
+          <div class="ex-time">100% · $50,000</div>
+          <div class="ex-body">
+            <h4><span class="ex-num">4</span> Grand Opening <span class="b" style="background:var(--archived); font-size:10px">Upcoming</span></h4>
+            <div class="pbar"><span style="width:77%"></span></div>
+            <div class="ex-pills"><span class="ex-pill">The goal itself — stretch goal $75,000 waits beyond</span></div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Impact tiers &amp; recent donors</h3>
+      <div class="grid2">
+        <div class="card">
+          <h4 style="margin-top:0; color:var(--teal-700)">Your Impact <span style="color:var(--slate); font-weight:400; font-size:12px">(ImpactBreakdownJson)</span></h4>
+          <div class="ex-pills" style="flex-direction:column; align-items:stretch">
+            <span class="ex-pill" style="text-align:left">$50 — Provides a desk and chair for one student</span>
+            <span class="ex-pill" style="text-align:left">$100 — Funds a teacher's salary for one month</span>
+            <span class="ex-pill" style="text-align:left">$500 — Builds one section of exterior wall</span>
+            <span class="ex-pill" style="text-align:left">$1,000 — Completes one full classroom</span>
+            <span class="ex-pill" style="text-align:left">$5,000 — Builds the school library</span>
+          </div>
+        </div>
+        <div class="card">
+          <h4 style="margin-top:0; color:var(--teal-700)">Recent Supporters <span style="color:var(--slate); font-weight:400; font-size:12px">(donor wall)</span></h4>
+          <div class="ex-pills" style="flex-direction:column; align-items:stretch">
+            <span class="ex-pill" style="text-align:left">James M. — $1,000 · "Education changes everything"</span>
+            <span class="ex-pill" style="text-align:left">Lisa K. — $2,500 · "Honored to help build this school"</span>
+            <span class="ex-pill" style="text-align:left">Anonymous — $500</span>
+            <span class="ex-pill" style="text-align:left">Sarah R. — $250</span>
+            <span class="ex-pill" style="text-align:left">David L. — $100 · "Supporting the cause"</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <b>How this maps to the data model.</b> One campaign, configured once, with money tagged at the moment of giving.
+        <table class="ex-map">
+          <tr><th>In this example</th><th>Where it lives in the module</th></tr>
+          <tr><td>Build a School in Kenya (the campaign)</td><td>One <code>fund.CrowdFunds</code> row — managed in <b>#16</b>, configured in <b>#173</b></td></tr>
+          <tr><td>The 5 impact tiers &amp; the 3 FAQ entries</td><td><code>ImpactBreakdownJson</code> / <code>FaqJson</code> — jsonb on the same row (Content tab)</td></tr>
+          <tr><td>Foundation / Walls / Roof / Opening</td><td><code>MilestonesJson</code> — status auto-flips to Reached as the total crosses each amount</td></tr>
+          <tr><td>The 3 progress updates</td><td><code>UpdatesJson</code> — rendered newest-first in the Updates feed (Updates tab)</td></tr>
+          <tr><td>The $38,400 raised &amp; 345 donors</td><td><code>fund.GlobalDonations</code> (<code>DonationType='Crowd Donation'</code>) joined via <code>fund.CrowdFundDonations</code></td></tr>
+          <tr><td>The thermometer, donor wall &amp; "76.8%"</td><td>Aggregates over those donations — no stored totals to drift</td></tr>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  mermaid.initialize({ startOnLoad:true, theme:'base', securityLevel:'loose',
+    themeVariables:{ primaryColor:'#ecfeff', primaryBorderColor:'#0e7490', primaryTextColor:'#0f172a',
+      lineColor:'#0e7490', fontFamily:'-apple-system,Segoe UI,Roboto,sans-serif' } });
+</script>
+
+<!-- ===== interactive campaign walk-through (auto-play / manual stepper) ===== -->
+<script>
+(function(){
+  var STEPS=[
+    {lbl:'QUICK-CREATE', dt:'#16', title:'Create the campaign', badge:['Draft','draft'],
+     text:'In #16, fill 8 fields — name, slug, goal, currency, start/end dates, donation purpose, category. Saving creates the <code>fund.CrowdFunds</code> row as Draft and opens its drawer.'},
+    {lbl:'6-TAB EDITOR', dt:'#173', title:'Configure the page', badge:['Draft','draft'],
+     text:'In #173 work the 6 tabs — Content (story, impact tiers, FAQ), Donation Settings (chips, methods, goal-exceeded), Milestones, Updates and Design — all on the same row, with a live preview.'},
+    {lbl:'PUBLISH', dt:'go live', title:'Publish the campaign', badge:['Published','published'],
+     text:'Validation gates the button (name, slug, goal &gt; 0, dates, purpose, ≥1 payment method, ≥1 amount chip or custom). Publish stamps <code>PublishedAt</code> and auto-advances to Active if the start date has passed.'},
+    {lbl:'DONORS GIVE', dt:'/crowdfund', title:'Donations come in', badge:['Active','active'],
+     text:'Donors land on <code>/crowdfund/{slug}</code>, pick an amount, optionally make it monthly / cover fees / stay anonymous, and give. Each gift is a <code>GlobalDonation</code> + a <code>CrowdFundDonations</code> junction row.'},
+    {lbl:'MILESTONE', dt:'auto-flip', title:'A milestone is reached', badge:null,
+     text:'When the running total crosses a milestone amount, its status auto-flips to <b>Reached</b> (unless an admin pinned it). The thermometer, donor wall and updates feed all refresh from the aggregates.'},
+    {lbl:'GOAL MET', dt:'tri-state', title:'Hit the goal', badge:['Goal Met','goalmet'],
+     text:'At Total ≥ Goal the page shows "🎉 Goal met!". The <b>GoalExceededBehavior</b> decides what is next — Keep Accepting, Auto-Close (→ GoalMet, donate off), or Show Stretch Goal (a second thermometer).'},
+    {lbl:'CLOSE', dt:'end date', title:'Close the campaign', badge:['Closed','closed'],
+     text:'At the end date or via Close, the campaign goes Closed — the public page turns read-only with the final total. Later it can be Archived (410) or Duplicated into a fresh Draft.'}
+  ];
+  var track=document.getElementById('setupTrack');
+  if(!track) return;
+  var coin=document.getElementById('setupCoin'),
+      fill=document.getElementById('setupFill'),
+      cap=document.getElementById('setupCaption'),
+      auto=document.getElementById('autoToggle'),
+      prev=document.getElementById('prevBtn'),
+      next=document.getElementById('nextBtn'),
+      reset=document.getElementById('resetBtn'),
+      rail=track.querySelector('.rail'),
+      N=STEPS.length, cur=0, timer=null;
+  function pos(i){ return 5 + i*90/(N-1); }
+  STEPS.forEach(function(s,i){
+    var n=document.createElement('div');
+    n.className='node snode';
+    n.style.left=pos(i)+'%';
+    n.innerHTML='<div class="dot"></div><div class="lbl">'+s.lbl+'</div><div class="dt">'+s.dt+'</div>';
+    n.addEventListener('click',function(){ setAuto(false); go(i); });
+    track.insertBefore(n, rail);
+  });
+  function render(){
+    coin.style.left=pos(cur)+'%';
+    fill.style.width=(cur/(N-1)*100)+'%';
+    var nodes=track.querySelectorAll('.snode');
+    nodes.forEach(function(n,i){ n.classList.toggle('on', i===cur); n.classList.toggle('done', i<cur); });
+    var s=STEPS[cur],
+        badge=s.badge ? ' <span class="b '+s.badge[1]+'">'+s.badge[0]+'</span>' : '';
+    cap.innerHTML='<span class="step-i">'+(cur+1)+' / '+N+'</span> <b>'+s.title+'</b>'+badge+' — '+s.text;
+    var manual=!auto.checked;
+    prev.disabled = !manual || cur===0;
+    next.disabled = !manual || cur===N-1;
+  }
+  function go(i){ cur=(i%N+N)%N; render(); }
+  function setAuto(on){
+    auto.checked=on;
+    if(timer){ clearInterval(timer); timer=null; }
+    if(on){ timer=setInterval(function(){ cur=(cur+1)%N; render(); }, 1900); }
+    render();
+  }
+  prev.addEventListener('click',function(){ if(cur>0) go(cur-1); });
+  next.addEventListener('click',function(){ if(cur<N-1) go(cur+1); });
+  reset.addEventListener('click',function(){ setAuto(false); go(0); });
+  auto.addEventListener('change',function(){ setAuto(auto.checked); });
+  render();
+})();
+</script>
+
+<!-- ===== fullscreen modal — zoom + drag, shared by every diagram / flow section ===== -->
+<script>
+(function(){
+  var modal=document.createElement('div');
+  modal.className='fs-modal';
+  modal.innerHTML=
+    '<div class="fs-toolbar">'+
+      '<span class="fs-title"></span>'+
+      '<button class="fs-out" title="Zoom out">−</button>'+
+      '<span class="fs-zoomval">100%</span>'+
+      '<button class="fs-in" title="Zoom in">+</button>'+
+      '<button class="fs-fit" title="Reset zoom &amp; position">↻ Fit</button>'+
+      '<button class="fs-close" title="Close (Esc)">✕ Close</button>'+
+    '</div>'+
+    '<div class="fs-viewport">'+
+      '<div class="fs-canvas"></div>'+
+      '<div class="fs-hint">Scroll to zoom · drag to move · Esc to close</div>'+
+    '</div>';
+  document.body.appendChild(modal);
+
+  var titleEl=modal.querySelector('.fs-title'),
+      zoomVal=modal.querySelector('.fs-zoomval'),
+      viewport=modal.querySelector('.fs-viewport'),
+      canvas=modal.querySelector('.fs-canvas'),
+      scale=1, tx=0, ty=0, placeholder=null, hostEl=null;
+
+  function apply(){
+    canvas.style.transform='translate('+tx+'px,'+ty+'px) scale('+scale+')';
+    zoomVal.textContent=Math.round(scale*100)+'%';
+  }
+  function reset(){ scale=1; tx=0; ty=0; apply(); }
+  function zoom(d){ scale=Math.min(5, Math.max(0.3, scale+d)); apply(); }
+
+  function open(el, title){
+    hostEl=el;
+    placeholder=document.createComment('fs-slot');
+    el.parentNode.insertBefore(placeholder, el);
+    canvas.appendChild(el);
+    titleEl.textContent=title||'Diagram';
+    modal.classList.add('open');
+    reset();
+  }
+  function close(){
+    if(placeholder && hostEl){
+      placeholder.parentNode.insertBefore(hostEl, placeholder);
+      placeholder.parentNode.removeChild(placeholder);
+    }
+    placeholder=null; hostEl=null;
+    modal.classList.remove('open');
+  }
+
+  modal.querySelector('.fs-in').addEventListener('click',function(){ zoom(0.2); });
+  modal.querySelector('.fs-out').addEventListener('click',function(){ zoom(-0.2); });
+  modal.querySelector('.fs-fit').addEventListener('click',reset);
+  modal.querySelector('.fs-close').addEventListener('click',close);
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape' && modal.classList.contains('open')) close(); });
+
+  viewport.addEventListener('wheel',function(e){ e.preventDefault(); zoom(e.deltaY<0?0.12:-0.12); },{passive:false});
+
+  var dragging=false, sx=0, sy=0;
+  viewport.addEventListener('mousedown',function(e){
+    if(e.target.closest('.snode')||e.target.closest('button')||e.target.closest('.switch')) return;
+    dragging=true; sx=e.clientX-tx; sy=e.clientY-ty; viewport.classList.add('grabbing');
+  });
+  window.addEventListener('mousemove',function(e){ if(!dragging) return; tx=e.clientX-sx; ty=e.clientY-ty; apply(); });
+  window.addEventListener('mouseup',function(){ dragging=false; viewport.classList.remove('grabbing'); });
+
+  function titleFor(el){
+    if(el.classList.contains('setup-wrap')) return '⚙ Campaign Walk-through';
+    if(el.classList.contains('stage-wrap')) return '🏫 Live Flow — Build a School in Kenya';
+    if(el.classList.contains('mermaid')){
+      var t=(el.textContent||'').trim();
+      if(t.indexOf('sequenceDiagram')===0) return '💬 Donation hand-off sequence';
+      if(t.indexOf('erDiagram')===0) return '🗂 Entity relationships';
+    }
+    return 'Diagram';
+  }
+
+  function attach(){
+    var hosts=document.querySelectorAll('.stage-wrap, .mermaid');
+    for(var i=0;i<hosts.length;i++){
+      (function(el){
+        if(el.classList.contains('fs-host')) return;
+        el.classList.add('fs-host');
+        var btn=document.createElement('button');
+        btn.className='fs-btn'; btn.type='button'; btn.title='Open full screen'; btn.innerHTML='⛶';
+        btn.addEventListener('click',function(ev){ ev.stopPropagation(); open(el, titleFor(el)); });
+        el.appendChild(btn);
+      })(hosts[i]);
+    }
+  }
+  if(document.readyState==='complete') attach();
+  else window.addEventListener('load',attach);
+})();
+</script>
+</body>
+</html>
