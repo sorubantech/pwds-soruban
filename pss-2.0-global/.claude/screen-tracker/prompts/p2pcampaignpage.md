@@ -1767,3 +1767,20 @@ Full UI must be built (5 setup tabs, 4 public render trees including wizard, don
 - **Known issues opened**: None.
 - **Known issues closed**: None.
 - **Next step**: User retests `getAllFundraisersByP2PCampaignPage` admin query (expected to succeed); also retests `getP2PFundraiserStats` and the public child query if exercised.
+
+---
+
+## ⑭ SOURCE-2 FUNDING INTEGRATION & SETTINGS→CRM RELOCATION (planned 2026-06-29 — design only, do NOT build this pass)
+
+**Source-2 context:** "Fundraising Campaigns" is one of the two MAIN Case-Management funding sources (with Grant). Menu reorg applied 2026-06-29 in `Pss2.0_Global_Menus_List.sql`: parent renamed **"P2P Fundraising" → "Fundraising Campaigns"** (code `CRM_P2PFUNDRAISING` unchanged), now CRM top-level order 8; children = Campaigns · **Campaign Pages (THIS screen)** · P2P Fundraisers · Crowdfunding · Crowdfunding Page. (Matching Gifts moved out to the Donation/Source-3 parent.)
+
+**How Source-2 money funds a program (Option-A, locked):** campaign → linked **DonationPurpose** (already on this screen — field 7 "Linked Donation Purpose", stored via `Campaign.DonationPurposes` junction) → that purpose is added as a **ProgramFundingSource** (`DonationPurposeId`) on a Case-Mgmt Program → public donations roll up to the program's **Collected**. No new funding field needed here; the linked purpose IS the program bridge.
+
+**⚠ G9 gap (design-only — do NOT build yet):** `fund.GlobalDonations` has no `DonationPurposeId` and `case.ProgramFundingTransaction` (the Collected ledger) has no `GlobalDonationId` — money raised through this page does NOT auto-roll-up into program Collected. Bridge = the §5 fork in memory `project_case_fund_accounting_redesign` (A: seed matched demo rows · B: real reconciliation roll-up). Decide before building.
+
+**THIS SCREEN PHYSICALLY RELOCATES — Settings → CRM (planned, NOT executed this pass):**
+- Admin setup route: `setting/publicpages/p2pcampaignpage` → **`crm/p2pfundraising/p2pcampaignpage`**. Public anonymous routes `(public)/p2p/{campaignSlug}`, `(public)/p2p/{campaignSlug}/{fundraiserSlug}`, `(public)/p2p/{campaignSlug}/start` are **UNCHANGED**.
+- FE move (when executed): `app/[lang]/setting/publicpages/p2pcampaignpage/` → `app/[lang]/crm/p2pfundraising/p2pcampaignpage/`; `page-components/setting/publicpages/p2pcampaignpage/` → `page-components/crm/p2pfundraising/p2pcampaignpage/`; `presentation/pages/setting/publicpages/p2pcampaignpage.tsx` → `.../crm/p2pfundraising/p2pcampaignpage.tsx`; fix every internal import path.
+- Update menu seed `MenuUrl` `setting/publicpages/p2pcampaignpage` → `crm/p2pfundraising/p2pcampaignpage` (currently kept as `setting/...` in the seed pending this move; menu parent already on `CRM_P2PFUNDRAISING`).
+- **Inbound deep-links to update** (other screens that link here): `p2pcampaign.md` #15 (~10 refs: header "+ Create", drawer "Edit Campaign Setup", per-row Edit, communication-row Edit) and `p2pfundraiser.md` #135 (2 refs: row Edit + "Edit Page" override) — all currently target `setting/publicpages/p2pcampaignpage?...` and must change to `crm/p2pfundraising/p2pcampaignpage?...`.
+- **Approval config update:** ParentMenu `SET_PUBLICPAGES` → `CRM_P2PFUNDRAISING`; ModuleCode `SETTING` → `CRM`; MenuUrl as above.

@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pledges — Knowledge Transfer</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root{
+    --emerald:#059669; --emerald-600:#059669; --emerald-700:#047857; --emerald-50:#ecfdf5;
+    --teal:#0d9488;
+    --ink:#0f172a; --slate:#475569; --line:#e2e8f0; --bg:#f8fafc;
+    --ontrack:#16a34a; --fulfilled:#0e7490; --overdue:#dc2626; --behind:#ea580c; --cancelled:#64748b;
+    --paid:#16a34a; --upcoming:#d97706; --scheduled:#64748b;
+    --red:#dc2626; --green:#16a34a; --amber:#d97706;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink); background:var(--bg); line-height:1.6; font-size:15px;
+  }
+  /* ---------- layout ---------- */
+  .wrap{display:flex; max-width:1180px; margin:0 auto; gap:28px; padding:0 20px;}
+  nav.toc{
+    position:sticky; top:0; align-self:flex-start; height:100vh; overflow:auto;
+    width:230px; flex:none; padding:28px 16px; background:#0c1420; border-right:1px solid #000;
+  }
+  nav.toc h4{font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:#94a3b8; margin:0 0 10px; padding:0 14px;}
+  nav.toc a{
+    display:block; padding:9px 14px; margin:2px 0; border-radius:8px;
+    color:#cbd5e1; text-decoration:none; font-size:14px; font-weight:500;
+  }
+  nav.toc a:hover{background:#fff; color:#0c1420;}
+  main{flex:1; min-width:0; padding:36px 0 90px;}
+  /* ---------- header ---------- */
+  .hero{
+    background:linear-gradient(135deg,var(--emerald-700),var(--teal));
+    color:#fff; border-radius:16px; padding:34px 36px; margin-bottom:34px;
+  }
+  .hero h1{margin:0 0 8px; font-size:30px; letter-spacing:-.02em;}
+  .hero p{margin:0; opacity:.94; font-size:16px; max-width:680px;}
+  .hero .tags{margin-top:18px; display:flex; gap:8px; flex-wrap:wrap;}
+  .hero .tags span{background:rgba(255,255,255,.16); padding:5px 12px; border-radius:20px; font-size:12.5px; font-weight:600;}
+  /* ---------- sections ---------- */
+  section{margin-bottom:54px; scroll-margin-top:20px;}
+  h2{
+    font-size:23px; letter-spacing:-.01em; margin:0 0 6px; padding-bottom:10px;
+    border-bottom:2px solid var(--line); display:flex; align-items:center; gap:11px;
+  }
+  h2 .num{
+    background:var(--emerald); color:#fff; width:30px; height:30px; border-radius:8px;
+    display:inline-flex; align-items:center; justify-content:center; font-size:15px; flex:none;
+  }
+  h3{font-size:17px; margin:26px 0 10px; color:var(--emerald-700);}
+  .lead{color:var(--slate); margin:6px 0 18px; font-size:15.5px;}
+  p{margin:10px 0;}
+  /* ---------- cards ---------- */
+  .card{background:#fff; border:1px solid var(--line); border-radius:12px; padding:20px 22px; margin:16px 0;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  .note{border-left:4px solid var(--emerald); background:var(--emerald-50); padding:13px 18px; border-radius:0 8px 8px 0; margin:16px 0;}
+  .warn{border-left:4px solid var(--amber); background:#fffbeb; padding:13px 18px; border-radius:0 8px 8px 0; margin:16px 0;}
+  /* ---------- step list ---------- */
+  .steps{list-style:none; padding:0; margin:18px 0; counter-reset:s;}
+  .steps>li{
+    position:relative; padding:14px 18px 14px 58px; margin:10px 0; background:#fff;
+    border:1px solid var(--line); border-radius:10px; counter-increment:s;
+  }
+  .steps>li::before{
+    content:counter(s); position:absolute; left:16px; top:14px; width:28px; height:28px;
+    background:var(--emerald); color:#fff; border-radius:50%; display:flex; align-items:center;
+    justify-content:center; font-weight:700; font-size:14px;
+  }
+  .steps>li b{color:var(--emerald-700);}
+  /* ---------- tables ---------- */
+  table{width:100%; border-collapse:collapse; margin:14px 0; font-size:13.5px; background:#fff;
+    border:1px solid var(--line); border-radius:10px; overflow:hidden;}
+  th{background:#f1f5f9; text-align:left; padding:10px 12px; font-weight:600; color:var(--ink); font-size:12.5px;
+    text-transform:uppercase; letter-spacing:.03em;}
+  td{padding:10px 12px; border-top:1px solid var(--line); vertical-align:top;}
+  tr:hover td{background:#fafcff;}
+  code{background:#f1f5f9; padding:2px 6px; border-radius:5px; font-size:12.5px; font-family:"SF Mono",Consolas,monospace; color:var(--emerald-700);}
+  .req{color:var(--red); font-weight:700;}
+  /* ---------- badges ---------- */
+  .b{display:inline-block; padding:3px 11px; border-radius:20px; font-size:12px; font-weight:700; color:#fff; white-space:nowrap;}
+  .b.ontrack{background:var(--ontrack)} .b.fulfilled{background:var(--fulfilled)} .b.overdue{background:var(--overdue)}
+  .b.behind{background:var(--behind)} .b.cancelled{background:var(--cancelled)}
+  .b.paid{background:var(--paid)} .b.upcoming{background:var(--upcoming)} .b.scheduled{background:var(--scheduled)}
+  /* =================================================================
+     ANIMATED FLOW — the moving pledge pipeline (7 stages)
+  ================================================================= */
+  .stage-wrap{background:#052e16; border-radius:16px; padding:34px 24px 26px; margin:22px 0; color:#d1fae5; overflow:hidden;}
+  .stage-wrap h3{color:#6ee7b7; margin-top:0;}
+  .track{position:relative; height:150px; margin:30px 0 12px;}
+  .rail{position:absolute; top:96px; left:3%; right:3%; height:6px; background:rgba(255,255,255,.14); border-radius:4px;}
+  .rail-fill{position:absolute; top:0; left:0; height:100%; width:0; background:linear-gradient(90deg,#34d399,#a7f3d0);
+    border-radius:4px; animation:fill 28s ease-in-out infinite;}
+  @keyframes fill{
+    0%{width:4%} 10%{width:6%} 12%{width:20%} 22%{width:22%} 24%{width:35%} 34%{width:36%}
+    36%{width:49%} 46%{width:50%} 48%{width:64%} 58%{width:65%} 60%{width:79%} 70%{width:80%}
+    72%{width:96%} 100%{width:96%}
+  }
+  .node{position:absolute; top:74px; transform:translateX(-50%); text-align:center; width:92px;}
+  .node .dot{width:16px; height:16px; border-radius:50%; background:#052e16; border:3px solid #34d399; margin:0 auto 8px;
+    box-shadow:0 0 0 4px rgba(52,211,153,.16);}
+  .node .lbl{font-size:11px; font-weight:700; color:#a7f3d0; line-height:1.2;}
+  .node .dt{font-size:10px; color:#6ee7b7; opacity:.85;}
+  .node:nth-child(2){left:4%} .node:nth-child(3){left:19%} .node:nth-child(4){left:34%}
+  .node:nth-child(5){left:49%} .node:nth-child(6){left:64%} .node:nth-child(7){left:79%} .node:nth-child(8){left:96%}
+  .avatar{position:absolute; top:46px; transform:translateX(-50%); animation:travel 28s ease-in-out infinite; z-index:5;}
+  .avatar .face{width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#34d399,#047857);
+    display:flex; align-items:center; justify-content:center; font-size:19px; box-shadow:0 6px 16px rgba(0,0,0,.4);
+    border:2px solid #fff;}
+  .avatar .name{margin-top:5px; font-size:10.5px; font-weight:700; color:#fff; background:rgba(0,0,0,.35);
+    padding:1px 7px; border-radius:10px; white-space:nowrap; text-align:center;}
+  @keyframes travel{
+    0%{left:4%} 10%{left:4%} 12%{left:19%} 22%{left:19%} 24%{left:34%} 34%{left:34%}
+    36%{left:49%} 46%{left:49%} 48%{left:64%} 58%{left:64%} 60%{left:79%} 70%{left:79%}
+    72%{left:96%} 100%{left:96%}
+  }
+  .comms{position:relative; min-height:50px; margin-top:8px;}
+  .ping{position:absolute; left:50%; transform:translateX(-50%); top:0; opacity:0;
+    background:#064e3b; border:1px solid #34d399; color:#d1fae5; padding:7px 14px; border-radius:20px;
+    font-size:12.5px; font-weight:600; white-space:nowrap; box-shadow:0 4px 14px rgba(0,0,0,.35); text-align:center;}
+  .ping1{animation:show 28s ease-in-out infinite; animation-delay:0s;}
+  .ping2{animation:show 28s ease-in-out infinite; animation-delay:4s;}
+  .ping3{animation:show 28s ease-in-out infinite; animation-delay:8s;}
+  .ping4{animation:show 28s ease-in-out infinite; animation-delay:12s;}
+  .ping5{animation:show 28s ease-in-out infinite; animation-delay:16s;}
+  .ping6{animation:show 28s ease-in-out infinite; animation-delay:20s;}
+  .ping7{animation:show 28s ease-in-out infinite; animation-delay:24s;}
+  @keyframes show{0%,3%{opacity:0; transform:translateX(-50%) translateY(8px)}
+    5%,12%{opacity:1; transform:translateX(-50%) translateY(0)}
+    14%,100%{opacity:0; transform:translateX(-50%) translateY(-8px)}}
+  .legend{display:flex; gap:18px; flex-wrap:wrap; margin-top:18px; font-size:12px; color:#6ee7b7;}
+  .legend b{color:#fff;}
+  .mermaid{background:#fff; border:1px solid var(--line); border-radius:12px; padding:20px; margin:18px 0; text-align:center;}
+  /* ---------- screen-map strip ---------- */
+  .map{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin:18px 0;}
+  @media(max-width:760px){.map{grid-template-columns:1fr 1fr}}
+  .map .m{background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px; text-align:center;}
+  .map .m .ic{font-size:26px;}
+  .map .m h4{margin:8px 0 4px; font-size:14px; color:var(--emerald-700);}
+  .map .m p{margin:0; font-size:12.5px; color:var(--slate); line-height:1.45;}
+  .map .m .sn{display:inline-block; margin-top:8px; background:var(--emerald-50); color:var(--emerald-700);
+    font-size:11px; font-weight:700; padding:2px 9px; border-radius:12px;}
+  /* ---------- feature checklist ---------- */
+  .featgrp{padding:18px 20px;}
+  .featgrp h4{margin:0 0 6px; font-size:14.5px; color:var(--emerald-700); display:flex; align-items:center; gap:8px;}
+  .feat{list-style:none; padding:0; margin:6px 0 0;}
+  .feat li{position:relative; padding:7px 0 7px 24px; font-size:13.5px; line-height:1.45; border-top:1px solid var(--line);}
+  .feat li:first-child{border-top:none;}
+  .feat li::before{content:"✓"; position:absolute; left:2px; top:7px; color:#fff; background:var(--emerald);
+    width:15px; height:15px; border-radius:50%; font-size:9px; font-weight:800; text-align:center; line-height:15px;}
+  .feat li b{color:var(--ink);}
+  /* ---------- interactive walk-through ---------- */
+  .setup-wrap{padding-top:24px;}
+  .setup-bar{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; margin-bottom:6px;}
+  .switch-box{display:flex; align-items:center; gap:10px; font-size:12.5px; font-weight:700; color:#6ee7b7;}
+  .switch{position:relative; display:inline-block; width:46px; height:24px;}
+  .switch input{opacity:0; width:0; height:0;}
+  .slider{position:absolute; inset:0; background:rgba(255,255,255,.22); border-radius:24px; transition:.3s; cursor:pointer;}
+  .slider::before{content:""; position:absolute; height:18px; width:18px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.3s;}
+  .switch input:checked + .slider{background:var(--green);}
+  .switch input:checked + .slider::before{transform:translateX(22px);}
+  .nav-btns{display:flex; gap:8px;}
+  .nav-btns button{background:rgba(255,255,255,.12); color:#d1fae5; border:1px solid #34d399; padding:7px 15px;
+    border-radius:20px; font-size:13px; font-weight:700; cursor:pointer; transition:.18s;}
+  .nav-btns button:hover:not(:disabled){background:#34d399; color:#052e16;}
+  .nav-btns button:disabled{opacity:.32; cursor:not-allowed;}
+  .setup-coin{animation:none; transition:left .55s cubic-bezier(.45,.05,.3,1);}
+  .setup-fill{animation:none; width:0; transition:width .55s cubic-bezier(.45,.05,.3,1);}
+  .snode{cursor:pointer;}
+  .snode .lbl{transition:color .2s;}
+  .snode .dot{transition:transform .25s, background .25s, box-shadow .25s;}
+  .snode.done .dot{background:#6ee7b7; border-color:#a7f3d0;}
+  .snode.on .dot{background:#34d399; transform:scale(1.35); box-shadow:0 0 0 6px rgba(52,211,153,.32);}
+  .snode.on .lbl{color:#fff;}
+  .setup-caption{background:rgba(0,0,0,.26); border:1px solid #34d399; border-radius:12px; padding:14px 18px;
+    margin-top:16px; font-size:13.5px; color:#d1fae5; line-height:1.55; min-height:54px;}
+  .setup-caption .step-i{display:inline-block; background:#34d399; color:#052e16; font-weight:800; font-size:11px;
+    padding:2px 9px; border-radius:10px; margin-right:8px;}
+  .setup-caption b{color:#fff;}
+  /* ---------- worked example ---------- */
+  .ex-hero{background:linear-gradient(135deg,#052e16,var(--emerald-700)); color:#fff; border-radius:14px; padding:22px 24px; margin:16px 0 22px;}
+  .ex-hero h3{color:#6ee7b7; margin:0 0 6px;}
+  .ex-hero p{margin:0; opacity:.92; font-size:14px;}
+  .ex-hero .tags{margin-top:14px; display:flex; gap:8px; flex-wrap:wrap;}
+  .ex-hero .tags span{background:rgba(255,255,255,.16); padding:4px 11px; border-radius:20px; font-size:12px; font-weight:700;}
+  .ex-slot{display:flex; gap:14px; align-items:flex-start; padding:14px 0; border-top:1px solid var(--line);}
+  .ex-slot:first-child{border-top:none;}
+  .ex-time{flex:none; width:150px; font-size:12.5px; font-weight:700; color:var(--emerald-700); background:var(--emerald-50);
+    border:1px solid #a7f3d0; border-radius:9px; padding:7px 10px; text-align:center; line-height:1.35;}
+  .ex-body{flex:1; min-width:0;}
+  .ex-body h4{margin:0 0 6px; font-size:15px; color:var(--ink); display:flex; align-items:center; gap:8px;}
+  .ex-pills{display:flex; gap:7px; flex-wrap:wrap; margin-top:4px;}
+  .ex-pill{display:inline-block; background:#f1f5f9; border:1px solid var(--line); color:var(--slate);
+    padding:4px 11px; border-radius:16px; font-size:12.5px; font-weight:600;}
+  .ex-num{flex:none; width:24px; height:24px; border-radius:50%; background:var(--emerald); color:#fff;
+    font-size:12px; font-weight:800; display:inline-flex; align-items:center; justify-content:center;}
+  .ex-map{width:100%; border-collapse:collapse; margin-top:8px; font-size:13.5px;}
+  .ex-map th,.ex-map td{text-align:left; padding:8px 12px; border-bottom:1px solid var(--line);}
+  .ex-map th{background:#fafcff; color:var(--emerald-700); font-size:12px; text-transform:uppercase; letter-spacing:.04em;}
+  .ex-map td code{font-size:12.5px;}
+  /* ---------- progress bar (worked example) ---------- */
+  .pbar{height:9px; background:#f1f5f9; border-radius:6px; overflow:hidden; margin:6px 0;}
+  .pbar>span{display:block; height:100%; background:linear-gradient(90deg,var(--emerald),#34d399); border-radius:6px;}
+  .pbar.met>span{background:linear-gradient(90deg,#0e7490,#22d3ee);}
+  /* ---------- fullscreen diagram / flow modal ---------- */
+  .fs-host{position:relative;}
+  .fs-btn{position:absolute; top:10px; right:10px; z-index:8; width:34px; height:34px; cursor:pointer;
+    border-radius:9px; border:1px solid rgba(255,255,255,.4); background:rgba(0,0,0,.42); color:#fff;
+    font-size:15px; line-height:1; display:flex; align-items:center; justify-content:center; transition:.16s;}
+  .fs-btn:hover{background:var(--emerald); border-color:var(--emerald); transform:scale(1.08);}
+  .mermaid.fs-host .fs-btn{background:rgba(5,150,105,.9); border-color:var(--emerald);}
+  .setup-wrap.fs-host .setup-bar{padding-right:46px;}
+  .fs-canvas .fs-btn{display:none;}
+  .fs-modal{position:fixed; inset:0; z-index:1000; background:rgba(15,23,42,.86);
+    -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); display:none; flex-direction:column;}
+  .fs-modal.open{display:flex;}
+  .fs-toolbar{display:flex; align-items:center; gap:9px; padding:11px 16px; background:#0c1420; color:#fff; flex:none;}
+  .fs-toolbar .fs-title{font-size:14px; font-weight:700; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .fs-toolbar button{background:rgba(255,255,255,.12); color:#fff; border:1px solid rgba(255,255,255,.26);
+    border-radius:8px; min-width:38px; height:34px; padding:0 11px; cursor:pointer; font-size:15px; font-weight:700; transition:.15s;}
+  .fs-toolbar button:hover{background:var(--emerald); border-color:var(--emerald);}
+  .fs-toolbar .fs-zoomval{font-size:12.5px; min-width:50px; text-align:center; opacity:.85; font-variant-numeric:tabular-nums;}
+  .fs-toolbar .fs-close{margin-left:6px;}
+  .fs-viewport{flex:1; overflow:hidden; position:relative; cursor:grab; display:flex; align-items:center; justify-content:center;}
+  .fs-viewport.grabbing{cursor:grabbing;}
+  .fs-canvas{transform-origin:center center; will-change:transform;}
+  .fs-canvas>*{margin:0 !important; max-width:none !important; width:auto;}
+  .fs-canvas .stage-wrap{width:min(90vw,1080px);}
+  .fs-canvas .mermaid{background:#fff;}
+  .fs-hint{position:absolute; bottom:14px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,.55);
+    color:#6ee7b7; font-size:12px; font-weight:600; padding:6px 15px; border-radius:20px; pointer-events:none;}
+  /* ---------- print ---------- */
+  @media print{
+    nav.toc{display:none} .wrap{display:block} main{padding:0}
+    .stage-wrap{background:#fff; color:#0f172a; border:1px solid var(--line);}
+    .stage-wrap h3{color:var(--emerald-700)} .node .lbl,.node .dt{color:var(--ink)}
+    .avatar,.ping,.legend,.setup-bar,.setup-caption,.fs-btn{display:none} section{page-break-inside:avoid}
+    .fs-modal{display:none !important}
+    .hero{background:var(--emerald-700)!important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    a{color:var(--ink); text-decoration:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- =================== SIDEBAR =================== -->
+  <nav class="toc">
+    <h4>Contents</h4>
+    <a href="#agenda">Agenda</a>
+    <a href="#intro">Overview</a>
+    <a href="#screens">The Screen at a Glance</a>
+    <a href="#flow">① Start → End Flow</a>
+    <a href="#walk">⚙ Lifecycle Walk-through</a>
+    <a href="#diagram">② Live Flow + Example</a>
+    <a href="#surfaces">③ The Surfaces in Detail</a>
+    <a href="#data">④ Entity Tables</a>
+    <a href="#status">⑤ Statuses &amp; Lookups</a>
+    <a href="#example">⑥ Worked Example</a>
+  </nav>
+
+  <main>
+
+    <!-- =================== HERO =================== -->
+    <div class="hero">
+      <h1>Pledges</h1>
+      <p>A pledge is a donor's <b>promise to give a total over time</b> — "$1,200 across the year, $100 a month". This screen turns that promise into a tracked payment schedule: it auto-builds the installments, watches each one come due, lets staff record the incoming payment against the donation flow, and rolls the whole thing up into <i>On Track</i> / <i>Behind</i> / <i>Overdue</i> / <i>Fulfilled</i>. It is the operations hub for every multi-payment commitment.</p>
+      <div class="tags">
+        <span>💰 #12 · Fundraising (Donations)</span>
+        <span>2 entities · grid + drawer + form</span>
+        <span>schema <code style="color:#fff;background:rgba(255,255,255,.18)">fund</code></span>
+      </div>
+    </div>
+
+    <!-- =================== AGENDA =================== -->
+    <section id="agenda">
+      <h2><span class="num">≡</span> Agenda</h2>
+      <p class="lead">Everything the Pledge screen does, grouped as discussion topics — one card per capability.</p>
+
+      <div class="note" style="margin-top:0">
+        <b>In one line:</b> a donor promises a total → the system breaks it into a payment schedule → each installment is tracked <span class="b scheduled">Scheduled</span> → <span class="b upcoming">Upcoming</span> → <span class="b paid">Paid</span> (or <span class="b overdue">Overdue</span>) → as payments land the pledge climbs <span class="b ontrack">On Track</span> → <span class="b fulfilled">Fulfilled</span>.
+      </div>
+
+      <h3>Feature checklist — what the screen actually does</h3>
+      <div class="grid2">
+        <div class="card featgrp">
+          <h4>📝 Create &amp; schedule <span class="b" style="background:var(--emerald); font-size:10px">Form</span></h4>
+          <ul class="feat">
+            <li><b>One commitment, auto-split</b> — enter a total + frequency, the schedule generates itself</li>
+            <li><b>Smart auto-calc</b> — touch any of EndDate / amount / count and the rest derive</li>
+            <li><b>Frequencies</b> — Monthly · Quarterly · Semi-Annual · Annual · Custom</li>
+            <li><b>Schedule preview</b> — installment dots render live before you save</li>
+          </ul>
+        </div>
+        <div class="card featgrp">
+          <h4>📊 Track fulfillment <span class="b" style="background:var(--emerald); font-size:10px">Grid</span></h4>
+          <ul class="feat">
+            <li><b>Fulfillment bar</b> per pledge — % paid, coloured by computed status</li>
+            <li><b>5 status chips</b> — All / Active / Fulfilled / Overdue / Cancelled</li>
+            <li><b>Balance &amp; next-due</b> columns — outstanding + the next installment date</li>
+            <li><b>Advanced filters</b> — campaign, purpose, amount range, fulfilment %, date range</li>
+          </ul>
+        </div>
+        <div class="card featgrp">
+          <h4>💳 Record payments <span class="b" style="background:var(--emerald); font-size:10px">Drawer</span></h4>
+          <ul class="feat">
+            <li><b>"Record Payment"</b> deep-links to the donation form, donor &amp; purpose pre-filled</li>
+            <li><b>Linked back</b> — the new <code>GlobalDonation</code> stamps the installment Paid</li>
+            <li><b>Payment history</b> + horizontal schedule timeline in the drawer</li>
+            <li><b>Receipt link</b> — each paid installment jumps to its donation receipt</li>
+          </ul>
+        </div>
+        <div class="card featgrp">
+          <h4>⏰ Overdue &amp; lifecycle <span class="b" style="background:var(--emerald); font-size:10px">KPIs</span></h4>
+          <ul class="feat">
+            <li><b>4 KPIs</b> — Active · Fulfilled YTD · Outstanding balance · Overdue payments</li>
+            <li><b>Overdue alert banner</b> — top overdue installments + Send Reminder (placeholder)</li>
+            <li><b>Cancel with reason</b> — terminal; keeps paid history, drops unpaid rows</li>
+            <li><b>Status computed on read</b> — no stale stored status to drift</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================== OVERVIEW =================== -->
+    <section id="intro">
+      <h2><span class="num">▸</span> Overview</h2>
+      <p class="lead">A pledge is a <b>promise, not a transaction</b>. The donor commits a total; the system plans how it will arrive and chases each installment until the whole amount is collected. Unlike a recurring auto-debit, nothing is charged automatically — staff record each payment as it actually lands.</p>
+
+      <div class="grid2">
+        <div class="card">
+          <h3 style="margin-top:0">One screen, two entities</h3>
+          <p style="font-size:14px; color:var(--slate); margin-top:0">
+            <b>Pledge</b> is the parent commitment — donor, total, frequency, dates. <b>PledgePayment</b> is one auto-generated installment row; a pledge owns many. Create a pledge and the child rows are built for you; edit it and the unpaid rows regenerate while paid rows are preserved as history.
+          </p>
+          <p style="font-size:14px; color:var(--slate)">
+            Both live under schema <code>fund</code>, under <b>one</b> menu. The screen <i>consumes</i> existing entities — <code>GlobalDonation</code>, <code>Contact</code>, <code>Campaign</code>, <code>DonationPurpose</code> — as FK sources; it doesn't recreate them.
+          </p>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">The schedule math</h3>
+          <p style="font-size:14px; color:var(--slate); margin-top:0">
+            From a total + frequency, the installments fall out:
+          </p>
+          <ul class="feat">
+            <li><code>InstallmentAmount = Total ÷ NumberOfInstallments</code> — the final row absorbs any rounding remainder</li>
+            <li><code>DueDate = StartDate + freqDays × (i − 1)</code> — Monthly = 30, Quarterly = 90, Annual = 365</li>
+            <li><code>fulfilledAmount = Σ PaidAmount</code> on rows marked <b>Paid</b></li>
+            <li><code>outstandingBalance = Total − fulfilledAmount</code> · <code>fulfillment% = fulfilled ÷ Total</code> (capped 100)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="note">
+        <b>Why it matters.</b> Big gifts rarely arrive in one cheque — a $1,200 supporter pays $100 a month. Without a pledge the team has no way to know whether that donor is on schedule, behind, or has quietly stopped. The pledge screen makes the promise <i>visible and chase-able</i>: it knows exactly what's due, what's late, and how much is still outstanding across every multi-payment commitment.
+      </div>
+    </section>
+
+    <!-- =================== THE SCREEN AT A GLANCE =================== -->
+    <section id="screens">
+      <h2><span class="num">▦</span> The Screen at a Glance</h2>
+      <p class="lead">One menu (<code>crm/donation/pledge</code>), one grid with four working surfaces. URL modes drive everything: no params = grid, <code>?mode=new|edit</code> = form, <code>?mode=read&amp;id=</code> = drawer.</p>
+
+      <div class="map">
+        <div class="m">
+          <div class="ic">📊</div>
+          <h4>4 KPIs</h4>
+          <p>Active · Fulfilled YTD · Outstanding balance · Overdue payments — refresh after every mutation.</p>
+          <span class="sn">Above the grid</span>
+        </div>
+        <div class="m">
+          <div class="ic">📋</div>
+          <h4>Pledge Grid</h4>
+          <p>11 columns — fulfilment bar, balance, next-due, status — with 5 chips + advanced filters.</p>
+          <span class="sn">List · PLEDGE</span>
+        </div>
+        <div class="m">
+          <div class="ic">🗂️</div>
+          <h4>Pledge Drawer</h4>
+          <p>720px slide-in — summary, schedule timeline, payment history, inline cancel.</p>
+          <span class="sn">?mode=read&amp;id=</span>
+        </div>
+        <div class="m">
+          <div class="ic">📝</div>
+          <h4>Create / Edit Form</h4>
+          <p>4 cards — Donor &amp; Purpose, Pledge Details, Payment Schedule, Notes — with live preview.</p>
+          <span class="sn">?mode=new | edit</span>
+        </div>
+      </div>
+
+      <div class="note">
+        <b>How they hand off.</b> A grid row's <b>"Record Payment"</b> action deep-links to the donation form (<code>globaldonation?mode=new&amp;pledgePaymentId={id}</code>) with the donor and purpose pre-filled; saving the donation links it back and flips that installment <b>Paid</b>. A full-row click opens the <b>drawer</b> (<code>?mode=read&amp;id=</code>) where the schedule timeline and payment history live. The <b>overdue alert banner</b> sits under the KPIs and lists the soonest-late installments. The 4 KPIs refresh after any create / payment / cancel.
+      </div>
+    </section>
+
+    <!-- =================== ① START → END FLOW =================== -->
+    <section id="flow">
+      <h2><span class="num">1</span> The Flow — Start to End</h2>
+      <p class="lead">The whole pledge journey, in order. The donor commits a total, the schedule is built, installments come due, staff record each payment against the donation flow, and the pledge climbs toward fulfilled — or gets flagged behind / overdue along the way.</p>
+
+      <ol class="steps">
+        <li><b>Donor commits a total.</b> A supporter promises, say, <b>$1,200 over the year</b>. An admin opens the Pledge form, picks the donor, purpose (and optional campaign), enters the total, currency and start date.</li>
+        <li><b>Pick a frequency.</b> Choose <b>Monthly</b> (or Quarterly / Semi-Annual / Annual / Custom). Touch any one of EndDate, installment amount, or count and the others auto-derive — here <code>$1,200 ÷ 12 = $100/mo</code>. A live preview shows the installment dots before saving.</li>
+        <li><b>Schedule auto-generated.</b> <span class="b scheduled">Scheduled</span> On save, <b>12 <code>PledgePayment</code> rows</b> are created — installment 1..12, due monthly, $100 each (the last row absorbs any rounding). <code>PledgeCode</code> like <code>PLG-0007</code> is assigned.</li>
+        <li><b>An installment comes due.</b> <span class="b upcoming">Upcoming</span> As each due date arrives the row is <b>Upcoming</b>; if its date passes unpaid, a lazy flip on read marks it <span class="b overdue">Overdue</span> and it shows in the overdue banner.</li>
+        <li><b>Record the payment.</b> <span class="b paid">Paid</span> "Record Payment" deep-links to the donation form, donor &amp; purpose pre-filled. Saving creates a <code>GlobalDonation</code> that links back — stamping <code>PaidDate</code>, <code>PaidAmount</code> and flipping the installment <b>Paid</b>.</li>
+        <li><b>Pledge tracks its health.</b> <span class="b ontrack">On Track</span> <code>fulfilledAmount</code> climbs with each paid row. The pledge status is <b>computed on every read</b>: paying on schedule → On Track; falling behind the expected-by-today line → <span class="b behind">Behind</span>; a late row → <span class="b overdue">Overdue</span>.</li>
+        <li><b>Fulfilled — or cancelled.</b> <span class="b fulfilled">Fulfilled</span> When <code>fulfilledAmount ≥ Total</code> the pledge is Fulfilled (terminal). A pledge can instead be <span class="b cancelled">Cancelled</span> with a reason — paid history is kept, remaining unpaid rows are dropped, no further edits allowed.</li>
+      </ol>
+
+      <div class="note"><b>In plain words:</b> the form turns one promise into a row of dated installments; from then on the team's job is to record each payment as it lands and watch the fulfilment bar fill. The only money that actually moves is the donor's own payment at each "Record" — everything else is scheduling, chasing and roll-up so nothing slips through unnoticed.</div>
+    </section>
+
+    <!-- =================== ⚙ INTERACTIVE WALK-THROUGH =================== -->
+    <section id="walk">
+      <h2><span class="num">⚙</span> Lifecycle Walk-through — Step by Step</h2>
+      <p class="lead">The full pledge journey as movable steps. Flip the switch to <b>Auto</b> and it walks itself; leave it on <b>Manual</b> and you drive — click any node, or step <b>◀ Back / Forward ▶</b> to slide the coin along the board.</p>
+
+      <div class="stage-wrap setup-wrap">
+        <div class="setup-bar">
+          <div class="switch-box">
+            <span>Manual</span>
+            <label class="switch"><input type="checkbox" id="autoToggle"><span class="slider"></span></label>
+            <span>Auto</span>
+          </div>
+          <div class="nav-btns">
+            <button id="prevBtn">◀ Back</button>
+            <button id="nextBtn">Forward ▶</button>
+            <button id="resetBtn">↻ Reset</button>
+          </div>
+        </div>
+
+        <div class="track setup-track" id="setupTrack">
+          <div class="avatar setup-coin" id="setupCoin"><div class="face">💰</div><div class="name">you are here</div></div>
+          <div class="rail"><div class="rail-fill setup-fill" id="setupFill"></div></div>
+        </div>
+
+        <div class="setup-caption" id="setupCaption"></div>
+
+        <div class="legend">
+          <span>🟢 <b>Auto</b> = the coin advances on its own every ~2s and loops</span>
+          <span>🖐 <b>Manual</b> = click a node, or use ◀ / ▶ to move one step</span>
+          <span>💰 <b>The coin</b> = where this pledge is in its lifecycle right now</span>
+        </div>
+      </div>
+      <p style="text-align:center; color:var(--slate); font-size:13px;">↑ Same shape as the live flow below — but here <b>you</b> drive the piece, from committing the total all the way to the fulfilled pledge.</p>
+    </section>
+
+    <!-- =================== ② LIVE FLOW + EXAMPLE =================== -->
+    <section id="diagram">
+      <h2><span class="num">2</span> Live Flow — Watch One Pledge</h2>
+      <p class="lead">Follow <b>Margaret Chen's $1,200 pledge</b>, paid <b>$100 a month over a year</b>. Watch the admin create it, the 12-installment schedule build itself, the first installment come due, staff record the payment, the bar climb on track — and the pledge reach <b>$1,200 fulfilled</b>. The bubbles are the real touchpoints.</p>
+
+      <div class="stage-wrap">
+        <h3>💰 Margaret Chen's $1,200 — from promise to fulfilled</h3>
+
+        <div class="track">
+          <div class="avatar"><div class="face">💰</div><div class="name">Pledge</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">PLEDGE</div><div class="dt">$1,200 committed</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">SCHEDULE</div><div class="dt">12 × $100</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">DUE</div><div class="dt">Jan 15</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">RECORD</div><div class="dt">payment → donation</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">ON TRACK</div><div class="dt">4/12 · $400</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">FINAL PAY</div><div class="dt">Dec 15</div></div>
+          <div class="node"><div class="dot"></div><div class="lbl">FULFILLED</div><div class="dt">$1,200 collected</div></div>
+          <div class="rail"><div class="rail-fill"></div></div>
+        </div>
+
+        <div class="comms">
+          <div class="ping ping1">📝 Pledge created — Margaret commits $1,200, Monthly</div>
+          <div class="ping ping2">🗓 Schedule built — 12 installments of $100, Jan → Dec</div>
+          <div class="ping ping3">🔔 Installment 1 due — Jan 15, $100 (Upcoming)</div>
+          <div class="ping ping4">💳 Payment recorded — $100 GlobalDonation linked → Paid</div>
+          <div class="ping ping5">📊 On Track — 4 of 12 paid, $400 fulfilled (33%)</div>
+          <div class="ping ping6">💰 Final installment paid — Dec 15</div>
+          <div class="ping ping7">✅ Fulfilled — $1,200 collected, pledge complete</div>
+        </div>
+
+        <div class="legend">
+          <span>💰 <b>Pledge</b> = one Pledge record moving through its life</span>
+          <span>🌊 <b>Nodes</b> = the status / action at each step</span>
+          <span>💬 <b>Bubbles</b> = a schedule build, a due date, a recorded payment at that moment</span>
+        </div>
+      </div>
+      <p style="text-align:center; color:var(--slate); font-size:13px;">↑ The animation loops. Each pause = a real step; each bubble = an installment coming due, a payment recorded, or the bar climbing.</p>
+
+      <h3>The fulfilment hand-off — from pledge to recorded payment</h3>
+      <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor Admin
+    participant P as fund.Pledge
+    participant PP as fund.PledgePayment
+    participant GD as fund.GlobalDonation
+    participant KPI as KPI / status
+    Admin->>P: Create pledge $1,200, Monthly ×12
+    P->>PP: Auto-generate 12 installments ($100, due monthly)
+    Note over PP: Default SCHEDULED → UPCOMING; lazy-flip to OVERDUE on read when DueDate < today
+    Admin->>GD: Record Payment → deep-link, donor &amp; purpose pre-filled
+    GD-->>PP: link → PaidDate, PaidAmount, status PAID
+    PP->>KPI: fulfilledAmount = Σ PAID; status recomputed each read
+    Note over KPI: ≥ Total → FULFILLED · any OVERDUE row → OVERDUE · behind expected line → BEHIND
+      </pre>
+    </section>
+
+    <!-- =================== ③ THE SURFACES IN DETAIL =================== -->
+    <section id="surfaces">
+      <h2><span class="num">3</span> The Surfaces in Detail</h2>
+      <p class="lead">What each surface looks like and does. Four KPIs over a master grid (with chips + advanced filters), a 720px detail drawer, and a 4-card create/edit form.</p>
+
+      <h3>📊 The 4 KPIs — above the grid</h3>
+      <table>
+        <tr><th>KPI</th><th>Computes</th><th>Subtitle</th></tr>
+        <tr><td><b>Active Pledges</b></td><td>Count + <code>SUM(TotalPledgedAmount)</code> of open pledges (On Track / Behind / Overdue)</td><td>"18 · $42,300 pledged"</td></tr>
+        <tr><td><b>Fulfilled This Year</b></td><td><code>SUM</code> fulfilled amount YTD + count of pledges completed this year</td><td>"$28,900 · 11 completed"</td></tr>
+        <tr><td><b>Outstanding Balance</b></td><td><code>SUM(outstandingBalance)</code> across all open pledges</td><td>"$19,400 · across 18 pledges"</td></tr>
+        <tr><td><b>Overdue Payments</b></td><td>Count + <code>SUM(DueAmount)</code> of installments past due &amp; unpaid</td><td>"6 · $1,850 overdue"</td></tr>
+      </table>
+      <p style="color:var(--slate); font-size:13px;">All four come from <code>pledgeSummary</code> (no args, tenant-scoped, <code>cache-and-network</code>) and refresh after every create / record-payment / cancel. Multi-currency sums are in the company default currency — a "(in {currencyCode})" subtitle flags it.</p>
+
+      <h3>📋 The grid — 11 columns</h3>
+      <table>
+        <tr><th>Column</th><th>Shows</th></tr>
+        <tr><td><b>Pledge ID</b></td><td><code>PledgeCode</code> ("PLG-0007"), mono accent → click opens drawer</td></tr>
+        <tr><td><b>Donor</b></td><td>Avatar + name → links to the contact</td></tr>
+        <tr><td><b>Campaign / Purpose</b></td><td>Campaign if set, else the donation purpose</td></tr>
+        <tr><td><b>Total Pledged · Fulfilled · Balance</b></td><td>The total, the paid-so-far (green when complete), the outstanding (red-tinted if overdue)</td></tr>
+        <tr><td><b>Fulfillment</b></td><td>Progress bar + % — coloured by computed pledge status</td></tr>
+        <tr><td><b>Schedule</b></td><td>Derived "$100 /mo" (installment + frequency suffix); em-dash when Cancelled</td></tr>
+        <tr><td><b>Next Due</b></td><td>The next unpaid installment date — red-tinted if &lt; today, "—" if none</td></tr>
+        <tr><td><b>Status</b></td><td>5-variant badge — On Track / Fulfilled / Behind / Overdue / Cancelled</td></tr>
+        <tr><td><b>Actions</b></td><td>View · Record Payment · Remind (placeholder) · Edit · Cancel · Delete — status-aware</td></tr>
+      </table>
+      <p style="color:var(--slate); font-size:13px;"><b>5 filter chips</b> below the KPIs: All · Active (On Track + Behind + Overdue) · Fulfilled · Overdue · Cancelled. A collapsible <b>advanced filter</b> adds Campaign, Purpose, Amount min/max, Fulfilment-% band and Start-date range.</p>
+
+      <h3>🗂️ The drawer — 4 sections</h3>
+      <div class="grid2">
+        <div class="card">
+          <h4 style="margin-top:0; color:var(--emerald-700)">Summary + Schedule timeline</h4>
+          <ul class="feat">
+            <li><b>Pledge summary</b> — 2-column grid: donor, purpose, total, frequency, dates, status</li>
+            <li><b>Schedule timeline</b> — horizontal colour-coded dots (Paid / Upcoming / Scheduled / Overdue) with dates</li>
+            <li><b>Sticky header</b> — code badge + status + action cluster; sticky footer with created-by</li>
+            <li>Opens on <code>?mode=read&amp;id=</code>; close via X / Esc / overlay click preserves filters</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4 style="margin-top:0; color:var(--emerald-700)">Payment history + Cancel</h4>
+          <ul class="feat">
+            <li><b>Payment history table</b> — every installment: #, due date, due amount, paid date/amount, status</li>
+            <li><b>Receipt link</b> — paid rows jump to their <code>GlobalDonation</code> receipt</li>
+            <li><b>Record Payment</b> per due row → donation deep-link</li>
+            <li><b>Cancel form</b> — inline textarea reason (required); hidden once Fulfilled or Cancelled</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>📝 The form — 4 cards</h3>
+      <table>
+        <tr><th>Card</th><th>Fields</th></tr>
+        <tr><td><b>1 · Donor &amp; Purpose</b></td><td>Contact <span class="req">✔</span> · Campaign (optional) · Donation Purpose <span class="req">✔</span></td></tr>
+        <tr><td><b>2 · Pledge Details</b></td><td>Currency <span class="req">✔</span> (default = company) · Total Pledged <span class="req">✔</span> (&gt; 0) · Start Date <span class="req">✔</span> · End Date (auto-derived)</td></tr>
+        <tr><td><b>3 · Payment Schedule</b></td><td>Frequency <span class="req">✔</span> · Installment Amount · Number of Installments · Payment Mode (reminder-only) · live <b>schedule preview</b></td></tr>
+        <tr><td><b>4 · Additional</b></td><td>Notes (max 1000)</td></tr>
+      </table>
+      <p style="color:var(--slate); font-size:13px;">The schedule fields <b>auto-calc with touched-field tracking</b>: touch EndDate → derive count + amount; touch amount → derive count + EndDate; touch count → derive amount + EndDate. <b>Custom</b> frequency turns auto-calc off — you enter count and amounts by hand. Validation enforces <code>|Total − (amount × count)| ≤ $1.00</code>.</p>
+
+      <div class="warn"><b>Service placeholders.</b> Five things have full UI but stubbed back-ends: <b>Send Reminder</b> (single) and <b>Send Bulk Reminders</b> (toast only — needs the notification pipeline), and <b>Export to Excel / CSV / PDF</b>. All use <code>toast.info()</code> (blue), never success, so staff aren't trained to treat a placeholder as done. The cross-screen <b>Record Payment</b> deep-link also depends on the donation form accepting a <code>pledgePaymentId</code> param.</div>
+    </section>
+
+    <!-- =================== ④ ENTITY TABLES =================== -->
+    <section id="data">
+      <h2><span class="num">4</span> Entity Tables — Data Design</h2>
+      <p class="lead">Two new entities under schema <code>fund</code>: <code>Pledges</code> (the parent commitment) and <code>PledgePayments</code> (the auto-generated installments, 1:Many). They lean on existing <code>Contact</code>, <code>Campaign</code>, <code>DonationPurpose</code>, <code>GlobalDonation</code> and <code>MasterData</code> as FK sources.</p>
+
+      <h3>How the tables relate</h3>
+      <pre class="mermaid">
+erDiagram
+    PLEDGE ||--o{ PLEDGE_PAYMENT : "installments"
+    CONTACT ||--o{ PLEDGE : "donor"
+    CAMPAIGN ||--o{ PLEDGE : "optional"
+    DONATION_PURPOSE ||--o{ PLEDGE : "designation"
+    GLOBAL_DONATION ||--o{ PLEDGE_PAYMENT : "fulfils"
+    MASTER_DATA ||--o{ PLEDGE : "frequency / status"
+    PLEDGE {
+        int PledgeId PK
+        string PledgeCode "PLG-0001"
+        int ContactId FK
+        int CampaignId FK "nullable"
+        int DonationPurposeId FK
+        decimal TotalPledgedAmount
+        int FrequencyId FK "PLEDGEFREQUENCY"
+        decimal InstallmentAmount
+        int NumberOfInstallments
+        int PledgeStatusId FK "computed"
+        datetime CancelledAt "nullable"
+    }
+    PLEDGE_PAYMENT {
+        int PledgePaymentId PK
+        int PledgeId FK
+        int InstallmentNumber
+        datetime DueDate
+        decimal DueAmount
+        datetime PaidDate "nullable"
+        decimal PaidAmount "nullable"
+        int GlobalDonationId FK "nullable"
+        int PaymentStatusId FK "PLEDGEPAYMENTSTATUS"
+    }
+      </pre>
+
+      <h3>① <code>fund.Pledges</code> — the commitment (key columns)</h3>
+      <table>
+        <tr><th>Column</th><th>Type</th><th>Req</th><th>Notes</th></tr>
+        <tr><td>PledgeId</td><td>int</td><td>PK</td><td>Primary key</td></tr>
+        <tr><td>PledgeCode</td><td>string(50)</td><td class="req">✔</td><td>Auto-gen <code>PLG-{NNNN}</code> per company; unique (filtered index)</td></tr>
+        <tr><td>ContactId</td><td>int</td><td class="req">✔</td><td>FK → <code>cont.Contacts</code> — the donor</td></tr>
+        <tr><td>CampaignId</td><td>int?</td><td>—</td><td>FK → <code>app.Campaigns</code> — optional (e.g. "Capital Campaign")</td></tr>
+        <tr><td>DonationPurposeId</td><td>int</td><td class="req">✔</td><td>FK → <code>fund.DonationPurposes</code> — designation</td></tr>
+        <tr><td>CurrencyId</td><td>int</td><td class="req">✔</td><td>FK → Currency — pledge currency</td></tr>
+        <tr><td>TotalPledgedAmount</td><td>decimal(18,2)</td><td class="req">✔</td><td>Total commitment; must be &gt; 0</td></tr>
+        <tr><td>StartDate · EndDate</td><td>DateTime · DateTime?</td><td>✔ · —</td><td>First installment due · last (auto-derived if null)</td></tr>
+        <tr><td>FrequencyId</td><td>int</td><td class="req">✔</td><td>FK → MasterData (<code>PLEDGEFREQUENCY</code>)</td></tr>
+        <tr><td>InstallmentAmount · NumberOfInstallments</td><td>decimal(18,2) · int</td><td class="req">✔</td><td>Per-installment amount · count — auto-calc or manual override</td></tr>
+        <tr><td>PaymentModeId</td><td>int?</td><td>—</td><td>FK → PaymentMode — expected method (reminder-only, not enforced)</td></tr>
+        <tr><td>PledgeStatusId</td><td>int</td><td class="req">✔</td><td>FK → MasterData (<code>PLEDGESTATUS</code>) — <b>computed on read</b></td></tr>
+        <tr><td>CancelledAt · CancelledReason</td><td>DateTime? · string(500)</td><td>—</td><td>Set on cancel; reason mandatory when cancelled</td></tr>
+        <tr><td>Notes</td><td>string(1000)</td><td>—</td><td>Free-text admin note</td></tr>
+      </table>
+
+      <h3>② <code>fund.PledgePayments</code> — the installments (key columns)</h3>
+      <table>
+        <tr><th>Column</th><th>Type</th><th>Req</th><th>Notes</th></tr>
+        <tr><td>PledgePaymentId</td><td>int</td><td>PK</td><td>Primary key</td></tr>
+        <tr><td>PledgeId</td><td>int</td><td class="req">✔</td><td>FK → <code>fund.Pledges</code> (CASCADE DELETE) — parent</td></tr>
+        <tr><td>InstallmentNumber</td><td>int</td><td class="req">✔</td><td>1-based sequential (unique with PledgeId)</td></tr>
+        <tr><td>DueDate · DueAmount</td><td>DateTime · decimal(18,2)</td><td class="req">✔</td><td>Scheduled date &amp; amount (final row absorbs remainder)</td></tr>
+        <tr><td>PaidDate · PaidAmount</td><td>DateTime? · decimal(18,2)?</td><td>—</td><td>Stamped when a donation is recorded (may differ from due)</td></tr>
+        <tr><td>GlobalDonationId</td><td>int?</td><td>—</td><td>FK → <code>fund.GlobalDonations</code> — set on Record Payment</td></tr>
+        <tr><td>PaymentStatusId</td><td>int</td><td class="req">✔</td><td>FK → MasterData (<code>PLEDGEPAYMENTSTATUS</code>) — Paid / Upcoming / Scheduled / Overdue</td></tr>
+      </table>
+      <p style="color:var(--slate); font-size:13px;">On <b>Update</b>, paid rows are preserved as history; unpaid rows (Upcoming / Scheduled / Overdue) are dropped and regenerated from the remaining balance — atomically, in a transaction.</p>
+
+      <div class="grid2">
+        <div class="card">
+          <h3 style="margin-top:0">Computed / projected fields</h3>
+          <p style="color:var(--slate); font-size:14px">Derived per pledge on each read — no stored totals to drift.</p>
+          <table>
+            <tr><th>Field</th><th>Formula</th></tr>
+            <tr><td><code>fulfilledAmount</code></td><td>Σ PaidAmount where status = Paid</td></tr>
+            <tr><td><code>outstandingBalance</code></td><td>Total − fulfilled (capped at 0)</td></tr>
+            <tr><td><code>fulfillmentPercent</code></td><td>fulfilled ÷ Total × 100 (capped 100)</td></tr>
+            <tr><td><code>nextDueDate / Amount</code></td><td>MIN due date among Upcoming/Overdue rows</td></tr>
+            <tr><td><code>overdueAmount / Count</code></td><td>Σ / count of Overdue rows</td></tr>
+            <tr><td><code>computedStatusCode</code></td><td>see ⑤ — Cancelled / Fulfilled / Overdue / Behind / On Track</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">FK sources it consumes</h3>
+          <p style="color:var(--slate); font-size:14px">No new donation / contact / campaign tables — it joins to what already exists.</p>
+          <table>
+            <tr><th>FK</th><th>Target · used for</th></tr>
+            <tr><td><code>ContactId</code></td><td><code>cont.Contacts</code> — donor name &amp; profile</td></tr>
+            <tr><td><code>CampaignId / DonationPurposeId</code></td><td><code>app.Campaigns</code> / <code>fund.DonationPurposes</code></td></tr>
+            <tr><td><code>GlobalDonationId</code></td><td><code>fund.GlobalDonations</code> — the actual recorded payment</td></tr>
+            <tr><td><code>FrequencyId / StatusId</code></td><td><code>com.MasterData</code> — frequency, pledge &amp; payment status rows</td></tr>
+            <tr><td><code>CompanyId</code> ×2</td><td><code>app.Companies</code> — tenant scope (HttpContext)</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="note">
+        <b>Where the collected money is counted.</b> There's no separate ledger — the <code>PledgePayment</code> row <i>is</i> the attribution, pointing at the <code>GlobalDonation</code> that fulfils it. The KPIs and the fulfilment bar are pure aggregates over <code>PaidAmount</code> / <code>DueAmount</code> filtered by status:
+        <table class="ex-map">
+          <tr><th>Roll-up</th><th>Query</th></tr>
+          <tr><td>Fulfilled amount</td><td><code>SUM(PaidAmount)</code> where payment status = Paid</td></tr>
+          <tr><td>Outstanding balance</td><td><code>Total − fulfilled</code> per pledge, summed across open pledges</td></tr>
+          <tr><td>Overdue payments</td><td><code>SUM(DueAmount)</code> where payment status = Overdue — money past due</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- =================== ⑤ STATUSES & LOOKUPS =================== -->
+    <section id="status">
+      <h2><span class="num">5</span> Statuses &amp; Lookups</h2>
+      <p class="lead">A pledge carries a <b>computed</b> status (five MasterData rows, typeCode <code>PLEDGESTATUS</code>); each installment carries its own (four rows, <code>PLEDGEPAYMENTSTATUS</code>). The pledge status is re-derived on every read — only <b>Cancelled</b> is persisted.</p>
+
+      <div class="grid2">
+        <div class="card">
+          <h3 style="margin-top:0">Pledge lifecycle (computed)</h3>
+          <table>
+            <tr><th>Status</th><th>Meaning</th></tr>
+            <tr><td><span class="b ontrack">On Track</span></td><td>Default — fulfilling per schedule (no late rows, not behind)</td></tr>
+            <tr><td><span class="b behind">Behind</span></td><td><code>fulfilled &lt; expected-by-today</code> (installment × periods elapsed)</td></tr>
+            <tr><td><span class="b overdue">Overdue</span></td><td>At least one installment is past due &amp; unpaid</td></tr>
+            <tr><td><span class="b fulfilled">Fulfilled</span></td><td><code>fulfilled ≥ Total</code> — terminal</td></tr>
+            <tr><td><span class="b cancelled">Cancelled</span></td><td>Manually cancelled with reason — terminal, persisted</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">Payment status (per installment)</h3>
+          <table>
+            <tr><th>Status</th><th>Meaning</th></tr>
+            <tr><td><span class="b paid">Paid</span></td><td>A donation is linked; PaidDate / PaidAmount stamped</td></tr>
+            <tr><td><span class="b upcoming">Upcoming</span></td><td>Due date is at or near today, not yet paid</td></tr>
+            <tr><td><span class="b scheduled">Scheduled</span></td><td>Default — due date is in the future</td></tr>
+            <tr><td><span class="b overdue">Overdue</span></td><td>Due date passed, still unpaid (lazy-flipped on read)</td></tr>
+          </table>
+          <p style="color:var(--slate); font-size:12.5px; margin-bottom:0">Each <code>GetAll</code> runs an UPDATE flipping past-due Upcoming rows → Overdue before the SELECT.</p>
+        </div>
+      </div>
+
+      <h3>How the pledge status is computed (in order)</h3>
+      <table>
+        <tr><th>Check</th><th>Result</th></tr>
+        <tr><td><code>CancelledAt IS NOT NULL</code></td><td>→ <span class="b cancelled">Cancelled</span> (terminal, persisted)</td></tr>
+        <tr><td><code>fulfilledAmount ≥ TotalPledgedAmount</code></td><td>→ <span class="b fulfilled">Fulfilled</span></td></tr>
+        <tr><td>any installment is <b>Overdue</b></td><td>→ <span class="b overdue">Overdue</span></td></tr>
+        <tr><td><code>fulfilled &lt; InstallmentAmount × floor((today − Start) ÷ freqDays)</code></td><td>→ <span class="b behind">Behind</span></td></tr>
+        <tr><td>otherwise</td><td>→ <span class="b ontrack">On Track</span></td></tr>
+      </table>
+
+      <h3>The schedule math, in detail</h3>
+      <table>
+        <tr><th>Mechanic</th><th>How it works</th></tr>
+        <tr><td><b>InstallmentAmount</b></td><td><code>Total ÷ NumberOfInstallments</code>; the <b>final row absorbs</b> the rounding remainder so installments sum exactly to the total</td></tr>
+        <tr><td><b>DueDate</b></td><td><code>StartDate + freqDays × (i − 1)</code> — Monthly 30 · Quarterly 90 · Semi-Annual 180 · Annual 365</td></tr>
+        <tr><td><b>Installment-sum rule</b></td><td>Validation requires <code>|Total − (amount × count)| ≤ $1.00</code></td></tr>
+        <tr><td><b>Overpayment</b></td><td>If PaidAmount &gt; DueAmount, <code>fulfillment%</code> caps at 100 and <code>outstandingBalance</code> at 0</td></tr>
+        <tr><td><b>Cancel</b></td><td>Keeps paid history, drops unpaid rows, blocks further edits — cannot cancel when Fulfilled or already Cancelled</td></tr>
+      </table>
+
+      <h3>Lookups &amp; menu</h3>
+      <table>
+        <tr><th>Lookup</th><th>Values</th></tr>
+        <tr><td>Frequency (MasterData <code>PLEDGEFREQUENCY</code>)</td><td>MONTHLY (30) · QUARTERLY (90) · SEMIANNUAL (180) · ANNUAL (365) · CUSTOM (0) <span style="color:var(--slate)">(dataValue = day count)</span></td></tr>
+        <tr><td>Pledge status (<code>PLEDGESTATUS</code>)</td><td>ONTRACK · FULFILLED · OVERDUE · BEHIND · CANCELLED <span style="color:var(--slate)">(UPPERCASE; ONTRACK default)</span></td></tr>
+        <tr><td>Payment status (<code>PLEDGEPAYMENTSTATUS</code>)</td><td>PAID · UPCOMING · SCHEDULED · OVERDUE <span style="color:var(--slate)">(SCHEDULED default)</span></td></tr>
+        <tr><td>Filter chips</td><td>All · Active · Fulfilled · Overdue · Cancelled</td></tr>
+        <tr><td>Menu</td><td><code>PLEDGE</code> under <code>CRM_DONATION</code> → <code>crm/donation/pledge</code> (OrderBy 5)</td></tr>
+      </table>
+
+      <div class="warn"><b>Status is FK MasterData, not a string enum.</b> The pledge &amp; payment statuses are real <code>MasterData</code> FKs, seeded UPPERCASE (ONTRACK, PAID, …). Code that compares against PascalCase ("OnTrack", "Paid") silently misses — match on the <b>code</b> (or the resolved name), the same trap noted across the case-management and matching-gift screens. The frequency's <code>dataValue</code> is the <b>day count</b> ("30", "90"), used both for schedule math and the FE suffix map ("/mo", "/qtr").</div>
+    </section>
+
+    <!-- =================== ⑥ WORKED EXAMPLE =================== -->
+    <section id="example">
+      <h2><span class="num">6</span> Worked Example — Two Real Pledges</h2>
+      <p class="lead">To make the model concrete: one pledge paid cleanly on schedule, and a second that slips behind — showing the off-path statuses.</p>
+
+      <div class="ex-hero">
+        <h3>💰 Margaret Chen's $1,200 — $100/mo, paid on track</h3>
+        <p>One <code>fund.Pledges</code> row (<code>PLG-0007</code>, General Fund, Monthly) auto-builds <b>12 <code>PledgePayment</code> rows</b> of $100 due the 15th. Each month staff record a payment that links a $100 <code>GlobalDonation</code>; the bar climbs 8% → … → 100%. After installment 12 (Dec 15) the pledge is <b>Fulfilled — $1,200 collected</b>.</p>
+        <div class="tags">
+          <span>📝 Total $1,200</span>
+          <span>🗓 12 × $100 /mo</span>
+          <span>📊 On Track</span>
+          <span>✅ Fulfilled Dec 15</span>
+        </div>
+      </div>
+
+      <h3>The pledge, stage by stage</h3>
+      <div class="card">
+        <div class="ex-slot">
+          <div class="ex-time">Created · Jan 2</div>
+          <div class="ex-body">
+            <h4><span class="ex-num">1</span> Schedule generated <span class="b scheduled" style="font-size:10px">Scheduled</span></h4>
+            <div class="pbar"><span style="width:2%"></span></div>
+            <div class="ex-pills"><span class="ex-pill">12 installments built</span><span class="ex-pill">$100 each, due the 15th</span><span class="ex-pill">PLG-0007 assigned</span></div>
+          </div>
+        </div>
+        <div class="ex-slot">
+          <div class="ex-time">Installment 1 · Jan 15</div>
+          <div class="ex-body">
+            <h4><span class="ex-num">2</span> First payment recorded <span class="b paid" style="font-size:10px">Paid</span></h4>
+            <div class="pbar"><span style="width:8%"></span></div>
+            <div class="ex-pills"><span class="ex-pill">$100 GlobalDonation linked</span><span class="ex-pill">fulfilled $100 (8%)</span></div>
+          </div>
+        </div>
+        <div class="ex-slot">
+          <div class="ex-time">Installments 2–4 · Apr 15</div>
+          <div class="ex-body">
+            <h4><span class="ex-num">3</span> On schedule <span class="b ontrack" style="font-size:10px">On Track</span></h4>
+            <div class="pbar"><span style="width:33%"></span></div>
+            <div class="ex-pills"><span class="ex-pill">4 of 12 paid</span><span class="ex-pill">$400 fulfilled · $800 balance</span></div>
+          </div>
+        </div>
+        <div class="ex-slot">
+          <div class="ex-time">Installment 12 · Dec 15</div>
+          <div class="ex-body">
+            <h4><span class="ex-num">4</span> Final payment <span class="b fulfilled" style="font-size:10px">Fulfilled</span></h4>
+            <div class="pbar met"><span style="width:100%"></span></div>
+            <div class="ex-pills"><span class="ex-pill">$1,200 fulfilled · $0 balance</span><span class="ex-pill">status → Fulfilled (terminal)</span></div>
+          </div>
+        </div>
+      </div>
+
+      <h3>A pledge that slips &amp; the lookups behind it</h3>
+      <div class="grid2">
+        <div class="card">
+          <h4 style="margin-top:0; color:var(--emerald-700)">When a payment is missed <span style="color:var(--slate); font-weight:400; font-size:12px">(Behind → Overdue)</span></h4>
+          <div class="ex-pills" style="flex-direction:column; align-items:stretch">
+            <span class="ex-pill" style="text-align:left">$2,400 pledge, $200/mo — donor pays Jan &amp; Feb, then stops</span>
+            <span class="ex-pill" style="text-align:left">By April: fulfilled $400 &lt; expected $800 → <b style="color:var(--behind)">Behind</b></span>
+            <span class="ex-pill" style="text-align:left">March installment past due &amp; unpaid → row flips <b style="color:var(--overdue)">Overdue</b></span>
+            <span class="ex-pill" style="text-align:left">Pledge shows <b style="color:var(--overdue)">Overdue</b>, appears in the alert banner + KPI</span>
+          </div>
+        </div>
+        <div class="card">
+          <h4 style="margin-top:0; color:var(--emerald-700)">Frequency lookup <span style="color:var(--slate); font-weight:400; font-size:12px">(PLEDGEFREQUENCY)</span></h4>
+          <div class="ex-pills" style="flex-direction:column; align-items:stretch">
+            <span class="ex-pill" style="text-align:left">Monthly — dataValue 30 · suffix "/mo"</span>
+            <span class="ex-pill" style="text-align:left">Quarterly — dataValue 90 · suffix "/qtr"</span>
+            <span class="ex-pill" style="text-align:left">Semi-Annual — dataValue 180 · suffix "/6mo"</span>
+            <span class="ex-pill" style="text-align:left">Annual — dataValue 365 · suffix "/yr"</span>
+            <span class="ex-pill" style="text-align:left">Custom — dataValue 0 · no auto-calc, manual entry</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <b>How this maps to the data model.</b> One parent commitment, auto-generated installments, each fulfilled by a recorded donation.
+        <table class="ex-map">
+          <tr><th>In this example</th><th>Where it lives in the module</th></tr>
+          <tr><td>Margaret's $1,200 promise</td><td>One <code>fund.Pledges</code> row — created on the <b>Form</b></td></tr>
+          <tr><td>The 12 dated $100 installments</td><td><code>fund.PledgePayments</code> rows — auto-generated on save</td></tr>
+          <tr><td>Each month's actual $100 payment</td><td>An existing <code>fund.GlobalDonations</code> row — referenced, not duplicated</td></tr>
+          <tr><td>"$400 fulfilled · 33%" bar</td><td>Computed <code>fulfilledAmount</code> / <code>fulfillmentPercent</code> — aggregates, no stored totals</td></tr>
+          <tr><td>On Track / Behind / Overdue / Fulfilled</td><td><code>computedStatusCode</code> — re-derived on every read</td></tr>
+          <tr><td>"6 overdue · $1,850" KPI</td><td>Aggregate over <code>DueAmount</code> where payment status = Overdue</td></tr>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  mermaid.initialize({ startOnLoad:true, theme:'base', securityLevel:'loose',
+    themeVariables:{ primaryColor:'#ecfdf5', primaryBorderColor:'#059669', primaryTextColor:'#0f172a',
+      lineColor:'#059669', fontFamily:'-apple-system,Segoe UI,Roboto,sans-serif' } });
+</script>
+
+<!-- ===== interactive lifecycle walk-through (auto-play / manual stepper) ===== -->
+<script>
+(function(){
+  var STEPS=[
+    {lbl:'CREATE', dt:'the form', title:'Create the pledge', badge:null,
+     text:'On the form, enter the donor, purpose, total (<b>$1,200</b>), currency and start date — the promise the donor has made.'},
+    {lbl:'SCHEDULE', dt:'12 × $100', title:'Schedule auto-generated', badge:['Scheduled','scheduled'],
+     text:'Pick <b>Monthly</b> and the rest derives — <code>$1,200 ÷ 12 = $100/mo</code>. On save, 12 <code>PledgePayment</code> rows are built, due monthly; <code>PLG-0007</code> is assigned.'},
+    {lbl:'DUE', dt:'Jan 15', title:'An installment comes due', badge:['Upcoming','upcoming'],
+     text:'Installment 1 becomes <b>Upcoming</b> on its due date. If the date passes unpaid, a lazy flip on read marks it <b>Overdue</b> and it shows in the alert banner.'},
+    {lbl:'RECORD', dt:'→ donation', title:'Record the payment', badge:['Paid','paid'],
+     text:'"Record Payment" deep-links to the donation form, donor &amp; purpose pre-filled. Saving creates a <code>GlobalDonation</code> that links back — stamping <code>PaidDate</code>, <code>PaidAmount</code>, status <b>Paid</b>.'},
+    {lbl:'ON TRACK', dt:'4/12 · $400', title:'Pledge on track', badge:['On Track','ontrack'],
+     text:'<code>fulfilledAmount</code> climbs with each paid row. The pledge status is computed on read — paying on schedule → <b>On Track</b>; lagging the expected line → <b>Behind</b>.'},
+    {lbl:'FINAL PAY', dt:'Dec 15', title:'The last installment', badge:['Paid','paid'],
+     text:'The 12th payment lands. <code>fulfilledAmount</code> reaches <b>$1,200</b> — the outstanding balance hits $0 and the fulfilment bar is full.'},
+    {lbl:'FULFILLED', dt:'$1,200', title:'The pledge is fulfilled', badge:['Fulfilled','fulfilled'],
+     text:'<code>fulfilled ≥ Total</code> → <b>Fulfilled</b> (terminal). A pledge could instead be <b>Cancelled</b> with a reason — paid history kept, unpaid rows dropped.'}
+  ];
+  var track=document.getElementById('setupTrack');
+  if(!track) return;
+  var coin=document.getElementById('setupCoin'),
+      fill=document.getElementById('setupFill'),
+      cap=document.getElementById('setupCaption'),
+      auto=document.getElementById('autoToggle'),
+      prev=document.getElementById('prevBtn'),
+      next=document.getElementById('nextBtn'),
+      reset=document.getElementById('resetBtn'),
+      rail=track.querySelector('.rail'),
+      N=STEPS.length, cur=0, timer=null;
+  function pos(i){ return 5 + i*90/(N-1); }
+  STEPS.forEach(function(s,i){
+    var n=document.createElement('div');
+    n.className='node snode';
+    n.style.left=pos(i)+'%';
+    n.innerHTML='<div class="dot"></div><div class="lbl">'+s.lbl+'</div><div class="dt">'+s.dt+'</div>';
+    n.addEventListener('click',function(){ setAuto(false); go(i); });
+    track.insertBefore(n, rail);
+  });
+  function render(){
+    coin.style.left=pos(cur)+'%';
+    fill.style.width=(cur/(N-1)*100)+'%';
+    var nodes=track.querySelectorAll('.snode');
+    nodes.forEach(function(n,i){ n.classList.toggle('on', i===cur); n.classList.toggle('done', i<cur); });
+    var s=STEPS[cur],
+        badge=s.badge ? ' <span class="b '+s.badge[1]+'">'+s.badge[0]+'</span>' : '';
+    cap.innerHTML='<span class="step-i">'+(cur+1)+' / '+N+'</span> <b>'+s.title+'</b>'+badge+' — '+s.text;
+    var manual=!auto.checked;
+    prev.disabled = !manual || cur===0;
+    next.disabled = !manual || cur===N-1;
+  }
+  function go(i){ cur=(i%N+N)%N; render(); }
+  function setAuto(on){
+    auto.checked=on;
+    if(timer){ clearInterval(timer); timer=null; }
+    if(on){ timer=setInterval(function(){ cur=(cur+1)%N; render(); }, 1900); }
+    render();
+  }
+  prev.addEventListener('click',function(){ if(cur>0) go(cur-1); });
+  next.addEventListener('click',function(){ if(cur<N-1) go(cur+1); });
+  reset.addEventListener('click',function(){ setAuto(false); go(0); });
+  auto.addEventListener('change',function(){ setAuto(auto.checked); });
+  render();
+})();
+</script>
+
+<!-- ===== fullscreen modal — zoom + drag, shared by every diagram / flow section ===== -->
+<script>
+(function(){
+  var modal=document.createElement('div');
+  modal.className='fs-modal';
+  modal.innerHTML=
+    '<div class="fs-toolbar">'+
+      '<span class="fs-title"></span>'+
+      '<button class="fs-out" title="Zoom out">−</button>'+
+      '<span class="fs-zoomval">100%</span>'+
+      '<button class="fs-in" title="Zoom in">+</button>'+
+      '<button class="fs-fit" title="Reset zoom &amp; position">↻ Fit</button>'+
+      '<button class="fs-close" title="Close (Esc)">✕ Close</button>'+
+    '</div>'+
+    '<div class="fs-viewport">'+
+      '<div class="fs-canvas"></div>'+
+      '<div class="fs-hint">Scroll to zoom · drag to move · Esc to close</div>'+
+    '</div>';
+  document.body.appendChild(modal);
+
+  var titleEl=modal.querySelector('.fs-title'),
+      zoomVal=modal.querySelector('.fs-zoomval'),
+      viewport=modal.querySelector('.fs-viewport'),
+      canvas=modal.querySelector('.fs-canvas'),
+      scale=1, tx=0, ty=0, placeholder=null, hostEl=null;
+
+  function apply(){
+    canvas.style.transform='translate('+tx+'px,'+ty+'px) scale('+scale+')';
+    zoomVal.textContent=Math.round(scale*100)+'%';
+  }
+  function reset(){ scale=1; tx=0; ty=0; apply(); }
+  function zoom(d){ scale=Math.min(5, Math.max(0.3, scale+d)); apply(); }
+
+  function open(el, title){
+    hostEl=el;
+    placeholder=document.createComment('fs-slot');
+    el.parentNode.insertBefore(placeholder, el);
+    canvas.appendChild(el);
+    titleEl.textContent=title||'Diagram';
+    modal.classList.add('open');
+    reset();
+  }
+  function close(){
+    if(placeholder && hostEl){
+      placeholder.parentNode.insertBefore(hostEl, placeholder);
+      placeholder.parentNode.removeChild(placeholder);
+    }
+    placeholder=null; hostEl=null;
+    modal.classList.remove('open');
+  }
+
+  modal.querySelector('.fs-in').addEventListener('click',function(){ zoom(0.2); });
+  modal.querySelector('.fs-out').addEventListener('click',function(){ zoom(-0.2); });
+  modal.querySelector('.fs-fit').addEventListener('click',reset);
+  modal.querySelector('.fs-close').addEventListener('click',close);
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape' && modal.classList.contains('open')) close(); });
+
+  viewport.addEventListener('wheel',function(e){ e.preventDefault(); zoom(e.deltaY<0?0.12:-0.12); },{passive:false});
+
+  var dragging=false, sx=0, sy=0;
+  viewport.addEventListener('mousedown',function(e){
+    if(e.target.closest('.snode')||e.target.closest('button')||e.target.closest('.switch')) return;
+    dragging=true; sx=e.clientX-tx; sy=e.clientY-ty; viewport.classList.add('grabbing');
+  });
+  window.addEventListener('mousemove',function(e){ if(!dragging) return; tx=e.clientX-sx; ty=e.clientY-ty; apply(); });
+  window.addEventListener('mouseup',function(){ dragging=false; viewport.classList.remove('grabbing'); });
+
+  function titleFor(el){
+    if(el.classList.contains('setup-wrap')) return '⚙ Lifecycle Walk-through';
+    if(el.classList.contains('stage-wrap')) return '💰 Live Flow — Margaret Chen $1,200 pledge';
+    if(el.classList.contains('mermaid')){
+      var t=(el.textContent||'').trim();
+      if(t.indexOf('sequenceDiagram')===0) return '💬 Fulfilment hand-off sequence';
+      if(t.indexOf('erDiagram')===0) return '🗂 Entity relationships';
+    }
+    return 'Diagram';
+  }
+
+  function attach(){
+    var hosts=document.querySelectorAll('.stage-wrap, .mermaid');
+    for(var i=0;i<hosts.length;i++){
+      (function(el){
+        if(el.classList.contains('fs-host')) return;
+        el.classList.add('fs-host');
+        var btn=document.createElement('button');
+        btn.className='fs-btn'; btn.type='button'; btn.title='Open full screen'; btn.innerHTML='⛶';
+        btn.addEventListener('click',function(ev){ ev.stopPropagation(); open(el, titleFor(el)); });
+        el.appendChild(btn);
+      })(hosts[i]);
+    }
+  }
+  if(document.readyState==='complete') attach();
+  else window.addEventListener('load',attach);
+})();
+</script>
+</body>
+</html>

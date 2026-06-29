@@ -1445,3 +1445,20 @@ Full UI must be built (setup tabs, public render tree, donation flow up to gatew
   3. `pnpm dev` and visit `/{lang}/setting/publicpages/crowdfundingpage` (admin) + `/{lang}/crowdfund/build-a-school-kenya` (public).
   4. Exercise: Quick-Create → editor 6 tabs → Save Draft → Publish (validate-for-publish modal on missing fields) → public route renders → donate flow up to SERVICE_PLACEHOLDER gateway boundary → thank-you state with `milestoneCrossed` if threshold crossed.
   - All 7 SERVICE_PLACEHOLDERs from §⑫ require UI built fully (Payment Gateway / Receipt Email / WhatsApp Alert / reCAPTCHA / Image Upload / Multi-currency FX / Generated OG Image).
+
+---
+
+## ⑭ SOURCE-2 FUNDING INTEGRATION & SETTINGS→CRM RELOCATION (planned 2026-06-29 — design only, do NOT build this pass)
+
+**Source-2 context:** "Fundraising Campaigns" is one of the two MAIN Case-Management funding sources (with Grant). Menu reorg applied 2026-06-29 in `Pss2.0_Global_Menus_List.sql`: parent renamed **"P2P Fundraising" → "Fundraising Campaigns"** (code `CRM_P2PFUNDRAISING` unchanged), CRM order 8; children = Campaigns · Campaign Pages · P2P Fundraisers · Crowdfunding · **Crowdfunding Page (THIS screen)**.
+
+**How Source-2 money funds a program (Option-A, locked):** crowdfund → linked **DonationPurpose** (already on this screen — Tab-1 field "Linked Donation Purpose" = `CrowdFund.DonationPurposeId`) → that purpose is added as a **ProgramFundingSource** (`DonationPurposeId`) on a Case-Mgmt Program → public donations roll up to the program's **Collected**. No new funding field needed; the linked purpose IS the program bridge.
+
+**⚠ G9 gap (design-only — do NOT build yet):** `fund.GlobalDonations` has no `DonationPurposeId` and `case.ProgramFundingTransaction` (the Collected ledger) has no `GlobalDonationId` — money raised here does NOT auto-roll-up into program Collected. (Note: this screen's donate flow already inserts a `fund.CrowdFundDonations` junction per ISSUE-22, so per-crowdfund totals work; the program roll-up is the separate G9 bridge.) Bridge = the §5 fork in memory `project_case_fund_accounting_redesign` (A: seed matched demo rows · B: real reconciliation roll-up). Decide before building.
+
+**THIS SCREEN PHYSICALLY RELOCATES — Settings → CRM (planned, NOT executed this pass):**
+- Admin setup route: `setting/publicpages/crowdfundingpage` → **`crm/p2pfundraising/crowdfundingpage`**. Public anonymous route `(public)/crowdfund/{slug}` is **UNCHANGED**.
+- FE move (when executed): `app/[lang]/setting/publicpages/crowdfundingpage/` → `app/[lang]/crm/p2pfundraising/crowdfundingpage/`; `page-components/setting/publicpages/crowdfundingpage/` → `page-components/crm/p2pfundraising/crowdfundingpage/`; `presentation/pages/setting/publicpages/crowdfundingpage.tsx` → `.../crm/p2pfundraising/crowdfundingpage.tsx`; fix every internal import path.
+- Update menu seed `MenuUrl` `setting/publicpages/crowdfundingpage` → `crm/p2pfundraising/crowdfundingpage` (currently kept as `setting/...` in the seed pending this move; menu parent already on `CRM_P2PFUNDRAISING`).
+- **Inbound deep-links to update:** `crowdfunding.md` #16 "Edit Full Setup" (drawer + per-card Edit, ~5 refs) currently targets `setting/publicpages/crowdfundingpage?id={id}` → change to `crm/p2pfundraising/crowdfundingpage?id={id}`. (Reconcile: #16's prompt was written assuming this setup screen was a future 404 stub — it is in fact COMPLETED #173, so the deep-link will resolve once the route moves.)
+- **Approval config update:** ParentMenu `SET_PUBLICPAGES` → `CRM_P2PFUNDRAISING`; ModuleCode `SETTING` → `CRM`; MenuUrl `setting/publicpages/crowdfundingpage` → `crm/p2pfundraising/crowdfundingpage`.

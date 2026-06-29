@@ -1022,4 +1022,20 @@ The drawer (Sheet) is an *addition* to the mockup — the mockup doesn't show a 
 
 ---
 
+## ⑭ SOURCE-2 FUNDING INTEGRATION & SETTINGS→CRM RELOCATION (planned 2026-06-29 — design only, do NOT build this pass)
+
+**Source-2 context:** "Fundraising Campaigns" is one of the two MAIN Case-Management funding sources (with Grant). Menu reorg applied 2026-06-29: parent renamed **"P2P Fundraising" → "Fundraising Campaigns"** (code `CRM_P2PFUNDRAISING` unchanged), CRM order 8; **THIS screen = "Campaigns", order 1**; siblings = Campaign Pages · P2P Fundraisers · Crowdfunding · Crowdfunding Page. (Matching Gifts moved out to Donation/Source-3.)
+
+**How Source-2 money funds a program (Option-A, locked):** this campaign → linked **DonationPurpose** (via `Campaign.DonationPurposes`, set on #170 setup) → that purpose added as a **ProgramFundingSource** on a Case-Mgmt Program → donations roll up to program **Collected**.
+- **New UX work (this screen):** surface the program link — in the detail drawer show "Funds Program: {programName}" (resolved from the linked DonationPurpose → ProgramFundingSource) and, once the G9 bridge exists, a "Raised toward program" figure. Read-only here; the link is configured on Program Fund Allocation, not on this grid.
+
+**⚠ G9 gap (design-only — do NOT build yet):** `fund.GlobalDonations` has no `DonationPurposeId` and `case.ProgramFundingTransaction` has no `GlobalDonationId` — raised money does NOT auto-roll-up into program Collected. Bridge = §5 fork in memory `project_case_fund_accounting_redesign`.
+
+**Settings→CRM relocation impact (the target screen #170 relocates; THIS screen only updates its deep-links — planned, NOT executed this pass):**
+- #170 P2PCampaignPage admin route moves `setting/publicpages/p2pcampaignpage` → `crm/p2pfundraising/p2pcampaignpage`.
+- **Update every deep-link in this prompt + its built FE** that targets `setting/publicpages/p2pcampaignpage` → `crm/p2pfundraising/p2pcampaignpage` (header "+ Create P2P Campaign" `?mode=new`; drawer "Edit Campaign Setup" `?id={id}`; per-row Edit action; communication-row Edit `?id={id}&tab=communication`). ~10 occurrences (prompt lines ~21/53/74/106/332/477/480/515/520/801 plus the FE components they describe).
+- This screen's own route `crm/p2pfundraising/p2pcampaign` does NOT change (already CRM).
+
+---
+
 ## End of Prompt

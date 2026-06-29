@@ -773,12 +773,12 @@
           </div>
         </div>
 
-        <div class="tl-item prog">
-          <div class="tl-marker">●</div>
+        <div class="tl-item done">
+          <div class="tl-marker">✓</div>
           <div class="tl-card">
-            <div class="tl-top"><span class="tl-idx">01</span><span class="tl-name">📅 Events &amp; Ticketing</span><span class="b prog">Internal ✓ · Mgmt Mon 15 Jun</span></div>
-            <div class="tl-dates"><div class="d"><b>Internal demo</b><span class="dn">✓ Fri 12 Jun 2026</span></div><div class="d"><b>Management demo</b><span class="mg">Mon 15 Jun 2026</span></div></div>
-            <div style="margin-top:9px; font-size:12.5px; color:var(--slate);">📝 Internal demo done — 9 follow-up items captured in <a href="#notes" style="color:var(--rose-700); font-weight:700">⑤ Internal Demo Notes</a>.</div>
+            <div class="tl-top"><span class="tl-idx">✓</span><span class="tl-name">📅 Events &amp; Ticketing</span><span class="b done">Demo completed</span></div>
+            <div class="tl-dates"><div class="d"><b>Internal demo</b><span class="dn">✓ Fri 12 Jun 2026</span></div><div class="d"><b>Management demo</b><span class="dn">✓ Mon 15 Jun 2026</span></div></div>
+            <div style="margin-top:9px; font-size:12.5px; color:var(--slate);">📝 Internal demo done — 9 follow-up items captured in <a href="#notes" style="color:var(--rose-700); font-weight:700">⑤ Internal Demo Notes</a>. Management-demo meeting notes to be added.</div>
           </div>
         </div>
 
@@ -806,11 +806,12 @@
           </div>
         </div>
 
-        <div class="tl-item todo">
-          <div class="tl-marker">✓</div>
+        <div class="tl-item prog">
+          <div class="tl-marker">●</div>
           <div class="tl-card">
-            <div class="tl-top"><span class="tl-idx">05</span><span class="tl-name">🧑‍⚕️ Case Management</span><span class="b todo">Scheduled</span></div>
-            <div class="tl-dates"><div class="d"><b>Internal demo</b><span class="in">Fri 10 Jul 2026</span></div><div class="d"><b>Management demo</b><span class="mg">Mon 13 Jul 2026</span></div></div>
+            <div class="tl-top"><span class="tl-idx">05</span><span class="tl-name">🧑‍⚕️ Case Management</span><span class="b prog">Internal demos in progress</span></div>
+            <div class="tl-dates"><div class="d"><b>1st internal demo</b><span class="dn">✓ Thu 18 Jun 2026 · 4:30 PM</span></div><div class="d"><b>2nd internal demo</b><span class="dn">✓ Wed 24 Jun 2026 · 10:00 AM</span></div><div class="d"><b>Management demo</b><span class="mg">Mon 13 Jul 2026</span></div></div>
+            <div style="margin-top:9px; font-size:12.5px; color:var(--slate);">📝 1st internal demo — 15 enhancement points captured in <a href="#notes" style="color:var(--rose-700); font-weight:700">⑤ Internal Demo Notes</a>. 2nd internal-demo summary to be added.</div>
           </div>
         </div>
 
@@ -932,6 +933,48 @@
           <li><b>Event hosting &amp; general services tracking</b> — VIP personal support, food &amp; accommodation, welcome members, etc.</li>
           <li><b>Auction commission functionality</b> — commission calculation on auction winnings.</li>
           <li><b>Auction management with on-field bidding integration</b> — bring live on-field (in-room) bidding into auction management.</li>
+        </ol>
+      </div>
+
+      <div class="card">
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:4px;">
+          <span style="font-size:22px">🧑‍⚕️</span>
+          <h3 style="margin:0; text-transform:none; letter-spacing:0; font-size:17px;">Case Management — First Internal Demo Summary</h3>
+          <span class="b done" style="margin-left:auto">✓ 1st internal demo completed</span>
+        </div>
+        <p style="font-size:13px; color:var(--slate); margin:2px 0 6px;">Held <b>Thu 18 Jun 2026 · 4:30 PM</b> · 15 enhancement points raised for the Case Management module, to be taken forward.</p>
+        <ol class="actions">
+          <li><b>Eligibility Criteria</b> — add beneficiary eligibility-criteria verification, so a beneficiary is checked against the program's defined criteria before enrollment.</li>
+          <li><b>Beneficiary–Service Mapping</b> — map services to each beneficiary individually, since not every service in a program applies to every beneficiary.</li>
+          <li><b>Service "Provider"</b> — clarify and finalize what the "Provider" field on a service represents (who actually delivers the service) and how it should be captured.</li>
+          <li><b>Sponsorship Fund Tracking</b> — track all funding sources by funding model (Individual and Grant), capturing the amount, the donor/source, and the date received.</li>
+          <li><b>Fund Utilization Tracking</b> — track each beneficiary's fund utilization and remaining balance against their annual allocated fund amount.</li>
+          <li><b>Program Fund Allocation</b> — track how the program's overall funds are allocated.</li>
+          <li><b>Beneficiary Action Plan</b> — provide a single action-plan screen per beneficiary that tracks both services and milestones together.</li>
+          <li><b>Case Management Flow</b> — ensure the case-management flow renders real, properly linked data (service-tracking modal, milestone tracking, etc.).</li>
+          <li><b>Grant Integration</b> — integrate the Grant module with Case Management.</li>
+          <li><b>Beneficiary Verification Role</b> — create a beneficiary-verification role so staff can log in, see only the beneficiaries allocated to them, and complete verification through a dedicated screen.</li>
+          <li><b>Guardian Communication</b> — integrate the communication service to send messages to the beneficiary's guardian.</li>
+          <li><b>Remove Duplicate Fields</b> — remove fields captured in more than one place (e.g., Program, staff allocation, etc.).</li>
+          <li><b>Verification Document Upload</b> — add a verification-document upload option in the required areas (Beneficiary form and milestones).</li>
+          <li><b>Show Only Enrolled Programs</b> — across all beneficiary areas (view, edit, etc.), display only the programs that beneficiary is actually enrolled in.</li>
+          <li><b>Sponsorship Tab Review</b> — analyze and document the purpose and behavior of the sponsorship tab on the beneficiary view page.</li>
+        </ol>
+      </div>
+
+      <div class="card">
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:4px;">
+          <span style="font-size:22px">🧑‍⚕️</span>
+          <h3 style="margin:0; text-transform:none; letter-spacing:0; font-size:17px;">Case Management — Second Internal Demo</h3>
+          <span class="b done" style="margin-left:auto">✓ 2nd internal demo completed</span>
+        </div>
+        <p style="font-size:13px; color:var(--slate); margin:2px 0 6px;">Held <b>Wed 24 Jun 2026 · 10:00 AM</b> · 5 enhancement points raised for the Case Management module, to be taken forward.</p>
+        <ol class="actions">
+          <li><b>Text fields → FK relations</b> — evaluate converting free-text fields into lookup-backed (FK / master-data) dropdowns for consistency &amp; reporting. Example: a service's <b>Unit</b> — Year · Month · Half-Year · Meal, etc. (e.g. 80,000 per year, 1,000 per meal) — plus <b>Services</b>, <b>Outcomes</b> and similar.</li>
+          <li><b>Grant funding details on Program Fund Allocation</b> — the Program Fund Allocation screen is missing the grant money split; show <b>Available · Pending · Used</b> amounts.</li>
+          <li><b>Fund-allocation approval + cancellation restriction</b> — add an <b>approval process</b> to the Program Fund Allocation screen; once an allocation is <b>approved and the case has used that amount</b>, it can no longer be cancelled for that program.</li>
+          <li><b>Individual (sponsor) fund tracking</b> — <b>Individual</b> funding = a single sponsor (one person, one company, any single entity) funding a beneficiary.</li>
+          <li><b>Grant / charity / provider fund tracking</b> — <b>Grant</b> funding = one company shares/provides the amount; also track charity- and provider-sourced funds.</li>
         </ol>
       </div>
     </section>

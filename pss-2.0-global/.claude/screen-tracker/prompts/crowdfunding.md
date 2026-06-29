@@ -10,7 +10,7 @@ complexity: High
 new_module: NO
 planned_date: 2026-05-12
 completed_date: 2026-05-13
-last_session_date: 2026-05-13
+last_session_date: 2026-06-29
 ---
 
 ## Tasks
@@ -1419,6 +1419,19 @@ The drawer (Sheet) is an *addition* to the mockup — mirror of P2PCampaign #15 
 - **Verification**: `dotnet build Base.API.csproj` → Build succeeded, 0 errors, 1 unrelated NPOI license warning.
 - **Next step**: User runs `dotnet ef migrations remove` then `dotnet ef migrations add Add_CrowdFund_Entities --force` to regenerate Designer + ModelSnapshot for the new junction-table-only shape → `dotnet ef database update` → execute the updated `Crowdfunding-sqlscripts.sql` (now seeds the `Crowd Donation` MasterData row) → smoke-test. Junction is empty at first; aggregations safely return zeros until the public-page surface (#173) starts inserting GlobalDonations + matching `CrowdFundDonations` rows.
 
+### Session 3 — 2026-06-29 — FIX — COMPLETED
+
+- **Scope**: Fix TS2353 type error in the Quick-Edit dialog — `form.reset()`'s second arg is `KeepStateOptions`, which has no `shouldValidate` property (that belongs to `setValue`/`setError`).
+- **Files touched**:
+  - BE: None
+  - FE: `src/presentation/components/page-components/crm/p2pfundraising/crowdfunding/crowdfund-quick-edit-dialog.tsx` (removed the invalid `{ shouldValidate: true }` reset option; replaced with a `void form.trigger()` call after `form.reset()` to preserve the original re-validate-on-prefill intent under `mode: "onChange"`)
+  - DB: None
+- **Deviations from spec**: None.
+- **Known issues opened**: None.
+- **Known issues closed**: None (this was a build-time type error, not a tracked issue).
+- **Verification**: `npx tsc --noEmit` — 0 errors for any `crowdfund*` file (previously TS2353 at line 140).
+- **Next step**: None — COMPLETED.
+
 ### § Known Issues
 
 | ID | Severity | Status | Title |
@@ -1431,3 +1444,17 @@ The drawer (Sheet) is an *addition* to the mockup — mirror of P2PCampaign #15 
 ISSUE-1 (MED multi-currency totalRaised), ISSUE-2 (MED public route — deferred to #173), ISSUE-3 (LOW slug counter cap), ISSUE-4 (MED IsGoalMet badge divergence — handled in goalMetCount), ISSUE-5/6/7/8/9/10/11/12/13/14/15/16/17/18 from prompt §⑫ all remain OPEN / accepted-as-designed per their original status. They are documented in the prompt and not duplicated here.
 
 ---
+
+## ⑭ SOURCE-2 FUNDING INTEGRATION & SETTINGS→CRM RELOCATION (planned 2026-06-29 — design only, do NOT build this pass)
+
+**Source-2 context:** "Fundraising Campaigns" is one of the two MAIN Case-Management funding sources (with Grant). Menu reorg applied 2026-06-29: parent renamed **"P2P Fundraising" → "Fundraising Campaigns"** (code `CRM_P2PFUNDRAISING` unchanged), CRM order 8; **THIS screen = "Crowdfunding", order 4**; siblings = Campaigns · Campaign Pages · P2P Fundraisers · Crowdfunding Page.
+
+**How Source-2 money funds a program (Option-A, locked):** this crowdfund → linked **DonationPurpose** (already on the entity — `CrowdFund.DonationPurposeId`, Quick-Create + Tab-1) → that purpose added as a **ProgramFundingSource** (`DonationPurposeId`) on a Case-Mgmt Program → donations roll up to program **Collected**.
+- **New UX work (this screen):** surface the program link in the detail drawer — "Funds Program: {programName}" resolved from the linked DonationPurpose → ProgramFundingSource; read-only here (configured on Program Fund Allocation).
+
+**⚠ G9 gap (design-only — do NOT build yet):** `fund.GlobalDonations` has no `DonationPurposeId` and `case.ProgramFundingTransaction` has no `GlobalDonationId` — raised money does NOT auto-roll-up into program Collected. (Per-crowdfund totals already work via the `fund.CrowdFundDonations` junction — ISSUE-22; the program roll-up is the separate G9 bridge.) Bridge = §5 fork in memory `project_case_fund_accounting_redesign`.
+
+**Settings→CRM relocation impact (the "Edit Full Setup" target #173 CrowdFundingPage relocates; THIS screen updates its deep-links — planned, NOT executed this pass):**
+- #173 CrowdFundingPage admin route moves `setting/publicpages/crowdfundingpage` → `crm/p2pfundraising/crowdfundingpage`.
+- **Reconcile a stale assumption:** this prompt treats `setting/publicpages/crowdfundingpage` as a FUTURE SCREEN-FOLLOW-UP that 404s (SP-4, ISSUE deep-link). That setup screen is in fact **COMPLETED (#173)** — so once the route moves, "Edit Full Setup" should deep-link to `crm/p2pfundraising/crowdfundingpage?id={id}` and resolve (no more 404 fallback needed). Update all such refs (prompt lines ~68/618/1174/1204/1227/1232/1304) + the built FE drawer/card Edit actions.
+- This screen's own route `crm/p2pfundraising/crowdfunding` does NOT change (already CRM). Public route `(public)/crowdfund/{slug}` does NOT change.

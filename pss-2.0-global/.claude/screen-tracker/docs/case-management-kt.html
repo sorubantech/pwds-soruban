@@ -37,7 +37,7 @@
     color:#fff; border-radius:16px; padding:34px 36px; margin-bottom:34px;
   }
   .hero h1{margin:0 0 8px; font-size:30px; letter-spacing:-.02em;}
-  .hero p{margin:0; opacity:.92; font-size:16px; max-width:640px;}
+  .hero p{margin:0; opacity:.92; font-size:16px; max-width:660px;}
   .hero .tags{margin-top:18px; display:flex; gap:8px; flex-wrap:wrap;}
   .hero .tags span{background:rgba(255,255,255,.16); padding:5px 12px; border-radius:20px; font-size:12.5px; font-weight:600;}
   /* ---------- sections ---------- */
@@ -132,13 +132,62 @@
     19%,100%{opacity:0; transform:translateX(-50%) translateY(-8px)}}
   .legend{display:flex; gap:18px; flex-wrap:wrap; margin-top:18px; font-size:12px; color:#bae6fd;}
   .legend b{color:#fff;}
-  .mermaid{background:#fff; border:1px solid var(--line); border-radius:12px; padding:20px; margin:18px 0; text-align:center;}
+  /* ---------- mermaid (scrollable so wide diagrams never clip) ---------- */
+  .mermaid{background:#fff; border:1px solid var(--line); border-radius:12px; padding:20px; margin:18px 0;
+    text-align:center; overflow:auto;}
+  .mermaid svg{max-width:none; height:auto;}
+  .diagram-hint{text-align:center; color:var(--slate); font-size:12.5px; margin:-8px 0 18px;}
+  /* ---------- data-creation stage map (pure CSS, never overlaps) ---------- */
+  .flowmap{max-width:780px; margin:18px 0;}
+  .fm-stage{display:flex; gap:14px; align-items:flex-start; border:1px solid var(--line); border-radius:12px; padding:14px 18px;}
+  .fm-stage.root{background:var(--teal); border-color:var(--teal-700); color:#fff;}
+  .fm-stage.child{background:#fff; color:var(--ink);}
+  .fm-stage.state{background:#fffbeb; border-color:#fcd34d; color:#7c2d12;}
+  .fm-stage.read{background:#f1f5f9; color:#0f172a;}
+  .fm-badge{flex:none; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:14px; background:var(--teal); color:#fff;}
+  .fm-stage.root .fm-badge{background:rgba(255,255,255,.28); color:#fff;}
+  .fm-body{min-width:0;}
+  .fm-body h4{margin:0 0 4px; font-size:14.5px; color:var(--teal-700);}
+  .fm-stage.root .fm-body h4{color:#fff;}
+  .fm-stage.state .fm-body h4{color:#7c2d12;}
+  .fm-body p{margin:0; font-size:12.5px; line-height:1.55;}
+  .fm-body code{background:rgba(15,23,42,.06); color:inherit;}
+  .fm-stage.root .fm-body code{background:rgba(255,255,255,.2); color:#fff;}
+  .fm-arrow{text-align:center; color:var(--teal); font-size:16px; line-height:1; margin:5px 0; font-weight:700;}
+  /* ---------- fullscreen diagram / flow modal ---------- */
+  .fs-host{position:relative;}
+  .fs-btn{position:absolute; top:10px; right:10px; z-index:8; width:34px; height:34px; cursor:pointer;
+    border-radius:9px; border:1px solid rgba(255,255,255,.4); background:rgba(0,0,0,.42); color:#fff;
+    font-size:15px; line-height:1; display:flex; align-items:center; justify-content:center; transition:.16s;}
+  .fs-btn:hover{background:var(--teal); border-color:var(--teal); transform:scale(1.08);}
+  .mermaid.fs-host .fs-btn{background:rgba(14,116,144,.9); border-color:var(--teal);}
+  .fs-canvas .fs-btn{display:none;}
+  .fs-modal{position:fixed; inset:0; z-index:1000; background:rgba(15,23,42,.86);
+    -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); display:none; flex-direction:column;}
+  .fs-modal.open{display:flex;}
+  .fs-toolbar{display:flex; align-items:center; gap:9px; padding:11px 16px; background:#0c1420; color:#fff; flex:none;}
+  .fs-toolbar .fs-title{font-size:14px; font-weight:700; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .fs-toolbar button{background:rgba(255,255,255,.12); color:#fff; border:1px solid rgba(255,255,255,.26);
+    border-radius:8px; min-width:38px; height:34px; padding:0 11px; cursor:pointer; font-size:15px; font-weight:700; transition:.15s;}
+  .fs-toolbar button:hover{background:var(--teal); border-color:var(--teal);}
+  .fs-toolbar .fs-zoomval{font-size:12.5px; min-width:50px; text-align:center; opacity:.85; font-variant-numeric:tabular-nums;}
+  .fs-toolbar .fs-close{margin-left:6px;}
+  .fs-viewport{flex:1; overflow:hidden; position:relative; cursor:grab; display:flex; align-items:center; justify-content:center;}
+  .fs-viewport.grabbing{cursor:grabbing;}
+  .fs-canvas{transform-origin:center center; will-change:transform;}
+  .fs-canvas>*{margin:0 !important; max-width:none !important; width:auto;}
+  .fs-canvas .stage-wrap{width:min(90vw,1080px);}
+  .fs-canvas .mermaid{background:#fff;}
+  .fs-hint{position:absolute; bottom:14px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,.55);
+    color:#7dd3fc; font-size:12px; font-weight:600; padding:6px 15px; border-radius:20px; pointer-events:none;}
   /* ---------- print ---------- */
   @media print{
     nav.toc{display:none} .wrap{display:block} main{padding:0}
     .stage-wrap{background:#fff; color:#0f172a; border:1px solid var(--line);}
     .stage-wrap h3{color:var(--teal-700)} .node .lbl,.node .dt{color:var(--ink)}
-    .avatar,.ping,.legend{display:none} section{page-break-inside:avoid}
+    .avatar,.ping,.legend,.fs-btn{display:none} section{page-break-inside:avoid}
+    .fs-modal{display:none !important}
     .hero{background:var(--teal-700)!important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
     a{color:var(--ink); text-decoration:none}
   }
@@ -152,10 +201,9 @@
     <h4>Contents</h4>
     <a href="#intro">Overview</a>
     <a href="#flow">① Program → Case Flow</a>
-    <a href="#diagram">② Live Flow + 3 Variants</a>
-    <a href="#tests">③ Test Cases</a>
+    <a href="#datacreate">② Full Data-Creation Map</a>
+    <a href="#diagram">③ Live Flow + 3 Variants</a>
     <a href="#data">④ Entity Tables</a>
-    <a href="#seed">⑤ Seed Data</a>
   </nav>
 
   <!-- =================== MAIN =================== -->
@@ -163,25 +211,25 @@
 
     <div class="hero" id="intro">
       <h1>Case Management — Knowledge Transfer</h1>
-      <p>The full journey from setting up a <b>Program</b>, enrolling a <b>Beneficiary</b>, to opening, working and closing their <b>Case</b> — explained with one running example so a new team member can start testing on day one.</p>
+      <p>The full journey from setting up a <b>Program</b>, funding it, enrolling a <b>Beneficiary</b>, to opening, working and closing their <b>Case</b> — explained with one running example so the team can follow the module end-to-end.</p>
       <div class="tags">
         <span>Module: CRM · Case Management</span>
-        <span>Screen #50 · FLOW</span>
+        <span>Screens: #49 Beneficiary · #50 Case · #51 Program · #177 Fund Allocation</span>
         <span>Program → Beneficiary → Case</span>
-        <span>5-status lifecycle</span>
+        <span>schema <code style="color:#fff;background:rgba(255,255,255,.18)">case</code></span>
       </div>
     </div>
 
     <p class="lead">
       <b>What is it?</b> Case Management is where social workers <b>intake a beneficiary's need</b> (a child needing schooling, a medical issue, housing aid…),
-      <b>track the work</b> done on it (action plans, notes, referrals, documents), and finally <b>close it with an outcome</b>.
+      <b>track the work and the help delivered</b>, and finally <b>close it with an outcome</b>.
       But a case never stands alone — it always sits at the end of a chain:
-      a <b>Program</b> (e.g. an education sponsorship) defines <i>what</i> is offered → a <b>Beneficiary</b> is <b>enrolled</b> into it → a <b>Case</b> is opened to actually <b>deliver and track</b> that help.
+      a <b>Program</b> (e.g. an education sponsorship) defines <i>what</i> is offered and <i>how it is funded</i> → a <b>Beneficiary</b> is <b>enrolled</b> into it → a <b>Case</b> is opened to actually <b>deliver and track</b> that help.
     </p>
     <div class="note">
-      <b>Two layers, one story.</b> The <b>program / beneficiary layer</b> records what was actually <i>delivered</i> — <b>Service Logs</b> (tuition paid, food given) and <b>Milestones</b> (passed a grade). The <b>case layer</b> records the <i>casework</i> around it — the <b>Action Plan</b> (planned steps), <b>History</b> (the diary), <b>Documents</b> (evidence) and <b>Referrals</b> (needs sent outside the program). The link is <b>causal &amp; manual</b>: the worker plans an action → delivers it → records the matching Service Log / Milestone. Every delivery should trace back to a planned action and be backed by a document.
+      <b>Four screens, one story.</b> <b>Program (#51)</b> defines the offering — services, eligibility, outcome targets and the <i>funding model</i>. <b>Fund Allocation (#177)</b> records the actual money — which grants / donation purposes pay, and every payment as it arrives. <b>Beneficiary (#49)</b> is the person and their enrolment. <b>Case (#50)</b> is the workspace where the help is planned, delivered and recorded — its <b>Service Log</b> (tuition paid, food given) and <b>Milestones</b> (passed a grade) now live on the case itself, alongside the Action Plan, Notes, Referrals and Documents.
     </div>
-    <p class="lead">This guide has five parts: <b>① the Program → Case flow</b>, <b>② a live example with three lifecycle variants</b>, <b>③ the test cases</b>, <b>④ the data tables</b>, and <b>⑤ ready-to-run seed data</b>.</p>
+    <p class="lead">This guide has four parts: <b>① the Program → Case flow</b>, <b>② the full data-creation map</b> (one diagram, start to end — use this to walk the team through the demo), <b>③ a live example with three lifecycle variants</b>, and <b>④ the data tables</b>. Every diagram has a <b>⛶ full-screen button</b> — click it to zoom and drag for a closer read.</p>
 
 
     <!-- ============================================================
@@ -192,24 +240,26 @@
       <p class="lead">First the full chain (how a case comes to exist), then the five-status lifecycle the case itself walks.</p>
 
       <h3>From Program to Case — the full chain</h3>
-      <p>This is what a worker produces by walking the screens once, in order. Our running example is the <b>Hope Education Sponsorship</b> program (₹60,000/yr tuition + ₹30,000/yr hostel + ₹8,000/mo food) and a sponsored child, <b>Aisha Khan</b>.</p>
+      <p>This is what the team produces by walking the screens once, in order. Our running example is the <b>Hope Education Sponsorship</b> program (₹60,000/yr tuition + ₹30,000/yr hostel + ₹8,000/mo food) and a sponsored child, <b>Aisha Khan</b>. The detailed table/record map for each step is in <a href="#datacreate"><b>② Full Data-Creation Map</b></a>.</p>
       <ol class="steps">
-        <li><b>Create the Program</b> <span style="color:var(--gray)">(#51)</span> — name, category, funding model, capacity, then its <b>Eligibility Criteria</b>, <b>Services Included</b> (tuition / hostel / food), <b>Outcome Metrics</b> (attendance, pass rate) and <b>assigned staff + lead</b>. This is the menu of what the program offers.</li>
-        <li><b>Register the Beneficiary</b> <span style="color:var(--gray)">(#49)</span> — Aisha's intake: demographics, need category, consent. Saved with status <b>Draft</b>.</li>
-        <li><b>Enrol the Beneficiary into the Program</b> — creates a <code>BeneficiaryProgramEnrollment</code> with status <b>Enrolled</b>. This auto-promotes Aisha from Draft → <b>Active</b>.</li>
+        <li><b>Create the Program</b> <span style="color:var(--gray)">(#51)</span> — name, category, capacity, then its <b>Eligibility Criteria</b>, <b>Services Included</b> (each typed: service type · provider type · funding flow · optional cost), <b>Outcome Metrics</b> (attendance, pass rate), <b>staff team + lead</b>, and the <b>Funding Model</b> (Individual / Pool / Grant / Mixed) with a note. Saved in status <b>Draft</b>. This is the menu of what the program offers.</li>
+        <li><b>Approve the Program</b> — <b>Submit for Approval</b> (Draft → Pending Approval) then <b>Approve</b> (→ <b>Active</b>). Once active the program definition <b>locks</b> (read-only) so it can't be silently changed.</li>
+        <li><b>Allocate &amp; record Funding</b> <span style="color:var(--gray)">(#177)</span> — on the <b>Fund Allocation</b> screen (active programs only), <b>link the funding sources</b> (each a grant <i>or</i> a donation purpose, gated by the model), set each one's allocation + cadence, and keep its <b>Payment Log</b>: every incoming payment marked <b>Waiting</b> or <b>Transferred</b>. <i>Collected = Σ Transferred</i> — this is the cash ceiling that later caps service spend.</li>
+        <li><b>Register the Beneficiary</b> <span style="color:var(--gray)">(#49)</span> — Aisha's intake: demographics, household, needs assessment, consent. Saved as <b>Draft</b>; <b>Register Beneficiary</b> commits her to <b>Active</b>. Code <code>BEN-NNNN</code>.</li>
+        <li><b>Enrol into the Program</b> — creates a Program Enrollment (status <b>Enrolled</b>) and picks the services she'll receive. Her eligibility is checked against the program's criteria at this point. A Draft beneficiary can't get a case — being Active &amp; enrolled is what brings her in.</li>
         <li><b>Open a Case</b> <span style="color:var(--gray)">(#50)</span> — to actually deliver and track the sponsorship. Links Aisha + the program + an owner; auto-codes <code>CASE-NNNN</code>, status <span class="b open">Open</span>.</li>
         <li><b>Build the Action Plan</b> — the planned steps: verify consent → pay tuition → arrange hostel → set up monthly food → collect report card → confirm next-grade promotion. Each item has an owner, a target date and a status.</li>
-        <li><b>Deliver &amp; record Services</b> — as each action is done, log the matching <b>Service Log</b> on the beneficiary: Tuition ₹60,000, Hostel ₹30,000, Food ₹8,000 × 12 (all linked back to this case via <code>CaseId</code>).</li>
-        <li><b>Track Milestones</b> — outcomes achieved: <b>Passed Grade 2</b> (Achieved), <b>Promoted to Grade 3</b> (In Progress).</li>
-        <li><b>Keep History &amp; Documents</b> — every visit/call/status-change is a <b>Note</b> (the diary); receipts, report cards and consent forms are <b>Documents</b> (the evidence).</li>
+        <li><b>Deliver &amp; record Services</b> — as each action is done, log the matching <b>Service Log</b> on the case: Tuition ₹60,000, Hostel ₹30,000, Food ₹8,000 × 12. <b>Spend is hard-capped at the program's available cash</b> (Collected − Used).</li>
+        <li><b>Track Milestones</b> — outcomes achieved against the program's outcome metrics, logged on the case's <b>Milestones</b> tab: <b>Passed Grade 2</b> (Achieved), <b>Promoted to Grade 3</b> (In Progress).</li>
+        <li><b>Keep Notes &amp; Documents</b> — every visit / call / status-change is a <b>Note</b> (the activity feed); receipts, report cards and consent forms are <b>Documents</b> (the evidence).</li>
         <li><b>Refer out if needed</b> — for a need the program can't meet (e.g. a post-graduation job pathway), raise a <b>Referral</b> to an outside organisation.</li>
-        <li><b>Close at the outcome</b> — when support concludes, <b>Close Case</b> with an outcome (e.g. <i>Graduated</i>) + closure summary; the beneficiary's enrollment moves to <b>Graduated/Exited</b>.</li>
+        <li><b>Close at the outcome</b> — when support concludes, <b>Close Case</b> with an outcome (e.g. <i>Graduated</i>) + closure summary; the case becomes read-only and the enrolment moves to <b>Graduated</b>. Set the beneficiary to <b>Graduated</b> — their record then locks too.</li>
+        <li><b>Read back on Dashboards</b> — no new data: the <b>Program</b> and <b>Case</b> dashboards roll up everything created above (enrolment vs capacity, funding pool, services, milestones).</li>
       </ol>
 
       <div class="note">
         <b>Where each Case tab gets its data.</b>
-        <b>Action Plan</b> = the planned steps (your roadmap). <b>History</b> = notes + status changes + dated events (the diary). <b>Documents</b> = uploaded evidence. <b>Referrals</b> = hand-offs outside the program.
-        The beneficiary's <b>Services &amp; Milestones</b> (on screen #49) are what those actions actually <i>produced</i> — they carry the case's <code>CaseId</code> so they tie back here.
+        <b>Notes &amp; Activity</b> = visits, calls, status changes (the diary). <b>Action Plan</b> = the planned steps. <b>Service Log</b> = money &amp; help delivered. <b>Milestones</b> = outcomes achieved. <b>Referrals</b> = hand-offs outside the program. <b>Documents</b> = uploaded evidence. <b>History</b> = an auto-assembled timeline (no table of its own).
       </div>
 
       <h3>The five statuses</h3>
@@ -225,44 +275,131 @@
       <div class="warn">
         <b>⚠ The 6th badge — <span class="b over">Overdue</span> — is NOT a real status.</b> It is <b>calculated on the fly</b>: any case that is still
         <span class="b open">Open</span>/<span class="b prog">In Progress</span>/<span class="b pend">Pending</span> <b>and</b> whose <code>Follow-up Date</code> is in the past
-        shows up red. The stored status never changes. When you test, remember: setting a follow-up date in the past makes the row turn red — that's correct behaviour, not a bug.
+        shows up red. The stored status never changes — set a future follow-up date and the red clears.
       </div>
 
       <h3>The journey in plain words</h3>
       <ol class="steps">
         <li><b>Intake.</b> Staff clicks <b>+ New Case</b>, picks the beneficiary, writes a title + description, sets priority &amp; assigned staff. On save the system auto-stamps a code (<code>CASE-NNNN</code>), sets status <span class="b open">Open</span>, and records today as the opened date.</li>
-        <li><b>Casework.</b> Staff opens the case file and works it — adds <b>Notes</b> (home visits, phone calls), builds an <b>Action Plan</b> (tasks with owners + due dates), and moves the status to <span class="b prog">In Progress</span>.</li>
+        <li><b>Casework.</b> Staff opens the case file and works it — adds <b>Notes</b> (home visits, phone calls), builds an <b>Action Plan</b>, logs <b>Service Log</b> + <b>Milestones</b>, and moves the status to <span class="b prog">In Progress</span>.</li>
         <li><b>Referral (if needed).</b> If outside help is required, staff raises a <b>Referral</b> (auto-coded <code>REF-NNNN</code>) to an external organisation — <b>consent must be ticked</b> before it can be sent — and parks the case as <span class="b pend">Pending</span> until they respond.</li>
         <li><b>Resolution.</b> Once the response is in and the need is met, status goes back to <span class="b prog">In Progress</span> and then <span class="b res">Resolved</span>.</li>
-        <li><b>Closure.</b> Staff clicks <b>Close Case</b>, picks an <b>Outcome</b> and writes a required <b>Closure Summary</b> (optionally a post-close follow-up + lessons learned). The case becomes <span class="b closed">Closed</span> and read-only.</li>
+        <li><b>Closure.</b> Staff clicks <b>Close Case</b>, picks an <b>Outcome</b> and writes a required <b>Closure Summary</b> (optionally a post-close follow-up + lessons learned). The case becomes <span class="b closed">Closed</span> and read-only. A closed case can be <b>Reopened</b> back to Open if work must resume.</li>
       </ol>
 
       <div class="note">
-        <b>Communication happens along the way.</b> A welcome message to the guardian at intake, the referral hand-off to the partner org, the response coming back, and a closure note at the end — these touchpoints are shown live in the next section.
+        <b>Communication happens along the way.</b> A welcome message to the guardian at intake, the referral hand-off to the partner org, the response coming back, and a closure note at the end — these touchpoints are shown live in the <a href="#diagram">Live Flow section</a>.
       </div>
 
       <h3>State diagram</h3>
       <pre class="mermaid">
 stateDiagram-v2
     direction LR
-    [*] --> Open: + New Case
+    [*] --> Open: New Case
     Open --> InProgress: start work
     InProgress --> Pending: await referral
-    Pending --> InProgress: response received
+    Pending --> InProgress: response in
     InProgress --> Resolved: need met
     Pending --> Resolved: need met
-    Resolved --> Closed: Close Case (outcome + summary)
-    Closed --> [*]
+    Resolved --> Closed: Close with outcome and summary
     Closed --> Open: Reopen
+    Closed --> [*]
       </pre>
+      <p class="diagram-hint">⛶ Click the button on any diagram to open it full-screen — scroll to zoom, drag to move.</p>
     </section>
 
 
     <!-- ============================================================
-         SECTION 2 — ANIMATED FLOW DIAGRAM WITH EXAMPLE
+         SECTION 2 — FULL DATA-CREATION MAP  (the demo diagram)
+    ============================================================ -->
+    <section id="datacreate">
+      <h2><span class="num">2</span> Full Data-Creation Map — Start to End</h2>
+      <p class="lead">One diagram for the whole demo — read it <b>top to bottom</b>. Each box is a stage (a screen); the lines inside it are the <code>case.*</code> tables that get rows at that step. The causal links (a funding pool → the spend cap, an outcome metric → a milestone) are spelled out in the <b>table below</b> the diagram.</p>
+
+      <div class="flowmap">
+        <div class="fm-stage root">
+          <div class="fm-badge">①</div>
+          <div class="fm-body"><h4>Program Setup — Program #51</h4>
+            <p><code>Programs</code> (Draft) · <code>ProgramEligibilityCriteria</code> · <code>ProgramServices</code> (typed) · <code>ProgramOutcomeMetrics</code> · <code>ProgramStaffs</code> · Funding Model: Individual / Pool / Grant / Mixed</p></div>
+        </div>
+        <div class="fm-arrow">▼</div>
+        <div class="fm-stage state">
+          <div class="fm-badge">②</div>
+          <div class="fm-body"><h4>Approval</h4>
+            <p>Submit → Approve · status <code>DRAFT</code> → <code>PENDINGAPPROVAL</code> → <code>ACTIVE</code> (locks)</p></div>
+        </div>
+        <div class="fm-arrow">▼</div>
+        <div class="fm-stage child">
+          <div class="fm-badge">③</div>
+          <div class="fm-body"><h4>Fund Allocation — screen #177</h4>
+            <p>Link sources (Grant or Donation Purpose) · set allocation + cadence · <code>ProgramFundingSources</code> · <code>ProgramFundingTransactions</code>: WAITING / TRANSFERRED</p></div>
+        </div>
+        <div class="fm-arrow">▼</div>
+        <div class="fm-stage root">
+          <div class="fm-badge">④</div>
+          <div class="fm-body"><h4>Beneficiary Intake — Beneficiary #49</h4>
+            <p><code>Beneficiaries</code> (Draft) + <code>BeneficiaryHouseholdMembers</code> · Register → ACTIVE</p></div>
+        </div>
+        <div class="fm-arrow">▼</div>
+        <div class="fm-stage root">
+          <div class="fm-badge">⑤</div>
+          <div class="fm-body"><h4>Enrol into Program</h4>
+            <p><code>BeneficiaryProgramEnrollments</code> (ENROLLED) + <code>BeneficiaryEnrollmentServices</code> · eligibility checked against criteria</p></div>
+        </div>
+        <div class="fm-arrow">▼</div>
+        <div class="fm-stage root">
+          <div class="fm-badge">⑥</div>
+          <div class="fm-body"><h4>Open Case — Case #50</h4>
+            <p><code>Cases</code> (Open) · auto-coded <code>CASE-NNNN</code></p></div>
+        </div>
+        <div class="fm-arrow">▼</div>
+        <div class="fm-stage child">
+          <div class="fm-badge">⑦</div>
+          <div class="fm-body"><h4>Casework &amp; Delivery</h4>
+            <p><code>CaseActionItems</code> · <code>CaseNotes</code> · <code>CaseReferrals</code> · <code>CaseDocuments</code> · <code>BeneficiaryServiceLogs</code> (money, pool-capped) · <code>BeneficiaryMilestones</code></p></div>
+        </div>
+        <div class="fm-arrow">▼</div>
+        <div class="fm-stage state">
+          <div class="fm-badge">⑧</div>
+          <div class="fm-body"><h4>Closure &amp; Graduation</h4>
+            <p><code>Cases</code> → CLOSED (locks) · enrollment → GRADUATED · beneficiary → GRADUATED</p></div>
+        </div>
+        <div class="fm-arrow">▼</div>
+        <div class="fm-stage read">
+          <div class="fm-badge">⑨</div>
+          <div class="fm-body"><h4>Dashboards — read-only, no new data</h4>
+            <p>Roll-ups only: funding pool · capacity · KPIs</p></div>
+        </div>
+      </div>
+
+      <h3>What gets created at each stage</h3>
+      <table>
+        <tr><th>#</th><th>Stage / screen</th><th>You create</th><th>Tables written</th><th>Status change</th></tr>
+        <tr><td>1</td><td>Program Setup (#51)</td><td>Program + criteria, typed services, outcome metrics, staff; funding model + note</td><td><code>Programs</code>, <code>ProgramEligibilityCriteria</code>, <code>ProgramServices</code>, <code>ProgramOutcomeMetrics</code>, <code>ProgramStaffs</code></td><td>Program = <b>Draft</b></td></tr>
+        <tr><td>2</td><td>Approval</td><td>Submit → Approve</td><td><code>Programs</code> (status)</td><td>Draft → Pending → <b>Active</b> (locks)</td></tr>
+        <tr><td>3</td><td>Fund Allocation (#177)</td><td>Link sources, set allocation + cadence, log payments</td><td><code>ProgramFundingSources</code>, <code>ProgramFundingTransactions</code></td><td>per payment: Waiting / Transferred</td></tr>
+        <tr><td>4</td><td>Beneficiary Intake (#49)</td><td>Beneficiary + household</td><td><code>Beneficiaries</code>, <code>BeneficiaryHouseholdMembers</code></td><td>Beneficiary: Draft → <b>Active</b></td></tr>
+        <tr><td>5</td><td>Enrol into Program</td><td>Enrollment + selected services</td><td><code>BeneficiaryProgramEnrollments</code>, <code>BeneficiaryEnrollmentServices</code></td><td>Enrollment = <b>Enrolled</b></td></tr>
+        <tr><td>6</td><td>Open Case (#50)</td><td>Case (links beneficiary + program + owner)</td><td><code>Cases</code></td><td>Case = <span class="b open">Open</span></td></tr>
+        <tr><td>7</td><td>Casework &amp; Delivery</td><td>Action items, notes, referrals, documents, <b>service logs (₹)</b>, milestones</td><td><code>CaseActionItems</code>, <code>CaseNotes</code>, <code>CaseReferrals</code>, <code>CaseDocuments</code>, <code>BeneficiaryServiceLogs</code>, <code>BeneficiaryMilestones</code></td><td>Case → <span class="b prog">In Progress</span></td></tr>
+        <tr><td>8</td><td>Closure</td><td>Close (outcome + summary), graduate beneficiary</td><td><code>Cases</code>, <code>BeneficiaryProgramEnrollments</code>, <code>Beneficiaries</code> (statuses)</td><td>Case → <span class="b closed">Closed</span>; Beneficiary → Graduated</td></tr>
+        <tr><td>9</td><td>Dashboards</td><td>Nothing — read-only roll-ups</td><td>—</td><td>—</td></tr>
+      </table>
+
+      <div class="note">
+        <b>Two money rules to call out in the demo.</b> (1) Funding <b>Collected</b> = Σ <b>Transferred</b> payments only (Waiting is pledged, not cash). (2) A Service Log can never exceed the program's <b>available</b> cash (Collected − Used) — the form hard-blocks it. So the funding recorded in stage ③ is the budget the casework in stage ⑦ draws down.
+      </div>
+      <div class="warn">
+        <b>Read-only locks.</b> Once a <b>Program</b> is Active / Paused / Completed, a <b>Case</b> is Closed, or a <b>Beneficiary</b> is Graduated / Exited / Deceased, its form renders read-only (amber lock banner, Save hidden). To edit a closed case you must <b>Reopen</b> it first.
+      </div>
+    </section>
+
+
+    <!-- ============================================================
+         SECTION 3 — ANIMATED FLOW DIAGRAM WITH EXAMPLE
     ============================================================ -->
     <section id="diagram">
-      <h2><span class="num">2</span> Live Flow — One Program, Three Variants</h2>
+      <h2><span class="num">3</span> Live Flow — One Program, Three Variants</h2>
       <p class="lead">Three children in the same <b>Hope Education Sponsorship</b> program, each at a different point in their journey. Together they cover every status from intake to graduation.</p>
 
       <h3>The three lifecycle variants</h3>
@@ -274,7 +411,7 @@ stateDiagram-v2
         </tr>
         <tr>
           <td><b>② In progress</b></td><td>Aisha Khan</td><td><span class="b prog">In&nbsp;Progress</span></td>
-          <td>Mid-delivery. Year-1 actions <b>Done</b> + recurring food, Year-2 actions pending. Service Logs (Tuition 60k, Hostel 30k, Food 8k×12). One milestone <b>Achieved</b> (Passed Grade 2), one <b>In Progress</b>. Full history + evidence docs.</td>
+          <td>Mid-delivery. Year-1 actions <b>Done</b> + recurring food, Year-2 actions pending. Service Logs (Tuition 60k, Hostel 30k, Food 8k×12). One milestone <b>Achieved</b> (Passed Grade 2), one <b>In Progress</b>. Full activity feed + evidence docs.</td>
         </tr>
         <tr>
           <td><b>③ Completed</b></td><td>Fatima Ali</td><td><span class="b closed">Closed</span></td>
@@ -311,42 +448,42 @@ stateDiagram-v2
           <span>💬 <b>Bubbles</b> = communication sent at that moment</span>
         </div>
       </div>
-      <p style="text-align:center; color:var(--slate); font-size:13px;">↑ The animation loops. Each pause = a real stage; each bubble = a message going out or coming in.</p>
+      <p class="diagram-hint">↑ The animation loops. ⛶ Full-screen it to zoom in. Each pause = a real stage; each bubble = a message going out or coming in.</p>
 
       <h3>The same story, step by step</h3>
       <table>
-        <tr><th>When</th><th>Status</th><th>What the case worker did</th><th>Communication</th><th>Test ref</th></tr>
+        <tr><th>When</th><th>Status</th><th>What the case worker did</th><th>Communication</th></tr>
         <tr>
           <td>Jun 2024</td><td><span class="b open">Open</span></td>
           <td>Enrolled Fatima into the program, then created the case: title "Education sponsorship — Fatima Ali", category <b>Educational Support</b>, assigned to a case worker. System made the <code>CASE-NNNN</code> code.</td>
-          <td>📩 Welcome SMS to guardian</td><td>C1</td>
+          <td>📩 Welcome SMS to guardian</td>
         </tr>
         <tr>
           <td>Jun 2024</td><td><span class="b prog">In&nbsp;Progress</span></td>
-          <td>Built the <b>Action Plan</b>, paid Year-1 <b>tuition ₹60,000</b> + <b>hostel ₹30,000</b>, set up <b>monthly food ₹8,000</b> — each logged as a <b>Service Log</b>. Status → In Progress.</td>
-          <td>💰 Service-delivered notes logged</td><td>C5b · CN5</td>
+          <td>Built the <b>Action Plan</b>, paid Year-1 <b>tuition ₹60,000</b> + <b>hostel ₹30,000</b>, set up <b>monthly food ₹8,000</b> — each logged as a <b>Service Log</b> on the case. Status → In Progress.</td>
+          <td>💰 Service-delivered notes logged</td>
         </tr>
         <tr>
           <td>Apr 2025</td><td><span class="b prog">In&nbsp;Progress</span></td>
           <td>End-of-year report card in → logged <b>Milestone: Passed Grade 2</b> (Achieved). Renewed Year-2 tuition + hostel.</td>
-          <td>🏆 Milestone note + report card uploaded</td><td>CN5</td>
+          <td>🏆 Milestone note + report card uploaded</td>
         </tr>
         <tr>
           <td>Apr 2026</td><td><span class="b pend">Pending</span></td>
           <td>Final report in — Fatima graduates. Raised a <b>Referral</b> to the Skills &amp; Livelihood program for a post-graduation pathway. <b>Consent ticked</b> → Send enabled.</td>
-          <td>📨 Referral hand-off to partner</td><td>CR1 · CR2</td>
+          <td>📨 Referral hand-off to partner</td>
         </tr>
         <tr>
           <td>May 2026</td><td><span class="b res">Resolved</span> → <span class="b closed">Closed</span></td>
           <td>Marked Resolved, then <b>Close Case</b>: Outcome = <i>Graduated</i>, wrote the required <b>Closure Summary</b>. Enrollment → Graduated, beneficiary → Graduated (exit date set). Case locked read-only.</td>
-          <td>✅ Graduation + closure to guardian</td><td>C5 · C6</td>
+          <td>✅ Graduation + closure to guardian</td>
         </tr>
       </table>
 
       <div class="warn">
-        <b>↪ The "Overdue" twist (test this!).</b> Suppose mid-journey a worker set Aisha's (the in-progress case) follow-up date to a date that has already passed and went on leave.
+        <b>↪ The "Overdue" twist.</b> Suppose mid-journey a worker set Aisha's (the in-progress case) follow-up date to a date that has already passed and went on leave.
         Her row instantly turns <b>red</b> with an <span class="b over">Overdue</span> badge — even though the saved status is still <span class="b prog">In&nbsp;Progress</span>.
-        The moment someone sets a future follow-up date, the red clears. Nothing about the stored status ever changed. → tests <b>CO1–CO3</b>.
+        The moment someone sets a future follow-up date, the red clears. Nothing about the stored status ever changed — Overdue is a live calculation, not a state.
       </div>
 
       <h3>Communication sequence (who talks to whom)</h3>
@@ -357,69 +494,16 @@ sequenceDiagram
     participant S as Case Worker
     participant C as Case System
     participant L as Livelihood Program
-    S->>C: Enrol Fatima + Create Case (Open)
+    S->>C: Enrol Fatima then open Case (Open)
     C-->>G: Welcome SMS
-    S->>C: Action plan + Service Logs: tuition, hostel, food (In Progress)
+    S->>C: Action plan plus Service Logs - tuition, hostel, food (In Progress)
     S->>C: Log Milestone - Passed Grade 2 (Achieved)
     S->>C: Raise Referral - livelihood pathway (consent ok)
     C-->>L: Referral sent (Pending)
     L-->>S: Accepted - enrolled into vocational intake
-    S->>C: Close Case (Outcome = Graduated + Summary)
-    C-->>G: Graduation certificate + closure note
+    S->>C: Close Case (Outcome Graduated plus Summary)
+    C-->>G: Graduation certificate plus closure note
       </pre>
-    </section>
-
-
-    <!-- ============================================================
-         SECTION 3 — TEST CASES
-    ============================================================ -->
-    <section id="tests">
-      <h2><span class="num">3</span> Test Cases</h2>
-      <p class="lead">Run these in order. IDs match the references in the example above. <span class="req">Required</span> fields must block save when empty.</p>
-
-      <h3>Case lifecycle</h3>
-      <table>
-        <tr><th>ID</th><th>Scenario</th><th>Steps</th><th>Expected result</th></tr>
-        <tr><td>C1</td><td>Create a case</td><td>+ New Case → fill beneficiary, title, description, priority, assigned staff → Save</td><td>Code auto-set <code>CASE-NNNN</code>, status <span class="b open">Open</span>, opened date = today, lands on detail page</td></tr>
-        <tr><td>C2</td><td>Required-field guard</td><td>+ New Case → leave Title (or Beneficiary/Priority/Staff) empty → Save</td><td>Save blocked, field flagged red. <span class="req">Title, Description, Beneficiary, Priority, Assigned Staff</span> are mandatory</td></tr>
-        <tr><td>C3</td><td>Edit a case</td><td>Open case → Edit → change priority → Save</td><td>Returns to detail, change persisted</td></tr>
-        <tr><td>C4</td><td>Status transitions</td><td>Update Status: Open → In Progress → Pending → In Progress → Resolved</td><td>Badge updates each time; a "Status changed…" note appears automatically in the Notes feed</td></tr>
-        <tr><td>C5</td><td>Close a case</td><td>Resolved case → Close Case → pick Outcome + write Closure Summary → Confirm</td><td>Status <span class="b closed">Closed</span>, closed date set, case becomes read-only, action buttons hide</td></tr>
-        <tr><td>C6</td><td>Close guard</td><td>Close Case → leave Outcome or Closure Summary empty → Confirm</td><td>Blocked — both are <span class="req">required</span></td></tr>
-        <tr><td>C7</td><td>Reopen</td><td>Closed case → Reopen</td><td>Returns to <span class="b open">Open</span>; outcome/summary cleared; notes &amp; action items kept</td></tr>
-        <tr><td>C8</td><td>Reassign</td><td>Reassign → pick new staff → confirm</td><td>Assigned staff changes; auto note "Reassigned from X to Y" appears</td></tr>
-      </table>
-
-      <h3>Overdue (the calculated badge)</h3>
-      <table>
-        <tr><th>ID</th><th>Scenario</th><th>Steps</th><th>Expected result</th></tr>
-        <tr><td>CO1</td><td>Becomes overdue</td><td>On an Open/In Progress/Pending case, set Follow-up Date to a past date</td><td>Row turns red, <span class="b over">Overdue</span> badge shows — but stored status is unchanged</td></tr>
-        <tr><td>CO2</td><td>Clears overdue</td><td>Set Follow-up Date to a future date</td><td>Red clears immediately; badge reverts to real status</td></tr>
-        <tr><td>CO3</td><td>Closed is never overdue</td><td>Close a case that had a past follow-up date</td><td>No red tint — Closed/Resolved cases are excluded from the overdue calc</td></tr>
-      </table>
-
-      <h3>Notes, action plan &amp; referrals</h3>
-      <table>
-        <tr><th>ID</th><th>Scenario</th><th>Steps</th><th>Expected result</th></tr>
-        <tr><td>CN5</td><td>Add a note</td><td>Notes tab → Add Note → pick type (e.g. Home Visit) + content → Add</td><td>Note appears at top of feed with author avatar + type badge</td></tr>
-        <tr><td>CN2</td><td>Notify supervisor</td><td>Add Note with "Notify supervisor" ticked</td><td>Toast "Supervisor notification queued…" (placeholder — no real send yet)</td></tr>
-        <tr><td>C5b</td><td>Add action item</td><td>Action Plan tab → Add → description + responsible + status; toggle "Recurring"</td><td>Item added; when Recurring is on, the Target Date field hides</td></tr>
-        <tr><td>CR1</td><td>Raise a referral</td><td>Referrals tab → New Referral → fill org + reason → tick <b>Consent</b> → Send</td><td>Referral added, auto code <code>REF-NNNN</code>, status Pending</td></tr>
-        <tr><td>CR2</td><td>Consent guard</td><td>New Referral with Consent left unticked</td><td><b>Send button stays disabled</b> until consent is ticked</td></tr>
-        <tr><td>CR3</td><td>Referral response</td><td>Open a referral → record the partner's response</td><td>Response saved; referral status can move to Accepted/Completed</td></tr>
-      </table>
-
-      <h3>Grid, filters &amp; KPIs</h3>
-      <table>
-        <tr><th>ID</th><th>Scenario</th><th>Expected result</th></tr>
-        <tr><td>CG1</td><td>KPI cards</td><td>Four cards show live counts: Open (with priority split), Overdue (oldest days), Closed this month (avg days), Referrals pending</td></tr>
-        <tr><td>CG2</td><td>Status / priority chips</td><td>Clicking a chip filters the grid instantly</td></tr>
-        <tr><td>CG3</td><td>Search</td><td>Search by case code, beneficiary name, title, or description all match</td></tr>
-        <tr><td>CG4</td><td>"My Cases" toggle</td><td>Grid filters to cases assigned to the logged-in staff member</td></tr>
-        <tr><td>CG5</td><td>Row → detail</td><td>Clicking a row opens the read-only case file with the 5 tabs</td></tr>
-      </table>
-
-      <div class="note"><b>Placeholders (don't fail these):</b> file uploads, Print/Export-PDF/Share/Archive, Escalate, and Send Reminders are <b>UI-only</b> — they show a "coming soon" toast on purpose. The button must render and the toast must appear; that <i>is</i> the pass condition.</div>
     </section>
 
 
@@ -428,72 +512,66 @@ sequenceDiagram
     ============================================================ -->
     <section id="data">
       <h2><span class="num">4</span> Entity Tables — Data Design</h2>
-      <p class="lead">All in the <code>case</code> database schema. The <b>case layer</b> = one parent (<b>Case</b>) + four children. The <b>beneficiary layer</b> = <b>Service Logs</b> and <b>Milestones</b> — beneficiary-owned, but each carries an optional <code>CaseId</code> so it ties back to the case that delivered it. The "History" tab is built on the fly — it has no table.</p>
+      <p class="lead">All in the <code>case</code> database schema. The <b>case layer</b> = one parent (<b>Case</b>) + its children (Notes, Action Items, Referrals, Documents). The <b>delivery records</b> — <b>Service Logs</b> and <b>Milestones</b> — are beneficiary-owned but each carries an optional <code>CaseId</code>, so they surface as tabs on the case that delivered them. The "History" tab is built on the fly — it has no table.</p>
 
       <h3>How the tables relate</h3>
       <pre class="mermaid">
 erDiagram
-    PROGRAM ||--o{ ENROLLMENT : "enrols into"
-    BENEFICIARY ||--o{ ENROLLMENT : "is enrolled"
+    PROGRAM ||--o{ ENROLLMENT : "enrols"
+    PROGRAM ||--o{ PROGRAM_SERVICE : "offers"
+    PROGRAM ||--o{ OUTCOME_METRIC : "targets"
+    PROGRAM ||--o{ ELIGIBILITY : "requires"
+    PROGRAM ||--o{ FUNDING_SOURCE : "funded by"
+    FUNDING_SOURCE ||--o{ FUNDING_PAYMENT : "payment log"
+    BENEFICIARY ||--o{ ENROLLMENT : "enrolled in"
     BENEFICIARY ||--o{ CASE : "has cases"
-    PROGRAM ||--o{ CASE : "delivers"
-    STAFF ||--o{ CASE : "owns / assigned"
-    CASE ||--o{ CASE_NOTE : "1 : many"
-    CASE ||--o{ CASE_ACTION_ITEM : "1 : many"
-    CASE ||--o{ CASE_REFERRAL : "1 : many"
-    CASE ||--o{ CASE_DOCUMENT : "1 : many"
+    PROGRAM ||--o{ CASE : "delivered via"
+    CASE ||--o{ CASE_NOTE : "notes"
+    CASE ||--o{ CASE_ACTION : "action plan"
+    CASE ||--o{ CASE_REFERRAL : "referrals"
+    CASE ||--o{ CASE_DOCUMENT : "documents"
+    CASE ||--o{ SERVICE_LOG : "delivers"
+    CASE ||--o{ MILESTONE : "tracks"
     BENEFICIARY ||--o{ SERVICE_LOG : "receives"
     BENEFICIARY ||--o{ MILESTONE : "achieves"
-    CASE ||--o{ SERVICE_LOG : "0..1 case link"
-    CASE ||--o{ MILESTONE : "0..1 case link"
+    PROGRAM {
+        int ProgramId PK
+        string Status "Draft to Active"
+        string FundingModel "Individual / Pool / Grant / Mixed"
+    }
+    FUNDING_SOURCE {
+        int Id PK
+        int GrantId FK "or DonationPurposeId"
+        decimal AllocatedAmount
+    }
+    FUNDING_PAYMENT {
+        int Id PK
+        decimal Amount
+        string PaymentStatus "Waiting / Transferred"
+    }
+    BENEFICIARY {
+        int BeneficiaryId PK
+        string BeneficiaryCode "BEN-NNNN"
+        string Status "Draft to Graduated"
+    }
     CASE {
         int CaseId PK
         string CaseCode "CASE-NNNN"
-        int BeneficiaryId FK
-        int ProgramId FK
-        int AssignedStaffId FK
-        int StatusId "Open..Closed"
+        string Status "Open to Closed"
         date FollowUpDate "drives Overdue"
     }
-    ENROLLMENT {
-        int EnrollmentId PK
-        int BeneficiaryId FK
-        int ProgramId FK
-        int EnrollmentStatusId "Enrolled..Graduated"
-    }
-    CASE_NOTE {
-        int CaseNoteId PK
-        int CaseId FK
-        string Content
-    }
-    CASE_ACTION_ITEM {
-        int CaseActionItemId PK
-        int CaseId FK
-        string ActionDescription
-    }
-    CASE_REFERRAL {
-        int CaseReferralId PK
-        int CaseId FK
-        bool ConsentGiven
-    }
-    CASE_DOCUMENT {
-        int CaseDocumentId PK
-        int CaseId FK
-        string FileName
-    }
     SERVICE_LOG {
-        int BeneficiaryServiceLogId PK
-        int BeneficiaryId FK
+        int Id PK
         int CaseId FK "nullable"
         long AmountCents
     }
     MILESTONE {
-        int BeneficiaryMilestoneId PK
-        int BeneficiaryId FK
+        int Id PK
         int CaseId FK "nullable"
-        int StatusId "ACHIEVED.."
+        string Status "Achieved / InProgress"
     }
       </pre>
+      <p class="diagram-hint">⛶ Full-screen the relationship map to read every field clearly.</p>
 
       <h3>① <code>case.Cases</code> — the parent</h3>
       <table>
@@ -508,15 +586,11 @@ erDiagram
         <tr><td>CategoryId</td><td>int?</td><td>—</td><td>Educational / Medical / Housing …</td></tr>
         <tr><td>StatusId</td><td>int</td><td class="req">✔</td><td>Open / InProgress / Pending / Resolved / Closed. <b>Overdue is NOT stored.</b></td></tr>
         <tr><td>AssignedStaffId</td><td>int</td><td class="req">✔</td><td>FK → case owner</td></tr>
-        <tr><td>BranchId</td><td>int?</td><td>—</td><td>FK → field office</td></tr>
         <tr><td>OpenedDate</td><td>date</td><td class="req">✔</td><td>Defaults to today</td></tr>
         <tr><td>FollowUpDate</td><td>date?</td><td>—</td><td>Past date + open status ⇒ <b>Overdue</b></td></tr>
-        <tr><td>IsExternalReferral</td><td>bool</td><td class="req">✔</td><td>If true → ReferralTo required</td></tr>
-        <tr><td>ReferralTo / ReferralNotes</td><td>string?</td><td>—</td><td>Conditional on the flag above</td></tr>
         <tr><td>ClosedDate</td><td>date?</td><td>—</td><td>Set on close</td></tr>
-        <tr><td>CaseOutcomeId</td><td>int?</td><td>—</td><td>Required <i>at</i> close</td></tr>
-        <tr><td>ClosureSummary</td><td>string?(2000)</td><td>—</td><td>Required <i>at</i> close</td></tr>
-        <tr><td>ClosureFollowUpDate / LessonsLearned</td><td>—</td><td>—</td><td>Optional, from Close modal</td></tr>
+        <tr><td>CaseOutcomeId / ClosureSummary</td><td>int? / string?</td><td>—</td><td>Both required <i>at</i> close</td></tr>
+        <tr><td>ClosureFollowUpDate / LessonsLearned</td><td>date? / string?</td><td>—</td><td>Optional, from Close modal</td></tr>
       </table>
 
       <div class="grid2">
@@ -531,7 +605,6 @@ erDiagram
             <tr><td>Content <span class="req">✔</span></td><td>Note body</td></tr>
             <tr><td>AuthorStaffId</td><td>Auto = current user</td></tr>
             <tr><td>NotifySupervisor</td><td>Placeholder toast</td></tr>
-            <tr><td>AttachmentUrl/Name</td><td>Placeholder (no upload yet)</td></tr>
           </table>
         </div>
         <div class="card">
@@ -545,7 +618,7 @@ erDiagram
             <tr><td>ActionDescription <span class="req">✔</span></td><td>What to do</td></tr>
             <tr><td>ResponsibleStaffId <span class="req">✔</span></td><td>Owner</td></tr>
             <tr><td>TargetDate</td><td>Hidden when Recurring</td></tr>
-            <tr><td>ActionStatusId <span class="req">✔</span></td><td>Done / Pending / Recurring …</td></tr>
+            <tr><td>ActionStatusId <span class="req">✔</span></td><td>Done / Pending / In Progress / Contingent</td></tr>
           </table>
         </div>
         <div class="card">
@@ -560,7 +633,6 @@ erDiagram
             <tr><td>Reason <span class="req">✔</span></td><td>Why referred</td></tr>
             <tr><td>ReferralStatusId</td><td>Pending → Accepted → Completed</td></tr>
             <tr><td>ConsentGiven <span class="req">✔</span></td><td><b>Must be true to send</b></td></tr>
-            <tr><td>Response</td><td>Reply received</td></tr>
           </table>
         </div>
         <div class="card">
@@ -578,8 +650,8 @@ erDiagram
         </div>
       </div>
 
-      <h3>Beneficiary layer — what was actually delivered</h3>
-      <p class="lead">These two live on the <b>Beneficiary</b> (screen #49) but each row carries an optional <code>CaseId</code> linking it to the case that delivered it. <b>Neither has a <code>CompanyId</code> column</b> — only the inherited audit fields.</p>
+      <h3>Delivery records — what the case actually produced</h3>
+      <p class="lead">These two are beneficiary-owned (screen #49) but each row carries an optional <code>CaseId</code> linking it to the case that delivered it — that's why they appear as <b>Service Log</b> and <b>Milestones</b> tabs on the case.</p>
       <div class="grid2">
         <div class="card">
           <h3 style="margin-top:0">⑥ <code>case.BeneficiaryServiceLogs</code></h3>
@@ -588,11 +660,10 @@ erDiagram
             <tr><th>Column</th><th>Notes</th></tr>
             <tr><td>BeneficiaryServiceLogId</td><td>PK</td></tr>
             <tr><td>BeneficiaryId</td><td>FK → who received it</td></tr>
-            <tr><td>CaseId / ProgramId</td><td>Optional FKs → ties to the case &amp; program</td></tr>
+            <tr><td>CaseId / ProgramId / ProgramServiceId</td><td>Optional FKs → ties to case, program &amp; the typed service</td></tr>
             <tr><td>ServiceDate <span class="req">✔</span></td><td>When delivered</td></tr>
             <tr><td>ServiceDescription <span class="req">✔</span></td><td>e.g. "Annual tuition (Year 1)"</td></tr>
-            <tr><td>AmountCents</td><td>Money in <b>paise</b> (₹60,000 = 6,000,000)</td></tr>
-            <tr><td>ProviderStaffId / ProviderName</td><td>Who provided it</td></tr>
+            <tr><td>AmountCents</td><td>Money in <b>paise</b> (₹60,000 = 6,000,000); capped at available pool</td></tr>
           </table>
         </div>
         <div class="card">
@@ -602,76 +673,56 @@ erDiagram
             <tr><th>Column</th><th>Notes</th></tr>
             <tr><td>BeneficiaryMilestoneId</td><td>PK</td></tr>
             <tr><td>BeneficiaryId</td><td>FK → who achieved it</td></tr>
-            <tr><td>CaseId / ProgramId</td><td>Optional FKs → ties to the case &amp; program</td></tr>
+            <tr><td>CaseId / ProgramOutcomeMetricId</td><td>Optional FKs → ties to case &amp; the target metric</td></tr>
             <tr><td>MilestoneTitle <span class="req">✔</span></td><td>e.g. "Passed Grade 2"</td></tr>
             <tr><td>TargetValue / AchievedValue</td><td>e.g. "≥85%" / "88%"</td></tr>
-            <tr><td>StatusId <span class="req">✔</span></td><td><code>MILESTONESTATUS</code>: <b>ACHIEVED / INPROGRESS / NOTACHIEVED</b></td></tr>
-            <tr><td>AchievedDate / EvidenceUrl</td><td>Set when achieved</td></tr>
+            <tr><td>StatusId <span class="req">✔</span></td><td>Achieved / In Progress / Not Achieved</td></tr>
           </table>
         </div>
       </div>
 
-      <div class="warn">
-        <b>⚠ Milestone status casing.</b> <code>MILESTONESTATUS</code> DataValues are <b>UPPERCASE</b> (<code>ACHIEVED</code>, <code>INPROGRESS</code>) in the DB. Code that compares them must be case-insensitive (e.g. <code>statusCode.toUpperCase() === "ACHIEVED"</code>) — a PascalCase <code>=== "Achieved"</code> check silently fails and milestones drop off the timeline / turn grey.
-      </div>
-
       <div class="note">
-        <b>History tab = no table.</b> It is assembled at read-time from the case's own dates, its notes, status changes, and action-item updates — merged into one timeline. Nothing to seed or test as storage; just verify the events show in order.
+        <b>History tab = no table.</b> It is assembled at read-time from the case's own dates, its notes, status changes, and action-item updates — merged into one timeline. Nothing to store; it just reflects everything else.
       </div>
 
-      <h3>Lookup values (MasterData seeds)</h3>
+      <h3>Program &amp; funding tables</h3>
+      <div class="grid2">
+        <div class="card">
+          <h3 style="margin-top:0">Program (#51) children</h3>
+          <table>
+            <tr><th>Table</th><th>Holds</th></tr>
+            <tr><td><code>ProgramEligibilityCriteria</code></td><td>Who qualifies (+ document / verification config)</td></tr>
+            <tr><td><code>ProgramServices</code></td><td>Typed service catalogue — service type, provider type, funding flow, optional cost</td></tr>
+            <tr><td><code>ProgramOutcomeMetrics</code></td><td>Targets milestones are measured against</td></tr>
+            <tr><td><code>ProgramStaffs</code></td><td>Program team (+ lead)</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">Fund Allocation (#177) tables</h3>
+          <table>
+            <tr><th>Table</th><th>Holds</th></tr>
+            <tr><td><code>ProgramFundingSources</code></td><td>Each linked grant <i>or</i> donation purpose + allocated amount, cadence, period</td></tr>
+            <tr><td><code>ProgramFundingTransactions</code></td><td>The Payment Log — each payment <b>Waiting</b> or <b>Transferred</b></td></tr>
+          </table>
+          <p style="color:var(--slate); font-size:12.5px; margin-bottom:0">Collected = Σ Transferred · Used = Σ Service Logs · Available = Collected − Used (the spend cap).</p>
+        </div>
+      </div>
+
+      <h3>Lookup values (reference)</h3>
       <table>
-        <tr><th>Type</th><th>Values</th></tr>
-        <tr><td><code>CASEPRIORITY</code></td><td>Critical · High · Medium · Low</td></tr>
-        <tr><td><code>CASESTATUS</code></td><td>Open · In Progress · Pending · Resolved · Closed <i>(no Overdue!)</i></td></tr>
-        <tr><td><code>CASECATEGORY</code></td><td>Educational Support · Medical · Housing · Legal · Nutrition · Protection · Psychosocial · Livelihood · Referral · Other</td></tr>
-        <tr><td><code>CASENOTETYPE</code></td><td>Case Note · Home Visit · Phone Call · Service Delivered · Referral Update · Milestone · Status Change · Case Opened</td></tr>
-        <tr><td><code>CASEACTIONSTATUS</code></td><td>Done · Recurring · Pending · In Progress · Contingent</td></tr>
-        <tr><td><code>CASEREFERRALSTATUS</code></td><td>Pending · Awaiting Response · Accepted · Rejected · Completed</td></tr>
-        <tr><td><code>CASEOUTCOME</code></td><td>Resolved · Partially Resolved · Unresolved · Referred Out · Graduated · Beneficiary Exited</td></tr>
-        <tr><td><code>ENROLLMENTSTATUS</code></td><td>Enrolled · Waitlisted · Graduated · Exited · Suspended <i>(values are UPPERCASE: <code>ENROLLED</code>…)</i></td></tr>
-        <tr><td><code>MILESTONESTATUS</code></td><td>Achieved · In Progress · Not Achieved <i>(values are UPPERCASE: <code>ACHIEVED · INPROGRESS · NOTACHIEVED</code>)</i></td></tr>
+        <tr><th>Lookup</th><th>Values</th></tr>
+        <tr><td>Case priority</td><td>Critical · High · Medium · Low</td></tr>
+        <tr><td>Case status</td><td>Open · In Progress · Pending · Resolved · Closed <i>(Overdue is calculated, not a status)</i></td></tr>
+        <tr><td>Case category</td><td>Educational Support · Medical · Housing · Legal · Nutrition · Protection · Psychosocial · Livelihood · Referral · Other</td></tr>
+        <tr><td>Note type</td><td>Case Note · Home Visit · Phone Call · Service Delivered · Referral Update · Milestone · Status Change · Case Opened</td></tr>
+        <tr><td>Referral status</td><td>Pending · Awaiting Response · Accepted · Rejected · Completed</td></tr>
+        <tr><td>Case outcome</td><td>Resolved · Partially Resolved · Unresolved · Referred Out · Graduated · Beneficiary Exited</td></tr>
+        <tr><td>Program status</td><td>Draft · Pending Approval · Active · Paused · Completed · Rejected</td></tr>
+        <tr><td>Funding model</td><td>Individual · Pool · Grant · Mixed</td></tr>
+        <tr><td>Beneficiary status</td><td>Draft · Active · Waitlist · Graduated · Exited · Suspended · Deceased</td></tr>
+        <tr><td>Enrollment status</td><td>Enrolled · Waitlisted · Graduated · Exited · Suspended</td></tr>
+        <tr><td>Milestone status</td><td>Achieved · In Progress · Not Achieved</td></tr>
       </table>
-    </section>
-
-
-    <!-- ============================================================
-         SECTION 5 — SEED DATA
-    ============================================================ -->
-    <section id="seed">
-      <h2><span class="num">5</span> Seed Data — Load the Example</h2>
-      <p class="lead">Three ready-to-run PostgreSQL scripts under <code>PSS_2.0_Backend/DatabaseScripts/Seed/</code> recreate exactly the example in this guide. All are <b>idempotent</b> (safe to re-run) and scoped to company 1.</p>
-
-      <table>
-        <tr><th>File</th><th>What it creates</th><th>Codes</th></tr>
-        <tr>
-          <td><code>seed_case_lifecycle_flows.sql</code></td>
-          <td>ONE program with all <b>three lifecycle variants</b> (Rohan started / Aisha in progress / Fatima completed). Self-cleans its own rows <b>and</b> the old <code>DEMO_FLOW</code> sample first.</td>
-          <td><code>DEMO_LIFECYCLE</code>, <code>DEMO_LC_*</code></td>
-        </tr>
-        <tr>
-          <td><code>seed_case_manual_flow.sql</code></td>
-          <td>The same <b>in-progress</b> set (Aisha), written as <b>13 plain step-by-step INSERTs</b> — the way a worker creates it by walking the screens. No loops / variables; each step <code>NOT EXISTS</code>-guarded.</td>
-          <td><code>MAN_EDU</code>, <code>MAN_AISHA</code>, <code>MAN_CASE_AISHA</code></td>
-        </tr>
-        <tr>
-          <td><code>cleanup_case_management_by_program.sql</code></td>
-          <td>Wipes the <b>entire</b> case-management footprint of one program (set <code>v_program_id</code> or <code>v_program_code</code>) — logs, milestones, case children, cases, enrollments, beneficiaries, program children — FK-safe.</td>
-          <td>parameterised</td>
-        </tr>
-      </table>
-
-      <div class="warn">
-        <b>Prereqs (master data — not seeded by these files):</b> run <code>Program-sqlscripts.sql</code>, <code>Beneficiary-sqlscripts.sql</code> and <code>Case_Seed.sql</code> first, and have ≥1 <code>app.Branches</code> + <code>app.Staffs</code> row for company 1.
-      </div>
-
-      <div class="note">
-        <b>Cleanup keeps shared beneficiaries safe.</b> A beneficiary enrolled in more than one program is <i>not</i> deleted by default — only their rows for the target program are removed. Set <code>v_force_all = true</code> to delete every touched beneficiary regardless (also wipes their data in other programs).
-      </div>
-
-      <div class="note">
-        <b>Money:</b> Service-Log <code>AmountCents</code> is stored in <b>paise</b> — ₹60,000 → <code>6000000</code>, ₹8,000 → <code>800000</code>.
-      </div>
     </section>
 
   </main>
@@ -681,6 +732,103 @@ erDiagram
   mermaid.initialize({ startOnLoad:true, theme:'base', securityLevel:'loose',
     themeVariables:{ primaryColor:'#ecfeff', primaryBorderColor:'#0e7490', primaryTextColor:'#0f172a',
       lineColor:'#0e7490', fontFamily:'-apple-system,Segoe UI,Roboto,sans-serif' } });
+</script>
+
+<!-- ===== fullscreen modal — zoom + drag, shared by every diagram / flow ===== -->
+<script>
+(function(){
+  var modal=document.createElement('div');
+  modal.className='fs-modal';
+  modal.innerHTML=
+    '<div class="fs-toolbar">'+
+      '<span class="fs-title"></span>'+
+      '<button class="fs-out" title="Zoom out">−</button>'+
+      '<span class="fs-zoomval">100%</span>'+
+      '<button class="fs-in" title="Zoom in">+</button>'+
+      '<button class="fs-fit" title="Reset zoom &amp; position">↻ Fit</button>'+
+      '<button class="fs-close" title="Close (Esc)">✕ Close</button>'+
+    '</div>'+
+    '<div class="fs-viewport">'+
+      '<div class="fs-canvas"></div>'+
+      '<div class="fs-hint">Scroll to zoom · drag to move · Esc to close</div>'+
+    '</div>';
+  document.body.appendChild(modal);
+
+  var titleEl=modal.querySelector('.fs-title'),
+      zoomVal=modal.querySelector('.fs-zoomval'),
+      viewport=modal.querySelector('.fs-viewport'),
+      canvas=modal.querySelector('.fs-canvas'),
+      scale=1, tx=0, ty=0, placeholder=null, hostEl=null;
+
+  function apply(){
+    canvas.style.transform='translate('+tx+'px,'+ty+'px) scale('+scale+')';
+    zoomVal.textContent=Math.round(scale*100)+'%';
+  }
+  function reset(){ scale=1; tx=0; ty=0; apply(); }
+  function zoom(d){ scale=Math.min(5, Math.max(0.3, scale+d)); apply(); }
+
+  function open(el, title){
+    hostEl=el;
+    placeholder=document.createComment('fs-slot');
+    el.parentNode.insertBefore(placeholder, el);
+    canvas.appendChild(el);
+    titleEl.textContent=title||'Diagram';
+    modal.classList.add('open');
+    reset();
+  }
+  function close(){
+    if(placeholder && hostEl){
+      placeholder.parentNode.insertBefore(hostEl, placeholder);
+      placeholder.parentNode.removeChild(placeholder);
+    }
+    placeholder=null; hostEl=null;
+    modal.classList.remove('open');
+  }
+
+  modal.querySelector('.fs-in').addEventListener('click',function(){ zoom(0.2); });
+  modal.querySelector('.fs-out').addEventListener('click',function(){ zoom(-0.2); });
+  modal.querySelector('.fs-fit').addEventListener('click',reset);
+  modal.querySelector('.fs-close').addEventListener('click',close);
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape' && modal.classList.contains('open')) close(); });
+
+  viewport.addEventListener('wheel',function(e){ e.preventDefault(); zoom(e.deltaY<0?0.12:-0.12); },{passive:false});
+
+  var dragging=false, sx=0, sy=0;
+  viewport.addEventListener('mousedown',function(e){
+    if(e.target.closest('button')) return;
+    dragging=true; sx=e.clientX-tx; sy=e.clientY-ty; viewport.classList.add('grabbing');
+  });
+  window.addEventListener('mousemove',function(e){ if(!dragging) return; tx=e.clientX-sx; ty=e.clientY-ty; apply(); });
+  window.addEventListener('mouseup',function(){ dragging=false; viewport.classList.remove('grabbing'); });
+
+  function titleFor(el){
+    if(el.classList.contains('stage-wrap')) return '🎓 Live Flow — Fatima Ali, intake to graduation';
+    if(el.classList.contains('mermaid')){
+      var t=(el.textContent||'').trim();
+      if(t.indexOf('stateDiagram')===0) return '🔄 Case status lifecycle';
+      if(t.indexOf('flowchart')===0) return '🗺 Full data-creation map';
+      if(t.indexOf('sequenceDiagram')===0) return '💬 Communication sequence';
+      if(t.indexOf('erDiagram')===0) return '🗂 How the tables relate';
+    }
+    return 'Diagram';
+  }
+
+  function attach(){
+    var hosts=document.querySelectorAll('.stage-wrap, .mermaid');
+    for(var i=0;i<hosts.length;i++){
+      (function(el){
+        if(el.classList.contains('fs-host')) return;
+        el.classList.add('fs-host');
+        var btn=document.createElement('button');
+        btn.className='fs-btn'; btn.type='button'; btn.title='Open full screen'; btn.innerHTML='⛶';
+        btn.addEventListener('click',function(ev){ ev.stopPropagation(); open(el, titleFor(el)); });
+        el.appendChild(btn);
+      })(hosts[i]);
+    }
+  }
+  if(document.readyState==='complete') attach();
+  else window.addEventListener('load',attach);
+})();
 </script>
 </body>
 </html>

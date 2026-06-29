@@ -1000,3 +1000,18 @@ The `P2PFundraiser` entity is **owned by #170 P2PCampaignPage** (parent-with-chi
   - ISSUE-2 (CLOSED) — `actions` GridComponentName now resolves via `p2p-fundraiser-actions` case in `component-column.tsx`; DB seed updated accordingly.
   - Session 1 deviation #10 — superseded; FE grid IS now the shared FlowDataTable.
 - **Next step**: User runs (1) re-apply `sql-scripts-dyanmic/P2PFundraiser-sqlscripts.sql` (idempotent — adds `P2PF_ACTIONS` Field row + new GridField row + flips PK `IsPrimary` to false on prior-seeded rows); (2) `dotnet build` to confirm BE compiles; (3) `pnpm dev` + smoke-test `/[lang]/crm/p2pfundraising/p2pfundraiser` — grid should render via `<FlowDataTableContainer>`, status-conditional action buttons should appear in the rightmost column for each row, chip + campaign + search + sort still filter correctly.
+
+---
+
+## ⑭ SOURCE-2 FUNDING INTEGRATION & SETTINGS→CRM RELOCATION (planned 2026-06-29 — design only, do NOT build this pass)
+
+**Source-2 context:** "Fundraising Campaigns" is one of the two MAIN Case-Management funding sources (with Grant). Menu reorg applied 2026-06-29: parent renamed **"P2P Fundraising" → "Fundraising Campaigns"** (code `CRM_P2PFUNDRAISING` unchanged), CRM order 8; **THIS screen = "P2P Fundraisers", order 3**; siblings = Campaigns · Campaign Pages · Crowdfunding · Crowdfunding Page.
+
+**How Source-2 money funds a program (Option-A, locked):** an individual fundraiser **inherits its parent P2P campaign's linked DonationPurpose** — it has NO own program linkage. The parent campaign's purpose → ProgramFundingSource is the bridge; donations a fundraiser collects roll up to the same program **Collected** as the campaign. No new funding field on this screen.
+
+**⚠ G9 gap (design-only — do NOT build yet):** donation-layer money does not yet auto-roll-up into program Collected (`fund.GlobalDonations` lacks `DonationPurposeId`; `case.ProgramFundingTransaction` lacks `GlobalDonationId`). Bridge = §5 fork in memory `project_case_fund_accounting_redesign`.
+
+**Settings→CRM relocation impact (target screen #170 relocates; THIS screen only updates its deep-links — planned, NOT executed this pass):**
+- #170 P2PCampaignPage admin route moves `setting/publicpages/p2pcampaignpage` → `crm/p2pfundraising/p2pcampaignpage`.
+- **Update the 2 deep-links** in this prompt + its built FE that target `setting/publicpages/p2pcampaignpage` → `crm/p2pfundraising/p2pcampaignpage` (row Edit `?id={P2PCampaignPageId}&tab=fundraisers`; "Edit Page"/override `?id={...}&tab=fundraisers&fundraiserId={id}`). Prompt lines ~53/446/846 plus the FE components they describe.
+- This screen's own route `crm/p2pfundraising/p2pfundraiser` does NOT change (already CRM). Public child page `(public)/p2p/{parentSlug}/{slug}` does NOT change.
