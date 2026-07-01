@@ -525,9 +525,9 @@ These are the screens that need work, ordered by priority tier. Within each tier
 
 | # | Screen | Module | Type | Status | Notes |
 |---|--------|--------|------|--------|-------|
-| 2 | Donation Purpose | Fundraising | MASTER_GRID | COMPLETED | Completed 2026-04-18 |
-| 3 | Donation Category | Fundraising | MASTER_GRID | COMPLETED | Completed 2026-04-18 |
-| 4 | Donation Group | Fundraising | MASTER_GRID | COMPLETED | Completed 2026-04-18 |
+| 2 | Donation Purpose | Fundraising | MASTER_GRID | COMPLETED | Completed 2026-04-18. Session 2 (2026-06-29): combined #2+#3+#4 into single tabbed "Donation Configuration" screen (route `setting/donationconfig`, menu `DONATIONCONFIG`). FE-only shell reusing the 3 grids unchanged; seed hides the 3 child menus via ISMENURENDER=false (kept IsActive=true so tab CRUD works). |
+| 3 | Donation Category | Fundraising | MASTER_GRID | COMPLETED | Completed 2026-04-18. Session 2 (2026-06-29): now the "Categories" tab of combined "Donation Configuration" (#2+#3+#4). Standalone DONATIONCATEGORY menu hidden; grid unchanged. See donationpurpose.md Session 2. |
+| 4 | Donation Group | Fundraising | MASTER_GRID | COMPLETED | Completed 2026-04-18. Session 2 (2026-06-29): now the "Groups" tab of combined "Donation Configuration" (#2+#3+#4). Standalone DONATIONGROUP menu hidden; grid unchanged. See donationpurpose.md Session 2. |
 | 19 | Contact Type | Contacts | MASTER_GRID | NEEDS_FIX | Session 2 (2026-04-18 UI): ScreenHeader moved to page top; 4 prior known issues still open |
 | 26 | Placeholder Definition | Communication | MASTER_GRID | COMPLETED | Completed 2026-04-19 Ã¢â‚¬â€ FLOWÃ¢â€ â€™MASTER_GRID conversion + ALIGN BE. 2 BE created + 7 modified + seed (51 rows). 8 FE deleted + 1 rewritten + 7 created + 7 modified. Orchestrator patched type-badge renderer mid-session. Variant B verified. 7 OPEN + 3 resolved. |
 | 41 | Branch | Organization | MASTER_GRID | COMPLETED | Completed 2026-04-18 |

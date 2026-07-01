@@ -495,3 +495,11 @@ _(none — this is a standard master-grid CRUD screen; every action has a backen
 - **Known issues opened**: ISSUE-1, ISSUE-2, ISSUE-3, ISSUE-4, ISSUE-5 (see table above).
 - **Known issues closed**: Resolves DonationPurpose (#2) ISSUE-1 at the data-model layer (new DonationGroupId FK). Follow-up to re-enable Category→Group auto-fill in #2 modal is tracked as ISSUE-5 here.
 - **Next step**: (empty — COMPLETED). User should run the migration + seed SQL, then `dotnet build` and `pnpm dev` for full E2E verification.
+
+### Session 2 — 2026-06-29 — ENHANCE — COMPLETED
+
+- **Scope**: This screen's grid (`DonationCategoryDataTable`) is now mounted as the **"Categories" tab** of the new combined **"Donation Configuration"** screen (#2+#3+#4 consolidation, reverting to the original 3-tab mockup). FE-only; **zero backend changes** — this grid, its entity, queries and mutations are untouched and still resolve CRUD by `gridCode="DONATIONCATEGORY"`.
+- **Files touched**: None owned by this screen. New combined shell + seed live with screen #2 — see **donationpurpose.md Session 2** for the full file manifest and RBAC mechanics. Net effect here: the standalone `DONATIONCATEGORY` sidebar menu is hidden (its ISMENURENDER role-grant set to `HasAccess=false`); the menu stays `IsActive=true` so the Categories tab keeps full CRUD. The standalone route `setting/donationconfig/donationcategory` is left in place for count-link deep-links.
+- **Deviations from spec**: Supersedes the "build as standalone grid" note in §⑥/§⑫ — the grid now lives inside a tabbed shell. No code change to the grid itself.
+- **Known issues opened/closed**: None.
+- **Next step**: See donationpurpose.md Session 2 (run `DonationConfig-sqlscripts.sql`, re-login, verify).
