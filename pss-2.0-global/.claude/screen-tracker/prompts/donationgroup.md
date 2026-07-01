@@ -500,3 +500,11 @@ _(none — this is a standard master-grid CRUD screen; every action has a backen
 - **Next step**: (empty — build COMPLETED)
   - Deploy steps for user: (a) run `DonationGroup-sqlscripts.sql` against target DB; (b) verify `dotnet ef database update` completes cleanly (the DB already has the nullable change applied in the working env); (c) `pnpm dev` → navigate to `/{lang}/setting/donationconfig/donationgroup` → test CRUD + "Categories" click-through.
   - Future cleanup (non-blocking): resolve ISSUE-1 by either (a) creating a dedicated migration that performs the DonationGroup.Description nullable AlterColumn and is additive-safe on DBs where the change was already applied, OR (b) renaming the on-disk migration and adding the missing AlterColumn step guarded by an existence check.
+
+### Session 2 — 2026-06-29 — ENHANCE — COMPLETED
+
+- **Scope**: This screen's grid (`DonationGroupDataTable`) is now mounted as the **"Groups" tab** of the new combined **"Donation Configuration"** screen (#2+#3+#4 consolidation, reverting to the original 3-tab mockup). FE-only; **zero backend changes** — this grid, its entity, queries and mutations are untouched and still resolve CRUD by `gridCode="DONATIONGROUP"`.
+- **Files touched**: None owned by this screen. New combined shell + seed live with screen #2 — see **donationpurpose.md Session 2** for the full file manifest and RBAC mechanics. Net effect here: the standalone `DONATIONGROUP` sidebar menu is hidden (its ISMENURENDER role-grant set to `HasAccess=false`); the menu stays `IsActive=true` so the Groups tab keeps full CRUD. The standalone route `setting/donationconfig/donationgroup` is left in place for count-link deep-links.
+- **Deviations from spec**: Supersedes the "build as standalone grid" note in §⑥/§⑫ — the grid now lives inside a tabbed shell. No code change to the grid itself.
+- **Known issues opened/closed**: None.
+- **Next step**: See donationpurpose.md Session 2 (run `DonationConfig-sqlscripts.sql`, re-login, verify).

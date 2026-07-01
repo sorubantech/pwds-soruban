@@ -519,3 +519,42 @@ _(none — this is a standard master-grid CRUD screen; every action has a backen
 - **Known issues opened**: ISSUE-1 (Category→Group auto-fill data-model gap), ISSUE-2 (DB column nullability migration required), ISSUE-3 (RaisedAmount aggregation scope limited to one source table)
 - **Known issues closed**: None
 - **Next step**: (empty — COMPLETED; manual verification pending per checklist)
+
+### Session 2 — 2026-06-29 — ENHANCE — COMPLETED
+
+- **Scope**: Combined screens #2 (Donation Purpose) + #3 (Donation Category) + #4 (Donation Group) into a single tabbed screen **"Donation Configuration"** — reverting to the original `donation-purposes.html` 3-tab mockup. FE-only shell + RBAC menu seed; **zero backend changes** (all 3 entities, queries, mutations, grids untouched). Each tab mounts the existing zero-prop data-table unchanged, so each grid keeps resolving its own CRUD capabilities by its own `gridCode`.
+- **Files touched**:
+  - BE: None.
+  - FE (created):
+    - `src/presentation/components/page-components/setting/donationconfig/donationconfig/index-page.tsx` (new `DonationConfigPage` tabbed shell — ScreenHeader + Tabs[purpose|category|group], `?tab=` URL state, modelled on `ReceiptManagementPage`)
+    - `src/presentation/components/page-components/setting/donationconfig/donationconfig/index.ts` (barrel)
+    - `src/presentation/pages/setting/donationconfig/donationconfig.tsx` (`DonationConfigPageConfig` — gates on `DONATIONCONFIG` menu capability)
+    - `src/app/[lang]/setting/donationconfig/page.tsx` (route → `/{lang}/setting/donationconfig`)
+  - FE (modified):
+    - `src/presentation/pages/setting/donationconfig/index.ts` (export `DonationConfigPageConfig`)
+  - DB (created):
+    - `PSS_2.0_Backend/.../sql-scripts-dyanmic/DonationConfig-sqlscripts.sql` (idempotent: create `DONATIONCONFIG` menu inheriting parent/module from `DONATIONPURPOSE`; MenuCapabilities; grant READ+ISMENURENDER to BUSINESSADMIN + mirror to any role that renders `DONATIONPURPOSE`; hide the 3 child menus from the sidebar by flipping their ISMENURENDER role-grant `HasAccess=false`).
+  - The standalone routes `setting/donationconfig/{donationpurpose,donationcategory,donationgroup}` are LEFT in place so the Category→Purpose / Group→Category count-link click-throughs (deep-links) keep working.
+- **Key RBAC mechanics confirmed (BE read-only investigation)**:
+  - Sidebar visibility (`GetParentChildMenu`) = a menu renders IFF the role has an ISMENURENDER RoleCapability `HasAccess=true` for it (ancestors auto-included). → hiding the 3 children = flip their ISMENURENDER to false.
+  - Grid CRUD (`GetRoleCapabilityByUser`, consumed by `AdvancedDataTable` via its `gridCode`) filters on `Menu.IsActive=true`. → the 3 child menus MUST stay `IsActive=true`; do NOT deactivate them, or the tab grids lose Add/Edit/Delete.
+- **Deviations from spec**: This consolidates what `/plan-screens` had deliberately split into 3 standalone menus (per the now-superseded "build as standalone grid" note in §⑫ of all three prompts). The standalone build artifacts remain valid and untouched; only menu presentation changed.
+- **Known issues opened**: None new. (Carry-over: the count-link `{lang}` prefix limitation from #3 ISSUE-1 still applies to the click-throughs.)
+- **Known issues closed**: None.
+- **Next step**: User to (a) run `DonationConfig-sqlscripts.sql` against the target DB, (b) **re-login** so the refreshed RoleCapabilities load, (c) `pnpm dev` → verify `/{lang}/setting/donationconfig` shows 3 tabs with full CRUD per tab and the 3 old menus no longer appear in the sidebar.
+
+### Session 3 — 2026-06-29 — FIX — COMPLETED
+
+- **Scope**: Two cleanups on the combined Donation Configuration screen per user feedback. (1) Removed the now-redundant standalone routes. (2) Removed duplicate per-tab page header + breadcrumbs (the shell already renders title + breadcrumbs).
+- **Files touched**:
+  - FE (deleted — standalone routes + dead page-configs, only consumers were these routes):
+    - `src/app/[lang]/setting/donationconfig/{donationpurpose,donationcategory,donationgroup}/page.tsx`
+    - `src/presentation/pages/setting/donationconfig/{donationpurpose,donationcategory,donationgroup}.tsx`
+  - FE (modified):
+    - `.../donationconfig/{donationpurpose,donationcategory,donationgroup}/data-table.tsx` — added optional `showHeader?: boolean` prop (default `true`), forwarded to `AdvancedDataTable`.
+    - `.../donationconfig/donationconfig/index-page.tsx` — pass `showHeader={false}` to all 3 tab grids. `AdvancedDataTable` with `showHeader={false}` renders only the grid card (toolbar + table) and skips the page header/breadcrumb block (`data-table-container.tsx` line 641) — toolbar New/Search/Export still render (shared `gridCard`).
+    - `src/presentation/pages/setting/donationconfig/index.ts` — dropped the 3 removed page-config exports.
+- **Deviations from spec**: None.
+- **Known issues opened**: The "Purposes"/"Categories" count-link click-throughs (DB-seed `linkTemplate` on the Category/Group GridFields) still point to the removed standalone routes `setting/donationconfig/donationpurpose|donationcategory?...` → they now 404. Proper fix (future): make the count-link switch tabs within the combined screen (`?tab=purpose` + filter) instead of navigating to a standalone route.
+- **Known issues closed**: None.
+- **Next step**: (empty — COMPLETED).

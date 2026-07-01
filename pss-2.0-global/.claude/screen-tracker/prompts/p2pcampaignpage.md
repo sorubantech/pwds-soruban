@@ -1768,6 +1768,161 @@ Full UI must be built (5 setup tabs, 4 public render trees including wizard, don
 - **Known issues closed**: None.
 - **Next step**: User retests `getAllFundraisersByP2PCampaignPage` admin query (expected to succeed); also retests `getP2PFundraiserStats` and the public child query if exercised.
 
+### Session 4 — 2026-06-30 — ENHANCE — COMPLETED (BE build pending)
+
+- **Scope**: Port the CrowdFunding (#173) editor "structure" onto this combined #15/#170 P2P campaign-page screen — 3-step publish lifecycle + edit-lock, accurate dirty-count, Public-page-URL bar, and a persistent split-pane live preview. (#15 is the main entry; #170 is the page editor.)
+- **Files touched**:
+  - BE (2 NEW + 2 MODIFY — **user must `dotnet build`**):
+    - `…/DonationBusiness/P2PCampaignPages/LifecycleCommands/MarkP2PCampaignPageReadyToPublish.cs` (NEW) — Draft → ReadyToPublish.
+    - `…/LifecycleCommands/RevertP2PCampaignPageToDraft.cs` (NEW) — ReadyToPublish → Draft.
+    - `…/LifecycleCommands/PublishP2PCampaignPage.cs` — now accepts source status Draft **or** ReadyToPublish (guard added before validation).
+    - `…/EndPoints/Donation/Mutations/P2PCampaignPageMutations.cs` — registered `markP2PCampaignPageReadyToPublish` + `revertP2PCampaignPageToDraft` endpoints. `PageStatus` is a free-text string column, so **no enum / no migration / no seed**.
+  - FE (modified — 6, NEW — 1):
+    - `…/p2pcampaignpage/p2pcampaignpage-store.ts` — `setField`/`patch` now clear the dirty flag when a value reverts to `lastSaved` (port of CrowdFund `isSameAsSaved`); fixes the "count stuck at 1 after editing back" bug.
+    - `…/p2pcampaignpage/components/public-page-url-bar.tsx` (NEW) — Copy/Open bar for `/{lang}/p2p/{slug}`, reads slug live from store; rendered OUTSIDE the lock fieldset.
+    - `…/p2pcampaignpage/editor-page.tsx` — 3-step publish pill (Draft → **Mark as Ready to Publish**; ReadyToPublish → **Cancel Ready to Publish** + **Publish**); `isLocked = !isNew && !isDraft` wraps tab content in `<fieldset disabled>`; Draft helper + amber lock banners; Save button shows `Save Draft (N)`; Configuration tab now a split-pane `[editor | LivePreview]` (preview outside the lock); URL bar above tabs on both tabs.
+    - `…/p2pcampaignpage/components/status-bar.tsx` — added `ReadyToPublish` chip (amber).
+    - `…/p2pcampaignpage/components/live-preview.tsx` — now actually rendered (was orphaned).
+    - `domain/entities/donation-service/P2PCampaignPageDto.ts` — `P2PCampaignPageStatus` union gains `"ReadyToPublish"`.
+    - `infrastructure/gql-mutations/donation-mutations/P2PCampaignPageMutation.ts` — `MARK_P2P_CAMPAIGN_PAGE_READY_TO_PUBLISH` + `REVERT_P2P_CAMPAIGN_PAGE_TO_DRAFT`.
+- **Build status**: FE `tsc --noEmit` PASSED (0 errors for the P2P area). BE NOT yet built (user builds BE).
+- **Deviations from spec**: P2P Publish does **not** auto-advance Published→Active (CrowdFund does) — dates live on the wrapped Campaign, not the page entity, so the auto-advance was skipped to avoid a Campaign join. Live states (Published/Active) are both treated as "locked" by the editor regardless.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step (not done this pass)**: (E) broader uniform-section / canonical-form-field / currency-formatter polish across the Configuration tab (status-bar still uses `Intl.NumberFormat(undefined)`); (F) align the #15 CRM list/flow grid row-actions with the CrowdFunding list. Confirm priority with user.
+
+### Session 5 — 2026-06-30 — ENHANCE/AUDIT — COMPLETED
+
+- **Scope**: Close out the Session-4 "next step" items (E uniform-section/currency, F #15 grid row-actions). One concrete fix + two audit confirmations.
+- **Files touched**:
+  - FE: `…/p2pcampaignpage/components/status-bar.tsx` — replaced the inline `Intl.NumberFormat(undefined, …)` currency helper with the app-wide tenant-aware canonical `formatCurrency` from `@/presentation/utils/companySettingsFormatters` (honors org number-format / separators / symbol placement; matches the KPI widgets which already use `formatCompactCurrency`). Call sites unchanged (`formatCurrency(value, code)`).
+  - BE/DB: None.
+- **Audit findings (no change needed)**:
+  - **(E) Uniform sections** — already at parity: all 5 Configuration sub-tabs (`fundraiser-settings`, `donation-settings`, `branding-page`, `communication`, `basic-info`) already render through the canonical `SectionCard`/`SubSection` chrome. Nothing to refactor.
+  - **(F) #15 CRM grid row-actions** — already at/above CrowdFunding parity. `P2PCampaignActionsCell` is fully wired (registered in all three grid column dispatchers: basic/advanced/flow, case `"p2p-campaign-actions"`) and is *richer* than CrowdFunding's plain native View/Edit/Delete — it renders status-conditional Dashboard / Edit / View / Duplicate / Delete. The remaining cosmetic gap vs CrowdFunding (status chips lack count badges) needs new per-status summary count fields on the BE `P2PCampaignSummaryDto` (currently only `activeCount` / `totalCount`) — deferred, not built (would require a BE change + user build).
+- **Deviations from spec**: P2P status-bar now uses the canonical tenant-aware formatter while CrowdFunding's own status-bar still uses `Intl.NumberFormat(undefined)` — deliberate (canonical-reuse outranks mirroring the inferior inline formatter). CrowdFunding's status-bar could get the same one-line upgrade later; left untouched to keep this session scoped to #170 and avoid parallel-session churn.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: (Optional) add per-status count badges to the #15 chips — requires BE `P2PCampaignSummaryDto` count fields (completed/draft/archived). (Optional) port the same canonical-currency one-liner into CrowdFunding's `status-bar.tsx` for cross-screen uniformity.
+
+---
+
+### Session 6 — 2026-06-30 — UI — COMPLETED
+
+- **Scope**: Three user-reported polish items on the editor — (1) currency still not symbol-aware in the top bar + goal-range + minimum-donation fields, (2) Configuration sections not ordered header→content→footer, (3) color picker lacked preset swatches like CrowdFunding.
+- **Files touched**:
+  - FE (new): `…/p2pcampaignpage/use-editor-currency.ts` — shared `useEditorCurrency()` hook resolving the campaign currency CODE + the tenant currency SYMBOL (₹/$) via `useCompanyCurrency` (CURRENCY_BY_ID lookup), returning `{ code, symbol, prefix }`. Single source of truth for the editor's display currency; symbol only borrowed when campaign code === org base code, else falls back to the code.
+  - FE: `components/status-bar.tsx` — new optional `currencySymbol` prop threaded into the canonical `formatCurrency` (`currencySymbol` option) so the top bar renders the symbol instead of the bare ISO code.
+  - FE: `editor-page.tsx` — calls `useEditorCurrency()`, passes `currencyCode={currency.code}` + `currencySymbol={currency.symbol}` to `StatusBar` (replaces the hard-coded `page.goalCurrencyCode ?? "USD"`).
+  - FE: `tabs/basic-info-tab.tsx`, `tabs/fundraiser-settings-tab.tsx`, `tabs/donation-settings-tab.tsx` — every money adornment (Campaign Goal, goal-range trio, Default Team Goal, Minimum Donation, amount-chips) now uses `cur.prefix` from the hook instead of `page.goalCurrencyCode ?? "USD"`.
+  - FE: `components/live-preview.tsx` — progress widget currency now uses `cur.prefix` (was `snapshot.goalCurrencyCode ?? "$"`), keeping the preview consistent with the form.
+  - FE: `tabs/configuration-tab.tsx` — reordered to mirror the public page (CrowdFunding parity): **Public Page (BrandingPageTab)** at the top → **Campaign Setup (Fundraiser + Donation settings)** in the center → **Communications (CommunicationTab)** last, each under a `RegionHeading` divider (icon + uppercase title + subtitle + rule). Was: Fundraiser, Donation, Branding, Communication.
+  - FE: `tabs/branding-page-tab.tsx` — swapped the bespoke hex-only `../components/color-picker` for the canonical preset-aware `setting/publicpages/onlinedonationpage/components/color-picker` (preset swatches + WCAG contrast hint), added the 12-swatch `P2P_COLOR_PRESETS` palette, and wrapped Primary/Secondary pickers with their own label + description (canonical picker has no `label`/`description` props).
+  - BE/DB: None.
+- **Deviations from spec**: None. The bespoke `components/color-picker.tsx` is now orphaned (only branding-page-tab used it) — left in place to keep the change surface minimal; safe to delete later.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: None (chip count-badges item from Session 5 still open, BE-dependent). Typecheck clean in `src/` (only the pre-existing stale `.next` types artifact for the old `setting/publicpages/p2pcampaignpage` route remains, unrelated).
+
+---
+
+### Session 7 — 2026-07-01 — UI — COMPLETED (DB re-seed pending)
+
+- **Scope**: On the #15 P2PCampaign **index grid**, switch the per-row actions from the bespoke status-conditional button cluster (custom `P2PCampaignActionsCell`: Dashboard / Edit / View-page / Duplicate / Delete) to the **standard FlowDataTable action column** (View / Edit / Delete icons), mirroring CrowdFunding.
+- **Root cause**: The grid deliberately seeded the PK GridField `IsPrimary=false` to suppress the standard `ActionColumnBuilder`, and injected a custom component-column (`GridComponentName='p2p-campaign-actions'`) instead. The default action column only renders when a GridField has `IsPrimary=true` (populates `primaryColumn` → `ActionColumnBuilder`) AND capability grants read/update/delete.
+- **Files touched**:
+  - DB: `sql-scripts-dyanmic/P2PCampaign-sqlscripts.sql` — (a) PK GridField `P2PCAMPAIGNPAGEID` flipped `IsPrimary=false → true` (both the INSERT for fresh DBs and the idempotent re-point UPDATE for already-seeded DBs); (b) the custom actions column (#10, `P2PC_ACTIONS` / `p2p-campaign-actions`) INSERT replaced with a soft-delete UPDATE (`IsActive=false, IsDeleted=true`) so it doesn't double up with the standard column.
+  - FE: `p2pcampaign/index-page.tsx` — `enableActions` flipped to `{ enableView: true, enableEdit: true, enableDelete: true, enableToggle: false }`. Also enabled the toolbar's **advanced filter** (`enableAdvanceFilter: true` — CrowdFunding parity; columns already seeded `IsFilterable=true`) and the **column chooser** (`enableSelectField: true` — show/hide/reorder). Sorting was already on (`enableSorting: true`). These were previously all `false`, which is why the filter + columns toolbar buttons weren't showing.
+  - FE: `p2pcampaign/index.tsx` (URL dispatcher) — now catches `?mode=read` (the standard View eye action's deep-link) alongside `?mode=edit`, opening the editor. View behaviour chosen by the user (editor has no separate read-only surface).
+- **Standard actions wiring** (already in place, no change): Edit → `?mode=edit&id` → editor; Delete → `DataTableOperationConfigs['P2PCAMPAIGN'].delete` = `DELETE_P2P_CAMPAIGN_PAGE_HARD` (Draft-only guards enforced at the GQL layer, so the standard confirm dialog is safe); PK resolves from the now-`IsPrimary=true` GridField.
+- **Deviations from spec**: View (eye) opens the editor rather than a read-only detail drawer — CrowdFunding uses a `?mode=read` drawer, but P2P has none and the editor has no read-only mode; per user decision, View reuses the editor. The custom `p2p-campaign-actions-cell.tsx`, its 3 `component-column.tsx` registrations, and the `Duplicate`/`Delete` P2P modals mounted in `index-page.tsx` are now orphaned (GridField deactivated → never rendered) — left in place to keep the change surface minimal and avoid touching shared wiring files; safe to remove later.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: User re-runs `P2PCampaign-sqlscripts.sql` against the DB (the `IsPrimary` flip + custom-column soft-delete are idempotent UPDATEs), then hard-refresh the grid. FE typecheck clean in `src/` (only the pre-existing stale `.next` artifact remains). No BE/build change this session.
+
+---
+
+### Session 8 — 2026-07-01 — FIX/UI — COMPLETED (BE build pending)
+
+Five reviewer items on the #170 editor + public donate form, CrowdFunding as reference.
+
+- **Item 1 — Save Draft button (count)**: Draft-branch button in `editor-page.tsx` re-labelled to CrowdFunding parity — ADD mode shows plain `Save Draft` (nothing to count yet), EDIT mode shows `Save Draft (N)` when dirty else `Saved`. Dropped the always-on pulsing dot (the count IS the signal) and added a saving spinner. Disabled-when-clean already held (`canSave = isDirty` in edit mode).
+- **Item 2 — Currency default**: new campaigns now inherit the **company base currency**. Added a `useCompanyCurrency()` seeding effect in `editor-page.tsx` that, once the company currency resolves and only while `goalCurrencyId` is still empty, patches `{ goalCurrencyId, goalCurrencyCode }` — so every money field (goal, minimum, chips) shows the right symbol from the start. Picker stays editable (CrowdFunding parity; user decision).
+- **Item 3 — Field order**: in `donation-settings-tab.tsx` the **Payment Gateway** select now sits **above** the payment-method list (gateway is the parent choice, methods are what it accepts).
+- **Item 4 — Donor identity (contact code OR name+email)**: user decision = **donor chooses either at donate time**. Public `donate-form.tsx` gained a segmented toggle ("New donor" = first/last/email · "I have a contact code" = single code input); `canSubmit` + submit payload switch on the mode and send only the chosen path (other side null). BE `InitiateP2PDonationDto` (in `P2PFundraiserSchemas.cs`) — `FirstName/LastName/Email` made nullable + new `ContactCode`; validator now conditionally requires name+email only when `ContactCode` is empty; handler logs a unified `donor=` ref (email or `contactCode:…`) and documents the deferred contact-by-code resolution (still SERVICE_PLACEHOLDER — no persistence yet). Admin builder (`donation-form-fields.tsx`) got a note that its toggle now only sets which path shows first.
+- **Item 5 — Missing asterisks**: backend publish-validation requires Campaign **Story**, Campaign **Type**, ≥1 **Payment Method**, ≥1 **Amount chip (or custom)** — none showed a `*`. Added `required?` support to `SubSection` (`section-card.tsx`) and marked Campaign Type + Campaign Story (`basic-info-tab.tsx`), Payment Methods + Donation Amounts (`donation-settings-tab.tsx`, incl. an "add one amount or enable custom" hint). Description already had its `*`. Validation itself was correct — this was purely the missing UX affordance.
+- **Files touched**:
+  - FE: `p2pcampaignpage/editor-page.tsx` (items 1, 2), `tabs/donation-settings-tab.tsx` (items 3, 5), `tabs/basic-info-tab.tsx` (item 5), `components/section-card.tsx` (item 5 — `SubSection required?`), `components/donation-form-fields.tsx` (item 4 note), `public/p2pcampaignpage/components/donate-form.tsx` (item 4).
+  - BE (compiling, **user builds**): `Base.Application/Schemas/DonationSchemas/P2PFundraiserSchemas.cs` (DTO), `Base.Application/Business/DonationBusiness/Public/PublicMutations/InitiateP2PDonation.cs` (validator + handler log).
+- **Deviations from spec**: item 4 changes the donor DTO from name-required to either-path; existing name-path callers are unaffected (fields kept, just nullable). The admin `donationFormFields.mode` remains stored but the public form always offers both paths (it was never consumed by the public form anyway).
+- **Known issues opened**: Contact-by-code resolution is still SERVICE_PLACEHOLDER — the handler validates/relays the code but does not yet look up `crm.Contact` or persist the donation (blocked on the real payment-gateway connect, same as the name path).
+- **Known issues closed**: None (these were fresh reviewer items, not tracked rows).
+- **Next step**: user builds the BE (DTO + validator changes to `InitiateP2PDonation`) so the public form's `contactCode` field is accepted by the GraphQL schema; FE ships on next dev reload. FE typecheck clean in `src/` (only the pre-existing stale `.next` artifacts remain).
+
+### Session 9 — 2026-07-01 — FIX — COMPLETED (BE build pending)
+
+Donation Purpose made a required field on #170, matching CrowdFunding.
+
+- **Finding**: a campaign is always run for **one specific donation purpose**, so the field must be required — but only CrowdFunding enforced it. CrowdFunding (`basic-tab.tsx`) already marks Donation Purpose `required` and gates draft-create via zod (`crowdFundQuickFormSchema` → `donationPurposeId: z.number().min(1)`). P2P (`basic-info-tab.tsx`) rendered "Linked Donation Purpose" as **optional** (`clearable`, no `*`), and the BE publish-validation (`GetP2PCampaignPagePublishValidation.cs`) did **not** check it — despite the doc comment claiming "≥1 DonationPurposes attached". Gap in P2P only.
+- **Fix (FE)**: `basic-info-tab.tsx` — added `required` to the Donation Purpose `ApiSingleSelect` (renders the `*`), dropped `clearable` (mandatory now), added a helper description. Mirrors the P2P publish-gating + asterisk pattern from Session 8 item 5.
+- **Fix (BE, compiling, user builds)**: `GetP2PCampaignPagePublishValidation.cs` — added a `DonationPurposeId` check (null/≤0 → MissingField `donationPurposeId` "Donation purpose is required.") right after the GoalAmount block, so publish is now actually blocked without a purpose and the doc-comment claim becomes true. `DonationPurposeId` is a scalar already loaded on the entity — no extra Include needed.
+- **CrowdFunding**: verified already-correct (required in UI + zod). No change.
+- **Files touched**:
+  - FE: `p2pcampaignpage/tabs/basic-info-tab.tsx`.
+  - BE (compiling, **user builds**): `Base.Application/.../P2PCampaignPages/Queries/GetP2PCampaignPagePublishValidation.cs`.
+- **Deviations from spec**: none — this closes the doc-comment/behavior gap.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: user builds the BE so the publish-validation blocks on missing donation purpose. FE asterisk ships on next dev reload.
+
+### Session 10 — 2026-07-01 — UI — COMPLETED
+
+Configuration (Tab 2) section chrome aligned to the CrowdFunding Configuration tab.
+
+- **Finding**: CrowdFunding's config tab (`crowdfundingpage/tabs/page-builder-tab.tsx`) wraps every section in the canonical `FormSectionCard` (event `form-tabs/fields.tsx`) — a **SOLID primary header bar** with a white icon chip (`bg-white/15`) + white title/description. The P2P editor's shared `SectionCard` (`p2pcampaignpage/components/section-card.tsx`) used a **muted** header (`bg-muted/50`, inline primary icon, foreground text), so P2P's Configuration tab sections looked different from CrowdFunding's.
+- **Fix (FE)**: restyled the P2P `SectionCard` header to mirror `FormSectionCard` — `bg-primary px-3.5 py-2.5`, white icon in a `bg-white/15` chip, white title (`text-white`) + `text-white/80` truncated description; body padding matched to `space-y-4 p-3.5 sm:p-4`. Kept the `badge` prop API (unused across all call-sites — verified) but re-toned it (`bg-white/20 text-white`, amber variant) to stay legible on the primary bar. Consistent with the standing [[solid-icon-bg-white-foreground]] preference.
+- **Scope note**: `SectionCard` is the shared card used by **all** P2P editor tabs (Basic Info + every Configuration sub-tab: Branding, Fundraiser, Donation, Communication), so this one change brings the whole editor into uniform parity with CrowdFunding — not just Tab 2. `RegionHeading` dividers already matched. Config sub-tab call-sites unchanged.
+- **Files touched**:
+  - FE: `p2pcampaignpage/components/section-card.tsx` (header/body chrome only; API unchanged).
+- **Deviations from spec**: none — visual alignment only.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: none — FE-only, ships on next dev reload.
+
+### Session 11 — 2026-07-01 — FIX — COMPLETED
+
+`UpdateP2PCampaignPage` silently failed to persist Configuration-tab edits (amount chips, allow-custom-amount, team goal/size) — the **entire** mutation was 400-rejected.
+
+- **Symptom**: user set `amountChips`, `allowCustomAmount`, `maxTeamSize`, saved — nothing persisted. GraphQL error: `The field '__typename' does not exist on the type 'P2PEnabledPaymentMethodInput'.` at `page.enabledPaymentMethods[0]`.
+- **Root cause**: Apollo tags every cached object with `__typename`. HotChocolate rejects an input object carrying any field its Input type doesn't declare, so a single stray `__typename` fails the WHOLE mutation (not just that field) → **no** field saved. `toRequest()` in `editor-page.tsx` stripped `__typename` only at the top level + `fundraiserPageOptions` + `donationFormFields.fields` — it **missed the `enabledPaymentMethods[]` array items**. Classic shallow-strip gap ([[apollo-typename-strip-on-round-trip]] / `feedback_apollo_typename_strip_on_round_trip`). BE write-mapping + read-projection + FE GET selection were all already correct — the payload just never reached the handler.
+- **Fix (FE)**: added a **recursive** `stripTypename()` helper and applied it to the whole `toRequest()` output, so `__typename` is dropped from every nested object/array (payment methods, page options, form fields, and any future nested shape). Replaced the piecemeal per-field strips. `toCreateRequest()` calls `toRequest()`, so Create inherits the fix too.
+- **Files touched**:
+  - FE: `p2pcampaignpage/editor-page.tsx` (`toRequest` + new `stripTypename`).
+- **Deviations from spec**: none.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: none — FE-only, ships on next dev reload. (No BE build needed — BE was never the problem.)
+
+### Session 12 — 2026-07-01 — FIX — COMPLETED (BE build pending)
+
+Publish redirect to the public page (`/p2p/{slug}`) 404'd on localhost — public GetBySlug used first-active-tenant only. Mirrored the CrowdFunding #173 hostname/login-company tenant resolution.
+
+- **Symptom**: after publishing, `/en/p2p/build-school` → 404. The page owned by the logged-in admin's tenant wasn't found because the public resolver only ever looked under the *first* active company.
+- **Root cause**: `GetP2PCampaignPageBySlug` hard-coded `companyId = first active company` (the old MVP hack) — no hostname resolution and no Development login-company fallback. On localhost (no subdomain) a page owned by any non-first tenant misses the company-scoped lookup → null → 404. CrowdFunding already solved this ([[public-by-slug-tenant-resolution]] / `feedback_public_by_slug_tenant_resolution`).
+- **Fix (BE, compiling, user builds)**:
+  - `GetP2PCampaignPageBySlug.cs` — query record arg `tenantSlug` → `hostname`; handler now injects `IHostEnvironment` + `IHttpContextAccessor` and resolves the tenant via `OnlineDonationPageTenantResolver.ResolveByHostnameAsync` (CustomDomain → Subdomain → `?_tenant=` dev override → first-active fallback). Added the Development-only fallback: if the slug misses under the resolved tenant, re-scope to the logged-in user's company, then a slug-only lookup — so an admin opening their just-published page resolves the right tenant. Production stays strict hostname-scoped.
+  - `P2PCampaignPagePublicQueries.cs` — endpoint arg `tenantSlug` → `hostname`, passed through. (Stats endpoint keeps `hostname: null`; the Dev login-company fallback still resolves it locally.)
+- **Fix (FE)**:
+  - `P2PCampaignPagePublicQuery.ts` — `GET_P2P_CAMPAIGN_PAGE_BY_SLUG` var `$tenantSlug` → `$hostname` (`hostname: $hostname`).
+  - All three public campaign routes (`[campaignSlug]/page.tsx`, `.../start/page.tsx`, `.../[fundraiserSlug]/page.tsx`) now resolve a `hostname` from `x-forwarded-host`/`host` (+ `?_tenant=` dev override) and pass it, and switched the campaign fetch to `cache: "no-store"` so a just-published page resolves immediately (no stale-404 from the 60s ISR window).
+- **Files touched**:
+  - BE (compiling, **user builds**): `.../Public/PublicQueries/GetP2PCampaignPageBySlug.cs`, `.../Base.API/EndPoints/Donation/Public/P2PCampaignPagePublicQueries.cs`.
+  - FE: `.../public-queries/P2PCampaignPagePublicQuery.ts`, `(public)/p2p/[campaignSlug]/page.tsx`, `.../start/page.tsx`, `.../[fundraiserSlug]/page.tsx`.
+- **Deviations from spec**: none.
+- **Known issues opened**: the **fundraiser** child handler `GetP2PFundraiserBySlug` still uses first-active-tenant resolution (same class of bug) — the child page's fundraiser lookup can still 404 on localhost for a non-first tenant. Not fixed here (separate handler, not part of the reported publish flow). Apply the same resolver when that flow is exercised.
+- **Known issues closed**: None.
+- **Next step**: user builds the BE. FE ships on next dev reload.
+
 ---
 
 ## ⑭ SOURCE-2 FUNDING INTEGRATION & SETTINGS→CRM RELOCATION (planned 2026-06-29 — design only, do NOT build this pass)
