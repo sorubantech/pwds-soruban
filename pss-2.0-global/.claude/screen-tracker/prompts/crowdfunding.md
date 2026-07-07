@@ -10,7 +10,7 @@ complexity: High
 new_module: NO
 planned_date: 2026-05-12
 completed_date: 2026-05-13
-last_session_date: 2026-06-29
+last_session_date: 2026-07-03
 ---
 
 ## Tasks
@@ -1431,6 +1431,14 @@ The drawer (Sheet) is an *addition* to the mockup — mirror of P2PCampaign #15 
 - **Known issues closed**: None (this was a build-time type error, not a tracked issue).
 - **Verification**: `npx tsc --noEmit` — 0 errors for any `crowdfund*` file (previously TS2353 at line 140).
 - **Next step**: None — COMPLETED.
+
+### Session 4 — 2026-07-03 — ENHANCE (§⑮ invitation drawer shortcut) — COMPLETED (FE tsc clean)
+
+- **Scope**: Companion to the CrowdFund donor-invitation feature built primarily on #173 (see `crowdfundingpage.md` §⑮ + Session 11). This screen (#16 monitoring drawer) gets a compact **read-only Invitations row** in the detail sheet: last-sent time, **Send** + **Resend** quick actions (reuse the same 3 GraphQL mutations), and an **"Edit setup" deep-link** into the #173 editor's Invitations tab. Full config (template picker + audience filter + history) lives on #173, not here.
+- **Files touched — FE**: `crowdfund-detail-sheet.tsx` (Invitations row + Send/Resend + deep-link) · `donation-queries/CrowdFundQuery.ts` (+5 invitation scalars in `CROWDFUND_FIELDS`) · `donation-service/CrowdFundDto.ts` (+5 response fields) · `donation-mutations/CrowdFundMutation.ts` (+3 invitation mutations). BE: none new (shares #173's entity fields/service/handlers).
+- **Deviations from spec**: None.
+- **Verification**: `npx tsc --noEmit` — 0 new errors for any `crowdfund*` file (only the pre-existing `PaymentMethodCode` duplicate-export in `donation-service/index.ts` remains, unrelated). Runtime E2E pending (with #173).
+- **Known issues opened**: None. **Next step**: user runs the #173 migration + seed (owned there), then E2E the drawer Send/Resend + deep-link.
 
 ### § Known Issues
 

@@ -5,12 +5,12 @@ module: CRM (P2P Fundraising)
 status: COMPLETED
 scope: FULL
 screen_type: FLOW
-flow_variant: drawer-only
+flow_variant: flow-grid (shared FlowDataTable; route unified as Event-style dispatcher — index + #170 editor on one route, Session 3)
 complexity: Medium
 new_module: NO
 planned_date: 2026-05-12
 completed_date: 2026-05-12
-last_session_date: 2026-05-12
+last_session_date: 2026-07-02
 ---
 
 ## Tasks
@@ -1003,10 +1003,82 @@ The drawer (Sheet) is an *addition* to the mockup — the mockup doesn't show a 
   - ISSUE-15 — `sql-scripts-dyanmic/` typo preserved as required.
 - **Next step**: User runs (1) seed defensive `auth.Capabilities` INSERTs for DUPLICATE/PUBLISH/ARCHIVE if missing → (2) `psql … -f P2PCampaign-sqlscripts.sql` → (3) `dotnet build` (BE Sonnet session reported 0 errors) → (4) `pnpm dev` and full E2E test per prompt §⑪ (page load + 4 KPIs + 5 chips + 10-col grid + per-row actions × 5 status variants + drawer 6 sections + Duplicate modal happy path + Delete modal guard paths × 3 + deep-links to #170/#135/public page in new tab).
 
+### Session 2 — 2026-06-29 — UI (menu-combine + FLOW-grid conversion) — COMPLETED
+
+- **Scope**: Combined the two redundant sidebar menus over `fund.P2PCampaignPages` (#15 P2P Campaign grid + #170 P2P Campaign Pages) into a SINGLE menu, and converted this screen's grid from the hand-rolled HTML table to the shared FlowDataTable (Event / P2PFundraiser #135 "page-setup" pattern). User directive: "keep #15 but change grid from custom to flow grid; row → #170 editor (Event-style); keep custom action set." Single menu lives at CRM > Fundraising Campaigns > "Campaigns" (P2PCAMPAIGN, OrderBy 1). #170 editor is now reached ONLY via Create/Edit deep-links — its standalone Settings sidebar menu is retired.
+- **Files touched**:
+  - DB (2 modified):
+    - `sql-scripts-dyanmic/P2PCampaign-sqlscripts.sql` — PK GridField flipped `IsPrimary=true→false` (+ self-heal UPDATE) to suppress the standard ActionColumnBuilder; column-1 name renderer repointed `campaign-name-link → p2p-campaign-name-link` (+ self-heal) so name-click opens the #170 editor; added synthetic `P2PC_ACTIONS` Field (FieldKey `campaignActions`, INT) + GridField #10 (`GridComponentName='p2p-campaign-actions'`, OrderBy 10, width 240, IsPrimary=false). Mirrors P2PFundraiser #135 Session 2.
+    - `sql-scripts-dyanmic/p2pcampaignpage-sqlscripts.sql` — #170 STEP 1 menu deactivated (`IsActive=false` on INSERT + idempotent UPDATE). Row + capabilities KEPT (audit / re-enable). Safe because `useAccessCapability` keys off moduleCode and the editor renders under the CRM route, not the SETTING menu.
+  - FE created (2):
+    - `custom-components/data-tables/shared-cell-renderers/p2p-campaign-name-link.tsx` (`P2PCampaignNameLink` — bold primary link, click → `/{lang}/crm/p2pfundraising/p2pcampaignpage?id={id}`)
+    - `page-components/crm/p2pfundraising/p2pcampaign/p2p-campaign-actions-cell.tsx` (`P2PCampaignActionsCell` — status-conditional Dashboard/Edit/View/Duplicate/Delete reading `row.original`)
+  - FE modified (6):
+    - `p2pcampaign/index-page.tsx` (rewritten — `FlowDataTableStoreProvider gridCode="P2PCAMPAIGN"` + `FlowDataTableContainer showHeader={false}`; 5 status chips → `setExtraVariables({ statuses })`; refresh mirror; ScreenHeader + Widgets + modals kept)
+    - `p2pcampaign/index.tsx` (drawer + `?mode=read` routing removed; renders index page only)
+    - `p2pcampaignpage/p2pcampaignpage-root.tsx` (no `?id`/`?mode=new` → `router.replace` to the #15 grid; editor modes unchanged — `isNew` + `?id` both supported by `editor-page.tsx`)
+    - `shared-cell-renderers/index.ts` (export `P2PCampaignNameLink`)
+    - `data-tables/{flow,advanced,basic}/data-table-column-types/component-column.tsx` (3 registries — added cases `p2p-campaign-name-link` + `p2p-campaign-actions`)
+  - FE deleted (4): `p2pcampaign/p2p-campaign-grid.tsx`, `p2pcampaign/p2p-campaign-filter-bar.tsx`, `p2pcampaign/p2p-campaign-detail-sheet.tsx`, `p2pcampaignpage/list-page.tsx`
+- **Deviations from spec**:
+  - Session 1's "plain HTML table" deviation is REVERSED — grid is now the canonical shared FlowDataTable (matches the §⑥ Variant B intent more faithfully; double-header suppressed via `showHeader={false}`).
+  - Detail drawer (Session 1 §⑥ Detail Sheet, 6 sections) is REMOVED per user decision — row navigation now goes to the #170 editor (Event "page-setup" model). The drawer's read-only summary is superseded by the editor.
+  - Chip count badges (from `getP2PCampaignSummary`) are no longer shown on the chips; row count comes from the FlowDataTable pagination footer (consistent with #135). KPI widgets still consume the summary query.
+  - `campaign-name-link` (SMS #30) is NOT reused — a dedicated `p2p-campaign-name-link` was created so name-click deterministically targets the #170 editor (decoupled from SMS behavior).
+- **Known issues opened**:
+  - ISSUE-16 (LOW) — Dead `searchTerm` mirror: the deleted filter-bar was the only writer of `useP2PCampaignStore.searchTerm`; the FlowDataTable's built-in search box is now the search UX. The store→flow `setSearchTerm` mirror forwards an always-empty string (harmless). Cleanup: drop the dead mirror + `searchTerm` slice next touch.
+  - ISSUE-17 (LOW) — #170 menu retired via `IsActive=false` (not deleted). Verify in E2E that no other surface relies on the Settings sidebar entry, and that the Create/Edit deep-links into the editor still resolve full capabilities (expected: yes — CRM-module route).
+- **Known issues closed**: None (Session 1 issues unaffected).
+- **Next step**: User runs (1) re-apply `P2PCampaign-sqlscripts.sql` + `p2pcampaignpage-sqlscripts.sql` (both idempotent) → (2) `pnpm dev` → (3) smoke-test: single "Campaigns" menu renders the FLOW grid; 5 status chips filter; row name-click + Edit action open the #170 editor; "+ Create" opens editor in new mode; Duplicate/Delete modals work; the Settings > Public Pages "P2P Campaign Pages" entry is gone.
+
+### Session 3 — 2026-06-29 — UI (Event-screen alignment: route unification + editor redesign + uniform fields) — COMPLETED
+
+- **Scope**: Align #15 + #170 to the Event screen pattern per user direction — (A) unify both onto ONE route via an Event-style dispatcher so the FLOW grid's built-in "+ New" button works; (B) drop the custom "+ Create" header button, enable the grid's native Add; (C) redesign the #170 editor to Event full-screen chrome (FlowFormPageHeader + step navigator + guide banners + floating action pill); (D) replace all raw `<input>/<select>/<textarea>` in the 5 tabs with canonical FormInput/FormSelect/FormDatePicker/FormTextarea; (E) consistent currency presentation (goal-currency CODE drives every amount prefix, right-aligned amounts).
+- **Why this shape**: the shared FLOW grid Add button hardcodes `${pathname}?mode=new` (`data-table-add-option.tsx`, no override) — so reusing it requires index+editor on ONE route, exactly like `EventPage`. Old split route `…/p2pcampaignpage` is now a pure redirect shim.
+- **Files touched** (FE only — 1 commit `ef11d54f` "replicate event screen ui into p2p campaign"; 12 files, +1013/−605):
+  - FE: `p2pcampaign/index.tsx` (Event-style dispatcher — sets crudMode/recordId on global `useFlowDataTableStore`; `?mode=new`→add, `?mode=edit&id`→edit, legacy `?id`→edit, else index)
+  - FE: `p2pcampaign/index-page.tsx` (`enableAdd: true`; removed custom `headerActions` "+ Create" button)
+  - FE: `p2pcampaignpage/editor-page.tsx` (full Event chrome — `FlowFormPageHeader`, 5-step navigator with FREE tab nav, per-step guide banner, `<Tabs>`, step prev/next, single floating action pill replacing the old header buttons + sticky footer + "Other actions" block; identity now read from the global store, props kept as backward-compat fallback; all 6 lifecycle dialogs + publish validation + LivePreview + StatusBar + FundraiserGrid preserved)
+  - FE: `p2pcampaignpage/p2pcampaignpage-root.tsx` (pure redirect shim → unified route)
+  - FE: `p2pcampaignpage/tabs/fields.tsx` (NEW — local TextField/NumberField/TextAreaField/SelectField wrappers over canonical form-fields, mirroring Event's `form-tabs/fields.tsx`)
+  - FE: `tabs/basic-info-tab.tsx`, `branding-page-tab.tsx`, `donation-settings-tab.tsx`, `fundraiser-settings-tab.tsx`, `communication-tab.tsx` (raw inputs → canonical fields; currency code prefix)
+  - FE: `shared-cell-renderers/p2p-campaign-name-link.tsx` + `p2pcampaign/p2p-campaign-actions-cell.tsx` (nav repointed to `…/p2pcampaign?mode=edit&id=`; danger button → destructive tokens)
+- **Lifecycle → floating-pill mapping**: Draft/New = Cancel · Save Draft · Publish (edit only) · Preview(if slug); Published = Cancel · Save changes(dirty) · Unpublish · Preview; Active = Cancel · Save changes(dirty) · Unpublish · Close (amber); Closed = Save changes(dirty) · Archive; Archived = "Archived" (disabled).
+- **Verification (re-verified by orchestrator, not just agent)**: `git status` clean (work committed in `ef11d54f`); `git show --stat` confirms all 12 files real; `tsc --noEmit` = **0 non-`.next` errors**; greps confirm `enableAdd: true`, custom button gone, no `?? "$"` left in tabs, nav repoints landed, dispatcher + editor store-identity wiring correct.
+- **Deviations from spec**: slug composite (URL-prefix + copy button) in `basic-info-tab.tsx` kept as an inline `<input>` by design (it's a composite widget, not a bare field); checkbox `<input>` rows kept (accent styling). Both intentional.
+- **Process note**: the FE agent's FIRST run explored but wrote nothing (git was clean) and returned a placeholder "I'll report back" message — caught on verification and resumed; second run did the work. The agent also **committed autonomously** (not requested) — left in place because this repo uses a commit-per-task convention (`t…-st…` suffix) and the commit is correct.
+- **Known issues opened**: ISSUE-18, ISSUE-19 (below).
+- **Known issues closed**: ISSUE-16 (the dead `searchTerm` mirror survives but is now wholly inert post-redesign — left as-is; reclassified, still LOW). None formally closed.
+- **Next step**: User `pnpm dev` smoke-test — (1) "Campaigns" menu → grid; the grid's own "+ New" opens the editor in create mode (no duplicate button); (2) row name-click + Edit → editor edit mode on the SAME route; (3) editor shows full-screen Event chrome (header, step strip, guide banner, floating pill) with uniform fields; (4) lifecycle actions (Save/Publish/Unpublish/Close/Archive) + publish-validation modal work; (5) old `…/p2pcampaignpage?id=N` deep-links still land on the editor via the shim.
+
+### Session 4 — 2026-07-02 — ENHANCE — COMPLETED
+
+- **Scope**: Surface the 5 NEW invitation fields on `fund.P2PCampaignPages` (added to the entity + EF config + DB migration `20260702080120_Add_InvitationMailTemplate_To_P2PCampaign` earlier the same day, out-of-session) through the DTO → mapping → projection → GraphQL → editor UI chain, so they round-trip and are editable in the #170 editor's Communication tab. **Wire-only** — NO donor-blast dispatch engine (email send stays a platform SERVICE_PLACEHOLDER; `InvitationSentAt` is server-managed and read-only here). Per user directive "those fields need implement in the overall p2pcampaign screen"; scope confirmed as "wire + surface all 5 fields" via AskUserQuestion.
+- **The 5 fields**: `InvitationEmailTemplateId` (EmailTemplate FK — donor blast on Publish) · `FundraiserInviteEmailTemplateId` (EmailTemplate FK — targeted invite from #135) · `InvitationSavedFilterId` (SavedFilter FK — blast audience) · `InvitationFilterJson` (jsonb — inline audience fallback) · `InvitationSentAt` (DateTime? — delta anchor, response-only).
+- **Files touched**:
+  - BE created: none.
+  - BE modified (3):
+    - `Base.Application/Schemas/DonationSchemas/P2PCampaignPageSchemas.cs` — RequestDto +4 fields (Invitation Email/FundraiserInvite/SavedFilterId/FilterJson); ResponseDto +4 (2 template names + `InvitationSavedFilterName` + `InvitationSentAt`). `InvitationSentAt` deliberately NOT on RequestDto (server-managed).
+    - `Base.Application/Business/DonationBusiness/P2PCampaignPages/Commands/P2PCampaignPageEntityHelper.cs` — `ApplyToP2PCampaignPage` +4 write-through assignments (not InvitationSentAt).
+    - `Base.Application/Business/DonationBusiness/P2PCampaignPages/Queries/GetP2PCampaignPageById.cs` — `ProjectToResponseDto` +5 assignments; `emailIds` batch extended with the 2 invitation template IDs; +2 name lookups following the existing `.HasValue ? GetValueOrDefault : null` pattern.
+  - FE modified (3):
+    - `domain/entities/donation-service/P2PCampaignPageDto.ts` — RequestDto +4, ResponseDto +4.
+    - `infrastructure/gql-queries/donation-queries/P2PCampaignPageQuery.ts` — byId `PAGE_FIELDS` +7 fields (4 ids/json + 2 names + sentAt).
+    - `presentation/components/page-components/crm/p2pfundraising/p2pcampaignpage/tabs/communication-tab.tsx` — new "Invitations" SubSection (`ph:paper-plane-tilt`) after "Fundraiser Lifecycle Emails": 2 template selectors via existing `renderTrigger`/`ApiSingleSelect`+`EMAILTEMPLATES_QUERY` pattern (new `INVITATION_EMAIL_TRIGGERS`), audience saved-filter picker via `ApiSingleSelect`+`SAVEDFILTERS_QUERY` (`savedFilterId`/`filterName`), advanced inline-JSON `TextAreaField` (muted/dashed container), read-only "Last invitation sent" row.
+  - FE unchanged: `P2PCampaignPageMutation.ts` — create/update pass the whole request as one typed input variable, so the 4 new request fields flow through with NO mutation edit (verified by inspection).
+  - DB: none — migration already existed before this session; no seed change.
+- **Deviations from spec**: (1) `InvitationSavedFilterName` is NOT projected by the BE — `SavedFilter` (`notify.SavedFilters`) is exposed only via `INotifyDbContext`, and the P2P byId handler uses `IApplicationDbContext`; adding a cross-context dependency was out of scope (ISSUE-20). FE resolves the audience display label itself from the picker's selected option. (2) `invitationSentAt` formatted with `toLocaleDateString()` (sibling-file convention in this folder; no shared date helper exists here). (3) minor: FE onChange for the saved-filter name uses a harmless `?? null as any` cast — noted, not worth a follow-up.
+- **Known issues opened**: ISSUE-20 (below).
+- **Known issues closed**: None.
+- **Verification (orchestrator-relayed from build agents)**: BE `dotnet build` Base.Application + Base.API = **0 errors** (warnings pre-existing). FE `pnpm tsc --noEmit` = **0 new errors** (1 pre-existing unrelated `PaymentMethodCode` duplicate-export, confirmed via git-stash baseline). Full E2E (apply migration → `pnpm dev` → open editor Communication tab → select templates + audience → save → reload round-trip) NOT run this session — no runtime app spun up; user should smoke-test.
+- **Next step**: User (1) confirm migration `20260702080120_Add_InvitationMailTemplate_To_P2PCampaign` is applied (`dotnet ef database update`), (2) `pnpm dev`, (3) open a campaign editor → Communication tab → "Invitations" section → pick the 2 templates + an audience saved-filter, Save, reload, confirm values persist. Donor-blast DISPATCH (send-on-Publish + delta-targeting via InvitationSentAt) remains unbuilt by design — plan as a separate workflow/SERVICE_PLACEHOLDER when the email service is wired.
+
 ### § Known Issues
 
 | ID | Severity | Description | Status |
 |----|----------|-------------|--------|
+| ISSUE-20 | LOW | `InvitationSavedFilterName` not projected by BE (`notify.SavedFilters` is on `INotifyDbContext`, P2P byId handler uses `IApplicationDbContext`) — FE resolves the audience label from the picker option instead. Wire a cross-context projection only if a server-rendered label is ever needed. | OPEN — by-design (Session 4) |
+| ISSUE-21 | MED | Invitation donor-blast DISPATCH (send template `InvitationEmailTemplateId` to the `InvitationSavedFilterId`/`InvitationFilterJson` audience on Publish, stamping `InvitationSentAt` as a delta anchor so republish never re-spams) is UNBUILT — fields persist but no send workflow exists. Depends on the platform email SERVICE_PLACEHOLDER. Plan as a dedicated workflow. | OPEN — deferred (Session 4) |
 | ISSUE-1 | MED | Multi-currency in TotalRaised / AvgPerFundraiser / TopFundraiserAmount (raw NetAmount sum without FX conversion) | OPEN (V2) |
 | ISSUE-2 | LOW | RecentDonors projection on P2PCampaignPageStatsDto | CLOSED Session 1 |
 | ISSUE-3 | LOW | Duplicate slug counter capped at 99 | OPEN (V2) |
@@ -1019,6 +1091,10 @@ The drawer (Sheet) is an *addition* to the mockup — the mockup doesn't show a 
 | ISSUE-BE-FE-HANDSHAKE | LOW | New GQL fields need BE deployment before page is fully functional | OPEN — coordinate deploy |
 | ISSUE-PUBLIC-BASE-URL | LOW | Public page URLs depend on NEXT_PUBLIC_PUBLIC_PAGE_BASE_URL env | OPEN — verify deploy config |
 | ISSUE-TS-PRE-EXISTING | LOW | 3 pre-existing TS errors in unrelated files | OPEN — not introduced by #15 |
+| ISSUE-16 | LOW | Dead `searchTerm` store mirror after FLOW-grid conversion (FlowDataTable built-in search is primary) | OPEN — cleanup next touch (Session 2) |
+| ISSUE-17 | LOW | #170 menu retired via IsActive=false; verify deep-link editor capabilities in E2E | OPEN — verify (Session 2) |
+| ISSUE-18 | LOW | `live-preview.tsx` (public-page mock) still uses `goalCurrencyCode ?? "$"` symbol fallback — intentionally a SYMBOL there (visual mock of the donor page), NOT changed to the code like the editor fields. Revisit only if public-page currency display is unified. | OPEN — by-design (Session 3) |
+| ISSUE-19 | LOW | `#135 p2p-fundraiser-admin-actions.tsx` deep-links to `…/p2pcampaignpage?id=N&tab=fundraisers&fundraiserId=…`; the new redirect shim forwards only `id`/`mode` (drops `tab`/`fundraiserId`). NOT a regression — the editor never consumed those params (uses store `activeTab`); the link still opens the correct campaign editor. Repoint #135 directly to the unified route + add tab deep-link support if that flow is ever wanted. | OPEN — latent (Session 3) |
 
 ---
 

@@ -1674,6 +1674,7 @@ Full UI must be built (5 setup tabs, 4 public render trees including wizard, don
 | ISSUE-6 | 1 | LOW | BE / Public | CSRF token validation is length-only (≥16 chars). Real cookie+header double-submit middleware (`[ValidateCsrfToken]`) lives at API endpoint layer; body-token format check is MVP guard. | OPEN |
 | ISSUE-7 | 1 | LOW | BE / Seed | `Sett.Grids` row seeded but `GridFields` / `GridFieldFilters` mappings deliberately omitted because `GridFormSchema: SKIP` (custom UI, not stock DataTable). Confirm FE doesn't rely on grid-field metadata for the admin list. | OPEN |
 | ISSUE-8 | 2 | LOW | FE / Public | Login-link manage page (`(public)/p2p/[campaignSlug]/[fundraiserSlug]/manage/page.tsx`) deferred. Token-auth fundraiser-owner edit shell not generated — depends on JWT issuance + validation (SERVICE_PLACEHOLDER). When token-auth lands, create the manage page reusing `<ChildFundraiserPage>` in an editable variant for story / cover / personal-goal / milestones. | OPEN |
+| ISSUE-9 | 13 | MEDIUM | BE/FE contract | §⑯ publish escape-hatch: FE "Publish without sending" persistently flips `sendInvitationOnPublish` OFF (a one-time publish choice mutates the campaign's master flag for all future republishes). BE owner to decide: (A) accept as-is (spec-conformant, no BE change) or (B) add nullable one-time override `PublishP2PCampaignPage(id, bool? sendInvitationOverride)` + rewire FE `publishWithFlag` to pass it without persisting. | OPEN |
 
 ### § Sessions
 
@@ -1923,6 +1924,27 @@ Publish redirect to the public page (`/p2p/{slug}`) 404'd on localhost — publi
 - **Known issues closed**: None.
 - **Next step**: user builds the BE. FE ships on next dev reload.
 
+### Session 13 — 2026-07-02 — ENHANCE — COMPLETED (FE only; BE built in parallel by user)
+
+- **Scope**: §⑯ CAMPAIGN INVITATION — Send/Resend actions, publish-time opt-in guard, five email-ops guardrails, and auditable send history on screen #170 P2PCampaignPage. Split build: **user owns BE** (`.cs` + migration), **this session owns FE** (`.ts`/`.tsx`). §⑯.3 contract frozen so both halves compile against the same GraphQL names. Single-fundraiser invite stream (`P2PF-{id}-INVITE`, screen #135) left UNTOUCHED — only the campaign donor blast (`P2PC-{id}-INVITE`) is in scope.
+- **Files touched**:
+  - BE: none (user builds BE in parallel — `PublishP2PCampaignPage.cs`, `P2PFundraiserEmailService.cs`, `P2PCampaignPage.cs` + column, `P2PCampaignPageEntityHelper.cs`, `GetP2PCampaignPageById.cs`, migration).
+  - FE (modified — 6):
+    - `domain/entities/donation-service/P2PCampaignPageDto.ts` — `sendInvitationOnPublish: boolean` on `P2PCampaignPageRequestDto`; new `P2PCampaignInvitationAudienceCountDto`, `P2PCampaignInvitationHistoryRowDto`, `P2PCampaignInvitationRecipientRowDto`.
+    - `infrastructure/gql-queries/donation-queries/P2PCampaignPageQuery.ts` — `sendInvitationOnPublish` in `PAGE_FIELDS`; `GET_P2P_CAMPAIGN_INVITATION_AUDIENCE_COUNT`, `_HISTORY`, `_RECIPIENTS`.
+    - `infrastructure/gql-mutations/donation-mutations/P2PCampaignPageMutation.ts` — `SEND_P2P_CAMPAIGN_INVITATION`, `RESEND_P2P_CAMPAIGN_INVITATION`, `SEND_P2P_CAMPAIGN_INVITATION_TEST`.
+    - `.../p2pcampaignpage/p2pcampaignpage-store.ts` — `sendInvitationOnPublish: false` in `initNew()` blank + `buildDefaultRequest()`.
+    - `.../p2pcampaignpage/tabs/communication-tab.tsx` — master-flag Switch, debounced (~500ms) live audience count (Skeleton + opted-out copy), "Send test to me" button, `<InvitationHistoryPanel>` replacing the old single "Last invitation sent" row.
+    - `.../p2pcampaignpage/editor-page.tsx` — audience-aware 3-branch Publish Dialog; Send/Resend floating pills (amber Resend) + History shortcut in Published/Active branches; Manual Send modal (disabled + hint at M=0); Manual Resend modal (cooldown line if `invitationSentAt` < 24h); large-blast (>1,000) type-to-confirm on Publish&Send / Send / Resend.
+  - FE (created — 1): `.../p2pcampaignpage/components/invitation-history-panel.tsx` — history table (When · Triggered by · Type · Sent · Failed · Status; numeric cols right-aligned; shaped Skeletons; empty/error states) + row-click per-recipient drill-in Dialog via `GET_P2P_CAMPAIGN_INVITATION_RECIPIENTS`.
+  - FE (barrel — 1): `.../p2pcampaignpage/components/index.ts` — export `invitation-history-panel`.
+- **Wired GraphQL contract (BE must match exactly)**: mutations `sendP2PCampaignInvitation` / `resendP2PCampaignInvitation` / `sendP2PCampaignInvitationTest`, all `(p2PCampaignPageId: Int!)`; queries `p2PCampaignInvitationAudienceCount(p2PCampaignPageId: Int!, savedFilterId: Int, filterJson: String)` → `{ totalAudience, alreadyInvited, notYetInvited }`, `p2PCampaignInvitationHistory(p2PCampaignPageId: Int!)`, `p2PCampaignInvitationRecipients(emailSendJobId: Int!)`; `sendInvitationOnPublish` on the byId response DTO.
+- **Verification**: `tsc --noEmit` clean in all §⑯-touched files. One pre-existing unrelated error remains (`PaymentMethodCode` duplicate export between `P2PCampaignPageDto.ts` and `CrowdFundingPageDto.ts`) — predates this session, not introduced here.
+- **Deviations from spec**: FE implements BOTH "Publish without sending" (flag ON) and "Turn on & send" (flag OFF) by mutating the **persistent** `sendInvitationOnPublish` flag → `save()` → plain `publishP2PCampaignPage` (no new publish arg). Side effect: "Publish without sending" persistently turns the master flag OFF for all future republishes. **OPEN contract decision** for the BE owner: accept as-is (spec-conformant, zero BE surface) OR add a nullable one-time override arg to `PublishP2PCampaignPage(id, bool? sendInvitationOverride)` and rewire FE `publishWithFlag` to pass it without persisting. See ISSUE-9.
+- **Known issues opened**: ISSUE-9 (publish escape-hatch mutates persistent flag — pending BE-owner decision).
+- **Known issues closed**: None.
+- **Next step**: user lands BE (column + migration OFF-for-all backfill + 3 mutations + 3 queries + per-run EmailSendJob counters). Then resolve ISSUE-9 A/B, run full-flow E2E, and flip #170 status back to COMPLETED.
+
 ---
 
 ### Session 13 — 2026-07-01 — ENHANCE — COMPLETED (BE build + 1 migration pending)
@@ -1965,3 +1987,139 @@ Full public-page parity build: the P2P public page now matches ODP/Event on the 
 - Update menu seed `MenuUrl` `setting/publicpages/p2pcampaignpage` → `crm/p2pfundraising/p2pcampaignpage` (currently kept as `setting/...` in the seed pending this move; menu parent already on `CRM_P2PFUNDRAISING`).
 - **Inbound deep-links to update** (other screens that link here): `p2pcampaign.md` #15 (~10 refs: header "+ Create", drawer "Edit Campaign Setup", per-row Edit, communication-row Edit) and `p2pfundraiser.md` #135 (2 refs: row Edit + "Edit Page" override) — all currently target `setting/publicpages/p2pcampaignpage?...` and must change to `crm/p2pfundraising/p2pcampaignpage?...`.
 - **Approval config update:** ParentMenu `SET_PUBLICPAGES` → `CRM_P2PFUNDRAISING`; ModuleCode `SETTING` → `CRM`; MenuUrl as above.
+
+---
+
+## ⑮ FUNDRAISER PAGE TEMPLATES + CHILD LIVE PREVIEW (planned 2026-07-02 — design only, do NOT build this pass)
+
+**Goal.** The parent editor already lets an admin pick a **campaign-landing** page template (`PageTemplateId` → MasterData `P2PCAMPAIGNPAGETEMPLATE`; codes STANDARD/IMAGE_FOCUS/VIDEO_FOCUS/MINIMAL/FESTIVAL) and see it in the right-pane live preview via `ParentTemplateRenderer`. The **child fundraiser page** (`/p2p/{slug}/{fundraiserSlug}`) has NO equivalent — it is a single fixed 60/40 layout (`child-fundraiser-page.tsx`) that only inherits parent colours via `ThemeWrap`. This feature gives the child page its own template set, **configured on the PARENT** (parent owns child-page appearance; child inherits), plus a **fundraiser-surface live preview** so the admin can see the child layout while editing.
+
+**Decision (locked 2026-07-02):** use a **NEW dedicated fundraiser template set** — MasterData `TypeCode='P2PFUNDRAISERPAGETEMPLATE'` — NOT a reuse of the campaign set (the campaign codes assume a hero/leaderboard landing; a personal fundraiser page has different needs: avatar/story/progress/donate). The template applies to **ALL child pages under the campaign**; a per-fundraiser override on `P2PFundraiser` (#135) is explicitly OUT OF SCOPE for this pass (future: `P2PFundraiser.FundraiserPageTemplateId` nullable override that falls back to the parent's).
+
+### ⑮.1 Data model (mirror the existing `PageTemplateId` wiring exactly)
+- **Entity** `P2PCampaignPage.cs`: add `public int? FundraiserPageTemplateId { get; set; }` (place beside `PageTemplateId`, Branding block) + nav `public virtual MasterData? FundraiserPageTemplate { get; set; }`.
+- **EF config** `P2PCampaignPageConfiguration.cs`: `builder.HasOne(o => o.FundraiserPageTemplate).WithMany().HasForeignKey(o => o.FundraiserPageTemplateId).OnDelete(DeleteBehavior.Restrict);` (clone of the `PageTemplate` FK, lines 104–107).
+- **Migration**: one new migration — add `FundraiserPageTemplateId integer NULL` + index + FK to `masterdatas`. (No date columns; UTC rule n/a.)
+- **Seed** (new SQL): register MasterDataType `P2PFUNDRAISERPAGETEMPLATE` + rows. Proposed codes (`DataValue` / `DataName`):
+  - `CLASSIC` / "Classic" — the EXISTING 60/40 story-left, progress+donate-right layout. **Default** (existing `child-fundraiser-page.tsx` becomes this variant → zero regression).
+  - `SPOTLIGHT` / "Spotlight" — full-bleed cover hero, avatar overlap, progress bar under hero, donate CTA immediately below; story lower.
+  - `STORY_FIRST` / "Story First" — single centered column, story leads, progress+donate as a sticky desktop rail.
+  - `COMPACT` / "Compact" — progress + donate above the fold, story collapsed/"read more"; best for shared-on-mobile links.
+
+### ⑮.2 Backend contract
+- **RequestDto** (+1): `FundraiserPageTemplateId int?`.
+- **ResponseDto** (+3): `FundraiserPageTemplateId int?`, `FundraiserPageTemplateCode string?` (= MasterData.DataValue — drives the renderer), `FundraiserPageTemplateName string?`.
+- **EntityHelper.ApplyToP2PCampaignPage** (+1): write-through `FundraiserPageTemplateId`.
+- **GetP2PCampaignPageById projection** (+3): resolve code+name from the MasterData batch (mirror how `PageTemplateCode`/`PageTemplateName` are resolved for `PageTemplateId`).
+- **Public child query** (the handler feeding `/p2p/{slug}/{fundraiserSlug}` — `P2PCampaignPagePublicDto`): add `FundraiserPageTemplateCode` so the public dispatcher can pick a layout. Default `CLASSIC` when null.
+
+### ⑮.3 Frontend
+1. **Picker** — new `components/fundraiser-page-type-picker.tsx` (clone of `page-type-picker.tsx`): MasterData `TypeCode='P2PFUNDRAISERPAGETEMPLATE'`, static fallback const `P2P_FUNDRAISER_PAGE_TYPE_OPTIONS`; `LayoutSketch` variants tuned to the 4 child codes; writes `fundraiserPageTemplateId` + `fundraiserPageTemplateCode` to the store. Add as a new `SubSection title="Fundraiser Page Template" icon="ph:identification-card"` inside `branding-page-tab.tsx` (below "Page Type").
+2. **DTO/GQL** — `P2PCampaignPageDto.ts`: add the 3 admin fields + `fundraiserPageTemplateCode` on `…PublicDto` + the new fallback options const. Add fields to the admin byId selection AND the public child selection. Mutation needs NO change (single typed input variable — new fields flow automatically, same as the invitation-field pass).
+3. **Child template renderer** — NEW `public/p2pcampaignpage/templates/child-templates.tsx` exporting `ChildTemplateRenderer({ parent, fundraiser, tenantHostname })` that switches on `parent.fundraiserPageTemplateCode` (default `CLASSIC`). CLASSIC = the current `child-fundraiser-page.tsx` body. SPOTLIGHT/STORY_FIRST/COMPACT are new wrapper compositions that **REUSE the existing child-* sub-components** (`child-cover-profile`, `child-story`, `child-updates`, `child-team-section`, `child-progress-widget`, `donate-form`, `donor-wall`, `share-buttons`, `mobile-donate-bar`) — only the layout shells are new. Public route `app/(public)/p2p/[campaignSlug]/[fundraiserSlug]/page.tsx` renders `ChildTemplateRenderer` instead of `ChildFundraiserPage` directly.
+4. **Fundraiser live preview** — extend `components/live-preview.tsx`: add a **Parent / Fundraiser** segmented toggle (store `previewSurface: 'parent' | 'fundraiser'`, default `'parent'`). When `'fundraiser'`, render `ChildTemplateRenderer` fed by a **synthetic sample fundraiser** DTO fabricated from editor state (name "Sample Fundraiser", demo story, demo raised/goal/donors/cover) — NO server round-trip, same 300ms debounce, same `zoom` + `pointer-events:none` framing. The template badge shows the fundraiser code when on that surface.
+
+### ⑮.4 Gotchas / guardrails
+- **Zero-regression rule:** `CLASSIC` MUST render byte-identical to today's child page; only extract, don't restyle it.
+- **Reuse-or-create:** the 3 new layouts reuse every `child-*` sub-component; escalate only if a genuinely new shared block is needed. Tokens only (no hex/px), `ph:*` icons, shaped Skeletons, per repo UI-uniformity rules.
+- **Preview needs a fabricated `P2PFundraiserPublicDto`** (no real fundraiser exists at edit time) — synthesize deterministically from editor state; never fetch.
+- **Fallback chain:** renderer + BE default to `CLASSIC` when `FundraiserPageTemplateId`/code is null, so existing campaigns keep working with no data backfill.
+- **Out of scope this pass:** per-fundraiser template override (#135), and any new child sub-components beyond the 4 layout shells.
+
+### ⑮.5 Planned file manifest
+- **BE:** `P2PCampaignPage.cs` · `P2PCampaignPageConfiguration.cs` · new Migration · `P2PCampaignPageSchemas.cs` · `P2PCampaignPageEntityHelper.cs` · `GetP2PCampaignPageById.cs` · public child query handler · new MasterData seed SQL.
+- **FE:** `P2PCampaignPageDto.ts` · byId + public GQL queries · `components/fundraiser-page-type-picker.tsx` (NEW) · `tabs/branding-page-tab.tsx` · `public/p2pcampaignpage/templates/child-templates.tsx` (NEW) · `public/p2pcampaignpage/child-fundraiser-page.tsx` (→ CLASSIC) · `app/(public)/p2p/[campaignSlug]/[fundraiserSlug]/page.tsx` · `components/live-preview.tsx` · `p2pcampaignpage-store.ts` (`previewSurface`).
+
+**Build trigger:** `/build-screen #170` (this Spec section is the blueprint). Do NOT build via `/continue-screen` — it adds a new FK + MasterData type + renderer variants (Spec change).
+
+---
+
+## ⑯ CAMPAIGN INVITATION — SEND/RESEND ACTIONS, PUBLISH GUARD & SEND HISTORY (planned 2026-07-02 — design only, do NOT build this pass)
+
+> **Goal.** Turn the invisible "auto-blast on every publish" into a controlled donor-communication feature: a publish-time opt-in guard, two explicit manual actions (Send / Resend), full email-ops safeguards, and an auditable send history. Built on the EXISTING engine — this section adds control, visibility, and one column; it does NOT rebuild the send pipeline.
+
+### ⑯.0 Current reality (verified 2026-07-02 — the starting point)
+The bulk donor-invitation engine **already exists and works** — the earlier build-log note (#15 ISSUE-21 "dispatch UNBUILT") is **STALE**:
+- [PublishP2PCampaignPage.cs:77-81](../../PSS_2.0_Backend/PeopleServe/Services/Base/Base.Application/Business/DonationBusiness/P2PCampaignPages/LifecycleCommands/PublishP2PCampaignPage.cs) — on publish, ALWAYS `backgroundJobClient.Enqueue<IP2PFundraiserEmailService>(s => s.SendCampaignInvitationAsync(id, …, true))`.
+- `P2PFundraiserEmailService.SendCampaignInvitationAsync` (lines 95-230) — resolves donor audience via `EventDonorAudienceQuery.ResolveAsync(InvitationSavedFilterId, InvitationFilterJson)` (saved filter → inline JSON → all donors), DELTA-excludes already-invited contacts (rolling parent `JobCode = "P2PC-{id}-INVITE"`), sends `P2P_CAMPAIGN_INVITATION` (or campaign override), stamps `InvitationSentAt`.
+- Editor already has an "Invitations" SubSection in [communication-tab.tsx:151-202](../../PSS_2.0_Frontend/src/presentation/components/page-components/crm/p2pfundraising/p2pcampaignpage/tabs/communication-tab.tsx): 2 template pickers, saved-filter picker, raw audience-JSON textarea, read-only "Last invitation sent".
+
+**Two problems this section fixes:** (1) publish silently blasts — staff can't publish-to-test without spamming donors; (2) there is no manual trigger, no audience visibility, and no send history.
+
+**Do NOT confuse with the single-fundraiser invite.** `SendInvitationEmailAsync` (template `P2P_FUNDRAISER_INVITE`, rolling code `P2PF-{id}-INVITE`, called from `InviteP2PFundraiser.cs` on screen #135) is a targeted one-person invite — OUT OF SCOPE, leave untouched. This section is only the **campaign donor blast** (`P2P_CAMPAIGN_INVITATION`, `P2PC-{id}-INVITE`).
+
+### ⑯.1 Locked decisions (from user, 2026-07-02)
+1. **Publish ≠ announce.** Decouple going-live from notifying donors.
+2. **New master flag `SendInvitationOnPublish` (bool, NOT NULL, DEFAULT FALSE).** Governs ONLY the publish-time auto-blast. Manual Send/Resend are always available on a live page regardless of the flag. Default **OFF** (safe — an accidental blast is irreversible; a missed one is recoverable via manual Send).
+3. **Two manual actions** (Published/Active only):
+   - **Send** = delta — email only donors NOT yet invited (existing behavior).
+   - **Resend** = force — email ALL donors in the audience again, including already-invited (new `forceResend` path that skips the dedup exclusion).
+4. **Publish modal is audience-aware and offers an escape hatch** (see ⑯.4).
+5. **All five email-ops guardrails included:** live audience count, send-test-to-myself, resend cooldown warning, large-blast type-to-confirm, and **send history** (who triggered · sent · failed · per-recipient drill-in).
+
+### ⑯.2 Data model
+- **NEW column** on `P2PCampaignPage`: `public bool SendInvitationOnPublish { get; set; }` — NOT NULL, default `false`. EF: `Property(p => p.SendInvitationOnPublish).HasDefaultValue(false)`. Migration adds the column with server default `false` (existing rows backfill to OFF → publishing them silently stops auto-blasting; that is the intended safer behavior, and it is a deliberate, documented change from today's always-send).
+- **CONFIRMED (2026-07-02): backfill OFF for ALL existing campaigns — do NOT grandfather any to ON.** Rationale: every already-published campaign already fired its invite at first publish (`InvitationSentAt` is set), so under the old always-send behavior a republish would still skip those donors via delta dedup — i.e. OFF-for-all costs existing campaigns no real reach while removing the silent-blast hazard the whole feature exists to eliminate. The build MUST NOT add any per-row ON backfill.
+- **No other new columns.** Audience (`InvitationSavedFilterId` / `InvitationFilterJson`), template (`InvitationEmailTemplateId`), and `InvitationSentAt` already exist.
+- **Send-history storage = existing `notify.EmailSendJob` + `EmailSendQueue`** (no new tables). See ⑯.6 for the required job-model change (rolling-parent → one-job-per-run).
+
+### ⑯.3 Backend contract
+- **Entity/DTO:** add `SendInvitationOnPublish` to RequestDto + ResponseDto; write-through in `P2PCampaignPageEntityHelper.cs`; project in `GetP2PCampaignPageById.cs`.
+- **Publish handler change** (`PublishP2PCampaignPage.cs`): the auto-enqueue at lines 77-81 becomes **conditional** — `if (entity.SendInvitationOnPublish) backgroundJobClient.Enqueue(... SendCampaignInvitationAsync(id, …, isSystem:true, forceResend:false))`. When the flag is off, publish stays silent. (Publish still succeeds regardless; the blast is best-effort as today.)
+- **Service change** (`P2PFundraiserEmailService.SendCampaignInvitationAsync`): add `bool forceResend = false`. When `true`, SKIP the `alreadySentContactIds` exclusion (send to the full resolved audience). Everything else (template resolve, tracking, `InvitationSentAt` stamp) unchanged. See ⑯.6 for the per-run job change that rides along.
+- **NEW mutations** (both `[CustomAuthorize(P2PCampaignPage, Modify)]`, gated to PageStatus ∈ {Published, Active}):
+  - `SendP2PCampaignInvitation(int p2PCampaignPageId)` → enqueues `SendCampaignInvitationAsync(id, …, isSystem:false, forceResend:false)`.
+  - `ResendP2PCampaignInvitation(int p2PCampaignPageId)` → enqueues `… forceResend:true`.
+  - Both stamp `CreatedBy` = current staff onto the run's `EmailSendJob` (see ⑯.6) so history records "who triggered".
+- **NEW query** `GetP2PCampaignInvitationAudienceCount(int p2PCampaignPageId, int? savedFilterId, string? filterJson)` → returns `{ totalAudience, alreadyInvited, notYetInvited }`. Uses the SAME `EventDonorAudienceQuery` resolver + the cross-run delta set (⑯.6) so **preview == actual**. Read permission. Powers both the live editor count and the confirmation modals. (Accepts the in-editor unsaved filter values so the count reflects what the admin is currently editing, mirroring `GetEventAnnouncementAudienceCount`.)
+- **NEW query** `GetP2PCampaignInvitationHistory(int p2PCampaignPageId)` → list of run summaries from `EmailSendJob` where `JobCode == "P2PC-{id}-INVITE"`, newest first: `{ emailSendJobId, jobName (Send/Resend/Auto-on-publish), triggeredByName (CreatedBy → staff), triggeredAt (CreatedDate), totalEmailsSend, totalEmailsFailed, totalEmailsQueued, jobStatus }`.
+- **(Optional, scope-flag) drill-in query** `GetP2PCampaignInvitationRecipients(int emailSendJobId)` → child `EmailSendQueue` rows: `{ toEmail, toName, status, skipReason, isBounced, isOpened, deliveredAt }` — leverages existing per-recipient webhook telemetry.
+- **NEW mutation (guardrail)** `SendP2PCampaignInvitationTest(int p2PCampaignPageId)` → sends the resolved invitation template to the CURRENT staff user's email ONLY (no audience resolve, no tracking-as-blast, no `InvitationSentAt` stamp). Placeholder values are sample/preview data.
+
+### ⑯.4 Frontend — confirmation matrix (the UX core)
+All copy below is the contract; exact wording can be polished at build. Buttons in **bold** are primary.
+
+**A. On Publish** (replaces the current generic publish `AlertDialog` at [editor-page.tsx:887-903](../../PSS_2.0_Frontend/src/presentation/components/page-components/crm/p2pfundraising/p2pcampaignpage/editor-page.tsx)). After publish-validation passes, resolve the audience count first, then branch:
+- **Flag ON, notYetInvited N > 0** → "Publish & notify — about **N donors** will be emailed the moment this goes live. This can't be undone." → **Publish & Send** / *Publish without sending* / Cancel.
+- **Flag ON, N = 0** (filter matches nobody / no primary emails) → "Publish — no eligible recipients. Your audience matches 0 donors with an email, so no invitation is sent." → **Publish** / Cancel. (Never imply a send that won't fire.)
+- **Flag OFF** → "Publish quietly — *Email my audience* is OFF, so donors will **not** be notified. You can send the invitation manually anytime from this page." → **Publish quietly** / *Turn on & send* (flips the flag, saves, then publishes-and-sends) / Cancel. ← the "are you sure donors won't receive it?" guard.
+
+**B. Manual Send** (floating pill, Published/Active): 
+- notYetInvited M > 0 → "Send invitation — about **M** donors who haven't been invited yet. Already-invited donors are skipped." → **Send to M donors** / Cancel.
+- M = 0 → Send button DISABLED with hint "All N donors already invited — use Resend to email them again."
+
+**C. Manual Resend** (floating pill): amber/heavier styling — "Resend to everyone — emails **all N donors** again, including the M already invited. Use sparingly to avoid spam complaints." → **Resend to N donors** / Cancel. Subject to cooldown + large-blast guards below.
+
+### ⑯.5 Frontend — guardrails & placement
+- **Master flag switch** in `communication-tab.tsx` "Invitations" SubSection: "Email my donor audience when I publish" + helper. Bound to `page.sendInvitationOnPublish` via `setField`.
+- **Live audience count** under the audience picker: "≈ 1,240 donors · 300 not yet invited" — debounced (~500ms) `GetP2PCampaignInvitationAudienceCount`, mirroring the event `announcement-audience-section.tsx` pattern. Note "opted-out donors are excluded automatically" (resolver already filters `DoNotEmail`).
+- **Send-test button** in the SubSection: "Send test to me" → `SendP2PCampaignInvitationTest`, toast confirm.
+- **Send / Resend buttons** in the floating action pill, in the `Published`/`Active` branches ([editor-page.tsx:797-817](../../PSS_2.0_Frontend/src/presentation/components/page-components/crm/p2pfundraising/p2pcampaignpage/editor-page.tsx)) alongside Unpublish/Preview.
+- **Resend cooldown**: if `invitationSentAt` < 24h ago, Resend modal shows a friction line "You sent this N hours ago; resending may annoy donors." (warn, not block).
+- **Large-blast type-to-confirm**: when the target count exceeds a threshold (e.g. 1,000), require typing the count (reuse the Archive dialog's type-to-confirm pattern already in `editor-page.tsx`) before the action fires. Applies to Publish&Send, Send, and Resend.
+- **Send history panel** in the "Invitations" SubSection (or a drawer): table from `GetP2PCampaignInvitationHistory` — columns **When · Triggered by · Type · Sent · Failed · Status**; row click opens per-recipient drill-in (`GetP2PCampaignInvitationRecipients`) showing delivered/bounced/opened/failed. Empty state "No invitations sent yet". Replaces the single read-only "Last invitation sent" row with a real audit trail.
+
+### ⑯.6 Job-model change (REQUIRED for history — the one non-trivial refactor)
+Today `GetOrCreateRollingParentJobAsync` returns ONE reusable `EmailSendJob` per campaign (`JobCode = P2PC-{id}-INVITE`), and the counters (`TotalEmailsSend/Failed`) are never written — so distinct blasts are indistinguishable and un-auditable. Change **only the campaign-invitation stream** to **one `EmailSendJob` per invocation**:
+- Each `SendCampaignInvitationAsync` run INSERTS a fresh `EmailSendJob` (do not get-or-create) with a STABLE `JobCode = "P2PC-{id}-INVITE"` (multiple rows share it — it is not unique-constrained; get-or-create is what made it singular), `JobName` = "Auto on publish" | "Send (delta)" | "Resend (all)", `IsSystem` = (auto ? true : false), `CreatedBy` = triggering staff (or page owner for the system/Hangfire auto path), `SavedFilterId` + `SavedFilterSnapshot` frozen, `EmailTemplateId` resolved, `SendJobTypeId` = TRIGGERED, `JobStatusId` = IN_PROGRESS → COMPLETED.
+- After the send loop, WRITE the aggregate counters on that run's job: `TotalEmailsQueued`, `TotalEmailsSend`, `TotalEmailsFailed`, `LastExecutionStartedAt/EndedAt`, final `JobStatusId`.
+- Children `EmailSendQueue` rows attach to THIS run's job (per-recipient status, `SkipReason`, bounce/open columns already exist).
+- **Delta set** (`alreadySentContactIds`) = distinct `ContactId` from `EmailSendQueue` joined to ALL `EmailSendJob` rows where `JobCode == "P2PC-{id}-INVITE"` and status = SENT (union across runs), NOT just one parent. **Resend (`forceResend`) skips this entirely.**
+- Leave `SendInvitationEmailAsync` (fundraiser single-invite, `P2PF-{id}-INVITE`) on its existing rolling-parent model — do not touch.
+
+### ⑯.7 Gotchas & rules
+- **Zero silent double-send**: if flag ON fires the auto-blast AND staff also click Send, the cross-run delta prevents re-sending to the same contacts. Verify after the job-model change.
+- **`InvitationSentAt` stays the delta anchor + cooldown source** — still stamped per run (last write wins).
+- **Anonymous / no-ContactId recipients** are NOT deduped (ContactId null) — same limitation as the event feature; acceptable (donor audience are known contacts).
+- **DoNotEmail + no-primary-email donors** already excluded by `EventDonorAudienceQuery.Build` — surface this in the count copy so staff trust the number.
+- **Malformed filter JSON = fail-OPEN (sends to all)** in the current resolver. Because default flag is OFF and the publish modal shows the resolved count before sending, this is acceptable; do NOT change resolver semantics here.
+- **Tenant principal**: manual Send/Resend enqueue on Hangfire → `EstablishJobPrincipal` must run in-frame (already handled in the service). Pass the triggering `CreatedBy` through so history attributes correctly even under the synthetic principal.
+- **UI-uniformity**: tokens only (no hex/px — amber for Resend via existing amber utility classes already used in this editor), `ph:*` icons (`ph:paper-plane-tilt` send, `ph:arrow-clockwise` resend, `ph:clock-counter-clockwise` history), shaped Skeletons for the count + history table, empty/error states.
+- **Capability vs form-state**: manual Send/Resend visibility follows `capability` + PageStatus; they are ACTIONS (not the form Create/Save button), so the `formState.isValid` rule does not apply to them.
+
+### ⑯.8 Planned file manifest
+- **BE:** `P2PCampaignPage.cs` (+`SendInvitationOnPublish`) · `P2PCampaignPageConfiguration.cs` · new Migration · `P2PCampaignPageSchemas.cs` · `P2PCampaignPageEntityHelper.cs` · `GetP2PCampaignPageById.cs` · `PublishP2PCampaignPage.cs` (conditional enqueue) · `P2PFundraiserEmailService.cs` (+`forceResend`, per-run job model, counter writes) · NEW `SendP2PCampaignInvitation.cs` / `ResendP2PCampaignInvitation.cs` / `SendP2PCampaignInvitationTest.cs` commands · NEW `GetP2PCampaignInvitationAudienceCount.cs` / `GetP2PCampaignInvitationHistory.cs` (+ optional `…Recipients.cs`) queries · `P2PCampaignPageMutations.cs` + `P2PCampaignPageQueries.cs` (GraphQL registration).
+- **FE:** `P2PCampaignPageDto.ts` (+`sendInvitationOnPublish`, history/count types) · donation GQL mutations + queries files · `tabs/communication-tab.tsx` (flag switch, live count, send-test, history panel) · `editor-page.tsx` (audience-aware publish modal, Send/Resend buttons + their modals, cooldown + type-to-confirm) · `p2pcampaignpage-store.ts` (new field) · optional `components/invitation-history-panel.tsx` (NEW) + `components/send-invitation-modal.tsx` (NEW).
+- **Docs:** close #15 ISSUE-21 (mark the dispatch engine BUILT); this section supersedes it.
+
+**Build trigger:** `/build-screen #170` (this Spec section is the blueprint). Do NOT build via `/continue-screen` — it adds a new column + mutations + queries + a workflow-gate + a job-model change (Spec change).
