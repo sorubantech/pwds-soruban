@@ -10,7 +10,7 @@ complexity: Medium
 new_module: NO
 planned_date: 2026-05-12
 completed_date: 2026-05-12
-last_session_date: 2026-06-29
+last_session_date: 2026-07-02
 ---
 
 ## Tasks
@@ -1051,10 +1051,34 @@ The drawer (Sheet) is an *addition* to the mockup — the mockup doesn't show a 
 - **Known issues closed**: ISSUE-16 (the dead `searchTerm` mirror survives but is now wholly inert post-redesign — left as-is; reclassified, still LOW). None formally closed.
 - **Next step**: User `pnpm dev` smoke-test — (1) "Campaigns" menu → grid; the grid's own "+ New" opens the editor in create mode (no duplicate button); (2) row name-click + Edit → editor edit mode on the SAME route; (3) editor shows full-screen Event chrome (header, step strip, guide banner, floating pill) with uniform fields; (4) lifecycle actions (Save/Publish/Unpublish/Close/Archive) + publish-validation modal work; (5) old `…/p2pcampaignpage?id=N` deep-links still land on the editor via the shim.
 
+### Session 4 — 2026-07-02 — ENHANCE — COMPLETED
+
+- **Scope**: Surface the 5 NEW invitation fields on `fund.P2PCampaignPages` (added to the entity + EF config + DB migration `20260702080120_Add_InvitationMailTemplate_To_P2PCampaign` earlier the same day, out-of-session) through the DTO → mapping → projection → GraphQL → editor UI chain, so they round-trip and are editable in the #170 editor's Communication tab. **Wire-only** — NO donor-blast dispatch engine (email send stays a platform SERVICE_PLACEHOLDER; `InvitationSentAt` is server-managed and read-only here). Per user directive "those fields need implement in the overall p2pcampaign screen"; scope confirmed as "wire + surface all 5 fields" via AskUserQuestion.
+- **The 5 fields**: `InvitationEmailTemplateId` (EmailTemplate FK — donor blast on Publish) · `FundraiserInviteEmailTemplateId` (EmailTemplate FK — targeted invite from #135) · `InvitationSavedFilterId` (SavedFilter FK — blast audience) · `InvitationFilterJson` (jsonb — inline audience fallback) · `InvitationSentAt` (DateTime? — delta anchor, response-only).
+- **Files touched**:
+  - BE created: none.
+  - BE modified (3):
+    - `Base.Application/Schemas/DonationSchemas/P2PCampaignPageSchemas.cs` — RequestDto +4 fields (Invitation Email/FundraiserInvite/SavedFilterId/FilterJson); ResponseDto +4 (2 template names + `InvitationSavedFilterName` + `InvitationSentAt`). `InvitationSentAt` deliberately NOT on RequestDto (server-managed).
+    - `Base.Application/Business/DonationBusiness/P2PCampaignPages/Commands/P2PCampaignPageEntityHelper.cs` — `ApplyToP2PCampaignPage` +4 write-through assignments (not InvitationSentAt).
+    - `Base.Application/Business/DonationBusiness/P2PCampaignPages/Queries/GetP2PCampaignPageById.cs` — `ProjectToResponseDto` +5 assignments; `emailIds` batch extended with the 2 invitation template IDs; +2 name lookups following the existing `.HasValue ? GetValueOrDefault : null` pattern.
+  - FE modified (3):
+    - `domain/entities/donation-service/P2PCampaignPageDto.ts` — RequestDto +4, ResponseDto +4.
+    - `infrastructure/gql-queries/donation-queries/P2PCampaignPageQuery.ts` — byId `PAGE_FIELDS` +7 fields (4 ids/json + 2 names + sentAt).
+    - `presentation/components/page-components/crm/p2pfundraising/p2pcampaignpage/tabs/communication-tab.tsx` — new "Invitations" SubSection (`ph:paper-plane-tilt`) after "Fundraiser Lifecycle Emails": 2 template selectors via existing `renderTrigger`/`ApiSingleSelect`+`EMAILTEMPLATES_QUERY` pattern (new `INVITATION_EMAIL_TRIGGERS`), audience saved-filter picker via `ApiSingleSelect`+`SAVEDFILTERS_QUERY` (`savedFilterId`/`filterName`), advanced inline-JSON `TextAreaField` (muted/dashed container), read-only "Last invitation sent" row.
+  - FE unchanged: `P2PCampaignPageMutation.ts` — create/update pass the whole request as one typed input variable, so the 4 new request fields flow through with NO mutation edit (verified by inspection).
+  - DB: none — migration already existed before this session; no seed change.
+- **Deviations from spec**: (1) `InvitationSavedFilterName` is NOT projected by the BE — `SavedFilter` (`notify.SavedFilters`) is exposed only via `INotifyDbContext`, and the P2P byId handler uses `IApplicationDbContext`; adding a cross-context dependency was out of scope (ISSUE-20). FE resolves the audience display label itself from the picker's selected option. (2) `invitationSentAt` formatted with `toLocaleDateString()` (sibling-file convention in this folder; no shared date helper exists here). (3) minor: FE onChange for the saved-filter name uses a harmless `?? null as any` cast — noted, not worth a follow-up.
+- **Known issues opened**: ISSUE-20 (below).
+- **Known issues closed**: None.
+- **Verification (orchestrator-relayed from build agents)**: BE `dotnet build` Base.Application + Base.API = **0 errors** (warnings pre-existing). FE `pnpm tsc --noEmit` = **0 new errors** (1 pre-existing unrelated `PaymentMethodCode` duplicate-export, confirmed via git-stash baseline). Full E2E (apply migration → `pnpm dev` → open editor Communication tab → select templates + audience → save → reload round-trip) NOT run this session — no runtime app spun up; user should smoke-test.
+- **Next step**: User (1) confirm migration `20260702080120_Add_InvitationMailTemplate_To_P2PCampaign` is applied (`dotnet ef database update`), (2) `pnpm dev`, (3) open a campaign editor → Communication tab → "Invitations" section → pick the 2 templates + an audience saved-filter, Save, reload, confirm values persist. Donor-blast DISPATCH (send-on-Publish + delta-targeting via InvitationSentAt) remains unbuilt by design — plan as a separate workflow/SERVICE_PLACEHOLDER when the email service is wired.
+
 ### § Known Issues
 
 | ID | Severity | Description | Status |
 |----|----------|-------------|--------|
+| ISSUE-20 | LOW | `InvitationSavedFilterName` not projected by BE (`notify.SavedFilters` is on `INotifyDbContext`, P2P byId handler uses `IApplicationDbContext`) — FE resolves the audience label from the picker option instead. Wire a cross-context projection only if a server-rendered label is ever needed. | OPEN — by-design (Session 4) |
+| ISSUE-21 | MED | Invitation donor-blast DISPATCH (send template `InvitationEmailTemplateId` to the `InvitationSavedFilterId`/`InvitationFilterJson` audience on Publish, stamping `InvitationSentAt` as a delta anchor so republish never re-spams) is UNBUILT — fields persist but no send workflow exists. Depends on the platform email SERVICE_PLACEHOLDER. Plan as a dedicated workflow. | OPEN — deferred (Session 4) |
 | ISSUE-1 | MED | Multi-currency in TotalRaised / AvgPerFundraiser / TopFundraiserAmount (raw NetAmount sum without FX conversion) | OPEN (V2) |
 | ISSUE-2 | LOW | RecentDonors projection on P2PCampaignPageStatsDto | CLOSED Session 1 |
 | ISSUE-3 | LOW | Duplicate slug counter capped at 99 | OPEN (V2) |

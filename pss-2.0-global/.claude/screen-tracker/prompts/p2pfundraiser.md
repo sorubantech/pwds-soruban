@@ -9,8 +9,8 @@ complexity: High
 new_module: NO
 planned_date: 2026-05-10
 completed_date: 2026-05-13
-last_session_date: 2026-05-13
-session_count: 2
+last_session_date: 2026-07-01
+session_count: 4
 ---
 
 ## Tasks
@@ -550,6 +550,13 @@ Wire into: 3 column-type registries (advanced/basic/flow) + barrel
 - Loading: 4 KPI tile skeletons + 8 row skeletons
 - Error: red inline banner above grid + Retry button + reload trigger
 
+### Fix-pass 2026-07-01 amendments (SUPERSEDE the conflicting §⑥ lines above — see Session 3 Build Log)
+- **Currency**: all money on this screen (grid Goal/Raised, detail drawer, recent-donors, invite modal) renders in the **tenant COMPANY currency** (`useCompanyCurrency()`), not per-row native currency. KPI widgets keep per-currency groups (no FX). Display-only; no conversion.
+- **Header buttons**: the custom "Export List" + "+ Invite Fundraiser" header buttons are REMOVED. The flow-grid toolbar's **built-in Export + New** buttons are used instead (`enableExport`/`enableAdd` + `canExport`/`canCreate` from RBAC seed). The New button is relabelled **"Invite Fundraiser"** and opens the existing Invite modal (via the generic, opt-in `addButtonLabel`/`onAddOverride` flow-store fields — non-breaking for all other FLOW screens).
+- **Actions column**: standardized CRUD trio styled like the flow-grid default action buttons — **two views** (View Page ↗ public new-tab; View Details → 520px drawer), Edit (→#170 deep-link), Delete (Draft/Pending only, confirm dialog → `deleteP2PFundraiser`). Workflow actions (Message/Approve/Reject/Pause/Resume/Members) unchanged.
+- **Bulk Invite**: placeholder header button only (toast "Bulk invite coming soon") — no modal/BE yet.
+- **Invite eligibility**: only **Published** parent campaigns can create fundraisers (BE `InviteP2PFundraiser` guard tightened from Published-OR-Active to Published-only).
+
 ---
 
 ## ⑦ Substitution Guide
@@ -1000,6 +1007,56 @@ The `P2PFundraiser` entity is **owned by #170 P2PCampaignPage** (parent-with-chi
   - ISSUE-2 (CLOSED) — `actions` GridComponentName now resolves via `p2p-fundraiser-actions` case in `component-column.tsx`; DB seed updated accordingly.
   - Session 1 deviation #10 — superseded; FE grid IS now the shared FlowDataTable.
 - **Next step**: User runs (1) re-apply `sql-scripts-dyanmic/P2PFundraiser-sqlscripts.sql` (idempotent — adds `P2PF_ACTIONS` Field row + new GridField row + flips PK `IsPrimary` to false on prior-seeded rows); (2) `dotnet build` to confirm BE compiles; (3) `pnpm dev` + smoke-test `/[lang]/crm/p2pfundraising/p2pfundraiser` — grid should render via `<FlowDataTableContainer>`, status-conditional action buttons should appear in the rightmost column for each row, chip + campaign + search + sort still filter correctly.
+
+### Session 3 — 2026-07-01 — FIX+ENHANCE — COMPLETED
+
+- **Scope**: User-directed 8-item fix/enhance pass on the CRM index. (1)+(4) dynamic COMPANY currency everywhere (replace hardcoded "USD"); (2)+(8) actions column standardized to flow-grid default-styled View/Edit/Delete with a **dual view** (public page + details drawer), keeping the workflow actions; (3) restrict fundraiser invites to **Published** campaigns only; (5) drop custom Export/Invite header buttons → use flow-grid built-in Export + New; (6) generic flow-grid New button gets a nullable dynamic label (default "New") + click override; (7) Bulk Invite placeholder button; new `DeleteP2PFundraiser` soft-delete command for (2). Main session did the tiny BE guard + orchestrated a backend-developer (delete command) and frontend-developer (Sonnet) agent. The FE agent's process died mid-run but all edits had landed on disk; main session verified completeness + typecheck (clean; only pre-existing stale `.next/types/validator.ts` artifacts errored).
+- **Files touched**:
+  - **BE (2 modified, 1 created)**:
+    - `.../P2PFundraisers/Commands/InviteP2PFundraiser.cs` (modified — parent-campaign guard tightened to **Published only**; error → `CAMPAIGN_NOT_PUBLISHED`)
+    - `.../P2PFundraisers/Commands/DeleteP2PFundraiser.cs` (**created** — soft delete `IsDeleted=true` + `ModifiedBy`/`ModifiedDate`; guard: status must be Draft/Pending else `BadRequestException`; `Permissions.Delete`; `DecoratorDonationModules.P2PFundraiser`)
+    - `.../Base.API/EndPoints/Donation/Mutations/P2PCampaignPageMutations.cs` (modified — `deleteP2PFundraiser(id: Int!): BaseApiResponseOfBoolean`). `dotnet build` 0 errors.
+  - **DB**: `sql-scripts-dyanmic/P2PFundraiser-sqlscripts.sql` (modified — +`EXPORT` MenuCapability + BUSINESSADMIN RoleCapability grant [ITEM 5]; Goal/Raised `GridComponentName` repointed to `p2p-fundraiser-currency-amount`/`-bold` via INSERT + idempotent UPDATE [ITEM 1/4])
+  - **FE — generic/shared (3 modified, purely additive)**:
+    - `.../datatable-store/flow-datatable-istore.ts` + `flow-datatable-store.ts` (added optional `addButtonLabel?`/`onAddOverride?` + setters; default undefined/null → other screens unchanged)
+    - `.../flow/data-table-crud-options/data-table-add-option.tsx` (label = `addButtonLabel ?? "New"`; `onAddOverride` short-circuits the default `?mode=new` navigation)
+  - **FE — screen (7 modified, 1 created)**:
+    - `.../p2pfundraiser/index-page.tsx` (removed custom header buttons; `enableAdd`/`enableExport`=true; effect sets New-button label+override to open Invite modal WITH unmount cleanup; Bulk Invite placeholder)
+    - `.../p2pfundraiser/p2p-fundraiser-actions-cell.tsx` (default-styled CRUD trio + dual view + Draft/Pending Delete w/ confirm dialog → `DELETE_P2P_FUNDRAISER`; workflow actions unchanged)
+    - `.../p2pfundraiser/p2p-fundraiser-detail-sheet.tsx` + `p2p-fundraiser-recent-donors-table.tsx` + `invite-fundraiser-modal.tsx` (hardcoded "USD" `Intl.NumberFormat` → `useCompanyCurrency().format`)
+    - `.../shared-cell-renderers/p2p-fundraiser-currency-cell.tsx` (**created** — company-currency Goal/Raised renderer, kept screen-scoped to avoid changing shared `currency-amount(-bold)` used by other screens) + barrel export
+    - `.../flow/data-table-column-types/component-column.tsx` (registered `p2p-fundraiser-currency-amount`/`-bold` cases)
+    - `.../gql-mutations/donation-mutations/P2PCampaignPageMutation.ts` (added `DELETE_P2P_FUNDRAISER`, arg `id` not `p2PFundraiserId`, selects `result{success message}`)
+- **Deviations from spec**: (a) ITEM 2's Delete required a NEW `DeleteP2PFundraiser` BE command — none existed. (b) Given the drawer-only architecture, View/Edit/Delete are rendered as flow-grid-default-STYLED buttons inside the custom actions cell (not via `ActionColumnBuilder` navigation, which would fight the drawer/deep-link/conditional-delete model). (c) KPI widgets left showing per-currency groups (not forced to company currency) — see ISSUE-14.
+- **Known issues opened**:
+  - ISSUE-13 (OPEN, MED) — Grid Goal/Raised + detail/recent-donors/invite now render the **company currency symbol** regardless of a row's own `goalCurrencyCode`. Correct for single-currency tenants; for multi-currency tenants the symbol may not match the amount's native currency (no FX). Extends §⑫ "Native-currency aware Total Raised" V2 deferral.
+  - ISSUE-14 (OPEN, LOW) — KPI widgets intentionally keep per-currency groups (`totalRaisedByCurrency`/`averageRaisedByCurrency`) rather than a single company-currency figure, since cross-currency summation needs FX. If product wants one company-currency KPI → V2 (FX).
+  - ISSUE-15 (OPEN, LOW) — `flow-datatable-store` `reset()`/`setInitialStore()` do not clear `addButtonLabel`/`onAddOverride`; relies on the screen's unmount cleanup effect. Add a defensive clear in reset() if any future screen navigation path bypasses unmount.
+  - ISSUE-16 (OPEN, LOW) — "Bulk Invite" is a placeholder (toast only); real multi-row/CSV bulk-invite command + modal deferred per user ("just give button — later we can discuss").
+- **Known issues closed**: None.
+- **Next step**: User runs (1) `dotnet build` (already 0 errors) — no EF migration needed; (2) **re-apply `sql-scripts-dyanmic/P2PFundraiser-sqlscripts.sql`** (idempotent — adds EXPORT capability + BUSINESSADMIN grant + repoints Goal/Raised renderers) — REQUIRED for Export button + company-currency grid cells; (3) `pnpm dev` + smoke-test: company-currency amounts in grid/drawer/donors; toolbar shows Export + "Invite Fundraiser" New button (opens invite modal); other screens' New button still reads "New"; actions column shows View Page ↗ / View Details / Edit (+ Delete only on Draft/Pending) plus workflow actions; Bulk Invite toast; invite only lists Published campaigns.
+
+### Session 4 — 2026-07-01 — ENHANCE — COMPLETED
+
+- **Scope**: User directive — replace the invitation-style `<EditFundraiserModal>` (name/phone/goal/greeting only) with an IN-SCREEN "Edit Fundraiser Page" 520px right-side drawer that edits the fundraiser's OWN page content (title/slug/story/media/goal/donation settings/thank-you) plus, for team fundraisers, full team-member management (add/remove/promote captain). Backend for the 3 new team-roster ops (`addP2PTeamMember`/`removeP2PTeamMember`/`setP2PTeamCaptain`/`p2PTeamMembers`) was already built and compiling before this session — FE-only session, bound to the exact confirmed contract.
+- **Files touched**:
+  - **FE (2 created, 6 modified, 1 deleted)**:
+    - `.../p2pfundraiser/fundraiser-page-editor-drawer.tsx` (**created** — 520px right-side `<Sheet>`; hydrates from `GET_P2P_FUNDRAISER_BY_ID`; `toRequestDto()` copies the ENTIRE loaded `P2PFundraiserResponseDto` into the editable request shape so `UPDATE_P2P_FUNDRAISER`'s full-row-overwrite never drops untouched fields (customAmountChips/socialShareMessages/employer* round-tripped verbatim); editable sections: Page Details (title/slug/story), Media (cover image/video/profile photo URLs), Goal (amount + visibility switch), Donation Settings (3 switches), Thank-You (switch + conditional textarea); Save gated on `pageTitle` non-empty + `personalGoal > 0`; slug-conflict 400 surfaced as inline field error, not toast; mounts `<TeamMembersSection>` when `fundraiserType === "TEAM" || teamId != null`)
+    - `.../p2pfundraiser/team-members-section.tsx` (**created** — Team Name + Shared Goal edit → `UPDATE_P2P_FUNDRAISER_TEAM` (full `P2PFundraiserTeamRequestDto`, `teamSize`/`captainContactId` derived from the live roster); roster list via `p2PTeamMembers(teamId)` — avatar/initials + name + email + solid-tone status badge + `ph:crown-simple-fill` captain marker; "Make captain" (`setP2PTeamCaptain`) hidden for the current captain; "Remove" (`removeP2PTeamMember`) disabled for the captain with a tooltip "Assign a new captain first" (also the BE's 400 message pattern-matched and surfaced as that same toast); inline Add-member form (name + email + optional goal) → `addP2PTeamMember`; empty state when no members)
+    - `.../p2pfundraiser/index-page.tsx` (modified — swapped `<EditFundraiserModal>` import/mount for `<FundraiserPageEditorDrawer>`; header doc-comment updated)
+    - `.../p2pfundraiser/p2p-fundraiser-store.ts` (modified — `EditFundraiserPayload` simplified to `{ p2PFundraiserId: number }`; `openEdit`/`closeEdit` signatures unchanged)
+    - `.../p2pfundraiser/p2p-fundraiser-actions-cell.tsx` (modified — Edit button's `openEdit(...)` call reduced to the id-only payload; doc-comment updated)
+    - `src/domain/entities/donation-service/P2PCampaignPageDto.ts` (modified — added `AddP2PTeamMemberInputDto` + `P2PTeamMemberDto`, mirroring the confirmed BE `P2PFundraiserTeamSchemas.cs` shapes exactly)
+    - `src/infrastructure/gql-mutations/donation-mutations/P2PFundraiserAdminMutation.ts` (modified — added `ADD_P2P_TEAM_MEMBER` / `REMOVE_P2P_TEAM_MEMBER` / `SET_P2P_TEAM_CAPTAIN`, each selecting the standard `errorCode errorDetails message status success data` envelope)
+    - `src/infrastructure/gql-queries/donation-queries/P2PFundraiserAdminQuery.ts` (modified — added `GET_P2P_TEAM_MEMBERS` selecting all 9 `P2PTeamMemberDto` fields)
+    - `.../p2pfundraiser/edit-fundraiser-modal.tsx` (**DELETED** — superseded by `fundraiser-page-editor-drawer.tsx`)
+  - No BE changes this session (backend pre-built per user's confirmed contract) — verified exact GraphQL field/arg names by reading `Base.API/EndPoints/Donation/Mutations/P2PCampaignPageMutations.cs` (L442-500), `Queries/P2PCampaignPageQueries.cs` (L273-291), and `Base.Application/Schemas/DonationSchemas/P2PFundraiserTeamSchemas.cs` (L43-66) directly rather than trusting the prompt text.
+  - No DB seed changes — this is a pure UI/UX surface swap over existing capabilities (Edit already had a capability-gated entry point).
+- **Deviations from spec**: None — reused `GET_P2P_FUNDRAISER_BY_ID` / `UPDATE_P2P_FUNDRAISER` / `UPDATE_P2P_FUNDRAISER_TEAM` exactly as they already existed in `P2PCampaignPageMutation.ts`/`P2PCampaignPageQuery.ts` per the user's explicit reuse instruction; new team-roster mutations/query placed in the existing `P2PFundraiserAdminMutation.ts`/`P2PFundraiserAdminQuery.ts` files (both barrel-exported via `export *`, so no new barrel wiring was needed).
+- **Known issues opened**: None.
+- **Known issues closed**: None (this session did not touch any of Sessions 1-3's OPEN issues; ISSUE-10 "Team-row Members action SERVICE_PLACEHOLDER" is now effectively superseded in spirit since Edit opens the full page+team editor, but the "Members" quick-action button on Active team rows still shows the placeholder toast — left as-is, out of this session's requested scope).
+- **Verification**: `pnpm exec tsc --noEmit` from `PSS_2.0_Frontend` — **zero errors project-wide** (clean exit code 0, empty output).
+- **Next step**: `pnpm dev` + smoke-test: Edit button on any fundraiser row opens the 520px drawer (not the old modal); verify Save round-trips untouched fields (customAmountChips/socialShareMessages) by editing only Page Title then re-opening and confirming other fields unchanged; for a TEAM fundraiser row, verify Team Members section appears, Add/Remove/Make-captain all work end-to-end, and Remove-captain is blocked with the correct tooltip/toast.
 
 ---
 

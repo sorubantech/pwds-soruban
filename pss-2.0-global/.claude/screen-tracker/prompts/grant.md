@@ -9,7 +9,8 @@ complexity: High
 new_module: YES — `grant` schema
 planned_date: 2026-04-25
 completed_date: 2026-04-26
-last_session_date: 2026-04-26
+last_session_date: 2026-07-03
+kt_doc: docs/grant-management-kt.html
 ---
 
 ## Tasks
@@ -1111,3 +1112,31 @@ Full UI must be built (buttons, forms, modals, tabs, kanban board). Only the han
 - **Next step**: Run `/plan-screens #62` to fold `GrantExpense` into Sections ②/⑥/⑧, then `/build-screen #62`. Developer runs `dotnet ef migrations add Add_GrantExpense` manually.
 
 > **Why the "Add Expense" button is a no-op today**: it fires a static toast (`grant-detail.tsx` ~line 167 + ~748) that wrongly blames GrantReport #63. The real gap is the missing `GrantExpense` table — see the two design docs above. The Budget tab table already renders per-line Spent/Remaining from `GrantBudgetLine.SpentAmount`, which nothing writes to yet; this feature supplies the write-path.
+
+### Session 2 — 2026-07-03 — ENHANCE (documentation) — COMPLETED
+
+- **Scope**: Upgraded the Grant Knowledge-Transfer doc (`docs/grant-management-kt.html`) from the old 4-section format to the newer "CRM business module" KT standard used by its siblings (matching-gift / event / case / crowdfunding / p2p). Grant was the last KT doc still on the old format. Additive enrichment + new chrome only — no screen code changed.
+- **Files touched**:
+  - BE: None
+  - FE: None
+  - DB: None
+  - DOCS: `.claude/screen-tracker/docs/grant-management-kt.html` (rewritten, 587 → 1065 lines); `prompts/grant.md` frontmatter (`kt_doc:` pointer added, this log entry).
+- **Deviations from spec**: None — documentation only; content cross-checked against §① / §② / §④ / §⑥.
+- **New sections added**: Agenda, Screens at a Glance, ⚙ Lifecycle Walk-through (stage-gate cheat sheet: ExecSummary→Application, AwardedAmount→Approved, FunderGrantNo+dates→Active, RejectionReason→Reject), ③ The Tabs in Detail (7 FORM sections + 5 DETAIL tabs + Quick Stats), ⑤ Statuses & Lookups. Preserved: 7-stage flow table + off-ramps, animated GRT-012 pipeline, all 4 mermaid diagrams (2× stateDiagram, sequenceDiagram, erDiagram), 6 entity tables, all Test Cases (G1–G9, GR1–GR3, GB1–GB2, GM1, GA1, GG1–GG5).
+- **Known issues opened**: None.
+- **Known issues closed**: None (the 15 OPEN code-level ISSUEs are unaffected by a doc pass).
+- **Next step**: None (doc shipped). The GrantExpense feature (ISSUE-1/6) still requires `/plan-screens #62` → `/build-screen #62` per Session 1.
+
+### Session 3 — 2026-07-03 — UI — COMPLETED
+
+- **Scope**: Default the new-grant **Currency picker** to the **company base currency** (from CompanySettings session store #75). Display of amounts is intentionally **left on each grant's own currency** — a grant may legitimately be funded in any currency, so grid/widgets/detail must show the grant's actual currency; only the create-form default is the company currency. Scoped **FE-only**.
+- **Course-correction note**: this session first (wrongly) relabeled ALL displayed amounts to the company currency (kanban card, KPI widgets collapsed to one currency, detail quick-stats/rows/expense rows). The user corrected: *"avoid in grid — grant currency can be any currency; only the default should be company currency."* All display changes were **reverted**; the net change is the single form-default effect below.
+- **Files touched**:
+  - BE: None (an early attempt to relabel `amountLabel` in `GetGrants.cs` was made then fully reverted — FE-only, and display now stays per-grant anyway).
+  - FE: `crm/grant/grantlist/grant/grant-form.tsx` — added a new-grant `useEffect` that defaults `currencyId` to `getCompanySessionSettings().baseCurrencyId` when unset (mirrors the existing Priority=Medium default); Currency picker kept editable; added the `getCompanySessionSettings` import. (grant-kanban-board.tsx / grant-widgets.tsx / grant-detail.tsx were touched then reverted to their pre-session state — per-grant `currencyCode`.)
+  - DB: None.
+- **Verification**: `npx tsc --noEmit` — no errors in any grant file. (One pre-existing, unrelated error remains: `donation-service/index.ts` duplicate `PaymentMethodCode` re-export.) Live click-through in `pnpm dev` not run this session.
+- **Deviations from spec**: None — display currency behavior unchanged from the original §⑥ blueprint (per-grant currency). Only adds a sensible create-time default.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: None.

@@ -10,7 +10,7 @@ complexity: High
 new_module: NO
 planned_date: 2026-05-13
 completed_date: 2026-05-13
-last_session_date: 2026-06-30
+last_session_date: 2026-07-03
 ---
 
 ## Tasks
@@ -1571,6 +1571,38 @@ Full UI must be built (setup tabs, public render tree, donation flow up to gatew
 - **Public page 404 on localhost (`/en/crowdfund/<slug>`) — BE dev-only tenant fallback** (`GetCrowdFundBySlug.cs`): root cause = tenant resolution. The BySlug handler resolves CompanyId from the hostname; on `localhost` (no subdomain / custom domain / `?_tenant=`) `OnlineDonationPageTenantResolver` falls back to the **first active company** (lowest CompanyId). A campaign owned by another tenant (user operates as company 3) then misses the company-scoped lookup → `result.Page == null` → resolver returns error → FE `notFound()`. **Fix**: after the tenant-scoped lookup misses **and `env.IsDevelopment()`**, retry the lookup **by slug alone** (any active tenant) so any published page opens on localhost without a manual `?_tenant=`. Production keeps strict tenant scoping (fallback gated on Development). On a real subdomain it already resolved correctly. Currency/orgName come from the entity itself, so they stay correct under the fallback.
 - **Files touched — FE** (`tsc` 0 src errors): `editor-page.tsx`, `tabs/basic-tab.tsx`, `tabs/page-builder-tab.tsx`. **BE (build handoff — code-only, no migration/seed)**: `Base.Application/.../CrowdFunds/Queries/GetCrowdFundBySlug.cs`. **Next step**: user `dotnet build`s the BE; then QA the public page on localhost (loads without `?_tenant=`), confirm URL bar Copy/Open work while a campaign is Active/Closed.
 
+### Session 11 — 2026-07-03 — ENHANCE (§⑮ CrowdFund donor invitation — SEND/RESEND/PUBLISH-GUARD/HISTORY) — COMPLETED (BE build clean, FE tsc clean) / MIGRATION + SEED HANDOFF
+
+- **Scope**: Built §⑮ end-to-end — port of the P2P Campaign invitation feature to the unified `CrowdFund` entity. BE + FE dispatched in parallel (Sonnet) against the frozen §⑮ GraphQL contract. Config UI lives in a NEW "Invitations" (`communication`) tab on THIS #173 editor; a compact Send/Resend + status shortcut was added to the #16 drawer (logged in `crowdfunding.md §⑮`).
+- **⚠ Orchestration note (for audit)**: the first BE + FE agent dispatches mis-fired — they returned plans and wrote ZERO files (pipeline agents defaulted to "delegate" behavior). Caught by disk check; re-dispatched with explicit "execute yourself" directives. The re-dispatch **plus** a late-spawning worker from the first dispatch ran concurrently → verified no source clobber (every field/method/DTO/DI line appears exactly once) EXCEPT one duplicate seed file (a fully-commented-out `CrowdFundInvitation-sqlscripts.sql`, deleted; kept the active `CrowdFund-Invitation-sqlscripts.sql`). The FE build was interrupted by a session exit but had already landed all edits.
+- **Files touched**:
+  - **BE (created)**: `Base.Application/Services/CrowdFundCommunications/{ICrowdFundEmailService,CrowdFundEmailService}.cs` (cloned from `P2PFundraiserEmailService`; JobCode `CF-{id}-INVITE`; template `CF_CAMPAIGN_INVITATION`; `/crowdfund/{slug}`, no RegisterUrl; per-run `EmailSendJob` + counters + cross-run delta) · `CrowdFunds/InvitationCommands/{SendCrowdFundInvitation,ResendCrowdFundInvitation,SendCrowdFundInvitationTest}.cs` · `CrowdFunds/Queries/{GetCrowdFundInvitationAudienceCount,GetCrowdFundInvitationHistory,GetCrowdFundInvitationRecipients}.cs` · migration `20260703061815_Add_Invitation_To_CrowdFunding` (+Designer; **user owns migration workflow per their request**) · seed `sql-scripts-dyanmic/CrowdFund-Invitation-sqlscripts.sql` (seeds `CROWDFUNDINVITATION` EMAILCATEGORY MasterData + `CF_CAMPAIGN_INVITATION` template; idempotent; NOT executed).
+  - **BE (modified)**: `CrowdFund.cs` (+5 fields +`InvitationEmailTemplate` nav) · `CrowdFundConfiguration.cs` (InvitationEmailTemplate FK Restrict + `InvitationFilterJson` jsonb + `SendInvitationOnPublish` default false; NO SavedFilter FK) · `CrowdFundSchemas.cs` (+5 fields on `CrowdFundPageUpdateRequest`/`CrowdFundResponseDto`; +3 result DTOs) · `CrowdFundEntityHelper.cs` (write-through + create default) · `GetCrowdFundById.cs` (project 5 raw fields) · `PublishCrowdFund.cs` (+`IBackgroundJobClient`, conditional enqueue when `SendInvitationOnPublish`) · `CrowdFundMutations.cs` (+3) · `CrowdFundQueries.cs` (+3) · `DependencyInjection.cs` (register `ICrowdFundEmailService`) · `ApplicationDbContextModelSnapshot.cs`.
+  - **FE #173 (created)**: `crowdfundingpage/tabs/communication-tab.tsx` (template picker + audience filter + `sendInvitationOnPublish` switch + live audience count + send-test + history mount) · `crowdfundingpage/components/invitation-history-panel.tsx` (history table + per-recipient drill-in).
+  - **FE #173 (modified)**: `CrowdFundingPageDto.ts` (+fields, +3 DTOs) · `CrowdFundingPageQuery.ts` (+5 scalars, +3 query consts) · `CrowdFundingPageMutation.ts` (+3 mutations) · `crowdfundingpage-store.ts` (`communication` tab entry + `sendInvitationOnPublish:false` default) · `editor-page.tsx` (Send/Resend pills + §⑮.4 audience-aware 3-way publish modal + large-blast type-to-confirm + manual Send/Resend modals + cooldown) · `crowdfundingpage-schemas.ts`.
+  - **FE #16 (modified)**: `crowdfund-detail-sheet.tsx` (read-only Invitations row + Send/Resend + "Edit setup" deep-link) · `CrowdFundQuery.ts` (+5 scalars) · `CrowdFundDto.ts` (+5 response fields) · `CrowdFundMutation.ts` (+3 mutations).
+- **Deviations from spec**: (1) §⑮.4 audience-aware publish branches live inline in `editor-page.tsx` rather than in `publish-validation-modal.tsx` — spec allowed either; functionally equivalent. (2) `EMAILCATEGORY` row `CROWDFUNDINVITATION` is seeded fresh (P2P never seeded its own category — this fixes that gap rather than reusing a NULL-resolving code).
+- **Bug caught + fixed during verification (CRITICAL)**: the FE invitation **queries** were written with a `get` prefix (`getCrowdFundInvitationAudienceCount` etc.), but this project's HotChocolate schema **strips the `Get` prefix** (proven by existing `crowdFundById`/`crowdFundSummary`/`crowdFundStats`). Builds don't catch a GraphQL field-name mismatch, so this would have failed silently at runtime. **Fixed** — stripped the prefix on all 3 query field selections in `CrowdFundingPageQuery.ts`. Mutations were already correct (`sendCrowdFundInvitation` etc. — non-`Get` verbs aren't stripped).
+- **Verification**: BE `dotnet build Base.API` → **Build succeeded, 0 errors** (548 pre-existing solution-wide warnings). FE `npx tsc --noEmit` → **0 new errors** for any crowdfund file; the only error is the pre-existing `PaymentMethodCode` duplicate export in `donation-service/index.ts` (predates this work — same one flagged in `p2pcampaignpage.md` Session 13). Runtime E2E NOT yet run.
+- **Known issues opened**: none new. Inherits P2P **ISSUE-9** (publish escape-hatch "Publish without sending" persistently flips `sendInvitationOnPublish` OFF — BE-owner may add a one-time override arg; default accept-as-is).
+- **Next step (user)**: (1) own the EF migration + `dotnet ef database update`; (2) execute `CrowdFund-Invitation-sqlscripts.sql`; (3) `pnpm dev` E2E — Communication tab config, live audience count, send-test, publish 3-way modal, manual Send/Resend, history + recipient drill-in, and the #16 drawer shortcut.
+
+### Session 12 — 2026-07-03 — FIX (Unpublish unreachable — widen gate Published→Published|Active) — COMPLETED (compiles; BE output lock only)
+
+- **Scope**: Unpublish was effectively unreachable. Both the FE ⋮-menu gate (`editor-page.tsx:949`) and the BE guard (`UnpublishCrowdFund.cs:41`) required `PageStatus == "Published"`, but `PublishCrowdFund` auto-advances Published→**Active** when `StartDate <= now`, so live campaigns are almost always `Active` → the option never showed. **Note: #16 + #173 are ONE combined screen** — all lifecycle actions live on the #173 editor action pill; the #16 row-grid/drawer intentionally carry none (`crowdfund-card.tsx` + `lifecycle-confirm-modal.tsx` are dead legacy from the pre-Session-6 card layout).
+- **Fix**: widened both gates to `Published || Active`. **Kept the donation-count guard** (`UnpublishCrowdFund.cs:52`) as the real safety net — a campaign with any recorded donation still cannot be unpublished and routes to Close. So this only unlocks Unpublish for live-but-empty campaigns.
+- **Files touched — BE**: `CrowdFunds/Commands/UnpublishCrowdFund.cs` (guard + doc comment). **FE**: `crowdfundingpage/editor-page.tsx` (⋮-menu gate). Confirm-modal copy already accurate ("re-publish at any time if there are zero donations").
+- **Deviations**: None. **Known issues opened**: None (open policy: campaigns with donations still Close-only, by design).
+- **Verification**: BE compiled clean; the `dotnet build` reported MSB3027/MSB3021 file-lock errors ONLY (`Base.Infrastructure.dll` held by the running Base.API under VS) — not code errors. **Next step (user)**: stop/rebuild the running API to pick up this + the §⑮ BE, then confirm Unpublish shows on an Active, zero-donation campaign.
+
+### Session 13 — 2026-07-03 — FIX (Send-test parity — modal-collect-recipient, no invisible send) — COMPLETED (BE `Base.Application` build clean; FE tsc clean)
+
+- **Scope**: Mirror the p2pcampaign §⑯ "invisible sender" fix onto crowdfund. p2p's "Send test" was changed to **collect an explicit recipient email in a modal** (never a silent send-to-self); crowdfund's clone still used the OLD invisible pattern — a "Send test to me" button that fired straight to the current staff user's inbox with no recipient input. Brought crowdfund to exact parity with `SendP2PCampaignInvitationTest` / p2pcampaignpage `communication-tab.tsx`.
+- **Files touched — BE (2)**: `CrowdFunds/InvitationCommands/SendCrowdFundInvitationTest.cs` (command record +`string? TestEmail = null`; validator `When(!empty) => EmailAddress()`; handler — explicit `TestEmail` wins, falls back to staff email, throws "Enter a test email…" if both empty; doc comment). `Base.API/EndPoints/Donation/Mutations/CrowdFundMutations.cs` (resolver +`string? testEmail = null` → passed into command).
+- **Files touched — FE (2)**: `CrowdFundingPageMutation.ts` (`SEND_CROWDFUND_INVITATION_TEST` +`$testEmail: String` arg). `crowdfundingpage/tabs/communication-tab.tsx` ("Send test to me" straight-fire button → "Send a test" button that opens a recipient-collection `<Dialog>` w/ email `TextField` + live-regex validation + `submitTest`; toast now names the entered address; imports Dialog set + `TextField` from event `fields`).
+- **Deviations**: None — byte-for-byte behavioural clone of the p2p test-send flow. **Known issues opened/closed**: None.
+- **Verification**: `dotnet build Base.Application` = **Build succeeded, 0 errors**. FE `tsc --noEmit` = only the pre-existing unrelated `PaymentMethodCode` duplicate-export (predates; same one noted in p2pcampaignpage Session 13) — 0 new errors. **Next step (user)**: rebuild the running Base.API (still holds old DLLs) to expose the new `testEmail` GraphQL arg, then smoke-test: Communication tab → Send test → modal collects an address → sends only there.
+
 ---
 
 ## ⑭ SOURCE-2 FUNDING INTEGRATION & SETTINGS→CRM RELOCATION (planned 2026-06-29 — design only, do NOT build this pass)
@@ -1586,4 +1618,147 @@ Full UI must be built (setup tabs, public render tree, donation flow up to gatew
 - FE move (when executed): `app/[lang]/setting/publicpages/crowdfundingpage/` → `app/[lang]/crm/p2pfundraising/crowdfundingpage/`; `page-components/setting/publicpages/crowdfundingpage/` → `page-components/crm/p2pfundraising/crowdfundingpage/`; `presentation/pages/setting/publicpages/crowdfundingpage.tsx` → `.../crm/p2pfundraising/crowdfundingpage.tsx`; fix every internal import path.
 - Update menu seed `MenuUrl` `setting/publicpages/crowdfundingpage` → `crm/p2pfundraising/crowdfundingpage` (currently kept as `setting/...` in the seed pending this move; menu parent already on `CRM_P2PFUNDRAISING`).
 - **Inbound deep-links to update:** `crowdfunding.md` #16 "Edit Full Setup" (drawer + per-card Edit, ~5 refs) currently targets `setting/publicpages/crowdfundingpage?id={id}` → change to `crm/p2pfundraising/crowdfundingpage?id={id}`. (Reconcile: #16's prompt was written assuming this setup screen was a future 404 stub — it is in fact COMPLETED #173, so the deep-link will resolve once the route moves.)
+
+---
+
+## ⑮ CROWDFUND INVITATION — DONOR-BLAST CONFIG, SEND/RESEND ACTIONS, PUBLISH GUARD & SEND HISTORY (✅ BUILT 2026-07-03 — see §⑬ Session 11; BE build clean + FE tsc clean; migration + seed handed to user)
+
+> **Goal.** Port the P2P Campaign "Campaign Invitation" feature (P2PCampaignPage §⑯, shipped 2026-07-02) to the CrowdFund entity: a per-campaign donor-blast — configurable invite template + audience filter, a publish-time opt-in guard, two explicit manual actions (Send delta / Resend force), all five email-ops safeguards, and an auditable send history. **This is the EXACT P2P feature adapted to CrowdFund's unified entity + this #173 editor.** Where P2P already had a send engine to extend, CrowdFund has NONE — so this build creates the `CrowdFundEmailService` from scratch by cloning `P2PFundraiserEmailService`.
+>
+> **Build trigger:** `/build-screen #173` (this section is the blueprint). A small companion drawer-shortcut for #16 is specced in `crowdfunding.md §⑮` and builds via `/build-screen #16` (or a queued `/continue-screen #16`). Do NOT build via `/continue-screen #173` — this adds columns + a migration + a brand-new service + 3 mutations + 3 queries + a publish gate + a job-model change (Spec change).
+
+### ⑮.0 Current reality (verified 2026-07-03 — the starting point)
+- **Entity is UNIFIED.** One `CrowdFund` (table `fund.CrowdFunds`) backs BOTH #16 (CRM cards-grid + drawer, `page-components/crm/p2pfundraising/crowdfunding/`) and #173 (this full-setup editor, `page-components/crm/p2pfundraising/crowdfundingpage/`). Invite fields live on `CrowdFund`; config UI lives in THIS editor; #16 gets a read-only shortcut. No P2P-style two-entity split.
+- **Status is a `string`, not an enum.** `CrowdFund.PageStatus` (`CrowdFund.cs:32`) ∈ `{"Draft","ReadyToPublish","Published","Active","GoalMet","Closed","Archived"}` (7 states in practice — `"ReadyToPublish"` is undocumented but present in `CrowdFundEntityHelper` + FE `CrowdFundStatus` type). Gate manual Send/Resend on `PageStatus ∈ {"Published","Active"}` (string compare, NOT an enum cast).
+- **CrowdFund has ZERO invitation infrastructure today.** It has 6 config-only EmailTemplate FKs (`ConfirmationEmailTemplateId`, `GoalMilestoneEmailTemplateId`, `GoalReachedEmailTemplateId`, `AdminNotificationEmailTemplateId`, `PaymentSuccessEmailTemplateId`, `ReceiptEmailTemplateId` — `CrowdFund.cs:100-105`) but **no email service dispatches ANY of them** (verified: grep for `CrowdFund*EmailService` = none; the 6 FKs are pure placeholders). No `SavedFilter` field, no `SendInvitationOnPublish`, no `InvitationSentAt`.
+- **`PublishCrowdFund.cs` enqueues nothing** — validation guards + `PageStatus = "Published"/"Active"` + `SaveChangesAsync` only; it does NOT inject `IBackgroundJobClient` (contrast `PublishP2PCampaignPageHandler`, which does). We add the client + a conditional enqueue.
+- **This #173 editor already has the shell we need:** `editor-page.tsx` (action pill + `publish-validation-modal.tsx`), `components/tab-nav.tsx`, `tabs/basic-tab.tsx` + `tabs/page-builder-tab.tsx`, `crowdfundingpage-store.ts`, `crowdfundingpage-schemas.ts`, `components/lifecycle-modals.tsx`, `components/status-bar.tsx`. A NEW `tabs/communication-tab.tsx` slots into `tab-nav` exactly like the two existing tabs.
+
+### ⑮.1 Locked decisions (mirror P2P §⑯.1, adapted)
+1. **Publish ≠ announce.** Decouple going-live from notifying donors.
+2. **New master flag `SendInvitationOnPublish` (bool, NOT NULL, DEFAULT FALSE).** Governs ONLY the publish-time auto-blast. Manual Send/Resend are always available on a live campaign regardless of the flag. Default **OFF** — an accidental blast is irreversible; a missed one is recoverable via manual Send. **Backfill OFF for ALL existing crowdfunds** (server default handles it; do NOT grandfather any to ON — CrowdFund has never auto-blasted, so OFF-for-all is zero behavioural regression).
+3. **Two manual actions** (`PageStatus ∈ {Published, Active}` only):
+   - **Send** = delta — email only donors NOT yet invited (cross-run dedup).
+   - **Resend** = force — email ALL donors in the audience again, including already-invited (`forceResend` skips the dedup exclusion).
+4. **Publish modal is audience-aware and offers an escape hatch** (see ⑮.4). Reuses/extends THIS editor's existing `publish-validation-modal.tsx`.
+5. **All five email-ops guardrails included:** live audience count, send-test-to-myself, resend cooldown warning, large-blast type-to-confirm, and send history (who triggered · sent · failed · per-recipient drill-in).
+6. **Audience = donor Contacts**, resolved by the SAME generic `EventDonorAudienceQuery` used by P2P + Events (tenant-scoped, not-deleted, not-`DoNotEmail`, primary-email-only). No CrowdFund-specific audience logic.
+
+### ⑮.2 Data model (on the shared `CrowdFund` entity)
+- **NEW columns** on `CrowdFund` (`CrowdFund.cs` — insert a `// ── Invitation (NEW) ──` block after the 6-EmailTemplate/WhatsApp config block, ~line 107; **omit** P2P's `FundraiserInviteEmailTemplateId` — CrowdFund has no child-fundraiser entity):
+  - `public int? InvitationEmailTemplateId { get; set; }` — the donor-blast template (falls back to a global `CF_CAMPAIGN_INVITATION` default when null).
+  - `public int? InvitationSavedFilterId { get; set; }` — **bare `int?`, NO EF FK/nav** (mirror P2P exactly — the SavedFilter lives on `INotifyDbContext` and is resolved ad-hoc inside `EventDonorAudienceQuery.ResolveAsync`, not via navigation).
+  - `public string? InvitationFilterJson { get; set; }` — inline audience filter (mapped `jsonb`).
+  - `public DateTime? InvitationSentAt { get; set; }` — delta anchor + cooldown source (`timestamptz`). **UTC rule applies** — stamp with `DateTime.UtcNow`; wire DTOs must arrive `Kind=Utc` (per `feedback_db_utc_only`).
+  - `public bool SendInvitationOnPublish { get; set; }` — publish-time auto-blast opt-in.
+  - Nav: `public virtual EmailTemplate? InvitationEmailTemplate { get; set; }` (after the `ReceiptEmailTemplate` nav, ~line 128).
+- **EF config** (`CrowdFundConfiguration.cs`): add ONE `HasOne(o => o.InvitationEmailTemplate).WithMany().HasForeignKey(o => o.InvitationEmailTemplateId).OnDelete(DeleteBehavior.Restrict)` (clone of the existing 6 template FK blocks, ~line 123); map `InvitationFilterJson` as `jsonb`; set `Property(p => p.SendInvitationOnPublish).HasDefaultValue(false)`. **Do NOT** add a `SavedFilter` FK/nav.
+- **Migration** — clone the two P2P migrations exactly:
+  - `20260702080120_Add_InvitationMailTemplate_To_P2PCampaign.cs` → `Add_Invitation_To_CrowdFunding` (adds `InvitationEmailTemplateId integer NULL` + FK to `masterdatas`/`emailtemplates`, `InvitationSavedFilterId integer NULL` **no FK**, `InvitationFilterJson jsonb NULL`, `InvitationSentAt timestamptz NULL`).
+  - `20260702121827_Add_SendInvitationOnPublish_To_P2PCampaignPage.cs` → `Add_SendInvitationOnPublish_To_CrowdFunding` (adds `SendInvitationOnPublish boolean NOT NULL DEFAULT FALSE`). Combine into ONE migration if cleaner; regen Designer + ModelSnapshot per the #16/#173 EF workflow.
+- **Send-history storage = existing `notify.EmailSendJob` + `notify.EmailSendQueue`** (NO new table — identical to P2P). See ⑮.6 for the per-run job model. Rolling `JobCode = "CF-{id}-INVITE"`.
+
+### ⑮.3 Backend contract (clone P2P names, swap `P2PCampaign`→`CrowdFund`, `p2PCampaignPageId`→`crowdFundId`)
+- **DTOs** (`CrowdFundSchemas.cs`):
+  - Add the 5 invitation fields to **`CrowdFundPageUpdateRequest`** (the existing #173 full-setup update DTO, ~lines 485-558) — this is the config vehicle; do NOT touch the 8-field `CrowdFundQuickCreateRequest`/`QuickEditRequest`.
+  - Add the 5 fields to **`CrowdFundResponseDto`** (~after line 177): `InvitationEmailTemplateId`, `InvitationSavedFilterId`, `InvitationFilterJson`, `InvitationSentAt`, `SendInvitationOnPublish`. (Template/filter NAMES are resolved FE-side via the picker's `displayLabel`, NOT server-projected — mirror how CrowdFund's other 6 template FKs work; do not add name resolution to `GetCrowdFundById`.)
+  - NEW result DTOs (clone `P2PCampaignPageSchemas.cs:473-513`): `CrowdFundInvitationAudienceCountDto { int TotalAudience; int AlreadyInvited; int NotYetInvited; }`, `CrowdFundInvitationHistoryEntryDto { int EmailSendJobId; string JobName; string? TriggeredByName; DateTime TriggeredAt; int TotalEmailsSend; int TotalEmailsFailed; int TotalEmailsQueued; string JobStatus; }`, `CrowdFundInvitationRecipientDto { string ToEmail; string? ToName; string Status; string? SkipReason; bool IsBounced; bool IsOpened; DateTime? DeliveredAt; }`.
+- **Write-through** (`CrowdFundEntityHelper.cs`): map the 5 fields from `CrowdFundPageUpdateRequest` onto the entity in the update path; set `entity.SendInvitationOnPublish = false` in `ApplyCreateDefaults` (~line 71, beside `WhatsAppDonationAlertEnabled = false`).
+- **byId projection** (`GetCrowdFundById.cs` `ProjectToResponseDto`, ~after line 137): pass through the 5 raw fields (ids + `InvitationSentAt` + flag). No name resolution.
+- **Publish handler change** (`PublishCrowdFund.cs`): inject `IBackgroundJobClient backgroundJobClient` into the primary constructor; after `SaveChangesAsync` (line ~112, before the `PublishCrowdFundResult` return), add:
+  ```csharp
+  if (entity.SendInvitationOnPublish)
+      backgroundJobClient.Enqueue<ICrowdFundEmailService>(
+          s => s.SendCampaignInvitationAsync(entity.CrowdFundId, CancellationToken.None, true, false, null));
+  ```
+  Publish still succeeds regardless; the blast is best-effort on Hangfire, delta-tracked. (Confirm `MarkCrowdFundReadyToPublish.cs` does NOT also need it — only the Draft→Published/Active transition blasts.)
+- **NEW mutations** — new command records under `CrowdFunds/InvitationCommands/`, each decorated `[CustomAuthorize(DecoratorDonationModules.CrowdFund, Permissions.Modify)]` (rides the standard `WRITE` cap — **no new `SEND_INVITE` capability**, matching P2P), gated to `PageStatus ∈ {"Published","Active"}`. Clone `SendP2PCampaignInvitation.cs` / `ResendP2PCampaignInvitation.cs` / `SendP2PCampaignInvitationTest.cs`:
+  - `SendCrowdFundInvitation(int crowdFundId)` → enqueue `SendCampaignInvitationAsync(id, ct, isSystem:false, forceResend:false, triggeredByUserId:currentUserId)`.
+  - `ResendCrowdFundInvitation(int crowdFundId)` → enqueue `… forceResend:true`.
+  - `SendCrowdFundInvitationTest(int crowdFundId)` → synchronous test-to-self (resolve template inline, send to current staff email only, no audience resolve, no tracking, no `InvitationSentAt` stamp).
+- **NEW queries** — clone `GetP2PCampaignInvitationAudienceCount/History/Recipients.cs`:
+  - `GetCrowdFundInvitationAudienceCount(int crowdFundId, int? savedFilterId, string? filterJson)` → `{TotalAudience, AlreadyInvited, NotYetInvited}`. Accepts the in-editor UNSAVED filter values so the live count reflects what the admin is editing. Uses the SAME `EventDonorAudienceQuery` resolver + the cross-run delta set so preview == actual. Read permission. Fail-open to 0 on malformed filter.
+  - `GetCrowdFundInvitationHistory(int crowdFundId)` → run summaries from `EmailSendJob` where `JobCode == "CF-{id}-INVITE"`, newest first; resolve `CreatedBy → Staff.DisplayName` for "who triggered".
+  - `GetCrowdFundInvitationRecipients(int emailSendJobId)` → child `EmailSendQueue` rows (per-recipient status/skip/bounce/open/delivered).
+- **GraphQL registration:** add the 3 mutations to `CrowdFundMutations.cs` (mirror `CrowdFundMutations` try/catch → `BaseApiResponse<bool>.PutSuccess(...)`; auth is on the command record, not the endpoint method) and the 3 queries to `CrowdFundQueries.cs` (mirror `ApiResponseHelper.ReturnObjectApiResponse(...)`).
+
+### ⑮.3a NEW backend service — `CrowdFundEmailService` (the one non-trivial new file)
+CrowdFund has no email service. Create `Base.Application/Services/CrowdFundCommunications/ICrowdFundEmailService.cs` + `CrowdFundEmailService.cs` as a **structural clone of** `Base.Application/Services/P2PFundraiserCommunications/P2PFundraiserEmailService.cs` (~417 lines), keeping the same signature and internals:
+- `SendCampaignInvitationAsync(int crowdFundId, CancellationToken ct, bool isSystem, bool forceResend, int? triggeredByUserId)`.
+- Same `EstablishJobPrincipal` synthetic-Hangfire-principal trick (no HttpContext under Hangfire) so `CreatedBy` attributes correctly.
+- Same audience resolve via `EventDonorAudienceQuery.ResolveAsync(dbContext, crowdFund.InvitationSavedFilterId, crowdFund.InvitationFilterJson, …)`.
+- Same cross-run delta exclusion (skipped when `forceResend`).
+- Same per-run `EmailSendJob` create + per-recipient `EmailSendQueue` rows + counter writes (⑮.6).
+- Same dispatch delegate: `IEmailTemplateService.SendEmailByTemplateKeyForCompanyAsync(...)` (shared company-provider pipeline — do NOT talk to SMTP directly).
+- Same template resolution: campaign override (`InvitationEmailTemplateId`) wins → global `CF_CAMPAIGN_INVITATION` default.
+- **URL/placeholder changes only:** donate URL `/crowdfund/{slug}` (public route, UNCHANGED per §⑭); **no fundraiser-registration URL** (CrowdFund has no child-fundraiser flow — drop P2P's `RegisterUrl`/`/p2p/{slug}/start`). Template placeholders: `{{DonorName}} {{CampaignName}} {{DonateUrl}} {{GoalAmount}} {{RaisedAmount}}`.
+- DI: register `AddScoped<ICrowdFundEmailService, CrowdFundEmailService>()` in `Base.Application/DependencyInjection.cs` (beside the P2P registration ~line 65).
+
+### ⑮.4 Frontend — confirmation matrix (the UX core, in THIS #173 editor)
+Copy is the contract; polish wording at build. Primary buttons in **bold**.
+
+**A. On Publish** (extend this editor's `publish-validation-modal.tsx` / the publish flow in `editor-page.tsx`). After publish-validation passes, resolve the audience count first, then branch:
+- **Flag ON, notYetInvited N > 0** → "Publish & notify — about **N donors** will be emailed the moment this campaign goes live. This can't be undone." → **Publish & Send** / *Publish without sending* / Cancel.
+- **Flag ON, N = 0** → "Publish — no eligible recipients. Your audience matches 0 donors with an email, so no invitation is sent." → **Publish** / Cancel.
+- **Flag OFF** → "Publish quietly — *Email my donor audience* is OFF, so donors won't be notified. You can send the invitation manually anytime from this campaign." → **Publish quietly** / *Turn on & send* (flips flag, saves, then publishes-and-sends) / Cancel.
+
+**B. Manual Send** (action pill, Published/Active):
+- notYetInvited M > 0 → "Send invitation — about **M** donors who haven't been invited yet. Already-invited donors are skipped." → **Send to M donors** / Cancel.
+- M = 0 → Send DISABLED with hint "All N donors already invited — use Resend to email them again."
+
+**C. Manual Resend** (action pill): amber/heavier styling — "Resend to everyone — emails **all N donors** again, including the M already invited. Use sparingly to avoid spam complaints." → **Resend to N donors** / Cancel. Subject to cooldown + large-blast guards.
+
+**⚠ Publish escape-hatch (inherit P2P ISSUE-9 decision):** the simplest FE ("Publish without sending" persistently flips `sendInvitationOnPublish` OFF via save→plain publish) mutates the master flag for all future republishes. Confirm with BE owner whether to (A) accept as-is (zero BE surface) or (B) add a nullable one-time override arg to the publish mutation. **Default to (A) unless told otherwise** — same call P2P deferred.
+
+### ⑮.5 Frontend — placement & guardrails (all in `crowdfundingpage/`)
+- **NEW `tabs/communication-tab.tsx`** (register in `components/tab-nav.tsx` as a new tab beside Basic / Page Builder). Contains an "Invitations" section cloned from `p2pcampaignpage/tabs/communication-tab.tsx:196-317`:
+  - Invite-template picker (reuse `EMAILTEMPLATES_QUERY` from `notify-queries/EmailTemplateQuery`) bound to `invitationEmailTemplateId`.
+  - Master flag Switch "Email my donor audience when I publish" → `sendInvitationOnPublish`.
+  - Saved-filter picker (reuse `SAVEDFILTERS_QUERY` from `notify-queries/SavedFilterQuery`, `idField="savedFilterId"`, `primaryField="filterName"`) + advanced `invitationFilterJson` textarea.
+  - **Live audience count** under the picker — debounced ~500ms `GetCrowdFundInvitationAudienceCount`, "≈ 1,240 donors · 300 not yet invited"; note "opted-out donors excluded automatically". Shaped Skeleton while loading; empty/error states.
+  - "Send test to me" button → `SendCrowdFundInvitationTest`, toast confirm.
+  - `<InvitationHistoryPanel/>` mount.
+- **NEW `components/invitation-history-panel.tsx`** (clone `p2pcampaignpage/components/invitation-history-panel.tsx`): table **When · Triggered by · Type · Sent · Failed · Status** (numeric cols right-aligned per `feedback_amount_field_alignment`; shaped Skeletons; empty state "No invitations sent yet"; error state). Row-click → per-recipient drill-in Dialog via `GetCrowdFundInvitationRecipients` (delivered/bounced/opened/failed). Export in `components/index.ts` (or the editor barrel).
+- **Send / Resend pills** in `editor-page.tsx`'s action pill, rendered in the Published/Active branches beside the existing lifecycle actions. Amber styling for Resend (existing amber utility classes, tokens only). Icons: `ph:paper-plane-tilt` (send), `ph:arrow-clockwise` (resend), `ph:clock-counter-clockwise` (history).
+- **Resend cooldown**: if `invitationSentAt` < 24h ago, Resend modal shows a friction line "You sent this N hours ago; resending may annoy donors." (warn, not block).
+- **Large-blast type-to-confirm**: when target count > threshold (e.g. 1,000), require typing the count before firing (reuse this editor's existing type-to-confirm pattern from the Archive/lifecycle modal). Applies to Publish&Send, Send, Resend.
+- **Component-reuse note (ApiSingleSelect):** P2P's `ApiSingleSelect` is scoped in `p2pcampaignpage/components/`. Per `feedback_component_reuse_create`: FE agent searches the registry first — if this editor already uses a shared `ApiSelect`/`ApiSingleSelect` (it has `page-template-picker.tsx` etc.), reuse it; otherwise copy `ApiSingleSelect` into `crowdfundingpage/components/` (cross-feature import from `p2pcampaignpage/` is discouraged). The two GQL queries are already shared — no duplication.
+- **Store** (`crowdfundingpage-store.ts`): add `sendInvitationOnPublish: false` (+ the 4 other invitation fields) to the blank-init and the default-request builder; `crowdfundingpage-schemas.ts` gets the fields if the tab is validated.
+- **Capability vs form-state:** Send/Resend visibility follows `capability` + `PageStatus`; they are ACTIONS, not the form Save button, so the `formState.isValid` gate does NOT apply (per `feedback_form_create_button_enablement`).
+
+### ⑮.5a Frontend DTO / GQL (donation-service)
+- `CrowdFundingPageDto.ts` — add the 5 request-side invitation fields + FE-only `invitationEmailTemplateName?`/`invitationSavedFilterName?` (display labels) on the response; add the 3 sibling DTOs (`CrowdFundInvitationAudienceCountDto`, `…HistoryRowDto`, `…RecipientRowDto`).
+- `CrowdFundingPageQuery.ts` — add the 5 invitation scalars to the byId field-set; add `GET_CROWDFUND_INVITATION_AUDIENCE_COUNT` / `_HISTORY` / `_RECIPIENTS` (clone the P2P query consts).
+- `CrowdFundingPageMutation.ts` — add `SEND_CROWDFUND_INVITATION` / `RESEND_CROWDFUND_INVITATION` / `SEND_CROWDFUND_INVITATION_TEST` (clone the flat P2P mutation shape).
+
+### ⑮.6 Job-model (REQUIRED for history — one `EmailSendJob` per invocation)
+Identical to P2P §⑯.6, scoped to the CrowdFund stream only:
+- Each `SendCampaignInvitationAsync` run INSERTS a fresh `EmailSendJob` (do NOT get-or-create) with STABLE `JobCode = "CF-{id}-INVITE"` (multiple rows share it — NOT unique-constrained), `JobName` ∈ {"Auto on publish","Send (delta)","Resend (all)"}, `IsSystem = isSystem`, `CreatedBy = triggeredByUserId` (or campaign owner for the auto path), `SavedFilterId` + snapshot frozen, `EmailTemplateId` resolved, `SendJobTypeId = TRIGGERED`, `JobStatusId = IN_PROGRESS → COMPLETED`.
+- After the send loop, WRITE aggregate counters on that run's job: `TotalEmailsQueued`, `TotalEmailsSend`, `TotalEmailsFailed`, `LastExecutionStartedAt/EndedAt`, final `JobStatusId`.
+- Child `EmailSendQueue` rows attach to THIS run's job.
+- **Delta set** (`alreadySentContactIds`) = distinct `ContactId` from `EmailSendQueue` joined to ALL `EmailSendJob` rows where `JobCode == "CF-{id}-INVITE"` and status = SENT (union across runs). **Resend (`forceResend`) skips this entirely.**
+
+### ⑮.7 DB seed (`sql-scripts-dyanmic/`)
+- **Email template `CF_CAMPAIGN_INVITATION`** — clone the `P2P_CAMPAIGN_INVITATION` insert (`P2PFundraiser-sqlscripts.sql:583-632`): global row (`CompanyId=3`), idempotent, subject/body with `{{DonorName}} {{CampaignName}} {{DonateUrl}} {{GoalAmount}} {{RaisedAmount}}`. Join to an `EMAILCATEGORY` MasterData row — **reuse the existing `P2PCAMPAIGNINVITATION` category OR add a `CROWDFUNDINVITATION` category** (look up, don't invent silently — verify which the template insert references).
+- **No new capability** — Send/Resend/Test ride the CrowdFund `WRITE` cap already seeded in `Crowdfunding-sqlscripts.sql`. Do NOT add `SEND_INVITE`.
+- Migration + Designer/Snapshot regen per the standard #16/#173 EF workflow (idempotent scripts; UTC-safe date columns).
+
+### ⑮.8 Gotchas & rules (inherit P2P §⑯.7)
+- **Zero silent double-send**: if flag-ON auto-blast AND staff also click Send, the cross-run delta prevents re-sending to the same contacts. Verify after the job-model change.
+- **`InvitationSentAt` stays the delta anchor + cooldown source** — stamped per run (last write wins), `DateTime.UtcNow`, `Kind=Utc`.
+- **Anonymous / no-ContactId recipients** are NOT deduped (ContactId null) — acceptable (donor audience are known contacts).
+- **DoNotEmail + no-primary-email donors** already excluded by `EventDonorAudienceQuery.Build` — surface in the count copy so staff trust the number.
+- **Malformed filter JSON = fail-OPEN (sends to all)** in the current resolver. Because default flag is OFF and the publish modal shows the resolved count first, this is acceptable; do NOT change resolver semantics.
+- **Tenant principal**: manual Send/Resend enqueue on Hangfire → `EstablishJobPrincipal` must run in-frame; pass `triggeredByUserId` so history attributes correctly under the synthetic principal.
+- **UI-uniformity**: tokens only (no hex/px), `ph:*` icons, shaped Skeletons for count + history, empty/error states, solid-bg icon containers/badges per `feedback_widget_icon_badge_styling`.
+
+### ⑮.9 Planned file manifest
+- **BE (create):** `Services/CrowdFundCommunications/ICrowdFundEmailService.cs` + `CrowdFundEmailService.cs` · `CrowdFunds/InvitationCommands/{SendCrowdFundInvitation,ResendCrowdFundInvitation,SendCrowdFundInvitationTest}.cs` · `CrowdFunds/Queries/{GetCrowdFundInvitationAudienceCount,GetCrowdFundInvitationHistory,GetCrowdFundInvitationRecipients}.cs` · 1 EF migration (+Designer/Snapshot) · 1 seed SQL (`CF_CAMPAIGN_INVITATION` template + category).
+- **BE (modify):** `CrowdFund.cs` (+5 fields +nav) · `CrowdFundConfiguration.cs` (+FK +jsonb +default) · `CrowdFundSchemas.cs` (+`CrowdFundPageUpdateRequest` fields, +`CrowdFundResponseDto` fields, +3 result DTOs) · `CrowdFundEntityHelper.cs` (write-through + create default) · `GetCrowdFundById.cs` (projection) · `PublishCrowdFund.cs` (+`IBackgroundJobClient` + conditional enqueue) · `CrowdFundMutations.cs` (+3) · `CrowdFundQueries.cs` (+3) · `DependencyInjection.cs` (+service registration).
+- **FE #173 (create):** `crowdfundingpage/tabs/communication-tab.tsx` · `crowdfundingpage/components/invitation-history-panel.tsx` · (maybe) `crowdfundingpage/components/api-single-select.tsx` (copy if not reusing a shared select).
+- **FE #173 (modify):** `CrowdFundingPageDto.ts` · `CrowdFundingPageQuery.ts` · `CrowdFundingPageMutation.ts` · `crowdfundingpage-store.ts` · `crowdfundingpage-schemas.ts` · `components/tab-nav.tsx` · `editor-page.tsx` · `components/publish-validation-modal.tsx` · `components/index.ts` (barrel).
+- **FE #16 (companion — see `crowdfunding.md §⑮`):** `crowdfund-detail-sheet.tsx` (read-only Invitations row + Send/Resend + deep-link) · `CrowdFundQuery.ts` (invitation scalars in `CROWDFUND_FIELDS`) · `CrowdFundDto.ts` (response fields) · `CrowdFundMutation.ts` (reuse the same 3 mutations).
+- **Docs:** supersede `crowdfunding.md §⑮.0`'s "CrowdFund emails not dispatched" note (this build lands the first CrowdFund email dispatch path).
+
+**Build trigger:** `/build-screen #173` (primary), then `/build-screen #16` or `/continue-screen #16` for the drawer shortcut. Do NOT build via `/continue-screen #173`.
 - **Approval config update:** ParentMenu `SET_PUBLICPAGES` → `CRM_P2PFUNDRAISING`; ModuleCode `SETTING` → `CRM`; MenuUrl `setting/publicpages/crowdfundingpage` → `crm/p2pfundraising/crowdfundingpage`.
