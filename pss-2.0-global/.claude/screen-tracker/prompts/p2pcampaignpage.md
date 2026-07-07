@@ -1925,6 +1925,32 @@ Publish redirect to the public page (`/p2p/{slug}`) 404'd on localhost — publi
 
 ---
 
+### Session 13 — 2026-07-01 — ENHANCE — COMPLETED (BE build + 1 migration pending)
+
+Full public-page parity build: the P2P public page now matches ODP/Event on the four capabilities that were missing, plus the editor gateway picker is corrected. Grounded in a reference study of ODP (`/p/{slug}`), Event (`/event/{slug}`), and an audit of the current P2P public renderer.
+
+- **Gaps closed (all 4 + gateway picker)**:
+  1. **Config-driven donation form** — `donate-form.tsx` now reads `donationFormConfig {mode, fields[{key,visible,required}]}` for donor-field visibility/required (mirrors ODP's donorFields map), with sensible defaults when absent.
+  2. **Real payment gateway process** — replaced the mock `gatewayHandoffUrl` stub with the real ODP dispatch: `InitiateP2PDonation`/`ConfirmP2PDonation` now route through the shared `IPaymentFlowService` (Braintree Drop-in / Razorpay popup / PayU hidden-form POST, one-time + recurring), persist an `OnlineDonationStaging` PENDING row with P2P attribution, and verify on confirm. FE runs the two-phase gateway UI. Promotion to `GlobalDonation` stays the existing #175 Donation-Inbox "Resolve" staff action (backfill extended to copy P2P attribution).
+  3. **Currency** — donate-form no longer hardcodes `$`; uses `currencySymbol` (new DTO field) or `Intl.NumberFormat(currencyCode)`.
+  4. **Page templates** — new `templates/` dispatcher renders 5 layouts (STANDARD / IMAGE_FOCUS / VIDEO_FOCUS / MINIMAL / FESTIVAL) off `pageTemplateCode`, with a `ThemeWrap` applying `pageTheme` — mirrors Event's layout dispatcher. Reuses existing P2P sub-components (no rebuild).
+  5. **Gateway picker (editor)** — Configuration → Donation Settings "Payment Gateway" field switched from the **global** `PAYMENTGATEWAYS_QUERY` (wrong: listed all gateways, stored a `paymentGatewayId` into the `companyPaymentGatewayId` FK) to the **tenant-scoped** `COMPANYPAYMENTGATEWAYS_QUERY` (only the company's connected gateways), storing the correct `companyPaymentGatewayId`. Added `rowMapper` support to the local `ApiSingleSelect` to flatten the nested `paymentGateway.paymentGatewayName`.
+- **Tenant resolution unified**: `InitiateP2PDonation` now resolves the tenant via `OnlineDonationPageTenantResolver.ResolveByHostnameAsync` (same as the read handler); FE threads the SSR-resolved `hostname` (+ `?_tenant=` dev override) down through the routes → renderers → donate-form so anonymous donors resolve the right tenant on localhost.
+- **Contract additions** — public DTO: `pageTemplateCode`, `pageTheme`, `currencySymbol`, `organizationName`, `donationFormConfig`. `InitiateP2PDonation` request +`currencyCode`(now required)/`isAnonymous`/`isRecurring`/`frequencyCode`/`returnUrl`/`hostname`; response now the full gateway bundle (`gatewayCode`, `clientToken`, `razorpay*`, `payU*`). `ConfirmP2PDonation` +`paymentMethodNonce`; response +`transactionId`/`redirectUrl`. (Removed dead `Frequency` string + `CoverProcessingFees`.)
+- **Files touched**:
+  - BE (compiling, **user builds**): `OnlineDonationStaging.cs` + `OnlineDonationStagingConfiguration.cs` (P2P FK columns; `OnlineDonationPageId` → nullable), `Public/PublicMutations/InitiateP2PDonation.cs`, `ConfirmP2PDonation.cs`, `Public/PublicQueries/GetP2PCampaignPageBySlug.cs`, `Schemas/DonationSchemas/P2PCampaignPageSchemas.cs`, `P2PFundraiserSchemas.cs`, and the #175 ripple (`OnlineDonationInbox/Commands/ResolveOnlineDonationStaging.cs`, `Queries/GetOnlineDonationStagingById.cs`, `GetOnlineDonationStagingList.cs`, `Schemas/DonationSchemas/OnlineDonationInboxSchemas.cs`).
+  - FE (ships on reload): `public-queries/P2PCampaignPagePublicQuery.ts`, `public-mutations/P2PCampaignPagePublicMutation.ts`, `donation-service/P2PCampaignPageDto.ts`, `public/p2pcampaignpage/components/donate-form.tsx`, `templates/` (new: `shared.tsx`, `parent-templates.tsx`), `parent-landing-page.tsx`, `child-fundraiser-page.tsx`, `start-fundraiser-wizard.tsx`, `index.ts`, the 3 `(public)/p2p/**` route files, and the editor `crm/.../components/api-single-select.tsx` + `tabs/donation-settings-tab.tsx`.
+- **Migration (user generates — one migration)** on `fund.OnlineDonationStagings`: `OnlineDonationPageId` → nullable; add `P2PCampaignPageId int NULL` (FK `fund.P2PCampaignPages`, RESTRICT); add `P2PFundraiserId int NULL` (FK `fund.P2PFundraisers`, RESTRICT); + indexes on both. `GlobalDonations` needs nothing (P2P FKs + `CK_GlobalDonations_OnePageSource` already exist).
+- **Verification**: FE `tsc --noEmit` clean on all touched source (only pre-existing stale `.next/types` route stubs remain). BE not built (user builds). Reverted an agent's stray edit to `BaseUrlConfig.ts` (user-managed).
+- **Deviations from spec**: none.
+- **Known issues opened**:
+  - **Cover-fees is display-only** — the "donor covers processing fees" toggle no longer feeds the charged amount (base amount is charged); per-gateway fee math not wired. Same interim state as ODP.
+  - Gateway-picker label shows the placeholder until the dropdown is opened (the local `ApiSingleSelect` resolves the label on open; no persisted display name). Pre-existing component behavior; cosmetic.
+- **Known issues closed**: None (Session 12's `GetP2PFundraiserBySlug` first-active-tenant item is still open — the child fundraiser lookup was not part of this pass).
+- **Next step**: user (1) builds the BE, (2) generates + applies the `OnlineDonationStagings` migration above, (3) ensures the tenant has a connected `CompanyPaymentGateway` (default) so the picker + dispatch resolve. Then publish → donate end-to-end.
+
+---
+
 ## ⑭ SOURCE-2 FUNDING INTEGRATION & SETTINGS→CRM RELOCATION (planned 2026-06-29 — design only, do NOT build this pass)
 
 **Source-2 context:** "Fundraising Campaigns" is one of the two MAIN Case-Management funding sources (with Grant). Menu reorg applied 2026-06-29 in `Pss2.0_Global_Menus_List.sql`: parent renamed **"P2P Fundraising" → "Fundraising Campaigns"** (code `CRM_P2PFUNDRAISING` unchanged), now CRM top-level order 8; children = Campaigns · **Campaign Pages (THIS screen)** · P2P Fundraisers · Crowdfunding · Crowdfunding Page. (Matching Gifts moved out to the Donation/Source-3 parent.)

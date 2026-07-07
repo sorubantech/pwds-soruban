@@ -3,13 +3,14 @@ screen: DonationPurpose
 registry_id: 2
 module: Fundraising
 status: COMPLETED
+pending_revision: R1_DETAIL_VIEW
 scope: ALIGN
 screen_type: MASTER_GRID
 complexity: Medium
 new_module: NO
 planned_date: 2026-04-18
 completed_date: 2026-04-18
-last_session_date: 2026-04-18
+last_session_date: 2026-07-07
 ---
 
 ## Tasks
@@ -468,6 +469,123 @@ _(none — this is a standard master-grid CRUD screen; every action has a backen
 
 ---
 
+## ⑭ REVISION R1 — Donation Purpose Detail / View Mode
+
+> **Planned by** `/plan-screens` on 2026-07-07. **Status**: `REVISION_PLANNED` (ready for `/build-screen` or `/continue-screen`).
+> **Driver**: New requirement — opening a Donation Purpose must show program details, goal / raised / remaining / progress, a donation summary **by source**, and the full donation history for that purpose.
+> **This section REVISES §②/③/⑥/⑧/⑩/⑪/⑫ for the detail-view addition. The original MASTER_GRID sections above remain valid — the modal CRUD is unchanged.**
+
+### R1.0 — Architecture decision (LOCKED)
+
+| Decision | Value | Rationale |
+|----------|-------|-----------|
+| Detail placement | Same route `setting/donationconfig?tab=purpose&mode=read&id={id}` — no new route, no dashboard-widget seed | Reuse `AdvancedDataTable` built-in View action + a `mode=read` dispatch branch in the shell (Receipt Management `generated-tab.tsx` pattern) |
+| Screen-type note | Stays `MASTER_GRID` for CRUD (modal); **adds a read-only DETAIL layout** (FLOW-like `mode=read`). Divergence noted per plan rule 13. | The add/edit form is still a modal; only a read view is added |
+| **Attribution model** | **Dedicated OrganizationalUnit node per DonationPurpose (1:1)** — mirrors the Event "own OrganizationalUnit node" pattern (`project_event_org_unit_node_pattern`). Cash is attributed via `fund.GlobalDonationDistributions.OrganizationalUnitId → DonationPurpose.OrganizationalUnitId`. | The donation pipeline already writes `GlobalDonationDistribution.OrganizationalUnitId`; making each purpose own a unique node turns that existing split into a unique per-purpose attribution with no new FK on the ledger. **`fund.GlobalDonations` gets NO `DonationPurposeId` column.** |
+| Total Raised | **Settled cash only** — `SUM(GlobalDonationDistribution.AllocatedAmount)` for distributions whose org unit = the purpose's node. Pledges count only paid installments (`PledgePayments` with a `GlobalDonationId`). No open-commitment / expected figures. | User decision |
+| Remaining / % | `Remaining = TargetAmount − Raised`; `% = Raised / NULLIF(TargetAmount,0) × 100`. When no target → "no target", no bar. | Matches existing `target-raised-progress` bands |
+
+**Why the current `OrganizationalUnitId` can't be used as-is**: today it is an *optional, user-picked FK to an existing shared department* (`CreateDonationPurpose.cs:30`), so many purposes can share one org unit and org-unit→purpose is **not unique**. R1 repoints this field to a **dedicated per-purpose node**. This is a semantic change to the column + requires a backfill.
+
+### R1.1 — Build phasing (my scope call)
+
+- **Phase 1 (this effort — makes the model structurally correct + ships the page):**
+  1. BE: `CreateDonationPurpose` auto-creates a dedicated `OrganizationalUnit` node (`UnitType = DONATIONPURPOSE`) and sets `DonationPurpose.OrganizationalUnitId` to it. Wrap the two inserts in one transaction via `CreateExecutionStrategy().ExecuteAsync` (Npgsql retrying strategy — see `reference_npgsql_execution_strategy_transactions`).
+  2. BE: **Backfill migration** — create a node for every existing purpose that lacks a dedicated one and repoint `OrganizationalUnitId`. (User writes the EF migration + backfill SQL.)
+  3. BE: New `GetDonationPurposeDetail(donationPurposeId)` query + handler + DTO — returns purpose + program(s) + goal/raised/remaining + by-source breakdown (see R1.5). Model on `CaseBusiness/Programs/GetFundingAllocationQuery/GetProgramFundingAllocation.cs`.
+  4. BE: fix `GetDonationPurposeByIdHandler` so `RaisedAmount` is populated (today it is silently `0` — the handler only Includes navs, `GetDonationPurposeById.cs:36-42`). Either reuse the detail query's raised calc or leave GetById as-is and drive the page solely off `GetDonationPurposeDetail`.
+  5. FE (I build): `enableView:true`, `mode=read` shell branch, `DonationPurposeDetailPage`, by-source summary component, embedded history grid, query + DTO extensions.
+- **Phase 2 (documented here, sequenced next — broadens coverage):** every donation channel that already knows its `DonationPurposeId` (P2P via `P2PCampaignPage`, Crowdfund via `CrowdFund`, Pledge via `Pledge`, Online-resolve via staff-supplied purpose, Recurring via `RecurringDonationScheduleDistribution`) must set its `GlobalDonationDistribution.OrganizationalUnitId = purpose.OrganizationalUnitId` (the node) at create/resolve time, so **future** donations attribute uniformly through the single org-unit path. Until Phase 2 lands, only distributions already routed to the purpose's node count toward Raised.
+
+### R1.2 — Entity / data-model changes (§② delta)
+
+| Change | Detail |
+|--------|--------|
+| `DonationPurpose.OrganizationalUnitId` | Semantic change: was "owning department (optional, shared)" → now "the purpose's own dedicated node (1:1, set by the system on create)". Keep the column; the FE org-unit picker in the modal should be **removed or made read-only** (the node is system-managed, not user-picked). |
+| New OrganizationalUnit `UnitType` | `DONATIONPURPOSE` MasterData code (mirror `EVENT`). Confirm the `UnitType`/`OrganizationalUnitType` MasterData set + seed the code. |
+| `fund.GlobalDonations` | **NO change** — no `DonationPurposeId` column added. |
+
+### R1.3 — New FK / reverse-lookups (§③ delta)
+
+| Lookup | Path | Purpose |
+|--------|------|---------|
+| Purpose → Program(s) | Query `case.ProgramFundingSource` WHERE `DonationPurposeId = @id AND IsDeleted = false`, `.Include(f => f.Program)` | "Program details" panel. No reverse nav exists on `DonationPurpose` — query the join table directly. A purpose may fund 0..N programs. |
+| Distributions → Purpose | `GlobalDonationDistribution.OrganizationalUnitId == DonationPurpose.OrganizationalUnitId` | Raised + history + by-source aggregation |
+| Distribution → source | Parent `GlobalDonation` columns: `P2PCampaignPageId` (P2P Campaign, `P2PFundraiserId IS NULL`), `P2PFundraiserId` (P2P Fundraiser), `OnlineDonationPageId` (Online); Crowdfund via `fund.CrowdFundDonations` junction; Pledge via `fund.PledgePayments.GlobalDonationId → Pledge`. **`SourceTypeId` is NOT a reliable discriminator** (its EF FK targets `Branch`). | Summary-by-source classification |
+
+### R1.4 — Detail view UI blueprint (§⑥ — LAYOUT 2: DETAIL, `mode=read`)
+
+Clone `.../donationconfig/receiptmanagement/tabs/generated-detail-page.tsx` structure (Card + DetailRow helpers, `DetailSkeleton`, `handleBack()` → `router.push` back to `?tab=purpose`). Bootstrap `row g-3`, left `col-lg-8` / right `col-lg-4`.
+
+- **Header row**: Purpose name (bold) + `donationPurposeCode` mono pill + Category (teal) & Group badges + Status badge; right-aligned **Back** + **Edit** (opens the existing modal) buttons.
+- **KPI tiles** (reuse `crowdfunding/crowdfund-widgets.tsx` `WidgetTile`; solid `bg-{tone}-600 text-white` icon badges per `feedback_solid_icon_bg_white_foreground`): **Goal** (`targetAmount`), **Total Raised** (settled), **Remaining**, **% Funded**. Loading skeletons.
+- **Funding progress bar**: reuse `shared-cell-renderers/target-raised-progress.tsx` (4-band: red <25 / amber <75 / green <100 / teal ≥100). No-target → "$X raised (no target)".
+- **Program Details card** (left col): for each linked program — program name + code, status badge, funding model, annual budget, approved date. If none → empty state "This purpose is not linked to a Case Management program."
+- **Donation Summary by Source** (left col, **NET-NEW component**): one card/row per source — **P2P Campaigns, P2P Fundraisers, Crowdfunding, Online Donations, Pledges** — each with donation count + total amount + % of raised. A small bar or the `WidgetTile` grid is fine (see `dataviz` skill if a chart is added). Sources with zero read as `$0 (0)`.
+- **Donation History grid** (full-width below): embedded `AdvancedDataTable` reusing an existing global-donation gridCode, scoped via `extraVariables={{ organizationalUnitId: <purpose node id> }}` (or a new `donationPurposeId` filter honored by the resolver). Columns: Date, Donor, Source, Amount, Mode, Receipt #. `showHeader={false}`.
+
+### R1.5 — BE→FE contract (§⑩ delta)
+
+New query (do **NOT** rename existing ones):
+
+| GQL field | Args | Returns |
+|-----------|------|---------|
+| `donationPurposeDetail` | `donationPurposeId: Int!` | `BaseApiResponse<DonationPurposeDetailResponseDto>` |
+
+`DonationPurposeDetailResponseDto` (new):
+- `donationPurposeId, donationPurposeCode, donationPurposeName, isActive`
+- `donationCategory { … }, donationGroup { … }, organizationalUnit { organizationalUnitId, unitName }`
+- `targetAmount: decimal?`, `raisedAmount: decimal`, `remainingAmount: decimal`, `raisedPercent: decimal`
+- `programs: [{ programId, programCode, programName, statusName, fundingModelName, annualBudget, approvedDate }]` (from `ProgramFundingSource`)
+- `sourceBreakdown: [{ source: string, donationCount: int, totalAmount: decimal }]` (P2P Campaign / P2P Fundraiser / Crowdfund / Online / Pledge)
+- (history is served by the embedded grid's own gridCode query, not this DTO)
+
+### R1.6 — File manifest (§⑧ delta)
+
+**Backend (user builds — I make compiling changes only where I touch shared code):**
+| File | Action |
+|------|--------|
+| `DonationPurposes/Commands/CreateDonationPurpose.cs` | Auto-create `DONATIONPURPOSE` OrganizationalUnit node in a tx (execution-strategy), set `OrganizationalUnitId`. |
+| `DonationPurposes/Queries/GetDonationPurposeDetail.cs` | **NEW** query+validator+handler+result (raised/remaining/by-source/programs). |
+| `DonationPurposes/Queries/GetDonationPurposeById.cs` | Optional: compute `RaisedAmount` (currently 0). |
+| `Base.API/EndPoints/Donation/Queries/DonationPurposeQueries.cs` | Add `donationPurposeDetail` field (keep all existing). |
+| `Schemas/DonationSchemas/DonationPurposeSchemas.cs` | Add `DonationPurposeDetailResponseDto` + nested program/source DTOs. |
+| EF migration + backfill | **NEW** — dedicated nodes for existing purposes + repoint `OrganizationalUnitId`; seed `DONATIONPURPOSE` UnitType MasterData. (User creates migration per `feedback_user_creates_migrations`.) |
+| *(Phase 2)* each channel's create/resolve handler | Set `GlobalDonationDistribution.OrganizationalUnitId = purpose node` where purpose is known. |
+
+**Frontend (I build):**
+| File | Action |
+|------|--------|
+| `domain/entities/donation-service/DonationPurposeDto.ts` | Add `DonationPurposeDetailResponseDto` (raised/remaining/percent, `programs[]`, `sourceBreakdown[]`). |
+| `infrastructure/gql-queries/donation-queries/DonationPurposeQuery.ts` | Add `DONATIONPURPOSE_DETAIL_QUERY`. |
+| `.../setting/donationconfig/donationpurpose/data-table.tsx` | `enableActions.enableView: true`; ensure `primaryKey: "donationPurposeId"`. |
+| `.../donationconfig/donationconfig/index-page.tsx` | Add `mode=read` branch on the `purpose` tab → render `DonationPurposeDetailPage` (clone `generated-tab.tsx` dispatch). |
+| `.../donationconfig/donationpurpose/detail-page.tsx` | **NEW** `DonationPurposeDetailPage` (KPI tiles + progress + program card + history grid). |
+| `.../donationconfig/donationpurpose/donation-summary-by-source.tsx` | **NEW** by-source summary component. |
+| reuse | `shared-cell-renderers/target-raised-progress.tsx`, `crowdfunding/crowdfund-widgets.tsx` `WidgetTile`. |
+
+### R1.7 — Acceptance criteria (§⑪ delta)
+
+- [ ] Grid row → View icon → `?mode=read&id=` opens the detail page inside the Purposes tab (Back returns to the grid).
+- [ ] KPI tiles show Goal, Total Raised (settled cash), Remaining, % — Raised is non-zero for a purpose whose node has distributions.
+- [ ] Progress bar color band matches % (red/amber/green/teal); no-target purpose shows "no target" with no bar.
+- [ ] Program Details card lists linked program(s) via `ProgramFundingSource`; empty state when none.
+- [ ] Summary-by-source shows all 5 sources with count + amount; zero sources render `$0 (0)`.
+- [ ] Donation history grid lists the purpose's donations, scoped by the node org unit.
+- [ ] Creating a new purpose auto-creates its dedicated org-unit node; the modal no longer asks the user to pick an org unit (or shows it read-only).
+- [ ] Existing purposes have nodes after backfill; their historical distributions attribute correctly.
+
+### R1.8 — Special notes & known gaps (§⑫ delta)
+
+- **Transaction + retrying strategy**: node + purpose insert must use `CreateExecutionStrategy().ExecuteAsync` (Npgsql forbids manual `BeginTransaction` — `reference_npgsql_execution_strategy_transactions`).
+- **`OrganizationalUnitId` semantic change + backfill** is the highest-risk item (ISSUE-2-style DB work). Existing rows must be migrated before the detail page reads correctly.
+- **Crowdfund source reads empty today** — `fund.CrowdFundDonations` is never populated (donations stay in `OnlineDonationStaging`; `ConfirmCrowdFundDonation` defers promotion and `ResolveOnlineDonationStaging` has no CrowdFund backfill). Show the Crowdfund card but expect `$0` until that pipeline gap is fixed. (See ISSUE-6.)
+- **Online source is partial** — one-time online donations persist no purpose; only recurring-flagged online resolves seed a `RecurringDonationScheduleDistribution`. Under the Phase-2 node mapping this resolves; pre-Phase-2 it undercounts. (See ISSUE-7.)
+- **Do NOT rename** existing queries/mutations (`GetDonationPurposes`, `donationPurposes`, `activateDeactivateDonationPurpose`) — used by #1 and others.
+- **Do NOT add** `DonationPurposeId` to `fund.GlobalDonations`.
+
+---
+
 ## ⑬ Build Log (append-only)
 
 > **Writer**: `/build-screen` on every BUILD session, `/continue-screen` on every FIX/ENHANCE session.
@@ -480,7 +598,11 @@ _(none — this is a standard master-grid CRUD screen; every action has a backen
 |----|------------------|----------|------|-------------|--------|
 | ISSUE-1 | 1 | Medium | Data model | `DonationCategory` entity has no `DonationGroupId` FK — mockup-implied Category→Group auto-fill cannot be achieved within ALIGN scope. Shipped as two independent ApiSelectV2 dropdowns. Permanent fix: add `DonationGroupId` FK to `DonationCategory` entity + data migration to populate it from existing Purpose rows + update `DonationCategoryResponseDto` to expose the nav. | OPEN |
 | ISSUE-2 | 1 | High | DB migration | Entity relaxes `StartDate`, `TargetAmount`, `Description` to nullable in C#; existing Postgres columns in `fund."DonationPurposes"` may still be `NOT NULL`. A migration (`ALTER COLUMN ... DROP NOT NULL`) is required before `dotnet build` runs migrations or before the screen is used against the live DB. | OPEN |
-| ISSUE-3 | 1 | Low | Aggregation scope | `RaisedAmount` subquery currently sums only `fund."RecurringDonationScheduleDistributions"` — the only child table presently carrying a `DonationPurposeId` FK. When GlobalDonation / BulkDonation / ChequeDonation add direct `DonationPurposeId` references, the handler subquery must be extended to union those sources. | OPEN |
+| ISSUE-3 | 1 | Low | Aggregation scope | `RaisedAmount` subquery currently sums only `fund."RecurringDonationScheduleDistributions"` — the only child table presently carrying a `DonationPurposeId` FK. When GlobalDonation / BulkDonation / ChequeDonation add direct `DonationPurposeId` references, the handler subquery must be extended to union those sources. | SUPERSEDED by R1 (attribution moved to org-unit node model — see §⑭) |
+| ISSUE-4 | R1-plan | High | Attribution model | Org-unit→purpose attribution requires each purpose to own a **dedicated** OrganizationalUnit node (1:1). Today `OrganizationalUnitId` is an optional, user-picked *shared* department, so attribution is non-unique. R1 Phase 1 fixes purpose-create + backfill; **`GetDonationPurposeById` currently returns `RaisedAmount = 0`** (handler never computes it). | OPEN (R1 Phase 1) |
+| ISSUE-5 | R1-plan | Medium | Pipeline coverage | Donation channels write `GlobalDonationDistribution.OrganizationalUnitId` from the value chosen at entry, NOT from the selected purpose's node. Until R1 **Phase 2** wires each channel (P2P/Crowdfund/Online/Pledge/Recurring) to set the distribution org unit = the purpose's node, only donations already routed to that node count toward Raised. | OPEN (R1 Phase 2) |
+| ISSUE-6 | R1-plan | Medium | Source gap | Crowdfund summary reads `$0` — `fund."CrowdFundDonations"` is never populated (crowdfund donations stay in `OnlineDonationStaging`; `ConfirmCrowdFundDonation` defers promotion and `ResolveOnlineDonationStaging` has no CrowdFund backfill). | OPEN |
+| ISSUE-7 | R1-plan | Low | Source gap | One-time Online donations persist no purpose (only recurring-flagged resolves seed a `RecurringDonationScheduleDistribution`), so the Online source undercounts pre-Phase-2. | OPEN |
 
 ### § Sessions
 
