@@ -9,7 +9,7 @@ complexity: Medium-High
 companion_of: 51 (Program), 50 (Case)
 planned_date: 2026-06-23
 completed_date: 2026-06-23
-last_session_date: 2026-06-23
+last_session_date: 2026-07-08
 ---
 
 # Program Fund Allocation — Screen Prompt (#177)
@@ -289,83 +289,84 @@ ProgramFundingAllocationDto {
 | ID | Description | Status |
 |----|-------------|--------|
 | ISSUE-1 | Runtime E2E (BE build + CRUD round-trip: set allocation + ledger → save → reopen → rehydrate) not yet executed — BE is user-built per project convention, FE verified via `tsc --noEmit` only. Run `/test-screen #177` after the user builds BE + applies the Program S18–S20 migration. | OPEN |
+| ISSUE-3 | FE delta 4 — grant-funded sources on the workbench didn't reflect the grantor's decision: a self-Approve button showed on grant-funded PENDING sources (BE rejects it → error toast), and the "Committed" figure used `ExpectedAnnualAmount` (the ask) instead of the grant's committed `AllocatedAmount`. | CLOSED (session 7) |
+| ISSUE-4 | Save Allocation fails: `"The required input field 'canApprove' is missing."` — the shared `ProgramFundingSourceDto` declares the response-only gates `CanApprove`/`CanClose`/`CanLogPayment` as non-nullable `bool`, so HotChocolate makes them **required** on `ProgramFundingSourceDtoInput`, but the FE `toRequest` allow-list correctly omits them (the save handler never reads them). Fixed by making the three gates `bool?` → optional on input. No migration. | CLOSED (session 9) |
+| ISSUE-5 | Grant Fund Position strip showed "Available to Allocate" = award reservation (awarded − committed), so a grant awarded 100k with only 25k received still showed 100k. Business-wrong: you can only give a program cash the funder actually sent. Fixed — strip now shows Awarded / Received / Available where Available = cash-on-hand (received − direct expenses − program transfers). | CLOSED (session 9) |
+| ISSUE-6 | Session 12 added payment-mode/reference/from-account columns via two generate-only migrations (`Add_ProgramFundingTransaction_PaymentDetails`, `Add_GrantExpense_PaymentDetails`). They must be applied (`dotnet ef database update`) before the new fields persist; until then Save will fail against the old schema. Code compiles clean; DB apply is the user's step per project convention. | OPEN |
 
 ### § Sessions
 
-### Session 1 — 2026-06-23 — BUILD — COMPLETED
+> _[8 older session entries trimmed to save tokens — full history in git: `git log -p -- programfundallocation.md`. Most recent 5 kept below.]_
 
-- **Scope**: Initial full build from PROMPT_READY prompt. FLOW screen, two doors (program card "Funding" action + sidebar leaf) → one lifecycle-gated workbench route. Pure assembly: reused existing schema, DTOs, rollup math, validators, and the `program-funding-sources.tsx` workbench component; only the write path + query + FE page/picker are new. Agents: backend-developer (Sonnet) + frontend-developer (Sonnet), per user cost-conscious default (overrode FLOW Opus escalation; user approved Sonnet).
+### Session 9 — 2026-07-08 — FIX (ISSUE-4 save bug) + FIX (ISSUE-5 available = received cash) — COMPLETED (BE built directly by agent, no migration)
+
+- **Scope**: User asked to fix pending issues and correct the Grant Fund Position "Available" figure. Both BE + FE changed directly this session (user authorized "fix what are issue pending"; all changes code-only, **no new migration**). Reached via `/continue-screen #177`.
+- **ISSUE-4 (save bug) — FIXED**: `ProgramSchemas.cs` — `ProgramFundingSourceDto.CanApprove/CanClose/CanLogPayment` changed from `bool` → `bool?`. HotChocolate now emits them OPTIONAL on `ProgramFundingSourceDtoInput`, so the FE `toRequest` (which correctly omits these computed gates) passes validation. Query still assigns them via implicit `bool`→`bool?` (`GetProgramFundingAllocation.cs:139-141`); FE already reads `?? false`. Verified: no BE consumer reads them as non-nullable `bool`.
+- **ISSUE-5 (available = received cash) — FIXED**: the strip previously showed the award-reservation ceiling (awarded − committed); user reported award 100k / received 25k still showed 100k. Now shows the CASH ceiling.
+  - BE: `GrantFundingRequestHeaderDto` (`GrantSchemas.cs`) — new `decimal ReceivedAmount` + `decimal AvailableCash`. `GetGrantFundingRequests.cs` — computes `totalReceived` (Σ non-voided GrantFundReceipts, excl BOUNCED/CANCELLED), `directExpenses` (Σ GrantExpenses), `availableCash = totalReceived − directExpenses − programTransferred` (mirrors `GetGrantFinancialSummary.CashOnHand`); added `using …GrantFundReceipts;`. `AvailableToAllocate` left untouched (still used by the grant-side allocate modal — reservation semantics preserved there).
+  - FE: `GrantQuery.ts` — select `receivedAmount` + `availableCash` on the header. `program-funding-sources.tsx` `GrantFundPositionStrip` — now renders **Awarded / Received / Available** (Available = `availableCash`, emerald when > 0).
 - **Files touched**:
-  - BE:
-    - `Base.Application/Schemas/CaseSchemas/ProgramSchemas.cs` (modified — appended `ProgramFundingAllocationDto` header wrapper; existing child DTOs untouched)
-    - `Base.Application/Business/CaseBusiness/Programs/ProgramFundingMath.cs` (created — shared `ApplyRollups`/`ComputeAnnualNeed`/`FrequencyToAnnualMultiplier`)
-    - `Base.Application/Business/CaseBusiness/Programs/GetByIdQuery/GetProgramById.cs` (modified — refactored to call ProgramFundingMath; behavior identical)
-    - `Base.Application/Business/CaseBusiness/Programs/GetFundingAllocationQuery/GetProgramFundingAllocation.cs` (created — query/validator/handler)
-    - `Base.Application/Business/CaseBusiness/Programs/SaveFundingAllocationCommand/SaveProgramFundingAllocation.cs` (created — command/validator(5 rules: exists, ACTIVE gate, source-ownership, ONGOING-cadence, txn-validity)/handler with resurrected `SyncFundingTransactions` soft-delete diff-persist)
-    - `Base.API/EndPoints/Case/Queries/ProgramQueries.cs` (modified — `programFundingAllocation(programId: Int!)`)
-    - `Base.API/EndPoints/Case/Mutations/ProgramMutations.cs` (modified — `saveProgramFundingAllocation(request: ProgramFundingAllocationDtoInput!)` → bare `data: Int!`)
-  - FE:
-    - `src/infrastructure/gql-queries/case-queries/ProgramFundingAllocationQuery.ts` (created — query + mutation) + `case-queries/index.ts` (barrel)
-    - `src/app/[lang]/crm/casemanagement/programfundallocation/page.tsx` (created — route wrapper)
-    - `src/presentation/pages/crm/casemanagement/program-fund-allocation.tsx` (created — page config, `menuCode: "PROGRAM"`) + `casemanagement/index.ts` (barrel)
-    - `src/presentation/components/page-components/crm/casemanagement/program/program-fund-allocation-page.tsx` (created — smart picker↔workbench branch, lifecycle gate, RHF `{fundingSources}`, toRequest strip + recursive `stripTypename`)
-    - `src/presentation/components/page-components/crm/casemanagement/program/program-allocation-picker.tsx` (created — reuses `PROGRAMS_QUERY`, client-filters `statusCode==ACTIVE`)
-    - `src/presentation/components/page-components/crm/casemanagement/program/program-funding-sources.tsx` (modified — additive `mode?: "form"|"allocate"` + `allowRemove` on FundingSourceCard; form-mode unchanged)
-    - `src/presentation/components/page-components/card-grid/types.ts` (modified — `onAllocate` on ProgramCardConfig)
-    - `src/presentation/components/page-components/card-grid/variants/program-card.tsx` (modified — "Funding" footer button, ACTIVE-gated + tooltip)
-    - `src/presentation/components/page-components/crm/casemanagement/program/index-page.tsx` (modified — supply `onAllocate` → push to `?programId=X`)
-  - DB: `PSS_2.0_Backend/DatabaseScripts/Seed/seed_program_fund_allocation_menu.sql` (created — idempotent Menus + MenuCapabilities[READ/MODIFY/ISMENURENDER] + RoleCapabilities[BUSINESSADMIN]; code-based lookups, WHERE NOT EXISTS guards). NO schema change, NO migration (rides Program #51 S18–S20). No sett.Grids/Fields (card-list picker reuses PROGRAMS_QUERY).
-- **Deviations from spec**: None material. Minor: source-ownership validator uses `Programs.SelectMany(p => p.FundingSources…)` because there is no `ProgramFundingSources` DbSet on `IApplicationDbContext`. Picker status-pill fallback color `#059669` is a null-fallback behind the DB-driven `statusColorHex` (data-driven inline color, accepted convention).
-- **Known issues opened**: ISSUE-1 (runtime E2E pending BE build).
+  - BE: `Base.Application/Schemas/CaseSchemas/ProgramSchemas.cs`; `Base.Application/Schemas/GrantSchemas/GrantSchemas.cs`; `Base.Application/Business/GrantBusiness/Grants/GetFundingRequestsQuery/GetGrantFundingRequests.cs`.
+  - FE: `src/infrastructure/gql-queries/grant-queries/GrantQuery.ts`; `.../program/program-funding-sources.tsx`.
+  - DB: none.
+- **Deviations from spec**: BE built directly by agent this session (prior sessions had user building BE) — user explicitly asked to fix pending issues; all changes are code-only with no new migration.
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-4, ISSUE-5.
+- **Verification**: BE `dotnet build Base.Application` exit 0 (clean). FE `npx tsc --noEmit` CLEAN except the known pre-existing unrelated `donation-service` duplicate `PaymentMethodCode` export.
+- **Next step**: user runs the API host + applies the `20260708061730` migration if not yet applied, then live E2E — save a grant-funded source now succeeds; the strip shows Received/Available reflecting actual fund receipts (award 100k, receipts 25k → Available 25k).
+
+### Session 10 — 2026-07-08 — UI (grant-appropriate status wording) — COMPLETED (FE-only, no BE change)
+
+- **Scope**: After a grant-funded source is saved, its status chip should speak the grantor's language — "Waiting for Allocation" while the grant hasn't committed, "Allocated" once it has — on BOTH the Program Fund Allocation workbench and the Grant "Fund Requests" tab. Confirmed the grant screen already lists saved grant-funded sources with a status column + Allocate button (no new listing needed); only the wording was generic ("Pending"/"Approved"). Reached via `/continue-screen #177`.
+- **Change**: status codes unchanged (PENDING/APPROVED/CLOSED). Only the display label + icon are now context-aware:
+  - `program-funding-sources.tsx` — replaced the static `SOURCE_STATUS_STYLES` map with a `sourceStatusChip(statusCode, isGrantFunded)` helper. Grant-funded → "Waiting for Allocation" (hourglass) / "Allocated" (seal-check) / "Closed"; self-funded (donation purpose / sponsor) keeps "Pending" (pencil) / "Approved" / "Closed". Badge render switched to `statusChip`.
+  - `grant-fund-requests-tab.tsx` — every row is grant-funded, so `FundSourceStatusBadge` now reads "Waiting for Allocation" / "Allocated" / "Closed"; the header count chip reads "{n} awaiting allocation" (was "{n} pending").
+- **Files touched**:
+  - FE: `.../program/program-funding-sources.tsx`; `.../crm/grant/grantlist/grant/grant-fund-requests-tab.tsx`.
+  - BE: none. DB: none.
+- **Deviations from spec**: None (pure display wording; underlying status semantics unchanged).
+- **Known issues opened**: None.
 - **Known issues closed**: None.
-- **Next step**: User builds BE + applies Program S18–S20 migration, runs `seed_program_fund_allocation_menu.sql`, then `/test-screen #177` for full CRUD/rehydrate verification.
+- **Verification**: FE `npx tsc --noEmit` CLEAN except the known pre-existing unrelated `donation-service` duplicate `PaymentMethodCode` export.
+- **Next step**: none — display-only. Covered by the same E2E run as Session 9.
 
-### Session 2 — 2026-06-23 — FIX + ENHANCE — COMPLETED
+### Session 11 — 2026-07-08 — FIX (allocate modal ceiling = cash received, not award) — COMPLETED (BE built directly, no migration)
 
-- **Scope**: Two runtime fixes found on first open, plus the deferred "Phase 2" actual-money rollup (user-requested: show real Collected / Used / Available per source so allocation is grounded in real funds, not just the manual ledger).
-- **Runtime fixes (FE-only, tsc can't catch)**:
-  - `ProgramFundingAllocationQuery.ts` — query var `$programId: Int` → `Int!` (HC rejected nullable var in non-null arg location: *"variable is not compatible with the type of the current location"*). See [[feedback_fe_query_nullability_must_match_be]].
-  - `program-fund-allocation-page.tsx` — wrapped workbench tree in `<FormProvider {...methods}>` (kept full `useForm` methods object). Canonical `Form*` field components use shadcn `useFormField`→`useFormContext()`, which was null without a provider → *"Cannot destructure property 'getFieldState' of useFormContext(...) as it is null."* Mirrors `program-form.tsx`.
-- **Actual-money rollup (read-only, NO schema change)**:
-  - BE `GetProgramFundingAllocation.cs` (modified) — after ledger rollups, computes per source: Grant → Collected = Σ `GrantStageHistory.AmountReceived` (received tranches), Used = Σ `GrantExpense.Amount`; Donation Purpose → Collected = Σ `PledgePayment.PaidAmount` (paid, non-cancelled) via `Pledge.DonationPurposeId`, Used = manual DRAWDOWN ledger (`TotalUsed`, no spend table links to a purpose); Available = Collected − Used. Grouped dictionary queries, no transaction (read-only).
-  - BE `ProgramSchemas.cs` (modified) — `ProgramFundingSourceDto` gains `CollectedAmount` / `SpentAmount` / `AvailableAmount` (response-only).
-  - FE `ProgramFundingAllocationQuery.ts` — select the 3 new fields.
-  - FE `program-form-schemas.ts` — add the 3 read-only fields to `fundingSourceSchema`.
-  - FE `program-fund-allocation-page.tsx` — map fields in `reset()`, add to `toRequest` discard list (response-only, never sent — see [[feedback_response_only_fields_leak_into_request]]), top strip gains **Total Collected** + **Total Available** (6-tile grid).
-  - FE `program-funding-sources.tsx` — `FundingSourceCard` gains `showActualMoney` prop; in allocate mode renders an emerald real-money strip **Collected · Allocated · Used · Available** (ledger strip kept for form mode).
-- **Deviations from spec**: "Used" for donation-purpose sources intentionally falls back to the manual ledger — no PSS table links real spend to a DonationPurpose (grants have `GrantExpenses`, purposes don't). User delegated the "Used" definition.
-- **Known issues opened**: None.
-- **Known issues closed**: None (ISSUE-1 still OPEN — full E2E still pending user BE build; now also covers verifying Collected/Used/Available against seeded grant tranches + pledge payments).
-- **Next step**: User builds BE → applies Program S18–S20 migration → runs `seed_program_fund_allocation_menu.sql` → `/test-screen #177`.
-
-### Session 3 — 2026-06-23 — ENHANCE — COMPLETED
-
-- **Scope**: Allocation-health guardrails (user reasoned through the money invariants). Decided semantics: there are THREE distinct "remaining"s — Unallocated (Expected−Allocated), Remaining (Allocated−Used), Available (Collected−Used). User's "Allocated ≤ Available" was reframed: the hard cap belongs on *spend*, not allocation (forward-commitment against awarded funds is legitimate).
-- **Rules implemented**:
-  - **Over-spend (HARD BLOCK)**: a source's manual DRAWDOWN total may not exceed its **Collected** cash. BE `SaveProgramFundingAllocation.cs` validator rule (f) — resolves source→grant/purpose from DB by Id (GrantId/DonationPurposeId are stripped from request), computes Collected (grant tranches / paid pledge payments), rejects if Σ DRAWDOWN > Collected. FE `program-fund-allocation-page.tsx` mirrors it: `useWatch` over sources → disables Save + footer "{n} sources over-spent" + `handleSave` guard + per-card red error.
-  - **Over-allocation (SOFT WARN)**: never blocks. Per-card chips in `program-funding-sources.tsx` (allocate mode): allocation-coverage vs Expected (annualized: MONTHLY×12) — Fully allocated / Under target $X/yr / Over target $X/yr; and amber "$X committed beyond collected" (forward-commitment).
+- **Scope**: Grant → Fund Requests tab → **Allocate modal** showed "Available to Allocate" = the award (100k) when the funder had only sent 25k. The grantor can only allocate cash actually received, so both the displayed figure AND the server guard must be cash-based. Same cash-vs-award correction as ISSUE-5, now applied to the allocate path. Reached via `/continue-screen #177`.
+- **Model**: allocation ceiling = `(receivedAmount − directExpenses) − Σ commitments to OTHER sources`. Distinct from `AvailableCash` (Session 9, program strip) which nets TRANSFERS; this nets RESERVATIONS so two programs can't be promised the same received cash. Award-reservation guard kept as an additional upper bound (tightest of the two binds).
 - **Files touched**:
-  - BE: `Base.Application/Business/CaseBusiness/Programs/SaveFundingAllocationCommand/SaveProgramFundingAllocation.cs` (modified — validator rule (f); collected-math duplicates the query handler's, watch for drift).
-  - FE: `program-funding-sources.tsx` (modified — advisory computations + chips), `program-fund-allocation-page.tsx` (modified — overspend watch, Save disable, footer badge, handleSave guard).
-- **Deviations from spec**: "Forward-committed" badge compares raw allocated vs collected (per-period vs cumulative) — intentional soft hint, not annualized, to stay simple. Coverage chip IS annualized.
+  - BE: `GrantSchemas.cs` — `GrantFundingRequestHeaderDto.AvailableCashToAllocate` (new). `GetGrantFundingRequests.cs` — compute `availableCashToAllocate = (totalReceived − directExpenses) − totalCommitted`, set on header. `AllocateGrantToFundingSource.cs` — new guard (4b): allocation may not exceed `(received − expenses) − otherCommitted`; added `using …GrantFundReceipts;`. Existing award guard (4) retained.
+  - FE: `GrantDto.ts` — typed `receivedAmount` / `availableCash` / `availableCashToAllocate` on the header interface (were previously read via `any`). `GrantQuery.ts` — select `availableCashToAllocate`. `grant-fund-requests-tab.tsx` — "Available to Allocate" KPI tile now uses `availableCashToAllocate`; modal receives `availableToAllocate={availableCashToAllocate}` + `receivedAmount`. `grant-allocate-modal.tsx` — added `receivedAmount` prop + "Fund Received" summary line; "Available to Allocate" now emerald + cash-driven; ceiling docstring updated.
+  - DB: none.
+- **Deviations from spec**: BE built directly by agent (consistent with Sessions 9). No new migration (uses existing GrantFundReceipts / GrantExpenses).
 - **Known issues opened**: None.
-- **Known issues closed**: None (ISSUE-1 still OPEN — E2E should now also verify the over-spend block fires + advisories render).
-- **Next step**: User builds BE → migration → seed → `/test-screen #177`.
+- **Known issues closed**: None.
+- **Verification**: BE `dotnet build Base.Application` exit 0 (0 errors). FE `npx tsc --noEmit` CLEAN except the known unrelated `donation-service` duplicate export.
+- **Next step**: user rebuilds/runs the API; live E2E — with award 100k and one 25k receipt, the allocate modal caps at 25k and shows Fund Received 25k / Available to Allocate 25k; attempting to allocate >25k is rejected server-side.
 
-### Session 4 — 2026-06-23 — RE-ARCHITECTURE (Spec change — user-authorized) — COMPLETED (⚠ needs BE build + migration by user)
+### Session 12 — 2026-07-08 — ENHANCE (payment-mode + reference + source-bank-account on money-out) — COMPLETED (BE built directly, migrations generated NOT applied)
 
-- **Scope**: Full money-model redesign — the typed ledger (ALLOCATION/DRAWDOWN/ADJUSTMENT) was confusing (recorded spend twice). Replaced per [[project_fund_allocation_payment_log_redesign]]. User decisions: **manual** payment log + **program-level pool**. SUPERSEDES the S2 actual-money rollup and the S3 allocation-health guardrails (drawdown/over-spend/coverage chips all removed).
-- **New model**:
-  - Per funding source → a **Payment Log**: each row is one incoming payment = `amount` + `PaymentStatus` (**WAITING** / **TRANSFERRED**). `TransferredAmount` = Σ TRANSFERRED (real cash in); `PendingAmount` = Σ WAITING.
-  - **Used** = Σ `BeneficiaryServiceLog.AmountCents` (this `ProgramId`) ÷ 100 — real money given to beneficiaries, logged in the Case Service Log, **program-level pool** (read-only here; cannot be edited on this screen).
-  - Program totals: `TotalTransferred` (Σ sources), `TotalUsed` (Service Log), `TotalAvailable` = Transferred − Used. Per-source Used/Available removed (pool can't be split).
-  - The disburse-cap guardrail moves OFF this screen → belongs on the Service Log save.
+- **Scope**: The transfer log recorded only amount/status/date/notes — it did not capture **how** the money moved. Confirmed with the user that the model already supports **both** money-out flows (charity → program → beneficiary via the transfer log; charity → vendor directly via `GrantExpense`), so payment-detail capture was added to **both**. When a program payment is marked *Transferred*, the grant-managing person now records **Payment Mode** (Bank Transfer / Cheque / Cash), a **Reference** (cheque no. / bank txn ref / cash voucher no.), and the **From Account** (the charity bank account the cash left). Same fields (mode optional) added to direct grant expenses. Reached via `/continue-screen #177`; user granted full read/write on case + grant files.
+- **Model**: mirror the money-IN pattern already on `GrantFundReceipt` (`PaymentMethodId`→`com.PaymentMode`, `ReferenceNumber`, `ReceivingAccountId`→`app.OrganizationBankAccount`). Money-OUT now symmetric. Transfer log **requires** `PaymentModeId` when `PaymentStatus == TRANSFERRED` (server + FE); direct expense keeps it optional (may be logged before the mode is known). Cross-screen: this session also modified Grant #62's `GrantExpense` — logged there too.
 - **Files touched**:
-  - BE (modified): `Base.Domain/.../ProgramFundingTransaction.cs` (TransactionType→**PaymentStatus**), `Base.Infrastructure/.../ProgramFundingTransactionConfiguration.cs`, `ProgramSchemas.cs` (DTOs: paymentStatus + transferred/pending + program TotalTransferred/Used/Available), `ProgramFundingMath.cs` (ApplyRollups → transferred/pending), `GetProgramFundingAllocation.cs` (dropped grant-tranche/pledge/expense queries; added `BeneficiaryServiceLogs` Used sum), `SaveProgramFundingAllocation.cs` (removed rule f + alloc-derive; rule e → WAITING/TRANSFERRED), `CreateProgram.cs` + `UpdateProgram.cs` (txn validator → WAITING/TRANSFERRED).
-  - FE (modified): `ProgramFundingAllocationQuery.ts`, `ProgramQuery.ts` (program GetById funding fields), `program-form-schemas.ts`, `program-funding-sources.tsx` (payment-log UI), `program-fund-allocation-page.tsx` (top strip Expected·Transferred·Used·Available; removed overspend guard + toRequest), `program-form-page.tsx` (reset mapping).
-- **Migration (user)**: rename `case.ProgramFundingTransaction.TransactionType` → `PaymentStatus` (string). `ProgramFundingSource.AllocatedAmount` column now unused (left in place — drop later if desired). No new seed (PaymentStatus is a plain string code, not MasterData).
-- **Deviations from spec**: Service Log Used is program-level only — Service Log doesn't tag a funding source (per-source attribution = future work if a funder needs restricted-grant reporting). `AllocationFrequencyCode`/Start/End kept as source config (relabeled "Funding Start"); `AllocatedAmount` field dropped from the UI.
-- **Known issues opened**: ISSUE-2 (OPEN) — `Used` reads 0 until Service Log has amount-bearing rows for the program; verify against a case with service-log disbursements.
-- **Known issues closed**: None. (S2/S3 guardrail behavior intentionally removed — not a regression.)
-- **Verification**: FE `npx tsc --noEmit` CLEAN (exit 0, full project). BE not built (user owns build).
-- **Next step**: User builds BE → applies the rename migration → reopens `?programId=` → `/test-screen #177` (verify payment log save, Transferred/Pending per source, program Used from a service log with amounts).
+  - BE (Flow A — transfer log): `ProgramFundingTransaction.cs` (+`PaymentModeId`/`ReferenceNumber`/`FromBankAccountId` + nav props), `ProgramFundingTransactionConfiguration.cs` (2 optional Restrict FKs, ref len 100), `ProgramSchemas.cs` (`ProgramFundingTransactionDto` +5 fields incl. display names), `SaveProgramFundingAllocation.cs` (`SyncFundingTransactions` maps 3 writable fields both branches; validator: TRANSFERRED ⇒ PaymentModeId required), `GetProgramFundingAllocation.cs` (Include + project display names), `CaseMappings.cs` (Mapster parity). Migration `20260708100505_Add_ProgramFundingTransaction_PaymentDetails` (generate-only).
+  - BE (Flow B — direct expense, Grant #62): `GrantExpense.cs` (+`PaymentModeId`/`FromBankAccountId` + nav props), `GrantExpenseConfiguration.cs` (2 optional Restrict FKs), `GrantSchemas.cs` (request +2 writable, response +2 display names), `GrantMappings.cs`, `GetGrantById.cs` (Include PaymentMode + FromBankAccount on expenses). Migration `20260708101323_Add_GrantExpense_PaymentDetails` (generate-only). No Update command exists for GrantExpense (Create-only).
+  - FE (Flow A): `case-queries/ProgramFundingAllocationQuery.ts` (+5 fields on transactions), `program-form-schemas.ts` (`fundingTransactionSchema` +fields + superRefine mode-required-on-TRANSFERRED), `program-fund-allocation-page.tsx` (toRequest/reset mapping), `program-funding-sources.tsx` (loads PaymentMode + OrgBankAccount options once; per payment row, TRANSFERRED reveals Payment Mode + dynamic-labelled Reference + From Account).
+  - FE (Flow B): `add-expense-modal.tsx` (Payment Mode + From Account optional selects + schema + mutation vars), `grant-detail.tsx` (`ExpenseRow` surfaces mode/account/reference), `grant-queries/GrantQuery.ts` (expenses +4 fields), `grant-service/GrantDto.ts` (+fields on request/response DTOs).
+  - DB: two migrations generated, **NOT applied** (no `database update`), per project convention.
+- **Deviations from spec**: reuses existing `PaymentModeQuery` / `OrganizationBankAccountQuery` FE endpoints (no new endpoints). Cross-screen edit into Grant #62 (`GrantExpense`) — noted in Grant Build Log too. `OrganizationBankAccount` displayed via `AccountName` (unmasked; masked variant available if wanted later).
+- **Known issues opened**: ISSUE-6 (below) — the two new migrations must be applied by the user before this works live.
+- **Known issues closed**: None.
+- **Verification**: BE `dotnet build` Base.Application + Base.Infrastructure — 0 errors (both flows). FE `npx tsc --noEmit` — CLEAN except the known unrelated `donation-service` duplicate export.
+- **Next step**: user applies both migrations (`Add_ProgramFundingTransaction_PaymentDetails`, `Add_GrantExpense_PaymentDetails`) + the still-pending `Add_ProgramFundingSource_AllocatedAmount`, then live E2E: mark a program payment Transferred → mode is required, reference label follows the mode, From Account lists charity bank accounts; log a direct grant expense → mode/account optional and shown on the expense row.
+
+### Session 13 — 2026-07-09 — PLANNED (delta only; build lives on Donation Purpose #2 §⑮) — REVISION_PLANNED
+
+- **Scope**: Extend the fund-allocation loop to **Donation Purpose** (the deferred ISSUE-20, sibling of the grant §⑭ build). Authoritative blueprint = `prompts/donationpurpose.md` §⑮ (R2). This entry records the matching deltas that land on the #177 surface — build them alongside #2 §⑮, not standalone.
+- **#177-side deltas (see donationpurpose.md §⑮.5c/5d + §⑮.7)**:
+  1. `SaveProgramFundingAllocation.cs` `SyncFundingTransactions` — extend the grant-only TRANSFERRED cap (`Σ ≤ AllocatedAmount`, block payment before allocation) to **purpose-funded** sources (`DonationPurposeId != null`). Sponsor keeps `≤ ExpectedAnnualAmount`.
+  2. `GetProgramFundingAllocation.cs` — `committed = (GrantId != null || DonationPurposeId != null) ? CommittedAmount : ExpectedAnnualAmount`; `CanApprove = PENDING && programActive && GrantId == null && DonationPurposeId == null` (purpose now routes through the purpose-owner allocate command, not program self-approve).
+  3. `program-funding-sources.tsx` — purpose-funded cards get the "Awaiting allocation" treatment + a new `DonationPurposeFundPositionStrip` (Raised · Committed · Available) fed by `DONATION_PURPOSE_FUNDING_REQUESTS_QUERY`. Mirror of the grant `GrantFundPositionStrip` branch. Cash-only pool (no Awarded/Received tiles).
+- **Model**: CASH-ONLY ceiling — `AvailableToAllocate(purpose) = RaisedAmount − Σ AllocatedAmount`; `TargetAmount` informational. No schema change / no migration (unlike grant, `AllocatedAmount` already exists). **Prerequisite**: R1 `UNITTYPE=DONATIONPURPOSE` seed + node backfill (see #2 §⑮.1).
+- **Known issues opened**: none new here (tracked as ISSUE-8/9/10 on #2 §⑮).
+- **Next step**: build together with Donation Purpose #2 §⑮ (`/build-screen #2` or `/continue-screen #2`, BE first). After build, add a matching FIX/ENHANCE entry here.

@@ -1,0 +1,149 @@
+# Crowdfunding — PM Audit & Bug Register (2026-07-10)
+
+> **Scope of audit:** end-to-end Crowdfunding feature — #16 Crowdfunding (CRM management grid), #173 CrowdFundingPage (admin setup + public donor page), and the shared inbox-promotion path (#175). Read-only audit; no code changed during the audit.
+> **Owner screen for this register:** #16 (linked from `prompts/crowdfunding.md` §⑬). Findings are tagged by the screen/file that actually owns the fix so work can be routed correctly.
+> **Method:** 5 parallel code audits — money/aggregation, public/payment security, lifecycle state-machine, public donor FE, CRM grid/drawer FE.
+
+---
+
+## Verdict
+
+**Not open-to-donor ready.** Payment *cryptography* is solid — no gateway callback can be forged without a real payment (Braintree server-side Sale, Razorpay HMAC-SHA256 + amount check, PayU SHA-512 constant-time reverse hash). But the money *number* is wrong three independent ways, the anonymous endpoints have no working anti-abuse, a configured "stop at goal" never stops, and the CRM management screen is largely wired to orphaned components.
+
+**32 findings — 4 blocker-class, 12 high, 10 medium, 6 low.**
+
+> **Fix Log — Session 16 (2026-07-10, donor-honesty + CRM-cluster batch, FE typecheck clean — 0 errors):** ✅ **CF-H7** + ✅ **CF-H11** + ✅ **CF-H12** (the two remaining donor-facing/CRM HIGH items, per the two product decisions the user made this session). **CF-H7 (dead cover-fees toggle → REMOVE):** user chose "remove the control" over building a server-authoritative fee calc (no gateway fee schedule available). `donate-form.tsx` (crowdfundingpage) rendered a "Cover processing fees so 100% goes to the campaign" checkbox whose `coverFees` state was never added to the charged amount nor sent — a false claim. Removed the toggle JSX, the `coverFees` state, and the now-unused `allowDonorCoverFees` destructure; **kept** `allowDonorCoverFees` on the interface/DTO/GQL so re-enabling is a one-place change when real fee support lands. FE-only, no BE change. **CF-H11 + CF-H12 (CRM cluster → wire DataTable + delete orphans):** user chose "add lifecycle actions + delete orphans" over swapping to the pre-built card-grid. The `LifecycleConfirmModal` (Publish/Unpublish/Close/Archive/Duplicate) and `DeleteCrowdFundModal` were fully built + store-driven (`openModal` → mutation → `bumpRefresh` → `closeModal`) but **never mounted**, so the drawer's two "Edit" buttons (which called `openModal("edit")`) were dead and no lifecycle path existed from the list. Fix: (1) mounted both modals in the router `index.tsx`; (2) added a status-aware **Lifecycle** section to the drawer (`crowdfund-detail-sheet.tsx`) — Draft→Publish/Duplicate/Delete, Published→Close/Unpublish/Duplicate, Active·GoalMet→Close/Duplicate, Closed→Archive/Duplicate — each opening the mounted confirm modal (BE re-validates every transition); (3) fixed the dead header "Edit" button to `router.push(editHref)` and removed the dead "Quick Edit Basic" ActionRow. **CF-H12:** the KPI widgets already refetched on the store `refreshToken`, but the index-page chip-count query (a separate `useQuery`) and the grid rows did not — so a mutation left them stale. Wired `index-page.tsx` to, on `refreshToken` bump, call the FlowDataTable store's `setRefresh(true)` (reload grid) **and** `refetchSummary()` (chips); all lifecycle/delete mutations now flow through the mounted modals → one `bumpRefresh` refreshes grid + widgets + chips + drawer together. Also **disabled the native row Delete** (`enableDelete: false`) and moved Delete into the drawer (Draft-only, store-driven) — the native delete reloaded only the grid (not widgets/chips) and had lost the "Draft-only" affordance; the drawer path fixes both (**partially closes CF-M10**). **Orphan deletion:** removed only `crowdfund-quick-edit-dialog.tsx` (no importers). **Deliberately NOT deleted:** `crowdfund-card.tsx` — it is still registered in the shared `card-variant-registry.ts` (via `card-grid/variants/crowdfund-card.tsx` + `types.ts`), so deleting it would require shared-wiring edits with cross-screen ripple; it's an unused-but-registered card variant, left in place. No BE change, no migration, no shared-wiring edit. **Files:** FE — `crowdfundingpage/donate-form.tsx`, `crowdfunding/index.tsx`, `crowdfunding/index-page.tsx`, `crowdfunding/crowdfund-detail-sheet.tsx`; deleted `crowdfunding/crowdfund-quick-edit-dialog.tsx`. **All HIGH items now resolved** (CF-H1 Razorpay-at-Initiate and CF-H4 multi-currency FX remain — H1 is #173 BE recurring-flow, H4 is deferred pending real cross-currency test per session 10).
+>
+> **Fix Log — Session 15 (2026-07-10, tenant-correct-donor-wall pair, BE build clean / FE typecheck clean):** ✅ **CF-H6** + ✅ **CF-H8** (fixed as a pair, per session 14's residual note). **CF-H6 (stats resolve wrong tenant):** `GetCrowdFundPublicStats` resolved the tenant as "first active company" (`OrderBy(CompanyId).First`) while the page query `GetCrowdFundBySlug` resolves by hostname — so on a multi-tenant deployment where the campaign owner isn't the lowest `CompanyId`, the two queries disagreed and the wall/counts came from a different tenant. Fix: added a `Hostname` param to `GetCrowdFundPublicStatsQuery` + the `crowdFundPublicStats` resolver, and swapped the first-active lookup for `OnlineDonationPageTenantResolver.ResolveByHostnameAsync` (the exact resolver the slug query uses), plus the same Development localhost fallback (re-scope to logged-in admin's company → slug-only) via a shared `GetCampaignAsync` helper. **CF-H8 (donor wall empty):** `page-content.tsx` hardcoded `donors={[]}` and never called `GET_CROWDFUND_PUBLIC_STATS`. Fix: `page.tsx` now server-fetches the stats query (same no-store SSR pattern, hostname forwarded so it resolves the **same** tenant as CF-H6) and passes `recentDonors` into `CrowdFundingPageContent`, which feeds the `DonorWall` (self-hides when empty; draft previews skip the fetch). Only `recentDonors` is consumed from stats — all other aggregates still come from the slug DTO. **Incidental fix:** session 14's CF-H10 referenced `data.robotsIndexable` in `page.tsx` but never added the field to the FE `CrowdFundPublicDto` type (it existed only on the admin DTO) — this was a latent type error; added `robotsIndexable?: boolean | null` to the public DTO's SEO/Sharing block. No migration, no shared-wiring edit. **Files:** BE — `GetCrowdFundPublicStats.cs`, `CrowdFundPublicQueries.cs`; FE — `CrowdFundPublicQuery.ts`, `page.tsx`, `page-content.tsx`, `CrowdFundingPageDto.ts`. **Residual:** CF-H7 (cover-fees) still open — needs server-authoritative fee calc or a product call to remove the control.
+>
+> **Fix Log — Session 14 (2026-07-10, donor-facing-correctness batch, BE build clean):** ✅ **CF-H9** + ✅ **CF-H10** (the two donor-facing items with no product decision / no cross-tenant dependency). **CF-H9 (phone field):** the public donate form (`donate-form.tsx`) hard-sent `phone: null` even though the DTO/`donationFormFieldsJson` config supports a PHONE field — so a "phone required" admin config was unsatisfiable and any captured number was dropped. Now the form derives `phoneEnabled`/`phoneRequired` from the parsed field-map (PHONE is the one admin-configurable donor field), renders a config-gated phone input, enforces it in `handleInitiate` + the submit-disabled guard when required, and sends `phone.trim() || null`. FE-only, no BE change. **CF-H10 (indexability):** the public route keyed `robots{index}` solely on `pageStatus === "Active"`, but Publish sets **"Published"** (nothing promotes it to Active until StartDate passes) — so every freshly-published campaign was `noindex`, and the admin's `RobotsIndexable` toggle was never honored (it wasn't even in the public DTO/query). Fix spans a thin BE projection + FE: exposed `RobotsIndexable` on `CrowdFundPublicDto` (the column already existed on the entity — **no migration, no entity change**) and mapped it in `GetCrowdFundBySlug`; added `robotsIndexable` to the public GQL query; `generateMetadata` now indexes Published/Active/GoalMet pages **and** gates on `robotsIndexable !== false`. **Residuals / deferred:** **CF-H7** (cover-fees toggle) left open — it needs a server-authoritative fee amount (gateway fee schedule) or a product call to remove the control; not a mechanical fix. **CF-H8** (donor wall `donors={[]}`) left open — the clean fix is tenant-correct donor data, which is blocked on **CF-H6** (`GetCrowdFundPublicStats` resolves the wrong tenant); pair H8 with the H6 fix rather than wiring the buggy stats query. No shared-wiring edit in this batch.
+>
+> **Fix Log — Session 13 (2026-07-10, lifecycle-guards batch, BE build clean):** ✅ **CF-H2** + ✅ **CF-H3**. **CF-H2 (authoritative delete/unpublish):** `DeleteCrowdFund` and `UnpublishCrowdFund` guarded only the `CrowdFundDonations` junction, which is empty under deferred-promotion until staff resolve the inbox row — so a campaign that had already captured public money could be deleted or pulled back to Draft. Both handlers now *also* count COMPLETED (`PAYMENTSTATUS` = COMPLETED/SUCCESS) `OnlineDonationStagings` rows for the crowdfund and add them to the junction count before deciding. **CF-H3 (authoritative publish gate):** the rich ERROR ruleset (category, reserved-slug, stretch-goal, WhatsApp-template, impact-row, milestone-row — plus the shape-tolerant payment-method check) lived only in the advisory `ValidateCrowdFundForPublishQuery`; the `PublishCrowdFund` mutation carried a thinner copy and could be called directly to bypass them. Root cause was duplication, so the fix is de-duplication: extracted all ERROR rules into a new pure static `CrowdFundPublishValidation.CollectErrors(entity, donationPurposeValid, nowUtc)` (in `Base.Application/Validations/`); the query handler now delegates its ERROR rules to it (keeps its own WARNING rules) and the Publish handler calls it and throws `BadRequestException` on any violation. **Single source of truth → the modal and the server gate can never disagree again.** No schema change, no shared-wiring edit. **Residuals:** the DonationPurpose existence check stays per-caller (query uses the Included nav, command uses `AnyAsync`) and is passed into the helper as a bool — intentional, keeps the helper DB-free.
+>
+> **Fix Log — Session 10 (2026-07-10, money-truth batch, BE build clean):** ✅ **CF-B2** (refund subtraction across all 6 aggregations), ✅ **CF-M7** (org-level distinct donor count), ✅ **CF-H5** (compensating soft-delete on partial-promotion failure). CF-H4 deliberately deferred — `ExchangeRate` is stubbed to `1m` at promotion, so switching aggregation to `BaseCurrencyAmount` today is a no-op; CF-H4 = FX-population at promotion (shared ODP/P2P code) **+** column switch, done together and tested with a real cross-currency donation.
+>
+> **Fix Log — Session 12 (2026-07-10, anti-abuse batch — the self-contained slice of CF-B4, BE+FE build clean):** ⚠️ **CF-B4 PARTIAL** — the 2 of 5 mechanisms fixable without shared-wiring edits or infra provisioning are done; the other 3 are documented as needing an infra/wiring pass the user owns. **(4) Honeypot** now live end-to-end on Crowdfund — `donate-form.tsx:304` was hardcoding `website: ""`; changed to send the bound `honeypot` state so the server-side check (which was already correct) actually fires. *ODP and P2P donate forms already transmitted the honeypot correctly — no change needed there* (register's "identical on all 3" was accurate for BE, not FE). **(5) Idempotency** now enforced on Crowdfund + P2P Initiate via an in-process `IMemoryCache` guard: the client-UUID `IdempotencyKey` is checked at entry (after honeypot/CSRF/reCAPTCHA) and, on a repeat within a 10-min TTL, the *first* built response is replayed instead of creating a new gateway order / Razorpay plan+subscription. **Residuals / deferred (honest scope):** ODP has **no** IdempotencyKey on its Initiate path at all (not in DTO/GraphQL/FE) — guarding it needs the field plumbed first, so ODP idempotency is untouched. The in-process cache is best-effort: it covers sequential retries on one instance but **not** cross-instance or concurrent-double-submit races — a distributed cache or a DB unique key on IdempotencyKey would close that (schema/infra = user-owned). **(1) Rate-limit binding, (2) reCAPTCHA, (3) real CSRF remain no-ops** — (1) is a GraphQL-single-endpoint architectural problem needing shared `DependencyInjection.cs` edits + a per-operation guard/interceptor; (2) needs a Google reCAPTCHA secret; (3) needs antiforgery middleware/cookie infra. None are true fixes without that provisioning; left as placeholders + this note.
+>
+> **Fix Log — Session 11 (2026-07-10, goal-enforcement batch, BE build clean):** ✅ **CF-B3** (GoalMet status now assigned). The consumer side was already built — the donate gate treats `GoalMet`+`AutoClose` as *not accepting* and `GoalMet`+`KeepAccepting`/`ShowStretchGoal` as *still accepting* — but nothing ever WROTE `"GoalMet"`. Added `ApplyCrowdFundGoalMetAsync` to `ResolveOnlineDonationStaging` (the deferred-promotion junction insert is where new crowdfund money is first recognized): after a promoted crowdfund donation, if refund-net raised ≥ GoalAmount and status is Active/Published, flip → `GoalMet` (race-safe, best-effort, never rolls back the donation). AutoClose now actually stops. **GoalReached/milestone email stays a `SERVICE_PLACEHOLDER`** — consistent with *every* crowdfund donor email (confirmation/receipt are all stubbed logs in `ConfirmCrowdFundDonation`); wiring only GoalReached live would be inconsistent and out of scope. **Residuals (not in CF-B3 scope):** GoalMet does not auto-revert if a later refund drops raised back below goal (lifecycle-reversal = separate product decision); non-crowdfund (Confirm-time, non-deferred) finalization paths, if any exist for other donation modes, are untouched. Remaining blockers CF-B1/B4 unchanged.
+
+Numbering here is `CF-*` (audit-local) to avoid colliding with the prompt's existing `ISSUE-1..24`. Where a finding overlaps an already-tracked issue, the **Maps-to** column names it.
+
+---
+
+## Root-cause map (fix these upstream, many findings collapse)
+
+| Root cause | Findings it drives |
+|---|---|
+| **Deferred inbox promotion** — a public donation writes only an `OnlineDonationStaging` row; the `GlobalDonation` + `CrowdFundDonations` junction (which every total reads) are created only when staff resolve the row in the Donation Inbox (#175). | CF-B1, CF-H8, CF-H2(lifecycle), CF-H10 (CRM $0 signal) |
+| **Anti-automation stack is all no-op** — rate-limit unbound, reCAPTCHA hardcoded 1.0, CSRF constant, honeypot never transmitted, idempotency key unused. | CF-B4 (cluster) |
+| **`GoalMet` status is never assigned anywhere.** | CF-B3, plus dead GoalReached/milestone emails |
+| **CRM card-grid + all lifecycle/quick-edit modals were built then never mounted** (live screen is a plain DataTable). | CF-H11, CF-H12, CF-M-CRM cluster |
+
+---
+
+## BLOCKERS
+
+### CF-B1 · Real-time "Raised" is chronically $0 (deferred promotion)
+- **What breaks:** the live thermometer, donor wall, donor count, and CRM Raised column read $0/empty for the entire window between a real payment and staff manually resolving the inbox row.
+- **Who:** every donor (sees dead campaign), every campaigner, finance.
+- **Owner:** cross-cutting — `ConfirmCrowdFundDonation.cs`, `ResolveOnlineDonationStaging.cs` (#175), all 6 aggregations.
+- **Fix (decision needed):** either auto-promote crowdfund donations on Confirm, or explicitly surface a "pending / awaiting reconciliation" figure on both public and CRM surfaces. This is a **product decision**, not a mechanical fix.
+- **Maps-to:** partially ISSUE-22 (junction insert, CLOSED) — but that fix only makes totals correct *after* promotion; the real-time lag remains.
+
+### CF-B2 · Refunded donations still counted 100% in Raised — ✅ FIXED (session 10)
+- **What breaks:** all 6 aggregations sum `NetAmount` filtered only by `IsDeleted`. Refund flow (`CreateRefund.cs:401-402`, `CompleteRefund.cs:217-218`) sets `PaymentStatusId=REFUND` + `RefundedAmount` but never soft-deletes or reduces `NetAmount`. A fully-refunded $1,000 gift still shows $1,000 raised.
+- **Who:** finance (overstated), donors (false progress), goal-met logic (fires on phantom money).
+- **Owner:** #16 BE — the 6 query files (`GetAllCrowdFundList`, `GetCrowdFundById`, `GetCrowdFundBySlug`, `GetCrowdFundStats`, `GetCrowdFundSummary`, `GetCrowdFundPublicStats`).
+- **Fix:** in the junction `.Sum()`, filter `PaymentStatusId == Completed` (exclude REFUND/partial) **and/or** subtract `RefundedAmount`. Apply identically to donor-count.
+
+### CF-B3 · `GoalMet` status is never assigned; AutoClose never stops accepting — ✅ FIXED (session 11)
+- **What breaks:** the string `"GoalMet"` is written nowhere. A campaign configured `AutoClose` at its goal keeps taking money past it indefinitely; GoalReached/milestone emails never fire; Close/Archive-from-GoalMet transitions are unreachable.
+- **Who:** donors (charged past a cap the org promised), org (trust/legal exposure).
+- **Owner:** lifecycle — donation-finalization path + `CloseCrowdFund`/status transitions.
+- **Fix:** on donation finalization, when `raised >= goal`, flip status per `GoalExceededBehavior` (KeepAccepting → stay Active; AutoClose → GoalMet+stop; ShowStretchGoal → GoalMet+continue to stretch) and fire the milestone email.
+
+### CF-B4 · Anti-automation stack is a no-op (cluster) — ⚠️ PARTIAL (session 12)
+Individually medium; together a wide-open anonymous endpoint that calls **paid** gateway APIs per hit.
+> **Session 12 status:** honeypot (4) FIXED on Crowdfund FE; idempotency (5) FIXED on Crowdfund + P2P via IMemoryCache. Rate-limit (1), reCAPTCHA (2), CSRF (3) remain no-ops — need shared-wiring + infra provisioning (see Fix Log). ODP idempotency deferred (no key on its Initiate path).
+- **Rate-limit** policy registered but never bound to the GraphQL endpoint (`DependencyInjection.cs:366` — no `.RequireRateLimiting`); partition key reads `Request.Query["slug"]` but GraphQL sends slug in the POST body (`:306`) → all campaigns share one empty bucket.
+- **reCAPTCHA** hardcoded `score = 1.0m`, then `< 0.3` never true (`InitiateCrowdFundDonation.cs:117`).
+- **CSRF** token is an unpersisted GUID, cached 60s (shared across viewers), validated only as `length ≥ 16` (`GetCrowdFundBySlug.cs:230`, `Initiate.cs:111`); no antiforgery middleware; CORS `SetIsOriginAllowed(_=>true)+AllowCredentials`.
+- **Honeypot** defeated — server checks `website` field but FE hardcodes `website:""` (`donate-form.tsx:304`) so it never populates.
+- **Idempotency** key required by validator (`Initiate.cs:77`) then never used → duplicate donations; Razorpay recurring re-creates plan+subscription per retry.
+- **Owner:** shared wiring (`Base.API/DependencyInjection.cs`) + `Initiate/Confirm` handlers. **⚠ Cross-cutting — the same weaknesses almost certainly exist on P2P (#170) and ODP siblings; fix as a set.**
+
+---
+
+## HIGH
+
+| ID | Finding | Who it affects | Owner / file | Recommended fix | Maps-to |
+|----|---------|----------------|--------------|-----------------|---------|
+| CF-H1 | **Razorpay recurring subscription created at *Initiate*** (`:468-494`), before payment proof; abandoned tab orphans a live, un-cancellable auto-charging subscription with no local record. | recurring donors | #173 BE `InitiateCrowdFundDonation` | Create plan/subscription only after Confirm succeeds; persist gateway subscription id for cancel/track. | — |
+| CF-H2 ✅ | **Delete/Unpublish guards count the empty junction** (`DeleteCrowdFund.cs:42-51`, `UnpublishCrowdFund.cs:50-59`), not COMPLETED staging → can nuke a campaign that already collected money. | orphaned funds | #16 BE | Guard on COMPLETED `OnlineDonationStaging` for the crowdfund too, not just junction count. | — |
+| CF-H3 ✅ | **Publish server-gate incomplete** — category/reserved-slug/stretch-goal/WhatsApp checks live only in advisory `ValidateCrowdFundForPublishQuery`; direct `PublishCrowdFund` mutation skips them (`:57-100`). | broken published campaigns | #173 BE | Call the validator (or inline its checks) inside the Publish handler. | — |
+| CF-H4 | **Multi-currency totals summed with no FX** — `NetAmount` is donor-currency; `BaseCurrencyAmount` ignored (`GetCrowdFundPublicStats` self-documents as ISSUE-8). Violates direct-pair FX rule. | meaningless KPIs | #16 BE (6 queries) | Aggregate on `BaseCurrencyAmount`; if null, resolve via `IFxRateService` snapshot value. | ISSUE-1, ISSUE-8 |
+| CF-H5 ✅ | **Resolve isn't atomic** — GlobalDonation commits (~`:241`) then junction+writeback in a separate `SaveChanges` (~`:347`); failure orphans a real donation, retry duplicates it. | duplicate money records | #175 BE `ResolveOnlineDonationStaging` | Wrap create + junction + writeback in one transaction. | — |
+| CF-H6 ✅ | **`GetCrowdFundPublicStats` resolves wrong tenant** (first-active-company, `:41-46`) vs page query hostname (`GetCrowdFundBySlug:57`) → donor wall/count empty on multi-tenant. | multi-tenant orgs | #173 BE | Resolve tenant by slug/hostname consistently with `GetCrowdFundBySlug`. | — |
+| CF-H7 ✅ | **"Cover processing fees" toggle is dead** — `coverFees` never added to amount nor sent (`donate-form.tsx:182,288-308`); UI's "100% goes to the campaign" is false. | donor deception | #173 FE (+BE amount calc) | Add fee to server-authoritative amount, or remove the control until supported. | — |
+| CF-H8 ✅ | **Donor wall permanently empty** — hardcoded `donors={[]}` (`page-content.tsx:222-228`); `GET_CROWDFUND_PUBLIC_STATS` never called. | lost social proof | #173 FE | Wire the public-stats query into the wall. | — |
+| CF-H9 ✅ | **Phone field missing from donate form** — DTO supports it (`CrowdFundDto.ts:303-308`) but form hard-sends `phone:null` (`:301`); if admin requires phone, donors can't satisfy it. | data capture | #173 FE | Render/collect phone per config. | — |
+| CF-H10 ✅ | **Published pages `noindex` + admin `RobotsIndexable` ignored** — indexability keys on `pageStatus==="Active"` (`page.tsx:84-86`) but live state is `Published`; toggle not in public query/metadata. | zero organic reach | #173 FE | Honor `RobotsIndexable`; treat Published/Active as indexable. | — |
+| CF-H11 ✅ | **CRM screen largely orphaned** — live screen is a plain DataTable; card-grid + all lifecycle/quick-create/quick-edit modals built but never mounted; the two surviving drawer "Edit" buttons are dead (`crowdfund-detail-sheet.tsx:364,761`). | admins can't publish/close from list | #16 FE | Decide: mount the card-grid+modals, or add lifecycle actions to the DataTable + delete orphaned files. | — |
+| CF-H12 ✅ | **KPI tiles + chip counts never refetch after mutation** — refresh token bumped only by orphaned modals (`crowdfund-widgets.tsx:85-89`). | stale dashboard | #16 FE | Bump the refresh signal from the live mutation path. | — |
+
+---
+
+## MEDIUM
+
+| ID | Finding | Owner | Maps-to |
+|----|---------|-------|---------|
+| CF-M1 | **StartDate not enforced** — future-dated Published campaign is donatable now (`Initiate.cs:205-214` checks only EndDate); no activation job → stuck in Published forever. | lifecycle | — |
+| CF-M2 | **No EndDate auto-close job** — ended campaigns still show "Active" (donate correctly blocked server-side, so cosmetic). | lifecycle | — |
+| CF-M3 | **Draft preview-token is a no-op** — any non-empty `?previewToken` discloses any Draft (`GetCrowdFundBySlug.cs:135`, SERVICE_PLACEHOLDER). | security + lifecycle | — |
+| CF-M4 | **Tenant resolved from client hostname / spoofable `x-forwarded-host`** with silent first-active fallback. | security | — |
+| CF-M5 | **Stored-XSS surface** — donor name/message (`Initiate.cs:540-546`) and `storyRichText` via `dangerouslySetInnerHTML` (`page-content.tsx:167-173`) depend on unverified server sanitization; render on donor wall + staff inbox. | security + #173 FE | — |
+| CF-M6 | **Confirm has no wrapping transaction** on recurring paths (`ConfirmCrowdFundDonation.cs:677,700,711,739`); non-locking idempotency read → racing confirms duplicate schedules. | security/BE | — |
+| CF-M7 ✅ | **Org-level Total Donors double-counts** a donor who gave to N campaigns as N (sums per-campaign distinct counts). | #16 BE | — |
+| CF-M8 | **BE/network errors surface as 404 "not found"** — any hiccup calls `notFound()` (`page.tsx:45-67,111`); no retry. | #173 FE | — |
+| CF-M9 | **No mobile sticky donate widget** — form sits below entire story on phones (P2P sibling ships one). | #173 FE | — |
+| CF-M10 ⚠️ | **CRM state gaps** — filtered-empty vs truly-empty no longer distinct; ~~Delete "Draft-only" affordance lost (relies on BE reject)~~ ✅ Delete affordance restored (session 16 — native row Delete disabled, drawer Delete shown Draft-only); "Goal Met" chip filters stored status while badge is computed → count/filter disagree. | #16 FE | ISSUE-4 (partial) |
+
+---
+
+## LOW
+
+| ID | Finding | Owner |
+|----|---------|-------|
+| CF-L1 | Confirm doesn't re-check lifecycle between initiate/confirm. | #173 BE |
+| CF-L2 | No maximum-donation cap. | #173 BE |
+| CF-L3 | Donor email/IP logged plaintext (`Initiate.cs:563-565`). | security |
+| CF-L4 | 60s public cache no invalidation → stale status/total after Close (`GetCrowdFundBySlug`). | #173 BE |
+| CF-L5 | Duplicate drops PageTemplateId/BeneficiariesJson/DonationFormFieldsJson/email FKs (`DuplicateCrowdFund`). | #16 BE |
+| CF-L6 | thank-you drops receiptUrl/transactionId it already has; a11y: labels lack `htmlFor`, amount chips under 44px tap target; fixed light-theme cards on admin-controlled bg. | #173 FE |
+
+---
+
+## What's genuinely solid (don't spend time here)
+
+Gateway callback authenticity (all three) · server-authoritative amount (can't donate $1, record $10k) · confirm replay guard · closed/archived donate blocked server-side (not just hidden) · single junction = all 6 queries agree · safe JSON parsing in drawer · UTC handling · KPI tile styling per memory rules · lifecycle banners render · min-donation + email validated · junction unique index prevents double-linking.
+
+---
+
+## Recommended fix sequence
+
+1. **Money truth** — CF-B2 (refund filter), CF-H4 (BaseCurrencyAmount), CF-H5 (atomic Resolve), CF-M7 (donor de-dup). One backend pass, #16/#175-owned, no product decision needed. **Best starting block.**
+2. ~~**Goal enforcement** — CF-B3 (GoalMet flip + milestone email).~~ ✅ **DONE (session 11)** — GoalMet flip live; milestone email deferred as SERVICE_PLACEHOLDER (all donor emails are stubbed).
+3. **Anti-abuse** — CF-B4 cluster. ⚠️ **PARTIAL (session 12)** — honeypot (Crowdfund FE) + idempotency (Crowdfund + P2P, IMemoryCache) done. **Remaining:** rate-limit binding (needs shared `DependencyInjection.cs` + GraphQL per-operation guard), reCAPTCHA (needs secret), real CSRF (needs antiforgery middleware), ODP idempotency (needs key plumbed). Coordinate before the shared-wiring pass.
+4. ~~**Guards** — CF-H2, CF-H3 (authoritative delete/unpublish/publish).~~ ✅ **DONE (session 13)** — CF-H2: Delete + Unpublish now also count COMPLETED `OnlineDonationStagings` (deferred-promotion money-in-flight), not just the junction. CF-H3: extracted the publish ERROR ruleset into shared `CrowdFundPublishValidation.CollectErrors`; both the advisory `ValidateCrowdFundForPublishQuery` and the authoritative `PublishCrowdFundCommand` call it → single source of truth, no drift, direct mutation can't skip category/slug/stretch-goal/WhatsApp/impact/milestone checks.
+5. **Donor-facing correctness** — CF-H7, CF-H8, CF-H9, CF-H10 (#173 FE) + CF-H6 tenant pair. ✅ **CF-H9 + CF-H10 DONE (session 14)** — phone field now config-gated/collected/sent; public route indexes Published/Active/GoalMet pages and honors the newly-exposed `RobotsIndexable` toggle (no migration). ✅ **CF-H6 + CF-H8 DONE (session 15)** — stats query now resolves tenant by hostname (was first-active-company) so the donor wall shows the right tenant; wall wired to server-fetched `recentDonors`; also closed a latent CF-H10 FE type gap (`robotsIndexable` was missing from the public DTO type). ✅ **CF-H7 DONE (session 16)** — cover-fees control removed (user chose remove-until-supported over building server-side fee calc); config flag kept for one-place re-enable. **Step complete.**
+6. **CRM screen** — CF-H11, CF-H12. ✅ **DONE (session 16)** — user chose "wire the DataTable + delete orphans" over mounting the card-grid. Mounted the built-but-orphaned `LifecycleConfirmModal` + `DeleteCrowdFundModal`; added a status-aware Lifecycle section to the drawer (Publish/Unpublish/Close/Archive/Duplicate/Delete, opened from the grid's View); fixed the two dead "Edit" buttons; wired grid + chip-count refetch to the shared `refreshToken` (CF-H12); disabled native row Delete in favor of the Draft-only drawer Delete (also restores the CF-M10 affordance). Deleted `crowdfund-quick-edit-dialog.tsx`; kept `crowdfund-card.tsx` (still registered in the shared card-variant registry — deleting = shared-wiring ripple).
+
+**All 12 HIGH findings are now resolved except CF-H1 (Razorpay recurring created at Initiate — #173 BE recurring-flow) and CF-H4 (multi-currency FX — deferred pending a real cross-currency donation test, see session 10).**
+
+**Deferred-promotion (CF-B1) is a product decision** — sequence it deliberately, it changes real-time semantics for all three public donation types.
+
+---
+
+## Cross-surface warning
+
+The crowdfund handlers mirror P2P (#170) and OnlineDonationPage field-for-field. The no-op CSRF/reCAPTCHA/rate-limit/idempotency (CF-B4) and the deferred-promotion behavior (CF-B1) **almost certainly exist identically on those two surfaces.** Fix them as a set, not per-screen.

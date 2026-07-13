@@ -9,7 +9,8 @@ complexity: High
 new_module: YES — `case` schema (first time creation; shares schema with Program #51 and Beneficiary #49)
 planned_date: 2026-04-21
 completed_date: 2026-04-24
-last_session_date: 2026-06-22
+last_session_date: 2026-07-08
+pending_enhancement: NONE — PART2-SERVICE-LOG-PAYMENT-TRACEABILITY built 2026-07-08 (see Build Log Session 8). ⚠ Deviation: used `com.PaymentModes` entity, NOT MasterData PAYMENTMETHOD as §⑫-E text states. Seed `ServiceLogPaymentMode-com-PaymentModes-extras.sql` (UPI/OTHER) pending user-apply.
 ---
 
 ## Tasks
@@ -1017,6 +1018,97 @@ Full UI must be built (buttons, forms, modals, panels, interactions). Only the h
 
 ---
 
+## ⑫-E Enhancement Spec — Service Log Payment Traceability (Part 2)
+
+> **Added**: 2026-07-08 (via `/plan-screens #50`, routed from `/continue-screen #50` — Part 2 is a Spec change).
+> **Consumer**: `backend-developer` then `frontend-developer` (BE first). This is an **augmentation** of the existing Case → **Service Log** tab, NOT a rebuild. Touch only the Service Log stack listed below. Keep the existing fund-aware design (pool strip + hard/soft caps from Build-Log Sessions 4/6/7) untouched — these fields sit **alongside** it.
+> **Part 1 (funding source) is DONE** — `FundingSourceId` + picker already shipped (2026-07-06). Do NOT re-plan or re-touch it.
+
+### E.1 Goal
+
+When a worker logs a Case Service disbursement, capture **how** the money left the org and **to whom**, so every payment is traceable to (a) its **funding source** — already captured — and now (b) its **payment method + destination**. Purely for **tracking + reporting**; no gateway/settlement integration.
+
+The worker picks a **Payment Mode**; the form then reveals a mode-specific **"Transferred To"** sub-block. All new fields are **optional at the DB layer** (nullable) — a legacy log with no payment detail stays valid — but the FE makes the mode-appropriate destination fields **required-by-mode** (soft, client-side) so new entries are complete.
+
+### E.2 Masterdata — REUSE `PAYMENTMETHOD` (do NOT invent a new TypeCode)
+
+> **⚠ SUPERSEDED AS BUILT (2026-07-08, Session 8)**: the build used the dedicated **`com.PaymentModes` entity** (`PaymentModeId` FK → `com.PaymentModes`), NOT the MasterData `PAYMENTMETHOD` TypeCode described below. Reason: the money-IN sibling `ProgramFundingTransaction` and `GrantFundReceipt` — same fund-flow domain — already use `com.PaymentModes`, so this keeps money-in/out consistent and reuses `PAYMENTMODES_QUERY`. `com.PaymentModes` already has `CASH`/`CHEQUE`/`BANKTRANSFER`/`ONLINE`/`MOBILEMONEY`; the extras seed adds `UPI`+`OTHER`. The E.2 paragraph below is retained for historical context only.
+
+The canonical global TypeCode **`PAYMENTMETHOD`** already exists and is seeded with 12 rows (`CARD, BANKTRANSFER, CREDITCARD, DEBITCARD, UPI, NETBANKING, WALLET, ACH, APPLEPAY, GOOGLEPAY, PAYPAL, SEPA`) — see `PaymentReconciliation-fix-paymentmethodtype.sql`. It already contains `BANKTRANSFER` and `UPI`. It is **missing `CASH` and `OTHER`**, which this enhancement needs.
+
+- **Seed action** (new idempotent script `ServiceLogPaymentMode-MasterData-extras.sql`, `sql-scripts-dyanmic/`): add two rows under `PAYMENTMETHOD` — `('Cash','CASH',0)` and `('Other','OTHER',13)` — using the same `NOT EXISTS (TypeCode, DataValue)` guard as the existing extras script. **User applies it** (migration/seed convention: user-owned).
+- The FE **Payment Mode** picker reads all active `PAYMENTMETHOD` rows via the standard masterdata query (mirror how `fieldcollection` / donation forms load payment methods). The conditional sub-form keys off the row's **`DataValue` code** (uppercased), NOT the raw id — same discipline as the Session-3 priority-by-code rule and the fieldcollection `inferPaymentModeCode` helper.
+- **Sub-form routing by code**: `CASH` → challan block; `BANKTRANSFER` → bank block; `UPI` → UPI block; **every other code (incl. `OTHER`, CARD, NETBANKING, WALLET, …)** → generic reference block. (Grouping the long tail under the generic block keeps it robust to any PAYMENTMETHOD row.)
+
+### E.3 Entity — `case.BeneficiaryServiceLog` new columns (ALL nullable)
+
+Add to `Base.Domain/Models/CaseModels/BeneficiaryServiceLog.cs` (place after `FundingSourceId`), + nav:
+
+| Field | C# Type | MaxLen | FK / Notes |
+|-------|---------|--------|------------|
+| `PaymentModeId` | `int?` | — | FK → `sett.MasterDatas` (TypeCode `PAYMENTMETHOD`). NULL = mode not recorded (legacy). |
+| `TransferredToName` | `string?` | 200 | Destination party across all modes — bank account holder / UPI payee / "paid to" (cash) / counterparty (other). |
+| `BankName` | `string?` | 200 | BANKTRANSFER only. |
+| `BankAccountNumber` | `string?` | 50 | BANKTRANSFER only. Store as entered (no masking at rest for now — flag in §⑫ if masking becomes a requirement). |
+| `BankIfsc` | `string?` | 20 | BANKTRANSFER only (IFSC / routing code). |
+| `UpiId` | `string?` | 100 | UPI only (VPA, e.g. `name@bank`). |
+| `PaymentReference` | `string?` | 100 | Generic txn ref / UTR / cheque no / gateway ref — shown for BANKTRANSFER, UPI, and generic/OTHER. |
+| `ChallanReceiptUrl` | `string?` | 500 | CASH only. Challan/receipt **image URL**. See E.6 — URL-paste now; real upload dormant. |
+
+Nav: `public virtual MasterData? PaymentMode { get; set; }`
+EF config (`BeneficiaryServiceLogConfiguration.cs`): FK `PaymentModeId → MasterDatas`, `OnDelete(DeleteBehavior.Restrict)` (or `SetNull`, matching how other optional MasterData FKs on case entities are configured — check `CaseConfiguration` for the house style and mirror it). String columns get their `HasMaxLength`.
+
+**Migration** (user-owned, do NOT apply): `Add_PaymentMode_And_TransferDetails_To_BeneficiaryServiceLog` — 8 nullable columns + 1 FK index on `PaymentModeId`. No data backfill.
+
+### E.4 BE wiring (mirror the existing FundingSourceId slice end-to-end)
+
+- **DTO** `BeneficiarySchemas.cs` → `BeneficiaryServiceLogRequestDto`: add all 8 fields. `BeneficiaryServiceLogResponseDto`: add `PaymentModeName string?` (+ `PaymentModeCode string?` for the FE to route the read-view display without re-deriving).
+- **Validator** (`CreateBeneficiaryServiceLog.cs` + `UpdateBeneficiaryServiceLog.cs`): `When(PaymentModeId.HasValue) → ValidateForeignKeyRecord<MasterData>(… _dbContext.MasterDatas, m => m.MasterDataId)`. `ValidateStringLength` for each new string field per the maxlens above. **Keep BE lenient** — do NOT hard-require bank/UPI fields by mode server-side (FE owns required-by-mode UX; BE nullable keeps legacy + partial rows valid). Note this choice in the session log.
+- **Mapping** `CaseMappings.cs`: map `PaymentModeName` (← `PaymentMode.DataName`) and `PaymentModeCode` (← `PaymentMode.DataValue`) on the response; `.Ignore()` the `PaymentMode` nav on the reverse (request→entity) map, same as the other nav ignores. The 8 scalar fields flow via `Adapt` automatically (they're on the Request base).
+- **Reads** — include the nav + project the name/code in all three read paths: `GetAllBeneficiaryServiceLogs.cs`, `GetBeneficiaryServiceLogById.cs`, and `Cases/GetByIdQuery/GetCaseById.cs` (the `caseServiceLogs` projection). The 8 scalars are already selected if the projection maps the whole entity; if it hand-projects columns, add them explicitly.
+- **Funding guard**: unchanged — payment-mode fields have **no** interaction with the pool/cap logic. Do not touch `ServiceLogFundingGuard.cs`.
+
+### E.5 FE wiring — `caselist/case/tabs/service-log-tab.tsx` (+ DTO + query)
+
+- **DTO** `domain/entities/case-service/BeneficiaryDto.ts`: add the 8 fields to the service-log request/response types + `paymentModeName`/`paymentModeCode` on the response.
+- **Query** `CaseQuery.ts` → `caseServiceLogs` selection set: add `paymentModeId paymentModeName paymentModeCode transferredToName bankName bankAccountNumber bankIfsc upiId paymentReference challanReceiptUrl`. Same additions to `GetAll`/`GetById` selection sets if used by this tab.
+- **Form** (add a **"Payment"** sub-group in the existing grid, after the Amount field so it reads money-out → how-paid):
+  1. **Payment Mode** `<Select>` — reads `PAYMENTMETHOD` masterdata; styled identically to the existing Funding Source `<Select>`; `"none"` sentinel for unset (Radix-empty-string rule — Session 5 precedent).
+  2. **Conditional "Transferred To" block** keyed off the selected mode's **code (uppercased)**:
+     - `CASH` → **Challan / Receipt**: a URL `<Input>` (`challanReceiptUrl`, placeholder "Paste receipt image URL") + a disabled-look **"Upload"** button that fires a `SERVICE_PLACEHOLDER` toast ("File upload will be enabled once blob storage is provisioned"). Optional `transferredToName` ("Paid to").
+     - `BANKTRANSFER` → `transferredToName` (Account Holder), `bankName`, `bankAccountNumber`, `bankIfsc`, `paymentReference` (UTR / txn ref).
+     - `UPI` → `upiId` (VPA), `transferredToName` (Payee), `paymentReference` (txn ref).
+     - **generic (OTHER / any other code)** → `transferredToName` (Paid to), `paymentReference` (Reference / txn details) as a free field; optional short note reuse of existing `notes`.
+  3. **Required-by-mode (client-side, soft)**: when a mode is chosen, mark its primary destination field(s) required and block submit with a toast if empty — CASH: challan URL *optional* (upload dormant) so DO NOT hard-block it; BANKTRANSFER: bankName + accountNumber required; UPI: upiId required; generic: paymentReference required. Keep it a FE guard (BE stays lenient).
+- **State/rehydrate/reset**: add the 8 fields to `useState`, to `beginEdit` (rehydrate from `item.*`), to `resetForm` (clear), and to the `payload` in `handleSubmit`. When Payment Mode changes, clear the **other** modes' fields (mirror the "stale program clears service" pattern at line ~596) so a BANKTRANSFER→UPI switch doesn't ship orphan bank fields.
+- **Grid**: add one compact **"Payment"** column rendering `{paymentModeName}` + a muted secondary line of the salient destination (`upiId` / `bankAccountNumber` masked to last-4 / `paymentReference` / "Challan" link). Reuse the existing table styling; keep the row height — collapse detail into the tooltip/second line, don't add 8 columns.
+
+### E.6 Cash challan upload — DORMANT dependency (flag, don't block)
+
+Blob file-upload infra is **not provisioned** in this project (no storage account — same state as Case Documents §⑫ SERVICE_PLACEHOLDER and the grant-attachment URL-vs-upload decision). Therefore:
+
+- **Now**: `ChallanReceiptUrl` is a **URL-paste** field. Worker pastes a link to an already-hosted receipt image; it renders as a clickable "Challan" link in the grid/read-view. The "Upload" button is a **SERVICE_PLACEHOLDER** (toast only).
+- **Flip-on path** (document in §⑫ / session log): when a **private** blob container is provisioned, wire the Upload button to a multipart upload service that returns a URL and writes it into `ChallanReceiptUrl` — no schema change needed (the column already stores a URL). Mirror the dormant grant `uploadGrantAttachment` pattern.
+
+### E.7 Acceptance (Part 2 only)
+
+- [ ] `PAYMENTMETHOD` gains `CASH` + `OTHER` rows (idempotent seed); Payment Mode picker lists them + the existing 12.
+- [ ] Selecting **Cash** → challan URL field + placeholder Upload toast; **Bank Transfer** → bank name/acct/IFSC/holder/ref; **UPI** → UPI ID/payee/ref; **Other** → paid-to + reference.
+- [ ] Switching mode clears the previous mode's fields (no orphan data on save).
+- [ ] Save persists `PaymentModeId` + the mode's destination fields; grid "Payment" column shows mode + destination summary.
+- [ ] Edit an existing log → payment mode + destination fields rehydrate; save preserves them.
+- [ ] Read-view (DETAIL) shows the payment mode + transferred-to details on the service-log row/expand.
+- [ ] Existing pool strip + hard/soft caps + funding-source picker behave exactly as before (no regression).
+- [ ] BE build clean; migration authored by user adds 8 nullable cols + FK index; seed applied.
+
+### E.8 Files to touch (Part 2)
+
+- **BE**: `BeneficiaryServiceLog.cs`, `BeneficiaryServiceLogConfiguration.cs`, `BeneficiarySchemas.cs`, `CaseMappings.cs`, `BeneficiaryServiceLogs/CreateCommand/CreateBeneficiaryServiceLog.cs`, `.../UpdateCommand/UpdateBeneficiaryServiceLog.cs`, `.../GetAllQuery/GetAllBeneficiaryServiceLogs.cs`, `.../GetByIdQuery/GetBeneficiaryServiceLogById.cs`, `Cases/GetByIdQuery/GetCaseById.cs`; new migration (user); new seed `sql-scripts-dyanmic/ServiceLogPaymentMode-MasterData-extras.sql`.
+- **FE**: `caselist/case/tabs/service-log-tab.tsx`, `domain/entities/case-service/BeneficiaryDto.ts`, `infrastructure/gql-queries/case-queries/CaseQuery.ts` (+ read-view render of payment details in `view-page.tsx` if the DETAIL shows service-log detail rows).
+- **Reference patterns**: `PAYMENTMETHOD` seed (`PaymentReconciliation-fix-paymentmethodtype.sql`); mode-conditional fields (`crm/fieldcollection/collectionlist/view-page.tsx` — `inferPaymentModeCode` + `chequeNumber`/`bankId`); the just-shipped `FundingSourceId` slice in this same file as the wiring template.
+
+---
+
 ## ⑬ Build Log (append-only)
 
 > **Writer**: `/build-screen` on every BUILD session, `/continue-screen` on every FIX/ENHANCE session.
@@ -1033,55 +1125,7 @@ Full UI must be built (buttons, forms, modals, panels, interactions). Only the h
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
 
-### Session 0 — 2026-04-24 — BUILD — COMPLETED
-
-- **Scope**: Initial build of the Case FLOW screen (retroactive entry — Build Log was not populated at build time; synthesized from frontmatter `completed_date`).
-- **Files touched**: (retroactive — not recorded) — see Section ⑧ File Manifest for the canonical file set.
-- **Deviations from spec**: (not recorded)
-- **Known issues opened**: None
-- **Known issues closed**: None
-- **Next step**: None (build marked COMPLETED on 2026-04-24)
-
-### Session 1 — 2026-06-17 — UI — COMPLETED
-
-- **Scope**: Remove the redundant header/toolbar "Export" button from the Case list page — the grid already provides export via `enableExport: true`.
-- **Files touched**:
-  - BE: None
-  - FE: `PSS_2.0_Frontend/src/presentation/components/page-components/crm/casemanagement/caselist/case/index-page.tsx` (removed `headerActions` Export button + `handleExport` placeholder callback + now-unused `Button`/`Icon`/`toast` imports; grid `enableExport: true` left intact)
-  - DB: None
-- **Deviations from spec**: None — Section ⑥ blueprint did not mandate a separate header Export; the header button was a placeholder (toast only). Grid export remains the single export affordance.
-- **Known issues opened**: None
-- **Known issues closed**: None
-- **Next step**: None
-
-### Session 2 — 2026-06-18 — UI — COMPLETED
-
-- **Scope**: De-duplicate the Case **detail (read) view** — case + beneficiary details were rendered **twice**: once as a non-card header text block under the title, and again in the Summary card below. Removed the non-card header duplicate; kept the Summary card as the single source. Preserved the **overdue** follow-up indicator (which only lived in the removed header) by adding it to the card's Follow-up row so no information was lost.
-- **Files touched**:
-  - BE: None
-  - FE: `caselist/case/view-page.tsx` — removed the two header meta `<div>` blocks (Beneficiary link / Program / Priority / Status, and Assigned / Opened / Follow-up·Overdue) under the `<h1>`; kept the `<h1>` title (the card renders no title). Card Follow-up `<Row>` now renders overdue styling (`text-destructive` + "· Overdue") via `caseRecord.isOverdue`, mirroring the old header.
-  - DB: None
-- **Deviations from spec**: None — purely removes a visual duplication; all fields remain available in the Summary card.
-- **Design decision (delegated)**: user left the follow-up "mark done" affordance to my discretion → **not added** this pass (the rolling `FollowUpDate` model already works via reschedule/clear; widening surface unwarranted). Only preserved overdue visibility in the card.
-- **Known issues opened**: None
-- **Known issues closed**: None
-- **Verification**: FE `npx tsc --noEmit` clean on the touched file (`view-page.tsx`). Header now shows only the title; Summary card retains all case/beneficiary details + overdue follow-up.
-
-### Session 3 — 2026-06-22 — ENHANCE — COMPLETED
-
-- **Scope**: New-case intake now derives its context from the selected beneficiary. (1) **Program** dropdown is limited to the programs the beneficiary is **enrolled in** (not all programs). (2) **Assigned Staff** defaults to the beneficiary's assigned case worker. (3) **Branch** defaults to the beneficiary's branch. (4) **Priority** defaults from the beneficiary's priority. All four apply on **new** cases only; editing keeps the case's saved values. All remain user-overridable.
-- **FE only** `caselist/case/case-form.tsx`:
-  - Watches `beneficiaryId` → lazy `BENEFICIARY_BY_ID_QUERY` (cache-first) for the selected beneficiary's `programEnrollments` + `assignedStaffId`/`branchId`/`priorityName`.
-  - **Program** field switched from `FormSearchableSelect`(PROGRAMS_QUERY, all programs) → **`FormSelect`** with `options` built from the beneficiary's enrollments; disabled until a beneficiary is chosen; loading/empty states ("Select a beneficiary first" / "No enrolled programs" / helper "This beneficiary isn't enrolled in any program yet."). On beneficiary switch, a stale program not in the new enrolment set is cleared (add mode).
-  - **Staff/Branch** inherited via `setValue` from the beneficiary (same entity types — `app.Staff` / `app.Branches` — so a direct id copy is correct). Ref-keyed so it fires once per beneficiary pick, never clobbers later manual edits.
-  - **Priority gotcha**: beneficiary Priority is sourced from `VULNERABILITYLEVEL` masterdata ([beneficiary-form.tsx] uses `VULN_FILTER`), but the case Priority uses `CASEPRIORITY` — **different MasterData pools, different ids**. Both pools share the same value codes (LOW/MEDIUM/HIGH/CRITICAL), so priority is mapped **by code/name** (match `casePriorityOptions.dataValue`/`dataName` against `beneficiary.priorityName`, uppercased) → CASEPRIORITY `masterDataId`, NEVER by raw id (raw id points at the wrong pool — same class as the UPPERCASE silent-read bugs). Runs in its own effect that waits for the CASEPRIORITY options to load.
-  - Helper text added to Staff/Branch/Priority noting the beneficiary-default behaviour.
-- **Files touched**: FE: `caselist/case/case-form.tsx`. BE/DB: none — all four target existing case fields (`programId`/`assignedStaffId`/`branchId`/`priorityId`); no schema/mutation change.
-- **Deviations from spec**: None.
-- **Known issues opened/closed**: None.
-- **Verification**: FE `npx tsc --noEmit` clean. Runtime not smoke-tested — recommend: New Case → pick a beneficiary → Program list shows only that beneficiary's enrolled programs; Staff/Branch/Priority pre-fill from the beneficiary; switch beneficiary → values re-derive and a now-invalid program clears; edit an existing case → its saved values are preserved (no overwrite).
-- **Next step**: None.
-- **Next step**: None. (Outstanding from a pre-compaction session: the R1–R6 UI fixes were applied but never given their own Build Log entry — can be reconstructed from transcript if an audit trail is needed.)
+> _[4 older session entries trimmed to save tokens — full history in git: `git log -p -- case.md`. Most recent 5 kept below.]_
 
 ### Session 4 — 2026-06-22 — ENHANCE (Spec change — user-authorized) — COMPLETED (⚠ needs BE build + migration by user)
 
@@ -1134,3 +1178,17 @@ Full UI must be built (buttons, forms, modals, panels, interactions). Only the h
 - **Known issues closed**: None.
 - **Verification**: FE `npx tsc --noEmit` clean (exit 0). BE not built here (user builds).
 - **Next step**: User builds BE → adds migration (`case.BeneficiaryServiceLogs.ProgramServiceId` nullable int FK → `case.ProgramServices.Id`, ON DELETE SET NULL) → reopens a case in `mode=read` → Service Log tab → select program (pool strip appears) → pick a service (detail card) → try an over-pool amount (Save blocks) and an over-service amount (amber warn, still saves).
+
+### Session 8 — 2026-07-08 — ENHANCE (Service Log Payment Traceability, Part 2) — COMPLETED
+
+- **Scope**: Capture **how** a Service Log disbursement left the org and **to whom** (Part 2 of the §⑫-E spec; Part 1 funding-source attribution already shipped Session-prior / migration `20260706083907`). Worker picks a **Payment Mode**; a mode-conditional **"Transferred To"** sub-block appears — Cash → challan/receipt URL (+ dormant Upload), Bank Transfer → holder/bank/account/IFSC/UTR, UPI → VPA/payee/ref, everything else (Cheque/Online/MobileMoney/Other) → paid-to + reference. All new columns nullable (BE lenient); required-by-mode is FE-only.
+- **⚠ Deviation from §⑫-E spec (deliberate, code-grounded)**: the spec said reuse the **MasterData `PAYMENTMETHOD`** TypeCode. I instead used the dedicated **`com.PaymentModes` entity** (`PaymentMode`), because the entire program-fund domain already does: the money-IN sibling `ProgramFundingTransaction` (same `case` schema, same feature) and `GrantFundReceipt` both FK to `com.PaymentModes` with `PaymentModeId`/`ReferenceNumber`. Using the same taxonomy keeps money-in and money-out consistent and reuses the existing `PAYMENTMODES_QUERY` + `record-transfer-modal.tsx` mode-code-conditional pattern. FK routes on `PaymentMode.PaymentModeCode` (CASH/BANKTRANSFER/UPI/…), uppercased — same by-code discipline as Session 3.
+- **Files touched**:
+  - BE: `BeneficiaryServiceLog.cs` (+8 nullable cols: `PaymentModeId` FK→`com.PaymentModes` + `TransferredToName`/`BankName`/`BankAccountNumber`/`BankIfsc`/`UpiId`/`PaymentReference`/`ChallanReceiptUrl` + `PaymentMode` nav; explicit `using …SharedModels`), `BeneficiaryServiceLogConfiguration.cs` (7 HasMaxLength + `HasOne(PaymentMode)…OnDelete(Restrict)` + index, mirrors `ProgramFundingTransactionConfiguration`), `BeneficiarySchemas.cs` (8 on Request; `PaymentModeName`+`PaymentModeCode` on Response), `CaseMappings.cs` (map name/code, ignore nav), `CreateBeneficiaryServiceLog.cs` + `UpdateBeneficiaryServiceLog.cs` (`When(PaymentModeId.HasValue)→ValidateForeignKeyRecord<PaymentMode>` + 7 `ValidateStringLength`; **no** by-mode required rules — lenient), `GetAllBeneficiaryServiceLogs.cs` + `GetBeneficiaryServiceLogById.cs` + `Cases/GetByIdQuery/GetCaseById.cs` (`.Include(PaymentMode)` so Mapster fills name/code).
+  - FE: `case-service/BeneficiaryDto.ts` (8 request fields + name/code on response), `case-queries/CaseQuery.ts` (10 fields on `caseServiceLogs` selection), `caselist/case/tabs/service-log-tab.tsx` (Payment sub-group after Amount: PAYMENTMODES_QUERY-driven mode `<Select>` w/ `"none"` sentinel + conditional block keyed on uppercased code; state/rehydrate/reset/payload for all 8; `handlePaymentModeChange` clears other modes' fields on switch; required-by-mode soft guards in `handleSubmit`; grid "Payment" column = mode + destination summary, account# masked to last-4, challan as link).
+  - DB: seed file **written** `sql-scripts-dyanmic/ServiceLogPaymentMode-com-PaymentModes-extras.sql` (idempotent add of `UPI` + `OTHER` to `com.PaymentModes`; `CASH`/`BANKTRANSFER` already seeded) — **user applies**. Migration authored+run+committed **by user** (agent does not own migrations — see memory).
+- **Deviations from spec**: the PaymentMode-entity choice above (spec §⑫-E text still says MasterData — treat this Build Log entry as the correcting record). No others.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Verification**: BE `dotnet build` on `Base.Infrastructure` (covers Domain+Application+Infrastructure) → **0 errors**. FE `npx tsc --noEmit` → 0 errors in touched files (1 pre-existing unrelated error in `donation-service/P2PCampaignPageDto`). Not manually exercised in-app.
+- **Next step**: User applies the `com.PaymentModes` extras seed (for UPI/OTHER options), then reopens a case → Service Log tab → Add: pick each mode, confirm the right destination fields appear, switch modes (fields clear), save + edit (rehydrate), check the grid Payment column.

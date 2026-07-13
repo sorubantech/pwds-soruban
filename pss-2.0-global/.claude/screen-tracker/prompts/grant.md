@@ -9,8 +9,9 @@ complexity: High
 new_module: YES — `grant` schema
 planned_date: 2026-04-25
 completed_date: 2026-04-26
-last_session_date: 2026-07-03
+last_session_date: 2026-07-10 (session 15)
 kt_doc: docs/grant-management-kt.html
+planned_enhancement: "Program→Grant Fund Allocation — BUILT session 4 (2026-07-08). As-built contract in §⑭; build log in §⑬ session 4. Migration Add_ProgramFundingSource_AllocatedAmount generated NOT applied. Companion deltas in prompts/programfundallocation.md."
 ---
 
 ## Tasks
@@ -1070,73 +1071,307 @@ Full UI must be built (buttons, forms, modals, tabs, kanban board). Only the han
 | ID | Raised (session) | Severity | Area | Description | Status |
 |----|------------------|----------|------|-------------|--------|
 | ISSUE-1 | planning (2026-04-25) | HIGH | BE | GrantReport #63 + GrantExpense not built — Budget Tab 2, Reports Tab 3, Add Expense/Report header actions degrade to SERVICE_PLACEHOLDER until #63 is built | OPEN |
-| ISSUE-2 | planning (2026-04-25) | HIGH | FE/BE | File upload infrastructure absent — attachments use URL-string fallback | OPEN |
+| ISSUE-2 | planning (2026-04-25) | HIGH | FE/BE | File upload infrastructure absent — attachments use URL-string fallback | PARTIALLY_ADDRESSED (session 15 WI-10 — Documents-tab "Upload Document" now opens the URL-paste modal + persists via updateGrant echo; blob upload still dormant per [[project-grant-attachment-url-vs-upload]]) |
 | ISSUE-3 | planning (2026-04-25) | MED | FE | Rich-text editor missing — 4 narrative fields fall back to textarea | OPEN |
 | ISSUE-4 | planning (2026-04-25) | MED | FE | Kanban dual-view custom-built (no drag-drop V1) | OPEN |
 | ISSUE-5 | planning (2026-04-25) | MED | BE | GRANTSTAGE codes must match GrantStageHelper constants — verify alignment | OPEN |
 | ISSUE-6 | planning (2026-04-25) | MED | BE | Cached TotalSpent/ComplianceRatePct stay 0/NULL until #63 wires expense logging | OPEN |
-| ISSUE-7 | planning (2026-04-25) | MED | BE | GrantCode auto-gen: simple MAX+1 with race risk under contention | OPEN |
+| ISSUE-7 | planning (2026-04-25) | MED | BE | GrantCode auto-gen: simple MAX+1 with race risk under contention | CLOSED (session 16 — NON-BUG: CreateGrant uses `NumberSequenceGenerator.GenerateAsync("GRANT")` inside an execution-strategy transaction with advisory lock; no MAX+1, no race window) |
 | ISSUE-8 | planning (2026-04-25) | MED | FE | ApiSelectV2 isMulti may not exist — verify; fallback to MultiSelectChips composite | OPEN |
-| ISSUE-9 | planning (2026-04-25) | MED | FE | Excel/PDF export = SERVICE_PLACEHOLDER; CSV via existing util | OPEN |
+| ISSUE-9 | planning (2026-04-25) | MED | FE | Excel/PDF export = SERVICE_PLACEHOLDER; CSV via existing util | CLOSED (session 15 — no shared CSV export utility exists anywhere in the codebase; entire Export dropdown removed rather than shipping 3 dead toasts) |
 | ISSUE-10 | planning (2026-04-25) | MED | FE | Amount Range select codes must align between BE handler and FE | OPEN |
 | ISSUE-11 | planning (2026-04-25) | LOW | BE | NextReportDueDate auto-compute deferred to post-#63 mutation | OPEN |
 | ISSUE-12 | planning (2026-04-25) | LOW | FE | Quick Stats Next Report Due color-coding (warning < 30d, danger < 7d/overdue) | OPEN |
-| ISSUE-13 | planning (2026-04-25) | LOW | FE | Add New Funder link routes to Contact form (verify reachability) | OPEN |
+| ISSUE-13 | planning (2026-04-25) | LOW | FE | Add New Funder link routes to Contact form (verify reachability) | CLOSED (session 10 — replaced with inline "+ New Funder" quick-create modal) |
 | ISSUE-14 | planning (2026-04-25) | LOW | FE | Currency formatting on blur — reuse CurrencyInput if present | OPEN |
 | ISSUE-15 | planning (2026-04-25) | LOW | DB | Preserve `sql-scripts-dyanmic/` typo | PRESERVE |
-| ISSUE-16 | planning (2026-04-25) | LOW | BE | IsAdminCategory V1 = case-insensitive name match on "Admin"/"Overhead" | OPEN |
+| ISSUE-16 | planning (2026-04-25) | LOW | BE | IsAdminCategory V1 = case-insensitive name match on "Admin"/"Overhead" | CLOSED (session 16 WI-6 — substring match replaced with ordinal EXACT match {"Admin","Administration","Overhead"} in shared `GrantBudgetLineHelper.ResolveAdminFlag`; fixes "Badminton"→admin false-positive + culture-sensitive ToLower. Soft >10% admin-cap warning added: BE computes it (CQRS result) but it is NOT surfaced via GraphQL — the client-side warning in grant-form (session 15 WI-6) is the live surface) |
+| ISSUE-17 | planning (2026-07-08) | HIGH | BE | Program→Grant fund allocation not built — see §⑭. `ProgramFundingSource` has NO `AllocatedAmount` column (needs schema add). Grant cannot see program requests nor allocate. | CLOSED (session 4) |
+| ISSUE-18 | planning (2026-07-08) | HIGH | BE | Double-spend hole — grant cash-on-hand guard (`CreateGrantExpense`/`GetGrantFinancialSummary`) ignores program transfers, so the same cash can be committed to a program AND booked as a direct expense. §⑭ cash-reconciliation closes it. | CLOSED (session 4) |
+| ISSUE-19 | planning (2026-07-08) | MED | BE | #177 delta — grant-funded sources must approve via grant allocation, not program self-approve; program TRANSFERRED cap becomes `AllocatedAmount` not `ExpectedAnnualAmount`. See `prompts/programfundallocation.md`. | CLOSED (session 4) |
+| ISSUE-20 | planning (2026-07-08) | LOW | FE | DonationPurpose/Sponsor allocation-from-source screens are out of §⑭ scope (grant path only). Those sources keep program self-approve. **DonationPurpose half now PLANNED as `donationpurpose.md` §⑮ (R2, 2026-07-09) — cash-only ceiling mirror of this §⑭. Sponsor still deferred.** | PARTIALLY_ADDRESSED (DonationPurpose planned; Sponsor open) |
 
 ### § Sessions
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
 
-### Session 0 — 2026-04-26 — BUILD — COMPLETED (retroactive entry)
+> _[12 older session entries trimmed to save tokens — full history in git: `git log -p -- grant.md`. Most recent 5 kept below.]_
 
-- **Scope**: Initial full build of Grant (#62) — `grant` schema bootstrap + 6 entities + 9 commands + 4 queries + 22 FE files + DB seed. (Build Log was not written at the time; reconstructed from frontmatter `completed_date` + registry notes.)
-- **Files touched**: (retroactive — not recorded; canonical owned-file list is Section ⑧ File Manifest)
-- **Deviations from spec**: see the 16 pre-flagged ISSUEs in § Known Issues (all SERVICE_PLACEHOLDERs / deferrals from planning).
-- **Known issues opened**: ISSUE-1 … ISSUE-16 (at planning).
-- **Known issues closed**: None.
-- **Next step**: None (shipped COMPLETED).
+### Session 12 — 2026-07-10 — UI (field uniformity + business helper text) — COMPLETED
 
-### Session 1 — 2026-06-12 — PLAN (handoff) — COMPLETED
-
-- **Scope**: Planned the **Grant Expense logging** sub-feature (closes ISSUE-1 + ISSUE-6). Produced shareable handoff docs for the developer who built #62/#63 — NO code changes this session. This is a **Spec change** (new `grant.GrantExpenses` table) → next step is `/plan-screens #62` then `/build-screen #62`.
+- **Scope**: Two staff-usability asks on the Grant form. (1) Add business helper text to Reporting Frequency, Financial Reporting Frequency and the other meaningful fields so staff understand what each field means. (2) Make every field render through the app-wide canonical form-field components (dropdown / text / number / month-date / textarea / checkbox) so the form is visually uniform — using **Case #50** (`case-form.tsx`) and **Program** (`program-form.tsx`) as the reference pattern. The grant form previously mixed raw `Label`+`Input`+`register`, standalone `FormSearchableSelect` wrapped in `Controller`, a raw `type=month/date` input, a hand-rolled `<input type=checkbox>`, and two local primitives (`FieldText`, `NarrativeField`).
 - **Files touched**:
-  - DOCS: `.claude/screen-tracker/docs/grant-expense-feature-plan.md` (feature plan / change request), `.claude/screen-tracker/docs/grant-expense-table-design.md` (table DDL + per-file change list + GraphQL contract)
-  - BE: None (planning only)
-  - FE: None (planning only)
-- **Deviations from spec**: None — documents the intended additive change; does not alter existing behavior.
+  - BE: None.
+  - FE (edit): `crm/grant/grantlist/grant/grant-form.tsx` — (a) every scalar field converted to the canonical `FormInput` / `FormTextarea` / `FormSearchableSelect` / `FormCheckbox` with `control={control}`, matching Case/Program; (b) `helperText` added to all fields (Funder, Contact Person/Email/Phone/Website, Grant Title, Requested Amount, Currency, Grant Type, Purpose, Start/End Date, Managing Branch, Implementing Branches, all 5 narrative fields, **Reporting Frequency**, **Financial Reporting Frequency**, Audit Required, Assigned Staff, Priority, Submission Deadline, Internal Notes); (c) validation moved off inline `rules`/`register` into a **zod resolver** (`grantSchema`, `mode: onChange`) — this is what the canonical components require (they don't forward `rules`), same as Case/Program. Schema validates only the required scalars (grantTitle, funderContactId, requestedAmount>0, currencyId, grantTypeId, branchId) and `.passthrough()`es everything else, including the nested `budgetLines`/`milestones`/`attachments` arrays driven by their child grids; (d) removed the now-dead `FieldText` / `NarrativeField` primitives and the unused `Input`/`Textarea`/`register`/`errors` references. Requested Amount kept right-aligned mono (amount-field convention). Stage badge, `+ New Funder` modal wiring, buildVars stage-echo, and the Implementing Branches composite picker all left functionally unchanged.
+  - DB / MIGRATION: None.
+- **Verification**: FE `npx tsc --noEmit` (PSS_2.0_Frontend) — **exit 0, clean**. Live form click-through not run.
+- **Deviations from spec**: None functional. Currency moved from the compact amount-adjacent selector into its own labeled grid cell for uniformity (same value/field, clearer label + helper). Required-field enforcement now comes from the zod resolver instead of inline rules — identical block-on-submit behavior, plus inline errors render via each component's helper slot.
 - **Known issues opened**: None.
-- **Known issues closed**: None (ISSUE-1/6 remain OPEN until the feature is built; now have a concrete design — see docs).
-- **Next step**: Run `/plan-screens #62` to fold `GrantExpense` into Sections ②/⑥/⑧, then `/build-screen #62`. Developer runs `dotnet ef migrations add Add_GrantExpense` manually.
+- **Known issues closed**: None (usability polish, not a tracked ISSUE). Note: ISSUE-14 (currency thousand-separator formatting on blur) remains OPEN — not in scope here.
+- **Next step**: Live check — open a new grant, confirm every field shows its helper line, required fields block submit with inline errors, and Save/Submit still persist correctly.
 
-> **Why the "Add Expense" button is a no-op today**: it fires a static toast (`grant-detail.tsx` ~line 167 + ~748) that wrongly blames GrantReport #63. The real gap is the missing `GrantExpense` table — see the two design docs above. The Budget tab table already renders per-line Spent/Remaining from `GrantBudgetLine.SpentAmount`, which nothing writes to yet; this feature supplies the write-path.
+### Session 13 — 2026-07-10 — UI (child-grid polish + required-asterisk audit) — COMPLETED
 
-### Session 2 — 2026-07-03 — ENHANCE (documentation) — COMPLETED
-
-- **Scope**: Upgraded the Grant Knowledge-Transfer doc (`docs/grant-management-kt.html`) from the old 4-section format to the newer "CRM business module" KT standard used by its siblings (matching-gift / event / case / crowdfunding / p2p). Grant was the last KT doc still on the old format. Additive enrichment + new chrome only — no screen code changed.
+- **Scope**: Extend the Session 12 uniformity pass into the two child grids and audit required-field markers across the whole Grant form.
+- **Regression caught & fixed**: Session 12 added a zod resolver to the parent form; RHF **ignores `register`-level `rules` when a resolver is present**, so the `required: true` rules inside `budget-lines-grid.tsx` / `milestones-grid.tsx` had silently gone dead (empty rows would no longer block submit). Restored that enforcement by validating the arrays in `grantSchema` (each added row must fill its required cells; the rest of the row and empty grids pass through).
 - **Files touched**:
-  - BE: None
-  - FE: None
-  - DB: None
-  - DOCS: `.claude/screen-tracker/docs/grant-management-kt.html` (rewritten, 587 → 1065 lines); `prompts/grant.md` frontmatter (`kt_doc:` pointer added, this log entry).
-- **Deviations from spec**: None — documentation only; content cross-checked against §① / §② / §④ / §⑥.
-- **New sections added**: Agenda, Screens at a Glance, ⚙ Lifecycle Walk-through (stage-gate cheat sheet: ExecSummary→Application, AwardedAmount→Approved, FunderGrantNo+dates→Active, RejectionReason→Reject), ③ The Tabs in Detail (7 FORM sections + 5 DETAIL tabs + Quick Stats), ⑤ Statuses & Lookups. Preserved: 7-stage flow table + off-ramps, animated GRT-012 pipeline, all 4 mermaid diagrams (2× stateDiagram, sequenceDiagram, erDiagram), 6 entity tables, all Test Cases (G1–G9, GR1–GR3, GB1–GB2, GM1, GA1, GG1–GG5).
-- **Known issues opened**: None.
-- **Known issues closed**: None (the 15 OPEN code-level ISSUEs are unaffected by a doc pass).
-- **Next step**: None (doc shipped). The GrantExpense feature (ISSUE-1/6) still requires `/plan-screens #62` → `/build-screen #62` per Session 1.
-
-### Session 3 — 2026-07-03 — UI — COMPLETED
-
-- **Scope**: Default the new-grant **Currency picker** to the **company base currency** (from CompanySettings session store #75). Display of amounts is intentionally **left on each grant's own currency** — a grant may legitimately be funded in any currency, so grid/widgets/detail must show the grant's actual currency; only the create-form default is the company currency. Scoped **FE-only**.
-- **Course-correction note**: this session first (wrongly) relabeled ALL displayed amounts to the company currency (kanban card, KPI widgets collapsed to one currency, detail quick-stats/rows/expense rows). The user corrected: *"avoid in grid — grant currency can be any currency; only the default should be company currency."* All display changes were **reverted**; the net change is the single form-default effect below.
-- **Files touched**:
-  - BE: None (an early attempt to relabel `amountLabel` in `GetGrants.cs` was made then fully reverted — FE-only, and display now stays per-grant anyway).
-  - FE: `crm/grant/grantlist/grant/grant-form.tsx` — added a new-grant `useEffect` that defaults `currencyId` to `getCompanySessionSettings().baseCurrencyId` when unset (mirrors the existing Priority=Medium default); Currency picker kept editable; added the `getCompanySessionSettings` import. (grant-kanban-board.tsx / grant-widgets.tsx / grant-detail.tsx were touched then reverted to their pre-session state — per-grant `currencyCode`.)
-  - DB: None.
-- **Verification**: `npx tsc --noEmit` — no errors in any grant file. (One pre-existing, unrelated error remains: `donation-service/index.ts` duplicate `PaymentMethodCode` re-export.) Live click-through in `pnpm dev` not run this session.
-- **Deviations from spec**: None — display currency behavior unchanged from the original §⑥ blueprint (per-grant currency). Only adds a sensible create-time default.
+  - BE: None.
+  - FE (edit): 
+    - `crm/grant/grantlist/grant/grant-form.tsx` — `grantSchema` now validates `budgetLines[]` (category required, budgetedAmount finite ≥ 0) and `milestones[]` (milestoneTitle + targetDate required), both `.optional()` + row `.passthrough()`.
+    - `crm/grant/grantlist/grant/budget-lines-grid.tsx` — column headers marked **Category \*** / **Amount \***; business hint line added; required cells get a destructive border when invalid (reads `formState.errors.budgetLines[idx]`); dead `register` rules removed.
+    - `crm/grant/grantlist/grant/milestones-grid.tsx` — headers marked **Milestone \*** / **Target Date \***; hint line; invalid-cell borders (`formState.errors.milestones[idx]`); dead `register` rules removed.
+  - DB / MIGRATION: None.
+- **Required-asterisk audit (whole form)**: required + asterisk = Funder, Grant Title, Requested Amount, Currency, Grant Type, Managing Branch (schema-enforced) + Executive Summary (required-to-submit) + child-grid Category/Amount/Milestone/Target Date. All optional fields correctly carry no asterisk. Consistent.
+- **Verification**: FE `npx tsc --noEmit` (PSS_2.0_Frontend) — **exit 0, clean**. Live click-through not run.
+- **Deviations from spec**: None. Child grids kept as dense inline tables (canonical Form* components don't suit table rows) — uniformity achieved via consistent headers, hints, asterisks and error styling instead.
 - **Known issues opened**: None.
 - **Known issues closed**: None.
-- **Next step**: None.
+- **Next step**: Live check — add a budget line and a milestone, leave a required cell blank, confirm submit is blocked with the cell outlined in red; fill them and confirm Save/Submit persist.
+
+---
+
+### Session 14 — 2026-07-10 — UI (floating action pill + child-grid field uniformity + premium kanban) — COMPLETED
+
+- **Scope**: (1) Convert the Grant form's bottom action bar to a centered floating button pill (crowdfunding / p2p-campaign parity); (2) unify the child-grid inline fields with the parent form's canonical field styling; (3) redesign the pipeline Kanban board for a premium look and fix the transparent-column reflection.
+- **Files touched**:
+  - BE: None.
+  - FE (edit):
+    - `crm/grant/grantlist/grant/grant-form.tsx` — replaced the full-width `fixed inset-x-0 bottom-0` sticky footer with a centered floating pill (`pointer-events-none fixed inset-x-0 bottom-4 … rounded-full border bg-background/95 shadow-xl ring-1 ring-black/5 backdrop-blur`), all buttons `rounded-full`. Matches the crowdfunding editor "Floating action pill". Content already had `pb-24`, so no reserve-space change needed. Same three actions / handlers (Cancel · Save as Draft/Save Changes · Submit Application) preserved.
+    - `crm/grant/grantlist/grant/budget-lines-grid.tsx` + `crm/grant/grantlist/grant/milestones-grid.tsx` — added module-level `FIELD_BASE` / `FIELD_ERROR` constants mirroring the canonical `FormInput` size-"sm" look (`h-8 sm:h-9`, `rounded-[calc(var(--radius)-2px)]`, `bg-card border border-default-400`, `focus:border-primary/50 focus:ring-1 focus:ring-primary/20`, error → destructive border + ring). Every inline cell input now uses these instead of the ad-hoc `h-8 text-sm`. Amount cell keeps `text-right font-mono`.
+    - `crm/grant/grantlist/grant/grant-kanban-board.tsx` — premium redesign. Board wrapped in an opaque `bg-muted/40` tray. Columns are now **opaque** (`bg-card`, was `bg-muted/30` — the `/30` opacity was the cause of the page-bg reflection), `rounded-xl` + `shadow-sm`, with a tinted gradient header, a top accent strip, a status dot, and a **solid-accent + white** count pill (per widget-badge guidance). Cards get an opaque `bg-card` base + a low-alpha status-tint overlay (kept as an absolute overlay so the base stays solid and never lets the background show through), a left status accent bar, hover lift (`hover:-translate-y-0.5 hover:shadow-md`), and thicker progress bar. Skeleton restyled to match.
+  - DB / MIGRATION: None.
+- **Verification**: FE `npx tsc --noEmit` (PSS_2.0_Frontend) — **exit 0, clean**. Live click-through not run.
+- **Deviations from spec**: None. Kanban stays V1 no-drag-drop (per ISSUE-4); only presentation changed. Child grids remain dense inline tables (uniformity via shared field classes, not full canonical components — table rows can't host labelled Form* fields).
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: Live check — (a) confirm the floating pill sits centered above content and doesn't overlap the last section; (b) open the pipeline Kanban and confirm columns/cards are solid (no page-bg bleed) and each column/card is tinted by its stage color.
+
+---
+
+### Session 15 — 2026-07-10 — FIX + ENHANCE (dead buttons, DTO type gaps, soft warnings) — COMPLETED
+
+- **Scope**: FE-only fix/enhance batch covering 9 work items surfaced against the COMPLETED screen: wire two dead lifecycle buttons, fix two FE-side DTO type gaps, add two non-blocking soft-warning chips (FX-unavailable, admin-cap), clarify a misleading required-asterisk, wire a real attachment-upload path, and remove three permanently-dead menu items (2 truly dead, 3 export items with no backing service). No backend contract changes; two FE-side GraphQL query SELECTIONS were extended (backward compatible — adding selected fields, not mutation input shapes).
+- **WI-4 (FIX) — Put On Hold / Cancel Grant wiring**: Both actions previously called `toast.info("… wiring pending")`. Mutations (`PUT_GRANT_ON_HOLD_MUTATION`, `CANCEL_GRANT_MUTATION`) already existed in `GrantMutation.ts` (`grantId: Int!, notes: String`). Added `PutOnHoldGrantModal` + `CancelGrantModal` to `workflow-modals.tsx` (optional-notes pattern mirroring `SendToFunderModal`/`CloseGrantModal`), added matching `putOnHoldModalOpen`/`cancelGrantModalOpen` state + `openPutOnHoldModal`/`openCancelGrantModal` actions to `grant-store.ts`, and wired both into `grant-detail.tsx`'s dropdown + modal-render block. Hint accuracy: matched — mutations existed exactly as described; no BE change needed.
+- **WI-5 (FIX) — `awardLetterUrl` missing from `ApproveGrantRequestDto`**: `APPROVE_GRANT_MUTATION` sends `$awardLetterUrl: String!` and `ApproveGrantModal` already collects + sends it (untyped inline `variables` object), but the FE DTO type (`GrantDto.ts`) was missing the field. Added `awardLetterUrl: string` to the interface. Hint accuracy: matched exactly; the DTO itself isn't consumed anywhere as a type annotation (grepped — zero other references), so this was a pure type-completeness fix with no behavior change.
+- **WI-3-FE (ENHANCE) — FX "rate unavailable" soft warning**: Added `exchangeRate`/`grantCurrencyAmount` to `GrantFundReceiptResponseDto` and `currencyId`/`currencyCode`/`exchangeRate`/`grantCurrencyAmount` to `ProgramFundingTransferRowDto` (`GrantDto.ts`); added the same fields to the GraphQL selections in `GrantFundReceiptQuery.ts` (`GET_GRANT_FUND_RECEIPTS_QUERY`) and `GrantQuery.ts` (`GET_GRANT_FUNDING_REQUESTS_QUERY`'s `transfers` sub-selection) — `currencyId`/`currencyCode` were already selected on the receipts query, only `exchangeRate`/`grantCurrencyAmount` were new there. Extracted a new shared `fx-warning-chip.tsx` (rather than defining the chip inline in `grant-detail.tsx` and importing it into `grant-fund-requests-tab.tsx`, which would have created a circular module dependency between the two tab files) exporting `FxWarningChip` — quiet amber `bg-amber-50 border-amber-200 text-amber-700` chip (dark-mode equivalents), per the session's styling exception for non-blocking informational warnings. Wired into `FundsReceivedTab`'s Amount cell (`grant-detail.tsx`) and the expanded-transfers row (`grant-fund-requests-tab.tsx`), both gated on `rowCurrencyId !== grant.currencyId && exchangeRate == null`. Hint accuracy: matched — both queries/DTOs needed the fields grepped-and-confirmed missing beforehand.
+- **WI-6 (ENHANCE) — Admin-cap soft warning in the form**: Added a `useWatch({ control, name: "budgetLines" })` + `useMemo` computation in `grant-form.tsx` that sums lines whose `category` case-insensitively matches admin/administration/overhead (or `isAdminCategory`) against the full budget total; renders a quiet amber banner ("Admin/overhead is X% of budget — funders typically cap this at 10%.") under `BudgetLinesGrid` in Section 4 only when > 10%. Purely client-side, `useMemo`-derived — never touches `grantSchema`/validation, cannot block Save or Submit. Hint accuracy: matched — `budgetLines` field names (`category`, `budgetedAmount`, `isAdminCategory`) confirmed via the existing `buildVars` mapping before use.
+- **WI-7 (FIX) — Executive Summary asterisk vs schema**: Confirmed via `grantSchema` (re-read) that `executiveSummary` is still NOT in the zod required set — session 13's audit holds. The bare `required` prop on its `FormTextarea` rendered the same red `*` as truly Save-blocking fields (Grant Title, Funder, etc.), which is misleading since this field only blocks Submit Application (imperative guard in `onSubmitApplication`, untouched). Removed the `required` prop (no more red asterisk) and changed the label to "Executive Summary (required to submit)" with helper text spelling out "Not required to save a draft, but you must fill this in before submitting the application." Did NOT add it to the zod draft-save required set, per instruction.
+- **WI-8 (FIX) — `implementingBranchIds` missing from `GrantRequestDto`**: `grant-form.tsx`'s `buildVars` already sends `implementingBranchIds: values.implementingBranchIds ?? []` (untyped `any` return) to both create/update mutations. Added `implementingBranchIds?: number[] | null` to `GrantRequestDto` in `GrantDto.ts`. No dead `grantProgram` passthrough concern found — `grantProgram` is a real, actively-used field (funder's named program/call), left untouched.
+- **WI-9 (FIX) — Export menu**: Grepped the whole FE tree for `exportToCsv`/`downloadCsv`/`json2csv`/`Papa.unparse`/`arrayToCsv` — **no shared, reusable client-side CSV export utility exists anywhere in the codebase.** The one near-hit (`downloadCsvBase64` in `email-analytics-recipient-activity-table-widget.tsx`) is a one-off local helper coupled to that widget's own base64 server payload, not a generic grid exporter — not reusable here. Per instruction, did not build one from scratch: removed `handleExport` and the entire Export dropdown (CSV/Excel/PDF) from `index-page.tsx`'s `headerActions`, along with now-unused `DropdownMenu*` and `toast` imports. Header now shows only "+ New Grant Application". (Note: `FlowDataTableContainer`'s own built-in export option — `DataTableDataRetrievalOption` — does exist but exports **Excel via a per-gridCode `/export/{gridCode}` BE endpoint**, not CSV, and grant's `TABLE_CONFIG.enableExport` is already `false`; wiring that would require confirming a BE `/export/grant` endpoint exists, which is out of scope for an FE-only fix session.)
+- **WI-10 (FIX) — Upload Document button**: `GrantAttachmentUploadModal` exists and is real (URL-paste flow), but it only **captures** `{url, fileName, fileSizeBytes, mimeType}` — per its own file header comment, `uploadGrantAttachment` "does NOT persist an attachment row; the row is saved by createGrant/updateGrant." The DETAIL page's Documents tab has no React Hook Form context (unlike the edit-form's `AttachmentChecklist`, which is field-array-based), and there is no standalone "add one attachment to an existing grant" mutation. Implemented an echo-update: `buildAttachmentOnlyUpdateVars(grant, attachments)` in `grant-detail.tsx` maps every `GrantDto` field back to `UPDATE_GRANT_MUTATION`'s variable shape (mirroring `grant-form.tsx`'s `buildVars`, field-for-field, verified against `GrantRequestDto`) and appends the new CUSTOM attachment row to the existing `attachments` array. `DocumentsTab` now takes `onRefetch`, opens `GrantAttachmentUploadModal` on click, and on `onUploaded` fires the echo-`updateGrant` call, toasts, and refetches. Hint accuracy: **materially differed** — the prompt's hint ("check the modal's actual prop interface first") undersold the gap; the modal has no `grantId` prop and does not persist, so a full update-mutation echo was required rather than a simple "add state + render" wire-up.
+- **WI-11 (FIX) — Hide dead Print Cover Sheet / Duplicate**: Both had zero backing feature (bare `toast.info(...coming soon)`, no modal, no route, no BE). Removed both `DropdownMenuItem`s and the trailing `DropdownMenuSeparator` from `grant-detail.tsx`'s More menu entirely, per instruction (no feature behind them — hide, don't stub).
+- **Files touched**:
+  - BE: None.
+  - FE (edit): `grant-store.ts` (+2 modal-open booleans, +2 open actions, wired into every existing `set({...})` block + `resetStore`); `workflow-modals.tsx` (+`PutOnHoldGrantModal`, +`CancelGrantModal`, +2 mutation imports, header doc comment updated); `grant-detail.tsx` (dead-button wiring, dropdown cleanup/removal, `FxWarningChip` usage in `FundsReceivedTab`, `DocumentsTab` upload wiring + `buildAttachmentOnlyUpdateVars` helper, +imports: `CancelGrantModal`/`PutOnHoldGrantModal`/`GrantAttachmentUploadModal`/`FxWarningChip`/`UPDATE_GRANT_MUTATION`/`GrantAttachmentRequestDto`/`GrantAttachmentUploadResponseDto`); `grant-fund-requests-tab.tsx` (`FxWarningChip` on expanded-transfer rows, currency-aware amount formatting, +import); `grant-form.tsx` (admin-cap `useWatch`/`useMemo` + banner in Section 4, executive-summary label/asterisk change, +`useWatch` import); `index-page.tsx` (Export dropdown removed, unused imports cleaned); `GrantDto.ts` (+`awardLetterUrl` on `ApproveGrantRequestDto`, +`implementingBranchIds` on `GrantRequestDto`, +`currencyId`/`currencyCode`/`exchangeRate`/`grantCurrencyAmount` on `ProgramFundingTransferRowDto`); `GrantFundReceiptDto.ts` (+`exchangeRate`/`grantCurrencyAmount` on `GrantFundReceiptResponseDto`); `GrantFundReceiptQuery.ts` (+2 fields on `GET_GRANT_FUND_RECEIPTS_QUERY`); `GrantQuery.ts` (+4 fields on `GET_GRANT_FUNDING_REQUESTS_QUERY`'s `transfers` selection).
+  - FE (new): `fx-warning-chip.tsx` (shared `FxWarningChip` component — extracted to avoid a circular import between `grant-detail.tsx` and `grant-fund-requests-tab.tsx`).
+  - DB / MIGRATION: None.
+- **Verification**: FE `npx tsc --noEmit` (PSS_2.0_Frontend) — **exit 0, fully clean**, no errors of any kind (the previously-noted unrelated `donation-service/index.ts` duplicate-export error did not surface, consistent with recent sessions). Live click-through not run this session.
+- **Deviations from spec**: WI-9 removes the Export entry point entirely rather than wiring CSV (no utility exists to wire — see WI-9 above); §⑥ blueprint's "Export dropdown (CSV/Excel/PDF)" is now absent from the header until a real export utility/service exists. WI-10 required building a heavier echo-update path than the prompt's hint implied (see WI-10 above) — functionally equivalent to what a real "add one attachment" mutation would do, but round-trips the whole grant record rather than a single row.
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-9 (Excel/PDF/CSV export — resolved by removal, not by wiring, since no shared CSV utility exists).
+- **Next step**: Live E2E — (a) Put On Hold / Cancel from an Active/pre-Active grant and confirm stage + history update; (b) Approve a grant and confirm `awardLetterUrl` round-trips (was already being sent — now correctly typed); (c) record a fund receipt / program transfer in a non-grant currency with no resolvable rate and confirm the FX-unavailable chip renders; (d) add 3+ budget lines with one "Admin" line > 10% of total and confirm the amber banner appears/disappears live as amounts change; (e) open a new grant and confirm Executive Summary shows no red asterisk but Save is still unblocked without it, then confirm Submit Application still blocks with it empty; (f) from Documents tab, click Upload Document, paste a URL, and confirm the new CUSTOM row appears and persists after a page refresh; (g) confirm the grid header no longer shows an Export button and the More menu no longer shows Print Cover Sheet / Duplicate.
+
+---
+
+### Session 16 — 2026-07-10 — FIX + ENHANCE (BE stabilization: double-spend, UTC, FX, admin) — COMPLETED (BE 0 errors; FX migration generated NOT applied)
+
+> **Companion to Session 15** (FE half). This is the backend half of the same `/continue-screen #62` stabilization pass run before Grant Report Generation. Planned in `.claude/plans/goofy-forging-rivest.md` (approved). Backend-developer, Sonnet. The pass followed a 3-part audit (BE correctness / FE correctness / migration-state).
+
+- **Scope**: Fix confirmed backend data-integrity + runtime bugs so report generation reads trustworthy numbers. Four work items (WI-1/2/3/6). No breaking API-shape changes.
+- **WI-1 (FIX) — double-spend hole (data integrity)**: The Session-4 cash guard only subtracted TRANSFERRED program funds; outstanding COMMITMENTS (allocated-but-not-transferred `ProgramFundingSource.AllocatedAmount`) were invisible, so the same cash could be committed to a program AND booked as a direct expense (100 received → allocate 100 → direct-expense 100 → transfer 100 = 200 out). Fixed by subtracting `Math.Max(totalCommitted, programTransferred)` (totalCommitted = Σ AllocatedAmount for non-CLOSED sources) in `CreateGrantExpense.cs` (cash-on-hand ceiling) and `GetGrantFinancialSummary.cs` (displayed CashOnHand). **This is the real close of ISSUE-18** (session 4 marked it CLOSED but the fix was incomplete).
+- **WI-2 (FIX) — UTC normalization on Approve/Reject**: `ApproveGrant.cs`/`RejectGrant.cs` saved the raw wire `decisionDate` (Kind=Unspecified) into a `timestamptz` → Npgsql throw. Added the same `NormalizeUtc()` local as `ActivateGrant.cs`; also normalize `StartDate/EndDate/SubmissionDeadline/SubmittedDate` at the entry of `CreateGrant.cs`/`UpdateGrant.cs` before `Adapt`. Per [[feedback-db-utc-only]].
+- **WI-3 (ENHANCE) — full FX normalization of financial rollups**: Rollups summed raw `Amount` across `GrantFundReceipt` + `ProgramFundingTransaction`, each with its own `CurrencyId` — a non-grant-currency receipt corrupted every total. Now snapshots a converted amount at WRITE time (mirrors `GlobalDonation.BaseCurrencyAmount`), target currency = `Grant.CurrencyId`. Per [[feedback-fx-direct-pair]] (direct-pair, snapshot VALUE, null on miss). Added nullable `ExchangeRate`(numeric 18,6)/`GrantCurrencyAmount`(numeric 18,2) to `GrantFundReceipt.cs` + `ProgramFundingTransaction.cs` + both EF configs; new shared helper `SharedBusiness/Currencies/GrantFxSnapshot.cs` (`SnapshotAsync` via `IFxRateService.GetRateAsync(fromCode, grantCode, DateOnly)` + `ResolveCurrencyCodeAsync`); write-time snapshot wired into `CreateGrantFundReceipt.cs` + `RecordProgramFundingTransfer.cs` (both now inject `IFxRateService`). Rollup sites switched to `Σ (GrantCurrencyAmount ?? Amount)` at `GetGrantFinancialSummary.cs` (receipts + programTransferred + receiptsByMethod), `GetGrantUtilization.cs` (receipts), `GetGrantFundingRequests.cs` (transactions ×2 + receipts), `CreateGrantExpense.cs` (receipts + transferred), `AllocateGrantToFundingSource.cs` (receipts + transferred), `RecordProgramFundingTransfer.cs` (existingTransferred guard). `GrantExpense` has NO CurrencyId (implicitly grant-currency) → left as `Σ Amount`. `BeneficiaryServiceLog.AmountCents` program-drawn left as-is for V1 (documented assumption: program funds flow in grant currency). **Confirmed `AllocateGrantToFundingSource` does NOT create a `ProgramFundingTransaction`** (reservation only) → no write-time snapshot there, only its rollup reads were fixed.
+- **WI-6 (FIX) — admin-category detection + soft warning**: New shared `Grants/GrantBudgetLineHelper.cs` — `ResolveAdminFlag` uses ordinal EXACT match against {"Admin","Administration","Overhead"} (no more `Contains`; fixes "Badminton" false-positive + culture-sensitive `ToLower`), and `ComputeAdminCapWarning` (>10% advisory). `CreateGrant.cs`/`UpdateGrant.cs` call the shared helper (duplicate in UpdateGrant deleted). **Warnings-channel decision**: `CreateGrantResult`/`UpdateGrantResult` got a `string? AdminCapWarning`, but the GraphQL mutations return `BaseApiResponse<int>` (grantId only) — the warning is computed at the CQRS layer but NOT surfaced via GraphQL (widening the return type is a breaking API-shape change deferred out of a bug-fix pass). **The live user-facing admin-cap warning is the client-side one in `grant-form.tsx` (session 15 WI-6)**, which needs no BE round-trip.
+- **Files touched**:
+  - BE (new): `Base.Application/Business/GrantBusiness/SharedBusiness/Currencies/GrantFxSnapshot.cs`; `Base.Application/Business/GrantBusiness/Grants/GrantBudgetLineHelper.cs`.
+  - BE (edit): `CreateGrantExpense.cs`; `GetGrantFinancialSummary.cs`; `ApproveGrant.cs`; `RejectGrant.cs`; `CreateGrant.cs`; `UpdateGrant.cs`; `GetGrantUtilization.cs`; `GetGrantFundingRequests.cs`; `AllocateGrantToFundingSource.cs`; `CreateGrantFundReceipt.cs`; `RecordProgramFundingTransfer.cs`; `Base.Domain/Models/GrantModels/GrantFundReceipt.cs`; `Base.Domain/Models/CaseModels/ProgramFundingTransaction.cs`; `GrantFundReceiptConfiguration.cs`; `ProgramFundingTransactionConfiguration.cs`; `CreateGrantResult`/`UpdateGrantResult` (+`AdminCapWarning`).
+  - MIGRATION: `.claude/screen-tracker/migration-specs/Add_Grant_And_ProgramTransaction_FxColumns_MIGRATION.md` — **generated (spec only), NOT applied**. Adds 4 nullable columns (ExchangeRate/GrantCurrencyAmount × GrantFundReceipt + ProgramFundingTransaction). User authors + runs per [[feedback-migrations-strictly-user-owned]].
+- **Verification**: BE `dotnet build PeopleServe.sln` — **0 errors** (one transient CS2012 file-lock cleared via `dotnet build-server shutdown`; one CS0019 double-coalesce fixed during the pass). Live E2E not run.
+- **Deviations from spec**: (1) Admin-cap warning not surfaced via GraphQL (see WI-6) — FE client-side warning is the live surface. (2) `UpdateGrantFundReceipt.cs`/`VoidGrantFundReceipt.cs` do NOT re-snapshot FX if Amount/CurrencyId are edited post-creation — noted in the migration spec, out of WI-3 scope.
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-7 (non-bug — NumberSequenceGenerator), ISSUE-16 (WI-6), ISSUE-18 (truly closed by WI-1).
+- **⚠ BLOCKER — DB migrations pending (user-owned)**: This screen's financials will throw Npgsql `42703 column does not exist` at runtime until these already-scaffolded migrations in `Base.Infrastructure/Migrations/` are applied (dependency order): `20260707050351_Add_GrantFundReceipt_And_OrganizationBankAccount`, `20260707072729_Add_GrantCommunication`, `20260708065411_Add_AllocatedAmount_To_ProgramFundSource`, `20260708102755_Add_PaymentTrackingField_To_ProgramFundTransaction_And_GrantExpanse`, `20260708133857_Add_PaymentTrackingField_To_BeneficiaryServiceLog`, `20260709160320_Add_ProgramFundingTransactionSource` — **plus the NEW FX migration** the user authors from `Add_Grant_And_ProgramTransaction_FxColumns_MIGRATION.md`. Then apply pending seeds (`GrantFundReceipt-OrganizationBankAccount-sqlscripts.sql`, GrantCommunication templates). Run `dotnet ef database update`.
+- **Next step**: user applies the migrations above → BE build + live E2E per the plan's Verification section → then proceed to Grant Report Generation planning (`/plan-screens`, new `screen_type: REPORT` / DOCUMENT).
+
+---
+
+## ⑭ ENHANCEMENT — Program → Grant Fund Allocation (BUILT · session 4, 2026-07-08)
+
+> **Planned**: 2026-07-08 via `/plan-screens #62` (entered from `/continue-screen #62`). **Built**: 2026-07-08 (session 4 — see §⑬).
+> **Status**: **BUILT** (BE 0 errors, FE grant files clean; migration generated NOT applied). Base Grant screen stays `COMPLETED`; this was an additive feature layered on top. Spec below is the as-built contract.
+> **Companion screen**: #177 Program Fund Allocation (`prompts/programfundallocation.md`) — has matching deltas (see §⑭.7).
+> **Design decisions LOCKED with user** (see memory `project-grant-program-fund-allocation-integration`): cash model = **commitment/reservation**; build via plan→build.
+> **Model tier**: Sonnet for BE + FE build agents (spec below is detailed). Opus not required.
+
+### ⑭.0 Business framing — the loop we are closing
+
+Funding is **PROGRAM-level, never per-case.** Do **NOT** create a `CaseFundRequest` or any per-beneficiary request entity — each program has many beneficiaries; requesting per case is wrong. A grant is a **common pool**: it funds any number of programs *and* has its own direct expenses (general purpose, not program-tied).
+
+Target loop (the last leg — grant-side — is the only gap):
+
+```
+Program form links a grant as a funding source        [BUILT: case.ProgramFundingSource, GrantId, status PENDING]
+        │  (the requester holds GrantId — grant NEVER stores a request id)
+        ▼
+Grant sees the pending request  ─────────────────────  [GAP → ⑭.4 inbox query + ⑭.6 UI tab]
+        │
+Grant allocates full / partial (grantor decision) ───  [GAP → ⑭.3 field + ⑭.5 allocate command]
+        │  sets ProgramFundingSource.AllocatedAmount, flips PENDING→APPROVED, reserves against AwardedAmount
+        ▼
+Program records TRANSFERRED payments ≤ AllocatedAmount  [BUILT: ProgramFundingTransaction; #177 cap delta ⑭.7]
+        │
+Program manager distributes to each beneficiary case  [BUILT: BeneficiaryServiceLog.FundingSourceId + ServiceLogFundingGuard]
+        ▼
+Grant Expense + Utilization reflect it ──────────────  [PARTIAL: GetGrantUtilization already sums ProgramSpend;
+                                                          add commitment/transfer lenses + cash-reconciliation ⑭.5c]
+```
+
+**Already built — REUSE, do NOT rebuild:** `case.ProgramFundingSource` (raise), `case.ProgramFundingTransaction` (TRANSFERRED payment log), `BeneficiaryServiceLog.FundingSourceId` + `ServiceLogFundingGuard` (beneficiary distribution), `GetGrantUtilization` ProgramSpend rollup. The beneficiary-distribution leg is complete and untouched.
+
+**Out of scope (this build):** DonationPurpose / Sponsor allocation-from-source (grant path only). Those sources keep the existing program self-approve behavior (ISSUE-20).
+
+### ⑭.1 Entity delta (cross-schema — the ONE schema change)
+
+Only **one** new stored field, on an existing `case`-schema entity (NOT a grant entity):
+
+| Entity | File | Field | Type | Purpose |
+|--------|------|-------|------|---------|
+| `case.ProgramFundingSource` | `Base.Domain/Models/CaseModels/ProgramFundingSource.cs` | **`AllocatedAmount`** | `decimal?` | The grantor's committed allocation to this source. NULL until the grant allocates. Distinct from `ExpectedAnnualAmount` (the program's *ask*). |
+
+- Reuse the existing `ApprovedByStaffId` / `ApprovedDate` fields to stamp who allocated (the grant allocate command sets them). No new staff/date columns.
+- EF config: `Base.Infrastructure/Data/Configurations/CaseConfigurations/ProgramFundingSourceConfiguration.cs` — add `AllocatedAmount` as `numeric(18,2)` (match `ExpectedAnnualAmount`).
+- **History note (verified 2026-07-08)**: this column ONCE existed as `numeric(18,2)` nullable and was **dropped** by migration `20260625075202_Remove_Unused_Columns_In_CaseManagement` (line 28-31) when #177 S4 replaced the typed-ledger model. It is **absent** from the current EF model snapshot AND the DB. Re-adding the property is therefore **clean** — a fresh `AddColumn`, NOT an orphan-column conflict. Reuse `numeric(18,2)`.
+- **Migration** (developer runs manually, per convention): `dotnet ef migrations add Add_ProgramFundingSource_AllocatedAmount` — generate, do NOT auto-apply. Expect a single `AddColumn` on `case.ProgramFundingSource`.
+- No change to `ProgramFundingTransaction`. No new entity anywhere.
+
+**Field semantics (keep these three apart):**
+1. `ExpectedAnnualAmount` — the **ask** (program planner sets on the program form).
+2. `AllocatedAmount` — the grant's **commitment** (grantor sets here; full or partial ≤ ask).
+3. `Σ TRANSFERRED ProgramFundingTransaction.Amount` — cash **actually moved** to the program pool.
+
+### ⑭.2 FK / reference resolution
+
+| Ref | Target | Path | Notes |
+|-----|--------|------|-------|
+| ProgramFundingSource.GrantId | `grant.Grants` | `Base.Domain/Models/GrantModels/Grant.cs` | already wired; the join key for the inbox |
+| ProgramFundingSource.ProgramId | `case.Programs` | `Base.Domain/Models/CaseModels/Program.cs` | display `ProgramName` in the inbox |
+| ProgramFundingSource.SourceStatusId | MasterData `FUNDSOURCESTATUS` | PENDING / APPROVED / CLOSED | NULL = PENDING (implicit) |
+| ProgramFundingTransaction (TRANSFERRED) | `case.ProgramFundingTransaction` | `Base.Domain/Models/CaseModels/ProgramFundingTransaction.cs` | `PaymentStatus == "TRANSFERRED"`, `IsActive`, not deleted |
+
+Cross-schema note: the grant-side query/command read & write `case`-schema rows. That is allowed — `IApplicationDbContext` spans all schemas (it already inherits `ICaseDbContext` + `IGrantDbContext`). `GetGrantUtilization` already reads `BeneficiaryServiceLogs` cross-schema; follow that precedent.
+
+### ⑭.3 Business rules — the two-ceiling model (closes the double-spend hole)
+
+Two **independent** ceilings, each against a different quantity — this is the whole reconciliation:
+
+**Ceiling A — Award reservation (commitment).** Governs how much a grant can *promise* to programs.
+- `AvailableToAllocate(grant) = AwardedAmount − Σ AllocatedAmount` over this grant's **non-CLOSED** funding sources.
+- Enforced by the allocate command (⑭.5). A grant with no `AwardedAmount` (not yet Approved) cannot allocate.
+
+**Ceiling B — Cash reconciliation.** Governs how much cash can actually *leave* the grant, so the same dollars can't be spent twice.
+- `GrantCashOut = Σ direct GrantExpenses + Σ TRANSFERRED ProgramFundingTransactions (this grant's sources)`.
+- `CashOnHand = Σ non-voided GrantFundReceipts − GrantCashOut`.
+- Enforced by `CreateGrantExpense` (⑭.5c) and surfaced by `GetGrantFinancialSummary`.
+
+Per-allocation validation (allocate command):
+1. Source exists, `GrantId != null` (is a grant-funded source), not CLOSED.
+2. Grant is in a funding-active stage (APPROVED / ACTIVE / REPORTING — reuse `GrantStageHelper.IsFundingActive`) and has `AwardedAmount`.
+3. `newAllocatedAmount > 0` and `≤ TERM-TOTAL ask` (cannot allocate more than the ask; partial is allowed). **[REVISED session 6, 2026-07-09]** The ceiling was originally `source.ExpectedAnnualAmount` (one year); it is now the program's term-total ask via `ProgramFundingMath.ComputeTermTotalAsk`: FIXEDTERM+recurring → `ExpectedAnnualAmount × termYears` (whole years rounded up over `Program.StartDate`→`EndDate`); FIXEDTERM+ONETIME → annual (single lump); ONGOING → annual (per-year). Cadence (monthly/weekly/annual) does not multiply — `ExpectedAnnualAmount` is already annualized. See §⑬ session 6.
+4. `(newAllocatedAmount − currentAllocatedAmount) ≤ AvailableToAllocate` (grant can't over-commit its award).
+5. On re-allocation (revise down), `newAllocatedAmount ≥ Σ TRANSFERRED for that source` (can't strand cash already moved).
+6. Currency: allocation is in the grant's currency; source `CurrencyId` should match the grant (validate or stamp).
+
+Distribution + utilization rules (unchanged, confirm still hold):
+- Program can record TRANSFERRED only up to `AllocatedAmount` (was `ExpectedAnnualAmount`; #177 delta ⑭.7).
+- Beneficiary drawdown ≤ Σ TRANSFERRED (existing `ServiceLogFundingGuard`, untouched).
+- Utilization `TotalUtilized = DirectSpend + ProgramSpend`; ProgramSpend = beneficiary drawdown (already computed). Commitment is a *reservation*, NOT counted as spend → no double-count.
+
+### ⑭.4 Grant-side INBOX query (NEW)
+
+`GetGrantFundingRequests(grantId)` → `Base.Application/Business/GrantBusiness/Grants/GetFundingRequestsQuery/GetGrantFundingRequests.cs`, `[CustomAuthorize(DecoratorGrantModules.Grant, Permissions.Read)]`.
+
+Returns a header rollup + per-source rows:
+
+- **Header**: `awardedAmount`, `totalCommitted` (Σ AllocatedAmount non-closed), `availableToAllocate` (Awarded − committed), `programTransferred` (Σ TRANSFERRED), `programDrawn` (= utilization ProgramSpend), `requestCount`, `pendingCount`.
+- **Rows** (one per `ProgramFundingSource` where `GrantId == grantId`, not deleted): `fundingSourceId`, `programId`, `programName`, `sourceStatusCode` (PENDING/APPROVED/CLOSED), `expectedAnnualAmount` (ask), `allocatedAmount` (nullable), `transferredAmount` (Σ TRANSFERRED for this source), `drawnAmount` (beneficiary drawdown for this source), `currencyCode`, `allocationFrequencyCode`, `startDate`, `endDate`, `canAllocate` (grant funding-active AND status != CLOSED), `approvedByStaffName`, `approvedDate`.
+
+### ⑭.5 Grant-side commands (NEW + guard edits)
+
+**⑭.5a — `AllocateGrantToFundingSource` (NEW).** `.../GrantBusiness/Grants/UpdateCommand/AllocateGrantToFundingSource.cs`, `[Grant, Modify]`.
+- Command: `AllocateGrantToFundingSourceCommand(int fundingSourceId, decimal allocatedAmount)`.
+- Loads the source (Include Program.Status, SourceStatus, Grant). Runs the ⑭.3 per-allocation validation.
+- Sets `source.AllocatedAmount = allocatedAmount`. If currently PENDING (or NULL status), flips `SourceStatusId → FUNDSOURCESTATUS.APPROVED`, stamps `ApprovedByStaffId` (current grantor staff via `ProgramLifecycleHelpers.ResolveCurrentStaffIdAsync` or the grant module's staff resolver), `ApprovedDate = DateTime.UtcNow` (Kind=Utc — see memory `db-utc-only`).
+- **Books NO GrantExpense** (commitment ≠ spend). Reservation is derived (Σ AllocatedAmount), not a stored ledger row.
+- Wrap in an execution-strategy transaction (mirror `CreateGrantExpense`).
+
+**⑭.5b — De-allocate / release (NEW, small).** `DeallocateGrantFromFundingSource(fundingSourceId)` OR reuse ⑭.5a with `allocatedAmount = 0` — sets `AllocatedAmount = null/0`; only allowed if `Σ TRANSFERRED == 0` for that source. Frees the reservation. Decide one path; prefer folding into ⑭.5a (allocate 0 = release) to avoid a second command.
+
+**⑭.5c — `CreateGrantExpense` guard edit (MODIFY existing).** In `CreateGrantExpense.cs`, extend the cash-on-hand calc to subtract program transfers:
+```
+programTransferred = Σ ProgramFundingTransaction.Amount
+    where FundingSource.GrantId == input.GrantId && PaymentStatus == "TRANSFERRED" && IsActive && !IsDeleted
+cashOnHand = totalReceived − totalDirectSpent − programTransferred
+```
+Keep the existing `cashOnHand <= 0` and `Amount > cashOnHand` guards. This is the double-spend fix (ISSUE-18).
+
+**⑭.5d — `GetGrantFinancialSummary` surfacing (MODIFY existing).** Add `TotalCommitted`, `AvailableToAllocate`, `ProgramTransferred` to `GrantFinancialSummaryDto`; recompute `CashOnHand = totalReceived − totalSpent − programTransferred`. Keep `Outstanding = Awarded − Received`.
+
+**⑭.5e — `GetGrantUtilization` breakdown (OPTIONAL, MODIFY).** Add a "Committed (not yet drawn)" informational line = `totalCommitted − programSpend` (never negative) so the utilization tab shows reservation vs realized. Do NOT add it into `TotalUtilized` (would double-count).
+
+### ⑭.6 UI blueprint (FE) — new "Fund Requests" tab on the Grant DETAIL
+
+Add a **6th tab** to the grant detail view (`?mode=read&id=X`), after Overview / Budget / Reports / Documents / Timeline → **"Fund Requests"** (icon `ph:hand-coins`). Only visible when the grant is in a funding-active stage (APPROVED/ACTIVE/REPORTING); otherwise show an empty-state ("Allocations open once the grant is Approved").
+
+Tab contents:
+1. **Reservation strip** (KPI row, tokens per memory `widget-icon-badge-styling` — solid `bg-X-600` + `text-white`): Awarded · Committed · **Available to Allocate** · Transferred · Drawn (beneficiary spend). Amounts right-aligned (memory `amount-field-alignment`).
+2. **Requests table** — one row per funding source pointing at this grant: Program · Ask (`expectedAnnualAmount`) · Allocated (`allocatedAmount`) · Transferred · Drawn · Status badge (reuse `grant-stage-badge` pattern / a new `fundsource-status-badge`) · **Allocate** action (enabled when `canAllocate`).
+3. **Allocate modal** (RHF + Zod): shows Program, Ask, and current Available-to-Allocate; single `allocatedAmount` numeric input (right-aligned), default = min(ask, available); inline validation mirrors ⑭.3 (≤ ask, ≤ available, ≥ already-transferred). Submit → `allocateGrantToFundingSource`. On success, refetch the tab + the grant financial summary. Full-amount quick button ("Allocate full ask") + partial free entry.
+4. Currency shown per-grant (memory `feedback-ui...` — display stays the grant's own currency).
+
+Empty state when no program has linked this grant yet: "No programs have requested funding from this grant yet." (memory `ui-uniformity` empty states.)
+
+FE files (new, under existing grant feature folder `crm/grant/grantlist/grant/`): `grant-fund-requests-tab.tsx`, `grant-allocate-modal.tsx`, GQL doc `GRANT_FUNDING_REQUESTS_QUERY` + `ALLOCATE_GRANT_TO_FUNDING_SOURCE` mutation, DTOs in `grant-service/`, register any new cell renderer in the column-type registry. Wire the tab into the existing grant-detail tab list.
+
+### ⑭.7 #177 Program Fund Allocation — matching deltas (see its prompt)
+
+On `prompts/programfundallocation.md` (update its notes too):
+- **Grant-funded sources approve via the grant**, not program self-approve. `ApproveFundingSourceCommand` (`FundingSourceLifecycle.cs`) must **reject sources with `GrantId != null`** ("Grant-funded sources are approved by the grantor from the Grant screen."). DonationPurpose/Sponsor sources keep self-approve (ISSUE-20).
+- **Payment (TRANSFERRED) cap** in `SaveProgramFundingAllocation.cs` `SyncFundingTransactions`: for grant-funded sources, cap `Σ payments ≤ AllocatedAmount` (was `ExpectedAnnualAmount`). Before the grant allocates (`AllocatedAmount == null`), the program cannot record any TRANSFERRED payment against that source.
+- The #177 workbench should show grant-funded sources as "Awaiting grant allocation" while PENDING, and display `AllocatedAmount` once set (read-only on the program side — the grantor owns it).
+
+### ⑭.8 BE→FE contract (GraphQL)
+
+| Kind | Name | Args | Returns |
+|------|------|------|---------|
+| Query | `getGrantFundingRequests` | `grantId: Int!` | header rollup + `[GrantFundingRequestRow]` (⑭.4) |
+| Mutation | `allocateGrantToFundingSource` | `fundingSourceId: Int!, allocatedAmount: Decimal!` | `data: Boolean` (or new AllocatedAmount) |
+| Query (edit) | `getGrantFinancialSummary` | `grantId: Int!` | + `totalCommitted, availableToAllocate, programTransferred`; `cashOnHand` recomputed |
+| Query (edit) | `getGrantUtilization` | `grantId: Int!` | + optional "Committed" breakdown row |
+
+Wire mutations/queries into `Base.API/EndPoints/Grant/Mutations/GrantMutations.cs` + `Queries/GrantQueries.cs`.
+
+### ⑭.9 File manifest (delta only)
+
+**BE (new):** `GetGrantFundingRequests.cs` (query), `AllocateGrantToFundingSource.cs` (command) + validator. **BE (edit):** `ProgramFundingSource.cs` (+field), `ProgramFundingSourceConfiguration.cs` (+column), `CreateGrantExpense.cs` (guard), `GetGrantFinancialSummary.cs` + `GrantFinancialSummaryDto` (fields), `GetGrantUtilization.cs` (optional line), `FundingSourceLifecycle.cs` (reject grant sources), `SaveProgramFundingAllocation.cs` (cap = AllocatedAmount), `GrantMutations.cs` + `GrantQueries.cs` (endpoints), `GrantSchemas.cs` (new DTOs). **Migration:** `Add_ProgramFundingSource_AllocatedAmount` (generate only). **FE (new):** `grant-fund-requests-tab.tsx`, `grant-allocate-modal.tsx`, GQL query+mutation docs, DTOs, cell renderer. **FE (edit):** grant-detail tab list, barrels, entity-operations. **No DB seed** — reuses existing FUNDSOURCESTATUS MasterData + GRANT menu/caps.
+
+### ⑭.10 Acceptance criteria
+
+- [ ] `AllocatedAmount` column added + migration generated (not applied).
+- [ ] Program links a grant → grant detail "Fund Requests" tab shows the PENDING request with the ask.
+- [ ] Allocate full → source APPROVED, AllocatedAmount = ask, AvailableToAllocate drops by that amount.
+- [ ] Allocate partial → AllocatedAmount < ask; can re-allocate up to available; cannot exceed ask or available.
+- [ ] Over-commit blocked: Σ AllocatedAmount can never exceed AwardedAmount.
+- [ ] Program can record TRANSFERRED only up to AllocatedAmount; zero before allocation.
+- [ ] Grant-funded source cannot be self-approved on the #177 screen.
+- [ ] **Double-spend closed**: after a grant transfers cash to a program, `CreateGrantExpense` available cash-on-hand is reduced by the transferred amount; a direct expense for the same dollars is blocked.
+- [ ] Beneficiary distribution unchanged; utilization still = DirectSpend + ProgramSpend (no double-count); financial summary shows Committed / Available / Transferred.
+- [ ] Grant not yet Approved (no AwardedAmount) → allocation blocked with a clear message.
+
+### ⑭.11 Special notes / warnings
+
+- **Cross-schema writes** from grant handlers into `case.ProgramFundingSource` are intended — follow the `GetGrantUtilization` precedent; `IApplicationDbContext` covers both schemas.
+- **UTC**: all new `DateTime` writes use `DateTime.UtcNow` (Kind=Utc) — memory `db-utc-only`.
+- **No new MasterData / menu / seed** — reuse existing FUNDSOURCESTATUS + GRANT menu.
+- **Do not** book a GrantExpense at allocation time (would double-count against downstream ProgramSpend). Commitment is derived, not a ledger row.
+- **Grant is common** — the inbox surfaces *any* program requesting this grant; keep it generic (don't case-scope). Direct grant expenses (general purpose) coexist with program allocations.
+- **Build path**: run `/build-screen #62` (or dispatch backend-developer then frontend-developer against §⑭). BE first — FE consumes the new query/mutation. Log a `/continue-screen` ENHANCE session in §⑬ on completion and add matching deltas to #177's build log.

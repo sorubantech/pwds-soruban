@@ -491,5 +491,10 @@
       "d:\\Repos\\PWDS\\pwds-soruban\\pss-2.0-global\\PSS_2.0_Frontend\\src\\app\\[lang]\\(member)\\login",
       "C:\\Users\\USER\\AppData\\Local\\Temp\\payu-dbcheck"
     ]
+  },
+  "autoCompactEnabled": true,
+  "env": {
+    "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "100000",
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "80"
   }
 }

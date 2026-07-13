@@ -74,7 +74,7 @@ For groups of screens, use [[test-batch]]. For fixing failures, use [[test-fix]]
 
 ### Step 1: Locate the target screen
 
-1. Read `REGISTRY.md`, find row by `#N` or name.
+1. **Never `Read` the whole `REGISTRY.md`** (~175K tokens) — `grep` the single row: `grep -nE "^\| *#?<id> " .claude/screen-tracker/REGISTRY.md` (by ID) or `grep -niE "<name>" .claude/screen-tracker/REGISTRY.md`.
 2. Verify `status ∈ {COMPLETED, NEEDS_FIX}`. Otherwise refuse with:
    > "Screen #N is `{status}`. Run `/build-screen #N` first."
 3. Read the prompt file frontmatter — extract `screen_type` (`MASTER_GRID` / `FLOW` / `CONFIG` / `DASHBOARD` / `EXTERNAL_PAGE` / `AUTH`).

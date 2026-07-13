@@ -44,7 +44,7 @@ description: /test-batch — Run Playwright tests across many screens in a singl
 
 ## Required Reading (load before starting)
 
-1. `.claude/screen-tracker/REGISTRY.md` — to resolve wave / --failed / --new filters to a list of screen IDs.
+1. `.claude/screen-tracker/REGISTRY.md` — **do NOT `Read` the whole file** (~175K tokens). `grep` only the rows the filter needs, e.g. `grep -nE "COMPLETED|NEEDS_FIX" .claude/screen-tracker/REGISTRY.md`, to resolve wave / --failed / --new filters to a list of screen IDs.
 2. Each target screen's frontmatter only (NOT the full spec) — to discover `screen_type` and `MenuUrl` for spec generation.
 3. `PSS_2.0_Frontend/tests/e2e/playwright.config.ts` — base config.
 
@@ -130,7 +130,7 @@ These writes are independent (per-screen files); batch as many parallel `Edit` c
 
 ### Step 6: Update REGISTRY.md (single edit)
 
-For screens whose status changed, update `REGISTRY.md` in one batched Edit pass (read once, replace many).
+For screens whose status changed, update `REGISTRY.md` with **scripted in-place edits** (Bash `sed -i` / PowerShell), never `Read`+`Edit` (reading it loads ~175K tokens). Run one `sed` per changed row, or a single `sed -i` with multiple `-e` expressions.
 
 ### Step 7: Aggregated summary (only output to chat)
 

@@ -838,35 +838,7 @@ Full UI must remain built (sections, masked inputs, copy-to-clipboard, action bu
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
 
-### Session 1 — 2026-05-15 — BUILD — COMPLETED
-
-- **Scope**: Initial ALIGN session against the existing #28 implementation. Applied targeted patches per §⑫ Known Issues without regenerating entity / EF config / DTO / mutations / queries / page-component.
-- **Files touched**:
-  - BE:
-    - `PSS_2.0_Backend/.../NotifyBusiness/CompanyEmailProviders/Queries/GetCompanyEmailProviderStats.cs` (modified) — added `SensitiveFieldMasking` static helper using `JsonNode`; `GetActiveCompanyEmailProviderHandler` now masks `apiKey`/`password` in returned ProviderConfiguration JSON
-    - `PSS_2.0_Backend/.../NotifyBusiness/CompanyEmailProviders/Queries/GetCompanyEmailProviderById.cs` (modified) — applied same mask post-projection (defense in depth even though the FE does not call this query)
-    - `PSS_2.0_Backend/.../NotifyBusiness/CompanyEmailProviders/Commands/SaveCompanyEmailProvider.cs` (modified) — UPDATE branch now calls `PreserveSensitiveFields` to restore prior apiKey/password when FE submits empty or the masking placeholder; removed two no-op TODO lines around `existing.ProviderConfiguration = existing.ProviderConfiguration`
-  - FE:
-    - `PSS_2.0_Frontend/.../emailproviderconfig/email-provider-config-page.tsx` (modified) — added `savedProviderId` state + provider-switch warning banner inside Card 1; removed `{form.webhookUrl && (...)}` gate so Webhook URL block is always visible for cloud providers (shows "Save configuration to generate webhook URL" hint when empty; Copy button disabled in that state)
-  - DB:
-    - `PSS_2.0_Backend/.../sql-scripts-dyanmic/CompanyEmailProvider-sqlscripts.sql` (modified) — Step 5b INSERT now uses `'CONFIG'` GridType; description text updated; new idempotent Step 5c backfills any prior `EMAILPROVIDERCONFIG` row whose `GridTypeId` still points at `FLOW`
-- **Deviations from spec**:
-  - **ISSUE-9 not patched** — the existing FE in `sending-identity-dialog.tsx:106-111` already strictly blocks `fromEmail` outside `@{sendingDomainName}`. That's stricter than the prompt's "non-blocking warn" request but is the safer behavior; left unchanged. Minor divergence: BE Save validator (in `SaveCompanyEmailProvider.cs:51-59`) is more permissive (also allows `.{sendingDomainName}` subdomain suffix) — flagged as informational, not blocking.
-  - **ISSUE-4 deferred** — prompt itself defers credential-rotation audit logging as a future enhancement tied to platform audit infra; not implemented.
-- **Known issues opened**: None new.
-- **Known issues closed**: ISSUE-1, ISSUE-2, ISSUE-3, ISSUE-5.
-- **Known issues verified (no change)**: ISSUE-6, ISSUE-7, ISSUE-10.
-- **Next step**: (none — COMPLETED). Optional follow-ups recorded in §⑫: unit tests for `SensitiveFieldMasking.MaskCredentials` + `PreserveSensitiveFields`; unit test for status-banner relative-time output. The seed Step 5c backfill should be exercised against any tenant DB whose `EMAILPROVIDERCONFIG` row was seeded by the original FLOW INSERT.
-
-### Session 2 — 2026-05-28 — FIX — COMPLETED
-
-- **Scope**: Runtime crash on page load — `MasterDatasByTypeCode` query selected `masterDataId` directly on `BaseApiResponseOfIEnumerableOfMasterDataResponseDto`, causing GraphQL field-resolution error. Switched provider catalog fetch to the canonical `MASTERDATAS_QUERY` + `advancedFilter { MasterDataType.TypeCode = "EMAILPROVIDER" }` pattern used by `custom-integration-workshop.tsx` (#87 Integration Marketplace). Mid-session follow-up: BE rejected initial fix with `"The required input field id is missing"` — `id` field is mandatory on BOTH the outer `advancedFilter` object AND each rule (matches the `#87` reference). Added `id: "1"` to both levels.
-- **Files touched**:
-  - FE: `PSS_2.0_Frontend/src/presentation/components/page-components/setting/communicationconfig/emailproviderconfig/provider-card-selector.tsx` (modified) — replaced inline `gql` with import from `MASTERDATAS_QUERY`; supplied `pageSize/pageIndex/sortDescending/sortColumn/advancedFilter` variables (with `id` on filter and rule); read providers from `result.data` (BaseApiResponse wrapper).
-- **Deviations from spec**: None.
-- **Known issues opened**: None.
-- **Known issues closed**: ISSUE-11.
-- **Next step**: (none — COMPLETED). User to refresh `pnpm dev` and confirm 4 provider cards render in Card 1.
+> _[2 older session entries trimmed to save tokens — full history in git: `git log -p -- emailproviderconfig.md`. Most recent 5 kept below.]_
 
 ### Session 3 — 2026-05-28 — FIX+UI+ENHANCE — COMPLETED
 

@@ -536,29 +536,7 @@ GridCode: ONLINEDONATIONINBOX
 
 ---
 
-### Session 1 — 2026-05-29 — BUILD — COMPLETED
-
-> Authoritative consolidated build record (supersedes the PART-1 sub-entry above, which is the FE-agent's partial note). BE + FE (both parts) + DB seed + validation.
-
-- **Scope**: Initial full build from PROMPT_READY. FULL scope. **Sonnet for all agents** (user opted out of the FLOW Opus escalation — cost-conscious). FE split into 2 sequential spawns (foundation+workbench, then process/read flow) to avoid the known FLOW stream-stall risk. Inline validation replaced redundant BA/Solution-Resolver/UX re-analysis (prompt already deeply analyzed by /plan-screens).
-- **Files touched**:
-  - BE (created): `Base.Application/Schemas/DonationSchemas/OnlineDonationInboxSchemas.cs`; `.../Business/DonationBusiness/OnlineDonationInbox/Queries/{GetOnlineDonationStagingList,GetOnlineDonationStagingById,GetOnlineDonationInboxSummary,FindContactMatches}.cs`; `.../OnlineDonationInbox/Commands/{ResolveOnlineDonationStaging,RunAutoMapOnlineDonations,DismissOnlineDonationStaging}.cs`; `Base.API/EndPoints/Donation/Queries/OnlineDonationInboxQueries.cs`; `Base.API/EndPoints/Donation/Mutations/OnlineDonationInboxMutations.cs`
-  - BE (modified): `Base.Application/Mappings/DonationMappings.cs` (2 Mapster configs). DbSet already present — no DbContext edit.
-  - FE (created): see PART-1 list above + (PART 2) `.../onlinedonationinbox/view-page.tsx` (full process/read, replaced stub), `contact-resolution-panel.tsx`, `donation-preview-panel.tsx`, `recurring-verify-panel.tsx`
-  - FE (modified): PART-1 wiring files + `presentation/components/modals/contact-create-modal/index.tsx` (⚠ shared — additive `prefill` support, guarded behind `prefill` presence; existing inline-create callers unaffected)
-  - DB (created): `PSS_2.0_Backend/PeopleServe/Services/Base/sql-scripts-dyanmic/OnlineDonationInbox-sqlscripts.sql` (menu @ OrderBy 9, caps READ/CREATE/MODIFY/DELETE/EXPORT/ISMENURENDER, BUSINESSADMIN role caps, FLOW grid GridFormSchema NULL, guarded sample staging rows)
-- **Deviations from spec**:
-  - Queue `matchSuggestion` is a lightweight hint; full candidate ranking is process-page only (ISSUE-6) — avoids per-row N+1.
-  - `CompanyConfigurations` dropped (S5 2026-05-26) → base-currency via `CurrencyBaseLookup.ResolveBaseCurrencyIdAsync` + `IOrgSettingsService`.
-  - Recurring schedule create needs a valid `DonationPurposeId` distribution row; wrapped in non-fatal catch so it never blocks promotion (ties to ISSUE-1).
-  - Contacts schema `corg` not `con` (ISSUE-7) — seed corrected.
-  - Manual contact search = debounced plain input + `useQuery` (not `FormSearchableSelect`, which needs RHF context absent on the non-form view-page) — mirrors reconciliation.
-- **Known issues opened**: ISSUE-6 (queue match hint scope).
-- **Known issues closed**: ISSUE-5 (DbSet confirmed registered), ISSUE-7 (schema doc fix).
-- **Validation**: BE `dotnet build` 0 errors (Base.Application + Base.API). FE `tsc --noEmit` clean (only the pre-existing unrelated #10 Razorpay error). Variant B confirmed (ScreenHeader + `showHeader`-equivalent custom table, no FlowDataTable). UI-uniformity greps all ZERO. GridComponentName check N/A (no GridFields seeded — custom Apollo table).
-- **Next step**: Runtime E2E not driven this session (compile-level only). Run `/test-screen #175` for the full E2E walk-through (queue load, Run Auto-Map, process→promote, recurring placeholder, read-mode idempotency, dismiss). Sample staging data materializes only if Screen #10's OnlineDonationPage + a CompanyPaymentGateway exist in the target DB.
-
----
+> _[1 older session entries trimmed to save tokens — full history in git: `git log -p -- onlinedonationinbox.md`. Most recent 5 kept below.]_
 
 ### Session 2 — 2026-05-29 — REFACTOR — COMPLETED
 

@@ -48,10 +48,12 @@ description: /plan-screens — Deep Screen Analyst & Prompt Builder
 
 Before planning new screens, check the current state:
 
-1. Read `.claude/screen-tracker/REGISTRY.md`
-2. Scan for screens with status `COMPLETED` — note the last completed screen
-3. Scan for screens with status `IN_PROGRESS` or `PARTIALLY_COMPLETED` — these need attention first
-4. Scan for screens with status `PROMPT_READY` — these are already planned, ready for `/build-screen`
+1. > ⚠️ **NEVER `Read` the whole `REGISTRY.md`** (~700 KB / ~175K tokens). Get the status picture with one grep:
+   > `grep -nE "IN_PROGRESS|PARTIALLY_COMPLETED|PROMPT_READY|COMPLETED" .claude/screen-tracker/REGISTRY.md`
+   > This returns just the relevant rows (a few KB) instead of the whole file.
+2. From the grep output, note the last `COMPLETED` screen
+3. Note any `IN_PROGRESS` / `PARTIALLY_COMPLETED` — these need attention first
+4. Note any `PROMPT_READY` — already planned, ready for `/build-screen`
 5. Present a brief status summary:
    ```
    ## Current Progress
@@ -299,8 +301,8 @@ Save to: `.claude/screen-tracker/prompts/{entity-lower}.md`
 
 ### Step 4: Update Registry
 
-1. Update REGISTRY.md: Status → `PROMPT_READY`, Prompt → `prompts/{entity-lower}.md`
-2. Update Summary counts
+1. Update REGISTRY.md with a **scripted in-place edit** (Bash `sed -i` / PowerShell), never `Read`+`Edit` (that reloads ~175K tokens): set the target row's Status → `PROMPT_READY` and Prompt → `prompts/{entity-lower}.md`.
+2. Do **not** hand-maintain Summary counts here — they are derived; per-edit summary churn is what produced the duplicated/corrupted summary tables. Regenerate on demand only.
 
 ---
 

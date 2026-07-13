@@ -104,7 +104,7 @@ playwright-report/             ← HTML report for humans
 
 | Step | What Claude Does | Tool Fired | I/O |
 |------|------------------|-----------|-----|
-| A1 | Locate screen in registry | `Read` | `.claude/screen-tracker/REGISTRY.md` |
+| A1 | Locate screen in registry | `Grep` (single row — never `Read` the ~175K-token file) | `.claude/screen-tracker/REGISTRY.md` |
 | A2 | Read full spec (12 sections) | `Read` | `.claude/screen-tracker/prompts/branch.md` |
 | A3 | Check if test-result file exists | `Glob` | `.claude/screen-tracker/prompts/branch.test-result.md` |
 | A4 | Check if spec file already has a test file | `Glob` | `tests/screens/branch.spec.ts` |
@@ -251,7 +251,7 @@ For testing groups of screens (e.g. all wave-1 screens) with a single aggregate 
 
 | Step | What Claude Does | Tool Fired | I/O |
 |------|------------------|-----------|-----|
-| E1 | Resolve the wave / filter to a list of screen IDs | `Read` | `.claude/screen-tracker/REGISTRY.md` |
+| E1 | Resolve the wave / filter to a list of screen IDs | `Grep` (status rows only — never `Read` the ~175K-token file) | `.claude/screen-tracker/REGISTRY.md` |
 | E2 | For each screen, ensure a spec file exists, generate `.spec.ts` if missing | `Glob`, `Read`, `Write` | one batch authoring pass |
 | E3 | **Single Playwright run** filtered to all tagged screens | `Bash` | `pnpm playwright test --grep "@wave-1"` |
 | E4 | Parse `results.json` once | `Read` | `test-results/results.json` |
