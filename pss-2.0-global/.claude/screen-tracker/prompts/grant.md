@@ -9,7 +9,7 @@ complexity: High
 new_module: YES — `grant` schema
 planned_date: 2026-04-25
 completed_date: 2026-04-26
-last_session_date: 2026-07-10 (session 15)
+last_session_date: 2026-07-13 (session 17)
 kt_doc: docs/grant-management-kt.html
 planned_enhancement: "Program→Grant Fund Allocation — BUILT session 4 (2026-07-08). As-built contract in §⑭; build log in §⑬ session 4. Migration Add_ProgramFundingSource_AllocatedAmount generated NOT applied. Companion deltas in prompts/programfundallocation.md."
 ---
@@ -1038,9 +1038,9 @@ HiddenChildMenus:
 | ISSUE-9 | MED | FE (export Excel/PDF) | Export dropdown shows CSV / Excel / PDF. CSV is likely supported via existing FE export utility — wire it. Excel + PDF are SERVICE_PLACEHOLDERs (no infra). Show toast "Excel/PDF export coming soon" on those entries. | OPEN |
 | ISSUE-10 | MED | FE (filter "Amount Range") | The Amount Range select is a hard-coded enum (`<50K`, `50K-100K`, etc.). Backend handler must parse this code into min/max bounds inside `GetGrants` query (e.g., `case "<50K": amountFrom=0, amountTo=50000`). Document the codes as constants on both BE and FE so they stay in sync. | OPEN |
 | ISSUE-11 | LOW | BE (NextReportDueDate auto-compute) | `NextReportDueDate` should be auto-derived from the next pending GrantReport (when #63 exists) or from milestones. MVP: store as nullable manual field; when #63 is built, expose a `recomputeNextReportDueDate(grantId)` mutation that walks reports + milestones and updates the cached column. | OPEN |
-| ISSUE-12 | LOW | FE (Quick Stats #5 warning color) | "Next Report Due" Quick Stat turns warning-color (amber) when daysToNextReport < 30 and danger-color (red) when < 7 OR overdue. Implement via conditional class in `<GrantQuickStats>`. | OPEN |
+| ISSUE-12 | LOW | FE (Quick Stats #5 warning color) | "Next Report Due" Quick Stat turns warning-color (amber) when daysToNextReport < 30 and danger-color (red) when < 7 OR overdue. Implement via conditional class in `<GrantQuickStats>`. | CLOSED (session 17) |
 | ISSUE-13 | LOW | FE (Add New Funder link) | Form Section 1 has "+ Add New Funder" link below FunderContactId select. V1: navigate to `/crm/contact/allcontacts?mode=new&type=organization` (Contact #18 partially-completed — verify route is reachable). If Contact form is not navigable yet, render link as disabled with tooltip "Use Contacts module". | OPEN |
-| ISSUE-14 | LOW | FE (currency formatting) | Amount fields should format with thousand-separators on blur and parse-friendly on focus (precedent: Pledge #12, Donation #1). Reuse `<CurrencyInput>` if present in the FE registry. | OPEN |
+| ISSUE-14 | LOW | FE (currency formatting) | Amount fields should format with thousand-separators on blur and parse-friendly on focus (precedent: Pledge #12, Donation #1). Reuse `<CurrencyInput>` if present in the FE registry. | CLOSED (session 17) |
 | ISSUE-15 | LOW | DB | Seed folder typo: `sql-scripts-dyanmic/` (NOT `sql-scripts-dynamic`) — preserve to match precedent. | PRESERVE |
 | ISSUE-16 | LOW | BE | `GrantBudgetLine.IsAdminCategory` defaults false. V1 detection: case-insensitive name match on "Admin" / "Administration" / "Overhead". Future: explicit checkbox in form row (skipped for V1 to keep mockup fidelity). | OPEN |
 
@@ -1081,9 +1081,9 @@ Full UI must be built (buttons, forms, modals, tabs, kanban board). Only the han
 | ISSUE-9 | planning (2026-04-25) | MED | FE | Excel/PDF export = SERVICE_PLACEHOLDER; CSV via existing util | CLOSED (session 15 — no shared CSV export utility exists anywhere in the codebase; entire Export dropdown removed rather than shipping 3 dead toasts) |
 | ISSUE-10 | planning (2026-04-25) | MED | FE | Amount Range select codes must align between BE handler and FE | OPEN |
 | ISSUE-11 | planning (2026-04-25) | LOW | BE | NextReportDueDate auto-compute deferred to post-#63 mutation | OPEN |
-| ISSUE-12 | planning (2026-04-25) | LOW | FE | Quick Stats Next Report Due color-coding (warning < 30d, danger < 7d/overdue) | OPEN |
+| ISSUE-12 | planning (2026-04-25) | LOW | FE | Quick Stats Next Report Due color-coding (warning < 30d, danger < 7d/overdue) | CLOSED (session 17 — already live in grant-detail.tsx `ProgramFundsBar`/`nextReportTone`; verified, no code change needed) |
 | ISSUE-13 | planning (2026-04-25) | LOW | FE | Add New Funder link routes to Contact form (verify reachability) | CLOSED (session 10 — replaced with inline "+ New Funder" quick-create modal) |
-| ISSUE-14 | planning (2026-04-25) | LOW | FE | Currency formatting on blur — reuse CurrencyInput if present | OPEN |
+| ISSUE-14 | planning (2026-04-25) | LOW | FE | Currency formatting on blur — reuse CurrencyInput if present | CLOSED (session 17 — no shared CurrencyInput exists; built grant-local `CurrencyNumberInput` + `CurrencyFormField`, wired to requestedAmount + budgetLines[].budgetedAmount) |
 | ISSUE-15 | planning (2026-04-25) | LOW | DB | Preserve `sql-scripts-dyanmic/` typo | PRESERVE |
 | ISSUE-16 | planning (2026-04-25) | LOW | BE | IsAdminCategory V1 = case-insensitive name match on "Admin"/"Overhead" | CLOSED (session 16 WI-6 — substring match replaced with ordinal EXACT match {"Admin","Administration","Overhead"} in shared `GrantBudgetLineHelper.ResolveAdminFlag`; fixes "Badminton"→admin false-positive + culture-sensitive ToLower. Soft >10% admin-cap warning added: BE computes it (CQRS result) but it is NOT surfaced via GraphQL — the client-side warning in grant-form (session 15 WI-6) is the live surface) |
 | ISSUE-17 | planning (2026-07-08) | HIGH | BE | Program→Grant fund allocation not built — see §⑭. `ProgramFundingSource` has NO `AllocatedAmount` column (needs schema add). Grant cannot see program requests nor allocate. | CLOSED (session 4) |
@@ -1095,20 +1095,7 @@ Full UI must be built (buttons, forms, modals, tabs, kanban board). Only the han
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
 
-> _[12 older session entries trimmed to save tokens — full history in git: `git log -p -- grant.md`. Most recent 5 kept below.]_
-
-### Session 12 — 2026-07-10 — UI (field uniformity + business helper text) — COMPLETED
-
-- **Scope**: Two staff-usability asks on the Grant form. (1) Add business helper text to Reporting Frequency, Financial Reporting Frequency and the other meaningful fields so staff understand what each field means. (2) Make every field render through the app-wide canonical form-field components (dropdown / text / number / month-date / textarea / checkbox) so the form is visually uniform — using **Case #50** (`case-form.tsx`) and **Program** (`program-form.tsx`) as the reference pattern. The grant form previously mixed raw `Label`+`Input`+`register`, standalone `FormSearchableSelect` wrapped in `Controller`, a raw `type=month/date` input, a hand-rolled `<input type=checkbox>`, and two local primitives (`FieldText`, `NarrativeField`).
-- **Files touched**:
-  - BE: None.
-  - FE (edit): `crm/grant/grantlist/grant/grant-form.tsx` — (a) every scalar field converted to the canonical `FormInput` / `FormTextarea` / `FormSearchableSelect` / `FormCheckbox` with `control={control}`, matching Case/Program; (b) `helperText` added to all fields (Funder, Contact Person/Email/Phone/Website, Grant Title, Requested Amount, Currency, Grant Type, Purpose, Start/End Date, Managing Branch, Implementing Branches, all 5 narrative fields, **Reporting Frequency**, **Financial Reporting Frequency**, Audit Required, Assigned Staff, Priority, Submission Deadline, Internal Notes); (c) validation moved off inline `rules`/`register` into a **zod resolver** (`grantSchema`, `mode: onChange`) — this is what the canonical components require (they don't forward `rules`), same as Case/Program. Schema validates only the required scalars (grantTitle, funderContactId, requestedAmount>0, currencyId, grantTypeId, branchId) and `.passthrough()`es everything else, including the nested `budgetLines`/`milestones`/`attachments` arrays driven by their child grids; (d) removed the now-dead `FieldText` / `NarrativeField` primitives and the unused `Input`/`Textarea`/`register`/`errors` references. Requested Amount kept right-aligned mono (amount-field convention). Stage badge, `+ New Funder` modal wiring, buildVars stage-echo, and the Implementing Branches composite picker all left functionally unchanged.
-  - DB / MIGRATION: None.
-- **Verification**: FE `npx tsc --noEmit` (PSS_2.0_Frontend) — **exit 0, clean**. Live form click-through not run.
-- **Deviations from spec**: None functional. Currency moved from the compact amount-adjacent selector into its own labeled grid cell for uniformity (same value/field, clearer label + helper). Required-field enforcement now comes from the zod resolver instead of inline rules — identical block-on-submit behavior, plus inline errors render via each component's helper slot.
-- **Known issues opened**: None.
-- **Known issues closed**: None (usability polish, not a tracked ISSUE). Note: ISSUE-14 (currency thousand-separator formatting on blur) remains OPEN — not in scope here.
-- **Next step**: Live check — open a new grant, confirm every field shows its helper line, required fields block submit with inline errors, and Save/Submit still persist correctly.
+> _[13 older session entries trimmed to save tokens — full history in git: `git log -p -- grant.md`. Most recent 5 kept below.]_
 
 ### Session 13 — 2026-07-10 — UI (child-grid polish + required-asterisk audit) — COMPLETED
 
@@ -1192,6 +1179,24 @@ Full UI must be built (buttons, forms, modals, tabs, kanban board). Only the han
 - **Known issues closed**: ISSUE-7 (non-bug — NumberSequenceGenerator), ISSUE-16 (WI-6), ISSUE-18 (truly closed by WI-1).
 - **⚠ BLOCKER — DB migrations pending (user-owned)**: This screen's financials will throw Npgsql `42703 column does not exist` at runtime until these already-scaffolded migrations in `Base.Infrastructure/Migrations/` are applied (dependency order): `20260707050351_Add_GrantFundReceipt_And_OrganizationBankAccount`, `20260707072729_Add_GrantCommunication`, `20260708065411_Add_AllocatedAmount_To_ProgramFundSource`, `20260708102755_Add_PaymentTrackingField_To_ProgramFundTransaction_And_GrantExpanse`, `20260708133857_Add_PaymentTrackingField_To_BeneficiaryServiceLog`, `20260709160320_Add_ProgramFundingTransactionSource` — **plus the NEW FX migration** the user authors from `Add_Grant_And_ProgramTransaction_FxColumns_MIGRATION.md`. Then apply pending seeds (`GrantFundReceipt-OrganizationBankAccount-sqlscripts.sql`, GrantCommunication templates). Run `dotnet ef database update`.
 - **Next step**: user applies the migrations above → BE build + live E2E per the plan's Verification section → then proceed to Grant Report Generation planning (`/plan-screens`, new `screen_type: REPORT` / DOCUMENT).
+
+### Session 17 — 2026-07-13 — UI (quick FE polish batch: currency formatting + report-due color-coding) — COMPLETED
+
+> `/continue-screen #62` from HANDOFF suggested-order item 3 — the two smallest, self-contained, FE-only, no-BE/no-migration polish items. Frontend-developer, Sonnet.
+
+- **Scope**: ISSUE-14 (currency thousand-separator formatting on blur) + ISSUE-12 (Next Report Due color-coding) — both LOW severity, FE-only.
+- **ISSUE-14 (UI) — currency thousand-separator on blur**: A native `<input type="number">` can't render grouping separators (the browser strips non-numeric chars). Built a **grant-local** `CurrencyNumberInput` — a `type="text"` / `inputMode="decimal"` field that shows grouped `1,250,000.50` when blurred and edits as raw digits while focused, emitting `number | null` (matching the `z.number()` schemas the call-sites already use). No shared `<CurrencyInput>` atom exists, so this was purpose-built rather than modifying the shared `FormInput`. Also shipped `CurrencyFormField<T>` — a RHF-connected labeled wrapper mirroring the shared `FormInput` markup (FormItem > FormLabel(+required *) > FormControl > helper/error). Wired to **requestedAmount** (via `CurrencyFormField` in `grant-form.tsx`) and **budgetLines[].budgetedAmount** (via `<Controller>` + `CurrencyNumberInput` in `budget-lines-grid.tsx`, `min={0}`).
+- **ISSUE-12 (UI) — Next Report Due color-coding**: Verified **already live** in `grant-detail.tsx` (`ProgramFundsBar` / `nextReportTone` logic tones the Next Report Due chip by proximity/overdue). No code change needed — CLOSED after confirming the implementation is present and correct.
+- **Files touched**:
+  - BE: None.
+  - FE (new): `crm/grant/grantlist/grant/currency-number-input.tsx` — `CurrencyNumberInput` (forwardRef, FormControl/Slot-compatible) + `CurrencyFormField<T>` wrapper + `formatGrouped`/`parseAmount` helpers.
+  - FE (edit): `crm/grant/grantlist/grant/grant-form.tsx` (requestedAmount → `CurrencyFormField`); `crm/grant/grantlist/grant/budget-lines-grid.tsx` (budgetedAmount cell → `CurrencyNumberInput` in `<Controller>`).
+  - DB / MIGRATION: None.
+- **Verification**: Filtered `npx tsc --noEmit` on the three grant files — **clean** (two TS2322 native-vs-CVA-variant prop conflicts on `size` then `color` fixed by widening the pass-through `Omit<...>` union to exclude both). Live click-through not run.
+- **Deviations from spec**: None. `CurrencyNumberInput` is grant-local by design (no shared atom touched).
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-12, ISSUE-14.
+- **Next step**: None for this item. Remaining OPEN issues (ISSUE-3/4/5/6/8/10/11) are intentionally-deferred larger efforts.
 
 ---
 

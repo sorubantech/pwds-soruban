@@ -10,7 +10,7 @@ complexity: High
 new_module: NO
 planned_date: 2026-05-12
 completed_date: 2026-05-13
-last_session_date: 2026-07-10
+last_session_date: 2026-07-13
 ---
 
 ## Tasks
@@ -1336,24 +1336,7 @@ The drawer (Sheet) is an *addition* to the mockup — mirror of P2PCampaign #15 
 
 ### § Sessions
 
-> _[9 older session entries trimmed to save tokens — full history in git: `git log -p -- crowdfunding.md`. Most recent 5 kept below.]_
-
-### Session 10 — 2026-07-10 — FIX (PM audit money-truth batch) — COMPLETED (BE build clean)
-
-- **Scope**: First fix pass against the 2026-07-10 PM audit register (`bug-reports/crowdfunding-audit-2026-07-10.md`). Money-truth batch — three self-contained, no-product-decision BE fixes.
-- **Fixes**:
-  - **CF-B2** — refunded donations no longer inflate Raised. All 6 aggregations (`GetAllCrowdFundList`, `GetCrowdFundById`, `GetCrowdFundBySlug`, `GetCrowdFundStats`, `GetCrowdFundSummary`, `GetCrowdFundPublicStats`) now sum `NetAmount - (RefundedAmount ?? 0)` instead of raw `NetAmount`; `GetCrowdFundStats.LargestDonation` likewise. Correct for **partial AND full** refunds (the refund flow flips `PaymentStatusId=REFUND` and accumulates `RefundedAmount` for both). Goal-Met math (`GetCrowdFundSummary.inclusiveGoalMetExtras`) now keys on net-of-refund Raised automatically.
-  - **CF-M7** — `GetCrowdFundSummary` org-level `totalDonors` changed from `Sum(perCampaignDistinctCount)` (double-counted a donor across N campaigns) to a single `Distinct(ContactId).Count()` over all non-deleted crowdfund donations for the company.
-  - **CF-H5** — `ResolveOnlineDonationStaging` (screen #175 file, serves #16/#173 roll-up): the composite `CreateGlobalDonationWithChildren` commits its own inner transaction, so a failure in any post-create step (page/junction backfill, resolution writeback) orphaned a live, counted GlobalDonation and let a retry mint a duplicate. Wrapped the post-create region in a compensating `try/catch` that soft-deletes the orphaned donation (`IsDeleted=true` via `ExecuteUpdateAsync`) and rethrows, so no rollup counts it and staff can retry cleanly. Not a true single-transaction (the inner command's committed execution-strategy prevents nesting) — a compensating-write saga, which is the correct self-contained pattern here.
-- **Files touched**:
-  - BE: `CrowdFunds/Queries/{GetAllCrowdFundList, GetCrowdFundById, GetCrowdFundBySlug, GetCrowdFundStats, GetCrowdFundSummary, GetCrowdFundPublicStats}.cs`; `OnlineDonationInbox/Commands/ResolveOnlineDonationStaging.cs`
-  - FE / DB: none
-- **Deviations from spec**: None. All three are correctness fixes within existing behavior.
-- **Deferred (same batch, intentionally NOT done this pass)**: **CF-H4** (multi-currency) — `ExchangeRate` is stubbed to `1m` at promotion so `BaseCurrencyAmount == NetAmount` today; switching aggregation columns now is a no-op. CF-H4 = wire real FX at promotion (shared ODP/P2P pipeline, `IFxRateService`, null-on-miss policy) **+** switch aggregations to `BaseCurrencyAmount` net-of-refund-in-base, done together and tested with a real cross-currency donation. Refund subtraction stays donor-currency until then; the CF-B2 expression converts cleanly to base once FX lands.
-- **Verification**: `dotnet build Base.Application.csproj` → Build succeeded, 0 errors (564 pre-existing warnings). Runtime E2E (donate → refund → confirm grid/thermometer drop; multi-campaign donor → org donor count = 1; forced post-create failure → orphan soft-deleted) is user-side.
-- **Known issues opened**: None (audit register already tracks all).
-- **Known issues closed**: CF-B2, CF-M7, CF-H5 (marked ✅ in the audit register Fix Log).
-- **Next step**: Next audit batch per user priority — goal-enforcement (CF-B3), anti-abuse (CF-B4, ⚠ shared wiring across P2P/ODP), donor-facing FE (CF-H7/8/9/10), or CF-H4 FX pass.
+> _[10 older session entries trimmed to save tokens — full history in git: `git log -p -- crowdfunding.md`. Most recent 5 kept below.]_
 
 ### Session 11 — 2026-07-10 — FIX (PM audit goal-enforcement batch) — COMPLETED (BE build clean)
 
@@ -1419,6 +1402,19 @@ The drawer (Sheet) is an *addition* to the mockup — mirror of P2PCampaign #15 
 - **Known issues opened**: None.
 - **Known issues closed**: CF-H11, CF-H12 (both ✅ in the audit register); CF-M10 delete-affordance sub-item partially closed.
 - **Next step**: Remaining Highs are CF-H1 (Razorpay recurring subscription created at Initiate — #173 BE recurring-flow) and CF-H4 (multi-currency FX — deferred pending a real cross-currency donation test). CF-B4 shared-wiring remainder (rate-limit binding / reCAPTCHA / real CSRF / ODP idempotency) and CF-B1 deferred-promotion product decision still need user go-ahead.
+
+### Session 17 — 2026-07-13 — FIX (CF-H1 — Razorpay recurring subscription orphaning) — COMPLETED (BE build clean)
+
+- **Scope**: **CF-H1** — a Razorpay recurring subscription is necessarily created at *Initiate* (the subscription_id must exist before the FE checkout modal opens), so an abandoned tab left a live, auto-charging subscription with **no local record** to cancel or track. Fixed as a cross-surface set across all three public-donation Initiate handlers (Crowdfund #16/#173, P2P #170, ODP #10).
+- **Fix**: Persist the gateway subscription id onto the PENDING staging row at Initiate. Added `GatewayTransactionId = razorpaySubscriptionResult?.SubscriptionId` inside the `new OnlineDonationStaging { … }` initializer (after `PaymentMethodId`) in each of the three handlers. An abandoned tab now leaves a trackable/cancellable PENDING `OnlineDonationStaging` row carrying the subscription id; the happy-path Confirm overwrites the same column with the payment id. This is the **intended design** — `ResolveOnlineDonationStaging` already reads it back as `GatewaySubscriptionId` when building the `RecurringDonationSchedule`.
+- **Files touched**:
+  - BE: `CrowdFunds/Commands/InitiateCrowdFundDonation.cs`, `Public/PublicMutations/InitiateP2PDonation.cs`, `OnlineDonationPages/PublicMutations/InitiateOnlineDonation.cs` (one line + comment each)
+  - FE / DB: none
+- **Deviations from spec**: The literal ticket fix ("create plan/subscription only after Confirm succeeds") is architecturally infeasible for Razorpay — the subscription_id is required before checkout opens. Realized instead via the existing nullable `OnlineDonationStaging.GatewayTransactionId` column rather than a half-formed PENDING `RecurringDonationSchedule` row, because `RECURRINGSCHEDULESTATUS` master data has **no PENDING value** and `RecurringDonationSchedule.PaymentMethodTokenId` is a **non-nullable** FK — either would force a schema change + seed addition (both user-owned). **No schema change.**
+- **Verification**: `dotnet build Base.Application.csproj` → 0 errors, 548 pre-existing warnings (none introduced). Runtime E2E (start a recurring donation, abandon the tab, confirm the PENDING staging row carries the subscription id and is cancellable from the inbox) is user-side.
+- **Known issues opened**: None.
+- **Known issues closed**: CF-H1 (mark ✅ in the audit register).
+- **Next step**: Remaining #16 High is CF-H4 (multi-currency FX — deferred pending a real cross-currency donation test). CF-B4 shared-wiring remainder and CF-B1 deferred-promotion product decision still need user go-ahead.
 
 ### § Known Issues
 
