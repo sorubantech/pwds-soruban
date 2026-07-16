@@ -2,7 +2,7 @@
 screen: OnlineDonationPage
 registry_id: 10
 module: Setting (Public Pages)
-status: NEEDS_FIX
+status: COMPLETED
 scope: FULL
 screen_type: EXTERNAL_PAGE
 external_page_subtype: DONATION_PAGE
@@ -10,8 +10,8 @@ complexity: High
 new_module: NO
 planned_date: 2026-05-08
 completed_date: 2026-05-08
-last_session_date: 2026-07-10
-last_session: 41
+last_session_date: 2026-07-16
+last_session: 55
 ---
 
 ## Tasks
@@ -172,6 +172,73 @@ Business: This is the canonical **public-facing donation page** an NGO publishes
 | OrderBy | int | YES | — | Display order in donor's purpose dropdown |
 
 Composite unique index on `(OnlineDonationPageId, DonationPurposeId)`.
+
+### Generic Config Table — `fund."OnlineDonationPageSettings"` (STANDARD-template landing content)
+
+> **Added 2026-07-16 (spec revision).** The STANDARD (Aurora) template renders a full landing page — hero benefit cards, a "Why Your Donation Matters" grid, impact stats, mission copy, and a rich footer (contact + socials + useful links). **None of these are page columns.** Instead of adding ~10 nullable columns × future config sections, they live in ONE generic key-value table, modeled on `sett.SettingGroups` + `sett.OrganizationSettings` (the tenant-settings EAV pattern) but **scoped to the page**.
+>
+> **Why not reuse `sett.OrganizationSettings` directly?** That table is keyed by `CompanyId` (tenant-wide) only. A tenant runs **multiple** donation pages, and landing content is per-page (like `PageTitle`/`LogoUrl`). We keep the *same shape and `ParamDataType`-driven idea*, but add the `OnlineDonationPageId` scope dimension.
+>
+> **Why not a jsonb column on the page?** A single blob works but is page-specific and not row-queryable. This generic table is reusable by **any future external-page config section** — add rows, never new tables/columns. That is the stated design goal.
+
+| Field | C# Type | MaxLen | Required | FK Target | Notes |
+|-------|---------|--------|----------|-----------|-------|
+| OnlineDonationPageSettingId | int | — | PK | — | Identity |
+| OnlineDonationPageId | int | — | YES | fund.OnlineDonationPages | **Scope dimension.** Cascade-delete on parent |
+| CompanyId | int | — | YES | corg.Companies | Denormalized tenant scope — fast security filter + defense-in-depth (mirrors `OrganizationSetting.CompanyId`) |
+| SectionCode | string | 40 | YES | — | UPPER. Groups params like `SettingGroup.SettingGroupCode`. Catalog below |
+| ParamCode | string | 60 | YES | — | UPPER. Unique per page. e.g. `BENEFIT_CARDS`, `MISSION_BODY` |
+| ParamName | string | 120 | NO | — | Human label for the admin editor row |
+| ParamDataType | string | 20 | YES | — | `string` \| `text` \| `int` \| `decimal` \| `bool` \| `url` \| `color` \| `json`. Drives the admin input widget AND how the FE parses `ParamValue`. This is the "data-type-based generic store" the design calls for |
+| ParamValue | string (text/unbounded) | — | NO | — | The value. For `json` type, a serialized array/object — repeating structured lists (cards/stats/links) live here as ONE row each. NULL = renderer uses its built-in default |
+| OrderBy | int | — | YES | — | Display order within the section |
+
+**Indexes**:
+- Unique filtered index on `(OnlineDonationPageId, ParamCode)` WHERE `IsDeleted = FALSE`.
+- Non-unique index on `(OnlineDonationPageId, SectionCode, OrderBy)` for ordered section reads.
+
+**Section / Param catalog** (maps the reference landing image → rows; all `json` values are arrays of small objects):
+
+| SectionCode | ParamCode | DataType | Shape / Default meaning |
+|-------------|-----------|----------|-------------------------|
+| `HERO_BENEFITS` | `BENEFIT_CARDS` | json | `[{icon,title,desc}]` ×3 — the three benefit cards under the hero |
+| `WHY_DONATE` | `WHY_DONATE_TITLE` | string | Section heading (default "Why Your Donation Matters") |
+| `WHY_DONATE` | `WHY_DONATE_ITEMS` | json | `[{icon,title,desc}]` ×4 — the 4-up reasons grid |
+| `IMPACT_STATS` | `IMPACT_STATS` | json | `[{value,label}]` ×N — the impact-number strip |
+| `MISSION` | `MISSION_TITLE` | string | e.g. "Together We Can Change Lives" |
+| `MISSION` | `MISSION_BODY` | text | Mission paragraph |
+| `FOOTER` | `FOOTER_CONTACT` | json | `{address,phone,email}` |
+| `FOOTER` | `FOOTER_SOCIALS` | json | `[{platform,url}]` (facebook/x/instagram/youtube…) |
+| `FOOTER` | `FOOTER_LINKS` | json | `[{label,url}]` — useful links |
+
+**Seeding**: on page **Create**, seed the default rows above (idempotent `NOT EXISTS` per `(OnlineDonationPageId, ParamCode)`) so a brand-new STANDARD page renders the full layout out-of-the-box. Admin edits only overwrite `ParamValue`. Renderer treats a missing/NULL row as "use the template's built-in default" — so old pages created before this revision still render (backfill optional, not required).
+
+**Relocated presentation/cosmetic params (ISSUE-41 + ISSUE-42, session 53–54).** The 18 cosmetic/media/SEO columns that used to live on `fund.OnlineDonationPages` now live as rows here (storage-only, **wire-stable**: the DTOs still expose the typed fields — `PresentationOnlineDonationPageSettings.Assemble(rows)` re-hydrates them on read, so FE/templates/dispatcher/GraphQL are untouched). Reset-Branding + Publish-validation read from the assembled `pres.*`. Catalog:
+
+| SectionCode | ParamCode | DataType | OrderBy | Source column (dropped) |
+|-------------|-----------|----------|---------|-------------------------|
+| `THEME` | `PRIMARY_COLOR` | color | 1 | PrimaryColorHex (default `#0e7490`) |
+| `THEME` | `DONATE_BUTTON_TEXT` | string | 2 | ButtonText (default "Donate Now") |
+| `THEME` | `PAGE_LAYOUT` | string | 3 | PageLayout (default "side-by-side") |
+| `THEME` | `CUSTOM_CSS` | text | 4 | CustomCssOverride |
+| `IFRAME` | `IFRAME_SHOW_HEADER` | bool | 1 | IframeShowHeader |
+| `IFRAME` | `IFRAME_SHOW_FOOTER` | bool | 2 | IframeShowFooter |
+| `THANKYOU` | `THANKYOU_MESSAGE` | text | 1 | ThankYouMessage |
+| `THANKYOU` | `THANKYOU_REDIRECT_URL` | url | 2 | ThankYouRedirectUrl |
+| `THANKYOU` | `TAX_RECEIPT_NOTE` | text | 3 | TaxReceiptNote |
+| `SOCIAL` | `SHOW_DONOR_COUNT` | bool | 1 | ShowDonorCount |
+| `SOCIAL` | `SHOW_SOCIAL_SHARE` | bool | 2 | ShowSocialShare |
+| `SEO` | `OG_TITLE` | string | 1 | OgTitle |
+| `SEO` | `OG_DESCRIPTION` | text | 2 | OgDescription |
+| `SEO` | `OG_IMAGE_URL` | url | 3 | OgImageUrl |
+| `SEO` | `ROBOTS_INDEXABLE` | bool | 4 | RobotsIndexable |
+| `MEDIA` | `LOGO_URL` | url | 1 | LogoUrl |
+| `MEDIA` | `HERO_IMAGE_URL` | url | 2 | HeroImageUrl |
+| `MEDIA` | `CAROUSEL_SLIDES` | json | 3 | CarouselSlidesJson (truncated to first 5 by OrderBy on assemble) |
+
+> **KEPT typed** (form config, not template content): `AmountChipsJson`, `AvailableFrequenciesJson`, `AllowCustomAmount` — payment-form behavior. Also structural/lifecycle/FK/aggregation columns stay typed. `SEO`/`MEDIA` feed the SSR `<head>`/OG path → they migrate + verify **LAST**. ParamCode constants live in `Helpers.PresentationOnlineDonationPageSettings`.
+
+> **DO NOT** add benefit/why/impact/footer columns to `OnlineDonationPages`, and **DO NOT** create a separate table per section. One generic `OnlineDonationPageSettings` table serves every current and future landing-content section.
 
 ### Donation Linkage (DO NOT add donation columns here — link from existing entity)
 
@@ -499,6 +566,19 @@ For DONATION_PAGE — TWO render trees:
 | 7a | Page Branding (NAV mode only) | `ph:palette` | autosave | Logo upload + Carousel slides config (max 5; image OR YouTube embed; reorderable) + Primary color picker + Button text + Page Layout select (centered/side-by-side/full-width) + Custom CSS textarea |
 | 7b | iFrame Configuration (IFRAME mode only) | `ph:code` | autosave + read-only embed | Accent color + Button text + Show form header toggle + Show powered-by footer toggle + Embed Code (read-only with copy) + JS Widget snippet (read-only with copy) |
 | 8 | Thank You & Advanced | `ph:gear` | autosave | Thank-you message textarea + Redirect URL + Goal Amount + End Date + Donor count toggle + Social share toggle + Tax receipt note textarea |
+| 9 | Landing Content (NAV / STANDARD only) | `ph:layout` | autosave (diff-only upsert) | **Added 2026-07-16.** Edits the generic `OnlineDonationPageSettings` rows that back the STANDARD (Aurora) landing sections. One collapsible sub-panel per `SectionCode` — see table below. Repeating lists (benefit cards, why-donate items, impact stats, socials, useful links) use a **row-repeater** editor (add/remove/reorder), each persisted as a single `json`-typed row. Scalars (mission title/body, section headings) persist as `string`/`text` rows. Hidden when ImplementationType = IFRAME (widget has no landing sections). Empty a row → renderer falls back to the template default |
+
+**Card 9 — Landing Content sub-panels** (each maps to `OnlineDonationPageSettings` rows from §②'s catalog; the admin widget is chosen by `ParamDataType`):
+
+| Sub-panel (SectionCode) | Editor widget | Persists as |
+|-------------------------|---------------|-------------|
+| Hero Benefits (`HERO_BENEFITS`) | Row-repeater ×3: icon-picker + title + short desc | `BENEFIT_CARDS` (json) |
+| Why Donate (`WHY_DONATE`) | Heading text field + row-repeater ×4: icon + title + desc | `WHY_DONATE_TITLE` (string) + `WHY_DONATE_ITEMS` (json) |
+| Impact Stats (`IMPACT_STATS`) | Row-repeater ×N: big value + label | `IMPACT_STATS` (json) |
+| Mission (`MISSION`) | Title field + body textarea | `MISSION_TITLE` (string) + `MISSION_BODY` (text) |
+| Footer (`FOOTER`) | Contact group (address/phone/email) + socials repeater (platform-picker + url) + useful-links repeater (label + url) | `FOOTER_CONTACT` (json) + `FOOTER_SOCIALS` (json) + `FOOTER_LINKS` (json) |
+
+> Icon-picker values are `@iconify` Phosphor names (e.g. `ph:heart`, `ph:hand-heart`, `ph:users-three`); the renderer resolves them via `<Icon icon={...} />`. Store the string name, never markup.
 
 **Implementation Type Switcher** (between Status Bar and settings cards):
 
@@ -580,6 +660,35 @@ For DONATION_PAGE — TWO render trees:
 | `centered` | Hero on top, form-only column below (info section pushed below form) |
 | `side-by-side` | Default mockup layout — info-left + form-right two-column |
 | `full-width` | Hero full-bleed; form floats as overlay card centered on hero |
+
+**STANDARD (Aurora) landing sections — data-driven from `landingContent` (added 2026-07-16)**:
+
+The INFO COLUMN and page chrome sketched above are **no longer hard-coded**. The STANDARD template renders these sections from the `publicData.landingContent` projection (§⑩), which the BE assembles from the page's `OnlineDonationPageSettings` rows. Each section renders ONLY if its setting is present and non-empty; otherwise the template's built-in default renders (so pre-revision pages still look complete). Order top-to-bottom:
+
+| Section | Source (landingContent key) | Fallback when null/empty |
+|---------|-----------------------------|--------------------------|
+| Hero benefit cards (3-up under hero) | `heroBenefits[]` `{icon,title,desc}` | 3 generic trust cards |
+| "Why Your Donation Matters" (heading + 4-up grid) | `whyDonateTitle` + `whyDonate[]` `{icon,title,desc}` | Section hidden |
+| Impact stats strip | `impactStats[]` `{value,label}` | Uses live aggregates (totalRaised/donorCount) only |
+| Mission block (title + body) | `missionTitle` + `missionBody` | Section hidden |
+| Footer (contact + socials + useful links) | `footerContact{address,phone,email}` + `footerSocials[]` + `footerLinks[]` | Minimal `© {orgName}` footer |
+
+- Everything is **DATA (dynamic, tenant-editable); the Aurora layout/spacing/section order is STATIC** — the design principle for this revision. The template never invents copy beyond the coded fallbacks.
+- The FORM COLUMN, hero carousel, goal strip, amount chips, recurring, donor fields, payment methods are unchanged (existing page columns / junction), NOT part of `landingContent`.
+- Icons are `@iconify` Phosphor names resolved at render (`<Icon icon={c.icon} />`). URLs in footer/social/links are rendered as `rel="noopener noreferrer"` external anchors.
+
+**Template renderer registry — `pageTypeCode` → template component (ISSUE-42, session 54)**:
+
+The public renderer `donation-page.tsx` is a **dispatcher** (already built — do NOT rebuild). It resolves `PageTypeId` → MasterData `DataValue` (`pageTypeCode`) and switches to the matching template in `public/onlinedonationpage/templates/` (two parallel switches: page view + thank-you view). Unknown/missing codes degrade to Aurora (STANDARD). New template variant = **1 MasterData row (`TypeCode=ONLINEDONATIONPAGETYPE`)** + settings catalog rows (MEDIA/§②) + **ONE renderer component** — no schema change. Media/content is fed from the assembled EAV channel (`carouselSlides`, `heroImageUrl`, `logoUrl`), never from typed columns.
+
+| `pageTypeCode` (DataValue) | Page template | Thank-you template |
+|----------------------------|---------------|--------------------|
+| `STANDARD` (+ unknown fallback) | `template-aurora.tsx` | `thank-you-aurora.tsx` |
+| `IMAGE` / `VIDEO` / `CAROUSEL` / image-position variants | existing per-variant templates | matching thank-you variant |
+| `CAROUSEL_VIDEO` **(new)** | `template-gallery-video.tsx` (image carousel + video hero panel) | `thank-you-gallery-video.tsx` |
+| `CAROUSEL_IMAGE` **(new)** | `template-gallery-image.tsx` (carousel + full-bleed hero image) | `thank-you-gallery-image.tsx` |
+
+> Combo templates reuse shared primitives (DonateFormSection, GoalProgressStrip, ClosedBanner, CustomCssInjector, FineFooter, SuccessCheck, SocialShareButtons) unmodified. Carousel filters `carouselSlides` to `type==="image"`; the video panel takes the first `type==="video"` slide; graceful fallbacks when a media channel is empty.
 
 **Public-route behavior**:
 - SSR with `revalidate: 60` (page metadata caches 60s; OG tags pre-rendered)
@@ -733,16 +842,20 @@ For DONATION_PAGE — TWO render trees:
 | 20 | Mutations endpoint | `Pss2.0_Backend/.../Base.API/EndPoints/DonationModels/Mutations/OnlineDonationPageMutations.cs` |
 | 21 | Queries endpoint (admin) | `…/EndPoints/DonationModels/Queries/OnlineDonationPageQueries.cs` |
 | 22 | Public endpoint | `…/EndPoints/DonationModels/Public/OnlineDonationPagePublicQueries.cs` (anonymous-allowed, rate-limited, csrf-validated) |
+| 23 | **Settings Entity (generic)** | `Pss2.0_Backend/.../Base.Domain/Models/DonationModels/OnlineDonationPageSetting.cs` — added 2026-07-16. Page-scoped EAV row (§②) |
+| 24 | **Settings EF Config** | `…/Data/Configurations/DonationConfigurations/OnlineDonationPageSettingConfiguration.cs` — filtered unique `(OnlineDonationPageId, ParamCode)` + `(OnlineDonationPageId, SectionCode, OrderBy)` index |
+| 25 | **SaveLandingContent Command** | `…/OnlineDonationPages/SaveLandingContentCommand/SaveOnlineDonationPageLandingContent.cs` — diff-only upsert of settings rows; JSON-parse validation for `json` types |
+| 26 | **DefaultLandingContent seeder helper** | `…/OnlineDonationPages/Helpers/DefaultOnlineDonationPageSettings.cs` — the STANDARD-template default rows seeded on Create (idempotent `NOT EXISTS`). Also assembles `LandingContentDto` from rows (reused by GetById + GetBySlug) |
 
 ### Backend Wiring Updates (5)
 
 | # | File to Modify | What to Add |
 |---|---------------|-------------|
-| 1 | `IDonationDbContext.cs` | `DbSet<OnlineDonationPage>` + `DbSet<OnlineDonationPagePurpose>` |
-| 2 | `DonationDbContext.cs` | DbSet entries |
-| 3 | `Base.Application/Extensions/DecoratorProperties.cs` | `DecoratorDonationModules.OnlineDonationPage` + `.OnlineDonationPagePurpose` |
+| 1 | `IDonationDbContext.cs` | `DbSet<OnlineDonationPage>` + `DbSet<OnlineDonationPagePurpose>` + `DbSet<OnlineDonationPageSetting>` |
+| 2 | `DonationDbContext.cs` | DbSet entries (incl. `OnlineDonationPageSettings`) |
+| 3 | `Base.Application/Extensions/DecoratorProperties.cs` | `DecoratorDonationModules.OnlineDonationPage` + `.OnlineDonationPagePurpose` + `.OnlineDonationPageSetting` |
 | 4 | `DonationMappings.cs` | Mapster mapping config (parent + junction; jsonb properties via `IgnoreUnmappedMember` or explicit `Map`) |
-| 5 | EF Migration | `Add_OnlineDonationPage_And_Junction_Plus_FK_On_GlobalDonations` — creates both tables + filtered unique index on (CompanyId, LOWER(Slug)) + adds `OnlineDonationPageId int NULL FK` to `fund.GlobalDonations` |
+| 5 | EF Migration | `Add_OnlineDonationPage_And_Junction_Plus_FK_On_GlobalDonations` — creates both tables + filtered unique index on (CompanyId, LOWER(Slug)) + adds `OnlineDonationPageId int NULL FK` to `fund.GlobalDonations`. **Second migration** `Add_OnlineDonationPageSettings` (added 2026-07-16) — creates `fund.OnlineDonationPageSettings` + its two indexes. **SPEC ONLY — user authors & runs both migrations** ([[feedback-migrations-strictly-user-owned]]) |
 
 ### Frontend Files (NEW — 26)
 
@@ -778,6 +891,12 @@ For DONATION_PAGE — TWO render trees:
 | 28 | Route Page (public NAV) | `src/app/[lang]/(public)/p/[slug]/page.tsx` (SSR with generateMetadata) |
 | 29 | Route Page (public IFRAME) | `src/app/[lang]/(public)/embed/[slug]/page.tsx` (CSR) |
 | 30 | JS widget snippet | `public/widget.js` (small loader appending iframe to host's `#hf-donate-widget`) |
+| 31 | **Settings Card 9 (Landing Content)** | `…/onlinedonationpage/sections/landing-content-section.tsx` — added 2026-07-16. 5 collapsible sub-panels + row-repeaters (§⑥ Card 9); reads/writes `landingContent`; NAV-mode only |
+| 32 | **Row-repeater primitive** | `…/onlinedonationpage/components/landing-repeater.tsx` — add/remove/reorder rows for benefit cards / why-donate / stats / socials / links; each maps to one json setting |
+| 33 | **Aurora template upgrade** | `…/public/onlinedonationpage/templates/template-aurora.tsx` — **MODIFY (not new).** STANDARD template renders hero-benefits / why-donate / impact-stats / mission / rich-footer from `publicData.landingContent` with coded fallbacks (§⑥ A.2). Layout STATIC; content DYNAMIC |
+| 34 | **Aurora landing sections** | `…/public/onlinedonationpage/templates/aurora/{HeroBenefits,WhyDonate,ImpactStats,MissionBlock,RichFooter}.tsx` — small presentational sub-components consumed by template-aurora; each takes its slice of `landingContent` + `accent` |
+
+> DTO file (#1) also gains `LandingContentDto` + `landingContent` on ResponseDto/PublicDto; admin GQL query/mutation (#2/#4) add the `landingContent` selection + `saveOnlineDonationPageLandingContent`; public GQL query (#3) adds the `landingContent` selection.
 
 ### Frontend Wiring Updates (5)
 
@@ -853,6 +972,9 @@ GridCode: ONLINEDONATIONPAGE
 | `closeOnlineDonationPage` | `(onlineDonationPageId)` | `OnlineDonationPageResponse` |
 | `archiveOnlineDonationPage` | `(onlineDonationPageId)` | `int` |
 | `resetOnlineDonationPageBranding` | `(onlineDonationPageId)` | `int` |
+| `saveOnlineDonationPageLandingContent` | `(onlineDonationPageId, sections: [{ sectionCode, paramCode, paramName?, paramDataType, paramValue, orderBy }])` | `int` — **added 2026-07-16.** Diff-only upsert into `OnlineDonationPageSettings` (insert new `ParamCode`, update changed `ParamValue`, soft-delete rows the payload drops). Tenant/page ownership enforced server-side; `paramValue` for `json` types validated as parseable JSON before write |
+
+> The generic landing-content rows can also ride inside `updateOnlineDonationPage` if the build agent prefers one save path — but a **dedicated diff-only mutation is recommended** (matches the MATRIX_CONFIG diff-only convention and keeps the row set queryable). Do NOT put landing content on the page's jsonb columns.
 
 ### Public Queries (anonymous)
 
@@ -869,6 +991,25 @@ GridCode: ONLINEDONATIONPAGE
 | `confirmOnlineDonation` | `ConfirmOnlineDonationRequest` (paymentSessionId, gatewayCallbackPayload) | `OnlineDonationConfirmedResponse` (success, receiptUrl, thankYouMessage, redirectUrl?) |
 
 ### Response DTO Field Lists
+
+**LandingContentDto** (shared by admin Response + public — added 2026-07-16):
+```ts
+// Server-assembled from OnlineDonationPageSettings rows (§②). Each field is the
+// PARSED value of its ParamCode row: `json` rows → arrays/objects, scalars → primitives.
+// Any field null/absent when its setting row is missing → FE renderer uses its coded fallback.
+// The admin editor (Card 9) round-trips the SAME shape it reads here.
+interface LandingContentDto {
+  heroBenefits: { icon: string; title: string; desc: string }[];   // HERO_BENEFITS
+  whyDonateTitle: string | null;                                    // WHY_DONATE_TITLE
+  whyDonate: { icon: string; title: string; desc: string }[];       // WHY_DONATE_ITEMS
+  impactStats: { value: string; label: string }[];                  // IMPACT_STATS
+  missionTitle: string | null;                                      // MISSION_TITLE
+  missionBody: string | null;                                       // MISSION_BODY
+  footerContact: { address: string | null; phone: string | null; email: string | null } | null;  // FOOTER_CONTACT
+  footerSocials: { platform: string; url: string }[];               // FOOTER_SOCIALS
+  footerLinks: { label: string; url: string }[];                    // FOOTER_LINKS
+}
+```
 
 **OnlineDonationPageResponseDto** (admin):
 ```ts
@@ -919,6 +1060,7 @@ GridCode: ONLINEDONATIONPAGE
   ogImageUrl: string | null;
   robotsIndexable: boolean;
   isActive: boolean;
+  landingContent: LandingContentDto;   // added 2026-07-16 — STANDARD-template sections (Card 9 editor round-trips this)
 }
 ```
 
@@ -977,6 +1119,7 @@ GridCode: ONLINEDONATIONPAGE
   ogDescription: string;
   ogImageUrl: string | null;
   csrfToken: string;               // issued on render
+  landingContent: LandingContentDto;   // added 2026-07-16 — only STANDARD template consumes; other variants ignore
 }
 ```
 
@@ -1087,7 +1230,7 @@ Full UI must be built (10 settings cards, Implementation Type switcher, 4-varian
 |----|--------|----------|------|-------------|--------|
 | ISSUE-1 | planning 2026-05-08 | HIGH | Hosting | Tenant resolution on public route — `/p/{slug}` with same slug across 2 tenants needs tenant identification (subdomain `{tenant}.donate.app`, custom-domain map, OR `tenantSlug` querystring). Decision deferred; MVP assumes one-tenant-per-deployment domain. | OPEN |
 | ISSUE-2 | planning 2026-05-08 | HIGH | Payment | SERVICE_PLACEHOLDER for gateway tokenization — InitiateDonation handler returns mock; real Stripe/PayPal/Razorpay integration depends on CompanyPaymentGateway screen shipping gateway-connect flow. | PARTIAL (session 33 — Braintree + Razorpay + PayU India one-time card donations end-to-end; PayU SI recurring registers mandate only [ISSUE-36]; Stripe / PayPal / PayU Global still deferred) |
-| ISSUE-3 | planning 2026-05-08 | HIGH | Email | SERVICE_PLACEHOLDER for receipt email — handler logs but doesn't send (no email infra). Receipt PDF generation also pending (separate service). | OPEN |
+| ISSUE-3 | planning 2026-05-08 | HIGH | Email | SERVICE_PLACEHOLDER for receipt email — handler logs but doesn't send (no email infra). Receipt PDF generation also pending (separate service). | CLOSED (session 55 — `DonationReceiptService` renders an A4 print-CSS tax receipt via `IPdfService.GeneratePdfBytesAsync` (reuses `GlobalDonation.ReceiptNumber`); `ConfirmOnlineDonation.cs` now attaches it to the confirmation email via `SendComposedEmailForCompanyAsync` (3 placeholder logs removed); anonymous token-gated `GET api/ReceiptDownload/{sessionToken}` (rate-limited, NotFound-on-miss) + FE `DownloadReceiptButton` on all 9 thank-you templates. New OrgSettings ParamCode `TAX_EXEMPTION_NUMBER` (EAV seed, user-owned). User compiles + applies seed. **Session 56 jurisdiction-safety amendment**: PSS is a GLOBAL product, so the receipt must NOT assert India 80G on every tenant. Tax block is now self-gating — renders ONLY when the tenant explicitly enters a real `TAX_EXEMPTION_NUMBER`; removed the `Company.TaxId` fallback (a registration number ≠ an exemption certificate); blanked the `TAX_SECTION` new-tenant default (`80G`→`""`). India tenants set number + 80G and still get the full statement; everyone else gets a clean receipt.) |
 | ISSUE-4 | planning 2026-05-08 | MED | Analytics | conversionRate Status-Bar stat is SERVICE_PLACEHOLDER — no page-visit log table exists. Show "—". | OPEN |
 | ISSUE-5 | planning 2026-05-08 | MED | Migration | GlobalDonations migration must add `OnlineDonationPageId` nullable FK without breaking existing rows. Backfill = no-op (stays NULL); FK constraint filtered. EF migration name suggestion: `Add_OnlineDonationPage_And_FK_On_GlobalDonations`. | OPEN |
 | ISSUE-6 | planning 2026-05-08 | MED | Image | Logo/Hero/Carousel use URL-text inputs in MVP — no shared image-upload service. Admin pastes CDN URLs. Cross-cutting infra missing (matches DonationInKind #7 ISSUE-5 + ChequeDonation #6 ISSUE-27). | OPEN |
@@ -1121,67 +1264,120 @@ Full UI must be built (10 settings cards, Implementation Type switcher, 4-varian
 | ISSUE-34 | session-14 2026-05-25 | HIGH | MasterData IsDeleted NULL filter | `InitiateOnlineDonation.GetMasterDataIdFirstOf` (and Confirm's copy) filtered MasterData with `m.IsDeleted == false`. `IsDeleted` on `Entity` base is `bool?` (nullable); seed scripts commonly insert MasterData with `IsDeleted=NULL` (column default not set). EF Core translates `== false` to PostgreSQL `WHERE "IsDeleted" = false`, which **excludes NULL rows** — so every seeded MasterData lookup that should have matched returned 0 rows instead. User repro: `MASTERDATA_MISSING: MasterData[PAYMENTMETHOD/CARD]` even though the row visibly exists in `sett."MasterDatas"` with `TypeCode='PAYMENTMETHOD'` and `DataValue='CARD'`. Sibling handlers `RunAutoReconciliation.cs:62`, `CreateChequeDonation.cs:128`, `RealizeInKindDonation.cs:103`, `CompleteRefund.cs:192` ALL omit the IsDeleted filter on MasterData precisely because of this — the convention is "don't filter IsDeleted on MasterData, it's seed data". My helper inherited the filter from boilerplate copy-paste of `IsDeleted == false` patterns that apply to *transactional* entities (OnlineDonationPages, Contacts, etc.) where IsDeleted is always set. Fixed in Session 14 by dropping the `IsDeleted == false` filter in BOTH Initiate's helper AND Confirm's helper. | CLOSED (session 14 — filter dropped to match sibling convention) |
 | ISSUE-35 | session-16 2026-05-26 | MED | Multi-currency wiring | The Amounts card's `EnableMultiCurrency` toggle is persisted but has NO effect on the public form. Donor cannot pick currency; Braintree always captures in the company base. To wire properly (recommended global-platform behaviour): (a) public form renders a small currency switcher next to the amount input when `enableMultiCurrency=true`; (b) **switcher options = base currency + rows in `sett.CompanyConfigurationCurrencies` for the tenant** (admin-curated allow-list, already managed by CompanySettings #75 — supersedes the original CurrencyConversion-based proposal because admin intent is explicit, soft-delete + audit are preserved, and FK integrity stays at the row level); (c) donor's chosen CurrencyId flows through Initiate → staging row → Braintree `currencyIsoCode`; (d) BE Initiate accepts donor CurrencyId only when `OnlineDonationPage.EnableMultiCurrency=true` AND the currency is in the tenant's `CompanyConfigurationCurrencies` list (or is the base), else rejects with `CURRENCY_NOT_SUPPORTED`; (e) admin live preview also shows the switcher. Dependencies: per-tenant Braintree merchant-account presentment-currency config (real gating constraint), CurrencyConversion seed rows from base → each target for any client-side display equivalents (ISSUE-12 lane). | OPEN |
 | ISSUE-36 | session-33 2026-06-01 | MED | Recurring (PayU SI) | PayU India recurring is wired as Standing-Instruction (SI) mandate REGISTRATION only (`si=1` + `si_details` on the `_payment` request; `mihpayid` stored as `GatewaySubscriptionId`). Subsequent auto-debits are scaffolded with an explicit `// TODO(PayU-SI)` in `PayUIndiaProvider.CreateSubscriptionAsync` — the real recurring charge uses PayU `command=si_transaction` and requires **SI activation on the merchant account**. Cancel uses `command=cancel_si` (also needs SI-enabled account). Until activated, one-time PayU donations work end-to-end but recurring registers intent without confirmed downstream charges. | PARTIAL (session 34 — merchant-side SI auto-debit engine shipped: daily Hangfire cron `payu-si-recurring-charges` → `PayURecurringChargeService` → `IPaymentFlowService.ChargeRecurringCycleAsync` → `PayUIndiaProvider.RetrySubscriptionChargeAsync` now does a real `command=si_transaction` POST; successful cycles record a full `fund.GlobalDonation` (DonationType RECURRINGDONATION) + `GlobalOnlineDonation` + `PaymentTransaction` and advance the schedule, idempotent per day. Compiles 0-errors. **Still runtime-blocked on PayU SI activation** — the `si_transaction` `var1` field names are marked `// VERIFY against your PayU SI account` and the first SI-enabled run pins them via the logged raw response. Also fixed a latent hardcoded-Braintree dispatch bug in the manual-retry bridge.) |
-| ISSUE-37 | session-33 2026-06-01 | LOW | PayU return-URL | The FE supplies `returnUrl` (surl/furl base) at Initiate and the BE trusts it verbatim. Should validate the host against the tenant's registered CustomDomain/Subdomain (same resolver as ISSUE-32) to prevent an attacker pointing surl/furl at a foreign origin and capturing the PayU response (open-redirect / hash-leak). Hardening follow-up. | OPEN |
+| ISSUE-37 | session-33 2026-06-01 | LOW | PayU return-URL | The FE supplies `returnUrl` (surl/furl base) at Initiate and the BE trusts it verbatim. Should validate the host against the tenant's registered CustomDomain/Subdomain (same resolver as ISSUE-32) to prevent an attacker pointing surl/furl at a foreign origin and capturing the PayU response (open-redirect / hash-leak). Hardening follow-up. | CLOSED (session 55 — `OnlineDonationPageTenantResolver.IsReturnUrlAllowed(returnUrl, requestHost, CustomDomain, Subdomain, env)` gates `req.ReturnUrl` in the PayU branch of `InitiateOnlineDonation` before it becomes surl/furl; requires absolute http/https (https-only outside Dev), host must match request-host ∪ CustomDomain ∪ Subdomain (localhost only in Dev), else `RETURN_URL_INVALID`. Build 0-errors.) |
 | ISSUE-38 | session-33 2026-06-01 | INFO | PayU creds bootstrap | PayU credentials are NOT seeded (AES-encrypted per tenant). The seed only adds the `com."PaymentGateways"` `PAYU` provider row. Admin must add a `CompanyPaymentGateway` PAYU row with **merchant key + salt** via the admin screen before donations route to PayU. India public sandbox test creds: key=`gtKFFx`, salt=`eCwWELxi` against `test.payu.in` (test card `5123 4567 8901 2346`, CVV `123`, any future expiry, OTP `123456`). | OPEN |
+| ISSUE-39 | spec-rev 2026-07-16 | MED | Generic settings table | STANDARD-template landing content moves to a NEW generic per-page EAV table `fund.OnlineDonationPageSettings` (§②), modeled on `sett.OrganizationSettings` but scoped by `OnlineDonationPageId`. Requires: entity + EF config + `SaveLandingContent` diff-only command + `LandingContentDto` assembler + default-rows seeder on Create + a SECOND user-owned migration `Add_OnlineDonationPageSettings`. Not yet built. | ✅ CLOSED (session 51 — built: entity `OnlineDonationPageSetting` + EF config (filtered-unique `(PageId,ParamCode)`, cascade FK), `SaveOnlineDonationPageLandingContent` diff-only command, `DefaultOnlineDonationPageSettings` seeder+assembler, DbSet ×2 wiring, `LandingContentDto` on ResponseDto+PublicDto, seed-on-Create, assemble in GetById/GetBySlug, `saveOnlineDonationPageLandingContent` mutation; FE Card 9 editor + `LandingRepeater` + 5 Aurora sub-sections + template-aurora MODIFY + DTO/GQL/editor wiring. Migration SPEC `onlinedonationpage-ISSUE39-MIGRATION-SPEC.md` user-owned; no build/migration run this session.) |
+| ISSUE-40 | spec-rev 2026-07-16 | LOW | Backfill for old pages | Pages created BEFORE ISSUE-39 have no settings rows → `LandingContentDto` fields come back null and the Aurora template renders its coded fallbacks (page still complete). Optional one-shot backfill can seed default rows into existing pages if tenants want them editable immediately. Renderer must never assume a row exists. | OPEN |
+| ISSUE-41 | session-52 2026-07-16 | MED | Thin-core relocation | **PLANNED for next session** (reverses the 2026-07-16 "ship as-is" decision — user opted to proceed). Relocate the cosmetic/presentational typed columns OUT of `fund.OnlineDonationPages` INTO the generic `fund.OnlineDonationPageSettings` EAV table, then DROP them from the parent. **Candidate columns** (~15, confirm against `OnlineDonationPage.cs` at build time): `PrimaryColorHex`, `ButtonText`, `PageLayout`, `CustomCssOverride`, `IframeShowHeader`, `IframeShowFooter`, `ThankYouMessage`, `ThankYouRedirectUrl`, `ShowDonorCount`, `ShowSocialShare`, `TaxReceiptNote`, `OgTitle`, `OgDescription`, `OgImageUrl`, `RobotsIndexable`. **KEEP as typed columns** (structural/validated/FK/lifecycle/aggregation-join): identity+slug, ImplementationType/Status/PageTypeId, dates, amounts, currency, gateway FK, all `*Json` form config, media URLs. **Build-time caution** — the `Og*`/`RobotsIndexable` set feeds the SSR OG-meta / SEO path; a bad move breaks link previews + search indexing on a live-money page → migrate + assemble those LAST and verify SSR head output before dropping the columns. **Migration is TWO user-owned steps** (per policy): (1) additive — backfill each page's existing column values into settings rows via a data migration/seed; (2) destructive — DROP the columns only AFTER backfill verified. Do NOT drop-and-relocate in one shot. FE: remove the relocated fields from `OnlineDonationPageRequestDto`/typed reads, route them through the `landingContent`/settings channel. **BE done (session 53); MIGRATION DEFERRED** — the additive backfill + destructive DROP are NOT run separately. They are folded into ISSUE-42's SINGLE combined migration (user decision, session 53) so the live `fund.OnlineDonationPages` table is altered only ONCE. | CLOSED (session 53) |
+| ISSUE-42 | session-53 2026-07-16 | MED | Template-variant content system | **PLANNED — needs `/plan-screens #10` spec revision.** Template types will proliferate (Image / Video / Carousel / Carousel+Video / Carousel+Image / …). Handle as: `PageTypeId` (MasterData `TypeCode=ONLINEDONATIONPAGETYPE`) stays the typed **selector** — new type = 1 MasterData row, no schema change; template-specific **CONTENT** goes in `fund.OnlineDonationPageSettings` (EAV), **NEVER** per-variant typed columns (avoids sparse-wide table + per-variant migrations). Renderer reads `PageTypeId` → which `SectionCode`s to pull → assembles from settings. New template = MasterData row + settings catalog + **ONE renderer component** (real code, not zero-cost). **This pass ALSO relocates the template-presentation media columns** (`CarouselSlidesJson`, `HeroImageUrl`, `LogoUrl`) into the settings template model (finalize exact set in the plan pass). **KEEP typed** the donation-FORM config (`AmountChipsJson`, `AvailableFrequenciesJson`, `AllowCustomAmount`) — these are payment-form behavior, not template content. **SINGLE COMBINED MIGRATION** (user-owned): after 41's BE + 42's build are both in, ONE backfill (41's 15 cosmetic cols + 42's media cols → settings rows) → verify → ONE `DROP COLUMN` for all of them. The live table is altered exactly once. Full design: `bug-reports/onlinedonationpage-ISSUE42-TEMPLATE-VARIANT-DESIGN.md`. | ✅ CLOSED (session 54 — §⑥ revised (dispatcher NOT rebuilt); 2 combo MasterData rows seeded (`CAROUSEL_VIDEO`/`CAROUSEL_IMAGE`, `online-donation-page-sqlscripts.sql` Session 54 block); 4 FE templates built (`template-gallery-{video,image}.tsx` + `thank-you-gallery-{video,image}.tsx`) + dispatcher wired (both switches, no existing case altered); 3 media cols (`CarouselSlidesJson`/`HeroImageUrl`/`LogoUrl`) relocated to `MEDIA` EAV wire-stable (BE session 53); ONE combined 18-col migration SPEC `onlinedonationpage-COMBINED-MIGRATION-SPEC.md` (backfill 41's 15 + 42's 3 → verify typed reads + SSR/OG LAST → single DROP; live table altered once). Form config `AmountChipsJson`/`AvailableFrequenciesJson`/`AllowCustomAmount` kept typed. 0 type errors in touched files. Migration user-owned — not run.) |
+
+#### ISSUE-41 — Column → Settings-row mapping (pre-derived from `OnlineDonationPage.cs`, ready to execute)
+
+> Backfill catalog for step (1) of the ISSUE-41 migration. For **each** page, insert one
+> `fund.OnlineDonationPageSettings` row per column below, copying the column's current value into
+> `ParamValue`. `(OnlineDonationPageId, ParamCode)` is the filtered-unique key — ParamCodes are
+> globally unique per page (safe across sections). `ParamDataType` values come from the allowed set
+> `string|text|int|decimal|bool|url|color|json`. **NULL-source rule**: if a page's column value is
+> `NULL` (nullable columns: `IframeShowHeader/Footer`, `PrimaryColorHex`, `ButtonText`, `PageLayout`,
+> `CustomCssOverride`, `ThankYouMessage`, `ThankYouRedirectUrl`, `TaxReceiptNote`, `Og*`), **skip the
+> row** — the renderer falls back to its coded default (ISSUE-40 guarantee). Non-nullable bools
+> (`ShowDonorCount`, `ShowSocialShare`, `RobotsIndexable`) always get a row.
+
+| # | Source column (`OnlineDonationPages`) | CLR type | SectionCode | ParamCode | ParamDataType | ParamName (admin label) | OrderBy |
+|---|---------------------------------------|----------|-------------|-----------|---------------|-------------------------|---------|
+| 1  | `PrimaryColorHex`     | `string?` | `THEME`    | `PRIMARY_COLOR`         | `color`  | Primary Colour          | 1 |
+| 2  | `ButtonText`          | `string?` | `THEME`    | `DONATE_BUTTON_TEXT`    | `string` | Donate Button Text      | 2 |
+| 3  | `PageLayout`          | `string?` | `THEME`    | `PAGE_LAYOUT`           | `string` | Page Layout             | 3 |
+| 4  | `CustomCssOverride`   | `string?` | `THEME`    | `CUSTOM_CSS`            | `text`   | Custom CSS Override     | 4 |
+| 5  | `IframeShowHeader`    | `bool?`   | `EMBED`    | `IFRAME_SHOW_HEADER`    | `bool`   | Show Header (Iframe)    | 1 |
+| 6  | `IframeShowFooter`    | `bool?`   | `EMBED`    | `IFRAME_SHOW_FOOTER`    | `bool`   | Show Footer (Iframe)    | 2 |
+| 7  | `ThankYouMessage`     | `string?` | `THANKYOU` | `THANKYOU_MESSAGE`      | `text`   | Thank-You Message       | 1 |
+| 8  | `ThankYouRedirectUrl` | `string?` | `THANKYOU` | `THANKYOU_REDIRECT_URL` | `url`    | Thank-You Redirect URL  | 2 |
+| 9  | `ShowDonorCount`      | `bool`    | `SOCIAL`   | `SHOW_DONOR_COUNT`      | `bool`   | Show Donor Count        | 1 |
+| 10 | `ShowSocialShare`     | `bool`    | `SOCIAL`   | `SHOW_SOCIAL_SHARE`     | `bool`   | Show Social Share       | 2 |
+| 11 | `TaxReceiptNote`      | `string?` | `RECEIPT`  | `TAX_RECEIPT_NOTE`      | `text`   | Tax Receipt Note        | 1 |
+| 12 | `OgTitle`             | `string?` | `SEO`      | `OG_TITLE`              | `string` | OG Title                | 1 |
+| 13 | `OgDescription`       | `string?` | `SEO`      | `OG_DESCRIPTION`        | `text`   | OG Description          | 2 |
+| 14 | `OgImageUrl`          | `string?` | `SEO`      | `OG_IMAGE_URL`          | `url`    | OG Image URL            | 3 |
+| 15 | `RobotsIndexable`     | `bool`    | `SEO`      | `ROBOTS_INDEXABLE`      | `bool`   | Search-Engine Indexable | 4 |
+
+**bool serialization**: store `ParamValue` as lower-case `"true"`/`"false"` (matches the existing
+settings reader). **Section render order** for the admin editor: `THEME → EMBED → THANKYOU → SOCIAL →
+RECEIPT → SEO`. **Execution order reminder**: assemble + verify the `SEO` section LAST and confirm the
+public SSR `<head>` (`og:title`/`og:description`/`og:image`/`robots`) still renders from settings
+BEFORE running step (2) destructive `DROP COLUMN`.
 
 ### § Sessions
 
 <!-- Each /build-screen session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
 
-> _[39 older session entries trimmed to save tokens — full history in git: `git log -p -- onlinedonationpage.md`. Most recent 5 kept below.]_
+> _[45 older session entries trimmed to save tokens — full history in git: `git log -p -- onlinedonationpage.md`. Most recent 5 kept below.]_
 
-### Session 46 — 2026-07-13 — ODP-H6 SEO/OG/robots editor card missing + public robots ignored (CONTINUED FIX)
-- **Trigger**: /continue-screen #10 — user delegated ("you can decide"); ODP-H6 is fully self-contained on the FE (admin card + public route), no BE/secret/migration/product dependency.
-- **Root cause**: `ogTitle/ogDescription/ogImageUrl/robotsIndexable` were persisted and already round-tripped through the admin request/response DTOs, but had **no admin control** — the editor never rendered a SEO/OG card, so tenants could not set share-card metadata or toggle search indexability. Worse, the public page (`p/[slug]/page.tsx generateMetadata`) **hardcoded** `robots: { index: true, follow: true }`, so the stored `robotsIndexable=false` was silently ignored — private / invite-only campaigns were still indexable by search engines.
-- **Change** (admin half + public half, all FE):
-  - **Admin card** `onlinedonationpage/sections/seo-section.tsx` (NEW, store-driven, no props — reads `currentPage` aliased `page`, edits via `setField`) — `SectionCard icon="ph:share-network" title="Search & Social (SEO)" collapsible defaultCollapsed`: ogTitle Input (maxLength 70), ogDescription Textarea (maxLength 160), ogImageUrl Input `type=url`, a live share-card **preview** that shows the OG fallback chain (ogImageUrl → carouselSlides[0] → heroImageUrl → logoUrl) with a note, and a `robotsIndexable` Switch (`color="success"`, "Allow search engines to index this page").
-  - **Wiring** `editor-page.tsx` — imports + renders `<SeoSection />` after `<ThankYouSection />`, **outside** the NAV-only conditional so it applies to both NAV and IFRAME implementation types.
-  - **Public half** — extended the anonymous read path to carry the flag then honored it: `public-queries/OnlineDonationPagePublicQuery.ts` selects `robotsIndexable`; `OnlineDonationPageDto.ts` adds required `robotsIndexable: boolean` to `OnlineDonationPagePublicDto` (and `robotsIndexable` to the request DTO); `p/[slug]/page.tsx generateMetadata` now emits `robots: { index: !!data.robotsIndexable, follow: !!data.robotsIndexable }` instead of the hardcoded `true` (not-found branch already returns `index:false`). OG sharing is unaffected — this only gates search-engine listing.
-  - **Cascade** — making `robotsIndexable` required on the public DTO broke the 3 non-BE literal builders; each now supplies it: `preview/onlinedonationpage/[id]/page.tsx` (`page.robotsIndexable`), `template-mock-data.ts` (`true`), `live-preview.tsx` (`page.robotsIndexable`).
-- **Scope note**: FULL closure of ODP-H6 (both the missing admin card and the ignored public flag). The embed route needs no change — the iframe fragment has no `generateMetadata`/`robots`.
-- **Build verification**: FE `npx tsc --noEmit` → **0 errors** project-wide (the 3× TS2741 from the required-field addition resolved by the cascade fixes above). No live browser run this session.
-- **Next step**: no self-contained quick-wins remain in the register after ODP-H6. Only the two Deferred items — reCAPTCHA + CSRF shared-platform hardening, and ODP-B5 auto-promotion (`/plan-screens`) — remain, both needing user confirmation before starting.
+### Session 56 — 2026-07-16 — FIX — COMPLETED — ISSUE-3 jurisdiction-safety (global product must not assert India 80G on every tenant)
+- **Trigger**: /continue-screen #10. User flagged that the session-55 receipt applied Indian tax-exemption text (80G) to ALL tenants — but tax exemption is jurisdiction-specific (India 80G / US 501c3 / UK Gift Aid) and PSS is a GLOBAL product. Audited the delivered code (not the completion report). **Concern CONFIRMED**: a non-India tenant's downloadable/emailed receipt PDF would falsely assert an 80G exemption — a real compliance defect on a donor-facing artefact.
+- **Root cause (3 compounding defaults)**: (a) `TAX_SECTION` new-tenant default hard-coded to `"80G"`; (b) `SHOW_TAX_INFO_ON_RECEIPT` default `true`; (c) `TAX_EXEMPTION_NUMBER` read fell back to generic `Company.TaxId` (a tax *registration* number is NOT an exemption certificate); (d) render gate was an OR (`TaxSection` **OR** `TaxExemptionNumber`), so the 80G default alone printed the block even with no exemption number.
+- **Fix (minimal, NO schema change — self-gating)**: tax block now renders ONLY when the tenant has explicitly entered a real `TAX_EXEMPTION_NUMBER`.
+  - `DonationReceiptService.cs`: removed the `fallback: company.TaxId` on the `TAX_EXEMPTION_NUMBER` read; render condition changed from OR to `ShowTaxInfo && !IsNullOrWhiteSpace(TaxExemptionNumber)`.
+  - `OrgSettingsDefaultSeeder.cs`: blanked the `TAX_SECTION` new-tenant default (`"80G"` → `""`); description now lists India 80G / US 501c3 / UK Gift Aid as examples. Only affects NEW tenants — existing `CurrentValue` untouched.
+  - India tenants (who set both a number + 80G) still get the full statement; every other tenant gets a clean receipt with no tax claim.
+- **Files touched**:
+  - BE: `Base.Application/Services/DonationReceipt/DonationReceiptService.cs`; `Base.Infrastructure/Seeders/OrgSettingsDefaultSeeder.cs`
+  - FE: none
+  - DB: none (seed SQL `orgsettings-tax-exemption-number-seed.sql` unchanged — CurrentValue already NULL, correct)
+- **Verify**: both changed projects compiled individually to a scratch output (`--no-dependencies`) → **0 errors**. Full-solution build was blocked only by VS-Insiders file locks on the output DLLs (MSB3027/MSB3021 copy locks, zero CS-errors), not compiler failures.
+- **Deviations from spec**: None — tightens jurisdiction correctness within the existing DOCUMENT-subtype receipt contract.
+- **Known issues opened**: None.
+- **Known issues closed**: None (ISSUE-3 already CLOSED session 55; row note amended with the jurisdiction fix).
+- **Next step (USER-OWNED)**: (1) release the VS-Insiders lock (or restart the running app) and compile the full BE; (2) apply `sql-scripts-dyanmic/orgsettings-tax-exemption-number-seed.sql`; (3) for each India tenant set `TAX_EXEMPTION_NUMBER` + `TAX_SECTION='80G'`; (4) exercise a confirmed donation → verify the email attaches the PDF and the Download Receipt button works, and that a non-India tenant's receipt shows NO tax claim.
 
-### Session 43 — 2026-07-13 — ODP-H8 clickjacking boundary (`frame-ancestors` CSP) (CONTINUED FIX)
-- **Trigger**: /continue-screen #10 — HANDOFF's recommended next self-contained item. ODP-H8 closes fully on the FE with no BE/secret/migration/product dependency.
-- **Root cause**: the NAV/IFRAME framing security boundary was documented in comments but **never emitted** — `frame-ancestors` existed only as TODO comments in `(public)/layout.tsx` / `embed/[slug]/page.tsx` / `iframe-widget.tsx`, and no header was set anywhere in the app. So the first-party NAV donor page `/p/{slug}` was fully framable → open to a clickjacking overlay that hijacks donor clicks/keystrokes.
-- **Change** (1 config file + 2 comment syncs + 1 e2e unskip):
-  - `next.config.mjs` — added `async headers()` (after `redirects()`) with two DISJOINT locale-prefixed rules (middleware rewrites every path to include `{lang}` before render, so `source` must carry the `:lang` segment): `/:lang/p/:slug*` → `Content-Security-Policy: frame-ancestors 'none'` **+** legacy `X-Frame-Options: DENY` (never embeddable); `/:lang/embed/:slug*` → `Content-Security-Policy: frame-ancestors *` (widget INTENDED to embed on any charity site), `X-Frame-Options` deliberately omitted (can't express "allow all origins"; unset lets `frame-ancestors *` govern). Only `frame-ancestors` set — a full CSP (`script-src` etc.) is out of scope and would risk breaking inline scripts/styles. `headers()` chosen over middleware because the `auth()` wrapper makes response-header injection there awkward and per-path matching is clean; the two rules are disjoint so no duplicate-header conflict.
-  - `(public)/layout.tsx` + `embed/[slug]/page.tsx` — synced the stale ISSUE-8 TODO comments to point at `next.config.mjs headers()`.
-  - `tests/e2e/screens/onlinedonationpage.spec.ts` — replaced the skipped stub with a real 2-case `test.describe("clickjacking boundary (CSP frame-ancestors)")`: NAV asserts CSP contains `frame-ancestors 'none'` and X-Frame-Options matches `/deny/i`; IFRAME asserts CSP contains `frame-ancestors *` and X-Frame-Options is empty. Uses the `request` fixture + `E2E_CONFIG.ROUTE` locale-prefixed paths.
-- **Scope note**: FULL closure of the ODP-H8 finding / ISSUE-8. Per-tenant embed allow-list (restrict `frame-ancestors` to tenant-registered domains) remains a hardening follow-up, unchanged by this fix.
-- **Build verification**: FE `npx tsc --noEmit` → **0 errors** project-wide. No live browser run this session (headers assert via e2e when the suite runs against a live FE).
-- **Next step**: ODP-M10 (BE config-key drift — TEST webhook reads `PaymentGateway:EncryptionKey` vs canonical `…:CredentialEncryptionKey`) or ODP-M11 (BE dead legacy Braintree credential path cleanup), both self-contained. reCAPTCHA+CSRF shared-platform pass and ODP-B5 auto-promotion remain the big items.
+### Session 55 — 2026-07-16 — ISSUE-3 donation tax-receipt PDF (service + email attach + anonymous download + FE button) — COMPLETED
+- **Trigger**: /continue-screen #10 "Build ISSUE-3 — a receipt-PDF service feeding BOTH the confirmation-email attachment AND a Download Receipt button on the thank-you page." Classified FIX/ENHANCE (in-scope; replaces the SERVICE_PLACEHOLDER email + adds the missing OUR-receipt artefact). BE Sonnet + FE Sonnet (both agents; §①–§⑫ detailed).
+- **Approach**: OUR tax receipt (not the gateway's payment confirmation). Reuses existing `GlobalDonation.ReceiptNumber` (no new numbering) and existing `IPdfService.GeneratePdfBytesAsync` (PuppeteerSharp print-to-PDF, print-CSS/`PreferCSSPageSize` — DOCUMENT-subtype rule, NOT html-screenshot). Lookup chain for the anonymous download: `PaymentSessionId` (session/confirmation token the success page holds) → `OnlineDonationStaging.PromotedGlobalDonationId` → `GlobalDonation`; donor falls back to staging `Provided*` fields when `ContactId` is null. Endpoint is token-gated (cannot be enumerated by donationId), `NotFound()` on miss (no PII), rate-limited.
+- **Files touched**:
+  - BE (created): `Base.Application/Services/DonationReceipt/IDonationReceiptService.cs` (`GenerateReceiptPdfAsync(int)` + `GenerateReceiptPdfBySessionAsync(string)`, both `Task<byte[]?>`); `.../DonationReceipt/DonationReceiptService.cs` (A4 print-CSS receipt HTML → `IPdfService.GeneratePdfBytesAsync`; resolves org identity/donor/currency/org-settings/payment-method); `Base.API/Controller/ReceiptDownloadController.cs` (anonymous `GET api/ReceiptDownload/{sessionToken}` → PDF or `NotFound()`, generic filename, `[EnableRateLimiting("ReceiptDownload")]`).
+  - BE (modified): `Base.Application/DependencyInjection.cs` (`AddScoped<IDonationReceiptService, DonationReceiptService>()`); `Base.API/DependencyInjection.cs` (new `"ReceiptDownload"` fixed-window policy, 10/min/IP); `.../OnlineDonationPages/PublicMutations/ConfirmOnlineDonation.cs` (inject `IDonationReceiptService` + `IEmailTemplateService`; `IssueReceiptEmailAsync` helper — temp-file PDF attachment via `SendComposedEmailForCompanyAsync`, best-effort try/catch, `File.Delete` in finally; wired into `PromoteCapturedDonationAsync`; **replaced all 3 SERVICE_PLACEHOLDER email-send log lines**); `Base.Infrastructure/Seeders/OrgSettingsDefaultSeeder.cs` (`TAX_EXEMPTION_NUMBER` in RECEIPTS group).
+  - FE (created): shared primitive `DownloadReceiptButton` in `public/onlinedonationpage/templates/shared.tsx` (fetch→blob→`URL.createObjectURL` download; prefers mutation `receiptUrl`, falls back to `${BASE_SERVICE_API_ENDPOINT}/receiptdownload/${paymentSessionId}`; renders nothing if neither exists; idle/loading/error states, `Skeleton` while fetching, solid-`accent` button + white `ph:download-simple` icon).
+  - FE (modified): `templates/types.ts` (`ThankYouResult` +`receiptNumber`/`receiptUrl`/`paymentSessionId`); `components/donation-form.tsx` (`onSuccess` payload + both call sites now pass `receiptUrl` + `paymentSessionId`); all 9 `templates/thank-you-*.tsx` (drop the button near `SocialShareButtons`). `donation-page.tsx` needed no edit (generic typing already propagates the widened result).
+  - DB (SPEC/seed — user-owned): `sql-scripts-dyanmic/orgsettings-tax-exemption-number-seed.sql` (idempotent per-tenant `TAX_EXEMPTION_NUMBER` seed, `NOT EXISTS`-guarded, `BEGIN/COMMIT`).
+- **Contract note**: FE download URL = `api/receiptdownload/{paymentSessionId}` — matches BE `api/ReceiptDownload/{sessionToken}` (ASP.NET routing case-insensitive; `sessionToken`≡`PaymentSessionId`). BE did NOT populate the confirm response's `ReceiptUrl` field — unnecessary since the FE builds the token URL from `paymentSessionId` it already holds; change surface kept minimal.
+- **Deviations from spec**: Used `IPdfService.GeneratePdfBytesAsync` (in-memory bytes) over the disk-path variant (bytes serve both email temp-file + download response, no redundant disk round-trip). Rate-limit partition is IP-only (`receipt-download-{ip}`) — sufficient for an anonymous read-only endpoint. Receipt amount = `GlobalDonation.DonationAmount` (no distinct NetAmount field). Added new OrgSettings ParamCode `TAX_EXEMPTION_NUMBER` (fallback to `Company.TaxId`) — no real 80G certificate-number field existed; delivered as EAV seed, NOT a migration.
+- **Build verification**: **NONE run — per user directive ("avoid BE build - i will build").** BE self-checked by reading real source: all domain-model props (`GlobalDonation`/`Company`/`Currency`/`GlobalOnlineDonation`/`OnlineDonationStaging`/`ContactEmailAddress`), service signatures (`IPdfService`/`IEmailTemplateService`/`IOrgSettingsService`), DbSets, DI + rate-limit blocks verified exact — no outstanding uncertainties. FE `tsc --noEmit` → clean for all 12 edited files (3 pre-existing unrelated `landingContent` errors untouched, out of scope).
+- **Known issues opened**: None. **Known issues closed**: ISSUE-3 (receipt email placeholder replaced + PDF service + anonymous token-gated download + FE button).
+- **Next step**: User compiles BE + applies `orgsettings-tax-exemption-number-seed.sql`, sets each tenant's `TAX_EXEMPTION_NUMBER` (80G/exemption cert no.), then exercises: confirm a donation → email carries the PDF + Download Receipt button fetches the same PDF on the thank-you page. Screen's other OPEN issues (ISSUE-4/35/38/40 etc.) unchanged.
 
-### Session 42 — 2026-07-13 — cancelled-donation staging strand (NEW FIX + one-off SQL)
-- **Trigger**: user report — the online-donation staging table shows a record still in "payment gateway selection" state (PaymentMethodId=PENDING sentinel, PaymentStatusId=`Pending`, `GatewayResponseMessage=NULL`) for a donation the donor actually **cancelled**. Two deliverables: (1) forward fix so future cancels/failures record the outcome on the staging row instead of stranding at PENDING; (2) one-off SQL to correct the existing stranded row(s). No migration (all columns already exist).
-- **Root cause**: PayU (hosted-redirect cancel/failure `furl`) and Razorpay (client `modal.ondismiss` on donor cancel) both terminate WITHOUT ever calling `ConfirmOnlineDonation`, so the staging row created at Initiate was never advanced past PENDING and no gateway reason was captured. (Braintree declines DO reach Confirm; only pure Braintree abandonment strands — out of scope, not wired.)
-- **Change** (gateway-agnostic, 1 new BE mutation + FE wiring on both stranding gateways):
-  - **BE** `PublicMutations/MarkOnlineDonationFailed.cs` (NEW — command + validator + handler) — looks up staging by `PaymentSessionId`; resolves COMPLETED + FAILED master-data ids (canonical `PAYMENTSTATUS` lookup, case-insensitive, no `IsDeleted` filter per ODP-M8 convention); idempotency guards (already COMPLETED → cached success, never clobbered; already FAILED → cached failed response); else sets `PaymentStatusId=FAILED`, truncated `GatewayResponseMessage`/`GatewayResponseCode`, conditional `GatewayTransactionId`; `SaveChanges`; writes `PAYMENT_FAILED` audit (userId:null). `ReceivedDate` intentionally NOT set (not a capture). Reuses `OnlineDonationConfirmedResponse` as return type.
-  - **BE** `OnlineDonationPagePublicQueries.cs` — registered `MarkOnlineDonationFailed` mutation under the same `[EnableRateLimiting("DonationSubmit")]` policy as Initiate/Confirm.
-  - **FE** `OnlineDonationPagePublicMutation.ts` — added `MARK_ONLINE_DONATION_FAILED` gql.
-  - **FE** `payu/return/route.ts` — cancel/failure branch now best-effort `await`s `MARK_ONLINE_DONATION_FAILED` (correlate by `udf5`=full paymentSessionId, `reason`=payuStatus, `gatewayCallbackPayload`=JSON of all PayU fields) before the failure redirect; wrapped in try/catch so it never blocks the donor.
-  - **FE** `donation-form.tsx` — Razorpay `modal.ondismiss` fires `markDonationFailed({paymentSessionId, reason:"usercancelled"})` (fire-and-forget `.catch(()=>{})`) alongside the existing UI reset.
-- **One-off SQL** `PSS_2.0_Backend/.../sql-scripts-dyanmic/online-donation-staging-cancelled-backfill.sql` (NEW, user-applied) — 3-step guarded script: STEP 1 read-only PREVIEW, STEP 2 `BEGIN;…COMMIT;` UPDATE flipping PENDING+`GatewayResponseMessage IS NULL` rows to the FAILED sibling (resolved within the SAME MasterDataTypeId via `JOIN LATERAL`, keeps tenant scope), setting the cancel message + `GatewayResponseCode='USER_CANCELLED'` + `ModifiedBy=2`/`ModifiedDate=now()`, STEP 3 VERIFY count (expect 0). `ModifiedBy`/`ModifiedDate` confirmed present on base `Entity` — SQL valid unchanged.
-- **Scope note**: FULL forward+backfill closure for the two stranding gateways. Braintree pure-abandonment strand deliberately NOT wired (no client cancel hook reaches us; separate finding). Idempotency guarantees a late cancel callback can never overwrite a COMPLETED donation.
-- **Build verification**: BE `Base.Application` build → **0 errors** (`Base.API` full build hit pre-existing MSB3021 file-copy locks from running processes — NOT compile errors; `Base.Application` isolates the compile). FE `npx tsc --noEmit` → **0 errors**. No live gateway sandbox run this session.
-- **Next step**: ODP-H8 (`frame-ancestors` CSP — FE, self-contained) or ODP-M10/M11 (BE config/cleanup). reCAPTCHA+CSRF shared-platform pass and ODP-B5 auto-promotion remain the big items.
+### Session 54 — 2026-07-16 — ISSUE-42 template-variant content system + ISSUE-41 combined migration — COMPLETED
+- **Scope**: Executed ISSUE-42 (template-variant content) and finalized ISSUE-41 into ONE combined migration. Phase 1: revised §⑥ (dispatcher `donation-page.tsx` already exists — NOT rebuilt; added renderer registry + §② MEDIA/relocated-cols catalog). Phase 2: (a) 2 new PageType combo variants; (b) 3 media cols relocated to `MEDIA` EAV wire-stable. Phase 3: ONE user-owned combined migration SPEC.
+- **Files touched**:
+  - DB (seed): `sql-scripts-dyanmic/online-donation-page-sqlscripts.sql` — "Session 54 migration D" block seeds `CAROUSEL_VIDEO` + `CAROUSEL_IMAGE` MasterData rows (`ONLINEDONATIONPAGETYPE`, idempotent `NOT EXISTS`); updated STEP 0c renderer DataValue comment.
+  - FE (created): `public/onlinedonationpage/templates/template-gallery-video.tsx`, `template-gallery-image.tsx`, `thank-you-gallery-video.tsx`, `thank-you-gallery-image.tsx`.
+  - FE (modified): `public/onlinedonationpage/donation-page.tsx` — 4 imports + `CAROUSEL_VIDEO`/`CAROUSEL_IMAGE` cases in BOTH switches + header comment; no existing case altered.
+  - BE (session 53, confirmed): media relocation in `OnlineDonationPage.cs`, `ResetOnlineDonationPageBranding.cs`, `ValidateOnlineDonationPageForPublish.cs` read from assembled `pres.*`.
+  - SPEC: `bug-reports/onlinedonationpage-COMBINED-MIGRATION-SPEC.md` (supersedes ISSUE-41-only spec); backfill via committed `online-donation-page-issue41-backfill-sqlscripts.sql` (all 18 params).
+  - Docs: §② relocated-cols/MEDIA catalog, §⑥ renderer registry, Known Issues ISSUE-42 CLOSED.
+- **Deviations from spec**: None. Form config (`AmountChipsJson`/`AvailableFrequenciesJson`/`AllowCustomAmount`) kept typed per directive; media fed from EAV-assembled DTO channel.
+- **Known issues opened**: None. **Known issues closed**: ISSUE-42 (ISSUE-41 already closed session 53).
+- **Build verification**: FE `pnpm exec tsc --noEmit` → 0 errors in the 5 touched files (pre-existing unrelated `landingContent`/`dompurify` project errors untouched, out of scope).
+- **Next step**: User applies the ONE combined migration (SPEC file): run committed backfill → verify typed reads + Reset-Branding + Publish validation + SSR/OG (SEO LAST) → single `DROP COLUMN` for all 18. Live `fund.OnlineDonationPages` altered exactly once. Also apply the Session 54 seed block for the 2 combo MasterData rows.
 
-### Session 41 — 2026-07-10 — ODP-H9 failed-PayU donor dead-end (CONTINUED FIX)
-- **Trigger**: /continue-screen #10 — take the next self-contained FE fix. ODP-H9 is fully closable on the FE with no BE/secret/migration/product dependency, and it carries a concrete dead-branch bug alongside the UX gap.
-- **Root cause**: PayU is a full-page hosted-redirect flow (no in-component `onError` like the Razorpay popup). The return route (`payu/return/route.ts`) already redirects to `/p/{slug}?donation=failed&reason=…` on decline/cancel/verify-fail, but the public page (`p/[slug]/page.tsx`) only handled `?donation=success` → the donor landed back on a **blank donation form with no message**, unsure whether their card was charged. Compounding it, the route's cancel check `payuStatus === "userCancelled"` was a **dead branch**: `payuStatus` is `.toLowerCase()`'d earlier, so the mixed-case literal could never match and a cancelled payment fell through to Confirm.
-- **Change** (3 FE files, reuses the form's existing destructive-banner idiom — no new design system):
-  - `payu/return/route.ts` — fixed the dead branch: compare against lower-case `usercancelled` and also catch `cancel`/`cancelled`; commented why (payuStatus is pre-lowercased).
-  - `p/[slug]/page.tsx` — read the `reason` search param; added `describeDonationFailure(reason)` mapping status codes to an **honest, charge-state-aware** donor sentence (decline/cancel = "not charged, try again"; `session_missing` = "will be reversed automatically, contact us"; `confirm_*`/verify-fail = "may have been charged, staff will reconcile, don't retry"; anything else = the human BE message verbatim). Passed the result as `forceError` to `DonationPage`.
-  - `donation-page.tsx` — added `forceError?: string` prop; refactored the template `switch` to assign `templateView` then render `{forceError && <PaymentFailureBanner/>} + {templateView}`. The banner is a sticky, dismissible `role="alert"` at page top, styled with the same `border-destructive/30 + bg-destructive tint + text-destructive` palette the in-form error banner uses. Rendered **once** in the dispatcher, so it covers all 7 current templates + any future variant with zero per-template edits.
-- **Scope note**: FULL closure of ODP-H9 (both the UX dead-end and the dead-branch bug). Deliberately did NOT thread a prop through all 7 templates (`DonateFormSection` funnel) — a single dispatcher-level banner is template-agnostic and honest about charge state, which per-template in-form seeding could not centralize. The banner intentionally sits above the form (donor also has the `#donate` anchor) rather than reconstructing PayU's per-txn state, which the hosted-redirect architecture cannot carry back.
-- **Build verification**: FE `npx tsc --noEmit` → **0 errors** project-wide (edited files clean). No runtime PayU sandbox run this session.
-- **Next step**: ODP-H8 (`frame-ancestors` CSP — FE `next.config`/middleware, self-contained) or ODP-M10/M11 (BE config-key drift / dead legacy Braintree path cleanup). The reCAPTCHA+CSRF shared-platform pass and the ODP-B5 auto-promotion product decision remain the big items.
+### Session 53 — 2026-07-16 — ISSUE-41 thin-core column relocation EXECUTED (BE + migration specs) — COMPLETED
+- **Trigger**: /continue-screen #10 "execute ISSUE-41 — thin-core column relocation per the mapping table in §⑬". User scope: **complete ISSUE-41 only (BE + migration specs), no new FE** (user built the BE; Claude verified + authored the migration specs).
+- **Approach**: Option A "storage-only, wire stable" — the 15 cosmetic/presentational typed columns are removed from the EF entity and now persist as EAV rows in `fund."OnlineDonationPageSettings"`. Wire DTOs UNCHANGED (15 typed fields stay); **FE cards + GraphQL UNTOUCHED — BE-only**. Create/Update UPSERT the rows; GetById/GetBySlug RE-ASSEMBLE them into the same typed fields; public SSR OG-meta reads assembled fields.
+- **Files touched**:
+  - BE: `Helpers/PresentationOnlineDonationPageSettings.cs` (NEW — 15-code writer `BuildRows` + assembler `Assemble` + `ManagedParamCodes`; bool → lowercase `'true'`/`'false'`; nullable NULL/blank → skip; 3 non-nullable bools always emit; `StripScriptTags` relocated here from EntityHelper); `Models/DonationModels/OnlineDonationPage.cs` (15 columns removed, relocation comment); `Data/Configurations/.../OnlineDonationPageConfiguration.cs` (relocated-column `HasMaxLength` removed); `Commands/OnlineDonationPageEntityHelper.cs` (15 field assignments + StripScriptTags removed); `Commands/CreateOnlineDonationPage.cs` (seed presentation rows post-insert, idempotent NOT-EXISTS); `Commands/UpdateOnlineDonationPage.cs` (diff-only upsert; cleared nullable → `ParamValue = null`, not soft-deleted); `Queries/GetOnlineDonationPageById.cs` (re-assemble 15 fields from already-loaded rows); `PublicQueries/GetOnlineDonationPageBySlug.cs` (assemble 15 fields, OG fallback chain preserved); `Commands/SaveOnlineDonationPageLandingContent.cs` (soft-delete sweep now excludes the 15 managed presentation ParamCodes — collision guard).
+  - DB (SPEC/seed — user-owned to apply): `sql-scripts-dyanmic/online-donation-page-issue41-backfill-sqlscripts.sql` (STEP 1 additive backfill, idempotent); `.claude/screen-tracker/bug-reports/onlinedonationpage-ISSUE41-MIGRATION-SPEC.md` (2-step deploy ordering + STEP 2 DROP COLUMN ×15).
+  - FE: **None** (per user scope).
+- **Build verification**: `dotnet build` (Base.API → transitively Domain/Application/Infrastructure) → **Build succeeded. 3 Warning(s) 0 Error(s)**.
+- **Migration (TWO user-owned steps, in order)**: (1) deploy new build + apply backfill seed while columns still exist (EF ignores unmapped columns) → **verify** GetById/GetBySlug re-hydrate + public SSR `<head>` renders `og:*`/`robots` from settings; (2) ONLY THEN author + run the destructive `DROP COLUMN ×15` migration. SEO/OG assembled + verified LAST before drop. Claude did NOT run any `dotnet ef` command or hand-author migration/snapshot (policy).
+- **Deviations from spec**: None. Wire contract intentionally preserved (Option A); FE deferred by explicit user scope.
+- **Known issues opened**: None. **Known issues closed**: ISSUE-41 (thin-core relocation).
+- **Next step**: user applies the 2-step migration (backfill → verify SSR OG head → drop). No BE/FE code work remains for ISSUE-41. Screen's other OPEN issues (P0 live-money gate etc.) remain.
 
-### Session 40 — 2026-07-10 — ODP-M9 slug-immutability guard misses staging (CONTINUED FIX)
-- **Trigger**: /continue-screen #10 — take the next self-contained BE fix. ODP-M9 is fully closable in a single validator with no migration, no product decision, no shared-platform work.
-- **Root cause**: `OnlineDonationPageSlugValidator.ValidateImmutableAfterDonationsAsync` only counted `GlobalDonations` for the page. But every public donation lands in `fund.OnlineDonationStagings` first and is promoted to `GlobalDonations` only by the manual Donation Inbox step (#175, deferred). So an Active page that had already **captured real money** (cards charged, receipts referencing `/p/{slug}`) but whose rows weren't promoted yet still passed the guard and let staff change the slug → link-rot on live shared/receipt URLs.
-- **Change** (1 BE file): added an OR clause counting a **captured** staging row — `OnlineDonationStagings.Any(s => s.OnlineDonationPageId == pageId && s.ReceivedDate != null && s.IsDeleted != true)`. `ReceivedDate` is stamped only on Confirm-success capture, so PENDING/abandoned initiates deliberately do NOT lock the slug (avoids a spam-initiate lockout). No MasterData resolution needed. Rewrote the method doc-comment to explain the staging-first pivot. `IApplicationDbContext` already exposes `OnlineDonationStagings` via `IDonationDbContext`.
-- **Scope note**: FULL closure of ODP-M9. Left the promoted-`GlobalDonations` check in place (a promoted donation is still a hard lock); the staging check is additive.
-- **Build verification**: BE `dotnet build Base.Application.csproj` → **0 errors** (566 warnings, pre-existing). PASS.
-- **Next step**: ODP-H8 (`frame-ancestors` CSP — FE/next.config) or ODP-H9 (failed-PayU donor dead-end — FE), both self-contained; ODP-M10/M11 config/cleanup. The reCAPTCHA+CSRF shared-platform pass and the ODP-B5 auto-promotion product decision remain the big items.
+### Session 52 — 2026-07-16 — migration applied + thin-core relocation PLANNED (FIX / PLANNING)
+- **Trigger**: /continue-screen #10 — user applied the ISSUE-39 migration, hit a `23505` failure, then decided to reverse "ship as-is" and plan the thin-core column cleanup for next session.
+- **Migration outcome**: User ran `Add_OnlineDonationPageSetting`. It failed on an UNRELATED, previously un-migrated model delta bundled into the same migration — the ODP-B5 idempotency partial-unique index `UX_GlobalOnlineDonations_Company_GatewayTxn` on `fund.GlobalOnlineDonations (CompanyId, GatewayTransactionId) WHERE GatewayTransactionId IS NOT NULL AND IsDeleted=false` (defined in `GlobalOnlineDonationConfiguration.cs:80`). Postgres `23505: could not create unique index` = existing duplicate rows (empty-string / repeated test `GatewayTransactionId`). Postgres DDL is transactional so the WHOLE migration rolled back (new table not created either). **Resolved**: user de-duped `GlobalOnlineDonations` (NULL empty-string txn ids / soft-delete genuine dupes), re-ran `dotnet ef database update` → both the idempotency index AND `fund.OnlineDonationPageSettings` landed. Table now live.
+- **Decision reversed**: The 2026-07-16 "ship as-is" (keep the ~19 typed columns) is **superseded** — user chose to proceed with the thin-core relocation, but as **next-session** work. Logged as **ISSUE-41 (OPEN, MED, PLANNED)** with candidate column list, keep-list, SSR/SEO build-time caution, and the two-step (additive backfill → verified drop) user-owned migration plan.
+- **Change** (this session): prompt-file only — ISSUE-41 added to §⑬ Known Issues; frontmatter `status: COMPLETED → NEEDS_FIX`. No BE/FE/DB code touched.
+- **Deviations from spec**: None (planning + status transition only).
+- **Known issues opened**: ISSUE-41 (thin-core relocation, PLANNED). **Known issues closed**: None (ISSUE-39 already closed session 51).
+- **Build verification**: N/A — no code built this session. Migration verification owned by user (confirmed applied).
+- **Next step**: `/continue-screen #10` next session to execute ISSUE-41 — Sonnet BE (settings-row backfill assembler + reads re-pointed to settings channel + migration SPEC step 1 additive, step 2 drop) then FE (drop relocated fields from typed DTO, route via `landingContent`/settings). Migrate + verify SSR OG-meta BEFORE the destructive column drop.
