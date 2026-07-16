@@ -9,7 +9,7 @@ complexity: High
 new_module: YES — `case` schema (already bootstrapped by Program #51)
 planned_date: 2026-04-21
 completed_date: 2026-04-24
-last_session_date: 2026-06-23
+last_session_date: 2026-07-16
 ---
 
 ## Tasks
@@ -1104,6 +1104,7 @@ Action: SET IsMenuRender = 0 (legacy List+Form split not used by FLOW)
 | ISSUE-13 | LOW | FE | Disabilities multi-select persists as CSV of codes in a single column. Flag for potential normalization (child table `BeneficiaryDisability`) if reporting/queries grow. | OPEN |
 | ISSUE-14 | MED | FE | `Add to Program` modal duplicates the eligibility-card UX from FORM §5 but without auto-eligibility check (used post-registration in DETAIL). Ensure `beneficiaryProgramEnrollments[]` is kept in sync when this modal adds a row (cache update or refetch). | OPEN |
 | ISSUE-15 | LOW | BE | `BeneficiaryHouseholdMember.LinkedBeneficiaryId` is self-referencing FK within the same schema. EF Core may need explicit `OnDelete(DeleteBehavior.NoAction)` to avoid cycle errors on migration generation. | OPEN |
+| ISSUE-16 | MED | Spec change (needs `/plan-screens #49`) | **Category-scoped outcome vocabulary.** Session 25 neutralised the education-specific "Graduated" → "Completed" (universally readable for water/food/medical/education) at both status levels — an in-scope relabel, no schema change. The richer model — outcome label varies by the enrollment's `Program.CategoryId` (Education→Graduated, Healthcare→Recovered/Discharged, Nutrition→Target Met, WASH/Emergency→Aid Delivered) — needs a new `ENROLLMENTSTATUS → PROGRAMCATEGORY` scoping relationship = a Spec change. Person-level `BeneficiaryStatusId` should stay program-agnostic ("Completed"); only the per-enrollment outcome would become category-scoped. Route to `/plan-screens #49` if the business wants program-specific outcome wording. | OPEN |
 
 ### Service Dependencies (UI-only — no backend service implementation)
 
@@ -1131,25 +1132,13 @@ Everything else (KPI widgets, filter chips, advanced filter panel, bulk-select, 
 
 ### § Known Issues
 
-See §⑫ table above — ISSUE-1 through ISSUE-15 pre-flagged by /plan-screens.
+See §⑫ table above — ISSUE-1 through ISSUE-16 (ISSUE-16 opened session 25).
 
 ### § Sessions
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
 
-> _[20 older session entries trimmed to save tokens — full history in git: `git log -p -- beneficiary.md`. Most recent 5 kept below.]_
-
-### Session 20 — 2026-06-22 — ENHANCE (Spec change — user-authorized) — COMPLETED (⚠ needs BE build + migration + seed by user)
-
-- **Scope**: **Layer-2 service selection** — a beneficiary's program enrollment now records *which* of the program's Layer-1 catalog services (`ProgramService`) they actually receive (not everyone uses every service), with full per-beneficiary detail: named provider, allocated amount + currency, per-service status, notes. Closes the gap the Program-services restructure (#50 S16) deferred to #49. User chose the **full** model (selection + detail) over selection-only.
-- **Data model** (new junction): `case."BeneficiaryEnrollmentServices"` — FK `BeneficiaryProgramEnrollmentId` (CASCADE) + `ProgramServiceId` (RESTRICT) + `NamedProvider`(200) + `AllocatedAmount` numeric(18,2) + `CurrencyId` (RESTRICT) + `ServiceStatusId` (RESTRICT, MasterData `ENROLLMENTSERVICESTATUS`) + `Notes`(500) + `OrderBy`. Unique index `(BeneficiaryProgramEnrollmentId, ProgramServiceId)` filtered `IsDeleted=false`. Nav `EnrollmentServices` added to `BeneficiaryProgramEnrollment`.
-- **BE files (⚠ user builds)**: NEW `BeneficiaryEnrollmentService.cs` (entity) + `BeneficiaryEnrollmentServiceConfiguration.cs`; `BeneficiaryProgramEnrollment.cs` (nav); `ICaseDbContext.cs` + `CaseDbContext.cs` (DbSet); `BeneficiarySchemas.cs` (new request/response DTOs + `EnrollmentServices` list on enrollment DTOs); `CaseMappings.cs` (join map + ignores; enrollment response maps nested); `CreateBeneficiary.cs` (build nested EnrollmentServices on each enrollment — EF cascade-inserts); `UpdateBeneficiary.cs` (load `.ThenInclude(e => e.EnrollmentServices)` + new `SyncEnrollmentServices` nested diff, called from both branches); `GetBeneficiaryById.cs` (3 grandchild ThenIncludes: ProgramService+ServiceType / Currency / ServiceStatus).
-- **DB (⚠ user)**: (1) **migration** creating `case."BeneficiaryEnrollmentServices"` (4 FKs as above) — no backfill; stacks on the still-pending S4 (relation FK repoint) + S14/S15 (CaseId cols) migrations. (2) run NEW `seed_enrollment_service_status_masterdata.sql` (`ENROLLMENTSERVICESTATUS`: ACTIVE/PAUSED/COMPLETED/CANCELLED, UPPERCASE, ColorHex in DataSetting).
-- **Mutation UNCHANGED** — HC auto-generates `BeneficiaryEnrollmentServiceRequestDtoInput` from the nested DTO list (same precedent as Program outcome-metrics #50 S20).
-- **FE files**: `BeneficiaryDto.ts` (new `BeneficiaryEnrollmentServiceDto` + `enrollmentServices` on enrollment dto); `BeneficiaryQuery.ts` (enrollmentServices selection); `beneficiary-update-helper.ts` + `view-page.tsx` buildVariables (carry enrollmentServices, strip response-only `serviceName`/`serviceTypeName`/`currencyCode`/`serviceStatusName`/`serviceStatusCode`); `eligibility-cards.tsx` (create-form **program selection area** — checked program reveals a lazy-loaded service checklist via `PROGRAM_BY_ID_QUERY`; selection-only here); `detail/enrollment-modal.tsx` (full per-service editor: checkbox + namedProvider/allocatedAmount+currency/status/notes, currency defaults to company base); `detail/tabs/programs-services-tab.tsx` (shows "Services Received" list per enrollment).
-- **Deviations from spec**: new junction entity + FK (Spec-level) — done in-session at user direction (same pattern as S4/S7/S14). Free-text `ServicesSummary` retained (now redundant; left as optional notes).
-- **Known issues opened**: FE sends `enrollmentServices` on every beneficiary save — **must build BE DTO + run the migration first or saves 400 / GetById fails** (HC strict input + missing table).
-- **Verification**: FE `npx tsc --noEmit` clean. BE not built (user builds).
+> _[21 older session entries trimmed to save tokens — full history in git: `git log -p -- beneficiary.md`. Most recent 5 kept below.]_
 
 ### Session 21 — 2026-06-22 — UI/ENHANCE — COMPLETED
 
@@ -1202,3 +1191,17 @@ See §⑫ table above — ISSUE-1 through ISSUE-15 pre-flagged by /plan-screens.
 - **Deviations from spec**: None. Scope limited to the beneficiary enrolment pickers (the `enrollableOnly` BE flag is generic and can be reused by other program pickers — e.g. Case program / service-log — if/when wanted).
 - **Known issues opened/closed**: None.
 - **Next step**: User builds BE (new GQL arg). No migration/seed required.
+
+### Session 25 — 2026-07-16 — FIX — COMPLETED (⚠ needs seed re-run by user)
+
+- **Scope**: The "Graduated" status is education-specific and misrepresents beneficiaries in water/food/medical/emergency programs (user report). Neutralised the term to **"Completed"** — universally readable across every program type — at both status levels. Relabel only: **codes stay GRD / GRADUATED**, so all BE logic (terminal-state guard, graduation→close-enrollment flow, `graduatedCount` projection) and FE chip filters (`CODE_MAP.graduated → "GRD"`) keep working untouched. No schema change, no migration — stays inside `/continue-screen` scope.
+- **What changed**:
+  - **DB seed** `sql-scripts-dyanmic/Beneficiary-sqlscripts.sql`: BENEFICIARYSTATUS VALUES `'Graduated'`→`'Completed'` (code GRD) + idempotent `UPDATE` to relabel already-seeded rows; ENROLLMENTSTATUS VALUES `'Graduated'`→`'Completed'` (code GRADUATED, `DataSetting` mirrors `DataName`) + idempotent `UPDATE` (sets both `DataName` and `DataSetting`). Status **badge/grid/chips are data-driven off `DataName`** → they show "Completed" automatically once reseeded.
+  - **FE labels** (hardcoded, not data-driven): `beneficiary-widgets.tsx` (KPI breakdown label "Graduated"→"Completed"; "Graduations · goals · milestones"→"Completions …"); `timeline-tab.tsx` ("Graduated / Exited"→"Completed / Exited"); `beneficiary-form.tsx` (read-only lock notice wording).
+  - **BE string**: `UpdateBeneficiaryStatus.cs` terminal-status error message wording ("Graduated"→"Completed"). Internal `TerminalStates` set + code comparisons keep the "Graduated" literal as a harmless code-level fallback (comparisons are against the DataValue code, which is unchanged).
+- **Files touched**: DB: `sql-scripts-dyanmic/Beneficiary-sqlscripts.sql`. FE: `beneficiary/beneficiary-widgets.tsx`, `beneficiary/timeline-tab.tsx`, `beneficiary/beneficiary-form.tsx`. BE: `Beneficiaries/UpdateCommand/UpdateBeneficiaryStatus.cs`.
+- **Deviations from spec**: None. Label-only; identifiers/codes/DTO field names (`graduatedCount`, chip key `graduated`, GraphQL `GraduatedCount`) intentionally left unchanged (internal contract).
+- **Known issues opened**: ISSUE-16 (category-scoped outcome vocabulary — Education→Graduated / Healthcare→Recovered / Nutrition→Target Met / WASH·Emergency→Aid Delivered — needs an `ENROLLMENTSTATUS → PROGRAMCATEGORY` relationship = Spec change; route to `/plan-screens #49` if wanted).
+- **Known issues closed**: None.
+- **Verification**: By inspection — all edits are string literals inside otherwise-unchanged SQL/TS/C# statements, none can affect compilation or type-checking (full `dotnet build`/`pnpm` skipped per "avoid full builds" directive).
+- **Next step**: User **re-runs `Beneficiary-sqlscripts.sql`** so existing rows relabel to "Completed" (idempotent `UPDATE`s handle already-seeded DBs). No migration.

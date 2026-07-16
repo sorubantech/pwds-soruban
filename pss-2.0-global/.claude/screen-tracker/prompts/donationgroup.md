@@ -9,7 +9,7 @@ complexity: Low
 new_module: NO
 planned_date: 2026-04-18
 completed_date: 2026-04-18
-last_session_date: 2026-04-18
+last_session_date: 2026-07-15
 ---
 
 ## Tasks
@@ -508,3 +508,14 @@ _(none — this is a standard master-grid CRUD screen; every action has a backen
 - **Deviations from spec**: Supersedes the "build as standalone grid" note in §⑥/§⑫ — the grid now lives inside a tabbed shell. No code change to the grid itself.
 - **Known issues opened/closed**: None.
 - **Next step**: See donationpurpose.md Session 2 (run `DonationConfig-sqlscripts.sql`, re-login, verify).
+
+### Session 3 — 2026-07-15 — ENHANCE — COMPLETED
+
+- **Scope**: Tenant-configurable auto-generation of `DonationGroupCode` on Create via `NumberSequenceGenerator` (entityTypeCode `DONATIONGROUP`, default pattern `DG-{SEQ:000}`), mirroring the Contact/Grant pattern. Code field is now server-owned.
+- **Files touched**:
+  - BE: `Business/DonationBusiness/DonationGroups/Commands/CreateDonationGroup.cs` — validator dropped `DonationGroupCode` required + unique checks (length-only now); handler injects `IHttpContextAccessor`, resolves tenant `CompanyId`, wraps unit-of-work in `CreateExecutionStrategy` + transaction, calls `NumberSequenceGenerator.GenerateAsync(...)` and assigns the code when non-empty.
+  - FE: `infrastructure/gql-mutations/donation-mutations/DonationGroupMutation.ts` — CREATE mutation `$donationGroupCode` relaxed `String!` → `String` (Update left `String!`).
+  - DB: `sql-scripts-dyanmic/NumberSequenceEntityType-BulkRegister-sqlscripts.sql` + `NumberSequenceConfig-CounterBackfill-sqlscripts.sql` — appended `DONATIONGROUP` rows (eligibility + `DG-` collision backfill).
+- **Deviations from spec**: None.
+- **Known issues opened/closed**: None.
+- **Next step**: User must re-run both seed scripts (BulkRegister first, then CounterBackfill) in each environment before Create is used — the generator throws if the `DONATIONGROUP` eligibility row is absent. Build verified: `Base.Application` compiles clean (0 errors).

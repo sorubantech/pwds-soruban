@@ -10,7 +10,7 @@ complexity: Medium
 new_module: NO
 planned_date: 2026-04-18
 completed_date: 2026-04-18
-last_session_date: 2026-07-09
+last_session_date: 2026-07-15
 ---
 
 ## Tasks
@@ -754,47 +754,7 @@ Re-verified the live grant flow before building. The recent "program fixed vs on
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
 
-> _[4 older session entries trimmed to save tokens — full history in git: `git log -p -- donationpurpose.md`. Most recent 5 kept below.]_
-
-### Session 5 — 2026-07-09 — BUILD (R2 §⑮, FE) — FE COMPLETED
-
-- **Scope**: R2 §⑮ frontend — the allocation surface on the R1 detail page + the #177 workbench purpose pool-strip. Mirrors the grant fund-allocation FE (`grant-fund-requests-tab.tsx` / `grant-allocate-modal.tsx`), cash-only variant. **Verified present + type-clean this session** (files had been authored earlier but were not yet logged as complete — corrects the stale "FE PENDING" on Session 4).
-- **Build result**: `npx tsc --noEmit` (PSS_2.0_Frontend) → **0 errors** across the whole frontend. New/edited donationpurpose + program-funding-sources files all clean.
-- **Files created**:
-  - `.../setting/donationconfig/donationpurpose/donation-purpose-fund-requests.tsx` — "Fund Requests" card: cash-only pool strip (Raised / Committed / Available to Allocate — solid `bg-X-600 text-white` badges, amounts right-aligned) + requests-by-program table (Ask w/ term basis, Allocated, Transferred, status badge Waiting→Allocated→Closed, per-row Allocate action gated on `canAllocate`) + shaped-Skeleton loading + error/empty states.
-  - `.../donationpurpose/donation-purpose-allocate-modal.tsx` — RHF + Zod allocate modal, single absolute-total `allocatedAmount` input (right-aligned), Zod ceilings mirror BE (≤ ask, ≤ currentAllocated + available, ≥ transferred, 0=release only when nothing transferred), "Allocate full ask" quick-fill; reads the mutation's SCALAR `BaseApiResponse<Decimal?>` result (uses the `row.fundingSourceId` it holds), refetches on success.
-  - `src/domain/entities/donation-service/DonationPurposeFundingRequestDto.ts` — header + row DTOs.
-- **Files edited**:
-  - `src/infrastructure/gql-queries/donation-queries/DonationPurposeQuery.ts` — `DONATION_PURPOSE_FUNDING_REQUESTS_QUERY` (header + rows under `BaseApiResponse` envelope).
-  - `src/infrastructure/gql-mutations/donation-mutations/DonationPurposeMutation.ts` — `ALLOCATE_DONATION_PURPOSE_TO_FUNDING_SOURCE_MUTATION`.
-  - `.../donationpurpose/detail-page.tsx` — mounted `<DonationPurposeFundRequests>` (full-width, below the collected-from breakdown; refetches R1 detail on allocate).
-  - `crm/casemanagement/program/program-funding-sources.tsx` — purpose-funded cards get the "awaiting allocation" treatment (no self-Approve; BE `CanApprove=false`) + `DonationPurposeFundPositionStrip` (Raised/Committed/Available, allocate-mode only); `committed` for purpose = `AllocatedAmount`.
-  - `donation-service` + gql barrels wired.
-- **Deviations**: none beyond the BE-contract shape already noted in Session 4 (mutation returns `Decimal?`, FE binds off the input `fundingSourceId`; no per-transfer list — aggregate `transferredAmount` only).
-- **Known issues opened**: none new.
-- **Known issues closed**: none — **ISSUE-9 (`UNITTYPE=DONATIONPURPOSE` seed + node backfill) remains OPEN and user-owned; it BLOCKS live use** (Raised reads $0 and allocation is impossible until applied).
-- **Next step**: user applies the ISSUE-9 seed + backfill (spec in §⑮.1), then E2E click-through: link a purpose as a program funding source (#177) → allocate from the purpose detail page → record TRANSFERRED ≤ allocated on the program screen.
-
-### Session 6 — 2026-07-09 — BUILD (R2 §⑮.9 — purpose-side transfer surface + per-source tracking) — BE+FE COMPLETED
-
-- **Scope / why**: user feedback — the grant screen has a **Record Transfer** surface (payment mode/details) beside Allocate; the purpose had allocation but **no transfer recording** (transfers were still pushed to the #177 program screen). Grant is a **single** source, but a Donation Purpose **pools cash from many donation channels** (Pledge / Online Donation / Crowdfunding / General), so each transfer must record **which source(s) it's drawn from**. Design chosen (user delegated, "decide as you work, think UX"): **per-transfer source split** — staff attribute the transfer amount across the 4 channels, `Σ split == amount`; NO fragile auto-classifier, NO false per-source ceilings. Transfers now **move onto the purpose screen** and off #177 (mirrors grant).
-- **Build result**: Base.API `dotnet build` → **0 errors** (build ran to a temp `-o` dir to dodge the running-app DLL locks; the only failures on the in-place build were MSB3021/MSB3027 file-locks, not CS errors). `npx tsc --noEmit` (PSS_2.0_Frontend) → **0 errors**.
-- **Schema change (ONE new table — user owns the migration)**: `case.ProgramFundingTransactionSource` (Id, ProgramFundingTransactionId FK→cascade, SourceChannel varchar(20) plain code, Amount numeric(18,2), + Entity base cols, IX on FK). Spec: `.claude/screen-tracker/migration-specs/ProgramFundingTransactionSource_MIGRATION.md`. **No seed** (channels are hard-coded plain codes, like PaymentStatus).
-- **BE created**: `CaseModels/ProgramFundingTransactionSource.cs` (+ `Sources` nav on `ProgramFundingTransaction`); `CaseConfigurations/ProgramFundingTransactionSourceConfiguration.cs`; `DonationPurposes/TransferSourceChannel.cs` (PLEDGE/ONLINE/CROWDFUND/GENERAL codes+labels+validation); `DonationPurposes/Commands/RecordDonationPurposeFundingTransfer.cs` (purpose-funded only; caps total at AllocatedAmount; validates `Σ split == amount`, channels valid, non-negative; writes TRANSFERRED txn + non-zero split child rows); `DonationPurposes/Commands/DeleteDonationPurposeFundingTransfer.cs` (soft-delete, purpose-guarded).
-- **BE edited**: `ICaseDbContext` + `CaseDbContext` (+`ProgramFundingTransactionSources` DbSet); `DonationPurposeSchemas.cs` (+`Transfers` on row DTO, +`DonationPurposeTransferRowDto`/`...SourceRowDto`, +`RecordDonationPurposeFundingTransferDto`/`...TransferSourceInputDto`); `GetDonationPurposeFundingRequests.cs` (loads per-source transfer ledger, labels resolved in-memory); `DonationPurposeMutations.cs` (+`recordDonationPurposeFundingTransfer`→`BaseApiResponse<decimal>`, +`deleteDonationPurposeFundingTransfer`→`BaseApiResponse<bool>`); **`SaveProgramFundingAllocation.cs` (#177) — excludes `DonationPurposeId` from `SyncFundingTransactions`** (now `!GrantId && !DonationPurposeId`; only Sponsor still records transfers there), so purpose transfers are single-sourced on the purpose screen (reverses the Session-4 §⑮.7 "purpose stays on program screen" note).
-- **FE created**: `donationpurpose/donation-purpose-record-transfer-modal.tsx` — mirrors grant `record-transfer-modal.tsx` (amount + payment mode/date/ref/from-account/notes, same option queries + dynamic ref-label) **plus** a 4-channel split section (Pledge/Online/Crowdfunding/General, right-aligned inputs, live "to attribute" chip, "put remainder in General" helper, submit blocked until `Σ split == amount`).
-- **FE edited**: `DonationPurposeFundingRequestDto.ts` (+`transfers` on row, +`DonationPurposeTransferRowDto`/`...SourceDto`); `DonationPurposeQuery.ts` (+`transfers { … sources { sourceChannel sourceLabel amount } }`); `DonationPurposeMutation.ts` (+RECORD/DELETE transfer mutations); `donation-purpose-fund-requests.tsx` — pool strip now 5 tiles (added Transferred + Drawn, solid `bg-X-600`), table gains Drawn column + expand caret + **Record Transfer** action (gated `canAllocate && allocated>transferred`) + expandable per-transfer ledger with source-split chips + delete.
-- **Known issues**: none new. **ISSUE-9 seed+backfill still OPEN/user-owned** (blocks live use). This table's migration is the other user-owned gate.
-- **Next step**: user (1) generates+applies the `Add_ProgramFundingTransactionSource` migration, (2) applies ISSUE-9 seed+backfill, then E2E: #177 link purpose → allocate on purpose screen → **Record Transfer with source split** on purpose screen → expand ledger to see per-channel chips.
-
-### Session 7 — 2026-07-10 — FIX (R2 §⑮.9) — Record Transfer validation: pooled-cash ceiling + LINQ translation bug
-
-- **Bug 1 (runtime, reported)**: `GetDonationPurposeFundingRequests` threw *"LINQ expression `s => s.IsDeleted == (bool?)False` could not be translated"* — the transfer-ledger projection filtered a **child collection** (`Sources.Where(s => s.IsDeleted == false)`) inside a SQL `Select`, and a `bool?` comparison in that nested subquery position isn't translatable. **Fix**: materialise the transactions first via `.Include(t => t.Sources)` + `ToListAsync`, then filter/label the child rows in memory (`TransferSourceChannel.Label/Normalize` aren't SQL-translatable anyway). Outer `Where` stays in SQL.
-- **Bug 2 (missing validation, reported)**: user could Record Transfer of e.g. 500 against a source whose purpose **had no raised cash** — no error. Root cause: the command capped only the **per-source `AllocatedAmount`** (a COMMITMENT ceiling), never the purpose's **actual pooled cash**. A source can be allocated 500 while the purpose's raised pool is exhausted/never-raised. **Fix = two-ceiling guard** (transfer ≤ min(per-source allocation headroom, purpose cash)):
-  - **BE** `RecordDonationPurposeFundingTransfer.cs` guard **(g)** — `availableCash = Raised − Σ TRANSFERRED across ALL of the purpose's sources` (Raised via `DonationPurposeRaisedHelper`); throws `BadRequestException` if `amount > availableCash`.
-  - **FE modal** — new `availableCash` prop; amount ceiling is now `min(allocationRemaining, cashCeiling)`; info panel shows **Purpose Cash Available** + **Can Transfer Now** (with "limited by pooled cash" hint when cash is binding); Zod message switches to the cash wording when cash binds.
-  - **FE table** — `purposeAvailableCash = Raised − Transferred` (from header); **Record Transfer button now also disabled when `purposeAvailableCash <= 0`** (user's "only enable fund-available sources" ask) with a specific tooltip reason (not-allocatable / fully-transferred / no-cash).
-- **Build**: FE `npx tsc --noEmit` → **0 errors** (changed files clean). BE build **left to user** (per instruction; the two edits are a nested-collection materialisation + one added guard block — no signature/schema change, no migration).
+> _[7 older session entries trimmed to save tokens — full history in git: `git log -p -- donationpurpose.md`. Most recent 5 kept below.]_
 
 ### Session 8 — 2026-07-10 — FIX (R2 §⑮.10) — Record Transfer: per-CHANNEL cash ceiling (aggregate ceiling was too loose)
 
@@ -824,3 +784,33 @@ Re-verified the live grant flow before building. The recent "program fixed vs on
   - **Utilization by Program** table: Allocated / Transferred / Utilized / With Mgr / Balance(alloc−drawn) + totals footer.
 - **Build**: FE `npx tsc --noEmit` → **0 errors** whole project. BE build **left to user** (guard is one added block, no signature/schema change, no migration).
 - **Files**: BE edit `AllocateDonationPurposeToFundingSource.cs`. FE new `donation-purpose-utilization.tsx`; FE edit `detail-page.tsx` (tabs), `donation-purpose-fund-requests.tsx` (allocate gate). No DTO/GQL change.
+
+### Session 10 — 2026-07-14 — ENHANCEMENT (DBA utility) — FK-safe purpose teardown script — COMPLETED
+
+- **Ask (user)**: mirror the program cleanup script (`DatabaseScripts/Seed/cleanup_case_management_by_program.sql`) for a Donation Purpose — "delete that record and those mapped childs also", FK-safe.
+- **Delivered**: `PSS_2.0_Backend/DatabaseScripts/Seed/cleanup_donation_purpose.sql` — a `DO $cleanup$` block, scope by `v_purpose_id` (or `v_purpose_code`). Prints a per-table **preflight report**, then a **transactional guard** that ABORTS by default when cash-bearing rows exist (upholds the §④ soft-delete-only rule); `v_force := true` overrides. Deletes in FK-safe order: **grandchildren** (AmbassadorCollectionDistributions, ContactCertificates, PledgePayments, CrowdFundDonations; NULL OnlineDonationStagings.CrowdFundId) → **children/direct FKs** (ContactDonationPurposes, AmbassadorCollections [col `DonationTypeId`], Pledges, CrowdFunds, CampaignDonationPurposes, OrganizationalUnitDonationPurposes, RecurringDonationScheduleDistributions, AccountingAccountMappings) → **NULL nullable config refs** (CertificateTemplates, ReceiptTemplates, P2PCampaignPages, ProgramFundingSource, ScheduledReports, Products.PurposeId; `v_null_config_refs`) → **the purpose row** + **optional dedicated org-unit node** (`v_drop_node`, guards settled GlobalDonationDistributions).
+- **FK map verified from EF configs** (all referencers are `DeleteBehavior.Restrict`, so nothing cascades — every child cleared explicitly). Correction vs earlier note: `fund.AmbassadorCollections.DonationTypeId` **is** a real FK → `fund.DonationPurposes` (not a MasterData ref).
+- **Deviations**: none. **No code/schema/migration change** — standalone operational SQL. Screen #2 code untouched; status stays COMPLETED.
+- **Known issues opened/closed**: none.
+- **Next step**: user runs the script against a target purpose (starts with `v_force=false` to read the preflight before deciding).
+
+### Session 11 — 2026-07-14 — ENHANCEMENT (DBA utility) — teardown now includes the dedicated org-unit node — COMPLETED
+
+- **Ask (user)**: "organization unit also we need to include and delete" — the purpose's dedicated `app.OrganizationalUnits` node (referenced by `DonationPurpose.OrganizationalUnitId`) should be torn down with the purpose, not left behind under the default-OFF flag.
+- **Delivered** (edit to `cleanup_donation_purpose.sql`): flipped `v_drop_node` default `false → true` (node deleted by default; set `false` to keep). Rewrote Phase D node-drop as a proper **FK-safe dedicated-node teardown** with a hard **safety guard** — the node is dropped ONLY when it is a genuine per-purpose node: (1) `UnitTypeId` = the `UNITTYPE/DONATIONPURPOSE` master-data id (matches `CreateDonationPurpose.BuildOwnOrganizationalUnitAsync`), (2) no OTHER `DonationPurpose` points at it, (3) no child org units are parented to it, (4) no settled `GlobalDonationDistributions` / `GlobalDonations` at it unless `v_force`. Any failed check → `RAISE NOTICE … KEPT` (never nukes a shared branch). Teardown order: node distributions → NULL `GlobalDonations.OrganizationalUnitId` → node junctions (`OrganizationalUnitDonationPurposes` / `OrganizationalUnitPaymentModes` / `OrganizationalUnitStaffs`) → the node row (D2–D7 notices).
+- **Verified from EF models**: `OrganizationalUnit` is a full org-tree entity (self-ref `ParentUnitId`, staff/payment/campaign/donation nav), so the type+ownership guard is essential — the purpose node is created as a root `DONATIONPURPOSE` unit 1:1 with the purpose. Table/column names (`sett.MasterDatas`/`MasterDataTypes`, `app.OrganizationalUnit*`, `fund.GlobalDonations.OrganizationalUnitId`) confirmed against the model files. Block balance re-checked (1 DO/END, 7 IF/7 END IF).
+- **Deviations**: none. **No code/schema/migration change** — standalone operational SQL. Screen #2 code untouched; status stays COMPLETED.
+- **Known issues opened/closed**: none.
+- **Next step**: user runs with `v_force=false` first — the node is kept + a reason printed if it isn't a clean dedicated node or still carries cash.
+
+### Session 12 — 2026-07-15 — ENHANCE — Tenant-configurable code generation (DONATIONPURPOSE) — COMPLETED
+
+- **Scope**: mirror the #3/#4 NumberSequence rollout on Donation Purpose — auto-generate `DonationPurposeCode` per tenant on Create. Because `CreateDonationPurpose.BuildOwnOrganizationalUnitAsync` copies `DonationPurposeCode` onto the purpose's dedicated `app.OrganizationalUnits` node (`UnitCode`), the **same generated code is shared** by the purpose AND its parent org-unit node — one sequence, two records. Generation is placed **before** the own-node build so the shared value propagates.
+- **Files touched**:
+  - BE: `DonationBusiness/DonationPurposes/Commands/CreateDonationPurpose.cs` — handler calls `NumberSequenceGenerator.GenerateAsync(dbContext, companyId, "DONATIONPURPOSE", DateTime.UtcNow, ct)` inside the existing execution-strategy transaction, right after OrderBy and before `BuildOwnOrganizationalUnitAsync`; validator drops `ValidatePropertyIsRequired`/`ValidateUniqueWhenCreate` on `DonationPurposeCode` (length check retained). Update path unchanged.
+  - FE: `gql-mutations/donation-mutations/DonationPurposeMutation.ts` — CREATE `$donationPurposeCode` relaxed `String!` → `String` (server-generated); Update stays `String!`.
+  - DB: `sql-scripts-dyanmic/NumberSequenceEntityType-BulkRegister-sqlscripts.sql` (+`DONATIONPURPOSE` → `fund.DonationPurposes.DonationPurposeCode`, prefix `DP`, pattern `{PREFIX}-{SEQ:000}`) and `NumberSequenceConfig-CounterBackfill-sqlscripts.sql` (+`DONATIONPURPOSE`, match prefix `DP-`).
+- **Build**: `dotnet build Base.Application.csproj` → **0 errors** (551 warnings, pre-existing).
+- **Deviations from spec**: none — §④ "DonationPurposeCode unique per Company" is now enforced by the generator's per-tenant counter + backfill instead of a client-boundary uniqueness rule.
+- **Known issues opened/closed**: none.
+- **Next step**: user re-runs the two seed scripts (BulkRegister FIRST, then CounterBackfill) per environment before Create is used — the generator throws if the `DONATIONPURPOSE` eligibility row is absent.
