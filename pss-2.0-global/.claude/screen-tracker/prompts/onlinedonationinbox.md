@@ -9,7 +9,7 @@ complexity: High
 new_module: NO
 planned_date: 2026-05-29
 completed_date: 2026-05-29
-last_session_date: 2026-06-01
+last_session_date: 2026-07-17
 ---
 
 ## Tasks
@@ -502,78 +502,6 @@ GridCode: ONLINEDONATIONINBOX
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
 
-#### Session 1 — 2026-05-29 (PART 1: Foundation + Queue Workbench)
-
-**Agent**: Frontend Developer (Sonnet)
-**Scope**: PART 1 of 2 — DTOs, GQL queries/mutations, Zustand store, KPI widgets, toolbar, queue table, index page (Variant B), router shell, route page, wiring. PART 2 (process/read view-page) has a stub placeholder.
-
-**Files created**:
-- `src/domain/entities/donation-service/OnlineDonationInboxDto.ts`
-- `src/infrastructure/gql-queries/donation-queries/OnlineDonationInboxQuery.ts`
-- `src/infrastructure/gql-mutations/donation-mutations/OnlineDonationInboxMutation.ts`
-- `src/presentation/pages/crm/donation/onlinedonationinbox.tsx`
-- `src/presentation/components/page-components/crm/donation/onlinedonationinbox/index.tsx`
-- `src/presentation/components/page-components/crm/donation/onlinedonationinbox/index-page.tsx`
-- `src/presentation/components/page-components/crm/donation/onlinedonationinbox/view-page.tsx` (stub)
-- `src/presentation/components/page-components/crm/donation/onlinedonationinbox/onlinedonationinbox-store.ts`
-- `src/presentation/components/page-components/crm/donation/onlinedonationinbox/inbox-widgets.tsx`
-- `src/presentation/components/page-components/crm/donation/onlinedonationinbox/inbox-toolbar.tsx`
-- `src/presentation/components/page-components/crm/donation/onlinedonationinbox/inbox-table.tsx`
-- `src/app/[lang]/crm/donation/onlinedonationinbox/page.tsx`
-
-**Files modified (wiring)**:
-- `src/domain/entities/donation-service/index.ts` — added OnlineDonationInboxDto export
-- `src/infrastructure/gql-queries/donation-queries/index.ts` — added OnlineDonationInboxQuery export
-- `src/infrastructure/gql-mutations/donation-mutations/index.ts` — added OnlineDonationInboxMutation export
-- `src/presentation/pages/crm/donation/index.ts` — added OnlineDonationInboxPageConfig export
-- `src/application/configs/data-table-configs/donation-service-entity-operations.ts` — added ONLINEDONATIONINBOX config block
-
-**tsc result**: Exit 0 — one pre-existing error in `donation-form.tsx` (Razorpay, Screen #10); zero errors in new files.
-
-**Deviations from spec**: None. Variant B confirmed (ScreenHeader + InboxWidgets + InboxTable). view-page.tsx is a stub (PART 2 scope). DB Seed (menu/caps) handled separately per spec §⑨.
-
-**ISSUE-5 resolution**: DB seed handled by /build-screen DB step; entity-operations wired with ONLINEDONATIONINBOX gridCode.
-
----
-
-> _[1 older session entries trimmed to save tokens — full history in git: `git log -p -- onlinedonationinbox.md`. Most recent 5 kept below.]_
-
-### Session 2 — 2026-05-29 — REFACTOR — COMPLETED
-
-> Queue grid migrated off the hand-rolled custom table onto the SHARED `<FlowDataTable>`, per user directive: "use flow grid or advanced grid — don't create custom grid; you can create the custom actions in advanced or flow if needed." Resolves ISSUE-8. (Mirrors the Refund #13 sibling — FlowDataTable + Variant B + filter→extraVariables + component-column actions.)
-
-- **Scope**: FE grid refactor + supporting BE/DB/seed changes. No agents spawned — done inline (precise, pre-researched edits). [[reuse-existing-grids]].
-- **Files touched**:
-  - FE (created): `presentation/components/custom-components/data-tables/shared-cell-renderers/online-donation-inbox-cells.tsx` — 8 `odi-*` renderers (donor / contact / amount / type / match / payment / state / **actions** Process+View).
-  - FE (modified): `.../shared-cell-renderers/index.ts` (barrel exports); `.../data-tables/flow/data-table-column-types/component-column.tsx` (8 `odi-*` GridComponentName cases + imports); `.../onlinedonationinbox/index-page.tsx` (rewritten → `FlowDataTableStoreProvider` + `FlowDataTableContainer showHeader={false}`; screen filters → grid `extraVariables` / `searchTerm` / `refresh`); `infrastructure/gql-queries/donation-queries/OnlineDonationInboxQuery.ts` (`$dateFrom`/`$dateTo` → nullable for grid first-fetch).
-  - FE (deleted): `.../onlinedonationinbox/inbox-table.tsx` (the hand-rolled `<table>`).
-  - FE (unchanged, reused): `inbox-toolbar.tsx`, `inbox-widgets.tsx`, `onlinedonationinbox-store.ts`, `index.tsx` (dispatcher), `view-page.tsx` + panels.
-  - BE (modified): `Base.API/EndPoints/Donation/Queries/OnlineDonationInboxQueries.cs` + `Base.Application/.../Queries/GetOnlineDonationStagingList.cs` — `dateFrom`/`dateTo` made nullable; handler defaults null → trailing 90-day window; validator range checks `.When(both present)`. (Summary query left required — widgets always pass a range.)
-  - DB (modified): `OnlineDonationInbox-sqlscripts.sql` — STEP 4b `sett.Fields` (11) + STEP 4c `sett.GridFields` (11 `odi-*` component columns); header/footer notes updated. No `IsPrimary` row → ActionColumnBuilder suppressed (P2P #135 precedent); `odi-actions` is the sole action surface.
-- **Why nullable dates**: the FlowDataTable fires its first fetch before the screen's `setExtraVariables` effect runs; required `DateTime!` vars would 400 on that first call. Nullable + server default removes the race; the toolbar overrides with the real range on the next tick.
-- **Deviations from spec**: Queue is now a config-driven grid (was custom Apollo table in §⑥/§⑫). `odi-*` renderers registered in the **flow** column builder only (this grid renders exclusively via `<FlowDataTable>`; advanced/basic builders not needed).
-- **Known issues opened**: None.
-- **Known issues closed**: ISSUE-8 (custom grid → FlowDataTable).
-- **Validation**: FE `tsc --noEmit` clean (only the pre-existing unrelated #10 Razorpay error; zero errors in new/changed files). BE `Base.Application` compiles `0 Error(s)` (full-solution build only failed on output-DLL file-locks from the running API/VS process — not code). Variant B confirmed (`ScreenHeader` + `FlowDataTableContainer showHeader={false}`). GridComponentName check: all `odi-*` cases registered in the flow `ComponentColumnBuilder`.
-- **Next step**: Runtime E2E still pending — run `/test-screen #175`. On first load, confirm the grid renders the 11 columns from the seeded GridFields (run `OnlineDonationInbox-sqlscripts.sql` first) and that Process/View navigation + Run Auto-Map refresh work.
-
-### Session 3 — 2026-05-30 — ENHANCE — COMPLETED
-
-> Two FE polish requests + audit-log integration for the mapping actions. No agents spawned for the edits — inline; two Explore agents used only to map the existing audit subsystem + handlers.
-
-- **Scope**: FE badge restyle + toolbar search removal; BE audit logging for manual-map & auto-map.
-- **Files touched**:
-  - FE (modified, badge restyle → solid `-600` bg + `text-white`, neutral → `bg-slate-500/600`): `custom-components/data-tables/shared-cell-renderers/online-donation-inbox-cells.tsx` (Anonymous chip, Type, Match, Payment, State badges); `page-components/.../onlinedonationinbox/contact-resolution-panel.tsx` (MatchReasonChip); `.../view-page.tsx` (PaymentCard status + ANONYMOUS chip); `.../recurring-verify-panel.tsx` (RECURRING pill only — surrounding amber callout panel left untouched).
-  - FE (modified, search removal): `.../onlinedonationinbox/inbox-toolbar.tsx` — removed the search `<Input>` left of the dropdowns + its now-unused `Input` import and `searchTerm`/`setSearchTerm` store hooks (`bumpRefresh` kept; `searchTerm` field stays in the store, just unset).
-  - BE (modified): `Base.Application/.../OnlineDonationInbox/Commands/ResolveOnlineDonationStaging.cs` — inject `IAuditLogWriter`; added optional `bool IsAutoMap = false` to the command record; writes an `OD_MAP` workflow audit (EntityType `OnlineDonationStaging`, EntityId = stagingId) after writeback `SaveChanges`, suppressed when `IsAutoMap`. `RunAutoMapOnlineDonations.cs` — inject `IAuditLogWriter`; passes `IsAutoMap: true` to the inner Resolve; writes ONE `OD_AUTOMAP` batch-summary audit (EntityId 0) after the loop with mapped/unresolved/failed counts + date range.
-  - DB: `AUDIT_ACTION_TYPE` codes `OD_MAP` (Online donation map) + `OD_AUTOMAP` (Online donation auto map) seeded by the **user**, not the build. `AuditTrail-sqlscripts.sql` left with only a comment pointer (no rows added by the build).
-- **Audit design**: explicit business-event audit via `IAuditLogWriter.WriteWorkflowEvent` (non-blocking queue, never throws, never joins the caller's txn). EntityType is the **staging entity** (`OnlineDonationStaging`) for both paths — manual map = per-row `OD_MAP`, auto-map = single `OD_AUTOMAP` summary (per-row entries suppressed to keep the trail readable). Complements the auto-interceptor's raw UPDATE/CREATE rows with named, human-readable actions.
-- **Deviations from spec**: None — audit logging was not in the original §-spec; added per user request ("include the audit log for this screen — manual map + run automap, mainly entity type").
-- **Known issues opened**: None.
-- **Known issues closed**: None.
-- **Validation**: BE `Base.Application` builds `0 Error(s)` (507 pre-existing nullable warnings, none in changed files). FE edits are token/class-only — no type surface change.
-- **Next step**: `OD_MAP` / `OD_AUTOMAP` already seeded by user. `/test-screen #175`: do a manual Process→map and a Run Auto-Map, and confirm the Audit Trail (Screen #74) shows the `OD_MAP` / `OD_AUTOMAP` rows under EntityType `OnlineDonationStaging`.
-
 ### Session 4 — 2026-05-30 — ENHANCE — COMPLETED (pending user EF migration)
 
 > Converted "Run Auto-Map" from a synchronous in-request for-loop into a **durable, resumable, queued Hangfire background job** with live progress, pause/resume/cancel, actor tracking, and crash recovery. Mirrors the existing Import subsystem (ImportSession → Hangfire → batched loop + LastProcessedOffset resume + startup recovery). Approved plan: `nifty-squishing-dragonfly.md`. Decisions: Apollo polling (not SignalR); job keeps running on screen close; inline panel + history on the inbox.
@@ -611,3 +539,30 @@ GridCode: ONLINEDONATIONINBOX
 - **Known issues opened / closed**: None.
 - **Validation**: `pnpm tsc --noEmit` — clean for `inbox-toolbar.tsx`; only the long-standing unrelated #10 `donation-form.tsx:659` Razorpay error remains. All components used (`Icon`, `Label`, `Input`, `AlertDialog*`) were already imported in the file.
 - **Next step**: None. Click "Run Auto-Map" to see the restyled confirm.
+
+### Session 7 — 2026-07-17 — FIX — COMPLETED (pending user EF migration)
+
+- **Scope**: Crowdfunding donation tracking was missing from `fund.GlobalDonations` — ODP (`OnlineDonationPageId`) and P2P (`P2PCampaignPageId`/`P2PFundraiserId`) had direct source FKs, but crowdfund donations were tracked only through a separate `fund.CrowdFundDonations` junction. Added a direct nullable `GlobalDonation.CrowdFundId` FK (consistent with the other two sources), rewired every consumer off the junction, and dropped the junction. Cross-cutting with **#16 / #173 (Crowdfunding)** — same data model.
+- **Files touched**:
+  - BE (model/config): `Base.Domain/Models/DonationModels/GlobalDonation.cs` (scalar `CrowdFundId` + `CrowdFund` nav + doc), `CrowdFund.cs` (nav → `ICollection<GlobalDonation> GlobalDonations`), `OnlineDonationStaging.cs` (comment; origin `CrowdFundId` column STAYS), `GlobalDonationConfiguration.cs` (HasOne/WithMany + `IX_GlobalDonations_CrowdFundId` + widened `CK_GlobalDonations_OnePageSource` to 3 cols), `DonationMappings.cs` (Ignore nav). **DELETED**: `CrowdFundDonation.cs`, `CrowdFundDonationConfiguration.cs`. Removed `CrowdFundDonations` DbSet from `DonationDbContext.cs` + `IDonationDbContext.cs`.
+  - BE (consumers): `PromoteOnlineDonationStaging.cs` + `ResolveOnlineDonationStaging.cs` (junction insert → `ExecuteUpdateAsync` column backfill, moved before the detach block; `raised` GoalMet aggregate rewritten to `GlobalDonations.CrowdFundId`, donor-currency `NetAmount - RefundedAmount` preserved), `DeleteCrowdFund.cs` + `UnpublishCrowdFund.cs` (donation-count guard → `GlobalDonations`), `DuplicateCrowdFund.cs` (comment only). All 7 rollup queries already read the column (prior session). `dotnet build` — **0 errors** (650 warnings, pre-existing).
+  - DB: `sql-scripts-dyanmic/global-donation-crowdfundid-migration-spec.sql` (user-owned migration + MANUAL backfill + parity-verify + junction DROP, ordered).
+- **Deviations from spec**: None — this is a BE data-model correctness fix; no FE/UI change. Per auto-memory `feedback_migrations_strictly_user_owned`, the EF migration is NOT scaffolded/applied by me — the user authors + runs + commits it using the spec file.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **User action required**: (1) scaffold + run the EF migration (`AddGlobalDonationCrowdFundId`) using the spec; run the MANUAL backfill + parity check (steps 2–3) BEFORE the junction DROP (step 4). (2) Seed SQL still referencing the junction must be updated to write `GlobalDonations.CrowdFundId` directly: `DatabaseScripts/Seed/seed_demo_company3_page_donations.sql`, `cleanup_online_donation_page.sql`, `cleanup_donation_purpose.sql`, `cleanup_demo_company3.sql`; and comment-only refs in `sql-scripts-dyanmic/Crowdfundingpage-sqlscripts.sql`, `Crowdfunding-sqlscripts.sql`.
+- **Next step**: None (code + spec complete; awaiting user migration).
+
+### Session 8 — 2026-07-17 — FIX — COMPLETED
+
+- **Scope**: The Global Donation list/grid (`GetGlobalDonations`) crashed with `NullReferenceException` on data retrieval right after Session 7 shipped `GlobalDonation.CrowdFundId`. Fixed the crash.
+- **Root cause**: Session 7 wired the new crowdfund FK **bidirectionally** — a `CrowdFund.GlobalDonations` back-collection + `.WithMany(c => c.GlobalDonations)`. ODP (`OnlineDonationPageId`) and P2P (`P2PCampaignPageId`) are unidirectional (`.WithMany()`), so they never hit this. `GetGlobalDonations` runs a **tracked** grid query (no `.AsNoTracking()`); EF relationship-fixup wires the tracked `GlobalDonation.CrowdFund ↔ CrowdFund.GlobalDonations` into an in-memory cycle, and the global `TypeAdapterConfig.GlobalSettings.Default.PreserveReference(true)` (NotifyMappings.cs:661) NREs while Mapster-adapting that cyclic graph into `IEnumerable<TDto>` inside `EntityExtensions.ToDtoList` (called from `CommonExtension.ApplyGridFeatures` → `GetGlobalDonations.cs:91`). The `CrowdFund.GlobalDonations` collection was the only GlobalDonation back-collection in the whole domain model — the sole structural difference from ODP/P2P.
+- **Fix (3 edits, BE-only, schema-identical — makes crowdfund FK mirror ODP/P2P byte-for-byte)**:
+  - `Base.Domain/Models/DonationModels/CrowdFund.cs` — removed the `ICollection<GlobalDonation> GlobalDonations` back-collection (unused; every consumer aggregates via the `dbContext.GlobalDonations` DbSet + `CrowdFundId` FK, never this nav).
+  - `Base.Infrastructure/.../DonationConfigurations/GlobalDonationConfiguration.cs:104` — `.WithMany(c => c.GlobalDonations)` → `.WithMany()`.
+  - `Base.Application/Mappings/DonationMappings.cs:697` — removed the now-obsolete `.Ignore(dest => dest.GlobalDonations!)` on the `CrowdFundPageUpdateRequest → CrowdFund` config.
+- **Deviations from spec**: None. Cross-cutting with #16/#173 (same data model as Session 7) but no FE/UI/business-behavior change — the FK, index, column, and CHECK are all unchanged; only the C# principal-side navigation was dropped.
+- **Known issues opened / closed**: None.
+- **Build verification**: `dotnet build Base.Infrastructure.csproj` → **0 errors** (617 pre-existing warnings). First build failed on `DonationMappings.cs:697` referencing the removed nav — fixed by removing that `.Ignore()`, rebuilt clean.
+- **Migration note**: No DB migration needed — the relational model (FK/index/column/CHECK) is byte-for-byte unchanged; only the principal-side nav was removed. EF's model snapshot still carries a `b.Navigation("GlobalDonations")` line under CrowdFund, so a future scaffold may show a metadata-only diff. Snapshot reconciliation is user-owned (per `feedback_migrations_strictly_user_owned`); it has **zero** runtime/DB effect and the app runs correctly with the current DB as-is.
+- **Next step**: Restart the API and reopen the Global Donation list — the grid loads without the NRE.

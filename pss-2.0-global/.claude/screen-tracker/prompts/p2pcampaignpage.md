@@ -2,7 +2,7 @@
 screen: P2PCampaignPage
 registry_id: 170
 module: Setting (Public Pages)
-status: COMPLETED
+status: NEEDS_FIX
 scope: FULL
 screen_type: EXTERNAL_PAGE
 external_page_subtype: P2P_FUNDRAISER
@@ -10,7 +10,7 @@ complexity: High
 new_module: NO
 planned_date: 2026-05-08
 completed_date: 2026-05-10
-last_session_date: 2026-05-10
+last_session_date: 2026-07-21
 ---
 
 ## Tasks
@@ -1674,109 +1674,108 @@ Full UI must be built (5 setup tabs, 4 public render trees including wizard, don
 | ISSUE-6 | 1 | LOW | BE / Public | CSRF token validation is length-only (≥16 chars). Real cookie+header double-submit middleware (`[ValidateCsrfToken]`) lives at API endpoint layer; body-token format check is MVP guard. | OPEN |
 | ISSUE-7 | 1 | LOW | BE / Seed | `Sett.Grids` row seeded but `GridFields` / `GridFieldFilters` mappings deliberately omitted because `GridFormSchema: SKIP` (custom UI, not stock DataTable). Confirm FE doesn't rely on grid-field metadata for the admin list. | OPEN |
 | ISSUE-8 | 2 | LOW | FE / Public | Login-link manage page (`(public)/p2p/[campaignSlug]/[fundraiserSlug]/manage/page.tsx`) deferred. Token-auth fundraiser-owner edit shell not generated — depends on JWT issuance + validation (SERVICE_PLACEHOLDER). When token-auth lands, create the manage page reusing `<ChildFundraiserPage>` in an editable variant for story / cover / personal-goal / milestones. | OPEN |
+| ISSUE-10 | 15 | HIGH | BE / Public (other screens) | ODP-B4 fail-closed tenant resolver 404s every public page on localhost (hostname matches no CustomDomain/Subdomain + 4 active companies). Fixed for P2P in Session 15; the SAME unconditional `if (companyId == null) return …` early-return still precedes the Development fallbacks in `GetOnlineDonationPageBySlug.cs` (#10, line ~55) and `GetCrowdFundBySlug.cs` (#173, line ~60) — apply the identical `&& !env.IsDevelopment()` gate under those screens' own `/continue-screen`. | OPEN |
+| ISSUE-11 | 16 | LOW | FE / Public | Landing Content exposes FOOTER_TREE / FOOTER_CONTACT / FOOTER_SOCIALS in the admin editor (lifted from ODP), but `public-footer.tsx` has no renderer for a footer tree, contact block, or social row — it still draws its own hardcoded footer. Editing those three params currently has no visible effect. Port ODP`s footer renderer, or hide the three editors until it lands. | CLOSED (session 18) |
+| ISSUE-12 | 16 | LOW | FE / Public | FESTIVAL layout renders its own `Top Fundraisers` eyebrow `<p>` immediately above `<Leaderboard>`, which draws the same heading internally. Session 16 wired the outer one to `leaderboardTitle` and deliberately left the inner `title` prop unset to avoid a visible duplicate. Pre-existing double-heading; collapse to one. | OPEN |
 | ISSUE-9 | 13 | MEDIUM | BE/FE contract | §⑯ publish escape-hatch: FE "Publish without sending" persistently flips `sendInvitationOnPublish` OFF (a one-time publish choice mutates the campaign's master flag for all future republishes). BE owner to decide: (A) accept as-is (spec-conformant, no BE change) or (B) add nullable one-time override `PublishP2PCampaignPage(id, bool? sendInvitationOverride)` + rewire FE `publishWithFlag` to pass it without persisting. | OPEN |
 
 ### § Sessions
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
 
-> _[9 older session entries trimmed to save tokens — full history in git: `git log -p -- p2pcampaignpage.md`. Most recent 5 kept below.]_
+> _[12 older session entries trimmed to save tokens — full history in git: `git log -p -- p2pcampaignpage.md`. Most recent 5 kept below.]_
 
-### Session 10 — 2026-07-01 — UI — COMPLETED
+### Session 15 — 2026-07-20 — FIX — COMPLETED
 
-Configuration (Tab 2) section chrome aligned to the CrowdFunding Configuration tab.
+Public P2P campaign page regressed to **404 on localhost** (`/en/p2p/education-support-p2p-campaign-par2`) — rendered fine 2026-07-17, dead 2026-07-20. Reported via `/continue-screen #15`.
 
-- **Finding**: CrowdFunding's config tab (`crowdfundingpage/tabs/page-builder-tab.tsx`) wraps every section in the canonical `FormSectionCard` (event `form-tabs/fields.tsx`) — a **SOLID primary header bar** with a white icon chip (`bg-white/15`) + white title/description. The P2P editor's shared `SectionCard` (`p2pcampaignpage/components/section-card.tsx`) used a **muted** header (`bg-muted/50`, inline primary icon, foreground text), so P2P's Configuration tab sections looked different from CrowdFunding's.
-- **Fix (FE)**: restyled the P2P `SectionCard` header to mirror `FormSectionCard` — `bg-primary px-3.5 py-2.5`, white icon in a `bg-white/15` chip, white title (`text-white`) + `text-white/80` truncated description; body padding matched to `space-y-4 p-3.5 sm:p-4`. Kept the `badge` prop API (unused across all call-sites — verified) but re-toned it (`bg-white/20 text-white`, amber variant) to stay legible on the primary bar. Consistent with the standing [[solid-icon-bg-white-foreground]] preference.
-- **Scope note**: `SectionCard` is the shared card used by **all** P2P editor tabs (Basic Info + every Configuration sub-tab: Branding, Fundraiser, Donation, Communication), so this one change brings the whole editor into uniform parity with CrowdFunding — not just Tab 2. `RegionHeading` dividers already matched. Config sub-tab call-sites unchanged.
+- **Root cause**: BE commit `33c93fce` (2026-07-17 14:41, "stateless csrf + recaptcha…") shipped **ODP-B4 fail-closed** in `OnlineDonationPageTenantResolver.ResolveByHostnameAsync` — the fallback changed from "first active company" to `null` whenever the hostname matches no `CustomDomain`/`Subdomain` **and 2+ active companies exist**. DB has 4 active companies (`app.Companies` 1, 3, 23, 24); `localhost` matches no domain → resolver returns `null`. Both P2P public handlers early-returned on `companyId == null` **before** their `env.IsDevelopment()` fallback block, so the dev "login-company → slug-only" lookup that used to rescue this never ran. Verified in DB: page id 6, `CompanyId=3`, `PageStatus='Published'`, `IsDeleted=false` — the row was always fine. Dates/lifecycle were never the cause.
+- **Fix**: gate the early-return on `!env.IsDevelopment()` and make the tenant-scoped lookup conditional (`companyId != null ? … : null`), letting a null tenant fall through to the existing Development fallbacks. **Production behaviour unchanged** — still fails closed per ODP-B4.
 - **Files touched**:
-  - FE: `p2pcampaignpage/components/section-card.tsx` (header/body chrome only; API unchanged).
-- **Deviations from spec**: none — visual alignment only.
-- **Known issues opened**: None.
+  - BE: `.../DonationBusiness/Public/PublicQueries/GetP2PCampaignPageBySlug.cs`, `.../GetP2PFundraiserBySlug.cs`
+  - FE: none. DB: none.
+- **Deviations from spec**: None.
+- **Verify**: `dotnet build Base.Application` → **0 errors**. (Full `Base.API` build emits only MSB3021/MSB3027 file-lock copy errors — Base.API is running under Visual Studio; not compile failures.)
+- **Known issues opened**: ISSUE-10 (same fail-closed regression is unfixed in the sibling public screens — out of scope here).
 - **Known issues closed**: None.
-- **Next step**: none — FE-only, ships on next dev reload.
-
-### Session 11 — 2026-07-01 — FIX — COMPLETED
-
-`UpdateP2PCampaignPage` silently failed to persist Configuration-tab edits (amount chips, allow-custom-amount, team goal/size) — the **entire** mutation was 400-rejected.
-
-- **Symptom**: user set `amountChips`, `allowCustomAmount`, `maxTeamSize`, saved — nothing persisted. GraphQL error: `The field '__typename' does not exist on the type 'P2PEnabledPaymentMethodInput'.` at `page.enabledPaymentMethods[0]`.
-- **Root cause**: Apollo tags every cached object with `__typename`. HotChocolate rejects an input object carrying any field its Input type doesn't declare, so a single stray `__typename` fails the WHOLE mutation (not just that field) → **no** field saved. `toRequest()` in `editor-page.tsx` stripped `__typename` only at the top level + `fundraiserPageOptions` + `donationFormFields.fields` — it **missed the `enabledPaymentMethods[]` array items**. Classic shallow-strip gap ([[apollo-typename-strip-on-round-trip]] / `feedback_apollo_typename_strip_on_round_trip`). BE write-mapping + read-projection + FE GET selection were all already correct — the payload just never reached the handler.
-- **Fix (FE)**: added a **recursive** `stripTypename()` helper and applied it to the whole `toRequest()` output, so `__typename` is dropped from every nested object/array (payment methods, page options, form fields, and any future nested shape). Replaced the piecemeal per-field strips. `toCreateRequest()` calls `toRequest()`, so Create inherits the fix too.
-- **Files touched**:
-  - FE: `p2pcampaignpage/editor-page.tsx` (`toRequest` + new `stripTypename`).
-- **Deviations from spec**: none.
-- **Known issues opened**: None.
-- **Known issues closed**: None.
-- **Next step**: none — FE-only, ships on next dev reload. (No BE build needed — BE was never the problem.)
-
-### Session 12 — 2026-07-01 — FIX — COMPLETED (BE build pending)
-
-Publish redirect to the public page (`/p2p/{slug}`) 404'd on localhost — public GetBySlug used first-active-tenant only. Mirrored the CrowdFunding #173 hostname/login-company tenant resolution.
-
-- **Symptom**: after publishing, `/en/p2p/build-school` → 404. The page owned by the logged-in admin's tenant wasn't found because the public resolver only ever looked under the *first* active company.
-- **Root cause**: `GetP2PCampaignPageBySlug` hard-coded `companyId = first active company` (the old MVP hack) — no hostname resolution and no Development login-company fallback. On localhost (no subdomain) a page owned by any non-first tenant misses the company-scoped lookup → null → 404. CrowdFunding already solved this ([[public-by-slug-tenant-resolution]] / `feedback_public_by_slug_tenant_resolution`).
-- **Fix (BE, compiling, user builds)**:
-  - `GetP2PCampaignPageBySlug.cs` — query record arg `tenantSlug` → `hostname`; handler now injects `IHostEnvironment` + `IHttpContextAccessor` and resolves the tenant via `OnlineDonationPageTenantResolver.ResolveByHostnameAsync` (CustomDomain → Subdomain → `?_tenant=` dev override → first-active fallback). Added the Development-only fallback: if the slug misses under the resolved tenant, re-scope to the logged-in user's company, then a slug-only lookup — so an admin opening their just-published page resolves the right tenant. Production stays strict hostname-scoped.
-  - `P2PCampaignPagePublicQueries.cs` — endpoint arg `tenantSlug` → `hostname`, passed through. (Stats endpoint keeps `hostname: null`; the Dev login-company fallback still resolves it locally.)
-- **Fix (FE)**:
-  - `P2PCampaignPagePublicQuery.ts` — `GET_P2P_CAMPAIGN_PAGE_BY_SLUG` var `$tenantSlug` → `$hostname` (`hostname: $hostname`).
-  - All three public campaign routes (`[campaignSlug]/page.tsx`, `.../start/page.tsx`, `.../[fundraiserSlug]/page.tsx`) now resolve a `hostname` from `x-forwarded-host`/`host` (+ `?_tenant=` dev override) and pass it, and switched the campaign fetch to `cache: "no-store"` so a just-published page resolves immediately (no stale-404 from the 60s ISR window).
-- **Files touched**:
-  - BE (compiling, **user builds**): `.../Public/PublicQueries/GetP2PCampaignPageBySlug.cs`, `.../Base.API/EndPoints/Donation/Public/P2PCampaignPagePublicQueries.cs`.
-  - FE: `.../public-queries/P2PCampaignPagePublicQuery.ts`, `(public)/p2p/[campaignSlug]/page.tsx`, `.../start/page.tsx`, `.../[fundraiserSlug]/page.tsx`.
-- **Deviations from spec**: none.
-- **Known issues opened**: the **fundraiser** child handler `GetP2PFundraiserBySlug` still uses first-active-tenant resolution (same class of bug) — the child page's fundraiser lookup can still 404 on localhost for a non-first tenant. Not fixed here (separate handler, not part of the reported publish flow). Apply the same resolver when that flow is exercised.
-- **Known issues closed**: None.
-- **Next step**: user builds the BE. FE ships on next dev reload.
-
-### Session 13 — 2026-07-02 — ENHANCE — COMPLETED (FE only; BE built in parallel by user)
-
-- **Scope**: §⑯ CAMPAIGN INVITATION — Send/Resend actions, publish-time opt-in guard, five email-ops guardrails, and auditable send history on screen #170 P2PCampaignPage. Split build: **user owns BE** (`.cs` + migration), **this session owns FE** (`.ts`/`.tsx`). §⑯.3 contract frozen so both halves compile against the same GraphQL names. Single-fundraiser invite stream (`P2PF-{id}-INVITE`, screen #135) left UNTOUCHED — only the campaign donor blast (`P2PC-{id}-INVITE`) is in scope.
-- **Files touched**:
-  - BE: none (user builds BE in parallel — `PublishP2PCampaignPage.cs`, `P2PFundraiserEmailService.cs`, `P2PCampaignPage.cs` + column, `P2PCampaignPageEntityHelper.cs`, `GetP2PCampaignPageById.cs`, migration).
-  - FE (modified — 6):
-    - `domain/entities/donation-service/P2PCampaignPageDto.ts` — `sendInvitationOnPublish: boolean` on `P2PCampaignPageRequestDto`; new `P2PCampaignInvitationAudienceCountDto`, `P2PCampaignInvitationHistoryRowDto`, `P2PCampaignInvitationRecipientRowDto`.
-    - `infrastructure/gql-queries/donation-queries/P2PCampaignPageQuery.ts` — `sendInvitationOnPublish` in `PAGE_FIELDS`; `GET_P2P_CAMPAIGN_INVITATION_AUDIENCE_COUNT`, `_HISTORY`, `_RECIPIENTS`.
-    - `infrastructure/gql-mutations/donation-mutations/P2PCampaignPageMutation.ts` — `SEND_P2P_CAMPAIGN_INVITATION`, `RESEND_P2P_CAMPAIGN_INVITATION`, `SEND_P2P_CAMPAIGN_INVITATION_TEST`.
-    - `.../p2pcampaignpage/p2pcampaignpage-store.ts` — `sendInvitationOnPublish: false` in `initNew()` blank + `buildDefaultRequest()`.
-    - `.../p2pcampaignpage/tabs/communication-tab.tsx` — master-flag Switch, debounced (~500ms) live audience count (Skeleton + opted-out copy), "Send test to me" button, `<InvitationHistoryPanel>` replacing the old single "Last invitation sent" row.
-    - `.../p2pcampaignpage/editor-page.tsx` — audience-aware 3-branch Publish Dialog; Send/Resend floating pills (amber Resend) + History shortcut in Published/Active branches; Manual Send modal (disabled + hint at M=0); Manual Resend modal (cooldown line if `invitationSentAt` < 24h); large-blast (>1,000) type-to-confirm on Publish&Send / Send / Resend.
-  - FE (created — 1): `.../p2pcampaignpage/components/invitation-history-panel.tsx` — history table (When · Triggered by · Type · Sent · Failed · Status; numeric cols right-aligned; shaped Skeletons; empty/error states) + row-click per-recipient drill-in Dialog via `GET_P2P_CAMPAIGN_INVITATION_RECIPIENTS`.
-  - FE (barrel — 1): `.../p2pcampaignpage/components/index.ts` — export `invitation-history-panel`.
-- **Wired GraphQL contract (BE must match exactly)**: mutations `sendP2PCampaignInvitation` / `resendP2PCampaignInvitation` / `sendP2PCampaignInvitationTest`, all `(p2PCampaignPageId: Int!)`; queries `p2PCampaignInvitationAudienceCount(p2PCampaignPageId: Int!, savedFilterId: Int, filterJson: String)` → `{ totalAudience, alreadyInvited, notYetInvited }`, `p2PCampaignInvitationHistory(p2PCampaignPageId: Int!)`, `p2PCampaignInvitationRecipients(emailSendJobId: Int!)`; `sendInvitationOnPublish` on the byId response DTO.
-- **Verification**: `tsc --noEmit` clean in all §⑯-touched files. One pre-existing unrelated error remains (`PaymentMethodCode` duplicate export between `P2PCampaignPageDto.ts` and `CrowdFundingPageDto.ts`) — predates this session, not introduced here.
-- **Deviations from spec**: FE implements BOTH "Publish without sending" (flag ON) and "Turn on & send" (flag OFF) by mutating the **persistent** `sendInvitationOnPublish` flag → `save()` → plain `publishP2PCampaignPage` (no new publish arg). Side effect: "Publish without sending" persistently turns the master flag OFF for all future republishes. **OPEN contract decision** for the BE owner: accept as-is (spec-conformant, zero BE surface) OR add a nullable one-time override arg to `PublishP2PCampaignPage(id, bool? sendInvitationOverride)` and rewire FE `publishWithFlag` to pass it without persisting. See ISSUE-9.
-- **Known issues opened**: ISSUE-9 (publish escape-hatch mutates persistent flag — pending BE-owner decision).
-- **Known issues closed**: None.
-- **Next step**: user lands BE (column + migration OFF-for-all backfill + 3 mutations + 3 queries + per-run EmailSendJob counters). Then resolve ISSUE-9 A/B, run full-flow E2E, and flip #170 status back to COMPLETED.
+- **Next step**: user restarts the BE (stop the VS-hosted `Base.API` so the new DLLs copy), then reload the URL.
 
 ---
 
-### Session 13 — 2026-07-01 — ENHANCE — COMPLETED (BE build + 1 migration pending)
+### Session 16 — 2026-07-20 — ENHANCE — COMPLETED (migration + backfill pending, user-owned)
 
-Full public-page parity build: the P2P public page now matches ODP/Event on the four capabilities that were missing, plus the editor gateway picker is corrected. Grounded in a reference study of ODP (`/p/{slug}`), Event (`/event/{slug}`), and an audit of the current P2P public renderer.
+Executed the **Public-Page EAV Settings Port** (`bug-reports/publicpages-EAV-SETTINGS-PORT-SPEC.md`), scoped to Surfaces **A** (P2P campaign public page) and **B** (child fundraiser page). Crowdfunding (#173) and `fundraiser-page-editor-drawer.tsx` were out of scope.
 
-- **Gaps closed (all 4 + gateway picker)**:
-  1. **Config-driven donation form** — `donate-form.tsx` now reads `donationFormConfig {mode, fields[{key,visible,required}]}` for donor-field visibility/required (mirrors ODP's donorFields map), with sensible defaults when absent.
-  2. **Real payment gateway process** — replaced the mock `gatewayHandoffUrl` stub with the real ODP dispatch: `InitiateP2PDonation`/`ConfirmP2PDonation` now route through the shared `IPaymentFlowService` (Braintree Drop-in / Razorpay popup / PayU hidden-form POST, one-time + recurring), persist an `OnlineDonationStaging` PENDING row with P2P attribution, and verify on confirm. FE runs the two-phase gateway UI. Promotion to `GlobalDonation` stays the existing #175 Donation-Inbox "Resolve" staff action (backfill extended to copy P2P attribution).
-  3. **Currency** — donate-form no longer hardcodes `$`; uses `currencySymbol` (new DTO field) or `Intl.NumberFormat(currencyCode)`.
-  4. **Page templates** — new `templates/` dispatcher renders 5 layouts (STANDARD / IMAGE_FOCUS / VIDEO_FOCUS / MINIMAL / FESTIVAL) off `pageTemplateCode`, with a `ThemeWrap` applying `pageTheme` — mirrors Event's layout dispatcher. Reuses existing P2P sub-components (no rebuild).
-  5. **Gateway picker (editor)** — Configuration → Donation Settings "Payment Gateway" field switched from the **global** `PAYMENTGATEWAYS_QUERY` (wrong: listed all gateways, stored a `paymentGatewayId` into the `companyPaymentGatewayId` FK) to the **tenant-scoped** `COMPANYPAYMENTGATEWAYS_QUERY` (only the company's connected gateways), storing the correct `companyPaymentGatewayId`. Added `rowMapper` support to the local `ApiSingleSelect` to flatten the nested `paymentGateway.paymentGatewayName`.
-- **Tenant resolution unified**: `InitiateP2PDonation` now resolves the tenant via `OnlineDonationPageTenantResolver.ResolveByHostnameAsync` (same as the read handler); FE threads the SSR-resolved `hostname` (+ `?_tenant=` dev override) down through the routes → renderers → donate-form so anonymous donors resolve the right tenant on localhost.
-- **Contract additions** — public DTO: `pageTemplateCode`, `pageTheme`, `currencySymbol`, `organizationName`, `donationFormConfig`. `InitiateP2PDonation` request +`currencyCode`(now required)/`isAnonymous`/`isRecurring`/`frequencyCode`/`returnUrl`/`hostname`; response now the full gateway bundle (`gatewayCode`, `clientToken`, `razorpay*`, `payU*`). `ConfirmP2PDonation` +`paymentMethodNonce`; response +`transactionId`/`redirectUrl`. (Removed dead `Frequency` string + `CoverProcessingFees`.)
+- **Part 1 — thin-core relocation (§3a)**: new `fund.P2PCampaignPageSettings` EAV table (entity + EF configuration + DbSet). 17 cosmetic columns relocated into rows across sections `THEME`/`MEDIA`/`SECTIONS`/`SOCIAL`/`SEO`. Create dual-writes typed columns + rows; Update does a diff-only upsert scoped to `ManagedParamCodes` (nulls `ParamValue` for orphans, never soft-deletes); Duplicate clones rows verbatim; both admin reads assemble from EAV. **Wire DTOs unchanged.** `PageTemplateId` stays a typed FK — never EAV a FK.
+- **Part 2 — landing content (§3b/§3c)**: 38-param catalogue (28 parent + 10 `CHILD_*`) → `P2PLandingContentDto`, `AssembleLandingContentDto`, `SaveP2PCampaignPageLandingContent` command + mutation. `CHILD_*` params live in the **parent-scoped** table; `GetP2PFundraiserBySlug` reads them by `page.P2PCampaignPageId`. Absent params assemble to null — **no server-side fallback**; components supply their own literal at render.
+- **Part 3 — ISSUE-50 law**: the save command has **no drop-sweep**, deliberately. The editor autosaves diff-only (300 ms debounce vs `baselineRef`), so soft-deleting rows absent from a payload wiped previously-saved sub-sections. Clearing a value = send that ParamCode with an empty `ParamValue`. FE carries the `EMPTY_P2P_LANDING_CONTENT` sentinel guard so a raced/empty refetch cannot flush a blanking payload.
+- **§3d bugs fixed**: `impact-stats.tsx` shipped a hardcoded `REFERENCE_STATS` array ("690 Children Funded") to every tenant as though it were their real data → now renders `null` unless the `IMPACT_STATS` row supplies entries; `leaderboard.tsx` hardcoded a currency symbol (`$`, not `₹` as the spec stated) → now `Intl.NumberFormat` on the page's currency code; `parent-templates.tsx` FESTIVAL variant hardcoded `#06060d`/`#0b0c14` → now `color-mix(in oklab, <brand> N%, black)`.
 - **Files touched**:
-  - BE (compiling, **user builds**): `OnlineDonationStaging.cs` + `OnlineDonationStagingConfiguration.cs` (P2P FK columns; `OnlineDonationPageId` → nullable), `Public/PublicMutations/InitiateP2PDonation.cs`, `ConfirmP2PDonation.cs`, `Public/PublicQueries/GetP2PCampaignPageBySlug.cs`, `Schemas/DonationSchemas/P2PCampaignPageSchemas.cs`, `P2PFundraiserSchemas.cs`, and the #175 ripple (`OnlineDonationInbox/Commands/ResolveOnlineDonationStaging.cs`, `Queries/GetOnlineDonationStagingById.cs`, `GetOnlineDonationStagingList.cs`, `Schemas/DonationSchemas/OnlineDonationInboxSchemas.cs`).
-  - FE (ships on reload): `public-queries/P2PCampaignPagePublicQuery.ts`, `public-mutations/P2PCampaignPagePublicMutation.ts`, `donation-service/P2PCampaignPageDto.ts`, `public/p2pcampaignpage/components/donate-form.tsx`, `templates/` (new: `shared.tsx`, `parent-templates.tsx`), `parent-landing-page.tsx`, `child-fundraiser-page.tsx`, `start-fundraiser-wizard.tsx`, `index.ts`, the 3 `(public)/p2p/**` route files, and the editor `crm/.../components/api-single-select.tsx` + `tabs/donation-settings-tab.tsx`.
-- **Migration (user generates — one migration)** on `fund.OnlineDonationStagings`: `OnlineDonationPageId` → nullable; add `P2PCampaignPageId int NULL` (FK `fund.P2PCampaignPages`, RESTRICT); add `P2PFundraiserId int NULL` (FK `fund.P2PFundraisers`, RESTRICT); + indexes on both. `GlobalDonations` needs nothing (P2P FKs + `CK_GlobalDonations_OnePageSource` already exist).
-- **Verification**: FE `tsc --noEmit` clean on all touched source (only pre-existing stale `.next/types` route stubs remain). BE not built (user builds). Reverted an agent's stray edit to `BaseUrlConfig.ts` (user-managed).
-- **Deviations from spec**: none.
-- **Known issues opened**:
-  - **Cover-fees is display-only** — the "donor covers processing fees" toggle no longer feeds the charged amount (base amount is charged); per-gateway fee math not wired. Same interim state as ODP.
-  - Gateway-picker label shows the placeholder until the dropdown is opened (the local `ApiSingleSelect` resolves the label on open; no persisted display name). Pre-existing component behavior; cosmetic.
-- **Known issues closed**: None (Session 12's `GetP2PFundraiserBySlug` first-active-tenant item is still open — the child fundraiser lookup was not part of this pass).
-- **Next step**: user (1) builds the BE, (2) generates + applies the `OnlineDonationStagings` migration above, (3) ensures the tenant has a connected `CompanyPaymentGateway` (default) so the picker + dispatch resolve. Then publish → donate end-to-end.
+  - BE: `Base.Domain/Models/DonationModels/P2PCampaignPageSetting.cs` (new) · `Base.Infrastructure/.../DonationConfigurations/P2PCampaignPageSettingConfiguration.cs` (new) · `ApplicationDbContext.cs` + `IApplicationDbContext.cs` · `.../P2PCampaignPages/Helpers/PresentationP2PCampaignPageSettings.cs` (new) · `.../Helpers/DefaultP2PCampaignPageSettings.cs` (new) · `.../Commands/SaveP2PCampaignPageLandingContent.cs` (new) · `Create/Update/DuplicateP2PCampaignPage.cs` · `Queries/GetP2PCampaignPageById.cs` · `Public/PublicQueries/GetP2PCampaignPageBySlug.cs` + `GetP2PFundraiserBySlug.cs` · `Schemas/DonationSchemas/P2PCampaignPageSchemas.cs` + `P2PFundraiserSchemas.cs` · `Base.API/EndPoints/Donation/Mutations/P2PCampaignPageMutations.cs`
+  - FE: `domain/entities/donation-service/P2PCampaignPageDto.ts` · `gql-queries/donation-queries/P2PCampaignPageQuery.ts` · `gql-queries/public-queries/P2PCampaignPagePublicQuery.ts` · `gql-mutations/donation-mutations/P2PCampaignPageMutation.ts` · `crm/p2pfundraising/p2pcampaignpage/sections/landing-content-section.tsx` (new) · `.../tabs/configuration-tab.tsx` · `public/p2pcampaignpage/templates/parent-templates.tsx` · `.../child-fundraiser-page.tsx` · `.../components/impact-stats.tsx` + `leaderboard.tsx`
+  - DB: `sql-scripts-dyanmic/p2pcampaignpage-eav-relocation-backfill.sql` (new, idempotent) · `bug-reports/p2pcampaignpage-EAV-MIGRATION-SPEC.md` (new)
+- **Deviations from spec**: (1) page FK uses **Cascade**, not §2a's "RESTRICT" — §2 also says "mirror `fund.OnlineDonationPageSettings` exactly", and that config is Cascade; the conflict is flagged in the migration spec so it can be overridden. (2) The Landing Content card renders from `configuration-tab.tsx` immediately after `<BrandingPageTab />` rather than inside `branding-page-tab.tsx` — "Page Sections" is that tab's last sub-section, so the visual placement matches the spec exactly. (3) Spec §3d says `leaderboard.tsx` hardcoded `₹`; it actually hardcoded `$`. Same bug, fixed either way.
+- **Verify**: `dotnet build Base.Application` → 0 errors (`Base.API` emits only MSB3021/MSB3027 file-lock copy errors from the VS-hosted process — not compile failures). `npx tsc --noEmit --skipLibCheck` → 0 errors in any p2p path; the 3 reported errors are pre-existing and confined to unrelated ODP files.
+- **Known issues opened**: ISSUE-11 (footer tree/contact/socials editable but not rendered), ISSUE-12 (FESTIVAL duplicate leaderboard heading).
+- **Known issues closed**: None.
+- **Next step**: **user-owned, 3 steps, never collapsed** — (1) `dotnet ef migrations add AddP2PCampaignPageSettings -c ApplicationDbContext` + `database update`; (2) run `p2pcampaignpage-eav-relocation-backfill.sql`; (3) deploy, then a second migration dropping the 17 relocated columns. Nothing in this port is live until step 1 runs. — **steps 1 + 2 confirmed done by user 2026-07-21.**
 
+---
+
+### Session 17 — 2026-07-21 — ENHANCE — COMPLETED (FE only, no schema change)
+
+Re-did the Configuration-step segregation properly, along the **settings-section axis** the Online Donation Page editor (#10) uses. The Session-16 version grouped 5 monolith cards into 4 tabs, so three tabs held exactly one card each — tabs without segregation. ODP splits **14 narrow cards** across its 4 tabs, one card per `OnlineDonationPageSettings` section code; P2P now does the same against `PresentationP2PCampaignPageSettings` (THEME / MEDIA / SECTIONS / SOCIAL / SEO) plus its typed campaign columns.
+
+- **20 cards, 5 tabs** (was 5 cards, 4 tabs):
+  - **Appearance** — Page Template · Theme & Colours (THEME) · Logo & Header (MEDIA) · Page Sections (SECTIONS) · Custom CSS (THEME, `Advanced` badge)
+  - **Content** — Landing Content · **Search & Social** (SOCIAL + SEO)
+  - **Fundraisers** — Registration · Goal Range · Team Fundraising · Page Options · Achievement Badges
+  - **Donations** — Donation Amounts · Recurring & Anonymous · Payment Methods · Giving Extras · Donation Form Fields
+  - **Communications** — Email Notifications · WhatsApp Notifications (own channel, own card)
+- **Bug fixed — SEO buried under email.** `ogTitle`/`ogDescription`/`ogImageUrl` (section `SEO`) and `defaultShareMessage` (`SOCIAL`) sat in a "Social Sharing" sub-section of the **Communication** card. Lifted into the new `tabs/seo-share-tab.tsx` on the Content tab.
+- **Bug fixed — duplicate switches on one field.** `showLeaderboard` and `showFundraiserCount` each had **two** controls (Branding → Page Sections *and* Fundraiser Settings → Gamification). Two switches writing one field means whichever was touched last silently won. Consolidated into Appearance → Page Sections; removed from Fundraisers. `achievementBadgesEnabled` deliberately stays with the badge catalogue — it governs whether badges are *awarded*, not whether a block renders.
+- **Gap closed — `robotsIndexable` had no editor at all.** The column and the `ROBOTS_INDEXABLE` param existed; nothing wrote them from the UI. Now a switch in Search & Social.
+- **Data safety unchanged**: every `TabsContent` keeps `forceMount` + `data-[state=inactive]:hidden`, so nothing unmounts — `dirtyCount`, the live preview, and Landing Content's 300 ms diff-only autosave behave exactly as in the flat scroll. Re-parenting cards is only safe under that mechanic (same reason ODP documents it at `editor-page.tsx:679–688`).
+- **Structure choice**: multiple named card exports per existing tab file (rather than ODP's one-file-per-card), so shared constants stay co-located — `P2P_COLOR_PRESETS`, `ToggleRow`, `CurrencyField`, the email-trigger tables and the invitation dialog state are each used by several cards in their file.
+- **Files touched** (FE only): `tabs/configuration-tab.tsx` (rewritten composition) · `tabs/seo-share-tab.tsx` (new) · `tabs/branding-page-tab.tsx` (→ 5 exports) · `tabs/fundraiser-settings-tab.tsx` (→ 5 exports) · `tabs/donation-settings-tab.tsx` (→ 5 exports) · `tabs/communication-tab.tsx` (→ 2 cards, Social Sharing removed). No BE, DTO, GraphQL or schema change — same fields, same store, same mutation payload.
+- **Verify**: `npx tsc --noEmit` → only the pre-existing `TS2688 dompurify` error, 0 in any p2p path. `npx eslint` on all six files → clean. Old default exports `BrandingPageTab` / `FundraiserSettingsTab` / `DonationSettingsTab` are gone; grep confirmed `configuration-tab.tsx` was their only consumer.
+- **Known issues opened**: None.
+- **Known issues closed**: None (ISSUE-11 / ISSUE-12 still open).
+- **Next step**: browser-verify tab switching leaves Landing Content autosave and `dirtyCount` undisturbed.
+
+---
+
+
+### Session 18 — 2026-07-21 — UI — COMPLETED (FE only, no schema / DTO / GraphQL change)
+
+Rebuilt the **STANDARD** public template for both surfaces (parent campaign landing + child fundraiser page) against the user's two reference mockups, using ODP #10's STANDARD template (`TemplateAurora`) as the design idiom. The other four `pageTemplateCode` variants (IMAGE_FOCUS / VIDEO_FOCUS / MINIMAL / FESTIVAL) are untouched — all new code lives under `templates/standard/`.
+
+- **Why**: STANDARD was a stack of unrelated full-width bands (OrgHeader → ParentHero → ProgressSection → Story → gated sections → a centred DonateForm) with no hierarchy, no sticky donate affordance and no visual relationship between parent and child pages.
+- **New — `templates/standard/standard-shell.tsx`**: shared STANDARD primitives — `StandardNav` (sticky, blurred, brand + nav + Share/Donate pills), `HeroBadge`, `TrustChips`, `SectionHeading`, `ProgressBar` (aria-valued), `StatTile` (right-aligned amounts), `DonateCard` (4px accent top border + Secure-Donation chip + payment-method icon band, ODP idiom), plus `daysLeft` / `percentOf` / `initials`.
+- **New — `templates/standard/standard-parent-layout.tsx`**: split hero (badge keyed off `campaignTypeKind`, dual CTA, overlapping "Raised so far" float card) → closed banner → About + **sticky donate card** grid → `TopFundraisers` → How-Fundraising-Works band → ImpactStats → DonorWall → rich footer → mobile donate bar. Every section self-omits on its existing gate (`showLeaderboard` / `showImpactStats` / `showDonorWall` / `allowPublicRegistration` / status).
+- **New — `templates/standard/top-fundraisers.tsx`**: leaderboard as a 3-up card rail (rank medal badge, avatar, progress, Support CTA) over the same BE-cached `p2PCampaignPagePublicLeaderboard` query. Skeleton / error / empty states shaped.
+- **New — `templates/standard/standard-child-layout.tsx`**: avatar-led split hero with fundraiser-type badge, "My Story", SVG **donut** progress card (Raised / Goal / Supporters / Days left), Updates, Team, sticky "Support {name}'s Fundraiser" donate card + Share + parent back-card, Top Supporters, a 4-item "Why Your Support Matters" reassurance band, rich footer. Child follows the **parent's** `pageTemplateCode`, so a campaign reads as one design system end to end.
+- **Configuration-driven, not hardcoded**: all copy reads the existing `landingContent` EAV params (`heroIcon`, `heroBylinePrefix`, `headerNavLinks`, `ctaDonateLabel`, `ctaFundraiserLabel`, `progress*Label`, `storyTitle`, `leaderboard*`, `donorWall*`, `impactStats*`, `share*`, `footer*`, `mobileRaisedLabel`, all `child*`). **No new params were added** — every literal in the new files is a render-time fallback for an absent param (same rule as ODP's `FALLBACK_MISSION_TITLE`), and the only coded content blocks are tenant-agnostic mechanics (how fundraising works, why-your-support-matters), never invented tenant facts.
+- **ISSUE-11 closed** — `components/public-footer.tsx` rewritten as a port of ODP `aurora/RichFooter.tsx`: brand column, "Get in Touch" (address / `tel:` / `mailto:`), N tenant-authored tree columns (one grouping level, url-less rows render as `<span>` not dead anchors), circular social buttons with a Phosphor platform map. Rich band self-omits when nothing is configured; the fine © bar always renders, so pages that never touched the footer params look exactly as before. All new props optional. Threaded through **all** call sites — the 4 legacy parent layouts and the legacy child page included.
+- **Bug fixed — dead leaderboard links.** `components/leaderboard.tsx` linked entries to `#{slug}`, a fragment anchor no element carries; now `/{lang}/p2p/{campaignSlug}/{fundraiserSlug}`. The new card rail was built with the correct route from the start.
+- **Files touched** (FE only): `templates/standard/standard-shell.tsx` (new) · `templates/standard/standard-parent-layout.tsx` (new) · `templates/standard/standard-child-layout.tsx` (new) · `templates/standard/top-fundraisers.tsx` (new) · `components/public-footer.tsx` (rewritten) · `components/leaderboard.tsx` (link fix + footer-agnostic) · `templates/parent-templates.tsx` (STANDARD → delegation; 4 legacy footers threaded) · `child-fundraiser-page.tsx` (STANDARD dispatch + footer threaded). No BE, DTO, GraphQL, EAV or schema change.
+- **Verify**: `npx tsc --noEmit` → only the pre-existing `TS2688 dompurify` error, 0 in any p2p path.
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-11.
+- **Next step**: browser-verify both STANDARD surfaces at xs→xl with (a) a fully-configured landingContent and (b) an empty one (fallback path). ISSUE-12 (FESTIVAL duplicate heading) and the BE placeholders ISSUE-1..7 remain open.
+
+
+### Session 19 — 2026-07-21 — FIX — COMPLETED (1 FE, 2 BE; no schema / migration change)
+
+Two defects surfaced while exercising the Session 18 work.
+
+- **Campaign save returned a GraphQL error while still persisting.** `UpdateP2PCampaignPage` failed with `The field 'landingContent' does not exist on the type 'P2PCampaignPageRequestDtoInput'`. Root cause: `LandingContent` lives on the **response** DTO only (`P2PCampaignPageResponseDto`) and persists through its own diff-only `SaveP2PCampaignPageLandingContent` mutation, but the landing-content section mirrors it into the editor store for live preview and `toRequest()` in `editor-page.tsx` omits response-only fields by destructuring — `landingContent` was missing from that omit list, so it rode `...rest` into the input type. HotChocolate rejects any undeclared input field and fails the whole mutation, which is why the landing-content save succeeded and the page save did not. Fix: drop `landingContent` in `toRequest()`. BE contract is correct and unchanged. Checked CrowdFundingPage and ODP editors — neither has the same leak.
+- **`StartP2PFundraiserHandler` resolved the tenant as "first active company".** The last public P2P write path that never got the hostname treatment, so a fundraiser started on a non-first tenant created `Contact` / `P2PFundraiserTeam` / `P2PFundraiser` / `P2PFundraiserMilestone` rows under the wrong `CompanyId`. Ported the chain already used by `InitiateP2PDonation` and `GetP2PCampaignPageBySlug`: staff token → `OnlineDonationPageTenantResolver.ResolveByHostnameAsync` (custom domain → subdomain → single-tenant fallback, else **fail closed**) → Development-only slug fallback for localhost, then `companyId = parent.CompanyId` so the matched page row is the authority on ownership. Production now throws `NotFoundException` on an unresolvable tenant instead of guessing. Added nullable `Hostname` to `StartP2PFundraiserDto` (additive, no caller breaks) and the wizard now sends it, preferring the SSR-provided `tenantHostname` prop over `window.location` (mirrors `donate-form.tsx`); the prop was previously received and discarded.
+- **Files touched** — FE: `crm/p2pfundraising/p2pcampaignpage/editor-page.tsx` · `public/p2pcampaignpage/start-fundraiser-wizard.tsx`. BE: `Business/DonationBusiness/Public/PublicMutations/StartP2PFundraiser.cs` · `Schemas/DonationSchemas/P2PFundraiserSchemas.cs`. No entity, EF config, migration or seed change.
+- **Verify**: `dotnet build` Base.Application → 0 Errors (557 pre-existing warnings). `npx tsc --noEmit` → only the pre-existing `TS2688 dompurify` error.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: on localhost, start a fundraiser while logged in as a non-first tenant and confirm the new `P2PFundraiser` + `Contact` rows carry that tenant's `CompanyId`; re-save a campaign and confirm both page fields and landing-content edits persist with no GraphQL error.
 ---
 
 ## ⑭ SOURCE-2 FUNDING INTEGRATION & SETTINGS→CRM RELOCATION (planned 2026-06-29 — design only, do NOT build this pass)
@@ -1929,3 +1928,34 @@ Today `GetOrCreateRollingParentJobAsync` returns ONE reusable `EmailSendJob` per
 - **Docs:** close #15 ISSUE-21 (mark the dispatch engine BUILT); this section supersedes it.
 
 **Build trigger:** `/build-screen #170` (this Spec section is the blueprint). Do NOT build via `/continue-screen` — it adds a new column + mutations + queries + a workflow-gate + a job-model change (Spec change).
+
+---
+
+## ⑰ PAGE-SETTINGS EAV PORT + LANDING CONTENT (planned 2026-07-20 — design only, do NOT build this pass)
+
+**Full spec**: `.claude/screen-tracker/bug-reports/publicpages-EAV-SETTINGS-PORT-SPEC.md` (§1 pattern, §2 tables, §3 this screen)
+
+Port the Screen #10 Online Donation Page pattern onto BOTH public surfaces this screen owns
+(parent `/[lang]/p2p/[campaignSlug]` and child `/[lang]/p2p/[campaignSlug]/[fundraiserSlug]`):
+
+1. **Thin-core relocation** — move 17 cosmetic/presentational typed columns off `fund.P2PCampaignPages`
+   (PageTheme, Primary/SecondaryColorHex, HeaderStyle, CustomCssOverride, LogoUrl, the 6 `Show*`/
+   `*Enabled` section toggles, DefaultShareMessage, Og*, RobotsIndexable) into a new generic EAV table
+   `fund.P2PCampaignPageSettings`, via `PresentationP2PCampaignPageSettings` (BuildRows / Assemble /
+   ManagedParamCodes). **Wire DTOs stay unchanged** — only persistence moves. `PageTemplateId` is a real
+   FK and stays typed.
+2. **Landing Content** — ~28 hardcoded public-template literals become admin-editable EAV rows behind a
+   new "Landing Content" card in `tabs/branding-page-tab.tsx`, each with the current literal as the coded
+   fallback. Plus 10 `CHILD_*` params (parent-scoped) driving the child fundraiser page — **no separate
+   table for the child**, it inherits the parent's rows (it has zero branding columns of its own).
+3. **ISSUE-50 law** — the Save handler is a diff-only upsert with **NO drop-sweep**, and the FE autosave
+   carries the `EMPTY_LANDING_CONTENT` identity guard. See the spec §1 Part 3 for why.
+
+**Highest-priority item**: `public/p2pcampaignpage/components/impact-stats.tsx` currently renders a
+**fabricated** reference array (`690 Children Funded`, `2,300 Textbooks Provided`) to every visitor whenever
+`ShowImpactStats` is true. Until the `IMPACT_STATS` EAV row exists it must render nothing.
+
+**Migrations are user-owned** — spec + backfill seed only, three ordered steps (create table → backfill →
+drop columns), never authored or run by the agent.
+
+Suggested split: session 1 = relocation only; session 2 = Landing Content + child params + public fallbacks.

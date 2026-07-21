@@ -494,7 +494,7 @@
   },
   "autoCompactEnabled": true,
   "env": {
-    "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "100000",
+    "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "150000",
     "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "80"
   }
 }
