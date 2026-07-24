@@ -3,13 +3,13 @@ screen: Contact
 registry_id: 18
 module: Contacts
 status: COMPLETED
-scope: ALIGN
+scope: FULL
 screen_type: FLOW
 complexity: High
 new_module: NO
 planned_date: 2026-04-19
 completed_date: 2026-04-26
-last_session_date: 2026-04-26
+last_session_date: 2026-07-23
 ---
 
 ## Tasks
@@ -1101,11 +1101,11 @@ Full UI must be built (buttons, forms, modals, panels, interactions, 8 sections,
 |----|------------------|----------|------|-------------|--------|
 | ISSUE-1 | Plan 2026-04-19 | Med | Data model | OrgUnit Assignment maps to ContactDonationPurpose (semantic drift); new ContactOrgUnit entity pending | OPEN |
 | ISSUE-2 | Plan 2026-04-19 | Med | Data model | Household fields (HouseholdName/TypeId/NumberOfMembers/SpouseName) are DTO-only, not on Contact entity | OPEN |
-| ISSUE-3 | Plan 2026-04-19 | High | Feature | Engagement score is unimplemented — score, factor breakdown, formula all stubbed | OPEN |
-| ISSUE-4 | Plan 2026-04-19 | High | Feature | Timeline cross-entity aggregation missing — build UI showing Donations+Emails only | OPEN |
+| ISSUE-3 | Plan 2026-04-19 | High | Feature | Engagement score is unimplemented — score, factor breakdown, formula all stubbed | OPEN — UI hidden (session 7), deferred post-MVP |
+| ISSUE-4 | Plan 2026-04-19 | High | Feature | Timeline cross-entity aggregation missing — build UI showing Donations+Emails only | OPEN — UI hidden (session 7), deferred post-MVP |
 | ISSUE-5 | Plan 2026-04-19 | Low | Integration | "Create New Family" inline form — verify createFamilyMember mutation works standalone | OPEN |
 | ISSUE-6 | Plan 2026-04-19 | Low | Navigation | Merge action navigates to #21 (PARTIAL) — add ?focusContactId param handling | OPEN |
-| ISSUE-7 | Plan 2026-04-19 | Med | Feature | Bulk Send Email from list — UI built, handler toast-only until bulk-send endpoint confirmed | OPEN |
+| ISSUE-7 | Plan 2026-04-19 | Med | Feature | Bulk Send Email from list — UI built, handler toast-only until bulk-send endpoint confirmed | CLOSED (session 7) — descoped, bulk email owned by Email Send Job screen |
 | ISSUE-8 | Plan 2026-04-19 | Low | Integration | Advanced Filter Tags multi-select — verify GetTags signature returns TagColor | OPEN |
 | ISSUE-9 | Plan 2026-04-19 | Med | Feature | Export button backend extension deferred — ExportContactDto is a 6-field stub | OPEN |
 | ISSUE-10 | Plan 2026-04-19 | Info | Design | Card-grid `profile` variant option for Contacts — table for now, profile variant deferred | OPEN |
@@ -1117,76 +1117,119 @@ Full UI must be built (buttons, forms, modals, panels, interactions, 8 sections,
 | ISSUE-16 | Session 2 2026-04-26 | Med | Data model | `ContactDonationPurposeDto` has no `organizationalUnitId` field; mockup's "Org Unit Assignment" semantic is approximated via `donationPurposeId`. Section 6 renamed to "Donation Purpose Assignment" in Session 2 to honest the semantic. Future option: extend DTO + entity + mutation to add `organizationalUnitId` + `configuredAmount` for true OrgUnit linkage. | OPEN |
 | ISSUE-17 | Session 2 2026-04-26 | Low | UX | FK lookups in the new accordion (Section 5 Family / Related Contact / Section 6 Donation Purpose / Currency) use plain `<select>` over GQL results rather than searchable typeahead — `ApiSelectV2` is RJSF-bound (not standalone-importable). Recommend extracting a generic `SearchableSelect` primitive (parallel to `ApiMultiSelect` from Pass B) for use in hand-built React Hook Form contexts. | OPEN |
 | ISSUE-18 | Session 2 2026-04-26 | Low | Cleanup | Legacy wizard files are unreachable dead code after Session 2's view-page swap to `ContactFormAccordion`: `contact-wizard-widget.tsx`, all `contact-*-tab.tsx` files (about/details/professional/certification/donation/profile/types/tags/recent-donation/donation-history/tags-profile/profile-photo), `contact-phonenumber.tsx`, `contact-emailaddress.tsx`, `contact-sociallink.tsx`, `contact-address.tsx`, `contact-relationship.tsx`, `contact-donation-purpose.tsx`, `child-crud-option/` folder. Also potentially the `*-card.tsx` display cards (phone/email/address/relationship/social) — verify no DETAIL imports first. Standalone admin routes (`crm/contact/contactaddress/`, etc.) MUST be untouched. | OPEN |
-| ISSUE-19 | Session 2 2026-04-26 | Low | Data integrity | `UpdateContact.cs` diff-update for addresses doesn't sync `LocalityId` on the existing-row branch (also omitted on the new-row branch). Data loss if user sets locality on edit. Trivial 2-line fix in `UpdateContact.cs`. | OPEN |
+| ISSUE-19 | Session 2 2026-04-26 | Low | Data integrity | `UpdateContact.cs` diff-update for addresses doesn't sync `LocalityId` on the existing-row branch (also omitted on the new-row branch). Data loss if user sets locality on edit. Trivial 2-line fix in `UpdateContact.cs`. | CLOSED (session 7) |
 | ISSUE-20 | Session 2 2026-04-26 | Low | Contract | `ContactPhoneNumberResponseDto.Country` is typed as the `Country` domain entity instead of `CountryResponseDto` — Mapster ambiguity warning when projecting `ContactPhoneNumber → ContactPhoneNumberResponseDto`. Recommend retyping the property to `CountryResponseDto?`. | OPEN |
 | ISSUE-21 | Session 2 2026-04-26 | Low | Filter wiring | `advancedFilters.tagIds[]` (Section 6 advanced filter) cannot be wired into the grid filter today: `Contact` entity has no `ContactTags` navigation collection (reverse-only on `Tag`). `GridQueryBuilderHelper` 360-degree filter cannot resolve the `collectionPath`. Resolution: BE adds `public ICollection<ContactTag>? ContactTags { get; set; }` to `Contact` entity + EF config; FE then adds the IN-rule. UI is fully built. | OPEN |
 | ISSUE-22 | Session 2 2026-04-26 | Info | Robustness | Quick chips Donors/Volunteers/Members filter on `contactType.contactTypeName` (string) — fragile if a deployment renames a built-in type. Switch chip rule to `contactType.contactTypeCode` once seed guarantees stable codes. | OPEN |
 | ISSUE-23 | Session 2 2026-04-26 | Med | UX (multi-row) | `CREATE_CONTACT_MUTATION` retains singular `$phoneNumber` / `$emailAddress` / `$address` args alongside the new array args (for backwards compat with the legacy `childType`/`childValue` inline-capture flow). The accordion now sends arrays — but the legacy inline-capture path is still wired. Future cleanup: remove the singular args + the `childType/childValue` branch in `parent-form.tsx onSubmit` once nothing else uses them. | OPEN |
-| ISSUE-24 | Session 2 2026-04-26 | Low | Filter contract | `EmailSendQueue.contactId` filter (Communication tab + Timeline) assumes the BE exposes `contactId` as a filterable field on the `emailSendQueues` advanced-filter schema. If the BE QueryBuilder doesn't include `contactId` in its allowed fields, the filter silently returns all records. Validate with a real API call once the EmailSendJob service runs end-to-end. | OPEN |
+| ISSUE-24 | Session 2 2026-04-26 | Low | Filter contract | `EmailSendQueue.contactId` filter (Communication tab + Timeline) assumes the BE exposes `contactId` as a filterable field on the `emailSendQueues` advanced-filter schema. If the BE QueryBuilder doesn't include `contactId` in its allowed fields, the filter silently returns all records. Validate with a real API call once the EmailSendJob service runs end-to-end. | CLOSED (session 7) |
+| ISSUE-25 | Session 3 2026-07-23 | Critical | Compliance | Consent flags are displayed but never enforced. `contact-sidebar.tsx:215,224,233` render raw `tel:` / `mailto:` / `https://wa.me/` deep links that fire regardless of `DoNotEmail` / `DoNotCall` / `DoNotSms`; `<PrefIcon value={contact.doNotEmail} />` (line 348) only displays state. No outreach is logged. Fix: disable the action with a reason tooltip when consent blocks it. | CLOSED (session 7) |
+| ISSUE-26 | Session 3 2026-07-23 | Critical | Security | `ExportContact.cs:27` has `// ValidateGridFeatures(x => x.GridFeatureRequest, ValidSortColumns);` commented out — unvalidated sort/filter input on a bulk-PII endpoint, with no max-row guard and no export audit log. Restore validation, add a row cap, log every export (actor, filter, row count). | CLOSED (session 6) |
+| ISSUE-27 | Session 3 2026-07-23 | Critical | Validation | `contact-validation-schemas.ts` (591 ln) contains ZERO `.email()` and ZERO `.max()` rules — `grep -c` returns 0. Only HTML-level `type="email"` / `maxLength` attributes exist (`form/email-address-section.tsx:145,150`, `form/phone-number-section.tsx:201,206`), which are not enforcement. Mirror the BE string-length + format rules in Zod. | CLOSED (session 7) |
+| ISSUE-28 | Session 3 2026-07-23 | Med | Security | `GetContactById.cs` carries only `[CustomAuthorize(...)]` — unlike its sibling `GetContact.cs` it lacks `[RequiresTenant]` / `[TenantScope(TenantScopeType.Current)]`, and the handler predicate is `ContactId == x && !IsDeleted` with no CompanyId. VERIFIED currently safe: `ApplicationDbContext.ApplyTenantFilters` applies a global query filter on every CompanyId-bearing entity. Defense is single-layered here — any future `IgnoreQueryFilters()` or raw-SQL path exposes PII. Add the attributes for parity. | CLOSED (session 7) |
+| ISSUE-29 | Session 3 2026-07-23 | Med | UI tokens / a11y | `detail/tabs/communication-tab.tsx:53-60` badge tones use `bg-emerald-100 text-emerald-700`, `bg-rose-100 text-rose-700`, `bg-amber-100 text-amber-700`, `bg-muted text-muted-foreground` — violates the project rule (solid `bg-X-600` + `text-white`). Status is also signalled by colour alone (WCAG 1.4.1). Add an icon or text cue. | CLOSED (session 5) |
+| ISSUE-30 | Session 3 2026-07-23 | Med | Performance | Communication tab hard-caps at `pageSize: 100, pageIndex: 0` with no pagination UI — contacts with a longer email history silently show a truncated view. Add server-side paging (25/page). | CLOSED (session 5) |
+| ISSUE-31 | Session 6 2026-07-23 | Med | Error handling (repo-wide) | `Base.API/Controller/ExportController.cs` — **every other** export action returns `Task<FileResult>` and calls `File(result.FileContent, result.ContentType, result.FileName)` unconditionally. Any handler returning `Success: false` (e.g. "No records found") carries empty `ContentType`/`FileName`, so ASP.NET sets an empty `Content-Type` header and throws `System.FormatException: The header contains invalid values at index 0: ''` — an opaque 500 instead of the handler's message. Fixed for the **Contact** action only in Session 6 (scope discipline); ~40 sibling actions still carry the bug. Fix pattern: return `IActionResult` and short-circuit `if (!result.Success) return BadRequest(result.ErrorMessage);`. The FE grid export button already reads a non-OK body into its error toast. | OPEN |
+| ISSUE-32 | Session 7 2026-07-23 | Low | Feature | `detail/tabs/relationships-tab.tsx:40` — the "Add Relationship" button only fires `toast.info("Add Relationship dialog — not yet wired")`. Entry point is real but the dialog was never built; relationships can only be added from the create/edit accordion. Build the dialog or route the button to the edit form. | OPEN |
 
 ### § Sessions
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
 
-### Session 1 — 2026-04-19 — BUILD — PARTIAL
+### Session 8 — 2026-07-23 — UI — COMPLETED
 
-- **Scope**: Initial full build from PROMPT_READY prompt. ALIGN scope FLOW screen #18 Contact. DETAIL layout + list controls + BE→FE contract delivered; FORM accordion restructure deferred (ISSUE-11); grid filter wiring deferred (ISSUE-12).
+- **Scope**: Contact form UX rework at the user's request — (a) drop the page-header "+ New Contact" button (the grid toolbar already owns create), (b) add a progress line to the create/edit form, (c) replace the full-section Contact Types card grid with a compact select-and-chip picker and reclaim the space it occupied.
 - **Files touched**:
-  - BE: 7 modified — `Base.Application/Schemas/ContactSchemas/ContactSchemas.cs` (modified), `Base.Application/Mappings/ContactMappings.cs` (modified), `Base.Application/Business/ContactBusiness/Contacts/Commands/CreateContact.cs` (modified), `.../Commands/UpdateContact.cs` (modified), `.../Queries/GetContact.cs` (modified), `.../Queries/GetContactById.cs` (modified), `Base.API/EndPoints/Contact/Queries/ContactQueries.cs` (modified); 1 created — `Base.Application/Business/ContactBusiness/Contacts/Queries/GetContactSummary.cs` (created). `dotnet build` on Base.API green, 0 errors.
-  - FE: 11 modified — `infrastructure/gql-queries/contact-queries/ContactTagQuery.ts` (tagColor→color fix), `domain/entities/contact-service/ContactDto.ts`, `infrastructure/gql-queries/contact-queries/ContactQuery.ts`, `infrastructure/gql-mutations/contact-mutations/ContactMutation.ts`, `application/stores/contact-stores/contact-store.ts`, `presentation/components/page-components/crm/contact/contact/index-page.tsx`, `presentation/components/page-components/crm/contact/contact/view-page.tsx`, `presentation/components/custom-components/data-tables/shared-cell-renderers/index.ts`, `presentation/components/custom-components/data-tables/flow/data-table-column-types/component-column.tsx`, `.../advanced/data-table-column-types/component-column.tsx`, `.../basic/data-table-column-types/component-column.tsx`; 20 created — 6 cell renderers under `shared-cell-renderers/` (contact-avatar-name, score-circle, last-donation-date-amount, contact-type-badge-list, tag-badge-list-overflow, pref-icon), 3 list-page controls under `.../contact/contact/list/` (filter-chips-bar, advanced-filter-panel, bulk-actions-bar), 2 form helpers under `.../contact/contact/form/` (contact-type-card-selector, cascading-address-fields), 9 detail files under `.../contact/contact/detail/` (detail-page, contact-sidebar, engagement-score-ring, score-factor-bars, engagement-score-card, org-units-table, tabs/timeline-tab, tabs/donations-tab, tabs/relationships-tab, tabs/communication-tab, tabs/events-tab, tabs/documents-tab). `pnpm tsc --noEmit` on Contact files: 0 errors (3 pre-existing Tag duplicate-export errors + 2 pre-existing unrelated donationinkind errors — noted as ISSUE-14 and pre-existing).
-  - DB: 1 created — `PSS_2.0_Backend/PeopleServe/Services/Base/sql-scripts-dyanmic/Contact-sqlscripts.sql` (menu + FLOW grid + 9 GridFields for 8 visible columns using FE-registered renderer names; all 7 renderer names verified against all 3 FE column-type registries).
-- **Deviations from spec**:
-  - FORM accordion restructure NOT done — kept existing 5-tab wizard (ISSUE-11). DETAIL layout is the primary mockup-new UI and is delivered.
-  - Grid-filter wiring NOT connected to `FlowDataTable` advancedFilter payload (ISSUE-12).
-  - Advanced filter multi-select fields use comma-entry inputs instead of `ApiSelectV2` (ISSUE-13).
-  - `CONTACT_BY_ID_QUERY` retained existing `donations` sub-query alongside new child collections (kept for wizard-tab backward compat + new detail-layout consumes it too).
-  - List-projection enrichment happens via 5 post-pagination batch queries rather than composed `Select` projection (preserves existing grid-features helper).
-  - `EngagementScore` stubbed to literal `0` per ISSUE-3 — all 7 factor values shown as placeholders in detail formula panel.
-  - MasterData `DataValue` (not `DataCode`) used for ContactBaseTypeCode throughout — matched actual entity property.
-- **Known issues opened**: ISSUE-11 (FORM 8-accordion deferred), ISSUE-12 (grid filter wiring deferred), ISSUE-13 (advanced-filter multi-select UX), ISSUE-14 (pre-existing TagDto duplicate exports — 3 TS2308 errors), ISSUE-15 (ContactUPIDetail DTO name mismatch BE↔FE).
-- **Known issues closed**: Tag #22 ISSUE-1 (legacy `ContactTagQuery.ts` `tagColor → color` fix applied).
-- **Next step**: Resume with `/continue-screen #18` to tackle (in priority order) (1) ISSUE-11 FORM 8-section accordion restructure — new `ContactTypeCardSelector` + `CascadingAddressFields` components are ready to wire; (2) ISSUE-12 connect Zustand quickFilterChip + advancedFilters to FlowDataTable fetch payload; (3) ISSUE-13 swap comma-entry inputs for `ApiSelectV2` multi-select; (4) ISSUE-14 remove duplicate TagDto exports from `ContactDto.ts`; (5) ISSUE-15 reconcile `ContactUPIDetail` DTO between BE/FE.
+  - BE: none.
+  - FE:
+    - `crm/contact/contact/index-page.tsx` — removed the `headerActions` create Button, the `handleCreate` callback, the now-unused `capability` selector line, and the `Button` / `Icon` imports left dangling by the removal.
+    - `crm/contact/contact/form/contact-types-picker.tsx` — **NEW**. Single "select a type → Add" row; assigned types render below as removable chips carrying their assigned date (solid `bg-primary text-white` icon circle per the widget-icon rule). Same value contract as the old grid.
+    - `crm/contact/contact/form/contact-types-section.tsx` — rewired from `ContactTypeCardSelector` to `ContactTypesPicker`; skeleton swapped from a 6-card grid to a select bar + 3 chips. `handleChange` → `contactTypeAssignments[]` mapping is unchanged, so **no save-path or BE change**.
+    - `crm/contact/contact/form/contact-form-progress.tsx` — **NEW**. Sticky bar: percent complete, one segmented track bar per section, and a clickable step chip per section (tick when complete, amber asterisk when required-and-missing). Exports `ContactSectionId`, `CONTACT_FORM_SECTIONS`, `useContactFormCompletion`.
+    - `crm/contact/contact/contact-form-accordion.tsx` — mounts the progress bar; Contact Types folded inline into Basic Information under a divider heading (**8 sections → 7**); `SectionId` now aliases `ContactSectionId`; each header carries a completion tick badge; `onJump` expands the target and `scrollIntoView`s it.
+    - `crm/contact/contact/form/accordion-shell.tsx` — root div gained `id="section-card-{id}"` + `scroll-mt-28` as the jump anchor.
+  - DB: none.
+- **Completion signals used by the progress bar** (read from `useContactStore`, not RHF — child rows live in sub-stores the resolver cannot see): basic = per-base-type name fields + `primaryCountryId` + `contactStatusId`; contact = any phone/email/social row or create-mode `childValue`; orgunit = `donationPurposeStore.data.length`; address = a row with `addressLine1`; family = a relationship row or `familyId`; comm = `preferredCommunicationId` / opt-in date / any do-not toggle; custom = `anniversaryDate` / `referredBy` / `preferredContactTime` / `taxIdNumber`. Only basic + contact are marked required.
+- **Deviations from spec**: the mockup's 8-section accordion is now 7 — Contact Types is inline in Basic Information. This is a deliberate, user-requested departure from `html_mockup_screens/screens/contacts/contact-form.html`; the mockup's own card-grid selector is the thing being replaced.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Verification**: FE `npx tsc --noEmit --incremental false` → **exit 0** (clean). No BE build needed — zero backend files touched.
+- **Next step**: none. `form/contact-type-card-selector.tsx` is now unreferenced but left on disk (deletion wasn't requested); remove it in a later cleanup pass if the card grid is not coming back.
 
-### Session 2 — 2026-04-26 — BUILD — COMPLETED
+### Session 9 — 2026-07-23 — UI — COMPLETED
 
-- **Scope**: Resume Session 1 (`/build-screen #18`). User scope: full HTML mockup fidelity + close all 5 outstanding ISSUEs (11–15). Executed in 6 sequenced agent passes:
-  - **Pass A.1 (Opus FE)**: started ISSUE-11 FORM accordion — built `accordion-shell.tsx` + Section 2 sub-section files (phone/email/social) before a network error.
-  - **Pass A.2 (Opus FE)**: resumed/finished ISSUE-11 — built remaining Sections 3–8 components, the `contact-form-accordion.tsx` orchestrator, `parent-form.tsx` Section-1 refactor, `view-page.tsx` swap (`ContactWizardWidget` → `ContactFormAccordion`), Zustand draft-array hydration. Surfaced 5 new findings → ISSUE-16, ISSUE-23, Pass-A.2-finding-3 (handled in Pass D), and Pass-A.2-findings-4+5 (handled in Pass D-BE + Pass E-FE).
-  - **Pass D-BE (Sonnet BE)**: extended `GetContactById` with `.ThenInclude` for phones/emails/addresses + their FK navigations; upgraded `ContactDto` collections from RequestDto types to ResponseDto types with full Mapster projection; renamed `ContactSocialLink.Link` → `LinkUrl` on the DTO (entity column unchanged); rippled to `Create/UpdateContact.cs` + standalone `Create/UpdateContactSocialLink.cs` validators + `ContactMappings.cs`. ISSUE-15 verified already aligned (no work needed). dotnet build green, 0 errors. Surfaced ISSUE-19 + ISSUE-20.
-  - **Pass B-FE (Opus FE)**: closed ISSUE-12 by deriving `TAdvanceFilter` payload from `useContactStore` quickFilterChip + advancedFilters via `useMemo` + `useEffect` → `useFlowDataTableStore.setAdvanceFilter` (fetch hook re-runs combinator). Closed ISSUE-13 by introducing a new generic `ApiMultiSelect` component (`api-multi-select/index.tsx`) with internal query registry (CONTACTTYPE, TAG), debounced search, popover+command UI, async label hydration. Surfaced ISSUE-21 (tagIds inert until BE adds `Contact.ContactTags` nav) + ISSUE-22 (chip-by-name fragility).
-  - **Pass E-FE (Sonnet FE)**: extended `CONTACT_BY_ID_QUERY` with the 3 new collections (full FK navigations); added `$contactPhoneNumbers`/`$contactEmailAddresses`/`$contactAddresses` array args to both `CREATE_CONTACT_MUTATION` and `UPDATE_CONTACT_MUTATION` (kept singular args for back-compat); rewrote `parent-form.tsx onSubmit` to send full arrays for all 9 child collections; renamed `ContactSocialLinkDto.link` → `linkUrl` (with deprecated `link?` for back-compat); renamed Section 6 to "Donation Purpose Assignment" (icon `ph:hand-coins`). Closed Pass-A.2-findings-4+5. Surfaced ISSUE-23 (singular args still in mutation).
-  - **Pass C-FE (Sonnet FE)**: closed ISSUE-14 by removing duplicate `TagRequestDto`/`TagResponseDto`/`TagDto` exports from `ContactDto.ts` and re-exporting from canonical `TagDto.ts`. Created `ContactDetailQueries.ts` with `CONTACT_DONATIONS_QUERY` (`globalDonations` filtered by `contactId`) + `CONTACT_EMAIL_QUEUE_QUERY` (`emailSendQueues`). Donations tab self-fetches + aggregates 6 mini-stats from real data; Communication tab self-fetches with token-based status badges; Timeline tab merges both into chronological feed with empty-state cards for unimplemented categories (Calls/Events/Notes/Volunteer with "soon" badges). Engagement score formula panel placeholders wrapped with `title` tooltip referencing ISSUE-3. Detail-page call sites updated to remove now-removed props. Surfaced ISSUE-24.
-  - **Pass F (deferred)**: legacy wizard file cleanup (~15 files in `contact/` folder) — captured as ISSUE-18, deferred to a future minor cleanup pass since the files are unreachable dead code.
-  - **Final post-pass patch** (main thread): fixed the legacy `social-link-card.tsx` to use `socialLink.linkUrl ?? socialLink.link ?? ""` to absorb Pass E's rename ripple in legacy code (4 TS errors → 0).
+- **Scope**: Three user-requested form changes: (a) rename the accordion's "Custom Fields" section to **Additional Details**; (b) make the progress bar **value-based, not row-based** (a brand-new contact must read 0%); (c) collapse the accordion **7 sections → 5** by removing the create-only "Initial Communication Details" block and folding **Address** + **Communication Preferences** into Contact Information.
 - **Files touched**:
-  - **BE: 7 modified** (Pass D)
-    - `Base.Application/Business/ContactBusiness/Contacts/Queries/GetContactById.cs` (modified — +9 ThenInclude lines for phones/emails/addresses navigations)
-    - `Base.Application/Schemas/ContactSchemas/ContactSchemas.cs` (modified — `ContactDto` collection types upgraded to ResponseDto[])
-    - `Base.Application/Schemas/ContactSchemas/ContactSocialLinkSchemas.cs` (modified — `Link` → `LinkUrl` on Request/Response DTOs)
-    - `Base.Application/Business/ContactBusiness/Contacts/Commands/CreateContact.cs` (modified — `dto.Link` → `dto.LinkUrl`)
-    - `Base.Application/Business/ContactBusiness/Contacts/Commands/UpdateContact.cs` (modified — same)
-    - `Base.Application/Business/ContactBusiness/ContactSocialLinks/Commands/CreateContactSocialLink.cs` (modified — DTO-side validator references)
-    - `Base.Application/Business/ContactBusiness/ContactSocialLinks/Commands/UpdateContactSocialLink.cs` (modified — same)
-    - `Base.Application/Mappings/ContactMappings.cs` (modified — explicit `LinkUrl ↔ Link` Mapster bridge)
-  - **FE: 11 created + 14 modified**
-    - **Created (11)** under `presentation/components/page-components/crm/contact/contact/form/`: `accordion-shell.tsx`, `phone-number-section.tsx`, `email-address-section.tsx`, `social-link-section.tsx`, `address-block.tsx`, `address-section.tsx`, `comm-prefs-section.tsx`, `inline-new-family-form.tsx`, `relationship-row.tsx`, `family-relationships-section.tsx`, `org-unit-assignment-row.tsx`, `org-unit-assignment-section.tsx`, `custom-fields-section.tsx`, `contact-types-section.tsx` (Pass A.1+A.2; technically 14 in this folder — 4 from A.1, 10 from A.2). Plus `presentation/components/page-components/crm/contact/contact/contact-form-accordion.tsx` (orchestrator, Pass A.2). Plus `presentation/components/custom-components/api-multi-select/index.tsx` (Pass B). Plus `infrastructure/gql-queries/contact-queries/ContactDetailQueries.ts` (Pass C).
-    - **Modified (14)**: `parent-form.tsx` (Pass A.2 + Pass E — Section-1 refactor + onSubmit array payload + child-store hydration), `view-page.tsx` (Pass A.2 — accordion swap + dynamic page title), `index-page.tsx` (Pass B — derived advancedFilter bridge), `list/advanced-filter-panel.tsx` (Pass B — ApiMultiSelect swap), `infrastructure/gql-queries/contact-queries/ContactQuery.ts` (Pass E — +3 collections), `infrastructure/gql-mutations/contact-mutations/ContactMutation.ts` (Pass E — +3 array args on CREATE+UPDATE), `domain/entities/contact-service/ContactSocialLinkDto.ts` (Pass E — `link → linkUrl` rename + back-compat), `domain/entities/contact-service/ContactDto.ts` (Pass C — TagDto duplicate-export removed), `infrastructure/gql-queries/contact-queries/index.ts` (Pass C — barrel re-export), `detail/tabs/donations-tab.tsx` (Pass C — self-fetch + 6 mini-stats), `detail/tabs/communication-tab.tsx` (Pass C — self-fetch + status badges), `detail/tabs/timeline-tab.tsx` (Pass C — merged chronological feed), `detail/engagement-score-card.tsx` (Pass C — tooltip wrappers on placeholders), `detail/detail-page.tsx` (Pass C — call-site prop cleanup), `social-link-card.tsx` (post-pass patch — `linkUrl ?? link` fallback for legacy compat).
-  - **DB: 0 modified** (Pass D verified existing seed sufficient; arrays are runtime payload, not seed schema).
-- **Deviations from spec**:
-  - Section 6 renamed from "Organizational Unit Assignment" → "Donation Purpose Assignment" to honestly reflect the underlying `ContactDonationPurpose` entity (ISSUE-16 left open for the true OrgUnit migration). Field labels updated accordingly.
-  - FK lookups in Sections 5 + 6 use plain `<select>` over GQL results rather than `ApiSelectV2` (which is RJSF-bound only). ISSUE-17 captures the recommendation to extract a generic `SearchableSelect` primitive parallel to the new `ApiMultiSelect`.
-  - Engagement score live values remain stubbed per ISSUE-3 (out of scope — needs cross-entity aggregation backend).
-  - Timeline tab cross-entity stream remains partial per ISSUE-4 — Donations + Email events are real; Calls/Events/Notes/Volunteer hours show "Coming soon" empty-state cards.
-  - Multi-row CREATE singular fallback path (`childType`/`childValue`) preserved in `parent-form.tsx onSubmit` for back-compat — ISSUE-23 captures the cleanup recommendation.
-  - Legacy wizard files NOT deleted (Pass F deferred → ISSUE-18). They're unreachable dead code; safe to remove in a future cleanup pass once any remaining consumers are confirmed gone.
-- **Known issues opened**: ISSUE-16 (Donation Purpose semantic vs OrgUnit), ISSUE-17 (no SearchableSelect primitive), ISSUE-18 (legacy file cleanup deferred), ISSUE-19 (LocalityId not synced in UpdateContact diff), ISSUE-20 (ContactPhoneNumberResponseDto.Country typed as entity), ISSUE-21 (tagIds filter inert — Contact.ContactTags nav missing), ISSUE-22 (chip-by-name string fragility), ISSUE-23 (CREATE_CONTACT_MUTATION singular args still present), ISSUE-24 (EmailSendQueue.contactId filter assumption).
-- **Known issues closed**: ISSUE-11 (Pass A.2 — accordion shipped), ISSUE-12 (Pass B — filter bridge wired), ISSUE-13 (Pass B — ApiMultiSelect swap), ISSUE-14 (Pass C — TagDto duplicates removed), ISSUE-15 (Pass D — verified already aligned).
-- **Verification**:
-  - `dotnet build PeopleServe/Services/Base/Base.API/Base.API.csproj` → green, 0 errors, 1 pre-existing NPOI warning.
-  - `pnpm tsc --noEmit` (FE) → 144 errors total. **0 NEW errors** in any contact-screen file. Only contact residual error is the long-standing `form-fields/CommonFormFields.tsx:162` null-check (pre-Session-1 baseline). All 144 remaining errors are in unrelated screens (beneficiary, duplicate-contact merge, volunteer, mem-service, etc.).
-  - UI uniformity greps on every newly authored file: 0 matches for inline hex / inline px spacing / raw `Loading...` text / hand-rolled grey skeleton divs.
-  - `view-page.tsx` confirmed rendering `<ContactFormAccordion />` (not `<ContactWizardWidget />`).
-  - Section 6 title confirmed as "Donation Purpose Assignment" with `ph:hand-coins` icon.
-  - All 9 child-collection arrays confirmed flowing through both CREATE and UPDATE mutation variables.
-  - All 9 child-collection arrays confirmed hydrating into Zustand sub-stores from `CONTACT_BY_ID_QUERY` in EDIT mode.
-- **Next step**: For follow-ups, work the OPEN ISSUEs in priority order — ISSUE-19 (data-loss path, trivial fix), ISSUE-21 (BE Contact.ContactTags nav, unblocks tag filter), ISSUE-18 (legacy cleanup), ISSUE-17 (SearchableSelect primitive). ISSUE-3 (real engagement scoring) and ISSUE-4 (full cross-entity timeline) are full backend module work — not screen-level. Manual E2E test recommended: `?mode=new` accordion full submit → `?mode=read` detail → `?mode=edit` round-trip with multi-row phones/emails/addresses; quick filter chip + advanced filter panel + bulk selection round-trip on the grid.
+  - BE: none.
+  - FE:
+    - `form/custom-fields-section.tsx`, `form/contact-form-progress.tsx`, `contact-form-accordion.tsx` — "Custom Fields" → "Additional Details".
+    - `form/contact-form-progress.tsx` — strict `filled()` helper (trims strings, treats `0` FK placeholders as empty) and every section check now tests the row's **value field** instead of `rows.length`. `ContactSectionId` / `CONTACT_FORM_SECTIONS` reduced to 5 (`basic`, `contact`, `orgunit`, `family`, `custom`); the address signal folded into `contact`; the `comm` signal dropped (prefs alone are not "reachable").
+    - `contact-form-accordion.tsx` — Contact Information now renders Phones + Emails + Social Links + **Addresses** + **Communication Preferences** under divider `SubHeading`s; the standalone `address` and `comm` `AccordionShell`s deleted; `INITIAL_EXPANDED` down to 5 keys.
+    - `form-fields/IndividualFormFields.tsx`, `form-fields/OrganizationFormFields.tsx` — `<CommunicationDetailsSection>` mount + import removed.
+    - `contact-validation-schemas.ts` — `communicationFieldsSchema.childType` is now `.optional().nullable()` (its `.refine()`s are all `data.childType === …`-guarded, so they self-disable). Without this the Create button would never enable.
+    - `application/stores/contact-stores/contact-store.ts` — `getRequiredFields()` no longer pushes `childType`/`childValue` in create mode.
+    - `parent-form.tsx` — deleted the singular `variables.emailAddress` / `phoneNumber` / `address` builder; added a create-mode guard in `onSubmit` that reads the phone/email/address sub-stores and `toast.error`s if no channel has a value.
+  - DB: none.
+- **Why the completion bug existed**: every repeatable section seeds ONE blank row on mount (`emptyPhoneRow()` etc., all ids `0` and text `""`), and re-seeds when the last row is removed — so `rows.length` is never 0 and was a false "complete" signal for Contact / Purpose / Family the instant the form opened.
+- **Defect closed by the restructure**: the create mutation sent the child arrays (`contactPhoneNumbers` / `contactEmailAddresses` / `contactAddresses`) **and** the singular `childType`-derived object, so the same email entered in both surfaces created **two rows**. Only the arrays are sent now. `$childType`/`$childValue` are optional GraphQL args — **no BE change required**.
+- **Deviations from spec**: the mockup's 8-section accordion is now 5 (`html_mockup_screens/screens/contacts/contact-form.html`). Deliberate and user-requested, extending the Session 8 deviation.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Verification**: FE `npx tsc --noEmit --incremental false` → **exit 0** (clean). No BE build — zero backend files touched.
+- **Next step**: none. `form-fields/CommunicationDetailsSection.tsx` and `form/contact-type-card-selector.tsx` are now unreferenced (the former still barrel-exported from `form-fields/index.ts`); delete both in a later cleanup pass.
+
+### Session 10 — 2026-07-23 — UI — COMPLETED
+
+- **Scope**: Country-aware phone validation + primary-country auto-fill (phone STD code, address country, donation currency), restored missing input borders, gated the accordion behind Basic Information, and turned the completeness bar into a vertical stepper rail with green per-section fill.
+- **Files touched**:
+  - BE: None
+  - FE:
+    - `contact/form/use-primary-country.ts` (NEW) — single cached `COUNTRIES_QUERY` source; exposes `countries`, `countryById`, `primaryCountryId`, `primaryStdCode`, `primaryCurrencyId`
+    - `contact/form/phone-number-section.tsx` — fixed `stdCode` -> `countryStdCode` mapping bug (dial code was always undefined), country + STD auto-fill, `validatePhoneByCountry` layered on the row schema, country-aware placeholder
+    - `contact/form/address-section.tsx` — blank rows inherit the primary country (heads the State/District/City/Pincode cascade)
+    - `contact/form/org-unit-assignment-section.tsx` — blank rows inherit `Country.currencyId` as `donatedCurrencyId`
+    - `custom-components/form-fields/FormInput.tsx` — default `variant` `"default"` -> `"faded"` so every FormInput renders a border width (only Basic Information looked right before, because those fields passed the variant explicitly)
+    - `contact/form/accordion-shell.tsx` — new `locked` / `lockedReason` props: lock icon, dashed border, disabled header, body never mounts
+    - `contact/contact-form-accordion.tsx` — `gateOpen = isReadMode || completed.basic`; the other five cards lock until Basic Information is complete; `onToggle` no-ops and `onJump` redirects to `basic`; two-column layout with the progress rail as a sticky `lg:w-64` left column
+    - `contact/form/contact-form-progress.tsx` — vertical stepper rail, per-section green fill, new `ratio` map (0-1) so partial sections show partial fill; headline `%` is now the average of ratios
+  - DB: None
+- **Deviations from spec**: `FormInput.tsx` is an app-wide shared component — the border default now applies to every FormInput that omits `variant`, outside this screen.
+- **Known issues opened**: None
+- **Known issues closed**: None
+- **Next step**: (none)
+
+### Session 11 — 2026-07-23 — FIX — COMPLETED
+
+- **Scope**: Floating Create/Save enablement. Create is gated on the full required set (identity fields for the contact type + at least one phone/email/address); Save is gated on a real *value* difference from the loaded record instead of the `isDirty` touch flag, so clearing a field and re-entering the same value no longer fires a no-op mutation.
+- **Files touched**:
+  - BE: None
+  - FE:
+    - `presentation/hooks/contact/useContactValueChanges.ts` (NEW) — normalised snapshot of parent scalars + all six child sub-stores (trimmed strings, `null`/`""`/`0`/`false` collapse to empty, blank seeded rows dropped, row order ignored, ids/audit/derived keys excluded). Baseline tracks the live snapshot while the record is untouched — that is what absorbs hydration and the country/currency auto-fills — and freezes on the first user edit; saving re-baselines.
+    - `presentation/hooks/contact/useSaveButtonState.ts` — edit mode now uses `hasValueChanges` (the `isDirty ||` term is gone); added the reachable-channel requirement (`communication`) to the required gate; dead `hasFormDataChanged` comparer removed.
+    - `contact/form/org-unit-assignment-section.tsx` — row add/update/remove now call `setIsDirty(true)` like every sibling section (the auto-fill effect still does not), so a purpose-only edit isn't absorbed into the baseline.
+    - `contact/view-page.tsx` — floating Save/Create carries a `title` explaining why it is disabled (missing required details vs. no changes).
+  - DB: None
+- **Deviations from spec**: None
+- **Known issues opened**: None
+- **Known issues closed**: None
+- **Next step**: (none)
+
+### Session 12 - 2026-07-23 - FIX - COMPLETED
+
+- **Scope**: Conditional validation for the Contact Information rows. Creating a contact with a phone/email/address typed in but no Type selected sent `typeId: 0` into a non-nullable FK and came back as the opaque "Database operation failed: An error occurred while saving the entity changes." The Type (and country) is now required *only once the row carries a value*, and duplicate type / duplicate number-or-email are caught too - they hit filtered UNIQUE indexes and produce the identical message.
+- **Files touched**:
+  - BE: None
+  - FE:
+    - `crm/contact/contact/communication-row-rules.ts` (NEW) - pure rules shared by the rows, the save gate and the submit guard. Blank seeded rows stay silent; only the 2nd+ occurrence of a duplicate key is flagged.
+    - `presentation/hooks/contact/useCommunicationRowErrors.ts` (NEW) - store-backed view of those rules (the sub-store rows are invisible to the RHF resolver, ISSUE-27).
+    - `contact/form/phone-number-section.tsx` - Type/Country selects carry `errorText` + conditional `required`; duplicate-number message on the number field.
+    - `contact/form/email-address-section.tsx` - same for Email Type; duplicate-email message on the address field.
+    - `contact/form/address-section.tsx` + `contact/form/address-block.tsx` - Address Type `errorText`, country message under the cascade.
+    - `presentation/hooks/contact/useSaveButtonState.ts` - `canSave` now also requires `!hasCommunicationErrors`; exposes `firstCommunicationError`.
+    - `contact/view-page.tsx` - the floating pill's disabled tooltip names the offending row rule.
+    - `contact/parent-form.tsx` - final guard in `onSubmit` (both modes, every submit path) toasts the first row error instead of letting the mutation fire.
+  - DB: None
+- **Deviations from spec**: None
+- **Known issues opened**: None
+- **Known issues closed**: None
+- **Next step**: (none)

@@ -12,7 +12,7 @@ complexity: High
 new_module: NO
 planned_date: 2026-05-16
 completed_date: 2026-05-16
-last_session_date: 2026-05-16
+last_session_date: 2026-07-22
 ---
 
 ## Tasks
@@ -852,3 +852,27 @@ Full UI must be built (tree, drag-reorder, properties pane, icon picker, badge c
   - Skeleton states: 8-row animated tree skeleton + full-form editor skeleton
 - **Component reuse check**: N/A — DESIGNER_CANVAS has no `<AdvancedDataTable>` / `<FlowDataTable>`, no `GridComponentName` cell-renderers. Custom designer page is the canonical sole consumer.
 - **Next step**: (empty — COMPLETED). User-pending verification: run `dotnet ef database update`, run `pnpm dev`, exercise CRUD + drag-reorder + delete-with-children + reset (with literal `"RESET MENUS"` confirm). Verify FA icon CSS is globally loaded (ISSUE-17).
+
+### Session 2 — 2026-07-22 — FIX (data-maintenance) — COMPLETED
+
+- **Scope**: Author a one-time SQL cleanup script to purge UNUSED rows from the global `auth."Menus"` table this screen manages. User-requested categories: unmapped top-level (ParentMenuId NULL + no RoleCapabilities mapping + no live child), unmapped leaf (has MenuUrl, no child, no mapping), orphaned children (parent missing/soft-deleted/inactive), dead-module + already-soft-deleted rows. "Mapped" = referenced by a live `auth."RoleCapabilities"` row (ISMENURENDER), matching runtime sidebar logic in `GetParentChildMenu.cs`.
+- **Files touched**:
+  - BE: none (no C# change)
+  - FE: none
+  - DB: `sql-scripts-dyanmic/Cleanup-Unused-Menus.sql` (created) — PART 1 read-only verification (1A rollup + 1B per-row detail, tagged by category with precedence D > C4 > C3 > C1 > C2); PART 2 transactional HARD DELETE that re-derives the same set, expands to full descendant subtrees (recursive CTE) to avoid dangling self-FK, deletes dependents (`RoleCapabilities`, `MenuCapabilities`, `SearchableEntities`) then the menu rows. Defaults to `ROLLBACK` (preview) — user flips to `COMMIT`. Idempotent / re-runnable.
+- **Deviations from spec**: None (operational script; no screen entity/UI change). C2 (unmapped leaf) intentionally restricted to rows with a real `MenuUrl` per user scope — url-less non-top leaves (dividers/headers) left untouched.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: User runs PART 1 to verify candidates, then flips PART 2's `ROLLBACK` → `COMMIT` to apply. Script is a hand-off (user owns DB application, per project convention).
+
+### Session 3 — 2026-07-22 — FIX (data-maintenance) — COMPLETED
+
+- **Scope**: Author a one-time SQL data-migration to MERGE the 'General' module into the 'Setting' module (both hold app-config, so they collapse to one). Move every General-owned artifact to Setting, then hard-delete the empty General module. Modules resolved by `ModuleCode` ('GENERAL'/'SETTING') at run time — no hardcoded Guids, copes with menus edited via this screen since seed.
+- **Files touched**:
+  - BE: none (no C# change)
+  - FE: moved Next.js route folders (git mv, history preserved) `src/app/[lang]/(core)/general/region/` → `.../(core)/setting/region/` and `.../general/masters/` → `.../setting/masters/` (12 leaf `page.tsx` under region/{city,country,district,locality,pincode,state} + masters/{bank,bloodgroup,currency,currencyconversion,gender,language,occupation,paymentmode,relation,salutation}). Safe move — leaf pages use `@/` alias imports only. `(core)/general/` retains unrelated `configuration/`, `dashboards/`, `underconstruction/` (not part of this merge).
+  - DB: `sql-scripts-dyanmic/Merge-General-Into-Setting-Module.sql` (created). PART 1 read-only verification (1A module resolve, 1B per-table row counts, 1C moving menus with proposed new OrderBy **+ old/new MenuUrl**, 1D RoleModules overlap). PART 2 transactional migration: re-sequence General TOP-LEVEL menus' `OrderBy` to append after Setting's current max (avoids 1..N sidebar collision), move all General menus (any depth) → Setting, **re-path moved menus' `MenuUrl` `general/…` → `setting/…` (2B-2, leading segment only, via `regexp_replace(^general/,setting/)`) to match the moved route folders**, move `sett."Grids"/"Widgets"/"Dashboards"`, `rep."Reports"`, `com."DocumentTypes"`, `notify."Notifications"/"EmailTemplates"`, `audit."AuditLogs"` → Setting, de-dup + move `auth."RoleModules"` grants (drop General grant where role already has Setting, else re-point), hard-delete the General `auth."Modules"` row. Defaults to `ROLLBACK` (preview); user flips to `COMMIT`. Idempotent (once General is gone every statement is a no-op).
+- **Deviations from spec**: None (operational script; no screen entity/UI change). MenuCodes kept as `GEN_*` (opaque ids referenced by RoleCapabilities/FE — renaming would break lookups); only owning `ModuleId`, top-level `OrderBy`, and the `MenuUrl` leading segment change. `audit."AuditLogs".ModuleId` (nullable) re-pointed to Setting purely to satisfy FK before delete — historical rows now attribute to Setting.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: User runs PART 1 to confirm the id resolve + move counts + URL rewrite, then flips PART 2's `ROLLBACK` → `COMMIT` to apply. FE folder move is already applied on disk (git mv) — rebuild FE to pick up the new `setting/region` + `setting/masters` routes. Also update the master seed `Pss2.0_Global_Menus_List.sql` (drop the General module block, re-home GEN_* menus under Setting with `setting/…` URLs, drop the 'GENERAL' RoleModules grant) so a fresh DB build reflects the merge — otherwise a re-seed re-creates General with old paths. Hand-off (user owns DB application).

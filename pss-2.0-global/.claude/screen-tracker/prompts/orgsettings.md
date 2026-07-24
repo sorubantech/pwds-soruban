@@ -12,7 +12,7 @@ complexity: High
 new_module: NO (existing `sett` schema; OrganizationSetting + SettingGroup + UserSetting entities + CRUD already exist)
 planned_date: 2026-05-15
 completed_date: 2026-05-15
-last_session_date: 2026-05-15
+last_session_date: 2026-07-22
 ---
 
 > **One screen, three menus** — this single tabbed UI fulfils **ORGANIZATIONSETTING**, **SETTINGGROUP** and **USERSETTING**
@@ -45,7 +45,7 @@ last_session_date: 2026-05-15
 - [x] Solution Resolution complete (sub-type confirmed, save model confirmed, ALIGN scope confirmed — additive BE + custom FE)
 - [x] UX Design finalized (sidebar-nav with 10 groups + setting-row stack + change-bar)
 - [x] User Approval received (2026-05-15 — Sonnet across the board, app-tenant runtime seeder)
-- [x] Backend code generated (ALIGN — additive only: 1 aggregate query + 1 bulk-update command + 1 reset-to-default command + default-row seeder for the 10 groups & ~75 ParamCodes)
+- [x] Backend code generated (ALIGN — additive only: 1 aggregate query + 1 bulk-update command + 1 reset-to-default command + default-row seeder for the 10 groups & ~70 ParamCodes)
 - [x] Backend wiring complete (extend existing `OrganizationSettingQueries` + `OrganizationSettingMutations` GraphQL types; Mapster + DI registrations added)
 - [x] Frontend code generated (1 settings-page + Zustand store + setting-row renderer + 3 custom widgets + 5 chrome components; FE generation agent crashed mid-flight, salvaged inline)
 - [x] Frontend wiring complete (3 stub pages → all render the SAME settings page; barrel index updated; capability gate on ORGANIZATIONSETTING menu code)
@@ -57,7 +57,7 @@ last_session_date: 2026-05-15
 - [ ] EF migration `Add_OrgSettings_Defaults_Seeder` applied (if new tables/columns added — likely NONE, just seed inserts)
 - [ ] pnpm dev — page loads at `/{lang}/setting/orgsettings/organizationsetting` (and `/settinggroup` and `/usersetting`)
 - [ ] **SETTINGS_PAGE checks**:
-  - [ ] First-load auto-seeds default `SettingGroups` (10) and `OrganizationSettings` (~75) for current tenant if missing → no 404 / empty state
+  - [ ] First-load auto-seeds default `SettingGroups` (10) and `OrganizationSettings` (~70) for current tenant if missing → no 404 / empty state
   - [ ] All 10 group categories render in left-sidebar nav with correct icons, names, and count badges
   - [ ] Active category click swaps the right-pane card; first category is `FUNDRAISING` (active by default)
   - [ ] Setting-row widget renders correctly per `ParamDataType`:
@@ -96,9 +96,9 @@ Frontend Module: setting (route under `setting/orgsettings/{organizationsetting 
 
 **Business**: This is the **generic key/value tenant-configuration screen** — the runtime-configurable knobs that drive cross-cutting behavior across CRM, Donations, Communication, Reports, Field Collection, and Compliance modules. Unlike #75 CompanySettings (which edits 3 specific entity tables — Company / CompanyConfiguration / CompanyBranding — for org identity, branding, and fiscal facts), THIS screen edits the **schema-less settings store**: `sett.OrganizationSettings` holds one row per `(CompanyId, ParamCode)` with a `CurrentValue` string + `ParamDataType` discriminator (STRING / NUMBER / BOOLEAN / SELECT / MULTI_CHECK / TAGS / TIME / EMAIL), and `sett.SettingGroups` partitions those rows into 10 user-facing categories (Fundraising & Donations, Receipts & Tax, Communication, Contacts & CRM, Organization, Field Collection, Reports, Security & Privacy, Notifications, Regional & Compliance). The mockup confirms ~75 individual settings spread across the 10 groups — every one is a typed runtime knob (e.g. `DEFAULTCURRENCY`, `MIN_DONATION_AMOUNT`, `EMAIL_DAILY_LIMIT`, `QUIET_HOURS_START`, `2FA_POLICY`, `GDPR_DATA_RETENTION`). The `CanUserOverride` flag on each definition controls whether a user may shadow the tenant value with a personal value stored in `sett.UserSettings` (out of scope for the MVP edit UI — admin-only edit screen for now; per-user override happens via separate end-user-preferences screen, not this one).
 
-**WHO edits it**: BUSINESSADMIN only (the tenant's owner/operator). All other roles get READ access to enable runtime lookups (e.g. donation entry reads `MIN_DONATION_AMOUNT` to validate; email-send job reads `EMAIL_DAILY_LIMIT` to throttle). **HOW OFTEN**: settings cluster as one-time-during-onboarding (most fields), quarterly tweaks (limits, fiscal-year rollover, GDPR retention), and rare-but-critical (2FA policy, IP whitelisting, maintenance toggles). **WHY it exists**: feature-flag and threshold infrastructure that lets the SaaS platform stay opinionated by default but lets each NGO customize without code changes. **WHAT BREAKS if mis-set**: high blast radius — wrong `DUPLICATE_CHECK_WINDOW` floods donation entry with false flags; wrong `EMAIL_DAILY_LIMIT` paginates campaigns wrong; wrong `2FA_POLICY` either locks admins out or exposes the tenant; wrong `MAX_REPORT_ROWS` causes export OOM. **HOW it relates to other screens**: the 75-ish ParamCodes are READ from this store across every module — every form, validator, scheduler, and email job pulls its threshold via `IOrganizationSettingsService.GetValueAsync(paramCode)`. **WHAT'S unique about its UX vs. a generic settings page**: it's NOT a hand-coded form — it's a **schema-driven renderer** that paints widgets based on `ParamDataType` and validates based on `AllValues`. The 10 categories and ~75 ParamCodes are seeded; the BUSINESSADMIN only ever sees existing rows and edits `CurrentValue`. New ParamCodes are added only by developers via migration/seed (NOT via the UI).
+**WHO edits it**: BUSINESSADMIN only (the tenant's owner/operator). All other roles get READ access to enable runtime lookups (e.g. donation entry reads `MIN_DONATION_AMOUNT` to validate; email-send job reads `EMAIL_DAILY_LIMIT` to throttle). **HOW OFTEN**: settings cluster as one-time-during-onboarding (most fields), quarterly tweaks (limits, fiscal-year rollover, GDPR retention), and rare-but-critical (2FA policy, IP whitelisting, maintenance toggles). **WHY it exists**: feature-flag and threshold infrastructure that lets the SaaS platform stay opinionated by default but lets each NGO customize without code changes. **WHAT BREAKS if mis-set**: high blast radius — wrong `DUPLICATE_CHECK_WINDOW` floods donation entry with false flags; wrong `EMAIL_DAILY_LIMIT` paginates campaigns wrong; wrong `2FA_POLICY` either locks admins out or exposes the tenant; wrong `MAX_REPORT_ROWS` causes export OOM. **HOW it relates to other screens**: the 70-ish ParamCodes are READ from this store across every module — every form, validator, scheduler, and email job pulls its threshold via `IOrganizationSettingsService.GetValueAsync(paramCode)`. **WHAT'S unique about its UX vs. a generic settings page**: it's NOT a hand-coded form — it's a **schema-driven renderer** that paints widgets based on `ParamDataType` and validates based on `AllValues`. The 10 categories and ~70 ParamCodes are seeded; the BUSINESSADMIN only ever sees existing rows and edits `CurrentValue`. New ParamCodes are added only by developers via migration/seed (NOT via the UI).
 
-> Why §① is heavier than other screens: this screen is fundamentally different from a typed singleton (CompanySettings). The developer must understand that **the field list comes from data, not code** — the BE must return the rendered list, the FE renders generic widget components per row, and adding a 76th setting tomorrow requires ZERO frontend code change. Without that grounding, an agent will write a hand-coded 75-field form and miss the entire point.
+> Why §① is heavier than other screens: this screen is fundamentally different from a typed singleton (CompanySettings). The developer must understand that **the field list comes from data, not code** — the BE must return the rendered list, the FE renders generic widget components per row, and adding a 71st setting tomorrow requires ZERO frontend code change. Without that grounding, an agent will write a hand-coded 70-field form and miss the entire point.
 
 **Combined-screen contract**:
 
@@ -149,7 +149,7 @@ All three FE routes render the **same component** (a single `OrgSettingsPage`). 
 | Description | string? | 500 | NO | — | Inline help text shown to right of widget |
 | CanUserOverride | bool | — | YES | — | If true, end users may store a personal override in UserSettings |
 
-> Seed: ~75 rows per tenant on tenant-onboarding — list lives in §⑫ default seeder.
+> Seed: ~70 rows per tenant on tenant-onboarding — list lives in §⑫ default seeder.
 
 > **Singleton-ish constraint**: NOT a true singleton — many rows. But the (CompanyId, ParamCode) tuple is UNIQUE.
 > Unique index recommended: `IX_OrganizationSettings_CompanyId_ParamCode_Unique`.
@@ -216,14 +216,13 @@ All three FE routes render the **same component** (a single `OrgSettingsPage`). 
 - `PASSWORD_MIN_LENGTH` between 6 and 32 (validate against widget min/max)
 - `EMAIL_DAILY_LIMIT`, `SMS_DAILY_LIMIT`, `WHATSAPP_DAILY_LIMIT` must be positive integers
 - `MAX_LOGIN_ATTEMPTS` between 1 and 20
-- `RECEIPT_NUMBER_PREFIX` matches `^[A-Z0-9\-]{1,10}$`
 - `AUTHORIZED_SIGNATORY` non-empty if `REQUIRE_RECEIPT_SIGNATURE` is true
 - For `SELECT` type: `CurrentValue` must be one of the pipe-delimited values in `AllValues`
 - For `MULTI_CHECK` type: `CurrentValue` is a comma-joined subset of `AllValues`
 - For `TAGS` type: each tag is a primitive token (e.g. "7", "14", "30" days)
 
 **Sensitive Fields**:
-- **None** in this screen. The 75 settings store thresholds, toggles, defaults, and policy values — NOT credentials. Password policies (length, expiry, history depth) are stored as plain numbers; actual passwords are never in this store.
+- **None** in this screen. The 70 settings store thresholds, toggles, defaults, and policy values — NOT credentials. Password policies (length, expiry, history depth) are stored as plain numbers; actual passwords are never in this store.
 
 **Read-only / System-controlled Fields:**
 - `ParamName`, `ParamCode`, `ParamDataType`, `AllValues`, `Description`, `CanUserOverride`, `ParamDefaultValue` are **definition fields** — NEVER editable from this admin screen. They're seeded by migration and changed only by developers.
@@ -259,7 +258,7 @@ All three FE routes render the **same component** (a single `OrgSettingsPage`). 
 **Storage Pattern**: `keyed-settings-rows`
 **Save Model**: `save-all`
 
-**Reason**: The mockup has a single sticky-footer "Save All" change-bar with a dirty-count badge — no per-section save buttons. This matches the schema-driven nature of the screen (all 75 settings live in the same table, paged into 10 groups for UX) and the typical edit cadence (BUSINESSADMIN does a few edits then saves once). Per-section save would add 10 redundant buttons and confuse the cross-category search/filter feature.
+**Reason**: The mockup has a single sticky-footer "Save All" change-bar with a dirty-count badge — no per-section save buttons. This matches the schema-driven nature of the screen (all 70 settings live in the same table, paged into 10 groups for UX) and the typical edit cadence (BUSINESSADMIN does a few edits then saves once). Per-section save would add 10 redundant buttons and confuse the cross-category search/filter feature.
 
 **Scope**: ALIGN — BE has 3 entities + 11-file standard CRUD already; FE has 3 `UnderConstruction` stub routes. ALIGN means: ADD the aggregate query + bulk-update + reset-to-default mutations (3 NEW BE handlers), KEEP existing per-row CRUD untouched (for admin/migration tooling), BUILD a single shared FE screen and wire all 3 stub routes to render it.
 
@@ -317,7 +316,7 @@ For **SETTINGS_PAGE**:
 6. **Widget styling** — all widgets are 32px-tall; toggle has 40×22 slider; tags input has inline chips with X icons.
 
 **Anti-patterns to refuse**:
-- Hand-coded 75-field React component (this is schema-driven — the row count comes from the BE)
+- Hand-coded 70-field React component (this is schema-driven — the row count comes from the BE)
 - Per-section Save buttons (mockup is unambiguous: ONE Save All in the change-bar)
 - ApiSelect for the categories sidebar (categories come from the SAME aggregate query)
 - Tabs as a substitute for sidebar-nav (mockup is explicitly a left-sidebar layout)
@@ -379,7 +378,7 @@ For **SETTINGS_PAGE**:
 
 #### Field Mapping — Schema-Driven (NOT hand-coded)
 
-> **Important**: the FE does NOT enumerate the 75 settings. It renders each `setting` row from
+> **Important**: the FE does NOT enumerate the 70 settings. It renders each `setting` row from
 > `view.groups[i].settings[j]` via a single `<SettingRow>` component that switches on `paramDataType`.
 
 `<SettingRow>` props: `{ paramCode, paramName, paramDataType, allValues, description, currentValue, canUserOverride, dirty, onChange, onReset }`
@@ -417,20 +416,18 @@ For **SETTINGS_PAGE**:
 | 14 | RECURRING_RETRY_ATTEMPTS | Recurring Retry Attempts | SELECT | `1\|2\|3\|5` | `3` | Number of retries for failed recurring payments |
 | 15 | RECURRING_RETRY_INTERVAL | Recurring Retry Interval | SELECT | `1 day\|3 days\|5 days\|7 days` | `3 days` | Days between retry attempts |
 
-> Group 2 — RECEIPTS (10):
+> Group 2 — RECEIPTS (6):
+>
+> **Numbering ParamCodes removed (2026-07-22).** `RECEIPT_NUMBER_PREFIX`, `RECEIPT_NUMBER_FORMAT`, `NEXT_RECEIPT_NUMBER`, `FINANCIAL_YEAR_RESET` were inert duplicates of the real `NumberSequenceGenerator`. Canonical home: **Company Settings #75 §9** / `sett.NumberSequenceEntityTypes`+`Configs` (entity `GLOBALDONATION`, prefix `RCPT`, pattern `{PREFIX}-{YYYY}-{SEQ:000000}`, reset `YEARLY`, live counter `LastSequence`). Do NOT re-add here.
 
 | # | ParamCode | ParamName | ParamDataType | AllValues | ParamDefaultValue | Description |
 |---|-----------|-----------|---------------|-----------|-------------------|-------------|
-| 1 | RECEIPT_NUMBER_PREFIX | Receipt Number Prefix | STRING | — | `REC-` | Prefix for receipt numbers |
-| 2 | RECEIPT_NUMBER_FORMAT | Receipt Number Format | SELECT | `Prefix + Auto\|Year/Serial\|Custom` | `Prefix + Auto` | Format: Prefix+Auto, Year/Serial, Custom |
-| 3 | NEXT_RECEIPT_NUMBER | Next Receipt Number | NUMBER | `1\|99999999\|1` | `1` | Next auto-generated number |
-| 4 | FINANCIAL_YEAR_RESET | Financial Year Reset | BOOLEAN | — | `false` | Reset numbering each financial year |
-| 5 | TAX_EXEMPT_ORG | Tax Exempt Organization | BOOLEAN | — | `true` | Organization is tax-exempt |
-| 6 | TAX_SECTION | Tax Section | STRING | — | `80G` | Applicable tax section (80G, 501c3, etc.) |
-| 7 | SHOW_TAX_INFO_ON_RECEIPT | Show Tax Info on Receipt | BOOLEAN | — | `true` | Include tax exemption details on receipts |
-| 8 | RECEIPT_VALIDITY_DAYS | Receipt Validity Days | NUMBER | `0\|3650\|1` | `365` | Days before receipt download links expire |
-| 9 | REQUIRE_RECEIPT_SIGNATURE | Require Receipt Signature | BOOLEAN | — | `false` | Require authorized signatory on receipts |
-| 10 | AUTHORIZED_SIGNATORY | Authorized Signatory | STRING | — | `` | Name and title for receipt signature |
+| 1 | TAX_EXEMPT_ORG | Tax Exempt Organization | BOOLEAN | — | `true` | Organization is tax-exempt |
+| 2 | TAX_SECTION | Tax Section | STRING | — | `80G` | Applicable tax section (80G, 501c3, etc.) |
+| 3 | SHOW_TAX_INFO_ON_RECEIPT | Show Tax Info on Receipt | BOOLEAN | — | `true` | Include tax exemption details on receipts |
+| 4 | RECEIPT_VALIDITY_DAYS | Receipt Validity Days | NUMBER | `0\|3650\|1` | `365` | Days before receipt download links expire |
+| 5 | REQUIRE_RECEIPT_SIGNATURE | Require Receipt Signature | BOOLEAN | — | `false` | Require authorized signatory on receipts |
+| 6 | AUTHORIZED_SIGNATORY | Authorized Signatory | STRING | — | `` | Name and title for receipt signature |
 
 > Group 3 — COMMUNICATION (9):
 
@@ -446,17 +443,18 @@ For **SETTINGS_PAGE**:
 | 8 | DEFAULT_REPLY_TO | Default Reply-To | EMAIL | — | `info@example.org` | Default reply-to for outgoing emails |
 | 9 | BOUNCE_HANDLING | Bounce Handling | SELECT | `Auto-deactivate after 1\|Auto-deactivate after 3\|Auto-deactivate after 5\|Manual review` | `Auto-deactivate after 3` | Action after N bounces |
 
-> Group 4 — CONTACTS (7):
+> Group 4 — CONTACTS (6):
+>
+> **`CONTACT_CODE_FORMAT` removed (2026-07-22).** Inert duplicate of the real generator. Canonical home: **Company Settings #75 §9** / `sett.NumberSequenceEntityTypes`+`Configs` (entity `CONTACT`, prefix `CON`, pattern `{PREFIX}-{SEQ:0000}`). Do NOT re-add here.
 
 | # | ParamCode | ParamName | ParamDataType | AllValues | ParamDefaultValue | Description |
 |---|-----------|-----------|---------------|-----------|-------------------|-------------|
 | 1 | AUTO_MERGE_DUPLICATES | Auto-Merge Duplicates | BOOLEAN | — | `false` | Automatically merge contacts with same email/phone |
 | 2 | DEFAULT_CONTACT_TYPE | Default Contact Type | SELECT | `Individual\|Organization` | `Individual` | Default type when creating new contacts |
 | 3 | REQUIRE_EMAIL_OR_PHONE | Require Email or Phone | BOOLEAN | — | `true` | At least one contact method is required |
-| 4 | CONTACT_CODE_FORMAT | Contact Code Format | STRING | — | `CON-{AUTO}` | Auto-generated contact code pattern |
-| 5 | INACTIVE_AFTER_DAYS | Inactive After Days | NUMBER | `0\|3650\|1` | `365` | Mark contact inactive after N days without activity |
-| 6 | ALLOW_CONTACT_DELETE | Allow Contact Delete | BOOLEAN | — | `false` | Allow permanent deletion of contacts (vs soft-delete only) |
-| 7 | GDPR_DATA_RETENTION | GDPR Data Retention | SELECT | `1 year\|2 years\|5 years\|7 years\|Indefinite` | `5 years` | Data retention period for contact records |
+| 4 | INACTIVE_AFTER_DAYS | Inactive After Days | NUMBER | `0\|3650\|1` | `365` | Mark contact inactive after N days without activity |
+| 5 | ALLOW_CONTACT_DELETE | Allow Contact Delete | BOOLEAN | — | `false` | Allow permanent deletion of contacts (vs soft-delete only) |
+| 6 | GDPR_DATA_RETENTION | GDPR Data Retention | SELECT | `1 year\|2 years\|5 years\|7 years\|Indefinite` | `5 years` | Data retention period for contact records |
 
 > Group 5 — ORGANIZATION (6):
 
@@ -522,7 +520,7 @@ For **SETTINGS_PAGE**:
 | 5 | RIGHT_TO_ERASURE | Right to Erasure | BOOLEAN | — | `true` | Allow contacts to request complete data deletion |
 | 6 | COOKIE_CONSENT_BANNER | Cookie Consent Banner | BOOLEAN | — | `true` | Show cookie consent on public-facing pages |
 
-**Total: 75 ParamCodes across 10 SettingGroups.**
+**Total: 70 ParamCodes across 10 SettingGroups.**
 
 #### Page-Level Actions
 
@@ -536,7 +534,7 @@ For **SETTINGS_PAGE**:
 
 #### User Interaction Flow (SETTINGS_PAGE)
 
-1. User clicks any of the 3 sidebar entries (Setting Group / Organization Setting / User Setting) → router lands on `setting/orgsettings/<which>/page.tsx` → all render the same `<OrgSettingsPage>` → BE call `GetOrganizationSettingsView` returns 10 groups + 75 settings → first group (`FUNDRAISING`) active in nav, others hidden but mounted.
+1. User clicks any of the 3 sidebar entries (Setting Group / Organization Setting / User Setting) → router lands on `setting/orgsettings/<which>/page.tsx` → all render the same `<OrgSettingsPage>` → BE call `GetOrganizationSettingsView` returns 10 groups + 70 settings → first group (`FUNDRAISING`) active in nav, others hidden but mounted.
 2. User clicks a different category in the sidebar → active class swaps → right pane shows that category's card.
 3. User edits a widget → store sets `dirtyValues[paramCode] = newValue` → row gets yellow bg + dot indicator + reset btn → change-bar count increments.
 4. User clicks reset (↶) → that row reverts to `originalValues[paramCode]` → dirty count decrements.
@@ -804,7 +802,7 @@ type OrgSettingsViewDto = {
 - [ ] `pnpm dev` — page loads at `/{lang}/setting/orgsettings/organizationsetting` AND `/settinggroup` AND `/usersetting` (all 3 routes render the same component)
 
 **Functional Verification — SETTINGS_PAGE:**
-- [ ] First-load auto-seeds 10 default `SettingGroups` and 75 default `OrganizationSettings` rows for the tenant if missing → no 404, no empty state
+- [ ] First-load auto-seeds 10 default `SettingGroups` and 70 default `OrganizationSettings` rows for the tenant if missing → no 404, no empty state
 - [ ] Sidebar shows 10 groups in correct order with icon + name + count badge
 - [ ] First group `FUNDRAISING` is active by default
 - [ ] Clicking another group swaps the right pane
@@ -830,7 +828,7 @@ type OrgSettingsViewDto = {
 
 **DB Seed Verification:**
 - [ ] Three menu rows present under SET_ORGSETTINGS (ORGANIZATIONSETTING, SETTINGGROUP, USERSETTING) with the right URLs
-- [ ] 10 SettingGroups + 75 OrganizationSettings seeded for the sample tenant
+- [ ] 10 SettingGroups + 70 OrganizationSettings seeded for the sample tenant
 - [ ] BUSINESSADMIN has READ + MODIFY on all 3 menus
 - [ ] Page renders without crashing on a freshly-seeded DB
 
@@ -850,7 +848,7 @@ type OrgSettingsViewDto = {
 
 | Gotcha | What to Do |
 |--------|------------|
-| Don't hand-code 75 fields | Render `<SettingRow>` per item from BE response; switch on `paramDataType` |
+| Don't hand-code 70 fields | Render `<SettingRow>` per item from BE response; switch on `paramDataType` |
 | Don't expose definition fields as editable | `ParamName`, `ParamCode`, `ParamDataType`, `AllValues`, `Description`, `CanUserOverride`, `ParamDefaultValue` are RO from this admin screen; only `CurrentValue` is editable |
 | Don't issue a separate mutation per row on save | Use ONE BulkUpdateOrganizationSettings for the dirty array; matches save-all UX |
 | Don't ApiSelect the categories | They come from the composite view; the sidebar is local state, not a separate fetch |
@@ -869,7 +867,7 @@ type OrgSettingsViewDto = {
 - ⚠ **SERVICE_PLACEHOLDER: Import Settings** — UI fully implemented (file picker + preview-diff modal). File-parse handler returns a mocked diff because we don't yet have a generic settings-import service abstraction. Real parsing of an uploaded `.json` / `.csv` is deferred.
 - ✅ Export Settings — REAL implementation: serializes current values to JSON and triggers browser download client-side. No external service needed.
 
-Full UI must be built (sidebar nav, 10 cards, 75 dynamically-rendered rows, dirty tracking, change-bar, search, validation, audit). Only Import's file-parse handler is mocked.
+Full UI must be built (sidebar nav, 10 cards, 70 dynamically-rendered rows, dirty tracking, change-bar, search, validation, audit). Only Import's file-parse handler is mocked.
 
 ---
 
@@ -943,5 +941,18 @@ Full UI must be built (sidebar nav, 10 cards, 75 dynamically-rendered rows, dirt
 - **Next step**: COMPLETED — no follow-up required for V1. User actions for E2E:
   1. Apply the `OrgSettings-sqlscripts.sql` to grant BUSINESSADMIN capabilities (idempotent).
   2. Run `dotnet build` to confirm BE compiles in the user's environment.
-  3. `pnpm dev` and navigate to `/{lang}/setting/orgsettings/organizationsetting` (also `/settinggroup` and `/usersetting` — same screen). First load auto-seeds 10 groups + 75 ParamCodes via the runtime seeder.
+  3. `pnpm dev` and navigate to `/{lang}/setting/orgsettings/organizationsetting` (also `/settinggroup` and `/usersetting` — same screen). First load auto-seeds 10 groups + 70 ParamCodes via the runtime seeder.
   4. Verify the 10 group categories render in the sidebar, each row renders the correct widget, dirty tracking works, Save All persists in one mutation, Export downloads JSON, Discard reverts.
+
+### Session 2 — 2026-07-22 — FIX — COMPLETED
+
+- **Scope**: Settings reconciliation with #75 Company Settings — remove the 5 number-sequence ParamCodes that duplicated #75 §9's `NumberSequenceGenerator` (single source of truth). Codes: `RECEIPT_NUMBER_PREFIX`, `RECEIPT_NUMBER_FORMAT`, `NEXT_RECEIPT_NUMBER`, `FINANCIAL_YEAR_RESET`, `CONTACT_CODE_FORMAT`.
+- **Why safe**: grep confirmed no application code reads these — seed-only. Receipt codes map to the `GLOBALDONATION` NumberSequence entity, `CONTACT_CODE_FORMAT` to `CONTACT`. `CanUserOverride`=false → no `UserSettings` cascade.
+- **Files touched**:
+  - DB: `setting-groups.sql` (repo root) — removed 10 INSERT rows (5 codes × CompanyId NULL + 3), appended idempotent cleanup `DELETE ... WHERE "ParamCode" IN (...)`. **User-applied** (seeds are user-owned).
+  - Spec: `orgsettings.md` (this file) — RECEIPTS group 10→6, CONTACTS group 7→6, rows renumbered, `RECEIPT_NUMBER_PREFIX` validation rule dropped, removed-note added under each group, count refs 75→70 (screen "#75" refs preserved).
+  - Doc: `PSS-2.0-SETTINGS-SCREEN-RECONCILIATION.md` — §2E + §6 marked executed; status header updated. `companysettings.md` §⑫ — canonical-home note added to #75.
+- **Deviations from spec**: None.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: COMPLETED for the 5 numbering codes. The 14 structural duplicates (§2A–2D of the reconciliation doc: currency/locale/security/`DEFAULT_REPLY_TO`) remain **pending user go-ahead** — same removal pattern, not yet executed.

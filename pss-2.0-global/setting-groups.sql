@@ -118,18 +118,6 @@ INSERT INTO sett."OrganizationSettings"
 VALUES(24, 2, 'Recurring Retry Interval', 'RECURRING_RETRY_INTERVAL', '3 days', 'SELECT', 'Days between retry attempts', '1 day|3 days|5 days|7 days', false, '3 days', 164, '2026-05-15 16:04:34.913', NULL, NULL, true, false, NULL);
 INSERT INTO sett."OrganizationSettings"
 ("OrganizationSettingId", "SettingGroupId", "ParamName", "ParamCode", "ParamDefaultValue", "ParamDataType", "Description", "AllValues", "CanUserOverride", "CurrentValue", "CreatedBy", "CreatedDate", "ModifiedBy", "ModifiedDate", "IsActive", "IsDeleted", "CompanyId")
-VALUES(25, 3, 'Receipt Number Prefix', 'RECEIPT_NUMBER_PREFIX', 'REC-', 'STRING', 'Prefix for receipt numbers', NULL, false, 'REC-', 164, '2026-05-15 16:04:34.913', NULL, NULL, true, false, NULL);
-INSERT INTO sett."OrganizationSettings"
-("OrganizationSettingId", "SettingGroupId", "ParamName", "ParamCode", "ParamDefaultValue", "ParamDataType", "Description", "AllValues", "CanUserOverride", "CurrentValue", "CreatedBy", "CreatedDate", "ModifiedBy", "ModifiedDate", "IsActive", "IsDeleted", "CompanyId")
-VALUES(26, 3, 'Receipt Number Format', 'RECEIPT_NUMBER_FORMAT', 'Prefix + Auto', 'SELECT', 'Format: Prefix+Auto, Year/Serial, Custom', 'Prefix + Auto|Year/Serial|Custom', false, 'Prefix + Auto', 164, '2026-05-15 16:04:34.913', NULL, NULL, true, false, NULL);
-INSERT INTO sett."OrganizationSettings"
-("OrganizationSettingId", "SettingGroupId", "ParamName", "ParamCode", "ParamDefaultValue", "ParamDataType", "Description", "AllValues", "CanUserOverride", "CurrentValue", "CreatedBy", "CreatedDate", "ModifiedBy", "ModifiedDate", "IsActive", "IsDeleted", "CompanyId")
-VALUES(27, 3, 'Next Receipt Number', 'NEXT_RECEIPT_NUMBER', '1', 'NUMBER', 'Next auto-generated number', '1|99999999|1', false, '1', 164, '2026-05-15 16:04:34.913', NULL, NULL, true, false, NULL);
-INSERT INTO sett."OrganizationSettings"
-("OrganizationSettingId", "SettingGroupId", "ParamName", "ParamCode", "ParamDefaultValue", "ParamDataType", "Description", "AllValues", "CanUserOverride", "CurrentValue", "CreatedBy", "CreatedDate", "ModifiedBy", "ModifiedDate", "IsActive", "IsDeleted", "CompanyId")
-VALUES(28, 3, 'Financial Year Reset', 'FINANCIAL_YEAR_RESET', 'false', 'BOOLEAN', 'Reset numbering each financial year', NULL, false, 'false', 164, '2026-05-15 16:04:34.913', NULL, NULL, true, false, NULL);
-INSERT INTO sett."OrganizationSettings"
-("OrganizationSettingId", "SettingGroupId", "ParamName", "ParamCode", "ParamDefaultValue", "ParamDataType", "Description", "AllValues", "CanUserOverride", "CurrentValue", "CreatedBy", "CreatedDate", "ModifiedBy", "ModifiedDate", "IsActive", "IsDeleted", "CompanyId")
 VALUES(29, 3, 'Tax Exempt Organization', 'TAX_EXEMPT_ORG', 'true', 'BOOLEAN', 'Organization is tax-exempt', NULL, false, 'true', 164, '2026-05-15 16:04:34.913', NULL, NULL, true, false, NULL);
 INSERT INTO sett."OrganizationSettings"
 ("OrganizationSettingId", "SettingGroupId", "ParamName", "ParamCode", "ParamDefaultValue", "ParamDataType", "Description", "AllValues", "CanUserOverride", "CurrentValue", "CreatedBy", "CreatedDate", "ModifiedBy", "ModifiedDate", "IsActive", "IsDeleted", "CompanyId")
@@ -182,9 +170,6 @@ VALUES(45, 5, 'Default Contact Type', 'DEFAULT_CONTACT_TYPE', 'Individual', 'SEL
 INSERT INTO sett."OrganizationSettings"
 ("OrganizationSettingId", "SettingGroupId", "ParamName", "ParamCode", "ParamDefaultValue", "ParamDataType", "Description", "AllValues", "CanUserOverride", "CurrentValue", "CreatedBy", "CreatedDate", "ModifiedBy", "ModifiedDate", "IsActive", "IsDeleted", "CompanyId")
 VALUES(46, 5, 'Require Email Or Phone', 'REQUIRE_EMAIL_OR_PHONE', 'true', 'BOOLEAN', 'At least one contact method is required', NULL, false, 'true', 164, '2026-05-15 16:04:34.913', NULL, NULL, true, false, NULL);
-INSERT INTO sett."OrganizationSettings"
-("OrganizationSettingId", "SettingGroupId", "ParamName", "ParamCode", "ParamDefaultValue", "ParamDataType", "Description", "AllValues", "CanUserOverride", "CurrentValue", "CreatedBy", "CreatedDate", "ModifiedBy", "ModifiedDate", "IsActive", "IsDeleted", "CompanyId")
-VALUES(47, 5, 'Contact Code Format', 'CONTACT_CODE_FORMAT', 'CON-{AUTO}', 'STRING', 'Auto-generated contact code pattern', NULL, false, 'CON-{AUTO}', 164, '2026-05-15 16:04:34.913', NULL, NULL, true, false, NULL);
 INSERT INTO sett."OrganizationSettings"
 ("OrganizationSettingId", "SettingGroupId", "ParamName", "ParamCode", "ParamDefaultValue", "ParamDataType", "Description", "AllValues", "CanUserOverride", "CurrentValue", "CreatedBy", "CreatedDate", "ModifiedBy", "ModifiedDate", "IsActive", "IsDeleted", "CompanyId")
 VALUES(48, 5, 'Inactive After Days', 'INACTIVE_AFTER_DAYS', '365', 'NUMBER', 'Mark contact inactive after N days without activity', '0|3650|1', false, '365', 164, '2026-05-15 16:04:34.913', NULL, NULL, true, false, NULL);
@@ -499,18 +484,6 @@ INSERT INTO sett."OrganizationSettings"
 VALUES(129, 2, 'Recurring Retry Interval', 'RECURRING_RETRY_INTERVAL', '3 days', 'SELECT', 'Days between retry attempts', '1 day|3 days|5 days|7 days', false, '3 days', 164, '2026-05-20 10:49:23.519', NULL, NULL, true, false, 3);
 INSERT INTO sett."OrganizationSettings"
 ("OrganizationSettingId", "SettingGroupId", "ParamName", "ParamCode", "ParamDefaultValue", "ParamDataType", "Description", "AllValues", "CanUserOverride", "CurrentValue", "CreatedBy", "CreatedDate", "ModifiedBy", "ModifiedDate", "IsActive", "IsDeleted", "CompanyId")
-VALUES(130, 3, 'Receipt Number Prefix', 'RECEIPT_NUMBER_PREFIX', 'REC-', 'STRING', 'Prefix for receipt numbers', NULL, false, 'REC-', 164, '2026-05-20 10:49:23.519', NULL, NULL, true, false, 3);
-INSERT INTO sett."OrganizationSettings"
-("OrganizationSettingId", "SettingGroupId", "ParamName", "ParamCode", "ParamDefaultValue", "ParamDataType", "Description", "AllValues", "CanUserOverride", "CurrentValue", "CreatedBy", "CreatedDate", "ModifiedBy", "ModifiedDate", "IsActive", "IsDeleted", "CompanyId")
-VALUES(131, 3, 'Receipt Number Format', 'RECEIPT_NUMBER_FORMAT', 'Prefix + Auto', 'SELECT', 'Format: Prefix+Auto, Year/Serial, Custom', 'Prefix + Auto|Year/Serial|Custom', false, 'Prefix + Auto', 164, '2026-05-20 10:49:23.519', NULL, NULL, true, false, 3);
-INSERT INTO sett."OrganizationSettings"
-("OrganizationSettingId", "SettingGroupId", "ParamName", "ParamCode", "ParamDefaultValue", "ParamDataType", "Description", "AllValues", "CanUserOverride", "CurrentValue", "CreatedBy", "CreatedDate", "ModifiedBy", "ModifiedDate", "IsActive", "IsDeleted", "CompanyId")
-VALUES(132, 3, 'Next Receipt Number', 'NEXT_RECEIPT_NUMBER', '1', 'NUMBER', 'Next auto-generated number', '1|99999999|1', false, '1', 164, '2026-05-20 10:49:23.519', NULL, NULL, true, false, 3);
-INSERT INTO sett."OrganizationSettings"
-("OrganizationSettingId", "SettingGroupId", "ParamName", "ParamCode", "ParamDefaultValue", "ParamDataType", "Description", "AllValues", "CanUserOverride", "CurrentValue", "CreatedBy", "CreatedDate", "ModifiedBy", "ModifiedDate", "IsActive", "IsDeleted", "CompanyId")
-VALUES(133, 3, 'Financial Year Reset', 'FINANCIAL_YEAR_RESET', 'false', 'BOOLEAN', 'Reset numbering each financial year', NULL, false, 'false', 164, '2026-05-20 10:49:23.519', NULL, NULL, true, false, 3);
-INSERT INTO sett."OrganizationSettings"
-("OrganizationSettingId", "SettingGroupId", "ParamName", "ParamCode", "ParamDefaultValue", "ParamDataType", "Description", "AllValues", "CanUserOverride", "CurrentValue", "CreatedBy", "CreatedDate", "ModifiedBy", "ModifiedDate", "IsActive", "IsDeleted", "CompanyId")
 VALUES(134, 3, 'Tax Exempt Organization', 'TAX_EXEMPT_ORG', 'true', 'BOOLEAN', 'Organization is tax-exempt', NULL, false, 'true', 164, '2026-05-20 10:49:23.519', NULL, NULL, true, false, 3);
 INSERT INTO sett."OrganizationSettings"
 ("OrganizationSettingId", "SettingGroupId", "ParamName", "ParamCode", "ParamDefaultValue", "ParamDataType", "Description", "AllValues", "CanUserOverride", "CurrentValue", "CreatedBy", "CreatedDate", "ModifiedBy", "ModifiedDate", "IsActive", "IsDeleted", "CompanyId")
@@ -563,9 +536,6 @@ VALUES(150, 5, 'Default Contact Type', 'DEFAULT_CONTACT_TYPE', 'Individual', 'SE
 INSERT INTO sett."OrganizationSettings"
 ("OrganizationSettingId", "SettingGroupId", "ParamName", "ParamCode", "ParamDefaultValue", "ParamDataType", "Description", "AllValues", "CanUserOverride", "CurrentValue", "CreatedBy", "CreatedDate", "ModifiedBy", "ModifiedDate", "IsActive", "IsDeleted", "CompanyId")
 VALUES(151, 5, 'Require Email Or Phone', 'REQUIRE_EMAIL_OR_PHONE', 'true', 'BOOLEAN', 'At least one contact method is required', NULL, false, 'true', 164, '2026-05-20 10:49:23.519', NULL, NULL, true, false, 3);
-INSERT INTO sett."OrganizationSettings"
-("OrganizationSettingId", "SettingGroupId", "ParamName", "ParamCode", "ParamDefaultValue", "ParamDataType", "Description", "AllValues", "CanUserOverride", "CurrentValue", "CreatedBy", "CreatedDate", "ModifiedBy", "ModifiedDate", "IsActive", "IsDeleted", "CompanyId")
-VALUES(152, 5, 'Contact Code Format', 'CONTACT_CODE_FORMAT', 'CON-{AUTO}', 'STRING', 'Auto-generated contact code pattern', NULL, false, 'CON-{AUTO}', 164, '2026-05-20 10:49:23.519', NULL, NULL, true, false, 3);
 INSERT INTO sett."OrganizationSettings"
 ("OrganizationSettingId", "SettingGroupId", "ParamName", "ParamCode", "ParamDefaultValue", "ParamDataType", "Description", "AllValues", "CanUserOverride", "CurrentValue", "CreatedBy", "CreatedDate", "ModifiedBy", "ModifiedDate", "IsActive", "IsDeleted", "CompanyId")
 VALUES(153, 5, 'Inactive After Days', 'INACTIVE_AFTER_DAYS', '365', 'NUMBER', 'Mark contact inactive after N days without activity', '0|3650|1', false, '365', 164, '2026-05-20 10:49:23.519', NULL, NULL, true, false, 3);
@@ -677,3 +647,66 @@ VALUES(188, 11, 'Right To Erasure', 'RIGHT_TO_ERASURE', 'true', 'BOOLEAN', 'Allo
 INSERT INTO sett."OrganizationSettings"
 ("OrganizationSettingId", "SettingGroupId", "ParamName", "ParamCode", "ParamDefaultValue", "ParamDataType", "Description", "AllValues", "CanUserOverride", "CurrentValue", "CreatedBy", "CreatedDate", "ModifiedBy", "ModifiedDate", "IsActive", "IsDeleted", "CompanyId")
 VALUES(189, 11, 'Cookie Consent Banner', 'COOKIE_CONSENT_BANNER', 'true', 'BOOLEAN', 'Show cookie consent on public-facing pages', NULL, false, 'true', 164, '2026-05-20 10:49:23.520', NULL, NULL, true, false, 3);
+
+-- ============================================================
+-- Cleanup — remove number-sequence ParamCodes that duplicate the real
+-- NumberSequenceGenerator (Company Settings §9 / sett.NumberSequence* tables).
+-- These 5 keys were inert strings with no runtime reader; NEXT_RECEIPT_NUMBER
+-- was even user-editable and could silently desync from the live counter.
+-- Canonical owners:
+--   RECEIPT_NUMBER_PREFIX/FORMAT/NEXT_RECEIPT_NUMBER/FINANCIAL_YEAR_RESET
+--     -> sett.NumberSequenceEntityTypes/Configs for entity GLOBALDONATION
+--   CONTACT_CODE_FORMAT
+--     -> sett.NumberSequenceEntityTypes/Configs for entity CONTACT
+-- Removed from the INSERT list above; this idempotent DELETE also clears any
+-- rows already seeded into existing tenant databases.  CanUserOverride was
+-- false for all 5, so there are no UserSettings overrides to cascade.
+-- ============================================================
+DELETE FROM sett."OrganizationSettings"
+WHERE "ParamCode" IN (
+    'RECEIPT_NUMBER_PREFIX',
+    'RECEIPT_NUMBER_FORMAT',
+    'NEXT_RECEIPT_NUMBER',
+    'FINANCIAL_YEAR_RESET',
+    'CONTACT_CODE_FORMAT'
+);
+
+-- ============================================================
+-- Cleanup 2 — entity-shadow codes moved to dedicated screens
+-- (settings reconciliation, 2026-07-22 — see repo-root
+--  PSS-2.0-SETTINGS-SCREEN-RECONCILIATION.md §5B).
+-- These ParamCodes shadow entities that own their own expandable
+-- screen + table; they must not be edited/seeded in the generic
+-- settings store.  The matching INSERT rows above are LEFT IN PLACE
+-- on purpose so this is trivially reversible — to un-move a code,
+-- delete its line from this DELETE list and the seed row re-lands.
+--
+-- Canonical owners:
+--   TAX_EXEMPT_ORG / TAX_SECTION / SHOW_TAX_INFO_ON_RECEIPT /
+--   RECEIPT_VALIDITY_DAYS / REQUIRE_RECEIPT_SIGNATURE /
+--   AUTHORIZED_SIGNATORY  -> #9 Receipt & Tax Management
+--                            (fund.CountryTaxConfig / fund.ReceiptTemplate)
+--   DEFAULT_PURPOSE        -> #2 Donation Purpose  (IsDefault flag)
+--   DEFAULT_CONTACT_TYPE   -> #19 Contact Type      (IsDefault flag)
+--
+-- ⚠ PREREQUISITE before running this block: confirm each destination
+--   screen actually absorbs the field (e.g. #9 captures AUTHORIZED_SIGNATORY
+--   / RECEIPT_VALIDITY_DAYS; #2 and #19 expose an IsDefault).  If a
+--   destination is not ready, remove that ParamCode from the list below.
+--
+-- NOT removed (kept, reassigned — see §5B refinement):
+--   DEFAULT_CURRENCY      -> #75 (org base-currency identity)
+--   ALLOW_MULTI_CURRENCY  -> #85 (policy toggle)
+-- NOT present in seed at all: ALLOWED_CURRENCIES (0 rows).
+-- ============================================================
+DELETE FROM sett."OrganizationSettings"
+WHERE "ParamCode" IN (
+    'TAX_EXEMPT_ORG',
+    'TAX_SECTION',
+    'SHOW_TAX_INFO_ON_RECEIPT',
+    'RECEIPT_VALIDITY_DAYS',
+    'REQUIRE_RECEIPT_SIGNATURE',
+    'AUTHORIZED_SIGNATORY',
+    'DEFAULT_PURPOSE',
+    'DEFAULT_CONTACT_TYPE'
+);

@@ -1033,6 +1033,43 @@ GridCode: COMPANYSETTINGS
 
 > **Consumer**: All agents — things that are easy to get wrong.
 
+### Settings ownership partition (reconciliation, rewritten 2026-07-22)
+
+> **Correction:** the earlier version of this note claimed #75 stores config in
+> *typed singleton tables* (`sett.CompanyConfigurations` / `sett.CompanyBrandings`)
+> and therefore "wins" any collision with #85. **That is no longer true** — those
+> tables were dropped (`20260519151055_Remove_CompanyBranding`,
+> `20260526140142_Remove_CompanyConfiguration`) and folded into the KV store.
+
+**Where #75 actually reads/writes today:**
+- **§1 Org Profile, §2 Contact** → `app.Companies` typed columns. **Unique to #75.**
+- **§3 Branding, §4 Financial, §5 Regional, §6 Communication, §7 System/Security,
+  §8 Receipt** → the generic KV store `sett.OrganizationSettings`
+  (keyed by `(CompanyId, ParamCode)`) — **the same rows #85 edits.** These are
+  NOT typed columns; #75 and #85 are two editors on one store.
+- **§9 Number Sequences** → `sett.NumberSequenceEntityTypes` +
+  `sett.NumberSequenceConfigs`, read at runtime via
+  `NumberSequenceGenerator.GenerateAsync(...)`. **Unique to #75 — its own engine.**
+
+**The rule is now a partition, not "#75 wins":** every ParamCode is edited by
+exactly one screen. #75 keeps **identity/appearance/mechanics** — Org Profile,
+Contact, Branding, Organization + Regional *identity* (FY start, language,
+timezone, date format, multi-branch, audit, default country, data residency),
+base currency (`DEFAULT_CURRENCY`), and the §9 engine. #85 owns **behavioural
+policy** — fundraising, communication, contacts, field, reports, **security**
+(2FA/password/session are flat policy now, no typed home), notifications,
+compliance. Per-user prefs (theme, personal notifications) → UserSettings.
+
+- **Number-sequence shadow codes already removed** from the #85 seed on
+  2026-07-22 (`RECEIPT_NUMBER_PREFIX`, `RECEIPT_NUMBER_FORMAT`,
+  `NEXT_RECEIPT_NUMBER`, `FINANCIAL_YEAR_RESET`, `CONTACT_CODE_FORMAT`) — receipt
+  fields → `GLOBALDONATION` entity, `CONTACT_CODE_FORMAT` → `CONTACT` entity.
+  Seed-only, no app code read them, so safe.
+- **Follow-up for THIS screen (not yet done):** #75 will shed its §6 Communication,
+  §7 Security, §8 Receipt, and currency-policy editor sections — they move to #85
+  / #9. Requires a spec (§⑥) revision → a separate pass, not an in-scope fix.
+- Full map: repo-root `PSS-2.0-SETTINGS-SCREEN-RECONCILIATION.md`.
+
 ### Session 2 architectural pivot (2026-05-01)
 
 After Session 1 BE-only build, user feedback drove a refactor:
