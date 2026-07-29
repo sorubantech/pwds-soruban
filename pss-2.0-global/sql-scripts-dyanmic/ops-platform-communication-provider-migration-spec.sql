@@ -1,0 +1,52 @@
+-- ═════════════════════════════════════════════════════════════════════════════════════════════
+--  MIGRATION SPEC (NOT a script to run blindly) — ops.PlatformCommunicationProviders
+--
+--  Org/PLATFORM-level communication providers (EMAIL / SMS / WHATSAPP) — the platform's OWN sender
+--  config, the control-plane counterpart of tenant-scoped notify.CompanyEmailProviders. Powers
+--  platform-owned sends (provisioning welcome/activation email) without the global appsettings key.
+--
+--  ── HOW TO APPLY (you own migrations — I do NOT run dotnet ef) ──────────────────────────────────
+--    The entity + EF config + DbSet are already in code:
+--      • Base.Domain/Models/OpsModels/PlatformCommunicationProvider.cs
+--      • Base.Infrastructure/Data/Configurations/OpsConfigurations/PlatformCommunicationProviderConfiguration.cs
+--      • IOpsDbContext / OpsDbContext  (DbSet PlatformCommunicationProviders)
+--    So just generate + apply the migration from the model:
+--      dotnet ef migrations add Add_PlatformCommunicationProviders
+--      dotnet ef database update
+--
+--    The DDL below is ONLY a reference of what EF should emit — verify the generated migration
+--    matches it. Do NOT hand-run this DDL instead of the migration (it would desync the snapshot).
+-- ═════════════════════════════════════════════════════════════════════════════════════════════
+
+-- Reference DDL (what the EF migration is expected to produce):
+--
+-- CREATE TABLE ops."PlatformCommunicationProviders" (
+--     "PlatformCommunicationProviderId" integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+--     "Channel"                text            NOT NULL,   -- EMAIL | SMS | WHATSAPP   (maxlen 20)
+--     "ProviderType"           text            NOT NULL,   -- SENDGRID | TWILIO | ...  (maxlen 30)
+--     "DisplayName"            varchar(150)    NULL,
+--     "ProviderConfiguration"  text            NOT NULL,   -- provider JSON the factory deserializes
+--     "DefaultFromEmail"       varchar(150)    NULL,
+--     "DefaultFromName"        varchar(150)    NULL,
+--     "DefaultFromNumber"      varchar(30)     NULL,
+--     "Priority"               integer         NULL,
+--     "IsDefault"              boolean         NOT NULL,
+--     "WebhookUrl"             varchar(1000)   NULL,
+--     "WebhookSecret"          varchar(1000)   NULL,
+--     "LastUsedAt"             timestamptz     NULL,
+--     -- Entity base columns:
+--     "CreatedBy"   integer NULL, "CreatedDate"  timestamptz NULL,
+--     "ModifiedBy"  integer NULL, "ModifiedDate" timestamptz NULL,
+--     "IsActive"    boolean NULL, "IsDeleted"    boolean NULL
+-- );
+--
+-- CREATE INDEX "IX_PlatformCommunicationProviders_Channel_IsActive"
+--     ON ops."PlatformCommunicationProviders" ("Channel", "IsActive");
+--
+-- -- One DEFAULT provider per channel:
+-- CREATE UNIQUE INDEX "IX_PlatformCommunicationProviders_Channel_IsDefault_Filtered"
+--     ON ops."PlatformCommunicationProviders" ("Channel")
+--     WHERE "IsDefault" = true AND "IsDeleted" = false;
+--
+-- After the migration is applied, run ops-platform-communication-provider-seed.sql to insert the
+-- default EMAIL provider row (so the provisioning welcome email actually sends).
