@@ -698,15 +698,36 @@ WHERE "ParamCode" IN (
 --   DEFAULT_CURRENCY      -> #75 (org base-currency identity)
 --   ALLOW_MULTI_CURRENCY  -> #85 (policy toggle)
 -- NOT present in seed at all: ALLOWED_CURRENCIES (0 rows).
--- ============================================================
-DELETE FROM sett."OrganizationSettings"
-WHERE "ParamCode" IN (
-    'TAX_EXEMPT_ORG',
-    'TAX_SECTION',
-    'SHOW_TAX_INFO_ON_RECEIPT',
-    'RECEIPT_VALIDITY_DAYS',
-    'REQUIRE_RECEIPT_SIGNATURE',
-    'AUTHORIZED_SIGNATORY',
-    'DEFAULT_PURPOSE',
-    'DEFAULT_CONTACT_TYPE'
-);
+--
+-- ------------------------------------------------------------
+-- 2026-08-03 — PREREQUISITE CHECK RUN.  RESULT: ALL 8 FAILED.
+-- (step 0 of PSS-2.0-SETTINGS-PARTITION-EXECUTION-PROMPT.md)
+--
+-- Not one destination absorbs its field yet, so the whole block is
+-- DISABLED — deleting now would drop live settings with nowhere to go.
+-- Per-code verdict:
+--   TAX_EXEMPT_ORG            MISSING — no boolean on CountryTaxConfig or ReceiptTemplate.
+--   TAX_SECTION               MISSING — only adjacent TaxCodeType/TaxCodeKey exist;
+--                                       still read live at DonationReceiptService.cs:105.
+--   SHOW_TAX_INFO_ON_RECEIPT  MISSING — no field; read live at DonationReceiptService.cs:104.
+--   RECEIPT_VALIDITY_DAYS     MISSING — #9 has no column; a validator const still references it.
+--   REQUIRE_RECEIPT_SIGNATURE MISSING — no field on ReceiptTemplate.
+--   AUTHORIZED_SIGNATORY      MISSING — no field; read live at DonationReceiptService.cs:111.
+--   DEFAULT_PURPOSE           MISSING — DonationPurpose has no IsDefault.
+--   DEFAULT_CONTACT_TYPE      MISSING — ContactType has IsSystem, no IsDefault.
+--
+-- Per invariant 3 of that prompt, a code with no absorbing field STAYS in
+-- the KV store.  Re-enable one line at a time, only after building the
+-- destination field on #9 / #2 / #19.
+-- ------------------------------------------------------------
+-- DELETE FROM sett."OrganizationSettings"
+-- WHERE "ParamCode" IN (
+--     'TAX_EXEMPT_ORG',
+--     'TAX_SECTION',
+--     'SHOW_TAX_INFO_ON_RECEIPT',
+--     'RECEIPT_VALIDITY_DAYS',
+--     'REQUIRE_RECEIPT_SIGNATURE',
+--     'AUTHORIZED_SIGNATORY',
+--     'DEFAULT_PURPOSE',
+--     'DEFAULT_CONTACT_TYPE'
+-- );

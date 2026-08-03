@@ -418,17 +418,17 @@ Section 7 (System):
 ### 🎨 Visual Uniqueness Rules (apply)
 
 1. Section emphasis varies — Subscription (§8) is hero-styled with plan badge gradient (`linear-gradient(135deg, #0e7490, #06b6d4)`), big seat-usage bars, feature checklist with green ✓ vs gray − icons. Sections 1–7 share consistent card chrome but with section-specific Phosphor icons in section header.
-2. Layout matches content: Org Profile + Contact + Communication = 2-col `row g-3` Bootstrap grid; Branding = mixed (file-upload cards in 2-col row, full-width receipt-footer textarea); Financial / Regional / System = 3-col grid for short fields with sub-cards for grouped items (Tax/Receipt sub-card, Password Policy sub-card, Data Retention sub-card, Maintenance Mode toggle row).
+2. Layout matches content: Org Profile + Contact = 2-col `row g-3` Bootstrap grid; Branding = mixed (file-upload cards in 2-col row, full-width receipt-footer textarea); Financial / Regional / Organization = 3-col grid for short fields with sub-cards for grouped items (Data Retention sub-card, Branch Structure toggle row).
 3. Sensitive fields — N/A (no raw secrets).
 4. Read-only — Section 8 chips/labels visually distinct from editable fields (no input borders, no focus states; gray text for "67% of seats used" footer hint).
-5. Section icons — semantic Phosphor: `ph:building` (Org), `ph:address-book` (Contact), `ph:palette` (Branding), `ph:coins` (Financial), `ph:globe` (Regional), `ph:envelope-simple` (Communication), `ph:gear` (System), `ph:crown` (Subscription).
-6. Save / status — top-right sticky header has primary "Save Changes" + outline "Discard Changes". Maintenance Mode toggle has its own warning banner (yellow) inline. Toast on save success (top-right slide-in, 3s).
+5. Section icons — semantic Phosphor: `ph:building` (Org), `ph:address-book` (Contact), `ph:palette` (Branding), `ph:coins` (Financial), `ph:globe` (Regional), `ph:buildings` (Organization), `ph:crown` (Subscription).
+6. Save / status — top-right sticky header has primary "Save Changes" + outline "Discard Changes". Toast on save success (top-right slide-in, 3s).
 
 **Anti-patterns to refuse**:
 - Generating a "Save" button per section — mockup has ONE save button at the top.
 - Putting Subscription as an editable form — it's read-only display.
 - Replacing the sidebar nav with horizontal tabs (mockup is unambiguously sidebar).
-- Implementing Maintenance Mode toggle without confirm modal — mockup explicitly shows the warning banner.
+- Re-adding an editor for any ParamCode this screen shed in Session 6 (communication, security/system, receipt, currency policy). They are #85-owned now; a second editor re-opens the last-writer-wins bug the partition closed.
 
 ---
 
@@ -451,9 +451,17 @@ Section 7 (System):
 | 3 | Branding | `ph:palette` | sidebar-nav-item-3 | save-all (page-top) | BUSINESSADMIN |
 | 4 | Financial Configuration | `ph:coins` | sidebar-nav-item-4 | save-all (page-top) | BUSINESSADMIN |
 | 5 | Regional & Localization | `ph:globe` | sidebar-nav-item-5 | save-all (page-top) | BUSINESSADMIN |
-| 6 | Communication Defaults | `ph:envelope-simple` | sidebar-nav-item-6 | save-all (page-top) | BUSINESSADMIN |
-| 7 | System Preferences | `ph:gear` | sidebar-nav-item-7 | save-all (page-top) | BUSINESSADMIN |
+| 6 | Organization | `ph:buildings` | sidebar-nav-item-6 | save-all (page-top) | BUSINESSADMIN |
 | 8 | Subscription & Plan | `ph:crown` | sidebar-nav-item-8 | (no save — read-only display) | BUSINESSADMIN |
+| 9 | Number Sequences | `ph:list-numbers` | sidebar-nav-item-9 | (own per-row save) | BUSINESSADMIN |
+
+> **Session 6 (2026-08-03) ownership partition** — sidebar id **7 is retired**. The former
+> §6 Communication Defaults and §7 System Preferences sections were deleted; their ParamCodes
+> are edited on **#85 Organization Settings** (COMMUNICATION / SECURITY groups). Id 6 was
+> reused for the new **Organization** section, which rescues the two ORGANIZATION-group codes
+> (`AUDIT_TRAIL_RETENTION`, `MULTI_BRANCH_MODE`) that #85 stopped editing in the same pass —
+> without it they would have had zero editors. The store's `ActiveSection` union still spans
+> `1..9` on purpose, so a persisted `7` renders nothing rather than crashing.
 
 > Active-section state lives in Zustand store (`activeSection`); clicking a sidebar item updates store + smooth-scrolls to the section anchor. Only ONE section visible at a time (display: block on active, none on others) — matching mockup behavior.
 
@@ -510,15 +518,21 @@ Sub-section divider + "Brand Colors"
 **Section 4 — Financial Configuration** (mockup lines 858–965)
 
 > **Session 2 refactor**: Tax/Receipt sub-card removed (moved to future "Receipt & Tax Configuration" screen). All static dropdowns swapped to ApiSelect (MasterData TypeCode-filtered).
+>
+> **Session 6 ownership partition**: the **currency-policy** control is gone. `ALLOWED_CURRENCIES`
+> (the "Additional Currencies" TagInput) is *policy* and is edited on **#85**. `DEFAULT_CURRENCY`
+> stays here — base-currency selection is **identity**. Value vs toggle: easy to get backwards.
 
 | Field | Widget | Default | Validation | Notes |
 |-------|--------|---------|------------|-------|
 | financialYearStartMonthId | ApiSelect (col-md-4) | (April row id) | required | "Financial Year Start *" — source: GetMasterDatas TypeCode=FINANCIALYEARSTARTMONTH; labels Jan…Dec |
 | baseCurrencyId | ApiSelect (col-md-4) | null | required | "Default Currency *" — source: GetCurrencies — display "🇦🇪 AED - UAE Dirham" via flag emoji + code + name |
 | currencyDisplayFormatId | ApiSelect (col-md-4) | (SymbolBefore row id) | required | source: GetMasterDatas TypeCode=CURRENCYDISPLAYFORMAT |
-| additionalCurrencies (junction) | TagInput backed by junction (col-md-6) | empty | optional | "Additional Currencies" — chips with X; Add via combo from GetCurrencies (excludes baseCurrencyId); state stored as `int[]` of CurrencyIds, BE persists into `CompanyConfigurationCurrencies` |
-| numberFormatId | ApiSelect (col-md-6) | (1,234,567.89 row id) | required | source: GetMasterDatas TypeCode=NUMBERFORMAT |
+| numberFormatId | ApiSelect (col-md-4) | (1,234,567.89 row id) | required | source: GetMasterDatas TypeCode=NUMBERFORMAT |
 
+> Grid is four `md:col-span-4` cells since the TagInput left. `baseCurrencySymbol` /
+> `baseCurrencyFlagEmoji` are still selected (read-only banner deep-linking to #79).
+>
 > Tax/Receipt sub-card removed. Future screen will own: TaxReceiptRequired, ReceiptAutoNumberingEnabled, ReceiptNumberPrefix, TaxExemptionSection, TaxExemptionCertificateNumber, TaxExemptionValidUntil + receipt-number preview compute.
 
 **Section 5 — Regional & Localization** (mockup lines 967–1037)
@@ -533,43 +547,32 @@ Sub-section divider + "Brand Colors"
 | countryOfOperationId | ApiSelect (col-md-4) | null | required | "Country of Operation *" — source: GetCountries |
 | additionalOperatingCountries (junction) | TagInput backed by junction (col-md-8) | empty | optional | state stored as `int[]` CountryIds; BE persists into `CompanyConfigurationOperatingCountries` |
 
-**Section 6 — Communication Defaults** (mockup lines 1039–1082)
+**Section 6 — Organization** (Session 6, 2026-08-03 — no mockup block; this section is new)
 
+> Replaces the deleted **Communication Defaults** (old §6) and **System Preferences** (old §7).
+> It exists to give the two ORGANIZATION-group ParamCodes an owner: both were orphaned by the
+> partition — `AUDIT_TRAIL_RETENTION` lived inside the doomed System Preferences section, and
+> `MULTI_BRANCH_MODE` was only reachable from #85's generic group editor, which stopped
+> exposing the ORGANIZATION group in the same pass.
+
+Sub-card "Data Retention" (`ph:database`):
 | Field | Widget | Default | Validation | Notes |
 |-------|--------|---------|------------|-------|
-| senderName | text (col-md-6) | (CompanyName) | optional, max 150 | "Sender Name" |
-| senderEmail | email (col-md-6) | (PrimaryEmail) | optional, valid email | "Sender Email" |
-| replyToEmail | email (col-md-6) | (PrimaryEmail) | optional, valid email | "Reply-To Email" |
-| smsSenderId | text-with-suffix (col-md-6) | "" | optional, alphanumeric 3–11 chars | "SMS Sender ID" — suffix text "Alphanumeric, max 11 chars" |
-| emailSignature | textarea rows=3 (col-12) | "Warm regards,\n{CompanyName}" | optional | "Email Signature" + form-text "Basic HTML formatting is supported (bold, italic, links)." |
-| whatsappBusinessNumber | tel-with-icon (col-md-6) | "" | optional, E.164 format | "WhatsApp Business Number" — green WhatsApp prefix icon |
+| auditLogRetentionYearsId | ApiSingleSelect (col-md-6) | (5 row id) | required, `> 0` | `AUDIT_TRAIL_RETENTION` — source: GetMasterDatas TypeCode=AUDITLOGRETENTIONYEARS; desc "How long audit-trail entries are kept before purge." |
 
-**Section 7 — System Preferences** (mockup lines 1084–1226)
-
-> **Session 2 refactor**: All StaticSelect dropdowns swapped to ApiSelect (MasterData TypeCode-filtered). FE no longer hardcodes the option lists.
-
+Sub-card "Branch Structure" (`ph:tree-structure`):
 | Field | Widget | Default | Validation | Notes |
 |-------|--------|---------|------------|-------|
-| autoLogoutMinutesId | ApiSelect (col-md-4) | (30min row id) | required | source: GetMasterDatas TypeCode=AUTOLOGOUTMINUTES |
-| loginAttemptsBeforeLockId | ApiSelect (col-md-4) | (5 row id) | required | source: GetMasterDatas TypeCode=LOGINATTEMPTSBEFORELOCK |
-| twoFactorAuthModeId | ApiSelect (col-md-4) | (AdminsOnly row id) | required | source: GetMasterDatas TypeCode=TWOFACTORAUTHMODE |
+| multiBranchMode | Switch (toggle-row) | false | — | `MULTI_BRANCH_MODE` — "Multi-Branch Mode" / "Enable branch-scoped data and branch selection across the application." |
 
-Sub-section "Password Policy" (sub-card):
-| passwordMinLengthId | ApiSelect (col-md-4) | (8 row id) | required | source: GetMasterDatas TypeCode=PASSWORDMINLENGTH |
-| passwordExpiryDaysId | ApiSelect (col-md-4) | (90 row id) | required | source: GetMasterDatas TypeCode=PASSWORDEXPIRYDAYS |
-| passwordHistoryCountId | ApiSelect (col-md-4) | (5 row id) | required | source: GetMasterDatas TypeCode=PASSWORDHISTORYCOUNT — form-text "Users cannot reuse the last N passwords" |
-| passwordRequireUppercase | Switch (col-12 toggle-row) | true | — | label "Require Uppercase" / desc "At least one uppercase letter required" |
-| passwordRequireNumber | Switch (col-12 toggle-row) | true | — | "Require Number" / "At least one numeric digit required" |
-| passwordRequireSpecialChar | Switch (col-12 toggle-row) | true | — | "Require Special Character" / "At least one special character (e.g., !@#$%) required" |
+**Sections deleted in Session 6** — do not re-add:
 
-Sub-section "Data Retention" (sub-card):
-| auditLogRetentionYearsId | ApiSelect (col-md-6) | (5 row id) | required | source: GetMasterDatas TypeCode=AUDITLOGRETENTIONYEARS |
-| deletedRecordsRetentionDaysId | ApiSelect (col-md-6) | (90 row id) | required | source: GetMasterDatas TypeCode=DELETEDRECORDSRETENTIONDAYS |
-
-Sub-section "Maintenance Mode":
-| maintenanceModeEnabled | Switch (toggle-row) | false | — | "Enable Maintenance Mode" / desc "When enabled, all non-admin users will see a maintenance page." Toggling triggers Confirm Modal (see Section 1 Actions table below) |
-| maintenanceModeMessage | textarea rows=2 (collapsed) | null | required if maintenanceModeEnabled | optional follow-up textarea visible only when toggle is on |
-| **Inline warning banner** when toggle ON (yellow `#fef3c7` bg, `#92400e` text): "⚠ Enabling maintenance mode will immediately lock out all non-admin users. Proceed with caution." |
+| Was | ParamCodes | New owner |
+|-----|-----------|-----------|
+| §6 Communication Defaults | SENDER_NAME, SENDER_EMAIL, REPLY_TO_EMAIL, SMS_SENDER_ID, EMAIL_SIGNATURE, WHATSAPP_BUSINESS_NUMBER | **#85** COMMUNICATION group |
+| §7 System Preferences | AUTO_LOGOUT_MINUTES, LOGIN_ATTEMPTS_BEFORE_LOCK, TWO_FACTOR_AUTH_MODE, PASSWORD_* (6), DELETED_RECORDS_RETENTION_DAYS, MAINTENANCE_MODE_ENABLED, MAINTENANCE_MODE_MESSAGE | **#85** SECURITY group |
+| §8 Receipt (already gone in Session 3) | TAX_*, RECEIPT_* , AUTHORIZED_SIGNATORY | **#9** Receipt & Tax — *not yet built*, see §⑬ Known Issues |
+| §4 currency policy | ALLOWED_CURRENCIES | **#85** FUNDRAISING group |
 
 **Section 8 — Subscription & Plan** (mockup lines 1228–1305) — READ-ONLY DISPLAY
 
@@ -597,12 +600,11 @@ Action buttons: `[View Plans & Pricing]` (primary) + `[Contact Support]` (outlin
 
 | Action | Label | Style | Confirmation | Handler | Section |
 |--------|-------|-------|--------------|---------|---------|
-| Toggle Maintenance ON | (switch) | destructive confirm | "Enabling maintenance mode will immediately lock out all non-admin users. Proceed?" | sets MaintenanceModeEnabled = true (in form state — actual write happens on Save) | §7 |
-| Toggle Maintenance OFF | (switch) | confirm | "Disable maintenance mode and restore user access?" | sets false | §7 |
 | Upload Logo / Favicon / Receipt Header | "Upload New" | secondary | none | SERVICE_PLACEHOLDER — file selected → toast "Upload service not yet wired" → preview as data-URL only | §3 |
 | Remove Logo / Favicon | "Remove" | tertiary | "Remove logo?" | clears the URL field | §3 |
-| Add tag to multi-select (currencies / languages / countries) | (combobox) | — | — | appends to CSV in form state | §4 / §5 |
-| Remove tag (X icon on chip) | — | — | — | removes from CSV | §4 / §5 |
+| Add tag to multi-select (languages / countries) | (combobox) | — | — | appends to the `int[]` in form state | §5 |
+| Remove tag (X icon on chip) | — | — | — | removes from the `int[]` | §5 |
+| Toggle Multi-Branch Mode | (switch) | — | none | sets `organization.multiBranchMode` in form state — written on page-level Save | §6 |
 | View Plans & Pricing | (button) | primary | — | SERVICE_PLACEHOLDER toast | §8 |
 | Contact Support | (button) | outline | — | SERVICE_PLACEHOLDER (or `mailto:`) | §8 |
 
@@ -619,12 +621,12 @@ Action buttons: `[View Plans & Pricing]` (primary) + `[Contact Support]` (outlin
 
 #### User Interaction Flow (SETTINGS_PAGE)
 
-1. User opens `/{lang}/setting/orgsettings/companysettings` → page loads → BE auto-seeds default CompanyConfiguration + CompanyBranding rows if missing → all 8 sections render with current values; Section 1 active by default.
+1. User opens `/{lang}/setting/orgsettings/companysettings` → page loads → BE auto-seeds any missing `sett.OrganizationSettings` rows from the platform defaults → all sections render with current values; Section 1 active by default.
 2. User clicks sidebar nav item → active state moves; right pane scrolls to top of section.
 3. User edits a field in any section → form becomes dirty → Save Changes button enables (visual cue: brighter/sticky).
 4. User clicks Save Changes → RHF validation runs (Zod) → on error: jumps to first invalid section + scrolls field into view + inline error; on success: composite UpdateCompanySettings mutation fires → toast "Company settings updated successfully" → form resets dirty flag.
 5. User clicks Discard Changes (with unsaved edits) → confirm dialog → on confirm reverts form to last-saved snapshot.
-6. User toggles Maintenance Mode → confirm modal appears (both directions) → on confirm sets local form state (still requires page-level Save to persist).
+6. (Session 6) Maintenance Mode is no longer on this screen — the toggle, its confirm modal and its warning banner moved to **#85** with the rest of the SECURITY group.
 7. User navigates away with unsaved changes → router-level guard prompts "Unsaved changes — leave anyway?".
 8. (Section 8) User clicks "View Plans & Pricing" → SERVICE_PLACEHOLDER toast (no mutation; no nav).
 
@@ -754,14 +756,15 @@ Action buttons: `[View Plans & Pricing]` (primary) + `[Contact Support]` (outlin
 | 7 | Section: Branding | …/setting/orgsettings/companysettings/sections/branding-section.tsx |
 | 8 | Section: Financial | …/setting/orgsettings/companysettings/sections/financial-section.tsx |
 | 9 | Section: Regional | …/setting/orgsettings/companysettings/sections/regional-section.tsx |
-| 10 | Section: Communication | …/setting/orgsettings/companysettings/sections/communication-section.tsx |
-| 11 | Section: System | …/setting/orgsettings/companysettings/sections/system-section.tsx |
+| 10 | ~~Section: Communication~~ | **DELETED Session 6** — `…/sections/communication-section.tsx` (ParamCodes now edited on #85) |
+| 11 | ~~Section: System~~ | **DELETED Session 6** — `…/sections/system-section.tsx` (ParamCodes now edited on #85) |
+| 11b | Section: Organization (**NEW Session 6**) | …/setting/orgsettings/companysettings/sections/organization-section.tsx |
 | 12 | Section: Subscription (read-only) | …/setting/orgsettings/companysettings/sections/subscription-section.tsx |
 | 13 | Components: ColorPickerInput (swatch+hex 2-way bound) | …/setting/orgsettings/companysettings/components/color-picker-input.tsx |
 | 14 | Components: TagInput (multi-select chips backed by ApiSelect) | …/setting/orgsettings/companysettings/components/tag-input.tsx (or REUSE if registry has equivalent — see §⑫ ISSUE-7 / Component Reuse-or-Create) |
 | 15 | Components: FileUploadCard (placeholder upload UI) | …/setting/orgsettings/companysettings/components/file-upload-card.tsx |
 | 16 | Components: TimezoneSelect | …/setting/orgsettings/companysettings/components/timezone-select.tsx |
-| 17 | Components: MaintenanceModeConfirmModal | …/setting/orgsettings/companysettings/components/maintenance-mode-modal.tsx |
+| 17 | ~~Components: MaintenanceModeConfirmModal~~ | **DELETED Session 6** — `…/components/maintenance-mode-modal.tsx` (maintenance mode is a #85 SECURITY-group field now) |
 | 18 | Zustand store (form snapshot for dirty-tracking + section state) | …/setting/orgsettings/companysettings/companysettings-store.ts |
 | 19 | Zod schema | …/setting/orgsettings/companysettings/companysettings-schemas.ts |
 | 20 | Sticky save header bar | …/setting/orgsettings/companysettings/components/save-changes-bar.tsx |
@@ -837,8 +840,12 @@ GridCode: COMPANYSETTINGS
 
 | GQL Field | Input | Returns |
 |-----------|-------|---------|
-| updateCompanySettings | CompanySettingsRequestDto | BaseApiResponse<CompanySettingsResponseDto> (refreshed composite) |
-| toggleMaintenanceMode | ToggleMaintenanceModeRequestDto { Enabled: bool, Message: string? } | BaseApiResponse<bool> (optional fast-path — see §⑫ ISSUE-6) |
+| updateCompanySettings | `CompanySettingsRequestDtoInput` | BaseApiResponse<CompanySettingsResponseDto> (refreshed composite) |
+
+> HotChocolate strips `Get` from every resolver and appends `Input` to input types — the wire
+> names are `companySettings` / `companySubscriptionInfo` / `updateCompanySettings(companySettings: CompanySettingsRequestDtoInput!)`.
+> `toggleMaintenanceMode` was never built (ISSUE-6, deferred) and is now **out of scope entirely** —
+> maintenance mode is a #85 ParamCode as of Session 6.
 
 ### CompanySettingsResponseDto shape
 
@@ -896,7 +903,10 @@ GridCode: COMPANYSETTINGS
     currencyDisplayFormatValue: string;      // "SymbolBefore"
     numberFormatId: number;
     numberFormatName: string;                // "1,234,567.89 (US/UK)"
-    additionalCurrencies: { id: number; code: string; name: string }[];   // from junction CompanyConfigurationCurrencies
+    baseCurrencySymbol: string | null;       // read-only banner (deep-links to #79 Currency Management)
+    baseCurrencyFlagEmoji: string | null;    // read-only banner
+    // Session 6: additionalCurrencyIds / additionalCurrencies REMOVED — ALLOWED_CURRENCIES
+    // is currency POLICY and is edited on #85. DEFAULT_CURRENCY (baseCurrency*) stays: identity.
   };
   // §5 — CompanyConfiguration (regional — Session 2 FK ids)
   regional: {
@@ -914,47 +924,16 @@ GridCode: COMPANYSETTINGS
     additionalLanguages: { id: number; name: string }[];                  // from junction
     additionalOperatingCountries: { id: number; name: string }[];         // from junction
   };
-  // §6 — CompanyConfiguration (communication — unchanged)
-  communication: {
-    senderName: string | null;
-    senderEmail: string | null;
-    replyToEmail: string | null;
-    smsSenderId: string | null;
-    emailSignature: string | null;
-    whatsappBusinessNumber: string | null;
+  // §6 — Organization (Session 6) — the two ORGANIZATION-group ParamCodes
+  organization: {
+    auditLogRetentionYearsId: number;        // AUDIT_TRAIL_RETENTION
+    auditLogRetentionYearsName: string | null;   // "5 years"
+    auditLogRetentionYearsValue: string | null;  // "1" | "3" | "5" | "7" | "-1"
+    multiBranchMode: boolean;                // MULTI_BRANCH_MODE
   };
-  // §7 — CompanyConfiguration (system — Session 2 all enums are FK ids)
-  system: {
-    autoLogoutMinutesId: number;
-    autoLogoutMinutesName: string;           // "30 minutes"
-    autoLogoutMinutesValue: string;          // "30" (or "-1" for Never)
-    loginAttemptsBeforeLockId: number;
-    loginAttemptsBeforeLockName: string;
-    loginAttemptsBeforeLockValue: string;
-    twoFactorAuthModeId: number;
-    twoFactorAuthModeName: string;           // "Admins Only"
-    twoFactorAuthModeValue: string;          // "AdminsOnly"
-    passwordMinLengthId: number;
-    passwordMinLengthName: string;
-    passwordMinLengthValue: string;          // "8"
-    passwordExpiryDaysId: number;
-    passwordExpiryDaysName: string;
-    passwordExpiryDaysValue: string;
-    passwordHistoryCountId: number;
-    passwordHistoryCountName: string;
-    passwordHistoryCountValue: string;
-    passwordRequireUppercase: boolean;
-    passwordRequireNumber: boolean;
-    passwordRequireSpecialChar: boolean;
-    auditLogRetentionYearsId: number;
-    auditLogRetentionYearsName: string;      // "5 years"
-    auditLogRetentionYearsValue: string;
-    deletedRecordsRetentionDaysId: number;
-    deletedRecordsRetentionDaysName: string;
-    deletedRecordsRetentionDaysValue: string;
-    maintenanceModeEnabled: boolean;
-    maintenanceModeMessage: string | null;
-  };
+  // Session 6: the `communication` and `system` blocks are GONE from this contract.
+  // COMMUNICATION-group and SECURITY-group ParamCodes are served by #85's
+  // OrganizationSettings query/mutation; this screen no longer reads or writes them.
 }
 ```
 
@@ -962,11 +941,13 @@ GridCode: COMPANYSETTINGS
 
 ```typescript
 // Identical to ResponseDto MINUS:
-//   - all *Name and *Value joined-display fields (e.g. financialYearStartMonthName, defaultTimezoneValue, autoLogoutMinutesName, etc.)
-//   - additionalCurrencies/additionalLanguages/additionalOperatingCountries become int[] of refIds (e.g. additionalCurrencyIds: number[])
+//   - all *Name and *Value joined-display fields (e.g. financialYearStartMonthName, defaultTimezoneValue, auditLogRetentionYearsName, etc.)
+//   - additionalLanguages/additionalOperatingCountries become int[] of refIds
 //   - companyId (HttpContext)
 //   - companyCode (legal-immutable)
-// Sections: orgProfile, contact, branding, financial, regional, communication, system
+// Sections (Session 6): orgProfile, contact, branding, financial, regional, organization
+// In practice the BE reuses ONE class for both directions — the handler simply ignores the
+// joined fields on the way in and repopulates them on the way out.
 ```
 
 ### CompanySubscriptionInfoDto shape (PLACEHOLDER)
@@ -1000,29 +981,27 @@ GridCode: COMPANYSETTINGS
 
 **Functional Verification (Full E2E — MANDATORY) — SETTINGS_PAGE block:**
 
-- [ ] First-load: BE auto-seeds default CompanyConfiguration + CompanyBranding rows for current tenant; no 404; page renders all 8 sections
-- [ ] Sidebar nav: 8 items render with correct icons + order; clicking switches active section + scrolls to top
+- [ ] First-load: BE auto-seeds any missing `sett.OrganizationSettings` rows for the current tenant from the platform defaults; no 404; page renders
+- [ ] Sidebar nav: items render with correct icons + order (ids 1-6, 8, 9 - id 7 retired in Session 6); clicking switches active section + scrolls to top
 - [ ] Section 1 (Org Profile): all 9 fields render with placeholder/seed values; CompanyName required; OrganizationType ApiSelect populates from MasterData ORGANIZATIONTYPE
 - [ ] Section 2 (Contact): all 10 fields render; AddressLine1+City+Country+Phone+Email required; Country ApiSelect from GetCountries
 - [ ] Section 3 (Branding): logo + favicon FileUpload card render with placeholder; color pickers (primary + secondary) render with default hex; swatch+text 2-way bind; receipt header image + footer text render
-- [ ] Section 4 (Financial): FY start dropdown 1–12; base currency ApiSelect; additional currencies tag input; tax-receipt toggle disables/enables sub-fields; valid-until DatePicker; "Next: REC-NNNN" preview updates as prefix changes
+- [ ] Section 4 (Financial): FY start dropdown 1–12; base currency ApiSelect; currency-display-format + number-format ApiSelects; read-only base-currency banner deep-links to #79. NO additional-currencies tag input (Session 6 — that is #85's ALLOWED_CURRENCIES)
 - [ ] Section 5 (Regional): default language ApiSelect; additional languages tag input; timezone select; date/time format static selects; country-of-operation ApiSelect; additional countries tag input
-- [ ] Section 6 (Communication): all 6 fields render; sender-name defaults to CompanyName if empty; email-signature textarea
-- [ ] Section 7 (System): all 13 fields render with seeded defaults; password-policy sub-card renders 3 dropdowns + 3 toggles; data-retention sub-card renders 2 dropdowns; maintenance-mode toggle shows confirm modal both directions; warning banner appears below toggle when enabled
+- [ ] Section 6 (Organization): Data Retention sub-card renders the Audit Log Retention ApiSingleSelect (required, seeded value preselected); Branch Structure sub-card renders the Multi-Branch Mode switch; saving persists AUDIT_TRAIL_RETENTION + MULTI_BRANCH_MODE
+- [ ] **Partition check (Session 6)**: nothing on this screen edits a communication, security/system, receipt or currency-policy ParamCode; open #85 and confirm each of those is editable there and ONLY there
 - [ ] Section 8 (Subscription): renders read-only with badge + plan info grid + feature checklist; NO save controls; "View Plans & Pricing" + "Contact Support" buttons toast SERVICE_PLACEHOLDER
-- [ ] Save Changes (page-top): runs validation across ALL 7 editable sections; on validation error, jumps to first invalid field; on success, single mutation persists to all 3 tables in one transaction; toast displays
-- [ ] Discard Changes (page-top): confirm dialog → on confirm, all 7 sections revert to last-saved state; dirty flag clears
-- [ ] Validation: required fields blocked; email format checked; URL format checked; hex color regex enforced; SMS sender alphanumeric
-- [ ] Conditional fields: TaxReceiptRequired = false → grays out tax-receipt sub-fields; MaintenanceModeEnabled = true → required `MaintenanceModeMessage`
+- [ ] Save Changes (page-top): runs validation across ALL 6 editable sections; on validation error, jumps to first invalid section (order: orgProfile, contact, branding, financial, regional, organization → sidebar ids 1-6); on success a single mutation persists `app.Companies` + the KV rows in one transaction; toast displays
+- [ ] Discard Changes (page-top): confirm dialog → on confirm, all 6 sections revert to last-saved state; dirty flag clears
+- [ ] Validation: required fields blocked; email format checked; URL format checked; hex color regex enforced
 - [ ] Audit trail: server-side handler emits audit-log entry on each successful UpdateCompanySettings call (whole-payload audit)
-- [ ] Maintenance Mode flip: confirm modal both directions; audit log entry; warning banner shown beneath toggle when enabled
 - [ ] Unsaved-changes blocker: navigating away with dirty form prompts confirm dialog (Next.js router-level guard + window.beforeunload listener)
 - [ ] Tenant scoping: switching tenant context (or testing with a different CompanyId) returns that tenant's settings; never the wrong tenant's data
 - [ ] Role gate: a non-BUSINESSADMIN account cannot see the COMPANYSETTINGS menu item; if they URL-bypass to the route, they see DefaultAccessDenied
 
 **DB Seed Verification:**
 - [ ] Menu visible in sidebar at Settings › Org Settings › Company Settings (re-parented from RA_AUDIT to SET_ORGSETTINGS)
-- [ ] Default CompanyConfiguration row + CompanyBranding row created for sample Company
+- [ ] `sett.OrganizationSettings` rows resolve for the sample Company (tenant row, else platform default with `CompanyId IS NULL`)
 - [ ] ORGANIZATIONTYPE MasterData seeded with 7 rows (Trust/Society/Section8/NGO/Foundation/Association/Other)
 - [ ] LOGINTEMPLATE MasterData seeded with 5 rows (BGIMAGE/CAROUSEL/BGVIDEO/FULLIMAGE/MINIMAL) — even though §3 doesn't use them, future #173 needs them
 - [ ] Page renders without crashing on a freshly-seeded DB
@@ -1065,9 +1044,24 @@ compliance. Per-user prefs (theme, personal notifications) → UserSettings.
   `NEXT_RECEIPT_NUMBER`, `FINANCIAL_YEAR_RESET`, `CONTACT_CODE_FORMAT`) — receipt
   fields → `GLOBALDONATION` entity, `CONTACT_CODE_FORMAT` → `CONTACT` entity.
   Seed-only, no app code read them, so safe.
-- **Follow-up for THIS screen (not yet done):** #75 will shed its §6 Communication,
-  §7 Security, §8 Receipt, and currency-policy editor sections — they move to #85
-  / #9. Requires a spec (§⑥) revision → a separate pass, not an in-scope fix.
+- **Follow-up for THIS screen — DONE in Session 6 (2026-08-03).** #75 shed its
+  §6 Communication, §7 System/Security and currency-policy editor sections
+  (§8 Receipt had already gone in Session 3). Spec §⑥/§⑧/§⑩/§⑪ revised in the same
+  pass. **Orphan rescue:** the two ORGANIZATION-group codes `AUDIT_TRAIL_RETENTION`
+  (which lived inside the deleted System Preferences section) and `MULTI_BRANCH_MODE`
+  (only reachable from #85's generic group editor, which stopped exposing the
+  ORGANIZATION group in the same pass) would have had **zero** editors. A new
+  §6 Organization section on #75 owns both. That is a DTO addition, not an
+  entity/column/migration change.
+- **`AUDIT_TRAIL_RETENTION` group mismatch fixed:** `UpdateCompanySettings.cs`
+  catalogued it under `SG_Security` (9) while `OrgSettingsDefaultSeeder.cs:113-114`
+  seeds it under ORGANIZATION. Re-pointed to `SG_Organization` (6) to match the seed —
+  the group id is what the upsert writes, so the old value would have created a
+  duplicate row in the wrong group.
+- **Seed contradiction, unresolved:** the reconciliation doc's §5B says
+  `ALLOWED_CURRENCIES` "does not exist in the seed (0 rows)". True of
+  `setting-groups.sql`, but `OrgSettingsDefaultSeeder.cs:208` **does** seed it
+  (FUNDRAISING group, default `["AED"]`). The row stays; #85 is its editor.
 - Full map: repo-root `PSS-2.0-SETTINGS-SCREEN-RECONCILIATION.md`.
 
 ### Session 2 architectural pivot (2026-05-01)
@@ -1143,8 +1137,8 @@ After Session 1 BE-only build, user feedback drove a refactor:
 | ISSUE-3 | (planning) | MED | FE / Timezone | Static IANA list. | **SUPERSEDED (Session 2)** — DefaultTimezone now FK to MasterData TypeCode=TIMEZONE |
 | ISSUE-4 | (planning) | MED | DB Seed | COMPANYSETTINGS re-parented from RA_AUDIT to ORG_COMPANY in seed. | OPEN |
 | ISSUE-5 | (planning) | LOW | BE / EF config naming | EF config for Company at `ApplicationConfigurations/CompanyConfiguration.cs` exists. NEW entity EF config lives in `SettingConfigurations/CompanyConfigurationConfiguration.cs` (different folder/namespace — no collision). | OPEN |
-| ISSUE-6 | (planning) | LOW | BE / Maintenance mutation | Optional fast-path ToggleMaintenanceMode mutation. Defer unless requested. | OPEN |
-| ISSUE-7 | (planning) | LOW | FE / TagInput | Search registries first; reuse if exists. | **CLOSED (Session 2)** — registries scanned (tag-input-pill, multi-tag-chip-selector, ApiMultiSelect); none matched the `{id, code, name}[]` + combobox-add shape. New `tag-input.tsx` created. |
+| ISSUE-6 | (planning) | LOW | BE / Maintenance mutation | Optional fast-path ToggleMaintenanceMode mutation. Defer unless requested. | **SUPERSEDED (Session 6)** — MAINTENANCE_MODE_* is a SECURITY-group ParamCode owned by #85 now. Never built here; out of scope for this screen entirely. Re-raise against #85 if the fast path is still wanted. |
+| ISSUE-7 | (planning) | LOW | FE / TagInput | Search registries first; reuse if exists. | **CLOSED (Session 2)** — registries scanned (tag-input-pill, multi-tag-chip-selector, ApiMultiSelect); none matched the `{id, code, name}[]` + combobox-add shape. New `tag-input.tsx` created. **Session 6**: the §4 currencies usage is gone (ALLOWED_CURRENCIES → #85); `tag-input.tsx` stays — §5 languages + countries still use it. |
 | ISSUE-8 | (planning) | LOW | FE / Route | New route at `companysettings/`; existing `company/` list-grid untouched. | **CLOSED (Session 2)** |
 | ISSUE-9 | (planning) | LOW | FE / CSV roundtrip | `additionalCurrenciesCsv` ↔ `{id, code, name}[]` serialization. | **SUPERSEDED (Session 2)** — CSV columns replaced with proper junction tables |
 | ISSUE-10 | (planning) | LOW | BE / Audit | Whole-payload audit; per-field diff is follow-up. | OPEN |
@@ -1332,3 +1326,80 @@ After Session 1 BE-only build, user feedback drove a refactor:
 ### Session 4 Addendum — Status flip
 
 Prompt frontmatter flipped: `status: NEEDS_FIX` → `status: COMPLETED`; `session4_in_progress: true` flag removed. Registry row #75 flipped from NEEDS_FIX back to COMPLETED with Notes appended (Session 4 file delta).
+
+
+### Session 6 — 2026-08-03 — REFACTOR (settings ownership partition) — COMPLETED
+
+- **Scope**: Step 1 of `PSS-2.0-SETTINGS-PARTITION-EXECUTION-PROMPT.md`, executing §7 of
+  `PSS-2.0-SETTINGS-SCREEN-RECONCILIATION.md`. #75 sheds every editor that overlapped #85
+  OrganizationSettings. Both screens write the same `sett.OrganizationSettings` KV rows keyed
+  `(CompanyId, ParamCode)`, so an overlap was a silent last-writer-wins bug on 6 of 8 sections.
+  This pass partitions **editors**, not data: **no entity, no column, no migration**, and no KV
+  row deleted. #75 = identity · appearance · mechanics; #85 = behavioural policy.
+- **Shed from this screen** (each ParamCode now editable on #85 and only there):
+  §6 Communication Defaults (SENDER_NAME, SENDER_EMAIL, REPLY_TO_EMAIL, SMS_SENDER_ID,
+  EMAIL_SIGNATURE, WHATSAPP_BUSINESS_NUMBER) · §7 System Preferences (AUTO_LOGOUT_MINUTES,
+  LOGIN_ATTEMPTS_BEFORE_LOCK, TWO_FACTOR_AUTH_MODE, PASSWORD_* ×6,
+  DELETED_RECORDS_RETENTION_DAYS, MAINTENANCE_MODE_ENABLED, MAINTENANCE_MODE_MESSAGE) ·
+  the currency-policy half of §4 (ALLOWED_CURRENCIES). §8 Receipt had already gone in Session 3.
+  `DEFAULT_CURRENCY` **stays** here — value vs toggle: the base currency is identity, the
+  multi-currency switch is policy.
+- **Orphan rescue — new §6 Organization section**: `AUDIT_TRAIL_RETENTION` lived inside the
+  doomed System section, and `MULTI_BRANCH_MODE` was only reachable from #85's generic group
+  editor. Blueprint §2 assigns both ORGANIZATION-group codes to #75, so after both shed steps
+  they would have had **zero** editors. A new `OrganizationSection` (Data Retention sub-card +
+  Branch Structure toggle) owns them. Adding DTO properties is not an entity/column change,
+  so the no-migration invariant holds.
+- **Files touched**:
+  - **BE — modified (4)**:
+    - `Base.Application/Schemas/SettingSchemas/CompanySettingsSchemas.cs` — `CurrencyChipDto`,
+      `CommunicationSection`, `SystemSection` and `financial.AdditionalCurrency*` deleted;
+      `OrganizationSection` added; composite is now
+      `OrgProfile, Contact, Branding, Financial, Regional, Organization`.
+    - `.../Queries/GetCompanySettingsQuery/GetCompanySettings.cs` — MasterData TypeCode
+      constants 12 → 7; `ALLOWED_CURRENCIES` read deleted; `MULTI_BRANCH_MODE` bool read added;
+      the Communication/System/Receipt initializers replaced by one `Organization` block;
+      now-dead `ParseIntOrZero` / `MonthNameToNumber` helpers removed.
+    - `.../Commands/UpdateCompanySettingsCommand/UpdateCompanySettings.cs` — `ParamCatalog`
+      trimmed to the surviving codes and gained `AUDIT_TRAIL_RETENTION` + `MULTI_BRANCH_MODE`
+      under `SG_Organization`; `ResolveCurrencyCodesAsync` / `MonthNames` / `MonthNumberToName`
+      deleted; `LoadMasterDataNamesAsync` id set 12 → 7.
+    - `.../UpdateCompanySettingsValidator.cs` — Communication/System/Receipt rules removed;
+      `Organization.AuditLogRetentionYearsId > 0` added.
+  - **FE — modified (7)**: `domain/entities/setting-service/CompanySettingsDto.ts`;
+    `infrastructure/gql-queries/setting-queries/CompanySettingsQuery.ts`;
+    `infrastructure/gql-mutations/setting-mutations/CompanySettingsMutation.ts`;
+    `.../companysettings/companysettings-schemas.ts`; `.../sections/financial-section.tsx`;
+    `.../settings-page.tsx`; `.../companysettings-store.ts`.
+  - **FE — created (1)**: `.../companysettings/sections/organization-section.tsx`.
+  - **FE — deleted (3)**: `.../sections/communication-section.tsx`,
+    `.../sections/system-section.tsx`, `.../components/maintenance-mode-modal.tsx`.
+    `.../components/tag-input.tsx` **kept** — §5 regional still uses it.
+  - **Spec — modified**: this file, §⑥ (visual rules, section-definitions table, §4 field map,
+    new §6 Organization block + "do not re-add" table, section-level actions, interaction flow),
+    §⑧ (FE manifest), §⑩ (mutations + Response/Request DTO), §⑪ (E2E), §⑫, §⑬.
+  - **DB**: none. No migration, no seed change in this step (Step 3 of the execution prompt
+    handles `setting-groups.sql`, written but not applied).
+- **Verification**: `npx tsc --noEmit --incremental false` in `PSS_2.0_Frontend` — **exit 0,
+  zero diagnostics**. BE compiled by inspection only: `dotnet build` is the user's to run
+  (execution-prompt rule).
+- **Deviations from spec**:
+  1. **New §6 Organization section** — not in §7's list; added to stop the two ORGANIZATION-group
+     codes being orphaned. Recorded above and in §⑬.
+  2. **`AUDIT_TRAIL_RETENTION` group id corrected** — `UpdateCompanySettings.cs` catalogued it
+     under `SG_Security` (9) while `OrgSettingsDefaultSeeder.cs:113-114` seeds it under
+     ORGANIZATION. The catalogued group id is what the upsert writes, so the stale value would
+     have created a duplicate row in the wrong group. Re-pointed to `SG_Organization` (6).
+  3. **Sidebar id 7 retired, id 6 reused** for Organization. The store's `ActiveSection` union
+     still spans `1..9` on purpose so a persisted `7` renders nothing rather than crashing.
+  4. **§①–§④ left stale** — they still describe the dropped `CompanyConfigurations` /
+     `CompanyBrandings` tables and the removed sections. Pre-existing Session-5 staleness; the
+     execution prompt scopes the spec edit to §⑥, so widening was declined rather than done
+     half-way.
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-6 → SUPERSEDED (maintenance mode is #85's now).
+  ISSUE-7 annotated (the §4 currency usage of `tag-input.tsx` is gone; §5 keeps the component).
+- **Next step**: Step 2 of the execution prompt — #85 OrganizationSettings sheds Branding,
+  Login, Organization and the Regional **identity** codes (`DEFAULT_COUNTRY`, `DATA_RESIDENCY`;
+  the Regional **compliance** codes stay), and splits ThemeCustomizer + the per-user
+  notification subset out to UserSettings. Then Step 3 (`setting-groups.sql` cleanup DELETE).

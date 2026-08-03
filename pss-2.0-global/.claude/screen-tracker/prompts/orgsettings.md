@@ -303,6 +303,14 @@ For **SETTINGS_PAGE**:
 > **Consumer**: UX Architect → Frontend Developer
 > **CRITICAL**: This section is the design spec. The mockup is the source of truth — match it exactly.
 
+> **Two scopes, one page (session 3)** — `OrgSettingsPage` takes a `scope` prop:
+> `"organization"` (default, ORGANIZATIONSETTING + SETTINGGROUP menus) and `"user"` (USERSETTING menu).
+> Scope swaps the query/mutation pair, the header title/icon/subtitle, the export filename, and the
+> save payload shape; it hides the Import placeholder. Everything below the header — CategoryNav,
+> SettingCard, SettingRow, the widgets, the Zustand store — is scope-agnostic and shared verbatim.
+> The two scopes are separate routes and never mount together, so the single store is safe.
+> Do **not** fork the page: a second copy re-introduces exactly the drift this partition removed.
+
 ### 🎨 Visual Uniqueness Rules
 
 > Each of the 10 group categories has a distinct icon and color cue but uses the **same** card chrome — that's
@@ -757,6 +765,14 @@ GridCode: USERSETTING
 | GQL Field | Returns | Key Args |
 |-----------|---------|----------|
 | `GetOrganizationSettingsView` | `OrgSettingsViewDto` (composite — groups + settings nested) | — (tenant from HttpContext) |
+| `GetUserSettingsView` | `OrgSettingsViewDto` (same shape) | — (UserId + tenant from HttpContext) |
+
+> **Ownership partition (session 3)** — `GetOrganizationSettingsView` excludes the ParamCodes owned by
+> #75 Company Settings and every row of a user-scoped group; `GetUserSettingsView` returns exactly the
+> complement that is personal: the whole `THEMECUSTOMIZER` group plus the four per-user notification
+> codes. Both lists live in ONE place, `SettingsOwnership.cs`. On the user view each row is resolved
+> `user value ?? org current ?? org default`, and `paramDefaultValue` carries the **org** value — so
+> "reset row" on a personal preference means "go back to what the organization set".
 
 **`OrgSettingsViewDto` shape:**
 
@@ -790,6 +806,12 @@ type OrgSettingsViewDto = {
 |-----------|-------|---------|
 | `BulkUpdateOrganizationSettings` | `BulkUpdateOrgSettingsRequestDto` (array of `{ organizationSettingId, paramCode, currentValue }`) | `BulkUpdateOrgSettingsResultDto` `{ updatedCount, errors: Array<{ paramCode, message }> }` |
 | `ResetOrganizationSettingsToDefaults` | `{ settingGroupCode?: string }` (optional — scope to one group, otherwise all) | `OrgSettingsViewDto` (refreshed) |
+| `BulkUpdateUserSettings` | `BulkUpdateUserSettingsRequestDto` (array of `{ paramCode, currentValue }` — **no id**, the row may not exist yet) | `BulkUpdateOrgSettingsResultDto` (reused) |
+
+> `BulkUpdateUserSettings` writes `sett.UserSettings` only. A blank `currentValue` is a **revert**: the
+> override row is soft-deleted and the org value takes over again. A ParamCode outside the personal
+> partition is rejected per-item, never silently written. `ResetOrganizationSettingsToDefaults` skips
+> #75-owned and user-scoped rows for the same reason — "reset all" is an edit and obeys the partition.
 
 **Sensitive-field handling**: None — no secrets in this screen.
 
@@ -880,7 +902,7 @@ Full UI must be built (sidebar nav, 10 cards, 70 dynamically-rendered rows, dirt
 
 | ID | Raised (session) | Severity | Area | Description | Status |
 |----|------------------|----------|------|-------------|--------|
-| — | — | — | — | (empty — no issues raised yet) | — |
+| ISSUE-01 | 3 | HIGH | BE | `ResetOrganizationSettingsToDefaultsHandler` filters on `IsDeleted` and the ownership partition but **never on `CompanyId`** — one tenant's "Reset to defaults" resets every tenant's rows. Pre-existing; found while adding the partition exclusion. Fix = add `s.CompanyId == companyId` from `IHttpContextAccessor.GetCurrentUserStaffCompanyId()`, matching the other #85 handlers. | OPEN |
 
 ### § Sessions
 
@@ -956,3 +978,19 @@ Full UI must be built (sidebar nav, 10 cards, 70 dynamically-rendered rows, dirt
 - **Known issues opened**: None.
 - **Known issues closed**: None.
 - **Next step**: COMPLETED for the 5 numbering codes. The 14 structural duplicates (§2A–2D of the reconciliation doc: currency/locale/security/`DEFAULT_REPLY_TO`) remain **pending user go-ahead** — same removal pattern, not yet executed.
+
+### Session 3 — 2026-08-03 — FIX — COMPLETED
+
+- **Scope**: Settings **ownership partition**, step 2 of `PSS-2.0-SETTINGS-PARTITION-EXECUTION-PROMPT.md` (§7 of the reconciliation doc). #85 sheds every ParamCode that #75 Company Settings now owns, and the per-user codes move to the UserSettings menu. Editors only — no entity, column, or migration change, and nothing is deleted from the KV store.
+- **What moved off #85's editor**: Branding, Login, Organization and the Regional *identity* codes (`DEFAULT_COUNTRY`, `OPERATING_COUNTRIES`, `DEFAULT_CURRENCY`) → #75. Regional *compliance* codes (`GDPR_COMPLIANCE`, `CONSENT_REQUIRED`, `RIGHT_TO_ERASURE`, `COOKIE_CONSENT_BANNER`) **stay** on #85, as does `DATA_RESIDENCY` (the blueprint assigns it to #75, but #75's ParamCatalog never writes it — leaving it here avoids orphaning it).
+- **What moved to the UserSettings menu**: the whole `THEMECUSTOMIZER` group, plus `IN_APP_NOTIFICATIONS` / `EMAIL_NOTIFICATIONS` / `DAILY_DIGEST` / `DIGEST_SEND_TIME`. Those four still appear on #85 as the **org-wide default** — same ParamCode, two scopes, deliberately not collapsed. `NOTIFICATION_RETENTION` is org-only (data-retention policy, not a preference).
+- **Deviation — partition granularity**: the blueprint reads as "drop whole SettingGroups", but #75 writes only 4 of BRANDING's 12 codes and 0 of LOGIN's 3. Dropping the groups would orphan 11 codes with no editor anywhere. So the partition is by **ParamCode**, expressed as an explicit allow-list in `SettingsOwnership.cs`. `CanUserOverride` could not be the selector — it is `true` on every BRANDING/LOGIN row.
+- **Files touched**:
+  - BE new: `SettingBusiness/OrganizationSettings/SettingsOwnership.cs` (the single source of truth: 17 company-owned codes, `UserScopedGroupCodes`, `UserOverridableParamCodes`), `UserSettings/Queries/GetUserSettingsView.cs`, `UserSettings/Commands/BulkUpdateUserSettings.cs`.
+  - BE edited: `GetOrganizationSettingsView.cs` (exclude company-owned codes + user-scoped groups, then drop now-empty groups), `ResetOrganizationSettingsToDefaults.cs` (same exclusion — reset is an edit), `Schemas/SettingSchemas/UserSettingSchemas.cs` (+2 DTOs), `EndPoints/Setting/Queries/UserSettingQueries.cs`, `EndPoints/Setting/Mutations/UserSettingMutations.cs`.
+  - FE new: `gql-queries/setting-queries/UserSettingsViewQuery.ts`, `gql-mutations/setting-mutations/BulkUpdateUserSettingsMutation.ts`, `UserSettingsPageConfig` in `pages/setting/orgsettings/orgsettings.tsx`.
+  - FE edited: `orgsettings-page.tsx` (`scope` prop), `OrgSettingsDto.ts` (+2 types), `app/[lang]/(core)/setting/orgsettings/usersetting/page.tsx` (points at the new wrapper).
+- **Verification**: `npx tsc --noEmit --incremental false` → exit 0. Backend compiled by inspection (builds are user-owned).
+- **Known issues opened**: ISSUE-01 (see § Known Issues) — `ResetOrganizationSettingsToDefaults` has no `CompanyId` filter, so a reset touches every tenant's rows. Pre-existing, found while adding the ownership exclusion; out of this pass's scope.
+- **Known issues closed**: None.
+- **Next step**: none for the partition. ISSUE-01 needs its own fix session.

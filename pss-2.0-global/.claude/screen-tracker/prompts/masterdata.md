@@ -3,14 +3,14 @@ screen: MasterData
 registry_id: 76
 combines_registry_ids: [76, 162]
 module: Settings
-status: PROMPT_READY
+status: COMPLETED
 scope: ALIGN
 screen_type: MASTER_GRID
 complexity: High
 new_module: NO
 planned_date: 2026-05-10
-completed_date:
-last_session_date:
+completed_date: 2026-08-03
+last_session_date: 2026-08-03
 ---
 
 ## Tasks
@@ -25,18 +25,22 @@ last_session_date:
 - [x] Prompt generated
 
 ### Generation (by /build-screen → /generate-screen)
-- [ ] BA Analysis validated
-- [ ] Solution Resolution complete
-- [ ] UX Design finalized
-- [ ] User Approval received
-- [ ] Backend code modified (ALIGN — modify in place, do NOT regenerate the entity)
-- [ ] Backend wiring confirmed (DbSet already in `SettingDbContext`; only mappings + endpoint fields added)
-- [ ] Frontend code consolidated (delete 4 duplicate page/data-table files; create combined split-panel page)
-- [ ] Frontend wiring confirmed (existing routes redirect to combined page)
-- [ ] DB Seed script generated (GridFormSchema for two distinct forms: Type form + Value form)
-- [ ] Registry updated to COMPLETED
+- [x] BA Analysis validated
+- [x] Solution Resolution complete
+- [x] UX Design finalized
+- [x] User Approval received ("sure you start the development", 2026-08-03)
+- [x] Backend code modified (ALIGN — modify in place, do NOT regenerate the entity)
+- [x] Backend wiring confirmed (DbSet already in `SettingDbContext`; only mappings + endpoint fields added)
+- [x] Frontend code consolidated (deleted 4 duplicate dirs + 2 barrel lines; created combined split-panel page)
+- [x] Frontend wiring confirmed (both legacy routes render the combined page)
+- [x] DB Seed script generated (`sql-scripts-dyanmic/masterdata-combined-menu-seed.sql` — menu + capabilities; **no** GridFormSchema, see deviation D-3)
+- [x] Registry updated to COMPLETED
 
 ### Verification (post-generation — FULL E2E required)
+> Frontend typecheck ran clean: `npx tsc --noEmit --incremental false` → empty output, exit 0.
+> `dotnet build` and every runtime box below are **NOT** done — the user forbade running the build
+> and the migration, and the screen cannot run until the migration in
+> `PSS-2.0-SCREEN-76-MASTERDATA-MIGRATION-SPEC.md` and the seed script are applied.
 - [ ] dotnet build passes
 - [ ] pnpm dev — page loads at `/[lang]/setting/dataconfig/masterdata`
 - [ ] `setting/dataconfig/masterdatatype` redirects to `setting/dataconfig/masterdata`
@@ -568,6 +572,25 @@ Dropdown uses `<DropdownMenu>` from existing primitive (Radix or shadcn — chec
 
 ---
 
+### Deviations from this manifest (recorded at build, 2026-08-03)
+
+The plan was written before the code was read. These are the points where the build had to differ, and why.
+
+| ID | Planned | Built | Why |
+|----|---------|-------|-----|
+| D-1 | Drag-handle reorder via `@dnd-kit/sortable` | **Move Up / Move Down** row actions hitting the same `reorderMasterDatas` mutation | `@dnd-kit` is **not** in `package.json`. Adding a drag-and-drop dependency is out of ALIGN scope. Both controls are disabled at a page edge and while a search is active (a filtered list has no meaningful neighbour). Closes ISSUE-8. |
+| D-2 | Mapster alias `SortOrder ← OrderBy` | **No alias.** `orderBy` stays the wire name; the UI labels the field "Sort Order" | A bidirectional alias buys nothing and gives every consumer two names for one column. Closes ISSUE-6. |
+| D-3 | RJSF modals driven by `MASTERDATA` / `MASTERDATATYPE` GridFormSchema | Hand-built dialogs (`type-modal.tsx`, `value-modal.tsx`); **no GridFormSchema seeded** | The type form needs an uppercase-masked code input that goes readonly for system rows, and the value form needs a translations sub-editor — neither is expressible in the generic grid form. Same reasoning as the CONFIG-screen precedent. |
+| D-4 | `TranslationsWidget` in `presentation/widgets/dgf-widgets/`; `system-badge` in `presentation/components/shared-cell-renderers/` | Both kept local: `masterdata/translations-editor.tsx`, `masterdata/system-badge.tsx` | **Neither directory exists** in this repo. Creating two top-level trees for one file each, with no second consumer, is not worth it. Move them out when a second screen needs them. |
+| D-5 | `MASTERDATATYPE` hidden via `IsLeastMenu = false` | Menu stays `IsActive = true`; hidden by revoking the **ISMENURENDER** role capability (+ `IsVisible = false`) | `GetRoleCapabilityByUser` requires `Menus.IsActive = true`. Deactivating the menu would hide it *and* turn the legacy route into Access Denied. See the header of the seed script. |
+| D-6 | `masterdatatype` route **redirects** to `masterdata` | Route **renders the same component**, resolving capabilities against `MASTERDATATYPE` | A redirect would strand a role granted only `MASTERDATATYPE` — it would land on a menu it has no capability for. |
+| D-7 | FE renames `isSystemType → isSystem`, `dataDescription → description` | Not needed — the FE DTOs already used `isSystem` / `description` | The plan was based on a stale reading. Closes ISSUE-5 (no cascade existed). |
+| D-8 | New unique indexes include `IsActive` | Indexes are `(MasterDataTypeId, DataValue, CompanyId)` and `(TypeCode, CompanyId)`, filtered on `"IsDeleted" = false` | Putting `IsActive` in a unique key lets the same code exist twice as long as one copy is inactive — which is exactly the duplicate the index is meant to prevent. The pre-existing `(MasterDataTypeId, ParentMasterDataId, IsActive)` unique index is **dropped**: it permitted only ONE active value per type. |
+
+**Deliberately not done** (out of ALIGN scope, per standing rules): no migration generated or applied, no `dotnet build`, no seed executed. Header rows 4/11/17 of the file manifest were also affected by the un-tenant-scoped legacy `GetMasterDatas` / `GetMasterDataTypes` queries, which were left as they were — see ISSUE-10.
+
+---
+
 ## ⑨ Pre-Filled Approval Config
 
 > **Consumer**: User Approval phase — pre-filled by /plan-screens.
@@ -886,16 +909,67 @@ Full UI must be built (buttons, modals, interactions). Only the file-IO handler 
 |----|------------------|----------|------|-------------|--------|
 | ISSUE-1 | Plan 2026-05-10 | MED | Data model | Translations stored in `DataSetting` JSON instead of dedicated structure | OPEN |
 | ISSUE-2 | Plan 2026-05-10 | LOW | Cross-entity guard | Delete does not block on downstream-entity references | OPEN |
-| ISSUE-3 | Plan 2026-05-10 | MED | Sandbox | Sandbox may block delete of 4 duplicate shared files | OPEN |
-| ISSUE-4 | Plan 2026-05-10 | LOW | Mockup gap | No toggle for whole MasterDataType in mockup | OPEN |
-| ISSUE-5 | Plan 2026-05-10 | MED | FE rename cascade | `isSystemType`→`isSystem`, `dataDescription`→`description` may break consumers | OPEN |
-| ISSUE-6 | Plan 2026-05-10 | LOW | Mapster alias | `OrderBy ↔ SortOrder` round-trip needs explicit bidirectional config | OPEN |
-| ISSUE-7 | Plan 2026-05-10 | MED | Empty state | Fresh tenant with 0 types — verify seed runs first AND FE handles null case | OPEN |
-| ISSUE-8 | Plan 2026-05-10 | LOW | DnD dependency | `@dnd-kit/sortable` may need to be added if not already in package.json | OPEN |
-| ISSUE-9 | Plan 2026-05-10 | LOW | RJSF widget | TranslationsWidget needs JSON ↔ object bridging | OPEN |
+| ISSUE-3 | Plan 2026-05-10 | MED | Sandbox | Sandbox may block delete of 4 duplicate shared files | CLOSED S1 — `rm -rf` succeeded; 2 barrel lines removed; grep-verified zero remaining importers |
+| ISSUE-4 | Plan 2026-05-10 | LOW | Mockup gap | No toggle for whole MasterDataType in mockup | OPEN — type-level Activate/Deactivate still not exposed; the `toggleMasterDataType` mutation exists |
+| ISSUE-5 | Plan 2026-05-10 | MED | FE rename cascade | `isSystemType`→`isSystem`, `dataDescription`→`description` may break consumers | CLOSED S1 — no rename was needed, FE DTOs already used the BE names (D-7) |
+| ISSUE-6 | Plan 2026-05-10 | LOW | Mapster alias | `OrderBy ↔ SortOrder` round-trip needs explicit bidirectional config | CLOSED S1 — alias dropped, `orderBy` is the single wire name (D-2) |
+| ISSUE-7 | Plan 2026-05-10 | MED | Empty state | Fresh tenant with 0 types — verify seed runs first AND FE handles null case | CLOSED S1 — `EmptyState` renders when no type is selected; the auto-select effect clears the selection at 0 types and recovers if the selected type disappears |
+| ISSUE-8 | Plan 2026-05-10 | LOW | DnD dependency | `@dnd-kit/sortable` may need to be added if not already in package.json | CLOSED S1 — not added; Move Up/Down instead (D-1) |
+| ISSUE-9 | Plan 2026-05-10 | LOW | RJSF widget | TranslationsWidget needs JSON ↔ object bridging | CLOSED S1 — no RJSF; `translations-editor.tsx` parses/merges `dataSetting` directly, preserving unrelated keys and dropping blanks (D-3, D-4) |
+| ISSUE-10 | Build S1 2026-08-03 | MED | Tenant scoping | Legacy `GetMasterDatas` / `GetMasterDataTypes` list queries are not explicitly tenant-scoped. The new `GetMasterDataTypeSummary` / `GetMasterDatasByTypeId` are. In practice the global query filter in `ApplicationDbContext.ApplyTenantFilters` covers them (`CompanyId == tenant \|\| IsSystem == true`), so this is defence-in-depth, not a live leak. | OPEN |
+| ISSUE-11 | Build S1 2026-08-03 | MED | Data | The new unique index `(MasterDataTypeId, DataValue, CompanyId)` may be violated by existing rows; the migration will fail if so. De-dup probes are in §4 of `PSS-2.0-SCREEN-76-MASTERDATA-MIGRATION-SPEC.md` and must run **before** `database update`. | OPEN — blocks the migration |
+| ISSUE-12 | Build S1 2026-08-03 | LOW | UX | Import and "Export All" in the page header are `toast.info` placeholders. Per-type CSV export **is** implemented in the values panel. | OPEN |
+| ISSUE-13 | Build S1 2026-08-03 | LOW | Reorder | Move Up/Down swaps the two rows' `orderBy` values. If a type's rows carry duplicate or all-zero `orderBy` (legacy data), a swap is a no-op. `CreateMasterData` now auto-appends (`orderBy <= 0` → max+1), so this only affects pre-existing rows. A one-off backfill would fix it. | OPEN |
 
 ### § Sessions
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
 
-{No build sessions recorded yet — filled in after /build-screen completes.}
+#### Session 1 — BUILD — 2026-08-03
+
+**Scope:** Full ALIGN build of the combined screen (#76 + #162). Approved by the user with
+"sure you start the development".
+
+**Backend** (`Base.*`, all in place, no entity regeneration)
+- `MasterDataType.cs` — added `AllowMultipleSelection`, `AllowUserInput`.
+- `MasterData.cs` — added `Abbreviation` (`string?`).
+- `MasterDataConfigurations.cs` — `Abbreviation` max 50; replaced the broken
+  `(MasterDataTypeId, ParentMasterDataId, IsActive)` unique index with
+  `(MasterDataTypeId, DataValue, CompanyId)` filtered on `"IsDeleted" = false`.
+- `MasterDataTypeConfigurations.cs` — `(TypeCode, CompanyId)` unique, same filter.
+- `MasterDataTypeSchemas.cs` — new `MasterDataTypeWithCountDto { ValuesCount }`.
+- `MasterDataSchemas.cs` — `Abbreviation`, `ParentMasterData`, `ReorderMasterDataItemDto`,
+  `ReorderMasterDataRequestDto`.
+- NEW `MasterDataTypes/Queries/GetMasterDataTypeSummary.cs` — projects `ValuesCount`, tenant-scoped.
+- NEW `MasterDatas/Queries/GetMasterDatasByTypeId.cs` — `FindRecordByProperty` + `ValidateGridFeatures`,
+  default sort `OrderBy ASC`.
+- NEW `MasterDatas/Commands/ReorderMasterDatas.cs` — ownership check, one `SaveChangesAsync`
+  (`IApplicationDbContext` exposes no transaction API, so that single save *is* the atomic boundary).
+- `CreateMasterData` auto-appends when `OrderBy <= 0`. `Update*` capture/restore `IsSystem` around
+  `Adapt` so a client cannot flip it. `Delete*` guard on `IsSystem` and on surviving children.
+- GraphQL: `masterDataTypeSummary`, `masterDatasByTypeId`, `reorderMasterDatas`
+  (HotChocolate strips the `Get` prefix; input DTOs gain the `Input` suffix).
+
+**Frontend**
+- DTOs + gql query/mutation files extended; `REORDER_MASTERDATAS_MUTATION` added.
+- 8 new components under `page-components/setting/dataconfig/masterdata/`: `index-page`,
+  `type-list-panel`, `values-panel`, `type-modal`, `value-modal`, `translations-editor`,
+  `system-badge`, `empty-state`.
+- Both `setting/dataconfig/masterdata.tsx` and `…/masterdatatype.tsx` render `MasterDataPage`,
+  differing only in the `menuCode` they resolve capabilities against.
+- Deleted 4 dead dirs (`masterdata-components/`, `masterdatatype-components/`, and both
+  `shared/configuration/mastersetup/` trees) + 2 barrel exports.
+
+**Verification:** `npx tsc --noEmit --incremental false` → empty output, **exit 0**.
+`dotnet build` NOT run (user instruction).
+
+**Handoff — user-owned, in order:**
+1. Run the de-dup probes in §4 of `PSS-2.0-SCREEN-76-MASTERDATA-MIGRATION-SPEC.md` (repo root).
+2. Generate + apply the migration per that spec.
+3. Apply `sql-scripts-dyanmic/masterdata-combined-menu-seed.sql`.
+4. Walk the E2E checklist at the head of this file.
+
+**Bugs found and fixed mid-session:** `TMenuCapabilities` imported from the wrong module (it lives in
+`@/domain/types/auth-types`, not `useCapability`); the value modal saved without refreshing the values
+grid (added a `refreshToken` prop, since `refetch` is local to `ValuesPanel`); a search/page reset
+effect that could never fire because `ValuesPanel` is keyed on the type id and remounts anyway.

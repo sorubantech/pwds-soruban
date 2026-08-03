@@ -114,7 +114,7 @@ This screen has **no FK pickers**, **no entity form**, **no grid filter**. The o
 |------|--------|
 | Source field | `useCompanySettingsSession().settings?.companyName`. |
 | Fallback | If `settings` is `null` (bootstrap still hydrating) → render shimmer skeleton (same 240px-wide treatment as the greeting line). If `settings.companyName` is empty → fallback to `"your organization"`. **Never** render the literal "undefined" or fall back to "PeopleServe" (PeopleServe is the platform brand, kept in footer only). |
-| Footer brand | `"© {currentYear} PeopleServe. All rights reserved."` — **stays hardcoded**. PeopleServe is the SaaS provider, not the tenant. |
+| Footer brand | `"© {currentYear} PWDS. All rights reserved."` — **stays hardcoded**, no tenant name (ISSUE-10, 2026-08-03). PWDS is the SaaS provider, not the tenant. |
 | Logo source | Already handled by `<SidebarLogo />` (reads tenant logo via existing bootstrap path). No change here. |
 
 ### 4c. Recent activity (localStorage-backed)
@@ -499,7 +499,7 @@ Future Landing siblings (e.g., Donor Portal landing, Volunteer Portal landing, S
 | 9 | `presentation/components/layout-components/header/logout/*` (path TBD by grep) | MODIFY (small) | In the logout click handler, call `clearRecentModules()` from `recent-activity.ts`. If the component is shared across many surfaces, prefer chaining the clear via `useUserStore`'s reset (set a side-effect callback). Document the choice in the Build Log. |
 | 10 | `presentation/pages/master/landing-page/index.tsx` | NO CHANGE | The wrapper that calls `useMounted` + renders header/content/footer is fine as-is. |
 | 11 | `presentation/pages/master/landing-page/loader.tsx` | NO CHANGE | Loader unchanged. |
-| 12 | `presentation/pages/master/landing-page/footer.tsx` | NO CHANGE | Footer "PeopleServe" string is intentional (platform brand, not tenant). |
+| 12 | `presentation/pages/master/landing-page/footer.tsx` | NO CHANGE | Footer brand string is intentional (platform brand **PWDS**, never the tenant — ISSUE-10). |
 | 13 | `app/[lang]/(master)/masterdashboard/page.tsx` | NO CHANGE | Thin wrapper — still calls `<MasterLandingPageConfig />`. |
 | 14 | `app/[lang]/(master)/layout.tsx` | NO CHANGE | Already wraps RouteGuard + CompanySettingsBootstrap. |
 
@@ -722,7 +722,8 @@ For visual debugging without a real backend: temporarily mock `useCompanySetting
 | ISSUE-5 | LOW | CLOSED | Mobile hamburger removal — pre-spec resolution: dead-link cleanup, not feature regression. |
 | ISSUE-6 | LOW | OPEN | Brief skeleton→real-text flicker when `useCompanySettingsSession` hydrates. Acceptable for v1. |
 | ISSUE-7 | MEDIUM | CLOSED | Header still showed hardcoded "PeopleServe" on `/masterdashboard` instead of tenant logo + company name — RESOLVED Session 2 (2026-05-20). Reason: `SidebarLogo` hardcoded the text and `useCompanySettingsSession` did not surface `branding.logoUrl`. Fix: extended session projection to include `logoUrl`/`faviconUrl`/`primaryColorHex`/`secondaryColorHex`; made `SidebarLogo` tenant-aware when `isMasterDashboard`. |
-| ISSUE-8 | LOW | CLOSED | Footer "© {year} PeopleServe. All rights reserved." overridden by direct user instruction — RESOLVED Session 2 (2026-05-20). Now reads `© {year} {companyName}. All rights reserved. Powered by PWDS.` with tenant-name from `useCompanySettingsSession`. Spec §4b note is superseded. |
+| ISSUE-8 | LOW | CLOSED | Footer "© {year} PeopleServe. All rights reserved." overridden by direct user instruction — RESOLVED Session 2 (2026-05-20). Now reads `© {year} {companyName}. All rights reserved. Powered by PWDS.` with tenant-name from `useCompanySettingsSession`. Spec §4b note is superseded. **REOPENED then RE-CLOSED 2026-08-03 — see ISSUE-10; the tenant-name wording is reverted.** |
+| ISSUE-10 | LOW | CLOSED | Footer rendered `© 2026 Aram. All rights reserved. Powered by PWDS.` — tenant name in product chrome. Direct user instruction 2026-08-03: "this are always PWDS brand only should come - no need to pass companyname". RESOLVED same day: `footer.tsx` now renders `© {year} PWDS. All rights reserved.` unconditionally; the `useCompanySettingsSession` import and `tenantName` read were removed (no other consumer in that file). tsc exit 0. This **reverts ISSUE-8** and re-aligns with spec §4b's intent (product brand in footer), differing only in that the brand is **PWDS**, not "PeopleServe". Tenant name stays in the hero — that part of ISSUE-8 is untouched. |
 
 ### Sessions
 
