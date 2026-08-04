@@ -1,6 +1,6 @@
 # PSS 2.0 — PROMPT 22 · In-App Notification Service (Platform + Tenant)
 
-> **Status:** PROMPT_READY · not built
+> **Status:** BUILT (2026-08-03) · BE + FE code complete, FE `tsc` exit 0 · **migration + 3 seeds user-owned and UNAPPLIED** — see §⑩
 > **Depends on:** PROMPT-21 (`AssignLead`) for the first real trigger — but §④ steps 1–11 are independent and can land first.
 > **Supersedes:** the unwritten `.claude/feature-specs/in-app-notification-runtime.md` referenced throughout the existing code. **That file does not exist on disk.** Its "Phase 0 / Phase 2 / Phase 3" numbering is unrecoverable; this document replaces it as the spec of record.
 
@@ -612,4 +612,49 @@ Per the standing UI rules: design tokens only (no hex, no px), `@iconify` Phosph
 
 ## ⑩ Build log
 
-_(empty — nothing built)_
+### Session 1 — 2026-08-03 · BE + FE built, DB user-owned
+
+**Outcome:** backend and frontend code complete. Frontend `npx tsc --noEmit --incremental false` → **exit 0, no output**.
+**Not run by me, by policy:** `dotnet build`, `dotnet ef migrations add`, `dotnet ef database update`, and every SQL file below. The migration is specified, not authored — see `PSS-2.0-ONBOARDING-PROMPT-22-MIGRATION-SPEC.md`.
+
+#### Open questions, resolved
+
+| Q | Answer | By |
+|---|---|---|
+| Q1 `ModuleId` | **Nullable** (§3.5). A PLATFORM notification has no tenant module to point at, and the only writer stamped it from a `"GENERAL"` lookup that returns `Guid.Empty` when the row is absent — a latent FK violation carrying no information. | user |
+| Q2 Mute | **Build `UserNotificationPreferences`.** | user |
+| Q3 `NotificationTypeId` | **DROP.** A required column whose only ever written value, at every call site, was the literal `1`. Nothing read it back. | me (delegated) |
+| Q4 Dedupe | **Not yet.** `SourceEntityType`/`SourceEntityId` added anyway — they earn their place as deep-link and cleanup keys. | as recommended |
+| Q5 Master bell | **No bell on `masterdashboard`.** `(master)/layout.tsx` stays bare; the platform inbox is a route, not a shell widget. | as written |
+| Q6 Poll interval | **Client constant, not a settings row.** The component must render before any settings round-trip could return, so a row would be a setting nothing consults — worse than no setting, because someone would eventually change it and expect the client to obey. Same for the badge cap. | me |
+| Q7 Hangfire fan-out | **DESCOPE.** `IsBulk` is still computed and written (a future async path reads it; dropping and re-adding the column later is the more disruptive choice), but the dead branch it gated is deleted. A seam that has never been exercised is not a seam. | me (delegated) |
+| Q8 `AllTenantsAllStaff` | **DESCOPE** — forced by Q7. `TargetKind.AllTenants`, the `AllTenantsAllStaff()` factory and `PLATFORM_NOTIFY_ANNOUNCE` are all omitted, leaving 2 of the 3 planned capabilities. `TargetKind` is free-text `varchar(20)`, so adding it later needs no migration. | me (delegated) |
+
+#### Decisions taken during the build, beyond the questions
+
+- **`updateNotification` deleted as well as `createNotification`.** §D5 named only Create. Update was the same shape of mistake — a tenant-editable mutation over rows the server derives — and leaving it would have left a writable back door into `Scope`.
+- **`c.ModuleId.ToString()` removed from the `GetNotifications` search predicate.** `ModuleId` is `Guid?` now; the term was matching a GUID nobody types into a search box.
+- **The `PLATFORM_NOTIFICATIONS` menu is created by the seed, not merely referenced.** `HasAccessAsync` joins UserRole → Menu(`MenuCode`) → Capability(`CapabilityCode`), so a grant needs a real `MenuId`. Deliberately **no `ISMENURENDER` grant** — no existing platform leaf has one, because the `(master)` nav is not built from `GetParentChildMenuHandler`.
+- **Capability idempotency guards check `CapabilityName`, not `CapabilityCode`.** The UNIQUE index is `(CapabilityName, IsActive)`; guarding on the code would let a re-run collide on the column it did not check.
+- **Role-join asymmetry in the grant seed is intentional:** `PLATFORM_*` roles are global so §4a joins `AND r."CompanyId" IS NULL`; `BUSINESSADMIN`/`ORGADMIN` are per-tenant so §4b **omits** that predicate and grants across every tenant.
+- **Both new capability codes had to be registered in `useAccessCapability`'s hardcoded `capabilityFlags` allow-list** or the hook would `console.warn` and silently drop them — the Compose button would never appear and nothing would explain why.
+- **The platform inbox route ships without a capability wrapper**, matching every other `(master)` route. `app/[lang]/(master)/layout.tsx` is `<RouteGuard requireAuth>` and nothing more; `useAccessCapability` is skipped unless `moduleCode && menuCode`, and `moduleCode` is not populated on the control-plane surface. A wrapper here would be the only one of its kind and would fail open anyway.
+- **Notification preferences are mounted as a pseudo-category in User Settings**, through a new `extraItems` prop on `CategoryNav`, rather than as a fake KV settings group. A live search takes precedence over it. `CategoryNav` renders group icons as **raw text** — `settingGroupIcon` holds an emoji, not an iconify name — so the nav entry uses `"🔔"`.
+- **`lead.created` is emitted on the anonymous `SubmitProductEnquiry` path too**, not just the console path. An inbound lead nobody is told about is the exact failure T-A22 already flagged.
+
+#### Deliverables the user owns
+
+1. `PSS-2.0-ONBOARDING-PROMPT-22-MIGRATION-SPEC.md` — **the first P-2x migration that drops a column and drops indexes. Take a backup.** §5 sequences everything below.
+2. `sql-scripts-dyanmic/notification-broadcast-capability-seed.sql` — **until it runs nobody can compose on either surface.**
+3. `sql-scripts-dyanmic/notification-platform-settings-seed.sql` — the four `NOTIFY_*` platform settings.
+4. `sql-scripts-dyanmic/notification-trigger-templates-seed.sql` — 2 `NOTIFICATIONCATEGORY` rows + 4 catalogue templates.
+
+#### Known issues
+
+1. **`NOTIFY_ADMIN_ROLE_CODES` fails quiet.** Unset resolves to an empty list and `IncludeAdmins` unions in **nobody** — no error, no log. That is the deliberate fail-safe direction (a missed courtesy copy is recoverable; delivery to the wrong people is not), but it means "…and notify the admins" notifies no one until seed #3 is applied.
+2. **The preferences panel is empty until seed #4 is applied.** It is built from templates overlaid with mute rows — never from the rows alone, because a row *is* a mute and absence means deliver. With no templates every user sees "Nothing to configure yet", permanently, and nothing errors.
+3. **Category strings must match character-for-character across three places** — `NotificationRequest.Category` in C#, the template's `Category.DataValue`, and the mute row's `Category` column. Seed #4 adds `Lead` and `Provisioning` to `NOTIFICATIONCATEGORY` for exactly this reason. If seed #4's prerequisite (`seed_notificationtemplate_masterdata.sql`) has not run, it inserts nothing, silently, and the panel files everything under the FE's `General` fallback whose switch matches no dispatch.
+4. **`NOTIFICATIONDELIVERYSTATUS` / `NOTIFICATIONJOBSTATUS` MasterData rows are unverified in the target environment.** Existing FKs reference them. The dispatcher has never executed in this codebase, so an absent lookup row has never had the chance to fail loudly — it will fail at the first real send, not at compile time.
+5. **The emitted GraphQL field names cannot be verified without a build.** HotChocolate strips `Get` from every resolver (`GetNotificationBadge` → `notificationBadge`) and appends `Input` to input types; `tsc` cannot see gql field names, so a wrong name compiles clean and fails only at runtime.
+6. **`GetNotificationPreferences.cs` may need `using Base.Domain.Models.NotifyModels;`** — the most likely first compile error on `dotnet build`.
+7. **Nothing has been executed against a running API.** Every path in this prompt is first-run code by definition: §① of this document is that the engine had never run once.

@@ -283,3 +283,63 @@ Note in the header comment that `auth` holds Roles/Capabilities and `sett` holds
 ## §⑬ Build log
 
 _(Append one entry per session: date, what landed, deviations from this spec and why, known issues. Cap at the last 5 sessions — git holds the rest. Preserve the Known Issues list in full.)_
+
+### 2026-08-04 — T-A15 built (BE + FE + seed)
+
+**Landed — backend** (`PSS_2.0_Backend`, builds clean: `638 Warning(s) 0 Error(s)`):
+
+- DTOs — `PlatformCommunicationProviderResponseDto` (**no** `ProviderConfiguration`, **no** `WebhookSecret`; exposes `IsConfigured` / `HasWebhookSecret` instead), `PlatformCommunicationProviderUpsertDto`, `TestPlatformCommunicationProviderDto`, `PlatformCommunicationProviderTestResultDto`.
+- Queries — list (paginated, filterable by channel / provider type / active / search) + by-id.
+- Commands — Create, Update, Delete (soft), SetDefault, Test.
+- All resolvers `[CustomAuthorize("PLATFORM_COMMS", "PLATFORM_COMMS_MANAGE")]`. No `CompanyId`, no tenant context, no `IgnoreQueryFilters()` anywhere in the slice.
+
+**Landed — frontend** (`npx tsc --noEmit --incremental false` → **no output, exit 0**):
+
+- `domain/entities/ops-service/PlatformCommunicationProviderDto.ts` — types + `PLATFORM_COMMUNICATION_CHANNEL_OPTIONS`, `PLATFORM_COMMUNICATION_PROVIDER_TYPES`, `providerTypesForChannel()`.
+- `infrastructure/gql-queries/ops-queries/PlatformCommunicationProviderQuery.ts` and `gql-mutations/ops-mutations/PlatformCommunicationProviderMutation.ts` (create / update / delete / set-default / test).
+- `page-components/ops/communications/` — `comms-chips.tsx`, `comms-form-schemas.ts`, `comms-form-dialog.tsx`, `comms-test-dialog.tsx`, `platform-comms-list-page.tsx`, `index.ts`.
+- Route `app/[lang]/(master)/platform/communications/page.tsx` — added as a **sibling** of `billing/`, `dashboards/`, `gateways/`, `webhook-logs/`. Nothing else under `(master)/platform/` was touched (trap 8).
+
+**Landed — seed (written, NOT applied):** `sql-scripts-dyanmic/platform-comms-crud-menu-capability-seed.sql` — menu `PLATFORM_COMMS`, capability pair, `MenuCapabilities` (incl. `ISMENURENDER`), role grants, `sett."Grids"` header row. Idempotent, one transaction, VERIFY block after `COMMIT`.
+
+**Deviations from this spec, and why:**
+
+1. **`MenuUrl` is `/platform/communications`, with a leading slash** — §⑦ writes it without one, but every platform menu row already in the DB carries the slash (`/platform/billing`, `/platform/webhook-logs`). Matched the stored convention; noted in the seed header.
+2. **Role grants are PLATFORM_ADMIN + SUPERADMIN only** — narrower than the adjacent gateway seed, which also gives `PLATFORM_FINANCE` / `PLATFORM_SUPPORT` a VIEW. §⑧.4 says "the platform operator role **only**", and this is the one screen where a vendor credential is entered and a billable send is fired. Widen through Access Control if operations asks.
+3. **No `sett."Fields"` / `"GridFields"` rows** — §⑦ asks for grid registration "per house convention"; the convention for a developer-owned custom screen (precedent: `organizationbankaccount-menu-seed.sql`) is the `Grids` header row alone. The write-only credential JSON cannot be expressed by the generic RJSF form, so per-field metadata would be dead rows.
+4. **Capability gating uses `has("PLATFORM_COMMS")` / `has("PLATFORM_COMMS_MANAGE")`, not the hook's `canView`** — `usePlatformCapabilities().canView` is hardwired to `PLATFORM_TENANT_VIEW` and would have gated this screen on an unrelated capability.
+5. **Two empty/fallback states, not one** — §6.2 asks for the "no EMAIL provider" warning. Implemented as `noEmailSenderAtAll` (true empty state) *and* `emailMissingAmongRows` (a red banner when rows exist but none are EMAIL), the second guarded to an unfiltered single-page result set since a filtered page cannot prove the configuration.
+
+**No schema change.** No migration added, `ApplicationDbContextModelSnapshot.cs` untouched. No field was found missing.
+
+### 2026-08-04 (later) — credential entry converted from JSON to named fields
+
+The operator was being asked to author `ProviderConfiguration` as raw JSON. Operations staff do not know
+JSON, so the textarea is gone: the form now renders the discrete fields the chosen vendor actually needs
+and the **server** assembles the stored document.
+
+**Landed — backend** (`Base.Application` scoped build: `579 Warning(s) 0 Error(s)`):
+
+- New `Business/OpsBusiness/PlatformCommunicationProviders/PlatformCommunicationCredentialSchema.cs` — the single field registry (`Key`, `IsSecret`, `IsRequired` per provider type, keys taken verbatim from the consumers `SendGridConfiguration` / `PlatformSmsConfiguration` / `PlatformWhatsAppConfiguration`) plus `FieldsFor` / `MissingRequiredFields` / `Serialize` / `Split` / `Label`. It is the only place the JSON is built or taken apart.
+- `PlatformCommunicationCredentialDto` (30 properties; the property names **are** the JSON keys) replaces the upsert DTO's `ProviderConfiguration` string. The response DTO gained `Credential` + `SecretFieldsSet`.
+- Create validates required fields before writing; Update merges per field over the stored document. **Merge rule:** secret blank ⇒ unchanged (the form never held it), non-secret blank ⇒ cleared (the form *did* show it), `bool?`/`int?` null ⇒ unchanged. Unknown/legacy keys already in the document are preserved untouched. Missing-field errors name the **label**, never a value.
+
+**Landed — frontend** (`npx tsc --noEmit --incremental false` → **no output, exit 0**):
+
+- `PlatformCommunicationProviderDto.ts` — `PlatformCommunicationCredentialDto`, `PlatformCredentialFieldMeta`, the `PLATFORM_CREDENTIAL_FIELDS` registry (label / kind / required / secret per vendor) and `credentialFieldsForProviderType()`, mirroring the C# registry.
+- `PlatformCommunicationProviderQuery.ts` — selects `secretFieldsSet` and a `credential { … }` block listing **only** non-secret members.
+- `comms-form-schemas.ts` — nested `credentialSchema`; the `JSON.parse` refinement is replaced by a registry-driven required-field check that exempts a required secret already present in `secretFieldsSet`.
+- `comms-form-dialog.tsx` — per-vendor field group (password inputs for secrets, checkbox/number/textarea by `kind`), re-seeded when the provider type changes, and a `buildCredential()` submit payload that sends trimmed strings so a cleared non-secret actually clears.
+
+**Deviation — authorized by the user, overrides acceptance item 7:**
+
+6. **Acceptance item 7 ("no read path ever returns `ProviderConfiguration` … plaintext") is relaxed to secrets-only.** The user chose "secrets masked, rest readable" so the screen can show what is configured instead of forcing a full re-key on every edit. Non-secret members (Twilio Account SID, endpoint URLs, sender IDs, IP pool, tracking domain, sandbox flag, originators, from-numbers, WABA/phone-number IDs, Graph API version) are returned in plaintext. True secrets — SendGrid `ApiKey`, `TwilioAuthToken`, `VonageApiSecret`, `BirdApiKey`, `LocalApiKey`, `LocalApiSecret`, `CustomAuthValue`, Meta `AccessToken` — are still never returned, never selectable, and never logged; only their names appear in `SecretFieldsSet`. `WebhookSecret` is unchanged: still `HasWebhookSecret` only.
+
+**No schema change.** Values still land in the existing `ProviderConfiguration` column; no migration, no snapshot edit.
+
+**Known issues:**
+
+0. **Unrelated build break outside this slice:** `Base.API/EndPoints/Ops/Queries/LeadQueries.cs` lines 167 and 213 fail with CS0029 — `BaseApiResponse<IReadOnlyList<PlanOptionDto>>` / `<GatewayRouteDto>` cannot convert to `BaseApiResponse<IEnumerable<…>>` (from `ApiResponseHelper.ReturnObjectApiResponse(result.plans)` / `(result.gateways)`). It comes from the PROMPT-23 Lead slice, not T-A15, and was left untouched. The solution will not build until it is fixed.
+1. **Acceptance items 6, 14, 15 and 20 are unverified** — blank-credential-preserves-the-key, a real test-send delivering, the trap-4 wrong-credential test failing loudly, and the browser check of grid/form/badges/empty-state. None can be verified by a compiler; all require the seed applied and the API running. They are the first things to run in §⑫.
+2. **`Priority` is captured and displayed but consumed by nothing** — multi-provider failover is explicitly out of scope (§⑩). The column reads as if it does something. Left dormant per spec.
+3. **The legacy global SendGrid key in `appsettings` still wins nothing and loses nothing here** — the screen tells the operator about it but cannot see or migrate it. That migration is §⑫.4, user-owned.

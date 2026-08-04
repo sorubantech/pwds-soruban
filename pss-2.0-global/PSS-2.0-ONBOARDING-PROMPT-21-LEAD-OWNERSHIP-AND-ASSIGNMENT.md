@@ -421,4 +421,28 @@ auth."RoleCapabilities" grants:
 
 ## ⑩ Build log
 
-*(empty — not built)*
+### 2026-08-03 — built, all 14 steps of §④
+
+**Backend**
+
+| # | What | Where |
+|---|---|---|
+| 1 | `LeadAssignment` entity + EF config + `DbSet`; `Lead.AssignedByUserId` / `AssignedOn`, `Company.AccountManagerUserId`, `TenantProvisioningRun.OwnerUserId` | `Base.Domain/Models/OpsModels/`, `Base.Infrastructure/.../OpsConfigurations/` |
+| 3 | `AssignLead` command + validator + handler; `AssignLeads` bulk; both resolvers (`assignLead`, `assignLeads`) | `Base.Application/Business/OpsBusiness/Leads/Commands/AssignLead.cs`, `Base.API/EndPoints/Ops/Mutations/LeadMutations.cs` |
+| 4 | `OwnerUserId` removed from `LeadRequestDto`; Create/Update handlers no longer touch it; `OpsMappings` ignores it | `Base.Application/Schemas/OpsSchemas/LeadSchemas.cs`, `.../Leads/Commands/`, `OpsMappings.cs` |
+| 5 | `GetAssignableLeadOwners` + `assignableLeadOwners` resolver (incl. `RoleNames`, `OpenLeadCount`); shared `PlatformUserHelper` (staff predicate + display-name ladder) | `.../Leads/Queries/GetAssignableLeadOwners.cs`, `.../OpsBusiness/Shared/PlatformUserHelper.cs` |
+| 6 | `unassignedOnly` + `mine` on `GetLeads` (`mine` resolves from the JWT claim, never a client id); `GetLeadById` returns `AssignmentHistory` | `.../Leads/Queries/` |
+| 7 | `ProvisionTenant` stamps `Company.AccountManagerUserId` and `run.OwnerUserId` from the source lead's owner | `.../Tenants/Commands/ProvisionTenant.cs` |
+| 13 | `AccountManagerUserId` / `AccountManagerName` on both tenant DTOs; both handlers enrich the name via `PlatformUserHelper` (one bounded lookup per page) | `TenantSchemas.cs`, `GetTenants.cs`, `GetTenantById.cs` |
+
+**Frontend** — `LeadDto` (`AssignableUserDto`, assignment fields, no `ownerUserId` on the request), `LeadMutation`/`LeadQuery` (`assignLead`, `assignLeads`, `assignableLeadOwners`), and under `page-components/ops/leads/`: new `lead-assign-dialog.tsx` (searchable picker showing the role, `UNASSIGN = -1` sentinel → `null`, bulk = one dialog / one confirmation / N history rows, partial-failure toast), `lead-assignment-panel.tsx` (Sheet timeline), `lead-time.ts` (relative age + absolute UTC-rendered-local `title`); `lead-list-page.tsx` rewritten for the server-side My / Unassigned / All views, capability-driven landing view, page-scoped bulk selection, one-click "Assign to me", the muted **Unassigned** chip (no em-dash) and the Assigned-by / Assigned columns. `/ops/tenants` list + detail now show **Account manager** with the same chip.
+
+**Steps 2 & 8 — written, not run (user-owned):** `PSS-2.0-ONBOARDING-PROMPT-21-MIGRATION-SPEC.md`, `sql-scripts-dyanmic/lead-assignment-history-backfill.sql`, `sql-scripts-dyanmic/ops-lead-assign-capability-seed.sql`.
+
+**Step 14:** `npx tsc --noEmit --incremental false` → **exit 0, no diagnostics**. `dotnet build` not run per the rules — the backend compile is the user's.
+
+**Deviations from the spec, for review**
+1. The backfill uses `COALESCE(ModifiedDate, CreatedDate)` for `AssignedOn` where §3.7 suggested `Lead.CreatedDate` — a lead owned since creation is rare, and `ModifiedDate` is the closer approximation of when ownership was last touched. Change the one expression if you disagree.
+2. The synthetic backfill `Note` is longer than §3.7's `'Backfilled — pre-P-21 assignment, assigner unknown'`; it states explicitly that the row is reconstructed and its timestamp approximate, so no one later reads it as a real episode.
+
+**Still open:** Q1 (does `PLATFORM_SALES` get `PLATFORM_LEAD_ASSIGN`? — the seed follows §3.8 and says **no**; it is one row to add if you decide otherwise) and Q6 (previous-owner notification copy).
