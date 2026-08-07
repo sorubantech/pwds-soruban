@@ -32,27 +32,27 @@
 
 BEGIN;
 
--- ── 1. Features — the vocabulary (14 codes: 11 MODULE:* then 3 CHANNEL:*) ────────────
+-- ── 1. Features — the vocabulary (14 codes: 11 FEATURE:* then 3 CHANNEL:*) ────────────
 -- Keep in step with Base.Application/Interfaces/BillingCodes.cs -> FeatureCodes.All.
--- SortOrder groups MODULE:* (10-110) before CHANNEL:* (200-220), leaving gaps so a new
+-- SortOrder groups FEATURE:* (10-110) before CHANNEL:* (200-220), leaving gaps so a new
 -- code can be slotted between two existing ones without renumbering.
 INSERT INTO billing."Features"
   ("FeatureCode","FeatureName","Description","SortOrder","CreatedDate","IsActive","IsDeleted")
 SELECT v."FeatureCode", v."FeatureName", v."Description", v."SortOrder", now(), true, false
 FROM (VALUES
   -- Existing vocabulary (unchanged — these already drive PlanEntitlements).
-  ('MODULE:CONTACTS',       'Contacts',         'Contacts, families and the supporter record.',            10),
-  ('MODULE:DONATION',       'Donations',        'Donations, receipting, pledges and P2P fundraising.',      20),
-  ('MODULE:EVENT',          'Events',           'Event management, registration and attendance.',           30),
-  ('MODULE:VOLUNTEER',      'Volunteers',       'Volunteer records, shifts and hours.',                     40),
-  ('MODULE:MEMBERSHIP',     'Membership',       'Membership plans, subscriptions and renewals.',            50),
-  ('MODULE:CASE',           'Case Management',  'Beneficiary case management and service delivery.',        60),
-  ('MODULE:GRANT',          'Grants',           'Grant pipeline, tranches, expenses and reporting.',        70),
+  ('FEATURE:CONTACTS',       'Contacts',         'Contacts, families and the supporter record.',            10),
+  ('FEATURE:DONATION',       'Donations',        'Donations, receipting, pledges and P2P fundraising.',      20),
+  ('FEATURE:EVENT',          'Events',           'Event management, registration and attendance.',           30),
+  ('FEATURE:VOLUNTEER',      'Volunteers',       'Volunteer records, shifts and hours.',                     40),
+  ('FEATURE:MEMBERSHIP',     'Membership',       'Membership plans, subscriptions and renewals.',            50),
+  ('FEATURE:CASE',           'Case Management',  'Beneficiary case management and service delivery.',        60),
+  ('FEATURE:GRANT',          'Grants',           'Grant pipeline, tranches, expenses and reporting.',        70),
   -- NEW in P-17 — menu groups that had no feature code and were therefore never gated.
-  ('MODULE:FIELDCOLLECTION','Field Collection', 'Ambassadors, field receipt books and collection routes.',  80),
-  ('MODULE:AUTOMATION',     'Automation',       'Workflow automation, journeys and scheduled actions.',     90),
-  ('MODULE:PRAYERREQUEST',  'Prayer Requests',  'Prayer request intake, assignment and follow-up.',        100),
-  ('MODULE:INTELLIGENCE',   'Intelligence',     'Analytics, insights and AI-assisted decision support.',   110),
+  ('FEATURE:FIELDCOLLECTION','Field Collection', 'Ambassadors, field receipt books and collection routes.',  80),
+  ('FEATURE:AUTOMATION',     'Automation',       'Workflow automation, journeys and scheduled actions.',     90),
+  ('FEATURE:PRAYERREQUEST',  'Prayer Requests',  'Prayer request intake, assignment and follow-up.',        100),
+  ('FEATURE:INTELLIGENCE',   'Intelligence',     'Analytics, insights and AI-assisted decision support.',   110),
   -- Channels.
   ('CHANNEL:EMAIL',         'Email Channel',    'Outbound email campaigns and transactional email.',       200),
   ('CHANNEL:WHATSAPP',      'WhatsApp Channel', 'Outbound WhatsApp campaigns and templates.',              210),
@@ -72,41 +72,41 @@ WHERE NOT EXISTS (
 --   CRM_DASHBOARDS      — the GROUP stays visible; its LEAVES are mapped individually
 --                         below, so a FREE tenant still gets the dashboards it paid for
 --                         instead of losing the whole section.
---   CONTACTDASHBOARD    — every plan has MODULE:CONTACTS, so a row would be inert.
+--   CONTACTDASHBOARD    — every plan has FEATURE:CONTACTS, so a row would be inert.
 --   BILLING* / SETTING* / ACCESSCONTROL* — see header note 2.
 INSERT INTO billing."FeatureMenuMaps"
   ("FeatureCode","MenuCode","CreatedDate","IsActive","IsDeleted")
 SELECT v."FeatureCode", v."MenuCode", now(), true, false
 FROM (VALUES
   -- ── Carried over verbatim from the C# dictionary (12 rows) ──
-  ('MODULE:CONTACTS',       'CRM_CONTACT'),
-  ('MODULE:CONTACTS',       'CRM_FAMILY'),
-  ('MODULE:DONATION',       'CRM_DONATION'),
-  ('MODULE:DONATION',       'CRM_P2PFUNDRAISING'),
-  ('MODULE:EVENT',          'CRM_EVENT'),
-  ('MODULE:VOLUNTEER',      'CRM_VOLUNTEER'),
-  ('MODULE:MEMBERSHIP',     'CRM_MEMBERSHIP'),
-  ('MODULE:CASE',           'CRM_CASEMANAGEMENT'),
-  ('MODULE:GRANT',          'CRM_GRANT'),
+  ('FEATURE:CONTACTS',       'CRM_CONTACT'),
+  ('FEATURE:CONTACTS',       'CRM_FAMILY'),
+  ('FEATURE:DONATION',       'CRM_DONATION'),
+  ('FEATURE:DONATION',       'CRM_P2PFUNDRAISING'),
+  ('FEATURE:EVENT',          'CRM_EVENT'),
+  ('FEATURE:VOLUNTEER',      'CRM_VOLUNTEER'),
+  ('FEATURE:MEMBERSHIP',     'CRM_MEMBERSHIP'),
+  ('FEATURE:CASE',           'CRM_CASEMANAGEMENT'),
+  ('FEATURE:GRANT',          'CRM_GRANT'),
   ('CHANNEL:EMAIL',         'CRM_COMMUNICATION'),
   ('CHANNEL:SMS',           'CRM_SMS'),
   ('CHANNEL:WHATSAPP',      'CRM_WHATSAPP'),
   -- ── Bundled into an EXISTING code (no new plan row needed) ──
   -- Maintenance = the reference data behind contacts (types, sources, tags).
-  ('MODULE:CONTACTS',       'CRM_MAINTENANCE'),
+  ('FEATURE:CONTACTS',       'CRM_MAINTENANCE'),
   -- Certificates are issued off donations (80G / tax receipts).
-  ('MODULE:DONATION',       'CRM_CERTIFICATE'),
+  ('FEATURE:DONATION',       'CRM_CERTIFICATE'),
   -- ── NEW codes ──
-  ('MODULE:FIELDCOLLECTION','CRM_FIELDCOLLECTION'),
-  ('MODULE:AUTOMATION',     'CRM_AUTOMATION'),
-  ('MODULE:PRAYERREQUEST',  'CRM_PRAYERREQUEST'),
-  ('MODULE:INTELLIGENCE',   'CRM_INTELLIGENCE'),
+  ('FEATURE:FIELDCOLLECTION','CRM_FIELDCOLLECTION'),
+  ('FEATURE:AUTOMATION',     'CRM_AUTOMATION'),
+  ('FEATURE:PRAYERREQUEST',  'CRM_PRAYERREQUEST'),
+  ('FEATURE:INTELLIGENCE',   'CRM_INTELLIGENCE'),
   -- ── Dashboard LEAVES (the CRM_DASHBOARDS group itself stays unmapped) ──
-  ('MODULE:DONATION',       'DONATIONDASHBOARD'),
+  ('FEATURE:DONATION',       'DONATIONDASHBOARD'),
   ('CHANNEL:EMAIL',         'COMMUNICATIONDASHBOARD'),
-  ('MODULE:CASE',           'CASEDASHBOARD'),
-  ('MODULE:VOLUNTEER',      'VOLUNTEERDASHBOARD'),
-  ('MODULE:FIELDCOLLECTION','AMBASSADORDASHBOARD')
+  ('FEATURE:CASE',           'CASEDASHBOARD'),
+  ('FEATURE:VOLUNTEER',      'VOLUNTEERDASHBOARD'),
+  ('FEATURE:FIELDCOLLECTION','AMBASSADORDASHBOARD')
 ) AS v("FeatureCode","MenuCode")
 WHERE NOT EXISTS (
   SELECT 1 FROM billing."FeatureMenuMaps" m
@@ -118,10 +118,10 @@ WHERE NOT EXISTS (
 -- are untouched. Tier shape per PROMPT-17 §④:
 --
 --   Feature                  FREE   PLAN_50K   PLAN_100K   CUSTOM
---   MODULE:FIELDCOLLECTION   off    on         on          on
---   MODULE:AUTOMATION        off    off        on          on
---   MODULE:PRAYERREQUEST     off    off        on          on
---   MODULE:INTELLIGENCE      off    off        on          on
+--   FEATURE:FIELDCOLLECTION   off    on         on          on
+--   FEATURE:AUTOMATION        off    off        on          on
+--   FEATURE:PRAYERREQUEST     off    off        on          on
+--   FEATURE:INTELLIGENCE      off    off        on          on
 --
 -- Rows are written for OFF as well as ON: the plan-catalog matrix renders one row per
 -- code and treats a missing row as an explicit OFF, but an explicit false row is what
@@ -132,25 +132,25 @@ SELECT p."PlanId", v."FeatureCode", v."IsEnabled", now(), true, false
 FROM billing."Plans" p
 JOIN (VALUES
   -- FREE
-  ('FREE','MODULE:FIELDCOLLECTION', false),
-  ('FREE','MODULE:AUTOMATION',      false),
-  ('FREE','MODULE:PRAYERREQUEST',   false),
-  ('FREE','MODULE:INTELLIGENCE',    false),
+  ('FREE','FEATURE:FIELDCOLLECTION', false),
+  ('FREE','FEATURE:AUTOMATION',      false),
+  ('FREE','FEATURE:PRAYERREQUEST',   false),
+  ('FREE','FEATURE:INTELLIGENCE',    false),
   -- PLAN_50K
-  ('PLAN_50K','MODULE:FIELDCOLLECTION', true),
-  ('PLAN_50K','MODULE:AUTOMATION',      false),
-  ('PLAN_50K','MODULE:PRAYERREQUEST',   false),
-  ('PLAN_50K','MODULE:INTELLIGENCE',    false),
+  ('PLAN_50K','FEATURE:FIELDCOLLECTION', true),
+  ('PLAN_50K','FEATURE:AUTOMATION',      false),
+  ('PLAN_50K','FEATURE:PRAYERREQUEST',   false),
+  ('PLAN_50K','FEATURE:INTELLIGENCE',    false),
   -- PLAN_100K
-  ('PLAN_100K','MODULE:FIELDCOLLECTION', true),
-  ('PLAN_100K','MODULE:AUTOMATION',      true),
-  ('PLAN_100K','MODULE:PRAYERREQUEST',   true),
-  ('PLAN_100K','MODULE:INTELLIGENCE',    true),
+  ('PLAN_100K','FEATURE:FIELDCOLLECTION', true),
+  ('PLAN_100K','FEATURE:AUTOMATION',      true),
+  ('PLAN_100K','FEATURE:PRAYERREQUEST',   true),
+  ('PLAN_100K','FEATURE:INTELLIGENCE',    true),
   -- CUSTOM (all on by default; real values via billing.SubscriptionOverrides)
-  ('CUSTOM','MODULE:FIELDCOLLECTION', true),
-  ('CUSTOM','MODULE:AUTOMATION',      true),
-  ('CUSTOM','MODULE:PRAYERREQUEST',   true),
-  ('CUSTOM','MODULE:INTELLIGENCE',    true)
+  ('CUSTOM','FEATURE:FIELDCOLLECTION', true),
+  ('CUSTOM','FEATURE:AUTOMATION',      true),
+  ('CUSTOM','FEATURE:PRAYERREQUEST',   true),
+  ('CUSTOM','FEATURE:INTELLIGENCE',    true)
 ) AS v("PlanCode","FeatureCode","IsEnabled") ON v."PlanCode" = p."PlanCode"
 WHERE NOT EXISTS (
   SELECT 1 FROM billing."PlanEntitlements" pe

@@ -29,7 +29,7 @@
 --
 --  These are MARKETING COPY, hand-written, and that is the whole point. GetPublicPlanTeasers is
 --  forbidden from deriving a single bullet from billing."PlanEntitlements" or billing."PlanQuotas":
---  those tables carry the MODULE:* / CHANNEL:* feature codes and the meter codes the entitlement
+--  those tables carry the FEATURE:* / CHANNEL:* feature codes and the meter codes the entitlement
 --  gate is written in, and publishing them at an anonymous URL would hand a reader the internal
 --  shape of our packaging and our authorisation vocabulary. A bullet that says "up to 50,000
 --  contacts" is written by a human who checked the quota; it is never generated from the quota row.

@@ -1,5 +1,7 @@
 # BUILD PROMPT — Contact (#18) Detail Page: 1:1 Communication (Email live · SMS/WhatsApp coming soon)
 
+> **Status: ✅ BUILT — email phase complete (verified on disk 2026-08-05).** BE: `SendContactEmail.cs`, `ContactMutations.cs:228` (`sendContactEmail`), `ContactQueries.cs:155` (`contactCommunications`). FE: `ComposeEmailDrawer` + both gql files, reachable from `contact-sidebar.tsx:359` and `communication-tab.tsx:306`. SMS/WhatsApp remain visibly disabled ("Coming soon") as specified. **Do not re-run this prompt.**
+>
 > Paste this into a fresh session. Companion analysis: `PSS-2.0-CONTACT-1TO1-COMMS-PLAN-AND-REVIEW.md`.
 > **Start with `/plan-screens #18`** — this adds a new entity, which exceeds #18's registered ALIGN scope. Do NOT try to ship it through `/continue-screen`.
 

@@ -52,7 +52,7 @@ WHERE rm."RoleId" = 21
 ORDER BY m."OrderBy";
 
 -- A4. Aram's plan entitlements — this is what gates the CRM / ORGANIZATION / REPORTAUDIT modules
---     in ProvisionTenant Step 4b. If no MODULE:* rows come back enabled, that is a SEPARATE gap
+--     in ProvisionTenant Step 4b. If no FEATURE:* rows come back enabled, that is a SEPARATE gap
 --     in the plan catalog seed, not something this script fixes.
 SELECT s."SubscriptionId", s."Status", p."PlanCode", p."PlanName",
        pe."FeatureCode", pe."IsEnabled"

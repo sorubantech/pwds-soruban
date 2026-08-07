@@ -5,13 +5,13 @@
 -- DECIDED map in PSS-2.0-ONBOARDING-DQ4-MODULE-PLAN-MAP.md (decided 2026-07-24):
 --
 --   Feature / Meter        Type      FREE      PLAN_50K   PLAN_100K   CUSTOM
---   MODULE:CONTACTS        ent       on        on         on          on
---   MODULE:DONATION        ent       on        on         on          on
---   MODULE:EVENT           ent       off       on         on          on
---   MODULE:VOLUNTEER       ent       off       on         on          on
---   MODULE:MEMBERSHIP      ent       off       on         on          on
---   MODULE:CASE            ent       off       off        on          on
---   MODULE:GRANT           ent       off       off        on          on
+--   FEATURE:CONTACTS        ent       on        on         on          on
+--   FEATURE:DONATION        ent       on        on         on          on
+--   FEATURE:EVENT           ent       off       on         on          on
+--   FEATURE:VOLUNTEER       ent       off       on         on          on
+--   FEATURE:MEMBERSHIP      ent       off       on         on          on
+--   FEATURE:CASE            ent       off       off        on          on
+--   FEATURE:GRANT           ent       off       off        on          on
 --   CHANNEL:EMAIL          feat      on(cap)   on         on          on
 --   CHANNEL:WHATSAPP       feat      off       off        on          on
 --   CHANNEL:SMS            feat      off       off        on          on
@@ -29,7 +29,7 @@
 --     - PLAN_50K / PLAN_100K EMAILS/mo limits (50,000 / 200,000) are not pinned by DQ4 —
 --       the map says "plan limit" with no number. Adjust as needed.
 --
--- FeatureCode vocabulary NOTE: MODULE:* / CHANNEL:* are FREE STRINGS with NO FK to
+-- FeatureCode vocabulary NOTE: FEATURE:* / CHANNEL:* are FREE STRINGS with NO FK to
 --   auth.Modules (auth modules are coarse — CRM/SETTING/... with Guid keys). The P-03
 --   capability-∩-entitlement step will need an auth ModuleCode -> FeatureCode mapping layer.
 --
@@ -62,53 +62,53 @@ WHERE NOT EXISTS (
   SELECT 1 FROM billing."Plans" p WHERE p."PlanCode" = v."PlanCode"
 );
 
--- ── 2. PlanEntitlements (MODULE:* / CHANNEL:* booleans) ───────────────────────────────
+-- ── 2. PlanEntitlements (FEATURE:* / CHANNEL:* booleans) ───────────────────────────────
 INSERT INTO billing."PlanEntitlements"
   ("PlanId","FeatureCode","IsEnabled","CreatedDate","IsActive","IsDeleted")
 SELECT p."PlanId", v."FeatureCode", v."IsEnabled", now(), true, false
 FROM billing."Plans" p
 JOIN (VALUES
   -- FREE
-  ('FREE','MODULE:CONTACTS',   true),
-  ('FREE','MODULE:DONATION',   true),
-  ('FREE','MODULE:EVENT',      false),
-  ('FREE','MODULE:VOLUNTEER',  false),
-  ('FREE','MODULE:MEMBERSHIP', false),
-  ('FREE','MODULE:CASE',       false),
-  ('FREE','MODULE:GRANT',      false),
+  ('FREE','FEATURE:CONTACTS',   true),
+  ('FREE','FEATURE:DONATION',   true),
+  ('FREE','FEATURE:EVENT',      false),
+  ('FREE','FEATURE:VOLUNTEER',  false),
+  ('FREE','FEATURE:MEMBERSHIP', false),
+  ('FREE','FEATURE:CASE',       false),
+  ('FREE','FEATURE:GRANT',      false),
   ('FREE','CHANNEL:EMAIL',     true),
   ('FREE','CHANNEL:WHATSAPP',  false),
   ('FREE','CHANNEL:SMS',       false),
   -- PLAN_50K
-  ('PLAN_50K','MODULE:CONTACTS',   true),
-  ('PLAN_50K','MODULE:DONATION',   true),
-  ('PLAN_50K','MODULE:EVENT',      true),
-  ('PLAN_50K','MODULE:VOLUNTEER',  true),
-  ('PLAN_50K','MODULE:MEMBERSHIP', true),
-  ('PLAN_50K','MODULE:CASE',       false),
-  ('PLAN_50K','MODULE:GRANT',      false),
+  ('PLAN_50K','FEATURE:CONTACTS',   true),
+  ('PLAN_50K','FEATURE:DONATION',   true),
+  ('PLAN_50K','FEATURE:EVENT',      true),
+  ('PLAN_50K','FEATURE:VOLUNTEER',  true),
+  ('PLAN_50K','FEATURE:MEMBERSHIP', true),
+  ('PLAN_50K','FEATURE:CASE',       false),
+  ('PLAN_50K','FEATURE:GRANT',      false),
   ('PLAN_50K','CHANNEL:EMAIL',     true),
   ('PLAN_50K','CHANNEL:WHATSAPP',  false),
   ('PLAN_50K','CHANNEL:SMS',       false),
   -- PLAN_100K
-  ('PLAN_100K','MODULE:CONTACTS',   true),
-  ('PLAN_100K','MODULE:DONATION',   true),
-  ('PLAN_100K','MODULE:EVENT',      true),
-  ('PLAN_100K','MODULE:VOLUNTEER',  true),
-  ('PLAN_100K','MODULE:MEMBERSHIP', true),
-  ('PLAN_100K','MODULE:CASE',       true),
-  ('PLAN_100K','MODULE:GRANT',      true),
+  ('PLAN_100K','FEATURE:CONTACTS',   true),
+  ('PLAN_100K','FEATURE:DONATION',   true),
+  ('PLAN_100K','FEATURE:EVENT',      true),
+  ('PLAN_100K','FEATURE:VOLUNTEER',  true),
+  ('PLAN_100K','FEATURE:MEMBERSHIP', true),
+  ('PLAN_100K','FEATURE:CASE',       true),
+  ('PLAN_100K','FEATURE:GRANT',      true),
   ('PLAN_100K','CHANNEL:EMAIL',     true),
   ('PLAN_100K','CHANNEL:WHATSAPP',  true),
   ('PLAN_100K','CHANNEL:SMS',       true),
   -- CUSTOM (all on by default)
-  ('CUSTOM','MODULE:CONTACTS',   true),
-  ('CUSTOM','MODULE:DONATION',   true),
-  ('CUSTOM','MODULE:EVENT',      true),
-  ('CUSTOM','MODULE:VOLUNTEER',  true),
-  ('CUSTOM','MODULE:MEMBERSHIP', true),
-  ('CUSTOM','MODULE:CASE',       true),
-  ('CUSTOM','MODULE:GRANT',      true),
+  ('CUSTOM','FEATURE:CONTACTS',   true),
+  ('CUSTOM','FEATURE:DONATION',   true),
+  ('CUSTOM','FEATURE:EVENT',      true),
+  ('CUSTOM','FEATURE:VOLUNTEER',  true),
+  ('CUSTOM','FEATURE:MEMBERSHIP', true),
+  ('CUSTOM','FEATURE:CASE',       true),
+  ('CUSTOM','FEATURE:GRANT',      true),
   ('CUSTOM','CHANNEL:EMAIL',     true),
   ('CUSTOM','CHANNEL:WHATSAPP',  true),
   ('CUSTOM','CHANNEL:SMS',       true)

@@ -236,8 +236,160 @@ Whichever is chosen must be stated on the pricing page, because the tenant will 
 
 ---
 
+## ⑨ Shared platform sender ("BYO provider **or** ours") — NOTED, NOT BUILT
+
+**Raised 2026-08-05:** *"some client not have email providers account — that time they want expect to use our accounts with dynamic from name and from email … if client have provider means they can configure or else they can use our configured providers like send grid."*
+
+**Verdict: valid, worth building, and half of it is already happening — by accident rather than by design.**
+
+**DECIDED 2026-08-05 — no implicit fallback, anywhere:** *"no fallback buddy — everything need to work configuration based. each tenant management need to configure provider and else select our provider then only we need to send. then the fall back also they need to configure — otherwise we no need to send. email sending configuration section area we need to show the warning … 'please configure your email communications providers'."*
+
+**The rule: sending is fail-closed. An unconfigured tenant does not send.** The `appsettings` fallback at `EmailTemplateService.cs:131/248/359` is **deleted**, not improved. Both the primary provider *and* any failover provider are explicit tenant choices. Choosing our shared sender is itself a configuration act, never a default that happens when the tenant does nothing.
+
+### ⑨.1 What the code does today — verified on disk 2026-08-05
+
+| Where | Behaviour |
+|---|---|
+| `Base.Infrastructure/Services/EmailTemplateService.cs:169-237` | Tenant path calls `GetCompanyEmailProvidersAsync(companyId)` and uses the active provider when `DefaultFromEmail` is set. |
+| `EmailTemplateService.cs:237` | No active provider → logs *"No active CompanyEmailProvider for CompanyId={CompanyId}; using global email key"*. |
+| `EmailTemplateService.cs:248-258` | **Falls through to the GLOBAL `appsettings` SendGrid key and sends anyway.** The send does not fail. |
+| `EmailTemplateService.cs:359-370` | Same fallback, duplicated for the composed-email path. |
+| `EmailTemplateService.cs:131` | Same fallback again on the platform path. Three copies of one decision. |
+| `Base.Infrastructure/Repositories/Email/EmailProviderConfigRepository.cs:14` | Provider lookup is strictly `CompanyId == companyId`. **There is no notion of a shared or platform-owned provider row.** |
+| `Base.Domain/Models/NotifyModels/CompanyEmailProvider.cs` | 40 properties. **No flag distinguishing "tenant's own account" from "platform shared sender".** |
+
+**So tenants with no provider are already sending on our SendGrid key.** The capability exists; the controls do not.
+
+### ⑨.2 Why the current accidental behaviour is unsafe
+
+| ID | Gap | Consequence |
+|---|---|---|
+| **P-1** | The fallback is silent — a log line and nothing else. | No query answers *"which tenants are sending on our key?"* Cost is unattributable. |
+| **P-2** | **Unmetered.** `[MeteredResource(MeterCodes.Emails, MeterTypes.Flow)]` appears on exactly one command (`SendTestEmail.cs:11`). See §④. | A tenant on a 1,000-email plan can send 100,000 **on our account**. We pay the bill. This is the commercial hole. |
+| **P-3** | From-address is whatever `render.TemplateFrom` contains — no verification, no ownership check. | Tenant A can send as Tenant B. Trivially. |
+| **P-4** | No verified-sender or authenticated-domain requirement on the shared key. | Arbitrary from-addresses on one shared key → spam complaints land on **our** sending reputation. **One bad tenant degrades deliverability for every tenant on the key.** This is the operational hole. |
+| **P-5** | The fallback reads `appsettings`, not `ops.PlatformCommunicationProviders` — which is built and has an `EMAIL` channel row. | Two sources of truth for one credential. Same root cause as the silent-no-mail platform bug (see PROMPT-08). |
+| **P-6** | Nothing in the UI tells a tenant whose account they are on. | The tenant cannot make an informed choice, and cannot be upsold off it. |
+
+### ⑨.3 The resolution rule — explicit, ordered, fail-closed
+
+Replaces every `appsettings` fallback. One resolver, used by all three send paths.
+
+```
+resolve(companyId):
+  rows = CompanyEmailProviders
+           .Where(CompanyId == companyId && IsActive && !IsDeleted)
+           .OrderBy(Priority)                    // column already exists
+  for row in rows:
+      if row.SenderMode == OWN:
+          credential = decrypt(row.ProviderConfiguration)
+      else:                                       // PLATFORM_SHARED
+          credential = IPlatformCommunicationProviderResolver
+                         .GetDefaultAsync(EMAIL)  // ops.PlatformCommunicationProviders
+          if credential == null:  continue        // platform mis-config → try next row
+      if row.SendingIdentity not verified:  continue
+      return (row, credential)
+
+  return NOT_CONFIGURED                           // ← do NOT send. No appsettings. No default.
+```
+
+Four properties that matter:
+
+1. **`Priority` is the failover chain.** The column already exists on `CompanyEmailProvider` and the screen already exposes it. **A "fallback provider" is just a second row with `Priority = 2`** — it is configured, visible, and tenant-owned, exactly as asked. No new column, no hidden behaviour.
+2. **`PLATFORM_SHARED` is a row, not an absence of rows.** The tenant must actively create it. Doing nothing yields `NOT_CONFIGURED`, never our key.
+3. **A single resolver, called from all three sites** (`:131`, `:248`, `:359`). Today the fallback decision is written out three separate times, which is why it drifted. Collapse it.
+4. **`NOT_CONFIGURED` is a real return value**, not an exception swallowed by the existing `catch` at `:242`. That catch currently converts *any* provider failure into a silent global-key send — it must stop doing that.
+
+### ⑨.4 What happens to an email that cannot be sent
+
+**Park it, never drop it.** Write the row to `EmailSendQueue` with a blocked status and a reason code, and surface a count. Silently discarding a donation receipt is worse than not sending it.
+
+| Reason code | Meaning | Tenant sees |
+|---|---|---|
+| `NO_PROVIDER_CONFIGURED` | Zero active rows | Banner: *"Email sending is not configured. Please configure your email communication provider."* |
+| `SENDER_NOT_VERIFIED` | Row exists, from-address unverified | Banner naming the address and the verification step |
+| `PLATFORM_PROVIDER_UNAVAILABLE` | Row is `PLATFORM_SHARED` but `ops` has no active `EMAIL` row | Tenant-facing: *"temporarily unavailable"*. **Platform-facing: alert.** Tenant did nothing wrong |
+| `QUOTA_EXCEEDED` | L1 plan allowance spent | Upgrade prompt (§④) |
+| `CAP_EXCEEDED` | L2 shared-sender cap hit | Existing L2 language |
+
+Queued rows are retryable: once the tenant configures a provider, a resend action drains the backlog. That turns fail-closed from a data-loss risk into a recoverable delay.
+
+### ⑨.5 ⚠️ The chicken-and-egg — this is the thing that will bite
+
+**A brand-new tenant has zero `CompanyEmailProvider` rows at the moment provisioning tries to send its welcome and activation email.** Under fail-closed, that email does not send — so the first admin never receives credentials and **cannot log in to configure the provider that would have let the email send.** The tenant is bricked at birth.
+
+`ProvisionTenant` Step 9 `SEND_WELCOME` is directly exposed. So are password reset and user activation for any tenant that has not configured yet.
+
+Three ways out:
+
+| Option | How | Verdict |
+|---|---|---|
+| **A. Provisioning seeds a `PLATFORM_SHARED` row** at a new Step 6b, before Step 9. | New tenants start on our sender explicitly — a real, visible, tenant-owned row they can see and replace. | ✅ **Recommended.** Preserves fail-closed (the row exists, it was configured — by provisioning, on the tenant's behalf) and keeps onboarding working. |
+| **B. Platform-origin mail bypasses tenant resolution** and always uses `ops.PlatformCommunicationProviders`. | Welcome/activation/reset are *platform* messages about the account, not *tenant* messages to donors. Arguably they were never tenant mail. | ✅ Also sound, and complements A. **Do both**: A for tenant mail, B for account mail. |
+| **C. Accept the breakage** and require the platform to send credentials out-of-band. | — | ❌ Unworkable. |
+
+**Decision needed — see Q12.** Nothing else in §⑨ can be built until this is settled.
+
+### ⑨.6 UI — the warning the user asked for
+
+On the email configuration screen (#28), above every other card, driven by resolver state — not by a client-side guess:
+
+| State | Banner | Tone |
+|---|---|---|
+| No active row | **"Email sending is not configured."** *No emails will be sent — receipts, campaigns, and notifications are all blocked. Configure a provider or select PeopleServe's shared sender to start sending.* + primary action button | 🔴 destructive, not dismissible |
+| Row exists, sender unverified | *"Verify `x@y.org` before sending."* + verify action | 🟠 warning |
+| Only one active row | *"No failover provider. If this provider fails, sending stops."* + add-failover action | 🟡 informational, dismissible |
+| Configured + verified | Provider name, mode (Own / PeopleServe shared), volume vs cap | ✅ neutral |
+
+Extend the same treatment to **SMS (#157)** and **WhatsApp (#34)** — all three screens carry the identical banner component, since all three channels are equally silent when unconfigured today.
+
+**Also needed:** a global indicator outside the settings screen. An admin who never opens Settings will not see the banner and will not know why receipts stopped. Put a badge on the Communications menu, and block campaign send with the same message rather than failing at send time.
+
+### ⑨.7 Full build shape
+
+1. **`SenderMode`** on `CompanyEmailProvider` — `OWN` | `PLATFORM_SHARED`. One nullable string/enum column. Existing rows backfill to `OWN`.
+2. **The §⑨.3 resolver**, replacing all three fallback sites. `IEmailProviderResolver.ResolveAsync(companyId)` returning provider + credential + reason code.
+3. **Delete** the `appsettings` SendGrid path and the catch-all at `:242` that silently reroutes to it. **This is the change that enforces the decision — everything else is scaffolding around it.**
+4. In `PLATFORM_SHARED`, the tenant supplies **from-name and from-email only**. Credentials resolve from `ops`, are never written to `ProviderConfiguration`, never returned to the client.
+5. **From-address verification mandatory before first send** — owned authenticated domain, or an address on our domain with the tenant's as reply-to. Closes P-3, P-4.
+6. **Metering mandatory** on the shared path (§④, §⑥ Q1).
+7. **Per-tenant cap + bounce/spam cut-off, same release.** Reuse `HourlyEmailLimit`/`DailyEmailLimit`/`MonthlyEmailLimit` (platform-set, tenant-read-only in shared mode) and the unused `BounceRate`/`SpamRate` columns for auto-suspend. **Without this, P-4 is live.**
+8. `EmailSendQueue` blocked-status + reason code + resend-backlog action (§⑨.4).
+9. The §⑨.6 banners on all three screens, plus the menu badge and the campaign-send pre-check.
+10. Provisioning Step 6b per §⑨.5 Option A, and platform-origin routing per Option B.
+11. Platform-side view: every tenant, its mode, its volume. Answers P-1.
+
+### ⑨.8 Why it is worth doing
+
+It removes the largest onboarding blocker. A charity that must open and verify a SendGrid account before sending a single receipt will stall during trial. Shared sender turns that into a choice; metering turns the shared send into a plan lever rather than an unpriced cost. Fail-closed turns "why did our receipts stop?" — currently unanswerable — into a banner that names the cause.
+
+### ⑨.9 Sequencing — do not build this first
+
+| Order | Item | Why |
+|---|---|---|
+| 1 | Answer **Q12** (§⑨.5) | Ship fail-closed without it and every newly provisioned tenant is bricked. Hard blocker. |
+| 2 | §④ metering (§⑥ Q1, Q2) | Shared sending without metering is an uncapped bill on our account. P-2 alone is worse than the status quo. |
+| 3 | R1 — apply PROMPT-08's migration + seed | `ops.PlatformCommunicationProviders` must hold an active `EMAIL` row, or **every** `PLATFORM_SHARED` tenant resolves to `PLATFORM_PROVIDER_UNAVAILABLE` at once. |
+| 4 | Items 7, 8 — cap, bounce cut-off, queue-and-park | Must land in the same release as the feature, never after. |
+| 5 | Items 1–5, 9, 10, 11 | The feature proper. |
+| 6 | Flip fail-closed on **last** | Steps 1–5 make configuration possible and visible; only then is it fair to stop sending. Land the banners at least one release before the enforcement. |
+
+### ⑨.10 New open questions
+
+- **Q12 — BLOCKING.** The §⑨.5 chicken-and-egg: provisioning seeds a `PLATFORM_SHARED` row (A), platform-origin mail bypasses tenant resolution (B), or both? Recommendation: **both**.
+- **Q13 — Migration of existing tenants.** Every tenant sending on the global key today breaks the moment fail-closed lands. Do we (a) auto-create a `PLATFORM_SHARED` row for every tenant with no provider, (b) notify and give a deadline, or (c) both? Recommendation: **(c)** — auto-create so nothing breaks, notify so they choose deliberately. **Needs a one-off backfill script; count the affected tenants before deciding.**
+- **Q8** — Is shared sender on every plan, or is it a paid feature? (Charging for BYO is backwards; gating shared sender by plan is defensible. Ties to §⑥ Q1.)
+- **Q9** — In shared mode: from-address on **our** domain (best deliverability, weakest branding) or the tenant's verified domain (best branding, needs DKIM/SPF onboarding)? Recommendation: **allow both**, default to ours, sell domain authentication as the upgrade.
+- **Q10** — Does fail-closed and shared sending extend to **SMS** and **WhatsApp**? Fail-closed and the banners: **yes, all three**. Shared *sending*: **email only** — SMS costs real money per unit and WhatsApp needs a Meta WABA per business.
+- **Q11** — Shared-sender cap exceeded: hard block or queued-and-delayed? (SMS auto-pauses; email has no equivalent.) Note this is `CAP_EXCEEDED`, distinct from `QUOTA_EXCEEDED`.
+- **Q14** — Does fail-closed apply to **transactional** mail (password reset, activation) as strictly as to campaigns? Blocking a password reset locks a user out permanently. Recommendation: route all account-level mail through Option B so the question does not arise.
+
+---
+
 ## ⑧ Build log
 
 | Date | Who | What |
 |---|---|---|
 | 2026-08-04 | agent | Document created. Review + plan only; nothing built. Verified all §⓪ rows on disk. |
+| 2026-08-05 | agent | Added §⑨ shared platform sender. Verified the `appsettings` fallback at `EmailTemplateService.cs:248/359/131`, the strict `CompanyId ==` lookup at `EmailProviderConfigRepository.cs:14`, and the absence of any sender-mode flag on `CompanyEmailProvider`. Nothing built. |
+| 2026-08-05 | agent | **Design correction — fail-closed.** User: *"no fallback buddy — everything need to work configuration based."* Rewrote §⑨.3–⑨.10: implicit `appsettings` fallback is **deleted**, not improved; explicit `Priority`-ordered failover (column already exists — no new column); unsendable mail parks in `EmailSendQueue` with a reason code; configuration-warning banners on #28/#157/#34. Recorded the **provisioning chicken-and-egg** (Step 9 `SEND_WELCOME` fires before any provider exists) as new blocking **Q12**, and existing-tenant cutover as **Q13**. Nothing built. |

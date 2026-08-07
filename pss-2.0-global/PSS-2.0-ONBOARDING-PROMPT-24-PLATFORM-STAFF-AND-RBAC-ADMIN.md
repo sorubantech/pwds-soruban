@@ -665,11 +665,175 @@ it is marked **[decision]**.
     tenant list's path on the reasoning that a hidden container owns no route. That was wrong: `MenuUrl` is
     the identity the nav builder and the sidebar active-state matcher key on, so two menus sharing one path
     are indistinguishable — the wrong item highlights and any url→menu lookup resolves to whichever row it
-    reads first. It now has its own namespace. No Next.js route answers it and none is needed while
-    `IsVisible = false`; the real surface is the `/ops/tenants/{companyId}` → Access tab. If the menu is ever
-    made visible, the route must be added first. §1 of the seed carries a narrowly-scoped `UPDATE` to repair
+    reads first. It now has its own namespace. §1 of the seed carries a narrowly-scoped `UPDATE` to repair
     a database where the earlier version was already applied — the `INSERT` is `NOT EXISTS`-guarded on
     `MenuCode` and would not have corrected it.
+46. **`/ops/tenant-access` is a real page, and the menu is `IsVisible = true`.** The first cut left the menu
+    hidden and routeless, on the reasoning that the surface it governs is a TAB whose `companyId` is not
+    knowable from a menu row. In practice that produced a menu that 404s, which is a bug however it is
+    justified. The route now renders `TenantAccessLandingPage` — a tenant PICKER whose rows deep-link to
+    `/ops/tenants/{companyId}?tab=access`. It deliberately does **not** duplicate the matrix: two places that
+    can override a tenant's permissions would mean two audit paths to keep honest. It is gated on
+    `PLATFORM_TENANT_ACCESS` / `PLATFORM_TENANT_ACCESS_VIEW`, not `PLATFORM_TENANT_VIEW` — permission to
+    browse tenants is not permission to read their permissions. To make the deep link work,
+    `tenant-detail-page.tsx` became a controlled `<Tabs value onValueChange>` that seeds from
+    `window.location.search` (not `useSearchParams`, which would force a Suspense boundary at build) and
+    writes back with `history.replaceState`, so tab changes cost no navigation, no refetch and no history
+    entry. The fallback-to-overview effect waits on `capsSettled` — all four `usePlatformCapabilities` reads
+    — so a deep link to `?tab=access` is not bounced before its gate resolves. Seed §1 flips `IsVisible` and
+    carries a second repair `UPDATE` for an already-applied database.
+47. **NEW seed `platform-menu-capability-backfill-seed.sql` — the platform role matrix was showing only two
+    of its ten rows.** Reported symptom: Billing & Gateways and Communications appear; Leads, Tenants, Plans,
+    Audit, Staff & Access and Tenant Access Control do not. Cause is a drift between two tables that nothing
+    forces to agree: `PlatformRoleMatrixBuilder` builds ROWS from `auth."MenuCapabilities"` and skips any menu
+    with zero of them, while authorization reads `auth."RoleCapabilities"` and never consults MenuCapabilities
+    at all. `ops-platform-rbac-seed.sql` wrote the menus, capabilities and grants but not one MenuCapability —
+    it did not need to, so the screens all worked and only the admin surface was blind. The later seeds
+    (billing, gateways, comms, notifications) did write them; those are exactly the two rows that showed. The
+    fix derives the missing pairs from the grants that already exist (§1), adds the pairs no role holds yet
+    (§2 — a capability nobody has been granted leaves nothing to derive from and would stay permanently
+    ungrantable), and repairs `NULL` `IsDeleted`/`IsActive`, which the builder's `mc.IsDeleted == false` test
+    drops as silently as a missing row (§3, §4). It writes **zero** `RoleCapabilities` rows: MenuCapabilities
+    says what a menu *offers*, not who *has* it, so no role gains or loses anything. VERIFY §3 pins that down
+    with a before/after grant count.
+
+### Platform staff means platform staff (session 5)
+
+48. **[decision] Tabs 3 (Plan Baselines) and 4 (Tenants & Push) were REMOVED from `/platform/staff`.** §②
+    specifies both; the user does not want either surface. `/platform/staff` is now two tabs — staff ·
+    platform role access. Deleted with them, as a closed unreferenced cluster: `plan-baseline-tab.tsx`,
+    `tenant-push-tab.tsx`, `capability-rollout-panel.tsx`, `rollout-history-panel.tsx`, and their four
+    `index.ts` re-exports. **The backend is untouched** — `SavePlanBaseline`, the baseline queries,
+    `IPlanMenuScope` and `plan-role-baseline-bootstrap-seed.sql` still feed provisioning
+    (`Step4_SeedCapabilitiesAsync` throws when a plan has no baseline, INV-13), so removing the handlers
+    would break tenant creation. What is gone is the UI that edited them; baselines are seed-managed until
+    an editor is asked for again. `PLATFORM_RBAC_ROLLOUT` is now a capability with no surface;
+    `PLATFORM_RBAC_TEMPLATE_EDIT` still drives the platform role matrix's edit mode.
+49. **Membership is now `IsPlatform || SUPERADMIN`, not `Role.CompanyId IS NULL`.** Reported symptom: tab 1
+    listed tenant staff, business admins included. `BUSINESSADMIN` and `SYSTEMROLE` are company-less
+    **tenant** system roles, so the old predicate admitted every one of their holders — platform staff or
+    tenant staff, never both (⚠ Rule 6), and this screen shows only the former. `SUPERADMIN` has to be named
+    explicitly because it is deliberately NOT flagged `IsPlatform` (that flag is what tenant matrices use to
+    exclude platform roles, and SUPERADMIN must stay a read-only column there — dev 40). One shared test,
+    `PlatformStaffHelper.HoldsPlatformRoleAsync`, now backs `GetPlatformStaff` (both the base query and the
+    page role lookup, kept character-identical so no row can render with an empty role list) and all four
+    tab-1 commands that gate on "is this account platform staff": update, set-active, resend-invite, unlock.
+    `InvitePlatformStaff` already went through `ResolvePlatformRolesAsync` and was correct.
+    ⚠ **DB prerequisite:** if migration `Add_PlatformStaffRbacAdmin` and `platform-staff-rbac-seed.sql` §1
+    (`UPDATE auth."Roles" SET "IsPlatform" = true …`) have not been applied, `IsPlatform` is false on every
+    row and this list is **empty**. That is the correct failure, not a regression.
+50. **Latent ⚠ Rule 7 hole closed in `UpdatePlatformStaff`.** Now that SUPERADMIN rows legitimately appear on
+    the list and are editable, the replace-the-whole-role-set loop would have retired the SUPERADMIN
+    assignment on **every save** — the picker never offers SUPERADMIN, so it can never be in
+    `resultingRoleIds`, so it always fell into the retire sweep. Its role ids are now resolved once and
+    excluded from that sweep.
+51. **[deliberately not changed] `PlatformUserHelper` keeps the broad `CompanyId IS NULL` definition.** It
+    drives control-plane host gating and the P-22 notification fan-out; narrowing it would change who can
+    reach the admin host and who receives platform mail. Different question, wider blast radius, separate
+    decision.
+52. **Both tab-1 actions were dead for a client-side reason, not a GraphQL one.** Reported symptom: Edit and
+    Invite operator both do nothing. Every field name had already been verified against the schema (session
+    2). The defect: `platform-staff-tab.tsx` passed `rolesData?.result?.data?.roles ?? []` — an unmemoized
+    fallback that is a **brand-new array on every render** whenever the roles query is unresolved or null —
+    into the dialog, whose reset effect depended on that array's *identity*. Every render re-fired
+    `form.reset()`; `form.watch()` (unargumented) re-rendered on every keystroke; so the form wiped itself
+    continuously, `formState.isValid` never became true, and the submit button — correctly gated on
+    `isValid` — stayed disabled in both modes. Fixed on both sides: the array is memoized at the source, the
+    effect keys on `staff?.userId` + a derived `roleOptionKey` string rather than references, and the watch
+    narrowed to `"roleIds"`. Two amber panels now name the legitimate dead-ends instead of leaving a button
+    disabled for invisible reasons — no platform roles configured (apply the seed) and this row holds a
+    non-platform role (not editable here).
+53. **The dialog was also missing its `FormProvider`, which threw on open.** `Cannot destructure property
+    'getFieldState' of useFormContext(...) as it is null`, from `useFormField` in
+    `common-components/molecules/Form`. Passing `control` to each field is only half the contract: the shared
+    field chrome (label, error text) reads `useFormContext()`, so the whole subtree has to sit inside
+    `<FormProvider {...form}>` — as every other ops dialog does. `tsc` cannot catch this; the context is typed
+    non-null and the failure is a runtime destructure. Swept the rest of `ops/`: the only other file importing
+    `form-fields` without a provider is `platform-webhook-logs-page.tsx`, and it uses `FormSelect` standalone
+    (`value`/`onChange`, no `control`), which does not take that path.
+54. **`FormMultiSelect` nested two `<button>`s inside its own trigger button — a hydration error, and it is a
+    SHARED component.** Ticking "Platform roles" reported `<button> cannot be a descendant of <button>`. Radix
+    renders `PopoverTrigger asChild` as the `<button>`, and the per-badge remove control and the clear-all
+    control were `<button>`s living inside it. Both are now `<span role="button" tabIndex={0}>` with an
+    explicit `onKeyDown` that treats Enter and Space as activation (`activateOnKey`), because a span gets no
+    keyboard behaviour for free; the two handlers widened from `React.MouseEvent` to `React.SyntheticEvent` so
+    click and key paths share them. ⚠ The edit is in
+    `custom-components/form-fields/FormMultiSelect.tsx` — **every screen using `FormMultiSelect` is affected**,
+    not just P-24. The markup was already invalid everywhere; only this screen happened to surface it.
+55. **Every row action on the staff grid fired blind — no confirm, no spinner, no guard.** `run()` toasted and
+    refetched but tracked no pending state, and all three `useMutation` loading flags were discarded at
+    destructure, so nothing could render in-flight. Resend was the worst case: it fires instantly, and a
+    double-click mailed two invitations where the second silently invalidated the link in the first. `run()`
+    now takes a `busyKey` (`${action}:${userId}`), refuses to start while another action is in flight, and
+    drives a `ph:spinner animate-spin` on the button it belongs to while disabling the rest of the row. Resend
+    gained an `AlertDialog` modelled on the Deactivate one, worded around the real consequence — the older
+    link stops working. And `run()`'s success argument accepts a callback, because the backend returns
+    `ResendPlatformStaffInviteResult(bool invitationSent)`: `success: true` with `data.invitationSent: false`
+    means the account is fine but the mail did not leave, and the old unconditional "Invitation re-sent" toast
+    sent the operator off to wait for an email that was never sent. That case is now a `toast.warning` naming
+    the email provider as the thing to check. Unlock / Reactivate / Deactivate got the same busy treatment.
+56. **Every refusal this screen can produce rendered as a generic fallback.** "Could not deactivate this
+    operator." was not a backend failure — the backend had said exactly why. `BaseApiResponse`'s failure
+    factories (`Error`, `PutError`, …) all set `Message = ""` and put the reason in `ErrorDetails`, and the
+    ops mutations catch every exception into `BaseApiResponse<T>.Error(ex.Message)` — so a business refusal
+    arrives as `success: false` + `errorDetails`, never as a GraphQL `errors[]`. The FE read
+    `payload?.message || fallback`, so `SELF_DEACTIVATION`, `LAST_PLATFORM_ADMIN`, `PLATFORM_ROLE_REQUIRED`
+    and `TENANT_USER` were all invisible. Now `payload?.errorDetails || payload?.message || fallback` in
+    `platform-staff-tab.tsx` (`run()`) and in both toasts of `platform-staff-form-dialog.tsx`. ⚠ The same
+    `?.message ||` pattern exists at **40 sites across 24 files** under `page-components/ops` — left alone
+    pending a decision, but every one of them is silently swallowing its backend's reason.
+57. **`LAST_PLATFORM_ADMIN` fired against a live SUPERADMIN, locking a role in permanently.** With dev 56
+    fixed the real refusal became visible: deactivating the only `PLATFORM_ADMIN` was refused while the
+    operator doing it was signed in as `SUPERADMIN`. Not a capability gap — `[CustomAuthorize("PLATFORM_STAFF",
+    "PLATFORM_STAFF_MANAGE")]` passed and the command reached its own business guard.
+    `PlatformStaffHelper.CountActivePlatformAdminsAsync` (and the `wasAdmin` probe in
+    `EnsureNotLastPlatformAdminAsync`) filtered on `RoleCode == "PLATFORM_ADMIN"` alone, so SUPERADMIN
+    holders were not counted as rescuers and the count could never leave 0 — contradicting the guard's own
+    premise, which is "nobody would be left who can invite anyone".
+    **The guard now asks RBAC instead of naming roles**, which was the user's correction and is the right
+    fix: authority is a capability, so "who can still administer staff tomorrow" is a live, `HasAccess`
+    grant of `PLATFORM_STAFF_MANAGE` on menu `PLATFORM_STAFF` — the same pair the endpoints declare in
+    `[CustomAuthorize]`. Widening the role list to `PLATFORM_ADMIN || SUPERADMIN` would have fixed this
+    one report and broken again the moment an operator granted the capability to a new platform role, or
+    renamed one. `PlatformAdminRoleCode` is **deleted**; `CountActivePlatformAdminsAsync` and the probe
+    both go through a new `RolesGrantStaffManageAsync(roleIds)`. Scope guards kept: the granting role must
+    be platform-global (`CompanyId IS NULL` — a tenant-scoped grant of the same capability is not control-
+    plane authority), and user / assignment / role / grant must all be active-and-not-deleted.
+    Consequence at the second call site: `UpdatePlatformStaff`'s `keepsAdmin` is now computed from the
+    real post-save role set — the roles being assigned **plus** the assignments the retire sweep leaves
+    alone (SUPERADMIN, ⚠ Rule 7) **plus** untouched tenant roles — so the guard moved to just after
+    `existing` is loaded, still before any write. `SetPlatformStaffActive`'s
+    `stillAdminAfterChange = command.isActive` is unaffected: a deactivated account cannot log in whatever
+    it holds. The refusal message no longer names a role ("Grant that access to another operator").
+    ⚠ The guard is only as good as the seed — if `platform-staff-rbac-seed.sql` §5/§6 have not been
+    applied, nobody holds the capability and the count is 0 for everyone. Backend-only, no schema change.
+
+58. **Deactivating an operator got a capability of its own — `PLATFORM_STAFF_DEACTIVATE`.** All five
+    PlatformStaff commands declared the same pair, so one grant of `PLATFORM_STAFF_MANAGE` bought invite,
+    edit, unlock, resend **and** the off switch. Those are not the same power: the first four add or adjust
+    access, deactivate takes it away from a person who is very likely signed in right now, and it is the
+    only staff operation that can lock the control plane out. The tenant side has always drawn this line —
+    `TOGGLE` is the app's canonical activate/deactivate capability, distinct from `CREATE`/`MODIFY` — and the
+    platform menus simply had no analogue. `SetPlatformStaffActiveCommand` now declares
+    `[CustomAuthorize("PLATFORM_STAFF", "PLATFORM_STAFF_DEACTIVATE")]`; the other four are unchanged.
+    FE: `platform-staff-page.tsx` resolves `canDeactivate` from the new capability and passes it beside
+    `canManage`; in `platform-staff-tab.tsx` the Deactivate/Reactivate button moved **out** of the
+    `canManage` fragment so the two can be held independently, and the `—` placeholder now needs both to be
+    false. `tsc` exit 0.
+    ⚠ The lock-out guard (dev 57) deliberately still keys on `PLATFORM_STAFF_MANAGE`, not on the new
+    capability: it asks "will anyone still be able to *administer* staff", and an operator who can only
+    switch accounts off is not a rescuer.
+    Seed, user-owned: **`sql-scripts-dyanmic/platform-staff-deactivate-capability-seed.sql`** — capability
+    (`'Platform Deactivate Staff'`, `OrderBy 105`, idempotent on `CapabilityName` because of the
+    `(CapabilityName, IsActive)` UNIQUE index), its `auth."MenuCapabilities"` row on `PLATFORM_STAFF`
+    (without which `PlatformRoleMatrixBuilder` never renders the cell and the capability is enforceable but
+    ungrantable), and the grants. **The grants are derived, not a role list**: it copies the new capability
+    to exactly the roles that hold a live `PLATFORM_STAFF_MANAGE` grant on that menu today, so the split is
+    access-neutral on the day it lands (⚠ Rule 5) and stays correct in a database where the matrix has been
+    re-arranged by hand. SUPERADMIN is added separately, matched by `RoleCode` alone (⚠ Rule 7, Q3).
+    ⚠ **Apply the seed before or with the backend change** — until it is applied nothing grants the
+    capability and Deactivate/Reactivate refuses every caller, including SUPERADMIN. The script's §6 block
+    raises a `WARNING` at apply time if that is the state it ends in.
 
 ---
 
@@ -787,8 +951,9 @@ customer moves onto `/ops/tenants/{companyId}`, which is now tabbed.
 **Typecheck: `npx tsc --noEmit --incremental false` → EXIT 0.**
 
 **Seed written, awaiting the user — `sql-scripts-dyanmic/platform-tenant-access-menu-seed.sql`:** the
-invisible `PLATFORM_TENANT_ACCESS` menu (parent `PLATFORMCONTROLPLANE`, OrderBy 955, `MenuUrl`
-`/ops/tenant-access` — see deviation 45), the new
+`PLATFORM_TENANT_ACCESS` menu (parent `PLATFORMCONTROLPLANE`, OrderBy 955, `MenuUrl`
+`/ops/tenant-access` — see deviations 45 and 46; it was seeded hidden in this session and made visible in
+session 4, once it had a page), the new
 `PLATFORM_TENANT_ACCESS_VIEW` capability (OrderBy 104), `MenuCapabilities` for both capabilities, a backfill
 of the four `PLATFORM_STAFF` `MenuCapabilities` rows that were missing, grants to ADMIN / SUPPORT /
 IMPLEMENTATION, `SUPERADMIN` by `RoleCode` alone (same Q3-proof shape as session 2), and an `EXISTS`-guarded
@@ -812,3 +977,165 @@ added; 7 must return zero rows after the run. See §⑬ deviation 44. `Roles.IsP
 used as the source — that column's migration is still unapplied.
 
 **Open questions still unanswered — Q3 (D5) and Q5.**
+
+---
+
+### Session 4 — 2026-08-04 — the tenant-access menu got a page, and the matrix got its missing rows
+
+Two user reports, both about the same seam: a menu row and the screen behind it.
+
+**1. `/en/ops/tenant-access` returned "Oops! Page Not Found".** I had predicted this and called it acceptable
+because the menu was hidden. It is not acceptable — a menu that leads nowhere is a bug. Fixed by building the
+page rather than by re-hiding the menu. See §⑬ deviation 46.
+
+- **New** `ops/tenants/tenant-access-landing-page.tsx` — a tenant picker (search, 25/page, status chip,
+  row-click and a per-row Manage/View button) whose rows open `/ops/tenants/{companyId}?tab=access`. Gated on
+  `PLATFORM_TENANT_ACCESS_VIEW`; a read-only banner names `PLATFORM_TENANT_RBAC_OVERRIDE` when the caller
+  cannot edit, so an operator learns why the switches are dead before clicking one. It is a picker, not a
+  second matrix — one editor, one audit path.
+- **New** route `src/app/[lang]/(master)/ops/tenant-access/page.tsx`; barrel updated.
+- `tenant-detail-page.tsx` — tabs became controlled and addressable: state seeds from
+  `window.location.search` (not `useSearchParams`, which forces a build-time Suspense boundary) and writes
+  back via `history.replaceState`. The fallback-to-overview effect waits on `capsSettled` across all four
+  capability reads so a deep link is not bounced before its gate resolves.
+- `platform-tenant-access-menu-seed.sql` §1 — `IsVisible` flipped to `true`, plus a second narrowly-scoped
+  repair `UPDATE` for an already-applied database, and the VERIFY wording corrected.
+
+**2. The platform role matrix showed only two rows** — Billing & Gateways and Communications; Leads, Tenants,
+Plans, Audit, Staff & Access and Tenant Access Control were all absent. Not a permissions problem:
+`PlatformRoleMatrixBuilder` derives its rows from `auth."MenuCapabilities"` and skips a menu with none, while
+authorization reads `auth."RoleCapabilities"` and never looks at MenuCapabilities. `ops-platform-rbac-seed.sql`
+populated the second and not the first, so every screen worked and only the admin surface was blind. The seeds
+that *did* write MenuCapabilities — billing, gateways, comms, notifications — are exactly the rows that showed.
+
+- **New seed `sql-scripts-dyanmic/platform-menu-capability-backfill-seed.sql`** — derives the missing pairs
+  from existing grants, declares the pairs no role holds yet, and repairs `NULL` `IsDeleted`/`IsActive` on
+  both `MenuCapabilities` and the PLATFORM menus. Grants nothing; VERIFY §3 is a before/after count of
+  `RoleCapabilities` that must not move. See §⑬ deviation 47.
+
+**Apply order matters:** `ops-platform-rbac-seed.sql` → `platform-tenant-access-menu-seed.sql` →
+`platform-menu-capability-backfill-seed.sql`. That last one widens the MenuCapabilities set the tenant-access
+seed's §5c derives SUPERADMIN's grants from, so re-running §5c *after* the backfill is what gives SUPERADMIN
+the full set. Both are `NOT EXISTS`-guarded and safe to re-run.
+
+---
+
+### Session 5 — 2026-08-05 — the screen became platform-staff-only, and its two actions started working
+
+Two user reports. No migration, no seed, no schema change; frontend typecheck `EXIT=0`.
+
+**1. "Should show platform staff only — now tenant staff including business admin shows. Remove Tenants &
+push and Plan baselines."**
+
+- `GetPlatformStaff.cs` — membership narrowed from `Role.CompanyId == null` to
+  `CompanyId == null && IsDeleted != true && (IsPlatform || RoleCode == "SUPERADMIN")`, applied identically to
+  the base query and to the per-page role lookup. Header docblock rewritten to say why. The deliberate absence
+  of an `IsActive` filter on users is preserved — a deactivated operator you cannot see is one you cannot
+  reactivate.
+- `PlatformStaffHelper.cs` — new `SuperAdminRoleCode` constant and `HoldsPlatformRoleAsync`, one shared
+  membership test so the list and the commands cannot drift apart.
+- `UpdatePlatformStaff.cs`, `SetPlatformStaffActive.cs`, `ResendPlatformStaffInvite.cs`,
+  `UnlockPlatformStaff.cs` — each had the same inline `CompanyId == null` block; all four now call the helper.
+  Without this a tenant business admin could be edited, deactivated or unlocked from the platform screen by id
+  (⚠ Rule 6, D2 through the back door).
+- `UpdatePlatformStaff.cs` — SUPERADMIN role ids excluded from the retire sweep (⚠ Rule 7, §⑬ dev 50).
+- `platform-staff-page.tsx` — `baselines` and `push` tab descriptors, their `TabsContent`, their imports and
+  `canRollout` removed; two tabs remain. `canEditBaseline` kept (it drives the platform role matrix).
+  Subtitle now points at the tenant page for a customer's own access.
+- **Deleted** `plan-baseline-tab.tsx`, `tenant-push-tab.tsx`, `capability-rollout-panel.tsx`,
+  `rollout-history-panel.tsx` and their `index.ts` re-exports — a closed cluster nothing else referenced.
+  Backend baseline handlers deliberately left in place; provisioning depends on them (§⑬ dev 48).
+
+**2. "Edit platform staff and invite operator both not working."** Client-side, not GraphQL — an unmemoized
+`?? []` fallback whose identity the dialog's reset effect depended on, so the form reset itself on every
+render and the `isValid`-gated submit never enabled. See §⑬ dev 52.
+
+- `platform-staff-tab.tsx` — `roleOptions` memoized, with a comment saying the identity is load-bearing.
+- `platform-staff-form-dialog.tsx` — reset effect keyed on `open` + `staff?.userId` + a derived
+  `roleOptionKey` (values, not references); `form.watch()` narrowed to `form.watch("roleIds")`; a second amber
+  panel for a row holding a non-platform role, and the existing one reworded to name the seed to apply.
+
+**3. "Cannot destructure property 'getFieldState' … as it is null" on Edit.** Second defect behind the same
+button, surfaced once the form stopped resetting itself. The dialog's fields were never wrapped in
+`<FormProvider {...form}>`, and the shared field chrome reads `useFormContext()` regardless of the `control`
+prop. Wrapped; `tsc EXIT=0` (which cannot catch this class of bug — see §⑬ dev 53).
+
+**4. "`<button>` cannot be a descendant of `<button>`" on the Platform roles picker.** Third defect behind the
+same button. `custom-components/form-fields/FormMultiSelect.tsx` — the badge-remove and clear-all controls are
+now spans with `role="button"`, `tabIndex={0}` and an `activateOnKey` Enter/Space handler, so nothing
+interactive nests inside the Radix trigger button. **Shared component: this fixes the same invalid markup on
+every screen that uses `FormMultiSelect`.** See §⑬ dev 54.
+
+**5. "Resend invitation not working — no UX. No modal, no success, no loading."** The mutation was firing and
+succeeding; the grid simply said nothing while it did. `platform-staff-tab.tsx` — `run()` now takes a
+`busyKey`, refuses re-entry while an action is in flight, spins the button it belongs to and disables the
+rest of the row; Resend gained a confirmation `AlertDialog` (it invalidates the link already in the invitee's
+inbox, so it deserves one); and the success toast now branches on `data.invitationSent`, so "account fine,
+mail did not leave" reads as a warning naming the email provider instead of a green "Invitation re-sent".
+Unlock / Reactivate / Deactivate got the same busy handling. See §⑬ dev 55.
+
+**6. "While deactivate I get this error / Could not deactivate this operator."** The backend had said why; the
+grid was throwing the reason away. `BaseApiResponse` failure factories leave `Message` empty and carry the
+reason in `ErrorDetails`, and the ops mutations catch every exception into `Error(ex.Message)` — so refusals
+arrive as `success: false` + `errorDetails`, never as an Apollo throw. `platform-staff-tab.tsx` and
+`platform-staff-form-dialog.tsx` now read `errorDetails` first. See §⑬ dev 56. ⚠ 40 more sites across 24 ops
+files have the same bug — **awaiting the user's decision** on whether to sweep them.
+
+**7. "`LAST_PLATFORM_ADMIN` … currently I logged in as superadmin. Any capability insertion missing?"** No
+capability is missing — the authorize attribute passed and the command reached its own guard. The guard
+counted only `PLATFORM_ADMIN`, so a SUPERADMIN was not counted as someone who could rescue the platform and
+the lone `PLATFORM_ADMIN` could never be deactivated. **User's correction — "don't hardcode the conditions,
+everything should work by role capabilities" — taken:** the guard no longer names roles at all. It asks for
+a live `HasAccess` grant of `PLATFORM_STAFF_MANAGE` on menu `PLATFORM_STAFF` (the pair the endpoints already
+declare in `[CustomAuthorize]`), so SUPERADMIN, PLATFORM_ADMIN and any role an operator grants it to later
+all count on the same terms. `PlatformAdminRoleCode` deleted; new `RolesGrantStaffManageAsync`;
+`UpdatePlatformStaff` computes `keepsAdmin` from the real post-save role set. Backend-only, no schema
+change, **not compiled here** (⚠ Rule 2). See §⑬ dev 57.
+
+**8. "On this basis, any capabilities / role capabilities need to insert — give that script."** Written,
+user-owned: **`sql-scripts-dyanmic/platform-staff-manage-capability-repair.sql`**. No *new* capability is
+needed — `PLATFORM_STAFF_MANAGE` and its menu already exist in `platform-staff-rbac-seed.sql` §4/§5/§6. What
+the capability-driven guard added is a hard dependency on those rows actually being live, and there are three
+ways they silently are not: (A) the seed was never applied; (B) a grant row exists with `IsActive` NULL or
+`HasAccess` false — the guard tests `IsActive = true`, so a NULL row is invisible to it *and* to
+`CustomAuthorizeService`; (C) SUPERADMIN's role row is not `CompanyId`-null, in which case §6's grant lands
+(it matches by `RoleCode` alone) but the guard still will not count its holders, because a company-scoped
+role is not control-plane authority. The script re-asserts §4/§5/§6 idempotently, normalises (B) with one
+narrowly-scoped `UPDATE`, and **reports** (C) as a `RAISE WARNING` rather than moving SUPERADMIN — that is a
+decision, not a seed edit. It ends by counting rescuers with the guard's own predicate and warning loudly if
+that count is `0`, which is the dangerous state: the lock-out protection is off and every staff write 403s.
+⚠ Open: PROMPT-24 §⑨ **Q3** is still unanswered, and verify query 3 in the file is exactly what answers it.
+
+**9. "Deactivate capability is not there — `platform_staff_deactive`; that capability is what lets staff
+deactivate staff."** Correct, and it was a real gap: all five staff commands declared
+`PLATFORM_STAFF_MANAGE`, so deactivate had no gate of its own. Built end to end — new capability
+`PLATFORM_STAFF_DEACTIVATE` (`OrderBy 105`), `SetPlatformStaffActive` re-gated to it, FE `canDeactivate`
+threaded from the page to the row action so the off switch renders independently of Edit/Unlock/Resend,
+`tsc` exit 0, backend **not compiled here** (⚠ Rule 2). Seed, user-owned:
+**`sql-scripts-dyanmic/platform-staff-deactivate-capability-seed.sql`** — it grants the new capability to
+whoever holds `PLATFORM_STAFF_MANAGE` today rather than to a hardcoded role list, so nobody loses the
+ability to deactivate on the day it is applied. ⚠ Apply it **before or with** the backend change or the
+button 403s for everyone. The lock-out guard keeps keying on `PLATFORM_STAFF_MANAGE` on purpose — someone
+who can only switch accounts off cannot rescue the platform. See §⑬ dev 58.
+
+Dev aid, user-owned: **`sql-scripts-dyanmic/dev-localhost-activation-url.sql`** — points
+`PLATFORM_ACTIVATION_URL_TEMPLATE` at `http://localhost:3000/{LANG}/activate?token={TOKEN}` so an invitation
+is reachable from a dev box. `CurrentValue` only; the seeded `ParamDefaultValue` is untouched and the revert
+is in §3 of the file. ⚠ Never apply to a shared or production database — the setting is shared with tenant
+provisioning.
+
+Answered without code change: platform staff are written to `auth.Users` + `auth.UserRoles` **only** — no
+`app.Staff` row, deliberately, because `Staff` requires a `CompanyId` (⚠ Rule 6). One consequence is open:
+`InvitePlatformStaffDto.DisplayName` is used for the email placeholder and the audit description and then
+discarded, and `PlatformUserHelper.GetDisplayNamesAsync` reads `u.Staff.*`, so the grid shows the login
+handle forever. Either persist a nullable `DisplayName` on `auth.Users` (recommended — one column, one
+migration) or drop the field from the invite dialog. **Awaiting the user's decision; nothing changed.**
+
+**⚠ DB prerequisite, unverified from here:** `IsPlatform` must actually be set. If migration
+`Add_PlatformStaffRbacAdmin` and `platform-staff-rbac-seed.sql` §1 have not been applied, the newly-narrowed
+list shows **nobody** and the role picker offers nothing — correct behaviour, alarming symptom.
+
+**Deliberately unchanged:** `PlatformUserHelper` keeps the broad `CompanyId IS NULL` definition it uses for
+host gating and P-22 notification recipients (§⑬ dev 51).
+
+**Typecheck: `npx tsc --noEmit --incremental false` → EXIT 0.** No migration, no entity change.
