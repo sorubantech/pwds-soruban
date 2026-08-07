@@ -10,7 +10,7 @@ complexity: High
 new_module: NO
 planned_date: 2026-05-19
 completed_date:
-last_session_date: 2026-05-19
+last_session_date: 2026-07-17
 ---
 
 # AppLayout — Application Shell Alignment (#121)
@@ -543,6 +543,7 @@ Per the FleetView memory policy: prefer **Sonnet** over Opus for FE-Developer sp
 | ISSUE-1 | OPEN | Visual restyle from §⑥ deferred — header gradient, 280 px classic sidebar, accordion sections, footer logout, cross-module menu aggregation NOT yet applied. Existing chrome (DashCode template) still renders. |
 | ISSUE-2 | OPEN | DB seed `app-layout-themecustomizer.sql` written but NOT yet applied to live database. Must be run manually before per-user override flow can be tested. |
 | ISSUE-3 | OPEN | BUSINESSADMIN role capability for `USERSETTING` menu (CREATE/MODIFY/DELETE) not verified. If missing, ThemeCustomizer save will 401. Confirm via `auth.RoleCapability` rows for MenuId=440 before testing. |
+| ISSUE-4 | CLOSED (session 2) | Sidebar + header remounted ("refreshed") when navigating between modules. Root cause: 6 sibling admin route segments (crm/setting/organization/accesscontrol/general/reportaudit) each mounted their own identical `layout.tsx` → crossing a segment boundary unmounted/remounted the whole `DashBoardLayoutProvider` shell. Fixed by consolidating all 6 under a single `(core)` route group with one shared shell layout. |
 
 ---
 
@@ -576,3 +577,22 @@ Per the FleetView memory policy: prefer **Sonnet** over Opus for FE-Developer sp
   - `pnpm tsc --noEmit` — 0 errors in any changed file (filtered grep confirms). Pre-existing project errors elsewhere not introduced by this session.
   - End-to-end manual smoke deferred until seed is applied to live DB.
 - **Next step**: Apply `.claude/screen-tracker/seed-scripts/app-layout-themecustomizer.sql` to the live DB; verify ThemeCustomizer renders + saves a per-user override; then resume Session 2 for visual restyle from §⑥.
+
+### Session 2 — 2026-07-17 — FIX — COMPLETED
+
+- **Scope**: Stop the sidebar/header remounting ("refresh") on cross-module menu navigation. Consolidate the per-module shell layouts into a single shared route-group shell (ISSUE-4).
+- **Root cause**: The 6 authenticated admin modules (`crm`, `setting`, `organization`, `accesscontrol`, `general`, `reportaudit`) were sibling route segments under `[lang]`, each with its own **identical** `layout.tsx` mounting `DashBoardLayoutProvider` (Header + Sidebar + `useMenu()`/`useBranding()`). In the App Router a layout instance persists only within its own segment subtree, so navigating between modules unmounted one shell and mounted a fresh one — the visible "refresh" (Sidebar rebuild + menu re-render + capability re-fetch).
+- **Fix**: Introduced route group `[lang]/(core)/` (parentheses ⇒ URL-neutral) wrapping all 6 modules with ONE shared shell layout. Menus stay per-module because they are driven by `moduleCode` (persisted Zustand) → `parentChildMenus` query, which the persistent `Sidebar` re-renders reactively (update, not remount). `RoleCapabilityProvider` reacts to `moduleCode` via `useEffect` and now caches loaded modules across navigation instead of re-fetching per module.
+- **Files touched**:
+  - FE: `src/app/[lang]/(core)/layout.tsx` (created — shared shell: RouteGuard + RoleCapabilityProvider + DashBoardLayoutProvider).
+  - FE: `src/app/[lang]/(core)/{crm,setting,organization,accesscontrol,general,reportaudit}/` (moved via `git mv` — folder location only; URLs unchanged since `(core)` is a route group).
+  - FE: deleted `src/app/[lang]/{crm,setting,organization,accesscontrol,general,reportaudit}/layout.tsx` (6 redundant per-module shells now replaced by the single `(core)` shell).
+- **Deviations from spec**: None. Pure structural change; no entity/API/token/menu-data changes. Consistent with §⑫ (keep menu pipeline + routes intact).
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-4.
+- **Verification**:
+  - Restarted `pnpm dev` (Turbopack) — Ready in 7.7s, middleware + routes compiled, no route-conflict / duplicate-segment errors.
+  - `GET /en/crm/dashboard` → **HTTP 200**, compiled as `/[lang]/crm/dashboard` (no `(core)` in URL — route group confirmed transparent).
+  - `GET /en/setting/communicationconfig/emailproviderconfig` → **HTTP 200**, compiled as `/[lang]/setting/...`.
+  - Manual cross-module click-through (Sidebar no longer flashes) to be spot-checked by user in browser; server-side route resolution confirmed.
+- **Next step**: None for this issue. Screen remains `PARTIALLY_COMPLETED` for the still-open ISSUE-1 (visual restyle) / ISSUE-2 (seed apply) / ISSUE-3 (capability verify).

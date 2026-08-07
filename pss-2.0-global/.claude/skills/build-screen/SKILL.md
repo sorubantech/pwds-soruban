@@ -42,9 +42,14 @@ The user invokes `/build-screen` with optional arguments:
 
 ### Step 1: Identify Target Screen
 
-1. Read `.claude/screen-tracker/REGISTRY.md`
-2. If no argument: find the first screen with status `PROMPT_READY`, ordered by dependency (Wave 1 → 2 → 3 → 4 → 5)
-3. If argument given: find the matching screen
+> ⚠️ **Registry access rule — NEVER `Read` the whole `REGISTRY.md`.** It is ~700 KB (~175K tokens); loading it wastes ~18% of the context window before any work starts.
+> - **Look up one screen:** `grep -nE "^\| *#?<id> " .claude/screen-tracker/REGISTRY.md` (by ID) or `grep -niE "<name>" .claude/screen-tracker/REGISTRY.md` (by name).
+> - **List candidates by status:** `grep -nE "PROMPT_READY|PARTIALLY_COMPLETED" .claude/screen-tracker/REGISTRY.md`.
+> - **Update a status:** edit in place with a script (Bash `sed -i` / PowerShell), never `Read`+`Edit` (see Step 6).
+
+1. Resolve the target row with `grep` (see rule above) — do **not** `Read` the file.
+2. If no argument: `grep -nE "PROMPT_READY|PARTIALLY_COMPLETED" .claude/screen-tracker/REGISTRY.md`, then pick the first by dependency (Wave 1 → 2 → 3 → 4 → 5).
+3. If argument given: `grep` the matching screen's single row
 4. Also accept `PARTIALLY_COMPLETED` screens (resume interrupted builds)
 5. Verify its status is `PROMPT_READY` or `PARTIALLY_COMPLETED` — if not, inform user to run `/plan-screens` first
 6. Verify all FK dependencies are met — check that FK target screens are `COMPLETED` or have existing BE entities
@@ -132,10 +137,11 @@ The prompt file IS the input. It contains everything `/generate-screen` expects:
    - `last_session_date: {YYYY-MM-DD}`
    - All generation tasks checked off
 2. **Append Build Log entry** (Section ⑬ — see below)
-3. Update REGISTRY.md:
-   - Change screen status from `PROMPT_READY` to `COMPLETED`
-   - Add Notes with date and file count
-   - Update Summary counts
+3. Update REGISTRY.md **with a scripted in-place edit — do NOT `Read`+`Edit` it** (that reloads ~175K tokens). Change the target row's status `PROMPT_READY` → `COMPLETED` and append the date/file-count Note, e.g.:
+   ```bash
+   sed -i -E "s/^(\| *#?<id> \|.*\| )PROMPT_READY( \|)/\1COMPLETED\2/" .claude/screen-tracker/REGISTRY.md
+   ```
+   (Do **not** hand-maintain the Summary counts here — they are derived and per-build edits are what created the duplicated/corrupted summary tables. Regenerate the summary only on demand.)
 
 **If generation fails or is partial:**
 
@@ -145,9 +151,7 @@ The prompt file IS the input. It contains everything `/generate-screen` expects:
    - Check off only completed tasks
    - Add a note about what remains
 2. **Append Build Log entry** with outcome `PARTIAL` and a `Next step:` line describing what to resume on
-3. Update REGISTRY.md:
-   - Change status to `PARTIALLY_COMPLETED`
-   - Add Notes explaining what was completed and what remains
+3. Update REGISTRY.md **with a scripted in-place edit — do NOT `Read`+`Edit` it** (see Step 5). Change the target row's status to `PARTIALLY_COMPLETED` and append a Note explaining what was completed and what remains.
 
 ### Step 5a: Append Build Log Entry (MANDATORY — every session)
 
@@ -174,6 +178,8 @@ Every `/build-screen` session — whether it ends in `COMPLETED` or `PARTIAL` �
 **Known Issues table**: if this session surfaced a real bug (test failure, build break not fixed this session, mockup gap), add a row to the Known Issues table with a stable ID `ISSUE-{N}` and `Status: OPEN`. Never edit prior sessions' entries.
 
 **Placeholder cleanup**: on the first session, delete the `{No sessions recorded yet …}` placeholder line before appending.
+
+**Cap § Sessions at the last 5 entries (token hygiene).** After appending, if `### § Sessions` now holds more than 5 `### Session …` entries, delete the oldest so exactly 5 remain — the full history is preserved in git (`git log -p -- <prompt>.md`). Do this with a scripted in-place edit; do NOT `Read` the whole prompt file just to prune it. The **§ Known Issues** table is NOT part of this cap — never trim it (it's the live state `/test-screen` reads). This is why the append-only log stopped ballooning the prompt files (see auto-memory `project_registry_grep_not_read`).
 
 ### Step 5b: Full-Flow Testing (MANDATORY)
 
@@ -428,7 +434,7 @@ For DASHBOARD seeds, parse `LayoutConfig` JSON and `ConfiguredWidget` JSON from 
 Fail mode (any of the above) — block COMPLETED until corrected.
 
 ### Session Optimization
-1. **Load minimal context** — only read: REGISTRY.md + prompt file
+1. **Load minimal context** — `grep` only the target screen's row from REGISTRY.md (never `Read` the whole ~175K-token file), plus the prompt file
 2. **Don't re-read HTML mockups** — the prompt already contains all extracted information
 3. **Don't re-read all agent files upfront** — the generation pipeline loads them as needed
 4. **Target ~30-50K tokens** per screen build — if a screen is complex, split into BE + FE sessions

@@ -35,9 +35,11 @@ description: /continue-screen — Resume work on a previously-built screen for b
 
 ### Step 1: Locate the target screen
 
-1. Read `.claude/screen-tracker/REGISTRY.md`
-2. If argument given → find that screen.
-   If no argument → prefer any screen with status `NEEDS_FIX`; if none, ask the user which COMPLETED screen to resume.
+1. > ⚠️ **NEVER `Read` the whole `REGISTRY.md`** (~700 KB / ~175K tokens). `grep` only what you need:
+   > - by ID: `grep -nE "^\| *#?<id> " .claude/screen-tracker/REGISTRY.md`
+   > - by status: `grep -nE "NEEDS_FIX" .claude/screen-tracker/REGISTRY.md`
+2. If argument given → `grep` that screen's single row.
+   If no argument → `grep -nE "NEEDS_FIX"`; if none, ask the user which COMPLETED screen to resume.
 3. Verify the prompt file exists at `.claude/screen-tracker/prompts/{entity-lower}.md`.
 4. Verify status is one of: `COMPLETED`, `NEEDS_FIX`. If it's `PROMPT_READY` or `PENDING` → refuse with:
    > "This screen hasn't been built yet. Run `/build-screen #{id}` first."
@@ -138,12 +140,17 @@ Append one entry to Section ⑬ `§ Sessions`:
 
 If any `Known issues closed` in this session → update the Known Issues table: change those rows' `Status` from `OPEN` to `CLOSED (session {N})`. Do not delete the rows — leave them for audit.
 
+**Cap § Sessions at the last 5 entries (token hygiene).** After appending, if `### § Sessions` now holds more than 5 `### Session …` entries, delete the oldest so exactly 5 remain — full history stays in git (`git log -p -- <prompt>.md`). Use a scripted in-place edit; do NOT `Read` the whole prompt file to prune it. Never trim the **§ Known Issues** table — it's the live state this skill and `/test-screen` rely on. (See auto-memory `project_registry_grep_not_read`.)
+
 Update frontmatter:
 - `status: IN_PROGRESS` → `COMPLETED` (if all work done + all OPEN issues addressed or intentionally deferred)
   OR → `NEEDS_FIX` (if work completed but other OPEN issues remain)
 - `last_session_date: {today}`
 
-Update `REGISTRY.md` only if the registry's shown status would change.
+Update `REGISTRY.md` only if the registry's shown status would change — and do it with a **scripted in-place edit** (Bash `sed -i` / PowerShell), never `Read`+`Edit` (that reloads ~175K tokens):
+```bash
+sed -i -E "s/^(\| *#?<id> \|.*\| )(COMPLETED|NEEDS_FIX)( \|)/\1<NEW_STATUS>\3/" .claude/screen-tracker/REGISTRY.md
+```
 
 ### Step 9: Summarize to the user
 

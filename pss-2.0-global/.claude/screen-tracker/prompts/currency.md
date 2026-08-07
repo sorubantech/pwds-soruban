@@ -2,14 +2,14 @@
 screen: Currency
 registry_id: 79
 module: General → Masters
-status: COMPLETED
+status: NEEDS_FIX
 scope: ALIGN
 screen_type: MASTER_GRID
 complexity: Medium
 new_module: NO
 planned_date: 2026-05-15
 completed_date: 2026-05-16
-last_session_date: 2026-05-16
+last_session_date: 2026-07-22
 ---
 
 ## Tasks
@@ -616,7 +616,7 @@ Everything else (Add, Edit, Delete, Toggle, View Rate History, Change Base, bann
 
 | ID | Raised (session) | Severity | Area | Description | Status |
 |----|------------------|----------|------|-------------|--------|
-| ISSUE-1 | Session 1 | Medium | FE Grid | `AdvancedDataTableContainer` has no `expandedRowRender` prop. `RateHistoryPanel` component exists and the BE `currencyRateHistory` query is wired, but the inline-row expansion for "View Rate History" More-menu action is NOT wired. Workaround: clicking the action could open a side panel/modal instead, or extend the grid container to support `expandedRowRender`. | OPEN |
+| ISSUE-1 | Session 1 | Medium | FE Grid | `AdvancedDataTableContainer` has no `expandedRowRender` prop. `RateHistoryPanel` component exists and the BE `currencyRateHistory` query is wired, but the inline-row expansion for "View Rate History" More-menu action is NOT wired. Workaround: clicking the action could open a side panel/modal instead, or extend the grid container to support `expandedRowRender`. | CLOSED (session 2) |
 | ISSUE-2 | Session 1 | Low | FE Modal | `ChangeBaseCurrencyModal` is invoked without `currentBaseCurrencyId` prop, so the dropdown doesn't exclude the current base. BE rejects no-op changes if the new id equals current, but UX gap remains. | OPEN |
 | ISSUE-3 | Session 1 | Low | DB Seed | The "Format" column uses a synthetic `CURRENCYFORMAT` field with `FieldKey='format'` — no BE projection backs it; the `format-preview-cell` renderer reads other row fields. If the grid framework refuses to render a column whose data key returns undefined, the column will show blank. Worked around by relying on the renderer to read sibling fields. Verify at runtime. | OPEN |
 | ISSUE-4 | Session 1 | Low | BE Migration | Migration `Add_Formatting_And_RateSource_To_Currency` was hand-written + `ApplicationDbContextModelSnapshot.cs` updated by hand. If `dotnet ef migrations add` is later run, EF may produce a no-op or conflict. Apply via `dotnet ef database update 20260515120000_Add_Formatting_And_RateSource_To_Currency` directly. | OPEN |
@@ -678,3 +678,58 @@ Everything else (Add, Edit, Delete, Toggle, View Rate History, Change Base, bann
 - **Known issues opened**: ISSUE-1 through ISSUE-6 (see Known Issues table above).
 - **Known issues closed**: None.
 - **Next step**: (none — COMPLETED). User to run `dotnet build`, apply migration `20260515120000_Add_Formatting_And_RateSource_To_Currency`, execute the Currency-sqlscripts.sql seed, then `pnpm dev` and verify the 7-column grid + Variant B layout + Add/Edit modal + Change Base + Update Rates flows. View Rate History action will need ISSUE-1 resolved before it shows inline-row content.
+
+### Session 2 — 2026-07-22 — FIX — COMPLETED
+
+- **Scope**: Resolve ISSUE-1 — wire the per-row "View Rate History" action so #141's exchange-rate history surfaces inside the Currency screen. (Context: user asked whether #79 + #141 could merge into one screen; assessed as feasible-but-wrong — #79 is per-tenant, #141 is a global table — so instead delivered the useful part: rates displayed within the currency screen.)
+- **Approach**: The shared grid container (`data-table-container.tsx`) is store/config-driven and exposes no `expandedRowRender` hook (confirmed). Rather than modify shared grid infrastructure (a shared-wiring file used by every MASTER_GRID), used the existing screen-owned `customRowActions` render-prop mechanism (`AdvancedDataTableStoreProvider` → store → action-column-cell line 101). Rate history now opens in a `Sheet` side drawer per row instead of an inline expandable row. Mirrors the `DataTableBranchStaffAssign` self-contained-action pattern.
+- **Files touched**:
+  - FE:
+    - `PSS_2.0_Frontend/src/presentation/components/page-components/general/masters/currency/rate-history-action.tsx` (created — self-contained icon-button action + Sheet drawer wrapping `RateHistoryPanel`; owns its own open state)
+    - `PSS_2.0_Frontend/src/presentation/components/page-components/general/masters/currency/data-table.tsx` (modified — pass `customRowActions={renderRateHistoryAction}` to the provider; import `CurrencyDto` + `RateHistoryAction`)
+    - `PSS_2.0_Frontend/src/presentation/components/page-components/general/masters/currency/index.ts` (modified — barrel export `RateHistoryAction`)
+  - BE: None.
+  - DB: None.
+- **Verification**: `npx tsc --noEmit --incremental false` — 32 errors, all stale `.next/types/**` stubs (pre-existing, unrelated to `.next` not being rebuilt); **zero errors in `src/`**. No shared-infra files touched.
+- **Deviations from spec**: Rate history surfaces in a side drawer (Sheet), not the inline expandable row the original blueprint envisioned — deliberate, to avoid editing the shared grid container. Functionally equivalent (same `RateHistoryPanel`, same `currencyRateHistory` query).
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-1.
+- **Next step**: 5 issues still OPEN (ISSUE-2 base-currency-id prop, ISSUE-3 synthetic format FieldKey, ISSUE-4 hand-written migration, ISSUE-5 inline gradient hex, ISSUE-6 GetCurrencyById latest-rate). Status → NEEDS_FIX.
+
+### Session 3 — 2026-07-22 — ENHANCE — COMPLETED
+
+- **Scope**: (a) Make "Update Rates" functional; (b) add a 30-day rate-trend chart to the Rate History drawer. (Context: user asked whether #79 + #141 merge into one screen, and whether to also put today's rate + a growth graph on the grid. Verdict delivered: today's rate is already a grid column (`LatestRateToBase`/`LatestRateDate`); a per-row graph in the grid is wrong UX, so the 30-day chart lives in the existing Rate History drawer via progressive disclosure — not the grid.)
+- **Approach**:
+  - Update Rates was calling a placeholder (`batchUpdateAutoRates`, a no-op stub returning "pending OpenExchangeRates integration"). Repointed the modal to the real, already-wired `triggerOpenExchangeRatesSync` command (the same handler #141's grid uses → `IOpenExchangeRatesSyncJob.RunOnceAsync`), which discovers tenant base↔collectable pairs from OrgSettings and writes `com.CurrencyConversions` rows for today. Handles `SyncResultDto` (success/rowsAdded/message) with a real success/error toast. No BE change — the command already exists.
+  - Chart: new screen-owned `RateHistoryChart` (ApexCharts `area`, dynamic `ssr:false` import, theme-aware — mirrors `case-resolution-trend-widget`). Plots `conversionRate` over `rateDate`, sorted oldest→newest (query is newest-first), padded y-range, renders nothing with < 2 points. Rendered above the exact-value table inside `RateHistoryPanel`; bumped history `take` 20 → 30.
+- **Files touched**:
+  - FE:
+    - `PSS_2.0_Frontend/src/presentation/components/page-components/general/masters/currency/rate-history-chart.tsx` (created — 30-day ApexCharts area trend)
+    - `PSS_2.0_Frontend/src/presentation/components/page-components/general/masters/currency/rate-history-panel.tsx` (modified — `take` 20→30; render `RateHistoryChart` above the table)
+    - `PSS_2.0_Frontend/src/presentation/components/page-components/general/masters/currency/update-rates-modal.tsx` (modified — swap `BATCH_UPDATE_AUTO_RATES_MUTATION` → `TRIGGER_OPEN_EXCHANGE_RATES_SYNC_MUTATION`; handle `SyncResultDto`)
+    - `PSS_2.0_Frontend/src/presentation/components/page-components/general/masters/currency/index.ts` (modified — barrel export `RateHistoryChart`)
+  - BE: None (reused existing `triggerOpenExchangeRatesSync`).
+  - DB: None.
+- **Verification**: `npx tsc --noEmit --incremental false` — **zero errors in `src/`** (remaining errors are pre-existing stale `.next/types/**` stubs affecting every masters page). No shared-infra files touched.
+- **Runtime dependency**: live rate fetch needs OpenExchangeRates `app_id` configured (`Fx:*` settings) on the server; without it the sync runs but adds 0 rows and the toast reports "already up to date"/0 refreshed. Wiring is complete regardless.
+- **Deviations from spec**: The 30-day growth graph goes in the drawer, not the grid rows (deliberate UX call — grid keeps today's rate column only). The old placeholder `BATCH_UPDATE_AUTO_RATES_MUTATION` is now unused by this screen.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: 5 issues still OPEN (ISSUE-2 base-currency-id prop, ISSUE-3 synthetic format FieldKey, ISSUE-4 hand-written migration, ISSUE-5 inline gradient hex, ISSUE-6 GetCurrencyById latest-rate). Status → NEEDS_FIX.
+
+### Session 4 — 2026-07-22 — FIX — COMPLETED
+
+- **Scope**: Session 3 shipped the chart + Update Rates rewire but user reported the chart was invisible and Update Rates produced no data. Fixed both root causes.
+- **Root causes & fixes**:
+  - **Chart invisible (height collapse)**: `RateHistoryChart` used `height="100%"` inside a plain `h-40` div. The Rate History host is a `Sheet` (`overflow-y-auto`, NOT a flex container), so `100%` resolved to 0px and the chart mounted at zero height. → Switched to fixed `height={180}` (the standalone chart idiom, cf. `daily-collection-bar-chart.tsx`), removed the `h-40`/`100%` reliance.
+  - **Update Rates produced no data (no FX source)**: OXR `ApiKey` is empty in `appsettings.json`, so `OpenExchangeRatesClient.GetLatestRatesAsync` returned `[]` → sync wrote 0 rows → no history → chart's `< 2 points` guard hid it AND grid rate columns stayed blank. → Added a **keyless fallback provider** (`open.er-api.com/v6/latest/USD`, same USD-base `{code→rateVsUsd}` shape) used when the OXR key is empty or OXR fails/returns empty. Paid OXR key still preferred when present. Sync job's USD-anchored derivation logic unchanged.
+- **Files touched**:
+  - FE: `PSS_2.0_Frontend/src/presentation/components/page-components/general/masters/currency/rate-history-chart.tsx` (fixed pixel height)
+  - BE: `PSS_2.0_Backend/PeopleServe/Services/Base/Base.Infrastructure/External/OpenExchangeRates/OpenExchangeRatesClient.cs` (keyless fallback; extracted shared `ParseRates`)
+  - DB: None.
+- **Verification**: BE `dotnet build Base.Infrastructure.csproj` — 0 errors (653 pre-existing warnings). FE `npx tsc --noEmit --incremental false` — 0 `src/` errors (only pre-existing `.next/types/**` stubs). No migration needed (code-only).
+- **Where the chart is**: Currency grid → row "Rate History" action (clock icon) → right-side Sheet drawer → chart at top, above the value table. Needs ≥2 distinct rate-dates to appear (one sync = one day = single point, still hidden by design).
+- **Deviations from spec**: None. Adds a no-key FX source so Update Rates works out of the box; admin can still configure `OpenExchangeRates:ApiKey` to prefer the paid provider.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: 5 issues still OPEN (ISSUE-2 base-currency-id prop, ISSUE-3 synthetic format FieldKey, ISSUE-4 hand-written migration, ISSUE-5 inline gradient hex, ISSUE-6 GetCurrencyById latest-rate). Status → NEEDS_FIX.

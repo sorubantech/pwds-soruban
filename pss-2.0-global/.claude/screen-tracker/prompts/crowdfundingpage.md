@@ -2,7 +2,7 @@
 screen: CrowdFundingPage
 registry_id: 173
 module: Setting (Public Pages)
-status: COMPLETED
+status: NEEDS_FIX
 scope: FULL
 screen_type: EXTERNAL_PAGE
 external_page_subtype: CROWDFUND
@@ -10,7 +10,7 @@ complexity: High
 new_module: NO
 planned_date: 2026-05-13
 completed_date: 2026-05-13
-last_session_date: 2026-07-03
+last_session_date: 2026-07-21
 ---
 
 ## Tasks
@@ -1350,258 +1350,32 @@ Full UI must be built (setup tabs, public render tree, donation flow up to gatew
 | ISSUE-21 | Session 1 BUILD | LOW | SEED | Sample-data seed uses an UPDATE-with-guard (`WHERE PageStatus='Draft'`) on the existing #16 `build-a-school-kenya` row to promote it to `Active` + add rich content. If a fresh tenant runs #173's seed WITHOUT first running #16's seed, the UPDATE will silently no-op (no sample CrowdFund exists). Document execution order in deployment notes: run `Crowdfunding-sqlscripts.sql` (#16) BEFORE `Crowdfundingpage-sqlscripts.sql` (#173). | OPEN |
 | ISSUE-22 | Session 2 FE_ONLY | LOW | FE | FE agent generated component exports as `CrowdFundingPageTabNav` + `CrowdFundingPageStatusBar` but editor-page imported them as short names `TabNav` + `StatusBar`. Resolved post-generation via `import { CrowdFundingPageTabNav as TabNav } from ...` aliases. Cosmetic cleanup option: rename exports to short forms in a future polish pass. | CLOSED (session 2) |
 | ISSUE-23 | Session 2 FE_ONLY | LOW | FE | FE agent's `status-bar.tsx` referenced `stats.lastDonationAt` but the admin `CrowdFundStatsDto` exposes `avgDonation` / `largestDonation` / weekly-trend fields — not `lastDonationAt`. `lastDonationAt` lives on `CrowdFundPublicStatsDto` (public-stats DTO) and on `CrowdFundResponseDto` (full response). Resolved post-generation by swapping the "Last donation" tile for a "Largest" tile using the field that IS available on `CrowdFundStatsDto`. | CLOSED (session 2) |
+| ISSUE-24 | Session 17 EAV-PORT | HIGH | BE/DB | EAV Part-1 relocation is CODE-COMPLETE but the DB is NOT migrated. `CrowdFund.cs` no longer has the 18 cosmetic columns, so the app will fail at runtime until the user runs, in order: migration A (create `fund.CrowdFundSettings`) → `sql-scripts-dyanmic/crowdfundingpage-eav-relocation-backfill.sql` → migration B (drop the 18 columns). Full command list in `.claude/screen-tracker/bug-reports/crowdfundingpage-EAV-PART1-MIGRATION-SPEC.md`. | OPEN |
+| ISSUE-25 | Session 17 EAV-PORT | HIGH | BE | `Base.Application` does not compile due to a collision OUTSIDE this screen: `LandingContentDto` is declared twice in namespace `Base.Application.Schemas.DonationSchemas` — `OnlineDonationPageSchemas.cs:346` and `P2PCampaignPageSchemas.cs:539` (CS0101). Introduced by the parallel #170 half of the same EAV spec; NOT touched by this session. Owner of #170 must rename one (e.g. `P2PLandingContentDto`). No CrowdFund file reported an error. | CLOSED (session 18) — the #170 session renamed its DTO; `dotnet build Base.Application` verified 0 Errors / 575 Warnings on 2026-07-20. |
+| ISSUE-26 | Session 17 EAV-PORT | MED | BE/DB | The backfill SQL was authored from the spec text + entity schema — no prior ODP backfill script existed to diff against. Review it against `fund.CrowdFundSettings` column order/types before running on production data. | OPEN |
+| ISSUE-27 | Session 17 EAV-PORT | LOW | BE | Deliberate deviation from spec §2a: the `CrowdFundSettings → CrowdFunds` FK uses `DeleteBehavior.Cascade` (settings are owned children), not the RESTRICT shown in §2a's column table. Matches the shipped ODP reference and spec §2's "mirror exactly" prose. | OPEN (accepted) |
+| ISSUE-28 | Session 18 EAV-PORT | LOW | FE | Public-page palette tokens missing. `donation-donut.tsx` keeps a raw-hex `PALETTE_TAIL` on purpose: `--chart-1..5` are declared only inside `[data-registry="plate"]` (`globals.scss:412`), never at `:root`, so on the un-themed public route `hsl(var(--chart-N))` resolves to nothing and every tail slice renders colourless. This page is tenant-branded rather than app-themed, so it needs its own public-page palette tokens declared at `:root` before the substitution is safe. (`--warning` / `--border` ARE global and were tokenised in `milestones-timeline.tsx`.) | OPEN |
+| ISSUE-29 | Session 18 EAV-PORT | LOW | FE | `edge-banners.tsx` renders a **ShowStretchGoal** banner whose copy has no Landing-Content param in the 35-entry catalog — it stays hardcoded. Add a `BANNER_STRETCH_GOAL` param in the next Landing-Content pass, or confirm it is intentionally fixed copy. `BANNER_PREVIEW` is deliberately hardcoded (admin-preview chrome, not donor-facing). | OPEN |
+| ISSUE-30 | Session 18 EAV-PORT | LOW | DOC | Catalog-vs-code literal drift found while wiring fallbacks; **the file won**, so the shipped fallbacks are: beneficiaries subtext = "Real stories from real people whose lives have been changed because of your support." (spec said "The people your generosity supports."); thank-you = "Thank You!" / the longer existing body / "View / Download Receipt" / "Donate Again" (spec said "Thank you!", "Download receipt", "Donate again"). Re-sync the spec catalog in `publicpages-EAV-SETTINGS-PORT-SPEC.md` §4b so a future pass doesn't silently regress the copy. | OPEN |
+| ISSUE-31 | Session 20 STANDARD-UI | LOW | DB/FE | The 26 new `CrowdFundLandingContent` keys added for the Verdant STANDARD template (`heroTitleLine1/2`, `heroSubtext`, `heroPrimaryCtaLabel`, `heroSecondaryCtaLabel`, `heroTaglineRight`, `featuredEyebrow`, `featuredCtaLabel`, `howItWorksTitle`, `howItWorksSteps`, `startCampaignTitle/Body/Bullets/CtaLabel/CtaUrl`, `otherCampaignsTitle/ViewAllLabel/ViewAllUrl`, `impactBandTitle`, `impactBandStats`, `testimonialsTitle`, `testimonials`, `footerSecureLabel`, `footerCopyright`, `footerMadeWithLabel`) have **no EAV seed rows and no admin editor fields** yet. The page renders correctly from coded fallbacks, but a tenant cannot change this copy. Seed the params + surface them in the page-builder tab in the next Landing-Content pass. | OPEN |
+| ISSUE-32 | Session 20 STANDARD-UI | LOW | FE | Only **STANDARD** was rebuilt. `STORY_FOCUS` / `IMAGE_FOCUS` / `VIDEO_FOCUS` / `MINIMAL` still share the original thin layout differentiated only by the four booleans in `TEMPLATE_LAYOUTS`, so they remain visually near-identical to one another — the original complaint that prompted this session. Give each a real design (ODP ships 9 genuinely distinct template files as the precedent). | OPEN |
 
 ### § Sessions
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
 
-### Session 1 — 2026-05-13 — BUILD — PARTIAL
+> _[12 older session entries trimmed to save tokens — full history in git: `git log -p -- crowdfundingpage.md`. Most recent 5 kept below.]_
 
-- **Scope**: Initial BE-only build from PROMPT_READY prompt. FE deferred to FE_ONLY Session 2 per #171/#172 EXTERNAL_PAGE precedent (large dual-surface + 45-file FE scope > token budget for one session).
+### Session 16 — 2026-07-16 — FIX (publish confirm-modal didn't close) — COMPLETED (FE only; tsc clean)
+
+- Raised via `/continue-screen #15 #135 #173` (issue 8) — twin of P2PCampaignPage issue 2: on the CrowdFunding editor, clicking "publish quietly" (or any button in the publish confirm-modal) left the modal open while the publish ran in the background.
+- **Root cause**: `setPublishOpen(false)` sat *after* the awaited save + `publishMutation` in the handler, so the modal only closed once the whole async chain resolved.
+- **Fix (FE)**: moved `setPublishOpen(false)` to click-time (top of the handler) so the modal dismisses immediately; the publish continues in the background under its own BusyOverlay + toast and the modal closes even if save/publish throws. Mirrors the P2P editor fix from `p2pcampaignpage.md` Session 14.
 - **Files touched**:
-  - BE:
-    - `Base.Application/Business/DonationBusiness/CrowdFunds/Queries/GetCrowdFundBySlug.cs` (created)
-    - `Base.Application/Business/DonationBusiness/CrowdFunds/Queries/GetCrowdFundPublicStats.cs` (created)
-    - `Base.Application/Business/DonationBusiness/CrowdFunds/Queries/ValidateCrowdFundForPublish.cs` (created)
-    - `Base.Application/Business/DonationBusiness/CrowdFunds/Queries/GetCrowdFundEmbedCode.cs` (created — V1 returns publicUrl only per ISSUE-15)
-    - `Base.Application/Business/DonationBusiness/CrowdFunds/Commands/InitiateCrowdFundDonation.cs` (created — SERVICE_PLACEHOLDER mock paymentSessionId)
-    - `Base.Application/Business/DonationBusiness/CrowdFunds/Commands/ConfirmCrowdFundDonation.cs` (created — atomic GlobalDonations + CrowdFundDonations junction INSERT; milestone auto-promote; GoalMet auto-flip on AutoClose)
-    - `Base.Application/Business/DonationBusiness/CrowdFunds/Commands/UpdateCrowdFundPage.cs` (created — NEW separate command; null-means-no-change semantics; backward-compatible with #16's UpdateCrowdFund — see ISSUE-16)
-    - `Base.API/EndPoints/Donation/Public/CrowdFundPublicQueries.cs` (created — anonymous-allowed)
-    - `Base.API/EndPoints/Donation/Public/CrowdFundPublicMutations.cs` (created — anonymous-allowed, rate-limited via `CrowdFundDonationSubmit`)
-    - `Base.Application/Schemas/DonationSchemas/CrowdFundSchemas.cs` (modified — appended 7 DTOs incl. renamed `CrowdFundDonationConfirmedDto` per ISSUE-17)
-    - `Base.Application/Mappings/DonationMappings.cs` (modified — appended Mapster configs for new DTOs)
-    - `Base.API/EndPoints/Donation/Queries/CrowdFundQueries.cs` (modified — appended `ValidateCrowdFundForPublish` + `GetCrowdFundEmbedCode` admin GQL fields)
-    - `Base.API/EndPoints/Donation/Mutations/CrowdFundMutations.cs` (modified — appended `UpdateCrowdFundPage` admin GQL mutation)
-    - `Base.API/DependencyInjection.cs` (modified — `CrowdFundDonationSubmit` rate-limit policy 5/min/IP+slug added inside existing AddRateLimiter lambda)
-  - FE: NONE (deferred to Session 2)
-  - DB: `sql-scripts-dyanmic/Crowdfundingpage-sqlscripts.sql` (created — STEP 0 GridType defensive + STEP 0a defensive Capability inserts + STEP 1 Menu CROWDFUNDINGPAGE + STEP 2 9 MenuCapabilities + STEP 3 BUSINESSADMIN RoleCapabilities + STEP 4 Grid CROWDFUNDINGPAGE GridType=EXTERNAL_PAGE + STEP 5 UPDATE-with-guard promoting #16's build-a-school-kenya Draft → Active with rich Content/Milestones/Updates/Impact/FAQ JSON)
-- **Deviations from spec**:
-  - Plan called for MODIFYING `UpdateCrowdFund.cs` to support per-tab partial save; agent chose the cleaner path of CREATING a separate `UpdateCrowdFundPage` command. #16's `UpdateCrowdFund` remains untouched (no risk of breaking the Quick-Edit code path). See ISSUE-16.
-  - Plan called for an EF migration extending the `fund.GlobalDonations` 3-arg CHECK constraint; turned out UNNECESSARY because #16's Session 2 redesign already replaced that column with the `fund.CrowdFundDonations` junction. ISSUE-3 from §⑫ → CLOSED via ISSUE-18.
-  - DTO `DonationConfirmedDto` renamed to `CrowdFundDonationConfirmedDto` to avoid namespace collision with P2PFundraiserSchemas (ISSUE-17 — CLOSED).
-- **Known issues opened**: ISSUE-16 (UpdatePage two-handler contract for FE), ISSUE-17 (CLOSED), ISSUE-18 (CLOSED), ISSUE-19 (atomicity verify in V2), ISSUE-20 (FE must use full `getCrowdFundBySlug` field name), ISSUE-21 (seed execution order — #16 before #173)
-- **Known issues closed**: ISSUE-3 from §⑫ (CHECK constraint extension — superseded by junction design); ISSUE-17 (collision resolved); ISSUE-18 (migration unnecessary)
-- **Build verification**: `dotnet build` PASS — 0 errors, 476 pre-existing warnings (none introduced by Screen #173).
-- **Next step**: User runs the DB seed (`Crowdfundingpage-sqlscripts.sql`) AFTER `Crowdfunding-sqlscripts.sql` (#16) — execution order matters per ISSUE-21. No EF migration needed this session (ISSUE-18 closed it). Then `/continue-screen #173 --scope FE_ONLY` to generate ~45 FE files: admin 6-tab editor + live preview pane + public SSR route at `(public)/crowdfund/[slug]/page.tsx` + 13 public components + Zustand store + Zod schemas + entity-operations CROWDFUNDINGPAGE wiring block. FE Developer (Opus) must honor:
-  - ISSUE-16: call `updateCrowdFundPage` (NEW handler) for per-tab partial saves; call existing `updateCrowdFund` only if reusing #16's Quick-Edit dialog component verbatim.
-  - ISSUE-17: confirmation DTO is `CrowdFundDonationConfirmedDto` not `DonationConfirmedDto`.
-  - ISSUE-20: GraphQL field is `getCrowdFundBySlug` (full name).
-  - Layout Variant `tabbed-with-preview` for the editor page (Variant B: ScreenHeader + showHeader=false on data-table containers).
-  - Reuse `<CrowdFundCardsGrid>` + `<CrowdFundKpiWidgets>` from #16 for the admin list view (when no `?id`).
-
-### Session 2 — 2026-05-13 — FE_ONLY BUILD — COMPLETED
-
-- **Scope**: Generate the full FE surface (admin 6-tab editor + public SSR storefront) deferred from Session 1. Triggered via `/continue-screen #173 --scope FE_ONLY`. Followed the #170/#171/#172 EXTERNAL_PAGE FE precedent.
-- **Files touched**:
-  - BE: NONE (FE-only session — BE Session 1 already complete and `dotnet build` re-verified PASS at session start).
-  - FE (admin setup — 17 files, all NEW under `PSS_2.0_Frontend/src/presentation/components/page-components/setting/publicpages/crowdfundingpage/`):
-    - `crowdfundingpage-root.tsx` (root dispatcher — reads `?id` → editor vs list)
-    - `crowdfundingpage-store.ts` (Zustand — per-tab form state + activeTab + dirty flag + modal state + preview device mode + diff-based saveAll)
-    - `crowdfundingpage-schemas.ts` (Zod schemas per tab + composite publish-validation schema)
-    - `index.ts` (barrel)
-    - `list-page.tsx` (Variant B ScreenHeader; reuses #16's `crowdfund-cards-grid` + `crowdfund-widgets` + `crowdfund-filter-bar`; "+ Create Campaign Page" → local `QuickCreateModal`; card click → `?id=N` navigation)
-    - `editor-page.tsx` (header + StatusBar + 6-tab nav + tab content + sticky dirty footer + lifecycle modals; calls `UPDATE_CROWDFUND_PAGE` per ISSUE-16)
-    - `tabs/basic-tab.tsx`, `content-tab.tsx`, `donation-settings-tab.tsx`, `milestones-tab.tsx`, `updates-tab.tsx`, `design-tab.tsx`
-    - `components/tab-nav.tsx`, `status-bar.tsx`, `live-preview.tsx` (300ms-debounced split-pane preview with Desktop/Mobile device-switcher; uses `React.memo` per spec §⑫), `lifecycle-modals.tsx` (Publish/Unpublish/Close/Archive confirm), `publish-validation-modal.tsx` (ERROR/WARNING separation), `quick-create-modal.tsx` (8 fields, gated by RHF `formState.isValid`), `section-toggles.tsx`, `color-picker-row.tsx`, `amount-chips-editor.tsx`, `impact-breakdown-editor.tsx`, `faq-editor.tsx`, `milestones-list-editor.tsx`, `updates-editor.tsx` (post-update modal merged inline)
-  - FE (public route — 15 files, all NEW under `PSS_2.0_Frontend/src/presentation/components/page-components/public/crowdfundingpage/`):
-    - `page-content.tsx` (2-col layout — left: headline/story/impact/milestones/updates/donor-wall/FAQ; right: sticky progress + donate-widget + share)
-    - `org-header.tsx`, `hero.tsx`, `progress-widget.tsx`, `donate-form.tsx` (CSRF + honeypot + idempotencyKey), `impact-list.tsx`, `milestones-timeline.tsx`, `updates-feed.tsx`, `donor-wall.tsx`, `faq-accordion.tsx`, `share-buttons.tsx` (FB/X/WhatsApp/LinkedIn/Copy Link), `public-footer.tsx`, `thank-you-state.tsx`, `edge-banners.tsx` (Draft preview / Closed / GoalMet × 3 behaviors), `index.tsx` (barrel)
-  - FE (route shells — 2 files, NEW):
-    - `app/[lang]/setting/publicpages/crowdfundingpage/page.tsx` (re-export of page-config; folder DID NOT previously exist — created)
-    - `app/[lang]/(public)/crowdfund/[slug]/page.tsx` (SSR with `generateMetadata` + ISR `revalidate=60` + OG fallback chain `ogImage → heroImage → orgLogo` + status gating `Archived → notFound`, `Draft && !previewToken → notFound`)
-  - FE (DTO / GQL — 5 NEW files):
-    - `domain/entities/donation-service/CrowdFundingPageDto.ts` (composite DTOs incl. `CrowdFundPublicDto`, `CrowdFundPublicStatsDto`, `ValidationResultDto`, `EmbedCodeDto`, `InitiateCrowdFundDonationDto`, `DonationInitResultDto`, `ConfirmCrowdFundDonationDto`, `CrowdFundDonationConfirmedDto`, `CrowdFundPageUpdateRequest`)
-    - `infrastructure/gql-queries/donation-queries/CrowdFundingPageQuery.ts` (`VALIDATE_CROWDFUND_FOR_PUBLISH`, `GET_CROWDFUND_EMBED_CODE`)
-    - `infrastructure/gql-queries/public-queries/CrowdFundPublicQuery.ts` (`GET_CROWDFUND_BY_SLUG`, `GET_CROWDFUND_PUBLIC_STATS` — full names per ISSUE-20)
-    - `infrastructure/gql-mutations/donation-mutations/CrowdFundingPageMutation.ts` (`UPDATE_CROWDFUND_PAGE` — null-means-no-change per ISSUE-16)
-    - `infrastructure/gql-mutations/public-mutations/CrowdFundPublicMutation.ts` (`INITIATE_CROWDFUND_DONATION`, `CONFIRM_CROWDFUND_DONATION`)
-  - FE (page-config — 1 NEW file):
-    - `presentation/pages/setting/publicpages/crowdfundingpage.tsx` (capability gate via `useAccessCapability({ menuCode: "CROWDFUNDINGPAGE" })`)
-  - FE (wiring — 5 MODIFY):
-    - `application/configs/data-table-configs/donation-service-entity-operations.ts` — appended `CROWDFUNDINGPAGE` block (mirrors `P2PCAMPAIGNPAGE` from #170); `update` → `UPDATE_CROWDFUND_PAGE` (ISSUE-16) with DTO `CrowdFundPageUpdateRequest`
-    - `domain/entities/donation-service/index.ts` — re-export `CrowdFundingPageDto`
-    - `infrastructure/gql-queries/donation-queries/index.ts` + `public-queries/index.ts` — re-export new query modules
-    - `infrastructure/gql-mutations/donation-mutations/index.ts` + `public-mutations/index.ts` — re-export new mutation modules
-    - `presentation/pages/setting/publicpages/index.ts` — re-export `crowdfundingpage`
-  - DB: NONE (`Crowdfundingpage-sqlscripts.sql` already created in Session 1; user must execute #16 SQL BEFORE #173 SQL per ISSUE-21)
-- **Deviations from spec**:
-  - `crowdfundingpage-store.ts` + `crowdfundingpage-schemas.ts` live at the component root (NOT in `store/` or `schemas/` subdirectories as §⑧ suggested). Matches the actual #170/#171/#172 sibling convention (`p2pcampaignpage-store.ts` lives at root, no `store/` subdir).
-  - `update-post-modal.tsx` merged inline into `updates-editor.tsx` (tight coupling; single component handles both list view and the post-modal). All other §⑧ components emitted as separate files.
-  - Public components folder named `public/crowdfundingpage/` (matching the screen name) rather than `public/crowdfund/[slug]/` (the URL path) — consistent with the `public/p2pcampaignpage/` and `public/onlinedonationpage/` neighbour pattern.
-  - Embed-widget UI deferred to V2 per ISSUE-15 — `GET_CROWDFUND_EMBED_CODE` query wired, but UI surfaces only `publicUrl` as a copyable textarea. No iframe-renderer.
-  - Communication template-FK selects (`confirmationEmailTemplateId`, `whatsAppDonationAlertTemplateId`, etc.) NOT surfaced in any tab — fields exist on DTO; full UI deferred to V2 per ISSUE-13. Tabs stay at exactly 6.
-  - Admin route page existed in `app/[lang]/setting/publicpages/crowdfundingpage/page.tsx`: §⑧ said "OVERWRITE existing UnderConstruction stub" but no stub existed — the file was created fresh. Outcome identical.
-- **Known issues opened**: ISSUE-22 (export-name mismatch fixup applied via `as` aliases) + ISSUE-23 (status-bar `lastDonationAt` field doesn't exist on admin `CrowdFundStatsDto` — swapped to `largestDonation`). Both **CLOSED in this session** via post-generation Edits.
-- **Known issues closed**: ISSUE-16 (FE wired to `UPDATE_CROWDFUND_PAGE` everywhere it matters), ISSUE-20 (FE wired to full `getCrowdFundBySlug` / `getCrowdFundPublicStats` field names), ISSUE-22 (fixup applied), ISSUE-23 (fixup applied).
-- **Still OPEN** (carry-over): ISSUE-19 (atomicity verification under load — V2 BE concern), ISSUE-21 (seed execution order — deployment note only).
-- **Pre-flagged §⑫ deferrals (V2 work, no FE action this session)**: ISSUE-8 (multi-currency FX), ISSUE-13 (Communication template UI), ISSUE-15 (live embed widget).
-- **Build verification**:
-  - `dotnet build` PASS (BE Session 1 outputs still compile, 0 errors).
-  - `npx tsc --noEmit` on FE: **5 errors remain — ALL pre-existing in unrelated files** (`event-overview-bar.tsx`, `event-selector.tsx`, `EmailConfiguration.tsx`, `RecipientFilterDialog.tsx`, `domain/entities/index.ts` `PageLayoutOption` ambiguity from `OnlineDonationPageDto.ts` exports). **Zero #173-introduced errors after the 2 post-generation fixes (ISSUE-22/23).**
-- **Next step**: Screen #173 is COMPLETED. User actions before E2E QA:
-  1. Run `Crowdfunding-sqlscripts.sql` (#16) IF not yet run.
-  2. Run `Crowdfundingpage-sqlscripts.sql` (#173) — promotes `build-a-school-kenya` Draft → Active with rich content for QA.
-  3. `pnpm dev` and visit `/{lang}/setting/publicpages/crowdfundingpage` (admin) + `/{lang}/crowdfund/build-a-school-kenya` (public).
-  4. Exercise: Quick-Create → editor 6 tabs → Save Draft → Publish (validate-for-publish modal on missing fields) → public route renders → donate flow up to SERVICE_PLACEHOLDER gateway boundary → thank-you state with `milestoneCrossed` if threshold crossed.
-  - All 7 SERVICE_PLACEHOLDERs from §⑫ require UI built fully (Payment Gateway / Receipt Email / WhatsApp Alert / reCAPTCHA / Image Upload / Multi-currency FX / Generated OG Image).
-
-### Session 3 — 2026-06-29 — FE POLISH (Event-parity) — COMPLETED
-
-- **Scope**: Make the admin editor's visual design match the **Event form** (`crm/event/event`) end-to-end — page shell (header / step-nav / floating buttons) AND form-field uniformity. FE-only, no BE/DB/migration. (Editor now lives at `crm/p2pfundraising/crowdfundingpage/` per §⑭ relocation, executed in an earlier pass.)
-- **Index seed check**: Confirmed the `CROWDFUNDING` card-grid index relies on the FLOW grid already seeded in `Crowdfunding-sqlscripts.sql` (#16) — FLOW GridType, no GridFields (intentional for card-grid). NO BE/DB work needed for the index page to initialize.
-- **Files touched** (all FE):
-  - `editor-page.tsx` — shell rewritten to Event-parity: shared `FlowFormPageHeader` (icon-gradient + breadcrumbs + amber "Unsaved" badge + status badge + Preview header-action), centered floating action pill (`fixed bottom-4`, rounded-full + shadow + ring + backdrop-blur; Cancel / Save as Draft / Save & Publish / Re-publish / Close Campaign by mode+status), `pb-24` content reserve. Removed all 3 native `confirm()` dialogs ([[feedback_no_browser_dialogs]]) — Cancel & Discard now act directly.
-  - `components/tab-nav.tsx` — flat pill tabs → Event numbered **step navigator** (circles + connectors; locked 🔒 / complete ✓ / active ring / inactive states) + new `CrowdFundStepGuidance` per-step banner.
-  - `crowdfundingpage-store.ts` — `CROWDFUND_EDITOR_TABS` extended with `guidanceTitle` / `guidance` / `gated` + `-duotone` icons.
-  - `tabs/*.tsx` (all 6: basic / content / donation-settings / milestones / updates / design) — converted from raw `<input>`/`<select>`/`<textarea>` + muted-header cards to the **canonical Event field primitives** imported from `crm/event/event/form-tabs/fields`: `FormSectionCard` (solid-primary header), `TextField` / `NumberField` / `SelectField` (searchable) / `TextAreaField` (counter) / `UrlField` / `Toggle` / `FieldWrapper`. Date fields → calendar `FormDatePicker`. Bespoke sub-editors (slug+copy, currency select, amount-chips, color pickers, section toggles, upload areas, rich-text, radio cards, payment rows) kept but wrapped in `FieldWrapper`/`FormSectionCard` for uniform chrome. ([[feedback_reuse_canonical_form_fields]])
-- **Deviations**: SEO block on the Design tab promoted from a collapsible to a normal solid-header `FormSectionCard` (Event has no collapsible cards). Headline char-limit now a hint (canonical `TextField` has no `maxLength` passthrough) instead of a hard cap.
-- **Decision**: Imported the Event field primitives directly rather than forking a local copy — guarantees byte-identical design and avoids per-screen drift ([[feedback_reuse_canonical_form_fields]]). Accepts a `crm/p2pfundraising → crm/event` module dependency.
-- **Build verification**: `npx tsc --noEmit` (filtered `^src/.*error TS`) → **0 errors**. (Two residual `.next/types` errors are stale entries for the old `setting/publicpages/crowdfundingpage` route — unrelated.)
-- **Next step**: Visual QA via `pnpm dev` — open Crowdfunding, click grid **New** (ADD) and a card's **Edit Full Setup** (EDIT); verify header/step-nav/floating-pill + uniform fields across all 6 tabs. No BE/DB action.
-
----
-
-### Session 4 — 2026-06-30 — ENHANCE (Event-parity structure) — COMPLETED (FE) / BE HANDOFF
-
-- **Scope**: Restructure the editor to match the **Event** screen's 4-tab + 3-step-publish shape and add the Event-style donor-setup features it was missing. Five user requests:
-  1. **6 → 4 tabs** (`basic · content · configuration · design`). Milestones + Updates folded into **Content**; donation settings + payment gateway/methods + donor form fields + email templates + display options consolidated into one **Configuration** tab ("all config in one tab", like Event's reg-page). Currency + slug-generation already worked.
-  2. **Dropped the Organizational Unit field** from Basic — Donation Purpose is the single business owner; the duplicate org-unit input was removed (entity column kept, sent as null).
-  3. **Email templates**: surfaced the 4 existing FK pickers (Confirmation / Goal-Milestone / Goal-Reached / Admin) **+ 2 NEW columns** `PaymentSuccessEmailTemplateId` + `ReceiptEmailTemplateId` (Event keeps these on its reg-page). All 6 picked from `EMAILTEMPLATES_QUERY` via canonical `SelectField`. ("Page Types" intentionally **skipped** — Event's `PageTemplateId` is not surfaced in Event's own UI either.)
-  4. **Donor form fields** config — NEW jsonb column `DonationFormFieldsJson`; Event-style table editor (`donation-form-fields-editor.tsx`) with Visible/Required toggles over `CONTACTCODE / FIRSTNAME / LASTNAME / EMAIL / PHONE` (Email locked-on). Donor identifies by Contact Code OR name+email.
-  5. **Publish workflow** → Event's **3-step**: `Draft → ReadyToPublish → Published`. Surfaced the existing `CompanyPaymentGatewayId` as a gateway picker. PageStatus is a free string so the new state needs **no column**.
-- **Decisions** (user-confirmed via AskUserQuestion): 4 tabs / add Ready-to-Publish / mirror-Event-templates+keep-crowdfund-ones / field-table for donor fields — all "recommended" options.
-- **Files touched — BE** (compiling C# only; **user builds + creates the migration**):
-  - `Base.Domain/Models/DonationModels/CrowdFund.cs` — +`PaymentSuccessEmailTemplateId`, +`ReceiptEmailTemplateId` (+nav props), +`DonationFormFieldsJson`.
-  - `Base.Infrastructure/.../CrowdFundConfiguration.cs` — 2 EmailTemplate FK relationships (Restrict, mirror existing) + `DonationFormFieldsJson` `HasColumnType("jsonb")`.
-  - `Base.Application/Schemas/DonationSchemas/CrowdFundSchemas.cs` — 3 new fields on `CrowdFundResponseDto` + `CrowdFundPageUpdateRequest`.
-  - `Base.Application/.../Commands/UpdateCrowdFundPage.cs` — null-means-no-change mapping for the 3 new fields.
-  - `Base.Application/.../Commands/PublishCrowdFund.cs` — source-status guard broadened to accept `Draft` **OR** `ReadyToPublish`.
-  - NEW `Commands/MarkCrowdFundReadyToPublish.cs` (Draft→ReadyToPublish) + `Commands/RevertCrowdFundToDraft.cs` (ReadyToPublish→Draft).
-  - `Base.API/.../Mutations/CrowdFundMutations.cs` — `markCrowdFundReadyToPublish(crowdFundId)` + `revertCrowdFundToDraft(crowdFundId)` (both `BaseApiResponse<bool>` → bare `data`).
-  - `Base.Application/.../Queries/GetCrowdFundById.cs` — added the 3 fields to the hand-projection.
-- **Files touched — FE** (`tsc` 0 src errors):
-  - `domain/.../CrowdFundDto.ts` — +`ReadyToPublish` status, +3 fields, +`CrowdFundDonationFormFieldEntry` type + defaults + `parseDonationFormFields()`.
-  - `crowdfundingpage-store.ts` — `CrowdFundEditorTabId`/`CROWDFUND_EDITOR_TABS` collapsed to 4; blank-draft seeds the 3 new fields.
-  - `tabs/basic-tab.tsx` — Org Unit field + its query/options removed.
-  - `tabs/content-tab.tsx` — Milestone Timeline + Campaign Updates `FormSectionCard`s folded in (reusing `MilestonesListEditor` / `UpdatesEditor`).
-  - NEW `tabs/configuration-tab.tsx` — 7 `FormSectionCard`s (amounts / gateway+methods / donor form fields / donor options / goal-exceeded / display / email templates).
-  - NEW `components/donation-form-fields-editor.tsx` — the Event-style field table.
-  - `editor-page.tsx` — 4-tab render; `toUpdateRequest` +3 fields; `STATUS_BADGE`/`GATED_TABS` updated; floating pill rewritten to 3-step (`Mark as Ready to Publish` / `Back to Draft` + `Publish` / `Close Campaign`); +mark-ready/revert mutations & handlers (mark-ready runs publish-validation first).
-  - `components/status-bar.tsx` — +`ReadyToPublish` chip (exhaustive `Record<CrowdFundStatus>`).
-  - GQL: `CrowdFundQuery.ts` (+3 fields on by-id), `CrowdFundMutation.ts` (+MARK/REVERT), `index.ts` barrel repointed.
-  - **Deleted** dead tabs: `tabs/donation-settings-tab.tsx`, `tabs/milestones-tab.tsx`, `tabs/updates-tab.tsx`.
-- **HANDOFF — user must**: (1) create ONE EF migration for the 3 new `fund."CrowdFunds"` columns (`PaymentSuccessEmailTemplateId`, `ReceiptEmailTemplateId` FK→email templates; `DonationFormFieldsJson` jsonb); (2) `dotnet build`. Optional later: seed dedicated email-template categories for crowdfund payment-success/receipt (FE currently lists ALL email templates — no category filter).
-- **Known issues opened**: None. **Next step**: post-build, visual QA the 4 tabs + the Draft→Ready→Publish pill, then E2E.
-
-### Session 5 — 2026-06-30 — UI POLISH + PageTemplateId — COMPLETED (FE) / BE HANDOFF
-
-- **Scope**: 6 UX-polish items on the editor/list + a follow-up request to add the missing `PageTemplateId` field (mirror Event reg-page setup).
-- **Item 1 — currency in index KPI widgets**: `crowdfunding/crowdfund-widgets.tsx` "Total Raised" tile hard-coded `$`. Now uses the tenant base currency (`useCompanySettingsSession().settings.baseCurrencyCode`) via `Intl.NumberFormat` compact-currency; tooltip note updated.
-- **Item 2 — Edit → form, not modal**: card-grid "Edit" on a Draft opened the quick-edit modal; now navigates to the full editor (`?id=N`) in every state. `crowdfund-card.tsx` Draft Edit → `editFullSetupUrl`; `onQuickEdit` made optional + removed from `card-grid/types.ts`, the `crowdfund-card` variant adapter, and `index-page.tsx` (quick-edit dialog mount + store wiring dropped; `crowdfund-quick-edit-dialog.tsx` now dead, left in place).
-- **Item 4 + 6 — 2-tab model + public-page ordering**: collapsed the 4 tabs to **2** — `basic` ("Basic Info") + `page` ("Page Builder"). NEW `tabs/page-builder-tab.tsx` merges the former Content+Configuration+Design sections into one scrolling pane shown beside a **persistent** `LivePreview` (split-pane), ordered to mirror public-page regions under labelled dividers: **Top of page** (Page Template · Brand Colors · Logo & Typography · Story & Media) → **Main content** (Impact · Milestones · Updates) → **Donation form** (Amounts · Gateway & Methods · Donor Form Fields · Donor Options · Goal-Exceeded · Display Options) → **Footer & visibility** (FAQ · Page Sections) → **Behind the scenes** (Email Templates · SEO & Sharing). Deleted `tabs/content-tab.tsx`, `tabs/configuration-tab.tsx`, `tabs/design-tab.tsx`; store `CrowdFundEditorTabId`/`CROWDFUND_EDITOR_TABS` → 2 entries; `GATED_TABS=["page"]`; editor split-pane keyed on `isPageTab`; barrel repointed.
-- **Item 5 — brand-color presets**: Brand Colors now use the canonical `setting/.../onlinedonationpage/components/color-picker` `ColorPicker` (preset swatches + WCAG contrast + copy) with a `CROWDFUND_COLOR_PRESETS` palette, replacing the bespoke `ColorPickerRow` (file left, now unused).
-- **Item 3 — Event-parity polish**: required-field markers already on the canonical fields; added (a) a **publish-flow helper** banner explaining the 2-step Mark-Ready→Publish gate and which fields it checks (Draft + ReadyToPublish states), (b) a non-dismissable **`BusyOverlay`** progress modal shown during create / save / mark-ready / publish / revert, (c) converted the secondary "Other actions" raw buttons to the shared `Button` for uniform styling.
-- **NEW — PageTemplateId** (supersedes Session-4's "Page Types skipped" note — user explicitly asked for it):
-  - **BE** (compiling C# only; user builds + creates migration): `CrowdFund.cs` +`int? PageTemplateId` + `virtual MasterData? PageTemplate` nav. `CrowdFundConfiguration.cs` + FK `PageTemplate` → MasterData (optional, Restrict). `CrowdFundSchemas.cs` +`PageTemplateId`/`PageTemplateCode` on `CrowdFundResponseDto`, +`PageTemplateId` on `CrowdFundPageUpdateRequest`, +`PageTemplateCode` on `CrowdFundPublicDto`. `GetCrowdFundById.cs` + `.Include(PageTemplate)` + projection. `GetCrowdFundBySlug.cs` + include + `PageTemplateCode` projection. `UpdateCrowdFundPage.cs` + null-means-no-change mapping.
-  - **FE**: `CrowdFundDto.ts` +`pageTemplateId`/`pageTemplateCode`; `CrowdFundQuery.ts` `CROWDFUND_FIELDS` +2 fields; `editor-page.tsx` `toUpdateRequest` +`pageTemplateId`; store blank-draft seeds both; NEW `components/page-template-picker.tsx` (`CrowdFundPageTemplatePicker`, MasterData `CROWDFUNDPAGETEMPLATE` with static fallback tiles STANDARD/STORY_FOCUS/IMAGE_FOCUS/VIDEO_FOCUS/MINIMAL — leaves `pageTemplateId=null` when unseeded, Event-parity) surfaced as the first "Top of page" section; barrel +export.
-  - **Seed (NEW)**: `sql-scripts-dyanmic/CrowdFundingPage-page-template.sql` — `MasterDataType` `CROWDFUNDPAGETEMPLATE` + 5 `MasterData` rows (idempotent, PostgreSQL). DataValues match the FE tile codes.
-- **Files touched — FE** (`tsc` 0 src errors; only pre-existing stale `.next/types` route entries remain): `crowdfund-widgets.tsx`, `crowdfund-card.tsx`, `index-page.tsx`, `card-grid/types.ts`, `card-grid/variants/crowdfund-card.tsx`, `crowdfundingpage-store.ts`, `editor-page.tsx`, `index.ts`, NEW `tabs/page-builder-tab.tsx`, NEW `components/page-template-picker.tsx`, `CrowdFundQuery.ts`, `CrowdFundDto.ts`; deleted `tabs/content-tab.tsx` + `tabs/configuration-tab.tsx` + `tabs/design-tab.tsx`.
-- **Files touched — BE** (compiling only): `CrowdFund.cs`, `CrowdFundConfiguration.cs`, `CrowdFundSchemas.cs`, `GetCrowdFundById.cs`, `GetCrowdFundBySlug.cs`, `UpdateCrowdFundPage.cs`; NEW seed `CrowdFundingPage-page-template.sql`.
-- **HANDOFF — user must**: (1) create ONE EF migration for the new `fund."CrowdFunds"."PageTemplateId"` column + FK → `sett."MasterDatas"`; (2) `dotnet build`; (3) run `CrowdFundingPage-page-template.sql` so the template picker persists (until then the picker shows fallback tiles and stores `null`). 
-- **Known issues opened**: None. **Next step**: post-build, visual QA the 2-tab Page Builder (live preview + region order), the color presets, the busy overlays, and the Page Template picker selection round-trip.
-
-### Session 6 — 2026-06-30 — #16 INDEX: card-grid → ROW table (Event-parity) — COMPLETED (FE) / SEED HANDOFF
-
-- **Scope**: User asked (again) to follow the **Event screen** list structure — show campaigns **row-wise**, not as cards, and **drop the bespoke card Edit/Delete/lifecycle buttons** in favour of the shared grid's standard row actions.
-- **FE — `crowdfunding/index-page.tsx` rewritten** to the Event index shape: `FlowDataTableStoreProvider` with a plain **row** `TABLE_CONFIG` (no `displayMode: "card-grid"` / `cardVariant`), `enableActions { view, edit, delete }` (toggle off — lifecycle lives in the editor pill). Removed the `cardConfig`/`buildPublicUrl`/`openModal` wiring and the mounted `LifecycleConfirmModal` + `DeleteCrowdFundModal` + quick-edit dialog. Kept the KPI widgets + status chips (chips still drive `extraVariables.statuses`).
-- **Standard grid actions** now drive everything via the existing `CrowdFundingPageRouter` URL modes: **New** → `?mode=new` (editor add), **View** → `?mode=read&id` (detail drawer), **Edit** → `?mode=edit&id` → router renders the editor (`?id=N`), **Delete** → `DELETE_CROWDFUND` (op-config). No code change needed in the router — it already handled these modes.
-- **op-config** `donation-service-entity-operations.ts`: added `primaryKey: "crowdFundId"` to the `CROWDFUNDING` entry so the standard View/Edit/Delete resolve the PK.
-- **Card files now dead but left in place** (harmless; card-grid `crowdfund` variant still registered): `crowdfund-card.tsx`, `delete-crowdfund-modal.tsx`, `lifecycle-confirm-modal.tsx`, `crowdfund-quick-edit-dialog.tsx`.
-- **NEW seed — `Crowdfunding-row-grid-columns.sql`**: the `CROWDFUNDING` grid was card-grid (GridFields NONE), so a row table had no columns. Seeds `sett.Fields` + `sett.GridFields` (8 cols, idempotent, mirrors `Campaign-sqlscripts.sql`): hidden PK `crowdFundId` + Campaign Name · Category (`crowdfund-category-chip`) · Status (`crowdfund-status-badge`) · Goal (`currency-amount`) · Raised (`currency-amount`) · Donors · End Date (DATETIME). FieldKeys match `GetAllCrowdFundList`'s `CrowdFundGridRowDto`.
-- **Files touched — FE** (`tsc` 0 src errors): `crowdfunding/index-page.tsx`, `configs/data-table-configs/donation-service-entity-operations.ts`. **BE/seed**: NEW `Crowdfunding-row-grid-columns.sql`.
-- **HANDOFF — user must run `Crowdfunding-row-grid-columns.sql`** before the list will render columns (until then the row table is empty — columns are DB-driven from `sett.GridFields`). No migration/build needed for this item (FE + seed only).
-- **Known issues opened**: None. **Next step**: run the column seed, then verify row list + New/View/Edit/Delete actions.
-
----
-
-### Session 7 — 2026-06-30 — FIX/ENHANCE (Event-parity batch: preview, currency, donor fields, sections, subdomain) — COMPLETED (FE) / BE HANDOFF
-
-- **Scope**: 8-point Event-parity batch on the editor live-preview, donor form, page-sections layout, and the public route's subdomain/currency handling.
-- **Issue 1 — preview layout follows Page Template** (`components/live-preview.tsx`): preview now branches on `pageTemplateCode` (STANDARD/IMAGE_FOCUS → side-by-side donate panel; STORY_FOCUS/MINIMAL/VIDEO_FOCUS/mobile → stacked), taller hero for image/video focus, and shows a template chip in the toolbar.
-- **Issue 3 — currency in preview** (`live-preview.tsx`): added `makeMoneyFmt(currency)` (Intl currency, code fallback); every `$` replaced — raised/goal, impact, stretch goal, donate chips (now real `amountChipsJson` values).
-- **Issue 5 — hero image/video in preview** (`live-preview.tsx`): new `HeroBlock` renders the uploaded `heroImageUrl` as a cover background (play badge overlay when a `heroVideoUrl` is also set), branded gradient placeholder otherwise.
-- **Issue 6 — currency in editors**: `amount-chips-editor.tsx` + `milestones-list-editor.tsx` take a `currency` prop and format money via `Intl`; `page-builder-tab.tsx` passes `currency={page.currency}` to both.
-- **Issue 7 — donor identity fields predefined** (`CrowdFundDto.ts` + `donation-form-fields-editor.tsx`): defaults are now ALL visible; CONTACTCODE/FIRSTNAME/LASTNAME/EMAIL are `isSystem` (locked — admin can't edit visible/required); only **Phone** is admin-toggleable. `parseDonationFormFields` forces system fields to defaults regardless of stored JSON; helper text rewritten to the "Contact Code OR first+last+email" rule.
-- **Issue 8 — Page Sections toggles moved into their cards** (`page-builder-tab.tsx`): removed the standalone "Page Sections" card + `SectionToggles` import. Added an inline `SectionVisibilityToggle` to the Impact / Milestone / Updates / FAQ cards (each wired to its `enabledSections` key via new `setSection`). Donor Wall (syncs `showDonorWall` + `enabledSections.donorWall`), Share Buttons, Countdown moved into the **Display Options** card. `section-toggles.tsx` now dead (left in place).
-- **Issue 4 — slug/subdomain/currency on the public page** (Event #169 parity):
-  - **BE** `GetCrowdFundBySlug.cs`: query gains `string? Hostname`; handler injects `IHostEnvironment env` and resolves the tenant via `OnlineDonationPageTenantResolver.ResolveByHostnameAsync` (CustomDomain → Subdomain → `?_tenant=` dev override → first-active fallback), replacing the first-active-only hack — so a campaign on a non-first tenant's subdomain resolves and returns **that tenant's currency**. `CrowdFundPublicQueries.cs` adds the `string? hostname` GQL arg.
-  - **FE** public route `app/[lang]/(public)/crowdfund/[slug]/page.tsx`: added `resolveHostname` (x-forwarded-host → host, `?_tenant=` dev override), passes `hostname` to the query, switched to `cache: "no-store"` (dropped `revalidate=60`). Query `CrowdFundPublicQuery.ts` adds `$hostname` + `pageTemplateCode`; `CrowdFundPublicDto` (FE) adds `pageTemplateCode`.
-  - **Editor preview link** `editor-page.tsx`: now always shown (slug-based full URL), with a `previewToken` appended for Draft so a pre-publish page resolves (Event parity).
-- **Action-pill consolidation** (`editor-page.tsx`, follow-up): removed the separate dashed "Other actions" box; **Discard changes / Unpublish / Archive** now live in a ⋮ "More" dropdown inside the floating pill (Event reg-page parity — secondary/destructive in a `DropdownMenu`, pill keeps only the primary lifecycle flow). **Cancel** (exit to list) vs **Discard changes** (revert unsaved edits, stay) kept distinct.
-- **Issue 2 — Mark-Ready / Back-to-Draft / "ReadyToPublish" status**: already implemented in Session 5 (editor lifecycle pill + `STATUS_BADGE`/`STATUS_CHIP` + BE `MarkCrowdFundReadyToPublish`/`RevertCrowdFundToDraft`). No code change — verify it renders after FE rebuild.
-- **Files touched — FE** (`tsc` 0 src errors): `crowdfundingpage/components/live-preview.tsx`, `components/amount-chips-editor.tsx`, `components/milestones-list-editor.tsx`, `components/donation-form-fields-editor.tsx`, `tabs/page-builder-tab.tsx`, `editor-page.tsx`, `domain/entities/donation-service/CrowdFundDto.ts`, `domain/entities/donation-service/CrowdFundingPageDto.ts`, `infrastructure/gql-queries/public-queries/CrowdFundPublicQuery.ts`, `app/[lang]/(public)/crowdfund/[slug]/page.tsx`. **BE**: `GetCrowdFundBySlug.cs`, `CrowdFundPublicQueries.cs`.
-- **HANDOFF — user builds BE** (`dotnet build`): no migration/seed needed for Issue 4 (code-only tenant resolution reusing the existing `OnlineDonationPageTenantResolver`).
-- **Known issues opened**: None. **Next step**: rebuild FE + BE; QA the preview per-template + currency + hero, donor-field locking, section toggles, and a Draft preview link / subdomain `?_tenant=` resolution.
-
-### Session 8 — 2026-06-30 — FIX/ENHANCE (public URL, Display-Options preview parity) + Q&A — COMPLETED (FE)
-
-- **Issue 1 — "Page Template not saved" = unrun seed, NOT a bug**: migration `20260630071516_Add_PageTemplate_To_CrowdFunding.cs` exists (column `fund.CrowdFunds.PageTemplateId` + FK→`sett.MasterDatas`) and the snapshot includes it. The picker stores the **MasterData FK** (`masterDataId`); when `CROWDFUNDPAGETEMPLATE` MasterData isn't seeded it deliberately stores `pageTemplateId: null` (no FK to point at), so the choice can't persist and `pageTemplateCode` (read-only, projected from the join) is lost on reload. **Fix = apply the migration + run `CrowdFundingPage-page-template.sql`.** No code change.
-- **Issue 2 — full public-access URL** (`tabs/basic-tab.tsx`, Event reg-page parity): added a read-only "Public page URL" row under the name/slug grid showing `${origin}/${lang}/crowdfund/${slug}` with **Copy** + **Open** buttons (mirrors Event's Page Identity card `window.location.origin` URL).
-- **Issue 6 — live preview honors Display Options** (`components/live-preview.tsx`): the editor preview now reflects every Display-Options toggle — Goal Thermometer (gates the progress bar), Donor Count (donor line), Donor Wall (recent-donors stub), Countdown (days-remaining chip from `endDate`), Share Buttons (social icon row). Previously these were `true` but invisible in the mock. Both stacked + side-by-side template layouts share one `DonateColumn`.
-- **Q&A (no code; behavior confirmed in the public renderer)**:
-  - **#3 Anonymous donations** — `donate-form.tsx`: "Donate anonymously" hides the *name* field but **email is still collected** (required, for receipt) and payment still processes; the donor wall shows "Anonymous". So collection is unaffected — only public identity is hidden.
-  - **#4 Cover processing fees** — `donate-form.tsx` "Cover processing fees so 100% goes to the campaign" adds the gateway fee on top of the gift so the charity nets the full intended amount (`coverFees` sent to the initiate mutation).
-  - **#5 Goal-exceeded behaviors** — `edge-banners.tsx` + `page-content.tsx` handle all three: **Keep Accepting** (banner "still open", donate form stays), **Auto Close** (banner "campaign has closed", `canDonate=false`), **Show Stretch Goal** (banner shows the stretch target + second bar, stays open).
-- **Files touched — FE** (`tsc` 0 src errors): `tabs/basic-tab.tsx`, `components/live-preview.tsx`. **Next step**: apply the PageTemplate migration + run the page-template MasterData seed, then QA template persistence + the preview's Display-Options reflection.
-
-### Session 9 — 2026-06-30 — FIX (publish lock, ReadyToPublish lock + cancel, dirty-count accuracy, URL on Page Builder) — COMPLETED (FE)
-
-- **Issue 1 — read-only after publish**: the editor is now editable **only while the campaign is a Draft** (or ADD mode). Non-Draft statuses (ReadyToPublish / Published / Active / GoalMet / Closed) render the tab content inside a native `<fieldset disabled>` wrapper (`editor-page.tsx`, `isLocked = !isNew && !isDraft`), which makes every input/select/button inside go read-only; added `pointer-events-none select-none opacity-70` for visual clarity + to cover non-form custom controls (rich-text). The **Save as Draft** button is hidden when locked.
-- **Issue 2 — ReadyToPublish lock + cancel button**: same lock covers ReadyToPublish. The revert button already existed (`REVERT_CROWDFUND_TO_DRAFT` → Draft); **relabelled "Back to Draft" → "Cancel Ready to Publish"** to match the user's mental model. Added an amber **lock banner** explaining how to make it editable again (ReadyToPublish → "Cancel Ready to Publish"; Live → "unpublish from ⋮ menu").
-- **Issue 3 — dirty-count miscalculation** (`crowdfundingpage-store.ts`): the `dirtyFields` Set only ever *added* keys, so toggling a value (true→false→**true**) stayed dirty `(1)` even after reverting to the saved value. Added `isSameAsSaved(a,b)` (Object.is for scalars, JSON.stringify fallback for objects/JSON-string fields) and changed `setField`/`patch` to **delete** the key from the dirty set when the new value matches `lastSaved`, else add. The "(N)" badge now reflects true net changes.
-- **New ask — Public page URL on Page Builder too**: extracted the inline URL row from `basic-tab.tsx` into shared **`components/public-page-url-bar.tsx`** (`PublicPageUrlBar` — origin+lang+slug, Copy+Open, reads slug from store live). Now rendered on **both** Basic Info (under name/slug) and at the **top of Page Builder**.
-- **Files touched — FE** (`tsc` 0 src errors): `editor-page.tsx`, `crowdfundingpage-store.ts`, `tabs/basic-tab.tsx`, `tabs/page-builder-tab.tsx`, **new** `components/public-page-url-bar.tsx`. **No BE / no migration / no seed.** **Next step**: QA — confirm fields lock at ReadyToPublish/Published, Cancel-Ready-to-Publish returns to editable Draft, dirty count returns to 0 when a value is reverted, URL bar shows on both tabs.
-- **pageTemplateId still saving null — investigated, FE is correct (decision: keep FK, run seed)**: user debugged the save payload and saw `pageTemplateId: null`. Confirmed end-to-end the FE path is wired (GET selects `pageTemplateId`+`pageTemplateCode`; DTO has both; picker `patch()`es them; `toUpdateRequest` sends `pageTemplateId`; BE DTO `CrowdFundPageUpdateRequest.PageTemplateId` exists @ `CrowdFundSchemas.cs:472` + command applies @ `UpdateCrowdFundPage.cs:186`). Root cause = the picker (`components/page-template-picker.tsx:214`, identical to the Event picker) sends `pageTemplateId: mdOptions.length>0 ? tile.id : null` — it refuses to write a fake FK for the static fallback tiles. `CROWDFUNDPAGETEMPLATE` MasterData rows live **only** in the manual `CrowdFundingPage-page-template.sql` (not auto-seeded), so the picker's MasterData query returns 0 rows → static fallback → `null`. **Decision (user): keep the MasterData FK, no code change — run `CrowdFundingPage-page-template.sql`** (verified correct/idempotent: seeds the type + 5 rows IsActive=TRUE with codes matching the picker). After it runs the query returns rows and the FE sends the real `masterDataId`.
-
-### Session 10 — 2026-06-30 — FIX (URL bar stays enabled when locked; publish-status Q&A; localhost public 404) — COMPLETED (FE) / BE HANDOFF
-
-- **URL bar disabled when fields locked → hoisted out of the lock fieldset** (`editor-page.tsx`): the Session-9 `<fieldset disabled>` lock also disabled the Public-page-URL Copy/Open. Moved `<PublicPageUrlBar />` to render **outside/above** the fieldset (once, shows on both tabs) and removed the two in-tab copies (`tabs/basic-tab.tsx`, `tabs/page-builder-tab.tsx`). Now interactive in **every** status. `tsc` 0 src errors.
-- **"After publish status is Active not Published" — by design, NOT a bug**: `PublishCrowdFund.cs:99-108` sets `Published` then **auto-advances to `Active`** when `StartDate <= UtcNow`. A campaign whose start date is today/past goes straight to Active (live & accepting). `Published` is only the transient pre-start state. No change.
-- **Public page 404 on localhost (`/en/crowdfund/<slug>`) — BE dev-only tenant fallback** (`GetCrowdFundBySlug.cs`): root cause = tenant resolution. The BySlug handler resolves CompanyId from the hostname; on `localhost` (no subdomain / custom domain / `?_tenant=`) `OnlineDonationPageTenantResolver` falls back to the **first active company** (lowest CompanyId). A campaign owned by another tenant (user operates as company 3) then misses the company-scoped lookup → `result.Page == null` → resolver returns error → FE `notFound()`. **Fix**: after the tenant-scoped lookup misses **and `env.IsDevelopment()`**, retry the lookup **by slug alone** (any active tenant) so any published page opens on localhost without a manual `?_tenant=`. Production keeps strict tenant scoping (fallback gated on Development). On a real subdomain it already resolved correctly. Currency/orgName come from the entity itself, so they stay correct under the fallback.
-- **Files touched — FE** (`tsc` 0 src errors): `editor-page.tsx`, `tabs/basic-tab.tsx`, `tabs/page-builder-tab.tsx`. **BE (build handoff — code-only, no migration/seed)**: `Base.Application/.../CrowdFunds/Queries/GetCrowdFundBySlug.cs`. **Next step**: user `dotnet build`s the BE; then QA the public page on localhost (loads without `?_tenant=`), confirm URL bar Copy/Open work while a campaign is Active/Closed.
-
-### Session 11 — 2026-07-03 — ENHANCE (§⑮ CrowdFund donor invitation — SEND/RESEND/PUBLISH-GUARD/HISTORY) — COMPLETED (BE build clean, FE tsc clean) / MIGRATION + SEED HANDOFF
-
-- **Scope**: Built §⑮ end-to-end — port of the P2P Campaign invitation feature to the unified `CrowdFund` entity. BE + FE dispatched in parallel (Sonnet) against the frozen §⑮ GraphQL contract. Config UI lives in a NEW "Invitations" (`communication`) tab on THIS #173 editor; a compact Send/Resend + status shortcut was added to the #16 drawer (logged in `crowdfunding.md §⑮`).
-- **⚠ Orchestration note (for audit)**: the first BE + FE agent dispatches mis-fired — they returned plans and wrote ZERO files (pipeline agents defaulted to "delegate" behavior). Caught by disk check; re-dispatched with explicit "execute yourself" directives. The re-dispatch **plus** a late-spawning worker from the first dispatch ran concurrently → verified no source clobber (every field/method/DTO/DI line appears exactly once) EXCEPT one duplicate seed file (a fully-commented-out `CrowdFundInvitation-sqlscripts.sql`, deleted; kept the active `CrowdFund-Invitation-sqlscripts.sql`). The FE build was interrupted by a session exit but had already landed all edits.
-- **Files touched**:
-  - **BE (created)**: `Base.Application/Services/CrowdFundCommunications/{ICrowdFundEmailService,CrowdFundEmailService}.cs` (cloned from `P2PFundraiserEmailService`; JobCode `CF-{id}-INVITE`; template `CF_CAMPAIGN_INVITATION`; `/crowdfund/{slug}`, no RegisterUrl; per-run `EmailSendJob` + counters + cross-run delta) · `CrowdFunds/InvitationCommands/{SendCrowdFundInvitation,ResendCrowdFundInvitation,SendCrowdFundInvitationTest}.cs` · `CrowdFunds/Queries/{GetCrowdFundInvitationAudienceCount,GetCrowdFundInvitationHistory,GetCrowdFundInvitationRecipients}.cs` · migration `20260703061815_Add_Invitation_To_CrowdFunding` (+Designer; **user owns migration workflow per their request**) · seed `sql-scripts-dyanmic/CrowdFund-Invitation-sqlscripts.sql` (seeds `CROWDFUNDINVITATION` EMAILCATEGORY MasterData + `CF_CAMPAIGN_INVITATION` template; idempotent; NOT executed).
-  - **BE (modified)**: `CrowdFund.cs` (+5 fields +`InvitationEmailTemplate` nav) · `CrowdFundConfiguration.cs` (InvitationEmailTemplate FK Restrict + `InvitationFilterJson` jsonb + `SendInvitationOnPublish` default false; NO SavedFilter FK) · `CrowdFundSchemas.cs` (+5 fields on `CrowdFundPageUpdateRequest`/`CrowdFundResponseDto`; +3 result DTOs) · `CrowdFundEntityHelper.cs` (write-through + create default) · `GetCrowdFundById.cs` (project 5 raw fields) · `PublishCrowdFund.cs` (+`IBackgroundJobClient`, conditional enqueue when `SendInvitationOnPublish`) · `CrowdFundMutations.cs` (+3) · `CrowdFundQueries.cs` (+3) · `DependencyInjection.cs` (register `ICrowdFundEmailService`) · `ApplicationDbContextModelSnapshot.cs`.
-  - **FE #173 (created)**: `crowdfundingpage/tabs/communication-tab.tsx` (template picker + audience filter + `sendInvitationOnPublish` switch + live audience count + send-test + history mount) · `crowdfundingpage/components/invitation-history-panel.tsx` (history table + per-recipient drill-in).
-  - **FE #173 (modified)**: `CrowdFundingPageDto.ts` (+fields, +3 DTOs) · `CrowdFundingPageQuery.ts` (+5 scalars, +3 query consts) · `CrowdFundingPageMutation.ts` (+3 mutations) · `crowdfundingpage-store.ts` (`communication` tab entry + `sendInvitationOnPublish:false` default) · `editor-page.tsx` (Send/Resend pills + §⑮.4 audience-aware 3-way publish modal + large-blast type-to-confirm + manual Send/Resend modals + cooldown) · `crowdfundingpage-schemas.ts`.
-  - **FE #16 (modified)**: `crowdfund-detail-sheet.tsx` (read-only Invitations row + Send/Resend + "Edit setup" deep-link) · `CrowdFundQuery.ts` (+5 scalars) · `CrowdFundDto.ts` (+5 response fields) · `CrowdFundMutation.ts` (+3 mutations).
-- **Deviations from spec**: (1) §⑮.4 audience-aware publish branches live inline in `editor-page.tsx` rather than in `publish-validation-modal.tsx` — spec allowed either; functionally equivalent. (2) `EMAILCATEGORY` row `CROWDFUNDINVITATION` is seeded fresh (P2P never seeded its own category — this fixes that gap rather than reusing a NULL-resolving code).
-- **Bug caught + fixed during verification (CRITICAL)**: the FE invitation **queries** were written with a `get` prefix (`getCrowdFundInvitationAudienceCount` etc.), but this project's HotChocolate schema **strips the `Get` prefix** (proven by existing `crowdFundById`/`crowdFundSummary`/`crowdFundStats`). Builds don't catch a GraphQL field-name mismatch, so this would have failed silently at runtime. **Fixed** — stripped the prefix on all 3 query field selections in `CrowdFundingPageQuery.ts`. Mutations were already correct (`sendCrowdFundInvitation` etc. — non-`Get` verbs aren't stripped).
-- **Verification**: BE `dotnet build Base.API` → **Build succeeded, 0 errors** (548 pre-existing solution-wide warnings). FE `npx tsc --noEmit` → **0 new errors** for any crowdfund file; the only error is the pre-existing `PaymentMethodCode` duplicate export in `donation-service/index.ts` (predates this work — same one flagged in `p2pcampaignpage.md` Session 13). Runtime E2E NOT yet run.
-- **Known issues opened**: none new. Inherits P2P **ISSUE-9** (publish escape-hatch "Publish without sending" persistently flips `sendInvitationOnPublish` OFF — BE-owner may add a one-time override arg; default accept-as-is).
-- **Next step (user)**: (1) own the EF migration + `dotnet ef database update`; (2) execute `CrowdFund-Invitation-sqlscripts.sql`; (3) `pnpm dev` E2E — Communication tab config, live audience count, send-test, publish 3-way modal, manual Send/Resend, history + recipient drill-in, and the #16 drawer shortcut.
-
-### Session 12 — 2026-07-03 — FIX (Unpublish unreachable — widen gate Published→Published|Active) — COMPLETED (compiles; BE output lock only)
-
-- **Scope**: Unpublish was effectively unreachable. Both the FE ⋮-menu gate (`editor-page.tsx:949`) and the BE guard (`UnpublishCrowdFund.cs:41`) required `PageStatus == "Published"`, but `PublishCrowdFund` auto-advances Published→**Active** when `StartDate <= now`, so live campaigns are almost always `Active` → the option never showed. **Note: #16 + #173 are ONE combined screen** — all lifecycle actions live on the #173 editor action pill; the #16 row-grid/drawer intentionally carry none (`crowdfund-card.tsx` + `lifecycle-confirm-modal.tsx` are dead legacy from the pre-Session-6 card layout).
-- **Fix**: widened both gates to `Published || Active`. **Kept the donation-count guard** (`UnpublishCrowdFund.cs:52`) as the real safety net — a campaign with any recorded donation still cannot be unpublished and routes to Close. So this only unlocks Unpublish for live-but-empty campaigns.
-- **Files touched — BE**: `CrowdFunds/Commands/UnpublishCrowdFund.cs` (guard + doc comment). **FE**: `crowdfundingpage/editor-page.tsx` (⋮-menu gate). Confirm-modal copy already accurate ("re-publish at any time if there are zero donations").
-- **Deviations**: None. **Known issues opened**: None (open policy: campaigns with donations still Close-only, by design).
-- **Verification**: BE compiled clean; the `dotnet build` reported MSB3027/MSB3021 file-lock errors ONLY (`Base.Infrastructure.dll` held by the running Base.API under VS) — not code errors. **Next step (user)**: stop/rebuild the running API to pick up this + the §⑮ BE, then confirm Unpublish shows on an Active, zero-donation campaign.
-
-### Session 13 — 2026-07-03 — FIX (Send-test parity — modal-collect-recipient, no invisible send) — COMPLETED (BE `Base.Application` build clean; FE tsc clean)
-
-- **Scope**: Mirror the p2pcampaign §⑯ "invisible sender" fix onto crowdfund. p2p's "Send test" was changed to **collect an explicit recipient email in a modal** (never a silent send-to-self); crowdfund's clone still used the OLD invisible pattern — a "Send test to me" button that fired straight to the current staff user's inbox with no recipient input. Brought crowdfund to exact parity with `SendP2PCampaignInvitationTest` / p2pcampaignpage `communication-tab.tsx`.
-- **Files touched — BE (2)**: `CrowdFunds/InvitationCommands/SendCrowdFundInvitationTest.cs` (command record +`string? TestEmail = null`; validator `When(!empty) => EmailAddress()`; handler — explicit `TestEmail` wins, falls back to staff email, throws "Enter a test email…" if both empty; doc comment). `Base.API/EndPoints/Donation/Mutations/CrowdFundMutations.cs` (resolver +`string? testEmail = null` → passed into command).
-- **Files touched — FE (2)**: `CrowdFundingPageMutation.ts` (`SEND_CROWDFUND_INVITATION_TEST` +`$testEmail: String` arg). `crowdfundingpage/tabs/communication-tab.tsx` ("Send test to me" straight-fire button → "Send a test" button that opens a recipient-collection `<Dialog>` w/ email `TextField` + live-regex validation + `submitTest`; toast now names the entered address; imports Dialog set + `TextField` from event `fields`).
-- **Deviations**: None — byte-for-byte behavioural clone of the p2p test-send flow. **Known issues opened/closed**: None.
-- **Verification**: `dotnet build Base.Application` = **Build succeeded, 0 errors**. FE `tsc --noEmit` = only the pre-existing unrelated `PaymentMethodCode` duplicate-export (predates; same one noted in p2pcampaignpage Session 13) — 0 new errors. **Next step (user)**: rebuild the running Base.API (still holds old DLLs) to expose the new `testEmail` GraphQL arg, then smoke-test: Communication tab → Send test → modal collects an address → sends only there.
+  - FE: `crm/p2pfundraising/crowdfundingpage/editor-page.tsx` (handler ordering only).
+- **Deviations from spec**: none.
+- **Known issues opened / closed**: None.
+- **Next step**: none — FE-only, ships on next dev reload.
 
 ---
 
@@ -1762,3 +1536,110 @@ Identical to P2P §⑯.6, scoped to the CrowdFund stream only:
 
 **Build trigger:** `/build-screen #173` (primary), then `/build-screen #16` or `/continue-screen #16` for the drawer shortcut. Do NOT build via `/continue-screen #173`.
 - **Approval config update:** ParentMenu `SET_PUBLICPAGES` → `CRM_P2PFUNDRAISING`; ModuleCode `SETTING` → `CRM`; MenuUrl `setting/publicpages/crowdfundingpage` → `crm/p2pfundraising/crowdfundingpage`.
+
+---
+
+## ⑯ PAGE-SETTINGS EAV PORT + LANDING CONTENT (planned 2026-07-20 — design only, do NOT build this pass)
+
+**Full spec**: `.claude/screen-tracker/bug-reports/publicpages-EAV-SETTINGS-PORT-SPEC.md` (§1 pattern, §2 tables, §4 this screen)
+
+Port the Screen #10 Online Donation Page pattern onto `/[lang]/crowdfund/[slug]`:
+
+1. **Thin-core relocation** — move the cosmetic/presentational typed columns off `fund.CrowdFunds`
+   (Primary/Accent/BackgroundColorHex, FontFamily, LogoUrl, HeroImageUrl, HeroVideoUrl, EnabledSectionsJson,
+   ShowGoalThermometer/ShowDonorCount/ShowDonorWall, Headline, StoryRichText, Og*, DefaultShareMessage,
+   RobotsIndexable) into a new generic EAV table `fund.CrowdFundSettings`, via
+   `PresentationCrowdFundSettings` (BuildRows / Assemble / ManagedParamCodes). **Wire DTOs stay unchanged.**
+   `PageTemplateId` is a real FK and stays typed. The five large JSON content columns
+   (ImpactBreakdownJson, FaqJson, BeneficiariesJson, MilestonesJson, UpdatesJson) relocate **LAST**, after
+   the cosmetic ones are proven green — `UpdatesJson` grows unbounded, so leave it typed if rows get large.
+2. **Landing Content** — ~35 hardcoded public-template literals become admin-editable EAV rows behind a new
+   "Landing Content" card in `tabs/page-builder-tab.tsx` (region "Main content"), each with the current
+   literal as the coded fallback. Biggest wins: `trust-badges.tsx` (100% hardcoded) and `edge-banners.tsx`
+   (largest single block of hardcoded donor-facing copy).
+3. **ISSUE-50 law** — the Save handler is a diff-only upsert with **NO drop-sweep**, and the FE autosave
+   carries the `EMPTY_LANDING_CONTENT` identity guard. See the spec §1 Part 3 for why.
+
+**Note**: §⑥ of this prompt describes a 6-tab admin editor; the shipped implementation has **3 gated
+step-tabs** (Basic Info / Page Builder / Invitations). §⑥ is stale — reconcile it during this work.
+
+**Migrations are user-owned** — spec + backfill seed only, three ordered steps (create table → backfill →
+drop columns), never authored or run by the agent.
+
+Suggested split: session 1 = cosmetic relocation only; session 2 = JSON content columns + Landing Content.
+
+### Session 17 — 2026-07-20 — ENHANCE (Public-Page EAV Settings Port, Part 1 — cosmetic relocation) — PARTIAL
+
+- **Scope**: Per `.claude/screen-tracker/bug-reports/publicpages-EAV-SETTINGS-PORT-SPEC.md` §8 "Session 3", relocate the 18 cosmetic/content/SEO columns off `fund.CrowdFunds` into a new per-page EAV table `fund.CrowdFundSettings`, mirroring the shipped #10 OnlineDonationPage implementation. Wire DTOs and the GraphQL contract are unchanged — only the persistence location moved. The 5 big JSON content columns (`ImpactBreakdownJson`, `FaqJson`, `BeneficiariesJson`, `MilestonesJson`, `UpdatesJson`) are deferred to a later session per spec §4a.
+- **Relocated params** — THEME: PrimaryColorHex, AccentColorHex, BackgroundColorHex, FontFamily · MEDIA: LogoUrl, HeroImageUrl, HeroVideoUrl · SECTIONS: EnabledSectionsJson, ShowGoalThermometer, ShowDonorCount, ShowDonorWall · CONTENT: Headline, StoryRichText · SOCIAL: DefaultShareMessage · SEO: OgTitle, OgDescription, OgImageUrl, RobotsIndexable.
+- **Files touched**:
+  - BE (new): `Base.Domain/Models/DonationModels/CrowdFundSetting.cs`; `Base.Infrastructure/Data/Configurations/DonationConfigurations/CrowdFundSettingConfiguration.cs`; `Base.Application/Business/DonationBusiness/CrowdFunds/Helpers/PresentationCrowdFundSettings.cs`
+  - BE (modified): `CrowdFund.cs` (18 properties removed); `CrowdFundConfiguration.cs`; `CrowdFundEntityHelper.cs`; `CreateCrowdFund.cs`; `UpdateCrowdFundPage.cs`; `DuplicateCrowdFund.cs`; `GetCrowdFundById.cs`; `GetCrowdFundBySlug.cs`; `ValidateCrowdFundForPublish.cs`; `SendCrowdFundInvitationTest.cs`; `CrowdFundEmailService.cs`; `Mappings/DonationMappings.cs`
+  - BE (shared wiring): `Base.Application/Data/Persistence/IDonationDbContext.cs`; `Base.Infrastructure/Data/Persistence/DonationDbContext.cs` — one additive `DbSet<CrowdFundSetting>` line each
+  - DB: `sql-scripts-dyanmic/crowdfundingpage-eav-relocation-backfill.sql` (idempotent, `BEGIN;…COMMIT;`, NOT-EXISTS guards, `-- ROLLBACK;` escape)
+  - DOC: `.claude/screen-tracker/bug-reports/crowdfundingpage-EAV-PART1-MIGRATION-SPEC.md`
+  - FE: none
+- **Design note (ISSUE-50 law)**: `UpdateCrowdFundPage` is a partial/per-tab writer with null-means-no-change semantics, so the EAV write is **presence-aware**: `BuildRowsPartial` emits nothing for a null field, emits `ParamValue = null` for an explicit `""` (clear), and `UpsertAsync` iterates only the *desired* rows — it never sweeps and never soft-deletes. `UpdateCrowdFund` (#16 Quick-Edit) touches none of the 18 and was left untouched. `CreateCrowdFund` seeds from the entity defaults post-SaveChanges behind a NOT-EXISTS guard; `DuplicateCrowdFund` clones the source's rows onto the new id.
+- **Deviations from spec**: FK `CrowdFundSettings → CrowdFunds` uses `DeleteBehavior.Cascade`, not §2a's RESTRICT — see ISSUE-27.
+- **Verification**: `dotnet build Base.Application` reports exactly ONE error, `CS0101` on `P2PCampaignPageSchemas.cs:539` (duplicate `LandingContentDto`) — a #170 collision outside this change surface. No CrowdFund file produced an error, so this session's code is itself clean, but the assembly is RED until #170 is fixed. Migration NOT run (strictly user-owned).
+- **Known issues opened**: ISSUE-24, ISSUE-25, ISSUE-26, ISSUE-27
+- **Known issues closed**: None
+- **Next step**: (1) #170 owner renames the duplicate `LandingContentDto` so the assembly compiles; (2) user runs migration A → backfill SQL → migration B per the migration spec; (3) then Part 2 (Landing Content card + ~35 EAV copy params) and Part 3 (admin-editor autosave) from spec §8.
+
+### Session 18 — 2026-07-20 — ENHANCE (Public-Page EAV Settings Port, Part 2 — Landing Content + Part 3 — ISSUE-50 autosave) — COMPLETED (BE `Base.Application` 0 errors; FE `tsc --noEmit` clean for crowdfund/landing)
+
+- **Scope**: Per `publicpages-EAV-SETTINGS-PORT-SPEC.md` §4b/§4c + §1 Part 3 — turn ~35 hardcoded public-template literals into admin-editable EAV rows (section `LANDING_CONTENT` on `fund.CrowdFundSettings`), surface them behind a new "Landing Content" card in the Page Builder tab with a diff-only autosave, and read them back on the public renderers with the original literal as the coded fallback. The 5 big JSON content columns (`ImpactBreakdownJson`, `FaqJson`, `BeneficiariesJson`, `MilestonesJson`, `UpdatesJson`) remain deferred per spec §4a.
+- **Files touched — BE**:
+  - new: `CrowdFunds/Commands/SaveCrowdFundLandingContent.cs`; `CrowdFunds/Helpers/CrowdFundLandingContentAssembler.cs`
+  - modified: `Schemas/DonationSchemas/CrowdFundSchemas.cs` (`CrowdFundLandingContentDto` + `SaveCrowdFundLandingContentRequest` — deliberately NOT named `LandingContentDto`, that name is already taken twice in this namespace, see ISSUE-25); `GetCrowdFundById.cs`; `GetCrowdFundBySlug.cs` (both assemble `landingContent` onto the response); `Base.API/EndPoints/Donation/Mutations/CrowdFundMutations.cs` (`saveCrowdFundLandingContent` resolver)
+- **Files touched — FE (admin)**:
+  - new: `gql-queries/donation-queries/CrowdFundLandingContentFields.ts` (single shared selection set so the admin + public documents cannot drift); `crm/p2pfundraising/crowdfundingpage/components/landing-content-editor.tsx`
+  - modified: `CrowdFundQuery.ts` (fragment added to `GET_CROWDFUND_BY_ID` **only** — deliberately not to the shared `CROWDFUND_FIELDS`, which the cards grid also uses); `public-queries/CrowdFundPublicQuery.ts`; `CrowdFundingPageMutation.ts` (`SAVE_CROWDFUND_LANDING_CONTENT`); `CrowdFundDto.ts` (+`CrowdFundLandingContent` / `…Key` / `CrowdFundSettingInput` / `SaveCrowdFundLandingContentRequest`, placed in the *base* DTO file to avoid a circular import); `CrowdFundingPageDto.ts` (`landingContent` on `CrowdFundPublicDto` + re-exports); `tabs/page-builder-tab.tsx` (one `FormSectionCard`, `ph:text-aa-duotone`, between "Campaign Updates" and the Donation Form region)
+- **Files touched — FE (public, 17 files, +361/−76)**: `page-content.tsx` · `trust-badges.tsx` · `edge-banners.tsx` · `share-buttons.tsx` · `public-footer.tsx` · `donation-donut.tsx` · `milestones-timeline.tsx` · `beneficiaries-showcase.tsx` · `thank-you-state.tsx` · `donor-wall.tsx` · `faq-accordion.tsx` · `campaign-updates.tsx` · `gift-impact.tsx` · `stats-bar.tsx` · `progress-thermometer.tsx` · `mobile-donate-bar.tsx` · `impact-section.tsx`. Every substitution uses `landingContent?.field || "<existing literal>"` (`||` not `??`, so a cleared `""` also falls back).
+- **ISSUE-50 law (Part 3)**: the editor is diff-only — it ships **only** the rows whose value differs from the hydrated baseline, and clearing a field sends the ParamCode with `paramValue: ""` rather than omitting it. The BE `SaveCrowdFundLandingContent` handler upserts the supplied rows and has **no drop-sweep**, so a row absent from the payload is left untouched. A module-level `EMPTY_LANDING_CONTENT` sentinel gives a stable identity for "server returned nothing", and a `hydratedRealRef` latch means the first *real* payload wins while a later raced/empty refetch is ignored — so an in-flight edit can never be clobbered back to the coded fallbacks.
+- **Deviations from spec**: (1) `donation-donut.tsx`'s `PALETTE_TAIL` stays raw hex — see ISSUE-28. (2) Shipped fallback literals differ from the spec catalog in 5 places; the file won — see ISSUE-30. (3) `share-buttons.tsx` §4c: the `window.location` hydration-mismatch workaround was replaced with an SSR-derived absolute URL built from the `tenantHostname` prop already resolved in `crowdfund/[slug]/page.tsx`, matching the P2P public pages.
+- **Verification**: `dotnet build Base.Application` = 0 Errors / 575 Warnings (this also confirms ISSUE-25's #170 collision is gone). FE `npx tsc --noEmit | grep -iE "crowdfund|landing"` = no output. Migration NOT run — strictly user-owned.
+- **Known issues opened**: ISSUE-28, ISSUE-29, ISSUE-30
+- **Known issues closed**: ISSUE-25
+- **Next step**: user runs Part-1 migration A → `crowdfundingpage-eav-relocation-backfill.sql` → migration B (ISSUE-24) before either half is exercisable at runtime. Landing Content needs no migration of its own — it writes into the same `fund.CrowdFundSettings` table under section `LANDING_CONTENT`.
+
+### Session 19 — 2026-07-21 — UI (editor restructured into 5 business-concern tabs, ODP-parity) — COMPLETED (FE only; `npx tsc --noEmit` clean bar the pre-existing `dompurify` TS2688)
+
+- **Scope**: Replaced the 3-tab stepper model (`basic` / `page` / `communication`) with 5 business-concern tabs mirroring OnlineDonationPage #10's ISSUE-47(a) pattern — `basic` (Campaign) / `appearance` / `story` / `payments` / `donor` (Donor & Comms). The 895-line Page Builder monolith was split by concern; `communication-tab.tsx` folded into the Donor tab. Per user decision, gating is ADD-only: `TabNav` renders the stepper (locked/completed chrome + `CrowdFundStepGuidance` banner) while `isNew`, then a flat ODP-style pill row once the campaign has an id.
+- **Files touched**:
+  - FE (new): `tabs/page-builder-shared.tsx` (hoisted `CROWDFUND_COLOR_PRESETS`, `PAYMENT_METHOD_META`, `GOAL_EXCEEDED_OPTIONS`, `EMAIL_TEMPLATE_FIELDS`, `FONT_OPTIONS`, `parseJsonArray`, `parsePaymentMethods`, `SectionVisibilityToggle`), `tabs/appearance-tab.tsx`, `tabs/story-tab.tsx`, `tabs/payments-tab.tsx`, `tabs/donor-tab.tsx`
+  - FE (modified): `crowdfundingpage-store.ts` (new `CrowdFundEditorTabId` union + `CROWDFUND_EDITOR_TABS` + `LEGACY_TAB_REMAP` so persisted `"page"`→`appearance`, `"communication"`→`donor`), `components/tab-nav.tsx` (`variant?: "stepper" | "flat"`), `tabs/basic-tab.tsx` (SEO & Sharing card moved in verbatim), `editor-page.tsx` (`GATED_TABS` → the 4 non-basic ids; all 5 panels always mounted), `index.ts`
+  - FE (deleted): `tabs/page-builder-tab.tsx`
+- **Deviations from spec**:
+  - `RegionHeading` dropped entirely — the tabs replace the divider model. CF's "Footer" region held only the FAQ card, so that label dissolved and FAQ now sits in Story.
+  - `tab-nav.tsx`'s flat variant is self-authored: ODP has no `tab-nav.tsx` to copy (it uses Radix `<Tabs>` inline), so parity was reached with existing tokens rather than copied markup.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: None for this item. **Correctness note for future edits** — every panel is rendered ALWAYS and merely hidden (never unmounted), exactly as ODP does with `forceMount`; this is what keeps the Zustand dirty-count, `LivePreview`, and `LandingContentEditor`'s debounced diff-only EAV autosave (ISSUE-50) intact across tab switches. Do not "optimise" this into a conditional render. The outer split-pane wrapper swaps its display CLASS (`hidden` ⇄ `grid …`) rather than using the `hidden` ATTRIBUTE — Tailwind's `grid` utility beats preflight's `[hidden]{display:none}`, so the attribute alone left the live preview visible on the Campaign tab.
+
+### Session 20 — 2026-07-21 — UI (STANDARD template rebuilt to Aurora grade — "Verdant") — COMPLETED (BE 0 compile errors; FE `tsc --noEmit` clean bar pre-existing `dompurify` TS2688)
+
+- **Scope**: The 5 crowdfund "page templates" were only boolean feature flags over one thin layout, not visually distinct designs (unlike #10 ODP's 9 real template files). Rebuilt **STANDARD only** as a dedicated Aurora-grade renderer ("Verdant") matching a supplied platform-style mockup: split hero w/ dual pill CTAs + org tagline, floating **Featured Campaign** card overlapping the hero, 4-up trust row, **How Crowdfunding Works** (4 steps + arrows) beside a **Start Your Own Campaign** panel, **Explore Other Campaigns** discovery rail, **Your Support Creates Real Impact** stats band, **What Our Supporters Say** carousel, and a dark accent-coloured 4-column rich footer + bottom bar. Reference implementation = ODP `template-aurora.tsx`.
+- **Files touched**:
+  - BE:
+    - `Base.Application/.../CrowdFunds/Queries/GetActiveCrowdFundsPublic.cs` (NEW — anonymous public query)
+    - `Base.Application/.../CrowdFunds/CrowdFundPublicCache.cs` (appended `ActiveCampaignsKey`)
+    - `Base.Application/Schemas/DonationSchemas/CrowdFundSchemas.cs` (appended `CrowdFundPublicCampaignCardDto`)
+    - `Base.API/EndPoints/Donation/Public/CrowdFundPublicQueries.cs` (appended `GetActiveCrowdFundsPublic`)
+  - FE:
+    - `public/crowdfundingpage/templates/verdant/` (NEW — `pattern.ts`, `VerdantHero`, `FeaturedCampaignCard`, `TrustRow`, `HowItWorks`, `OtherCampaigns`, `ImpactBand`, `SupporterVoices`, `VerdantFooter`, `index.ts`)
+    - `public/crowdfundingpage/templates/template-verdant.tsx` (NEW — assembles the above + carries over every existing section verbatim)
+    - `public/crowdfundingpage/page-content.tsx` (exported `Props`, new `otherCampaigns` prop, STANDARD early-return dispatch)
+    - `public/crowdfundingpage/public-footer.tsx` (export-only: `parseSocials`/`parseContact`/`parseTree` + their types, so Verdant reuses the identical parsers)
+    - `domain/entities/donation-service/CrowdFundDto.ts` (+26 optional landing-content keys)
+    - `domain/entities/donation-service/CrowdFundingPageDto.ts` (`CrowdFundPublicCampaignCardDto`)
+    - `infrastructure/gql-queries/public-queries/CrowdFundPublicQuery.ts` (`GET_ACTIVE_CROWDFUNDS_PUBLIC`)
+    - `app/[lang]/(public)/crowdfund/[slug]/page.tsx` (SSR fetch of other campaigns; failure → `[]`, never breaks the page)
+  - DB: **none** — no schema change, no migration this session.
+- **Design decisions (user-approved)**:
+  1. *Explore Other Campaigns* had no data source → added the anonymous BE query rather than faking it. `getActiveCrowdFundsPublic(excludeSlug, take = 4, hostname)`, 60 s `IMemoryCache`, tenant resolved via `OnlineDonationPageTenantResolver` + the same Development-only fallback as `GetCrowdFundPublicStats`, status gate `Published|Active`, `EndDate > UtcNow`, ordered most-urgent-first. Aggregates use the CF-H4 base-currency net-of-refunds sum in ONE grouped query (no N+1). Endpoint degrades to an **empty list**, never an error — the section is non-critical. Section self-hides at `< 2` cards.
+  2. New-section copy ships as **coded defaults now**, wired through the existing `lc?.key || "literal"` pattern, so it renders immediately with zero DB work. EAV seeding is deferred (see ISSUE-31).
+- **Deviations from spec**: `FeaturedCampaignCard` is rendered twice — absolutely positioned overlapping the hero on `lg+`, and in normal flow below the hero under `lg` — because the mockup's overlap cannot survive a mobile stack. Both instances are fed identical props.
+- **Known issues opened**: ISSUE-31 (LOW — 26 new landing-content keys have no EAV seed rows yet, so the admin cannot edit the new sections' copy; renders from coded fallbacks until seeded), ISSUE-32 (LOW — only STANDARD was rebuilt; STORY_FOCUS / IMAGE_FOCUS / VIDEO_FOCUS / MINIMAL still share the old thin layout and remain visually near-identical to each other).
+- **Known issues closed**: None.
+- **Next step**: None for STANDARD. Follow-ups are ISSUE-31 (seed the new keys) and ISSUE-32 (give the other 4 templates real designs).

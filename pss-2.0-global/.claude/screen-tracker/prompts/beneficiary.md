@@ -9,7 +9,7 @@ complexity: High
 new_module: YES — `case` schema (already bootstrapped by Program #51)
 planned_date: 2026-04-21
 completed_date: 2026-04-24
-last_session_date: 2026-06-23
+last_session_date: 2026-07-16
 ---
 
 ## Tasks
@@ -1104,6 +1104,7 @@ Action: SET IsMenuRender = 0 (legacy List+Form split not used by FLOW)
 | ISSUE-13 | LOW | FE | Disabilities multi-select persists as CSV of codes in a single column. Flag for potential normalization (child table `BeneficiaryDisability`) if reporting/queries grow. | OPEN |
 | ISSUE-14 | MED | FE | `Add to Program` modal duplicates the eligibility-card UX from FORM §5 but without auto-eligibility check (used post-registration in DETAIL). Ensure `beneficiaryProgramEnrollments[]` is kept in sync when this modal adds a row (cache update or refetch). | OPEN |
 | ISSUE-15 | LOW | BE | `BeneficiaryHouseholdMember.LinkedBeneficiaryId` is self-referencing FK within the same schema. EF Core may need explicit `OnDelete(DeleteBehavior.NoAction)` to avoid cycle errors on migration generation. | OPEN |
+| ISSUE-16 | MED | Spec change (needs `/plan-screens #49`) | **Category-scoped outcome vocabulary.** Session 25 neutralised the education-specific "Graduated" → "Completed" (universally readable for water/food/medical/education) at both status levels — an in-scope relabel, no schema change. The richer model — outcome label varies by the enrollment's `Program.CategoryId` (Education→Graduated, Healthcare→Recovered/Discharged, Nutrition→Target Met, WASH/Emergency→Aid Delivered) — needs a new `ENROLLMENTSTATUS → PROGRAMCATEGORY` scoping relationship = a Spec change. Person-level `BeneficiaryStatusId` should stay program-agnostic ("Completed"); only the per-enrollment outcome would become category-scoped. Route to `/plan-screens #49` if the business wants program-specific outcome wording. | OPEN |
 
 ### Service Dependencies (UI-only — no backend service implementation)
 
@@ -1131,325 +1132,13 @@ Everything else (KPI widgets, filter chips, advanced filter panel, bulk-select, 
 
 ### § Known Issues
 
-See §⑫ table above — ISSUE-1 through ISSUE-15 pre-flagged by /plan-screens.
+See §⑫ table above — ISSUE-1 through ISSUE-16 (ISSUE-16 opened session 25).
 
 ### § Sessions
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
 
-### Session 0 — 2026-04-24 — BUILD — COMPLETED (retroactive)
-
-- **Scope**: Initial full FLOW build (BE + FE + DB seed) generated via Sonnet per /build-screen → /generate-screen. Retro-entry synthesized by /continue-screen (Build Log was not written at build time per token-budget directive).
-- **Files touched**: (retroactive — not recorded in detail; see §⑧ File Manifest for the canonical 21 BE + 20 FE + seed file set)
-- **Deviations from spec**: EF migration SKIPPED per user token-budget directive; `dotnet build` + `pnpm dev` smoke + full E2E verification SKIPPED this session (§ Verification checklist left unchecked).
-- **Known issues opened**: ISSUE-1 … ISSUE-15 (pre-flagged by /plan-screens — see §⑫).
-- **Known issues closed**: None.
-- **Next step**: Run full E2E verification + EF migration before production-ready.
-
-### Session 1 — 2026-06-17 — UI — COMPLETED
-
-- **Scope**: Align Beneficiary form & index with Program #51's design — (1) restyle accordion `FormSection` to Program's flat header-bar look (kept expand/collapse), (2) match in-section field grid spacing (gap-3 → gap-4) and body padding (`p-4`), (3) remove duplicate Export button from index ScreenHeader (grid toolbar `enableExport` is the single export), (4) add Program-style bottom-center floating action pill to the form (add + edit) and drop the header's duplicate Save button, (5) replace raw `<textarea>` ×3 and raw consent `<input type=checkbox>` ×2 with canonical `FormTextarea` / `FormCheckbox`, (6) **fix section "merge" look** — the form was wrapped in an overall `bg-card`, so the white section cards blended in; now the form renders on a grey `bg-background` canvas (add: wrapper bg-card→bg-background+p-4; edit: OverviewTab wraps formContent in `-m-4 bg-background p-4` to bleed the white tab panel) with `space-y-4` between sections, so each white section card floats with a visible gap exactly like #51. (7) **Save-button gating** — useForm now `mode:"onChange"`; floating pill Save (+ Register & Add Another) gated by `canSave = isEdit ? isValid && isDirty : isValid` — create needs all required fields valid, edit needs a real change (unchanged values keep Save disabled), matching Program #51's `onCanSubmitChange`. (8) **Consent & Documents** section icon was invalid (`ph:file-signature-duotone` doesn't exist → blank) — replaced with `ph:file-text-duotone`. (9) **DOB date picker** — Date of Birth swapped from `FormDatePicker` to `FormDatePickerDropdown` (year/month/date dropdowns, `previousYears={100}` `nextYears={0}`, `dd/MM/yyyy` display / `yyyy-MM-dd` value) matching the Contact form's DOB field; `parseISO` handles edit pre-fill from full-ISO or date-only, save round-trip unchanged. Other date fields (lastCheckupDate/enrollmentDate) keep the standard `FormDatePicker`. (10) **SHARED z-index bug fix** — `common-components/molecules/Calender` dropdown year/month `SelectContent` was `z-[10001]` while the calendar `PopoverContent` portals to body at inline `zIndex:100000`, so the year/month list opened *behind* the calendar (latent app-wide bug, also affects Contact DOB). Bumped to `z-[100001]`. Pure bug fix — only raises a too-low dropdown; benefits every `captionLayout="dropdown"` date picker. (11) **Age auto-calc from DOB** — `useWatch("dateOfBirth")` + effect derives whole-year age and `setValue("approximateAge", …, {shouldValidate:true})` (recomputes only on DOB change, doesn't mark form dirty); Age field relabeled "Age" + `min={0}` + helperText "Auto-calculated from Date of Birth — you can override it if DOB is unknown" so it stays editable (DOB-unknown path). setValue writes a real number (no Int-coercion regression).
-- **Files touched**:
-  - BE: None.
-  - FE:
-    - `…/casemanagement/beneficiarylist/beneficiary/beneficiary-form.tsx` (FormSection restyle + FieldRow gap-4 + root space-y-4 + FormTextarea×3 + FormCheckbox×2; consent section icon fix; DOB → FormDatePickerDropdown; DOB→age auto-calc effect; removed unused `Label`/`register`)
-    - `…/common-components/molecules/Calender/index.tsx` ⚠ SHARED — dropdown year/month `SelectContent` z-index `z-[10001]` → `z-[100001]` (was opening behind the calendar popover; app-wide bug fix)
-    - `…/casemanagement/beneficiarylist/beneficiary/index-page.tsx` (removed ScreenHeader Export `headerActions` + `handleExport` + unused `Button`/`Icon`/`toast` imports)
-    - `…/casemanagement/beneficiarylist/beneficiary/view-page.tsx` (added `BeneficiaryFormActionPill` w/ `canSave` gating; useForm `mode:"onChange"`; add + edit modes use floating pill, header save removed; `pb-24` on scroll bodies; add-mode canvas bg-card→bg-background+p-4)
-    - `…/casemanagement/beneficiarylist/beneficiary/detail/tabs/overview-tab.tsx` (edit-mode formContent wrapped in `-m-4 bg-background p-4` grey canvas)
-  - DB: None.
-- **Deviations from spec**: None — §⑥ Blueprint's "7 accordion sections" and "3 header action buttons" intent preserved; the 3 form actions now live in the floating pill (Cancel / Register & Add Another / Register Beneficiary) mirroring Program #51.
-- **Known issues opened**: None.
-- **Known issues closed**: None (ISSUE-1…15 are functional/data items, untouched by this UI pass).
-- **Verification**: Static consistency check passed (no dangling imports/refs). Full `tsc --noEmit` deferred at user request (slow on this Next app); recommend a `pnpm dev` smoke on `/[lang]/crm/casemanagement/beneficiarylist` (index export single-source + `?mode=new` floating pill + collapsible sections).
-- **Next step**: None.
-
-### Session 2 — 2026-06-17 — FIX — COMPLETED
-
-- **Scope**: Fix DOB (and all dropdown-caption) date pickers reopening on **today's** month/year instead of the already-selected date — after picking a DOB, reopening the calendar to change it showed the current month, not the stored value.
-- **Root cause**: `FormDatePickerDropdown` passed `selected={selectedDate}` to react-day-picker but no `defaultMonth`. In react-day-picker, `selected` does NOT navigate the displayed month; `defaultMonth` (defaulting to today) controls it. Because the Radix Popover unmounts its content on close, every reopen remounts `Calendar` and re-defaulted to today.
-- **Fix**: Added `defaultMonth={selectedDate}` to both `Calendar` instances (RHF + standalone) in `FormDatePickerDropdown`. On reopen the calendar now lands on the selected date's month/year (falls back to today when empty).
-- **Files touched**:
-  - BE: None.
-  - FE:
-    - `…/custom-components/form-fields/FormDatePickerDropdown.tsx` ⚠ SHARED — added `defaultMonth={selectedDate}` to both Calendar usages (app-wide bug fix; benefits every dropdown-caption date picker incl. Contact DOB).
-  - DB: None.
-- **Deviations from spec**: None.
-- **Known issues opened**: None.
-- **Known issues closed**: None.
-- **Verification**: Static review — `defaultMonth` is a valid react-day-picker prop already imported via `Calendar`. Recommend `pnpm dev` smoke: pick a DOB, reopen → calendar shows that month/year, not today.
-
-### Session 3 — 2026-06-17 — UI — COMPLETED
-
-- **Scope**: Add staff-facing helper text so case workers understand each field's business purpose — a one-line **description** under every section header (all 7) plus inline `helperText` on the non-obvious fields.
-- **Implementation**:
-  - Extended the local `FormSection` with an optional `description` prop, rendered as a `text-xs text-muted-foreground` line under the title (icon/chevron given `shrink-0`; title+description stacked in a flex-1 column). Added a business-purpose line to all 7 sections (Personal, Location & Contact, Family/Household, Needs Assessment, Program Enrollment, Consent & Documents, Internal).
-  - Added `helperText` to fields whose meaning isn't self-evident: DOB (age driver / leave blank if unknown), National ID (optional — undocumented), Language (case-worker match), GPS (home visits), Alternative Contact (backup channel), Household Size (per-household aid), Orphan Status (reveals guardian fields), Primary Need, Vulnerability Level (auto-suggests Priority), Education Status (reveals grade/school), Assigned Staff, Sponsorship Type (reveals sponsor + amount), Referral Source, Branch, Status, Enrollment Date. Existing helper text on Age and Priority left as-is.
-  - Guardian sub-heading gained a muted explanatory line ("Required for orphans and minors…").
-- **Files touched**:
-  - BE: None.
-  - FE:
-    - `…/beneficiarylist/beneficiary/beneficiary-form.tsx` — `FormSection` `description` prop + section descriptions + per-field `helperText` (uses the shared form-field components' existing `helperText` support; no shared component changed).
-  - DB: None.
-- **Deviations from spec**: None — additive UX copy only, no field/schema/flow changes.
-- **Known issues opened**: None.
-- **Known issues closed**: None.
-- **Verification**: Static review — every form-field component (`FormInput`, `FormSearchableSelect`, `FormDatePicker`, `FormDatePickerDropdown`, `FormTextarea`) already accepts and renders `helperText` (muted line below the control, replaced by error when present). Recommend `pnpm dev` smoke: open New/Edit Beneficiary → each section shows its purpose line and the annotated fields show their helper text.
-- **Next step**: None.
-
-### Session 4 — 2026-06-17 — ENHANCE — COMPLETED (⚠ needs BE build + migration by user)
-
-Four review items raised by the user on form data sources. Decisions taken by the agent where delegated.
-
-1. **Relationship fields use the real Relations master, not MasterData (Q1).** `Relationship to Head` and `Guardian Relationship` previously read `MASTERDATAS_QUERY` (typeCode=`RELATION`). The canonical lookup is the shared `com.Relations` table (`RELATIONS_QUERY`, used by Contact). **BE FK repointed** `MasterData → Relation`: `Beneficiary.RelationshipToHead` + `GuardianRelation` navs, FK-validation (`_dbContext.Relations`, `r.RelationId`), and GetById display projections (`.DataName → .RelationName`). FE selects switched to `RELATIONS_QUERY` (valueColumn `relationId`, orderColumn `orderBy`, active filter, `initialOption` from `*Name`).
-2. **Household grid loads real lookups + drops dead column (Q2).** Grid Gender was a hardcoded `<select>` (1/2/3) → now `GENDERS_QUERY`; Relationship was free-text → now `RELATIONS_QUERY` bound to the **already-existing** `RelationId`. Per user, **`RelationshipName` column DROPPED entirely** (memberName + relationId suffice; display name comes from the Relation join `RelationName`): removed from domain entity, request DTO, EF config (`HasMaxLength`), Create/Update mappings, FE DTO, both FE request mappers, and the BY_ID GraphQL selection (replaced with `relationName`). HouseholdMember `Relation` nav also repointed `MasterData → Relation`.
-3. **"Also Beneficiary?" links a real beneficiary (user follow-up).** Replaced the free-typed BEN-code input with a `FormSearchableSelect` on `BENEFICIARIES_QUERY` → stores **`linkedBeneficiaryId` only**; label shows `code - name` via `labelFormatter`. No `beneficiaryCode` text round-trips (it's a response-only field; removed from request mappers).
-4. **Assigned Staff = all active staff (Q3, agent decision).** Org-level case-worker role, assigned at intake before enrollment; added `isActive` filter. (Not scoped to program team — that would block assignment pre-enrollment.)
-5. **Sponsorship removed from the beneficiary root form (Q4, agent decision).** Duplicated Program #51's funding model (amount in 3 places) and doesn't fit multi-program enrollment. The dedicated **sponsor-details-modal + sponsorship-tab** already manage it post-creation, so the form block was pure duplication. DTO/BE columns retained (untouched); only the form UI + `_sponsorshipTypeCode` watch + `SPONSOR_TYPE_FILTER`/`CONTACTS_QUERY` imports removed.
-
-- **Files touched**:
-  - BE (⚠ user builds): `Beneficiary.cs`, `BeneficiaryHouseholdMember.cs` (nav types + drop RelationshipName); `BeneficiaryConfiguration.cs`, `BeneficiaryHouseholdMemberConfiguration.cs` (comments + drop RelationshipName property map); `BeneficiarySchemas.cs` (drop RelationshipName from request DTO); `CreateBeneficiary.cs`, `UpdateBeneficiary.cs` (FK-validation → Relations; drop RelationshipName map); `GetBeneficiaryById.cs` (`.DataName → .RelationName`).
-  - FE: `beneficiary-form.tsx`, `household-members-grid.tsx`, `beneficiary-update-helper.ts`, `view-page.tsx` (create mapper), `BeneficiaryDto.ts`, `BeneficiaryQuery.ts`.
-- **Deviations from spec**: This changes BE FK targets + drops a column (Spec-level). Done in-session at user direction rather than via `/plan-screens`.
-- **Known issues opened**: None. **Known issues closed**: None.
-- **Verification**: FE — static sweeps confirm no dangling `relationshipName`/sponsorship refs; picker query compat checked (`advancedFilter` undefined is ignored; only pageSize/pageIndex required). BE — **user is building**.
-- **⚠ MIGRATION REQUIRED (user)**: EF migration must (a) repoint FKs `case.Beneficiaries.RelationshipToHeadId` + `GuardianRelationId` and `case.BeneficiaryHouseholdMembers.RelationId` from `setting.MasterDatas` → `com.Relations` (drop old FK, add new FK), and (b) drop column `case.BeneficiaryHouseholdMembers.RelationshipName`. **Data caveat**: existing relation FK values reference MasterData IDs and will be invalid against com.Relations — clear/re-map them pre-prod.
-- **Next step**: After BE build + migration, `pnpm dev` smoke: relation dropdowns populate from Relations; household Gender/Relationship are real dropdowns; "Also Beneficiary" picker shows `code - name` and saves the link; Assigned Staff lists active staff; no sponsorship block on the form.
-
-### Session 5 — 2026-06-17 — ENHANCE — COMPLETED (⚠ needs BE build + seed by user)
-
-Two user items: (a) Beneficiary status should be workflow-driven, not a form field; (b) BeneficiaryCode should auto-generate via the NumberSequence system like ProgramCode (#51).
-
-1. **Status is workflow-controlled, not a form field.** Confirmed the BE already has the lifecycle: BENEFICIARYSTATUS = Draft(DFT)→Active(ACT)→Waitlist(WL)/Graduated(GRD)/Exited(EXT)/Suspended(SUS)/Deceased(DEC), plus a dedicated `UpdateBeneficiaryStatusCommand` (transitions by code, with terminal-state side-effects: Graduated closes enrollments, Deceased soft-deletes household links, ExitDate stamping) — already wired to the grid status action + `beneficiary-status-badge`. **Changes**: removed the `Status` `FormSearchableSelect` from the form (§7 Internal) — Enrollment Date kept; removed unused `STATUS_FILTER`; made `beneficiaryStatusId` zod `.nullable().optional()`. BE `CreateBeneficiary`: dropped the `BeneficiaryStatusId` required + FK validations and now **defaults to Draft (DFT)** server-side (resolves MasterData by `MasterDataType.TypeCode='BENEFICIARYSTATUS' && DataValue='DFT'`). Edit preserves the loaded status (round-trips unchanged); transitions only via `UpdateBeneficiaryStatus`. FE "Save as Draft" button + `draftStatusId` left intact (still explicitly creates Draft).
-2. **BeneficiaryCode via NumberSequence (mirrors ProgramCode).** Replaced the fragile `BEN-{MAX(code)+1:D4}` string-sort in `CreateBeneficiary` with `NumberSequenceGenerator.GenerateAsync(db, companyId, "BENEFICIARY", EnrollmentDate, ct)`, wrapped the parent+children save in `CreateExecutionStrategy().ExecuteAsync` + `BeginTransactionAsync`/`Commit` (generator needs an open txn; manual txns illegal under the retrying strategy — see [[reference_npgsql_execution_strategy_transactions]]). Format `BEN-{YYYY}-{SEQ:000000}` (e.g. BEN-2026-000001), YEARLY reset. FE already treats BeneficiaryCode as read-only/auto (display only) — no FE change needed. Seed added to `NumberSequenceEntityType-sqlscripts.sql` (STEP 5/6: register `BENEFICIARY` EntityType + system-default NumberSequenceEntityType), mirroring PROGRAM. Extends [[reference_numbersequence_extend_new_entity]].
-- **Files touched**:
-  - BE (⚠ user builds): `CreateBeneficiary.cs` (drop status validations, default Draft, NumberSequence code-gen in execution-strategy txn); `sql-scripts-dyanmic/NumberSequenceEntityType-sqlscripts.sql` (BENEFICIARY seed — ⚠ user applies).
-  - FE: `beneficiary-form.tsx` (remove Status field + STATUS_FILTER), `view-page.tsx` (zod status optional).
-- **Deviations from spec**: None beyond the agreed direction. No EF migration needed (NumberSequence tables already exist; status change is logic-only).
-- **Known issues opened/closed**: None.
-- **Verification**: FE — sweeps confirm no dangling `STATUS_FILTER`/status-field refs; Save-as-Draft path intact. BE — **user is building**; brace balance verified (23/23), `MasterData.MasterDataType.TypeCode` nav confirmed.
-- **⚠ USER STEPS**: (1) build BE; (2) **apply the NumberSequence seed** (`NumberSequenceEntityType-sqlscripts.sql` STEP 5/6) so `GenerateAsync("BENEFICIARY")` returns a code — without it BeneficiaryCode stays empty and could violate uniqueness; (3) ensure `Draft`/`DFT` exists in BENEFICIARYSTATUS master (seed already has it). No migration for this session (the Session 4 migration is still separately pending).
-- **Next step**: After BE build + seed, smoke: create a beneficiary → no Status field on form; saved record gets `BEN-2026-000001` and starts in Draft; grid status action moves Draft→Active etc.
-- **Next step**: None.
-
-### Session 6 — 2026-06-17 — FIX — COMPLETED (⚠ needs BE build by user)
-
-Four user items.
-
-1. **Bug `"Variable beneficiaryStatusId is required"` (regression from S5).** After removing the Status field, the create/update mutation still declared `$beneficiaryStatusId: Int!`, and the BE request DTO field was non-nullable `int` (→ HC forces `Int!`). **Fix**: FE mutation var → `Int` (Create + Update); BE `BeneficiarySchemas` request DTO `BeneficiaryStatusId` → `int?`. `CreateBeneficiary` already defaults Draft when `<=0`. `UpdateBeneficiary` now **preserves** the existing status across `Adapt` (captures `existing.BeneficiaryStatusId`/`BeneficiaryCode` before, restores after) and its status required+FK validations removed — the main update never changes status (only `UpdateBeneficiaryStatus` does).
-2. **Country-specific phone digit validation (#1).** Reused the canonical `application/configs/validation-configs/phone-validation-rules.ts` (`validatePhoneByCountry` / `getPhonePlaceholder`, keyed by country STD code). The form already resolves `countryStdCode` (COUNTRY_BY_ID_QUERY) for address visibility — now also **published to the beneficiary store** (`setCountryStdCode`). Phone fields (`phone`, `alternativePhone`, `guardianPhone`) get dynamic placeholders; `view-page.handleSave` + `handleSaveAndAddAnother` call a new `validatePhones()` that reads `countryStdCode` from the store and `form.setError`s any invalid number before submit (empty/no-rule countries pass through).
-3. **Save button had no loading state (#3).** `handleSave` is called directly (not via `form.handleSubmit`), so RHF's `isSubmitting` never flipped → the pill's existing "Saving…" spinner never showed. **Fix**: capture `loading` from both `useMutation` hooks (`creating`/`updating`), `const saving = creating || updating`, and pass `isSubmitting={isSubmitting || saving}` to both action pills. Success/error toasts already existed.
-4. **Enrollment Date vs program enrollment (#2).** The Internal `enrollmentDate` is the **beneficiary-level intake/registration date** (BE defaults it to today) — *separate* from per-program `enrolledOn` collected in the Add-to-Program modal (Waitlist/Enroll Now). They are not related; a beneficiary can enroll in multiple programs each with their own date. User delegated the call → **relabeled the form field to "Registration / Intake Date"** (kept as a real editable field so staff can backdate paper registrations — auto-setting would remove that) + clarifying helper text; zod message updated. Field name (`enrollmentDate`) and BE unchanged.
-
-- **Files touched**:
-  - BE (⚠ user builds): `BeneficiarySchemas.cs` (`BeneficiaryStatusId` → `int?`); `UpdateBeneficiary.cs` (preserve status across Adapt; drop status validations).
-  - FE: `BeneficiaryMutation.ts` (status var `Int`), `beneficiary-store.ts` (`countryStdCode` slice), `beneficiary-form.tsx` (publish std code + dynamic phone placeholders), `view-page.tsx` (`validatePhones`, mutation loading → pill, store std code).
-- **Deviations from spec**: None. **Known issues opened/closed**: None.
-- **Verification**: FE static — `validatePhones` defined before use; `saving` wired to both pills; phone util reused (not reimplemented). BE — **user builds**; confirmed no non-comment `BeneficiaryStatusId` `<…,int>` validations remain (would mismatch `int?`).
-- **Next step**: None. (Pending across sessions: S4 migration + S5 NumberSequence seed, both user-applied.)
-
-### Session 7 — 2026-06-17 — ENHANCE — COMPLETED (⚠ needs BE build by user)
-
-User asked how/where the enrollment status changes and how it ties to case creation, wanting "the case management flow to properly come and status to properly change." Investigated, then wired the orchestration (agent-decided business rules, user delegated).
-
-**Findings (three independent status systems, previously unlinked):** beneficiary status (DFT/ACT… via grid `UpdateBeneficiaryStatus`), program-enrollment status (ENROLLED/WAITLISTED… edited on beneficiary detail → Programs & Services tab via the Enrollment modal, which submits the full `UPDATE_BENEFICIARY`), and case status (CASESTATUS via Case screen). Enrollment status changes on the **Beneficiary screen**, never the Case screen. `EnrollBeneficiaryInProgram` (add-program "Enroll Now"/"Waitlist") always INSERTs; existing-enrollment edits flow through `UpdateBeneficiary`'s `SyncProgramEnrollments`.
-
-**Implemented links:**
-1. **Activate enrollment → beneficiary Draft→Active (Link A).** When a beneficiary gains an `ENROLLED` (non-waitlist) enrollment, auto-promote DFT→ACT. Added to BOTH paths: `EnrollBeneficiaryInProgram` (when the new enrollment resolves to ENROLLED) and `UpdateBeneficiary` (after `SyncProgramEnrollments`, if status is DFT and any enrollment is ENROLLED). Waitlisting does NOT promote. Codes: BENEFICIARYSTATUS DFT/ACT, ENROLLMENTSTATUS ENROLLED/WAITLISTED (UPPERCASE DataValue).
-2. **Gate case creation on Draft (Link B).** `CreateCase` now throws `BadRequestException` ("…Enrol them in a program to activate the beneficiary before opening a case.") if the beneficiary is still DFT. Placed BEFORE the handler's try so the 400 isn't rewrapped as 500. No auto-create-case (deliberately — too noisy/opinionated).
-
-**Resulting flow:** register → Draft (auto BEN code) → enrol: "Add to Waitlist" keeps Draft / "Enroll Now" (or edit Waitlist→Enrolled on Programs tab) → **beneficiary auto-Active** → now a Case can be opened (blocked while Draft) → Case Open→Closed on Case screen → terminal beneficiary transitions (Graduated closes enrollments etc.) via existing grid status action.
-- **Files touched**: BE (⚠ user builds): `EnrollBeneficiaryInProgram.cs`, `UpdateBeneficiary.cs` (auto-promote), `CreateCase.cs` (Draft gate). FE: none.
-- **Deviations from spec**: Adds cross-entity workflow rules (beneficiary↔enrollment↔case) not in the original blueprint — done at user direction.
-- **Known issues opened**: `EnrollBeneficiaryInProgram` always INSERTs a new enrollment (no update-existing path) — fine for "add", but a "Waitlist→Active" action that routes here (vs the Programs-tab edit) would duplicate. Current FE edit path uses `UpdateBeneficiary` (correct), so not hit today. Left as a note.
-- **Verification**: BE — brace balance UpdateBeneficiary 42/42, EnrollBeneficiaryInProgram 12/12, CreateCase 11/11; `BadRequestException`/`InternalServerException` both in `Base.Application.Exceptions` (resolves). **User builds.**
-- **Optional follow-up**: filter the Case-form beneficiary picker to exclude Draft beneficiaries (proactive UX vs the current save-time 400).
-- **Next step**: None.
-
-### Session 8 — 2026-06-17 — FIX — COMPLETED
-
-- **Scope**: Editing a beneficiary record crashed with `Cannot read properties of null (reading 'map')` in `HouseholdMemberRow`.
-- **Root cause**: `useGenericQuery` returns `items` as `null`/`undefined` until the Gender/Relation lookups resolve. The household grid renders existing rows immediately on edit, and `HouseholdMemberRow` called `genders.map(...)` / `relations.map(...)` directly on the still-null value.
-- **Fix**: parent passes `genders ?? []` / `relations ?? []` to the row, and the row's two `.map` sites are additionally guarded with `(… ?? [])` for resilience.
-- **Files touched**: FE: `household-members-grid.tsx`. BE: none. DB: none.
-- **Deviations from spec**: None.
-- **Known issues opened**: None.
-- **Known issues closed**: None.
-- **Verification**: static — both `.map` call sites now null-safe; parent prop guarded. User to smoke via `pnpm dev` (open an existing beneficiary → Household Members renders without crash).
-- **Next step**: None.
-
-### Session 9 — 2026-06-17 — UI — COMPLETED
-
-- **Scope**: In edit mode the floating "Save Changes" pill showed on **every** detail tab, not just the one that owns the editable form.
-- **Context**: `view-page.tsx` is one component switching on URL `mode` (new/edit/read). In `mode=edit` it renders the tabbed `BeneficiaryDetail` (`isEditable`), and the main `BeneficiaryForm` is embedded **only in the Overview tab**. The other tabs (Programs & Services, Cases, Sponsorship, Documents) save via their own inline modals — they don't use the page-level pill. The pill was rendered at page level, so it floated over all tabs and would've saved the Overview form while the user was on an unrelated tab.
-- **Fix**: read `activeDetailTab` from `beneficiary-store` in `view-page.tsx` and render the edit-mode `BeneficiaryFormActionPill` only when `activeDetailTab === "overview"`. Add-mode pill unchanged (plain non-tabbed form); read-mode unaffected.
-- **Files touched**: FE: `view-page.tsx`. BE: none. DB: none.
-- **Deviations from spec**: None.
-- **Known issues opened**: None.
-- **Known issues closed**: None.
-- **Verification**: static — pill now gated on the Overview tab; other tabs keep their own save controls. User to smoke via `pnpm dev` (edit a beneficiary → switch tabs → pill only on Overview).
-- **Next step**: None.
-
-### Session 10 — 2026-06-17 — FIX — COMPLETED
-
-- **Scope**: On edit, the household member Gender/Relationship dropdowns didn't show the saved selection, and the §5 Program Enrollment cards didn't reflect existing enrollments.
-- **Root causes**:
-  1. Household grid used raw native `<select>` registered with RHF. The Gender/Relation options come from async lookups (`GENDERS_QUERY`/`RELATIONS_QUERY`); when `reset()` applies the saved id before the options exist, the uncontrolled select can't display it and RHF never re-applies once options arrive → looks empty.
-  2. `EligibilityCards` seeded its selection by matching `enrollmentStatusCode` against Pascal options (`Enrolled`/`Waitlisted`), but the BE returns the ENROLLMENTSTATUS `DataValue` **UPPERCASE** (`ENROLLED`/`WAITLISTED`), so the status dropdown showed blank/wrong and the card looked unselected.
-- **Fixes**:
-  1. `household-members-grid.tsx`: Gender/Relationship selects converted to controlled `Controller` selects (value bound to form state, converts to number/null on change) so they reflect the saved value whenever the lookups resolve.
-  2. `eligibility-cards.tsx` (§5 Program Enrollment): the existing enrollment wasn't binding because the cards mirrored `programEnrollments` into local `selections` state via a seed effect + `initializedRef`, which raced the async `reset()` (and also matched the BE's UPPERCASE `WAITLISTED` against Pascal options). **Rewrote it to derive the cards directly from form state**: `useWatch("programEnrollments")` → `enrollmentByProgram` Map; `isChecked`/`status` read from the Map (status normalized case-insensitively); `toggle`/`setStatus` mutate the Map and `setValue` straight back, preserving each original enrollment row (id, enrolledOn, staff, exit data). No seed/sync effects, no `initializedRef` — saved enrollments bind the instant `reset` lands, and edits keep enrollment ids (no delete/recreate churn).
-- **Files touched**: FE: `household-members-grid.tsx`, `eligibility-cards.tsx`. BE: none. DB: none.
-- **Deviations from spec**: None.
-- **Known issues opened**: None.
-- **Known issues closed**: None.
-- **Verification**: static — controlled household selects reflect form state regardless of lookup timing; program cards derive from `programEnrollments` so they bind without an effect race; status normalized to match options; original enrollment object preserved on write-back. User to smoke via `pnpm dev` (edit a beneficiary with household members + enrollments → both pre-fill; save keeps enrollment ids). Note: an enrolled program only shows as a checked card if it's within the first 100 programs returned by `PROGRAMS_QUERY`.
-- **Next step**: None.
-
-### Session 11 — 2026-06-17 — FIX — COMPLETED
-
-- **Scope**: Changing a program from Waitlist → Enroll on the Overview form's `EligibilityCards` dropdown didn't flip the beneficiary Draft → Active.
-- **Root cause**: the Session-10 refactor preserves the original enrollment row (to keep id/fields). When the status dropdown changed, only `enrollmentStatusCode` was updated; the stale `enrollmentStatusId` (e.g. WAITLISTED `1384`) stayed on the row. BE `SyncProgramEnrollments` prefers `EnrollmentStatusId` when `> 0` over `EnrollmentStatusCode`, so the enrollment never actually became ENROLLED → the `UpdateBeneficiary` auto-promote (Draft→Active when any enrollment is ENROLLED) never triggered.
-- **Fix**: `eligibility-cards.tsx` `setStatus` now nulls `enrollmentStatusId` + `enrollmentStatusName` alongside the new `enrollmentStatusCode`, forcing the BE to re-resolve the status from the code (case-insensitive lookup → ENROLLED id). The Programs-tab `EnrollmentModal` path was already correct (it sends the freshly-selected `enrollmentStatusId`).
-- **Files touched**: FE: `eligibility-cards.tsx`. BE: none. DB: none.
-- **Deviations from spec**: None.
-- **Known issues opened**: None.
-- **Known issues closed**: None.
-- **Verification**: static — with id cleared, `SyncProgramEnrollments` falls to the code branch → resolves ENROLLED → enrollment row updates → auto-promote sees an ENROLLED enrollment and sets ACT. **Requires the Session-7 BE auto-promote to be built.** User to smoke: edit beneficiary → switch card to Enroll Now → Save → beneficiary status becomes Active.
-- **Next step**: None.
-
-### Session 12 — 2026-06-17 — UI — COMPLETED
-
-- **Scope**: (a) all coloured status badges in the beneficiary edit/view should be SOLID accent background + WHITE text/icon (not light tint + coloured text); (b) the Timeline should show the full case-management lifecycle including cases.
-- **Changes**:
-  - **Badges → solid + white** (`[[feedback_solid_icon_bg_white_foreground]]`):
-    - `detail/detail-shared.tsx` `pillStyle(colorHex)` → `{ backgroundColor: colorHex, color: #fff, borderColor: colorHex }` (covers Cases-tab status + priority pills).
-    - `view-page.tsx` `statusPillStyle` (beneficiary status pill in both edit + read headers) → solid colorHex + white.
-    - `detail/tabs/programs-services-tab.tsx` enrollment status badge (`bg-emerald-100 text-emerald-700`… → `bg-emerald-600/amber-500/blue-600/red-600 text-white`; live pulse dot → `bg-white`) and milestone status badge (achieved/in-progress → solid + white). Program/service name chips were already solid+white.
-    - Left as-is: section-header count chips (`bg-primary/10`) and inline header icons (`text-primary`) — not status badges; and `beneficiary-widgets.tsx` (that's the LIST/KPI page, not edit/view).
-  - **Timeline = full lifecycle** (`timeline-tab.tsx`): now fetches `BENEFICIARY_CASES_QUERY` (cases aren't on the beneficiary DTO) and adds **Case opened / Case closed** events, plus **program exit** events (enrollment `exitDate`/`exitReason`) and distinguishes **Waitlisted vs Enrolled** enrolment steps. Existing registration / service-log / milestone / document steps retained. Dots stay solid accent + white icon. Empty-state copy updated.
-- **Files touched**: FE: `detail/detail-shared.tsx`, `view-page.tsx`, `detail/tabs/programs-services-tab.tsx`, `timeline-tab.tsx`. BE: none. DB: none.
-- **Deviations from spec**: None.
-- **Known issues opened**: None.
-- **Known issues closed**: None.
-- **Verification**: static — `pillStyle`/`statusPillStyle` now solid+white; enrollment/milestone badge classes solid; timeline merges cases + exits and sorts desc. Cases query fields (caseCode/caseTitle/statusName/openedDate/closedDate/programName/assignedStaffName) confirmed present. User to smoke via `pnpm dev` (view a beneficiary with a case → Timeline shows the case opened/closed steps; status badges are solid with white text).
-- **Next step**: Optional — if the user also wants section-header count chips + header icons restyled to solid chips, extend in a follow-up.
-
-### Session 13 — 2026-06-17 — UI — COMPLETED
-
-- **Scope**: Timeline should show the WHOLE case-management journey including remaining (not-yet-done) steps, with completed steps green-ticked; and the Timeline should be the FIRST tab (UX).
-- **Changes**:
-  - `timeline-tab.tsx`: added a **Case Management Journey** lifecycle stepper above the activity feed. Fixed canonical steps (Registered → Enrolled in a Program → Beneficiary Activated → Case Opened → Services & Milestones → Graduated/Exited), each computed from beneficiary + cases data. Completed = solid emerald circle + white `ph:check-bold`; current (first incomplete) = amber dashed-free ring + "In progress" chip; pending = dashed grey hollow circle with the step icon. Below it, the prior chronological **Activity History** feed (enrolments/exits/cases/services/milestones/documents) is retained.
-  - `beneficiary-detail.tsx`: moved **Timeline to the first tab**. Added `visibleTabs`/`effectiveTab` guard (Timeline is hidden in edit mode → falls back to first visible tab so the panel never renders blank) and synced it to the store.
-  - `view-page.tsx`: read mode now lands on **Timeline** (journey overview), edit mode lands on **Overview** (the form), keyed on the record id.
-  - `beneficiary-store.ts`: default + reset `activeDetailTab` → `"timeline"` (no read-mode flash). `resetStore` isn't called anywhere, so landing is driven by the view-page mode effect.
-- **Files touched**: FE: `timeline-tab.tsx`, `beneficiary-detail.tsx`, `view-page.tsx`, `beneficiary-store.ts`. BE: none. DB: none.
-- **Deviations from spec**: None.
-- **Known issues opened**: None.
-- **Known issues closed**: None.
-- **Verification**: static — stepper computes done/current/pending from status code + enrolments + cases + services/milestones; tab guard prevents blank edit panel; read lands on Timeline. User to smoke via `pnpm dev`.
-- **Next step**: None.
-
-### Session 14 — 2026-06-17 — ENHANCE — COMPLETED (⚠ needs BE build + migration by user)
-
-- **Scope**: Business rule confirmed — Services & Milestones can only be created once the beneficiary has a **case in an open/active (non-closed) status**, and each one **belongs to that case** (Case = the care plan). Decisions: keep the optional Program link (editable); "open/active" = any case whose `closedDate` is null.
-- **FE changes** (done):
-  - DTOs `BeneficiaryMilestoneDto` / `BeneficiaryServiceLogDto`: added `caseId` + `caseCode`.
-  - `BeneficiaryQuery` by-id: select `caseId`/`caseCode` on `milestones` + `serviceLogs`.
-  - Payload mappers carry `caseId`: `beneficiary-update-helper.ts` (preserve) + `view-page.tsx` `buildVariables`.
-  - `service-log-modal.tsx` + `milestone-modal.tsx`: new **required "Case" selector** (from the beneficiary's open cases, auto-selected when only one), `caseId` in payload, validation blocks save without a case.
-  - `programs-services-tab.tsx`: fetches `BENEFICIARY_CASES_QUERY`, computes `openCases` (not closed); **"Add Service Log" / "Add Milestone" disabled** with tooltip *"Open a case … first"* when there are no open cases; passes `openCases` to both modals. ("Add Program" is NOT gated — enrolment precedes the case.)
-- **⚠ BE changes required (user builds) — FE will 400 until these land** (the strict GQL input types must accept `caseId`):
-  1. Entities `BeneficiaryServiceLog` + `BeneficiaryMilestone`: add `int? CaseId` + `Case? Case` nav (nullable so legacy rows survive).
-  2. EF config: FK `CaseId → case.Cases.CaseId` (no cascade).
-  3. `BeneficiarySchemas`: add `CaseId` to **request** DTOs `BeneficiaryServiceLogRequestDto` + `BeneficiaryMilestoneRequestDto`; add `CaseId` + `CaseCode` to the **response** DTOs.
-  4. `UpdateBeneficiary` `SyncServiceLogs` + `SyncMilestones`: map `CaseId` (create + update branches).
-  5. `GetBeneficiaryById`: project `CaseId` + `CaseCode` (join `Case.CaseCode`) for both collections.
-  6. Migration: add `CaseId` columns + FKs on `case.BeneficiaryServiceLogs` + `case.BeneficiaryMilestones`.
-  7. (Optional) validator: ensure the `CaseId` belongs to the same beneficiary.
-- **Files touched**: FE: `BeneficiaryDto.ts`, `BeneficiaryQuery.ts`, `beneficiary-update-helper.ts`, `view-page.tsx`, `service-log-modal.tsx`, `milestone-modal.tsx`, `detail/tabs/programs-services-tab.tsx`. BE: none (user). DB: migration (user).
-- **Deviations from spec**: Adds a `CaseId` FK on service-log + milestone (data-model change) — done at user direction; aligns the journey stepper ("Services & Milestones" after "Case Opened").
-- **Known issues opened**: FE sends `caseId` on every service-log/milestone save — **must build the BE DTO change first or all saves 400** (HC strict-input rejection).
-- **Verification**: static only. User to build BE + migration, then smoke: beneficiary with no case → Add buttons disabled; open a case → buttons enable → modal forces a Case selection → save persists `caseId`.
-- **Next step**: User builds BE/migration; then verify end-to-end.
-
-### Session 15 — 2026-06-17 — FIX — COMPLETED (⚠ needs migration by user)
-
-- **Scope**: GetBeneficiaryById GraphQL error (`caseId`/`caseCode` don't exist on the milestone/service-log response types) blocking everything; user asked me to apply the BE fix directly (out of time). Also un-hid the Timeline tab in edit mode.
-- **BE changes (agent-applied this time, by request)**:
-  - DTOs `BeneficiarySchemas.cs`: `CaseId` on `BeneficiaryMilestoneRequestDto` + `BeneficiaryServiceLogRequestDto`; `CaseCode` on both response DTOs (clears the 4 schema errors).
-  - Entities `BeneficiaryMilestone.cs` + `BeneficiaryServiceLog.cs`: `int? CaseId` + `Case? Case` nav.
-  - EF configs (both): `HasOne(o => o.Case).WithMany().HasForeignKey(o => o.CaseId).OnDelete(Restrict)` (Restrict avoids a second cascade path alongside the Beneficiary cascade).
-  - `GetBeneficiaryById`: `ThenInclude(.Case)` on milestones + service logs; project `mDto.CaseCode`/`sDto.CaseCode` (CaseId auto-maps via Adapt).
-  - `UpdateBeneficiary` `SyncMilestones` + `SyncServiceLogs`: map `CaseId` in create + update branches.
-- **FE**: `beneficiary-detail.tsx` — `visibleTabs = TABS` (Timeline now shows in edit mode too; effectiveTab guard kept as safety net).
-- **⚠ Still required (user)**: run **one migration** adding `CaseId` columns + FKs on `case.BeneficiaryMilestones` + `case.BeneficiaryServiceLogs`, then restart BE. Until the migration runs, GetBeneficiaryById will fail (queries a column that doesn't exist yet).
-- **Files touched**: BE: `BeneficiarySchemas.cs`, `BeneficiaryMilestone.cs`, `BeneficiaryServiceLog.cs`, `BeneficiaryMilestoneConfiguration.cs`, `BeneficiaryServiceLogConfiguration.cs`, `GetBeneficiaryById.cs`, `UpdateBeneficiary.cs`. FE: `beneficiary-detail.tsx`.
-- **Deviations**: Agent edited BE this session at explicit user request (normally user-owned) — see [[feedback_user_creates_migrations]] (migration still user-run).
-- **Verification**: code-level only; user runs migration + restart, then end-to-end.
-- **Next step**: User runs the migration.
-
-### Session 16 — 2026-06-17 — FIX — COMPLETED
-
-- **Scope**: After creating a case the Add Service Log / Add Milestone buttons stayed disabled; and Overview (view mode) + Sponsorship tabs had no spacing between their two cards while Programs & Services did.
-- **Root cause (buttons)**: the services/milestones gate fetched cases with `isActive: true`, which filters `Case.IsActive == true` — but `CreateCase` never set `IsActive`, so a freshly opened case (IsActive defaults false) was excluded → `openCases` empty → buttons disabled forever.
-- **FE fix** `detail/tabs/programs-services-tab.tsx`: dropped `isActive` from the gate query and now gate purely on status — `!closedDate && statusCode ∉ {CLOSED, RESOLVED, CANCELLED}`. This also fixes pre-existing cases (created before the BE fix) without needing new data.
-- **BE fix** `CreateCase.cs`: set `caseEntity.IsActive = true` on create (a newly opened case is active). Fixes the Cases tab `isActive: true` filter too. No schema/migration change.
-- **Spacing fix**: Overview (`overview-tab.tsx`) + Sponsorship (`sponsorship-tab.tsx`) used Bootstrap `row g-3` / `col-lg-6` which produced no gutter; converted both to Tailwind `grid grid-cols-1 gap-4 lg:grid-cols-2` (+ `h-full` on the cards) to match the Programs tab.
-- **Files touched**: BE: `CreateCase.cs`. FE: `detail/tabs/programs-services-tab.tsx`, `detail/tabs/overview-tab.tsx`, `detail/tabs/sponsorship-tab.tsx`.
-- **Deviations**: None (CreateCase change is a field default, no migration).
-- **Known issues opened/closed**: None.
-- **Verification**: code-level; user to confirm — existing open case now enables the Add buttons, and the two tabs show a gap between cards.
-- **Next step**: None.
-
-### Session 17 — 2026-06-18 — FIX — COMPLETED
-
-- **Scope**: Draft→Active auto-promotion on program enrolment worked in UpdateBeneficiary but not in CreateBeneficiary — creating a beneficiary already with an ENROLLED program enrolment left them Draft.
-- **Root cause**: `UpdateBeneficiary` has an auto-promote block (Draft beneficiary with an active ENROLLED, non-deleted enrolment → ACT); `CreateBeneficiary` had no equivalent, so it always persisted the defaulted Draft (DFT) status regardless of the enrolments sent on create.
-- **BE fix** `CreateBeneficiary.cs`: after building the `programEnrollments` list (and before the persist transaction), added the same promotion — if the beneficiary's status is `DFT` and any enrolment has `EnrollmentStatusId == ENROLLED` (and not deleted), set `BeneficiaryStatusId` to `BENEFICIARYSTATUS/ACT`. Mirrors UpdateBeneficiary 1:1.
-- **Files touched**: BE: `Beneficiaries/CreateCommand/CreateBeneficiary.cs`. FE: none. DB: none.
-- **Deviations**: None (status field default at runtime, no schema/migration change).
-- **Known issues opened/closed**: None.
-- **Verification**: code-level; user to confirm — creating a beneficiary with an enrolled program now lands them Active; create without enrolment (or waitlist only) still lands Draft.
-- **Next step**: None. (Needs BE rebuild/restart — no migration.)
-
-### Session 18 — 2026-06-18 — ENHANCE — COMPLETED
-
-- **Scope**: Enforce the case business rule on the beneficiary detail **Programs & Services** tab — service logs and milestones can only be created against a case that is **actively being worked** (CASESTATUS `INPROGRESS` or `PENDING`). Previously any non-closed case (including `OPEN`) allowed logging.
-- **Why**: business flow — `OPEN` = intake/triage (delivery not yet started, no services/money), `IN PROGRESS` = active delivery phase (services rendered, amounts transferred, milestones tracked), `PENDING` = active but waiting, `RESOLVED/CLOSED/CANCELLED` = no more logging. The caseworker manually moves `OPEN → IN PROGRESS` when real delivery begins. (Decision: hard gate on In Progress; Pending also permitted.)
-- **FE fix** `detail/tabs/programs-services-tab.tsx`: replaced the closed-status *blocklist* (`CLOSED/RESOLVED/CANCELLED`) with an *allow-list* `LOGGABLE_STATUS = {INPROGRESS, PENDING}`; renamed `openCases` → `loggableCases`; `canLogWork` now true only when ≥1 case is In Progress/Pending. The "Add Service Log" / "Add Milestone" buttons disable on Open with hint *"Move the case to In Progress to start logging services and milestones."* Both modals' case dropdowns now list only loggable cases. (CASESTATUS DataValue `INPROGRESS` has no space — verified against `Case_Seed.sql`.)
-- **Files touched**: FE: `beneficiarylist/beneficiary/detail/tabs/programs-services-tab.tsx`. BE/DB: none.
-- **Deviations from spec**: tightens the prior gate (was non-closed; now In Progress/Pending only). No schema change.
-- **Cross-ref**: enforces a **Case #50** status rule, but the gated UI lives in the Beneficiary #49 detail tab — logged here because #49 owns the file.
-- **Known issues opened/closed**: None.
-- **Verification**: FE `npx tsc --noEmit` clean on the touched file. Runtime not smoke-tested — recommend: open a beneficiary with an OPEN case → Add buttons disabled w/ hint; move case to In Progress → buttons enable and the case appears in the modal dropdown.
-- **Next step**: None.
-
-### Session 19 — 2026-06-18 — FIX+UI — COMPLETED
-
-- **Scope (FIX)**: Draft→Active auto-promotion on program enrolment worked in UpdateBeneficiary but not in CreateBeneficiary — creating a beneficiary already with an ENROLLED program enrolment left them Draft. (Same root cause as Session 17; confirmed the promotion block is present in `CreateBeneficiary.cs` after the `programEnrollments` list build.)
-- **Scope (UI)**: Programs & Services tab — render Service History and Milestones & Outcomes as a vertical **timeline** view (was a 2-col card grid + a table), with a scrollable overflow container for responsiveness.
-- **FE fix** `detail/tabs/programs-services-tab.tsx` — rewrote Service History + Milestones to match the **canonical Activity-History timeline** in `beneficiary/timeline-tab.tsx` (single absolute vertical line at `left-4`, `space-y-4`, 32px (`h-8 w-8`) colored dot with white icon, title + date inline, meta/description muted line below). **No more nested cards** — flat timeline rows for tighter spacing.
-  - **Service History**: dot = program color; title = service description; meta line = `program · provider · amount`; notes as an italic muted sub-line. Edit/delete revealed on row hover next to the date.
-  - **Milestones & Outcomes**: dot color/icon by status (Achieved=green check, InProgress=amber hourglass, else grey flag); title = milestone; below = status badge + `Target: x · Achieved: y` inline.
-  - **Pagination removed** from both (user request): dropped `logPage`/`milestonePage` state + `logSlice`/`milestoneSlice`, now map the full `logs`/`milestones` arrays. Each timeline wrapped in `max-h-[420px] overflow-y-auto` so long lists scroll in place. `CardPagination`/`PAGE_SIZE` still used by the Enrolled Programs section (left as-is — richer 2-col cards, not a chronological log).
-- **Files touched**: BE: `Beneficiaries/CreateCommand/CreateBeneficiary.cs`. FE: `detail/tabs/programs-services-tab.tsx`. DB: none.
-- **Deviations**: None. No schema/migration change (CreateBeneficiary status set is a runtime field default).
-- **Known issues opened/closed**: None.
-- **Verification**: code-level; user to confirm in browser. Needs BE rebuild/restart for the CreateBeneficiary change (no migration).
-- **Next step**: None.
-
-### Session 20 — 2026-06-22 — ENHANCE (Spec change — user-authorized) — COMPLETED (⚠ needs BE build + migration + seed by user)
-
-- **Scope**: **Layer-2 service selection** — a beneficiary's program enrollment now records *which* of the program's Layer-1 catalog services (`ProgramService`) they actually receive (not everyone uses every service), with full per-beneficiary detail: named provider, allocated amount + currency, per-service status, notes. Closes the gap the Program-services restructure (#50 S16) deferred to #49. User chose the **full** model (selection + detail) over selection-only.
-- **Data model** (new junction): `case."BeneficiaryEnrollmentServices"` — FK `BeneficiaryProgramEnrollmentId` (CASCADE) + `ProgramServiceId` (RESTRICT) + `NamedProvider`(200) + `AllocatedAmount` numeric(18,2) + `CurrencyId` (RESTRICT) + `ServiceStatusId` (RESTRICT, MasterData `ENROLLMENTSERVICESTATUS`) + `Notes`(500) + `OrderBy`. Unique index `(BeneficiaryProgramEnrollmentId, ProgramServiceId)` filtered `IsDeleted=false`. Nav `EnrollmentServices` added to `BeneficiaryProgramEnrollment`.
-- **BE files (⚠ user builds)**: NEW `BeneficiaryEnrollmentService.cs` (entity) + `BeneficiaryEnrollmentServiceConfiguration.cs`; `BeneficiaryProgramEnrollment.cs` (nav); `ICaseDbContext.cs` + `CaseDbContext.cs` (DbSet); `BeneficiarySchemas.cs` (new request/response DTOs + `EnrollmentServices` list on enrollment DTOs); `CaseMappings.cs` (join map + ignores; enrollment response maps nested); `CreateBeneficiary.cs` (build nested EnrollmentServices on each enrollment — EF cascade-inserts); `UpdateBeneficiary.cs` (load `.ThenInclude(e => e.EnrollmentServices)` + new `SyncEnrollmentServices` nested diff, called from both branches); `GetBeneficiaryById.cs` (3 grandchild ThenIncludes: ProgramService+ServiceType / Currency / ServiceStatus).
-- **DB (⚠ user)**: (1) **migration** creating `case."BeneficiaryEnrollmentServices"` (4 FKs as above) — no backfill; stacks on the still-pending S4 (relation FK repoint) + S14/S15 (CaseId cols) migrations. (2) run NEW `seed_enrollment_service_status_masterdata.sql` (`ENROLLMENTSERVICESTATUS`: ACTIVE/PAUSED/COMPLETED/CANCELLED, UPPERCASE, ColorHex in DataSetting).
-- **Mutation UNCHANGED** — HC auto-generates `BeneficiaryEnrollmentServiceRequestDtoInput` from the nested DTO list (same precedent as Program outcome-metrics #50 S20).
-- **FE files**: `BeneficiaryDto.ts` (new `BeneficiaryEnrollmentServiceDto` + `enrollmentServices` on enrollment dto); `BeneficiaryQuery.ts` (enrollmentServices selection); `beneficiary-update-helper.ts` + `view-page.tsx` buildVariables (carry enrollmentServices, strip response-only `serviceName`/`serviceTypeName`/`currencyCode`/`serviceStatusName`/`serviceStatusCode`); `eligibility-cards.tsx` (create-form **program selection area** — checked program reveals a lazy-loaded service checklist via `PROGRAM_BY_ID_QUERY`; selection-only here); `detail/enrollment-modal.tsx` (full per-service editor: checkbox + namedProvider/allocatedAmount+currency/status/notes, currency defaults to company base); `detail/tabs/programs-services-tab.tsx` (shows "Services Received" list per enrollment).
-- **Deviations from spec**: new junction entity + FK (Spec-level) — done in-session at user direction (same pattern as S4/S7/S14). Free-text `ServicesSummary` retained (now redundant; left as optional notes).
-- **Known issues opened**: FE sends `enrollmentServices` on every beneficiary save — **must build BE DTO + run the migration first or saves 400 / GetById fails** (HC strict input + missing table).
-- **Verification**: FE `npx tsc --noEmit` clean. BE not built (user builds).
+> _[21 older session entries trimmed to save tokens — full history in git: `git log -p -- beneficiary.md`. Most recent 5 kept below.]_
 
 ### Session 21 — 2026-06-22 — UI/ENHANCE — COMPLETED
 
@@ -1502,3 +1191,17 @@ User asked how/where the enrollment status changes and how it ties to case creat
 - **Deviations from spec**: None. Scope limited to the beneficiary enrolment pickers (the `enrollableOnly` BE flag is generic and can be reused by other program pickers — e.g. Case program / service-log — if/when wanted).
 - **Known issues opened/closed**: None.
 - **Next step**: User builds BE (new GQL arg). No migration/seed required.
+
+### Session 25 — 2026-07-16 — FIX — COMPLETED (⚠ needs seed re-run by user)
+
+- **Scope**: The "Graduated" status is education-specific and misrepresents beneficiaries in water/food/medical/emergency programs (user report). Neutralised the term to **"Completed"** — universally readable across every program type — at both status levels. Relabel only: **codes stay GRD / GRADUATED**, so all BE logic (terminal-state guard, graduation→close-enrollment flow, `graduatedCount` projection) and FE chip filters (`CODE_MAP.graduated → "GRD"`) keep working untouched. No schema change, no migration — stays inside `/continue-screen` scope.
+- **What changed**:
+  - **DB seed** `sql-scripts-dyanmic/Beneficiary-sqlscripts.sql`: BENEFICIARYSTATUS VALUES `'Graduated'`→`'Completed'` (code GRD) + idempotent `UPDATE` to relabel already-seeded rows; ENROLLMENTSTATUS VALUES `'Graduated'`→`'Completed'` (code GRADUATED, `DataSetting` mirrors `DataName`) + idempotent `UPDATE` (sets both `DataName` and `DataSetting`). Status **badge/grid/chips are data-driven off `DataName`** → they show "Completed" automatically once reseeded.
+  - **FE labels** (hardcoded, not data-driven): `beneficiary-widgets.tsx` (KPI breakdown label "Graduated"→"Completed"; "Graduations · goals · milestones"→"Completions …"); `timeline-tab.tsx` ("Graduated / Exited"→"Completed / Exited"); `beneficiary-form.tsx` (read-only lock notice wording).
+  - **BE string**: `UpdateBeneficiaryStatus.cs` terminal-status error message wording ("Graduated"→"Completed"). Internal `TerminalStates` set + code comparisons keep the "Graduated" literal as a harmless code-level fallback (comparisons are against the DataValue code, which is unchanged).
+- **Files touched**: DB: `sql-scripts-dyanmic/Beneficiary-sqlscripts.sql`. FE: `beneficiary/beneficiary-widgets.tsx`, `beneficiary/timeline-tab.tsx`, `beneficiary/beneficiary-form.tsx`. BE: `Beneficiaries/UpdateCommand/UpdateBeneficiaryStatus.cs`.
+- **Deviations from spec**: None. Label-only; identifiers/codes/DTO field names (`graduatedCount`, chip key `graduated`, GraphQL `GraduatedCount`) intentionally left unchanged (internal contract).
+- **Known issues opened**: ISSUE-16 (category-scoped outcome vocabulary — Education→Graduated / Healthcare→Recovered / Nutrition→Target Met / WASH·Emergency→Aid Delivered — needs an `ENROLLMENTSTATUS → PROGRAMCATEGORY` relationship = Spec change; route to `/plan-screens #49` if wanted).
+- **Known issues closed**: None.
+- **Verification**: By inspection — all edits are string literals inside otherwise-unchanged SQL/TS/C# statements, none can affect compilation or type-checking (full `dotnet build`/`pnpm` skipped per "avoid full builds" directive).
+- **Next step**: User **re-runs `Beneficiary-sqlscripts.sql`** so existing rows relabel to "Completed" (idempotent `UPDATE`s handle already-seeded DBs). No migration.

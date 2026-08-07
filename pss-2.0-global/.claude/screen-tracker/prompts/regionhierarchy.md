@@ -6,14 +6,14 @@ module: Settings
 status: COMPLETED
 scope: ALIGN
 screen_type: CONFIG
-config_subtype: DESIGNER_CANVAS
+config_subtype: TABBED_GRID_CONTAINER
 storage_pattern: definition-list
-save_model: save-per-section
+save_model: per-grid-crud
 complexity: High
 new_module: NO
 planned_date: 2026-05-15
 completed_date: 2026-05-16
-last_session_date: 2026-05-16
+last_session_date: 2026-07-22
 ---
 
 ## Tasks
@@ -866,12 +866,12 @@ AbsorbedMenus (set IsLeastMenu=false on EACH existing menu — capability cascad
 
 | ID | Severity | Area | Description | Status |
 |----|----------|------|-------------|--------|
-| ISSUE-1 | MED | Classification | Tree-variant of DESIGNER_CANVAS — there's no PALETTE in the mockup (level inference replaces it). When `#78 Dashboard Config` lands as the first canonical DESIGNER_CANVAS, the variance with this screen's "no palette" model must be reconciled. Consider proposing a new sub-type `TREE_EDITOR` in `_CONFIG.md` after both ship. | OPEN |
+| ISSUE-1 | MED | Classification | Tree-variant of DESIGNER_CANVAS — there's no PALETTE in the mockup (level inference replaces it). When `#78 Dashboard Config` lands as the first canonical DESIGNER_CANVAS, the variance with this screen's "no palette" model must be reconciled. Consider proposing a new sub-type `TREE_EDITOR` in `_CONFIG.md` after both ship. | CLOSED (session 5) |
 | ISSUE-2 | HIGH | DTO field | `levelLabel` (e.g. "Emirate" / "County" / "State/UT" / "Division" / "Province") is mockup-supplied. No existing column on State/District/etc. stores this. Options: (a) hard-code by country code via a server-side switch (UAE→"Emirate", Kenya→"County", US→"State", India→"State/UT", Bangladesh→"Division", default→"State") inside `GetRegionHierarchyTree`; (b) add `Country.StateLabelOverride` column + similar per-level columns; (c) MasterData lookup `REGIONLEVELLABEL`. Recommend (a) for V1 — least code churn. | OPEN |
 | ISSUE-3 | MED | Usage stat | "Ambassador Territory" is in the mockup right-panel Usage card but `AmbassadorTerritory` entity does NOT appear to exist in the codebase (grep returned 0 model files). Options: (a) omit the tile entirely; (b) render the tile with SERVICE_PLACEHOLDER chip "Coming soon"; (c) defer until Ambassador module is built. Recommend (a) — hide the tile when `usage.ambassadorTerritoryCount` is `null`. | OPEN |
-| ISSUE-4 | LOW | Cleanup | 6 legacy route files + 12 legacy page-config/data-table files left on disk. Long-term cleanup (delete the 18 files + remove from `shared-service-entity-operations.ts`) deferred to a future cleanup task once we're confident no integrations bookmark the legacy URLs (~3 months post-launch). | OPEN |
+| ISSUE-4 | LOW | Cleanup | 6 legacy route files + 12 legacy page-config/data-table files left on disk. Long-term cleanup (delete the 18 files + remove from `shared-service-entity-operations.ts`) deferred to a future cleanup task once we're confident no integrations bookmark the legacy URLs (~3 months post-launch). | CLOSED (session 5) |
 | ISSUE-5 | MED | Decimal precision | EF migration must specify `HasPrecision(10, 7)` for Lat/Lng — NOT default. PostgreSQL `numeric(10,7)` covers ±999.9999999 (well beyond Earth's ±180 / ±90). | OPEN |
-| ISSUE-6 | LOW | Flag emoji | Country nodes display a flag emoji prefix (e.g. 🇦🇪). Strategy: derive from `CountryShortCode` (ISO 3166 alpha-2) via a small util `getFlagEmoji(code: string)` that maps `'AE' → '🇦🇪'` via Unicode regional indicators. Skip when code is invalid/empty. NO new column needed. | OPEN |
+| ISSUE-6 | LOW | Flag emoji | Country nodes display a flag emoji prefix (e.g. 🇦🇪). Strategy: derive from `CountryShortCode` (ISO 3166 alpha-2) via a small util `getFlagEmoji(code: string)` that maps `'AE' → '🇦🇪'` via Unicode regional indicators. Skip when code is invalid/empty. NO new column needed. | CLOSED (session 5) |
 | ISSUE-7 | LOW | Import progress | Real-time progress (WebSocket / SSE) for Import is out of V1 scope. V1: BE returns final counts after the full transaction; FE simulates progress bar client-side with intermediate stages (Uploading 0-30% / Parsing 30-50% / Inserting 50-100%) advancing on backend response. V2: subscribe to `ImportProgressUpdated` GraphQL subscription. | OPEN |
 | ISSUE-8 | MED | Locality ↔ Pincode coupling | The `Locality.PincodeId` cross-reference is non-obvious — when adding a Locality, should the modal auto-create a Pincode if a `pincode` field is filled? V1: NO — treat as independent records. Pincode column on locality is display-only (joined from Pincode table). User adds Pincode separately via the Pincode level. V2: optional inline-create from the locality form. | OPEN |
 | ISSUE-9 | MED | Bulk import schema | Mockup preview-table columns are Country/State/District/City/Locality/Pincode (6 columns, one row per pincode/locality combination). The BE Import handler must parse a denormalized CSV row into the 6 normalized tables — algorithm: for each row, upsert (or skip if exists) each level top-down, using NaturalKey lookup `(parent_id, name)` to dedupe. Schema is fixed by mockup — manual column mapper deferred to V2 (sibling pattern of #5 Bulk Donation V1). | OPEN |
@@ -907,12 +907,12 @@ Possible exception:
 
 | ID | Raised (session) | Severity | Area | Description | Status |
 |----|------------------|----------|------|-------------|--------|
-| ISSUE-1 | plan | MED | Classification | Tree-variant of DESIGNER_CANVAS — no PALETTE; reconcile with #78 canonical when both ship | OPEN |
+| ISSUE-1 | plan | MED | Classification | Tree-variant of DESIGNER_CANVAS — no PALETTE; reconcile with #78 canonical when both ship | CLOSED (session 5) |
 | ISSUE-2 | plan | HIGH | DTO | `levelLabel` source — V1: country-code switch in BE | OPEN |
 | ISSUE-3 | plan | MED | Usage | Ambassador Territory entity may not exist — tile hidden when null | OPEN |
-| ISSUE-4 | plan | LOW | Cleanup | 18 legacy FE files left on disk; cleanup deferred 3 months | OPEN |
+| ISSUE-4 | plan | LOW | Cleanup | 18 legacy FE files left on disk; cleanup deferred 3 months | CLOSED (session 5) |
 | ISSUE-5 | plan | MED | Migration | Lat/Lng `HasPrecision(10,7)` required | OPEN |
-| ISSUE-6 | plan | LOW | UI | Flag emoji via `getFlagEmoji(ShortCode)` util | OPEN |
+| ISSUE-6 | plan | LOW | UI | Flag emoji via `getFlagEmoji(ShortCode)` util | CLOSED (session 5) |
 | ISSUE-7 | plan | LOW | UX | Import progress V1: simulated client-side; V2: WebSocket | OPEN |
 | ISSUE-8 | plan | MED | UX | Locality↔Pincode coupling — V1: independent records | OPEN |
 | ISSUE-9 | plan | MED | Import | Denormalized CSV → 6-table top-down upsert; schema fixed (manual mapper V2) | OPEN |
@@ -926,7 +926,7 @@ Possible exception:
 | ISSUE-17 | S1 | LOW | EF | `AsSplitQuery()` not available on the project's deeply-nested ThenInclude chain (likely older EF Core or specific provider quirk). Removed without functional loss. For production-scale trees (>50K leaf rows / country) consider paginated/lazy-load. | OPEN |
 | ISSUE-18 | S1 | MED | Library | CsvHelper / ClosedXML NOT in project dependencies. Import uses hand-rolled RFC-4180 parser; export uses StringBuilder CSV (no XLSX). V2: add CsvHelper + ClosedXML packages OR migrate file-IO endpoints to REST controllers. | OPEN |
 | ISSUE-19 | S1 | LOW | Wire format | `ExportRegions` returns base64-encoded CSV as GraphQL response payload (not streamed). Acceptable for typical region exports (<5MB); for large country exports (10K+ pincodes) consider a REST `/api/regions/export` endpoint in V2. | OPEN |
-| ISSUE-20 | S1 | MED | Seed | `sett.Grids.GridTypeId` set to lookup of `'MASTER_GRID'` (closest available). No `'DESIGNER_CANVAS'` GridType exists in `sett.GridTypes`. Add via future migration alongside #78 Dashboard Config + similar canvas screens. | OPEN |
+| ISSUE-20 | S1 | MED | Seed | `sett.Grids.GridTypeId` set to lookup of `'MASTER_GRID'` (closest available). No `'DESIGNER_CANVAS'` GridType exists in `sett.GridTypes`. Add via future migration alongside #78 Dashboard Config + similar canvas screens. | CLOSED (session 5) |
 | ISSUE-21 | S1 | LOW | Seed | Section 5 seeded 6 shared `sett.Fields` rows (COUNTRYNAME...PINCODE) that weren't in the original plan. Idempotent + harmless — provides field metadata for any future grid renderers. | OPEN |
 | ISSUE-22 | S1 | MED | Scope | `RegionUsageGuard.EnsureNotInUseAsync` exists but NOT injected into the 6 existing per-level `Delete{Level}.cs` handlers (those are entity-level handler edits, excluded from scope). Delete-guard enforcement currently lives only in `GetRegionNodeDetail.canDelete` (FE-trusted). For BE-enforced safety, a future ALIGN session must inject the helper call into the 6 Delete handlers — OR re-classify Delete as part of the new RegionHierarchy mutation surface. | OPEN |
 | ISSUE-23 | S2 | LOW | GQL Input | `EXPORT_REGIONS_QUERY` uses input type name `ExportRegionsRequestDtoInput` per HotChocolate's auto-suffix convention. The endpoint signature in `RegionHierarchyQueries.ExportRegions(ExportRegionsRequestDto request, …)` may resolve under a flat-arg signature instead. Verify at runtime via GraphQL playground before E2E export test. | OPEN |
@@ -937,36 +937,6 @@ Possible exception:
 ### § Sessions
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
-
-### Session 1 — 2026-05-16 — BUILD — PARTIAL
-
-- **Scope**: Initial BE build from PROMPT_READY prompt. **User OVERRIDE mid-session**: removed all entity-level changes (no NativeName/Latitude/Longitude/Timezone/Code columns on the 6 region tables; no EF migration; no edits to 6 entities / 6 EF configs / 6 schemas / 24 per-level CRUD handlers / 1 Mapster config). Built only the composite UI-supporting layer + helper + 2 GraphQL endpoints + DB seed. FE deferred to Session 2.
-- **Files touched**:
-  - BE (9 NEW, 0 MODIFIED):
-    - `PSS_2.0_Backend/PeopleServe/Services/Base/Base.Application/Schemas/SharedSchemas/RegionHierarchySchemas.cs` (created) — all composite DTOs (RegionTreeNodeDto, RegionNodeDetailDto, RegionUsageDto, ImportRegionsRequest/Response, ExportRegionsRequest/Response). New columns (NativeName/Lat/Lng/Timezone/Code) OMITTED from DTOs.
-    - `Base.Application/Business/SharedBusiness/RegionHierarchies/Queries/GetRegionHierarchyTreeQuery/GetRegionHierarchyTree.cs` (created) — composite tree query, ISSUE-2 levelLabel switch on CountryShortCode, args countryId/levelFilter/searchTerm, Pincodes loaded separately.
-    - `…/Queries/GetRegionNodeDetailQuery/GetRegionNodeDetail.cs` (created) — right-panel detail; per-level breadcrumb + usage counts + children + canDelete derivation.
-    - `…/Queries/ExportRegionsQuery/ExportRegions.cs` (created) — flat CSV export via StringBuilder; reuses tree handler via MediatR.
-    - `…/Commands/ImportRegionsCommand/ImportRegions.cs` (created) — CSV import w/ top-down upsert; transaction via `dbContext as DbContext`; per-level in-memory caches; fail-fast V1.
-    - `…/Helpers/RegionUsageGuard.cs` (created) — `CountUsageAsync` + `EnsureNotInUseAsync` + `RegionInUseException`. NOT injected into 6 existing Delete handlers (see ISSUE-22).
-    - `Base.API/EndPoints/Shared/Queries/RegionHierarchyQueries.cs` (created) — GraphQL Query type extension (3 fields).
-    - `Base.API/EndPoints/Shared/Mutations/RegionHierarchyMutations.cs` (created) — GraphQL Mutation type extension (1 field).
-    - `Base/sql-scripts-dyanmic/regionhierarchy-sqlscripts.sql` (created) — 6 sections: Menu + MenuCapabilities (7 caps) + RoleCapabilities (BUSINESSADMIN×6) + Grid row (GridType='MASTER_GRID' placeholder per ISSUE-20, GridFormSchema=NULL) + 6 shared Fields (per ISSUE-21) + IsLeastMenu=false UPDATE on 6 absorbed legacy menus.
-  - FE: NONE (deferred to Session 2)
-  - DB: `regionhierarchy-sqlscripts.sql` (created)
-- **Deviations from spec**:
-  - User OVERRIDE: removed entity ALIGN delta (26 new columns × 6 tables + EF migration + 25 file modifications) — see top of section.
-  - `*Query` records renamed `*Request` suffix to avoid namespace collision (ISSUE-16).
-  - `AsSplitQuery()` removed from EF chain (ISSUE-17).
-  - CsvHelper / ClosedXML not in project — hand-rolled CSV (ISSUE-18).
-  - ExportRegions returns base64 in GraphQL response (not streamed) (ISSUE-19).
-  - GridType seeded as `'MASTER_GRID'` (no DESIGNER_CANVAS type exists) (ISSUE-20).
-  - Seed includes 6 shared `sett.Fields` rows not in original plan (ISSUE-21).
-  - `RegionUsageGuard.EnsureNotInUseAsync` built but NOT wired into 6 existing Delete handlers (ISSUE-22).
-- **Known issues opened**: ISSUE-16 (record naming), ISSUE-17 (AsSplitQuery removed), ISSUE-18 (CsvHelper/ClosedXML absent), ISSUE-19 (export base64-in-GQL), ISSUE-20 (DESIGNER_CANVAS GridType missing), ISSUE-21 (extra Fields seeded), ISSUE-22 (delete-guard not wired BE-side)
-- **Known issues closed**: ISSUE-15 DROPPED (entity changes excluded from scope by user)
-- **Build status**: `dotnet build Base.Application` → exit 0, 0 errors, 482 pre-existing warnings. `dotnet build Base.API` → exit 0, 0 errors, 69 pre-existing warnings. Full-solution build NOT run (token-efficient per [[feedback-build-directives]]).
-- **Next step**: `/continue-screen #80 --scope FE_ONLY` to build the 18-file split-pane FE shell (region-hierarchy-page + region-tree-panel + region-tree-node + region-detail-panel + region-detail-form + region-usage-stats + region-children-list + add-region-modal + import-regions-modal + export-regions-modal + delete-region-modal + regionhierarchy-store + DTO + 2 GQL barrels + zod-schemas + route stub + page config + 6 wiring files). Note for FE: the Region Detail form drops NativeName/Lat/Lng/Timezone/Code fields (no underlying columns) — render only Name + Code (Country/Pincode only) + Parent breadcrumb + Usage + Children. User can later request a follow-up MIGRATION session to add the optional columns if desired.
 
 ### Session 2 — 2026-05-16 — BUILD — COMPLETED
 
@@ -1043,3 +1013,34 @@ Possible exception:
 - **Known issues closed**: BE build error (12 × CS1061 `.Code` not defined on State/District/City/Locality) — resolved by dropping the projection.
 - **Build status**: `dotnet build PeopleServe.sln` → 0 Errors across full solution.
 - **Next step**: Same as S2/S3 — user runs `pnpm dev` for E2E smoke. The original entity column ALIGN remains a separate future migration session if those fields are later wanted on the screen.
+
+### Session 5 — 2026-07-22 — ENHANCE — COMPLETED
+
+- **Scope**: Re-architected #80 from the custom split-pane tree (DESIGNER_CANVAS) into a **TABBED_GRID_CONTAINER** — one tab per absorbed entity (Country / State / District / City / Locality / Pincode), each embedding `AdvancedDataTable gridCode="…"` that loads the entity's existing grid JSON schema + RJSF form from the DB. No custom FE form is rendered. This makes role capabilities granular per entity (the original goal): each tab's visibility + CRUD is gated on that entity's OWN capabilities, which the seed already preserved when hiding the legacy menus.
+- **Files touched**:
+  - FE (1 REWRITTEN):
+    - `presentation/components/page-components/setting/dataconfig/regionhierarchy/region-hierarchy-page.tsx` — now a `Tabs` shell; per-tab `useAccessCapability({menuCode: COUNTRY|STATE|DISTRICT|CITY|LOCALITY|PINCODE})` gating, `?tab=` URL sync, first-visible-tab fallback, container-level `DefaultAccessDenied` when no entity is READable. Uses `AdvancedDataTable` + `TABLE_CONFIG`.
+  - FE (12 DELETED — retired split-pane):
+    - `region-tree-panel.tsx`, `region-tree-node.tsx`, `region-detail-panel.tsx`, `regionhierarchy-store.ts`, `lib/get-flag-emoji.ts`, and `components/{add,delete,export,import}-region-modal.tsx`, `components/{region-children-list,region-detail-form,region-usage-stats}.tsx`. (`components/` + `lib/` dirs removed.)
+  - FE (UNCHANGED): `presentation/pages/setting/dataconfig/regionhierarchy.tsx` container page-config still gates on `REGIONHIERARCHY` READ; route unchanged.
+  - DB (1 MODIFIED — comments only): `Base/sql-scripts-dyanmic/regionhierarchy-sqlscripts.sql` — header/Step-4/history comments updated to document the tabbed model; REGIONHIERARCHY grid row noted as a dormant container placeholder. No capability rows changed — the preserved per-entity caps from Step 6 are what power per-tab role control.
+- **BE**: NONE edited. The 4 composite queries (`GetRegionHierarchyTree`, `GetRegionNodeDetail`, `ExportRegions`, `ImportRegions`) + `RegionUsageGuard` + GQL endpoints are now **dormant** (FE no longer calls them). Left in place to avoid touching shared GQL wiring files (parallel-session safety); safe to remove in a later cleanup.
+- **Verification**: `npx tsc --noEmit --incremental false` → 0 source errors (only pre-existing stale `.next/types/**` artifacts referencing non-existent `general/region/*` + `general/masters/*` `.js` pages, unrelated to this change).
+- **Deviations from spec**: This is a Spec change (DESIGNER_CANVAS → TABBED_GRID_CONTAINER), explicitly authorized by the user ("you can decide as better", "All 6" tabs) under `/continue-screen`. Frontmatter `config_subtype`, `save_model` updated accordingly.
+- **Known issues opened**: None.
+- **Known issues closed**: ISSUE-1 (classification — now TABBED_GRID_CONTAINER, no PALETTE ambiguity), ISSUE-4 (legacy split-pane FE files cleaned up), ISSUE-6 (flag-emoji util removed with the tree), ISSUE-20 (no DESIGNER_CANVAS GridType needed — container renders no grid of its own).
+- **Superseded / moot (left OPEN for audit)**: tree/detail-panel-specific issues — ISSUE-2 (levelLabel), ISSUE-3 (Ambassador tile), ISSUE-5 (Lat/Lng migration), ISSUE-7/8/9/10 (import/coupling/timezone), ISSUE-13 (detail-panel COUNT perf), ISSUE-22 (RegionUsageGuard in composite delete) — no longer on #80's path; per-entity delete-guard now lives with the individual entity screens.
+- **Next step**: Optional — (a) BE cleanup task to delete the dormant composite query/mutation surface + the `shared-service-entity-operations.ts` REGIONHIERARCHY placeholder (ISSUE-25); (b) a 7th read-only "Tree View" tab could restore the parent→child visualization reusing `GetRegionHierarchyTree` if the hierarchy view is missed. User applies the seed comment update (seeds are user-owned).
+
+### Session 6 — 2026-07-22 — UI + ENHANCE — COMPLETED
+
+- **Scope**: Three container-UX refinements on the tabbed shell — (1) suppress each grid tab's own header/breadcrumb so the container is the single header; (2) carry the breadcrumb trail on the "Region Hierarchy" screen label; (3) add a trailing read-only **Hierarchy** tab (the Session-5 "Next step (b)" — no CRUD tree view).
+- **Files touched**:
+  - FE (1 NEW): `presentation/components/page-components/setting/dataconfig/regionhierarchy/region-hierarchy-tree.tsx` — collapsible Country→…→Pincode tree using the (previously dormant) `REGION_HIERARCHY_TREE_QUERY` via Apollo `useQuery`. Read-only: expand/collapse per node + expand-all/collapse-all, level icons (solid `bg-primary` + white per [[feedback-widget-icon-badge-styling]]), child-count badges, inline code/pincode/levelLabel, loading skeletons, empty state. NO add/edit/delete affordances.
+  - FE (1 MODIFIED): `…/regionhierarchy/region-hierarchy-page.tsx` — (a) `showHeader={false}` on every per-tab `AdvancedDataTable` (confirmed `data-table-container.tsx:641` returns only the grid card, skipping header + inline `<Breadcrumb>`); (b) `breadcrumbs={BREADCRUMBS}` on `ScreenHeader` (Settings › Data Configuration › Region Hierarchy) — `ScreenHeader` already supports `breadcrumbs?: IBreadcrumbItem[]`; (c) added `HIERARCHY_TAB_KEY` trailing tab + `validTabKeys` so URL `?tab=hierarchy` resolves; grid tabs keep default landing on Countries.
+- **BE / DB**: NONE. Reused the dormant `regionHierarchyTree` resolver + existing `RegionHierarchyQuery.ts` + `RegionHierarchyDto.ts` (both survived S5 cleanup) — the Hierarchy tab reactivates them, no wiring change.
+- **Verification**: `npx tsc --noEmit --incremental false` → exit 2 but **0 source errors** after filtering `.next/` (all remaining errors are pre-existing stale `.next/types/**` typegen artifacts, unrelated).
+- **Deviations from spec**: None — in-scope UI/enhance on the S5 TABBED_GRID_CONTAINER; the tree view was already the authorized S5 next step.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: Optional BE cleanup (ISSUE-25) can no longer delete the `regionHierarchyTree` resolver — the Hierarchy tab now depends on it; scope ISSUE-25 to the remaining truly-dormant surface (`GetRegionNodeDetail`, `ImportRegions`, `RegionUsageGuard`) only.

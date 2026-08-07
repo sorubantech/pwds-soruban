@@ -58,7 +58,7 @@ description: /test-fix — Auto-fix failing Playwright tests for a screen. Reads
 
 ### Step 1: Locate the screen + verify state
 
-1. Read `REGISTRY.md`. Resolve `#N` → entity. Verify status is `NEEDS_FIX` (the expected starting point after `/test-screen`).
+1. **Never `Read` the whole `REGISTRY.md`** (~175K tokens) — `grep` the single row: `grep -nE "^\| *#?<id> " .claude/screen-tracker/REGISTRY.md`. Resolve `#N` → entity and verify status is `NEEDS_FIX` (the expected starting point after `/test-screen`).
 2. If status is `COMPLETED` and the user is invoking `/test-fix` anyway → ask "Tests are already green. Did you mean `/continue-screen #N` for a human-reported issue?" and abort unless user overrides.
 3. If no `{entity-lower}.test-result.md` exists → "No test run yet. Run `/test-screen #N` first." Abort.
 
