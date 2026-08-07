@@ -117,20 +117,20 @@ Use these constants everywhere. No string literals for task codes or statuses ou
 
 ## ③ The task catalog (authoritative)
 
-| Order | TaskCode | Surface | Required | Entitlement gate | Deep link (FE) |
+**All eight tasks are sections on the SINGLE `/setup` page.** There is no "checklist only" tier and no step-by-step navigation. See §⑤ for why.
+
+| Order | TaskCode | Required | Entitlement gate | Inline section content | Owning screen (reference only — DO NOT link to it) |
 |---|---|---|---|---|---|
-| 1 | `ORG_PROFILE_CONFIRM` | wizard step 1 | no | — | `/organization/organizationsetup/company` |
-| 2 | `ORG_LOCALE` | wizard step 2 | **yes** | — | `/organization/organizationsetup/company` |
-| 3 | `EMAIL_SENDER` | wizard step 3 | no | `CHANNEL:EMAIL` | `/setting/communicationconfig/emailproviderconfig` |
-| 4 | `PAYMENT_GATEWAY` | wizard step 3 | no | — | `/setting/paymentconfig/companypaymentgateway` |
-| 5 | `INVITE_TEAM` | checklist only | no | — | `/organization/staff/staff` |
-| 6 | `BRANDING` | checklist only | no | — | `/organization/organizationsetup/company` |
-| 7 | `WHATSAPP_SENDER` | checklist only | no | `CHANNEL:WHATSAPP` | `/setting/communicationconfig/whatsappsetup` |
-| 8 | `SMS_SENDER` | checklist only | no | `CHANNEL:SMS` | `/setting/communicationconfig/smssetup` |
+| 1 | `ORG_PROFILE_CONFIRM` | no | — | Org name, country, currency — editable inline | `/organization/organizationsetup/company` |
+| 2 | `ORG_LOCALE` | **yes** | — | 5 MasterData selects | `/organization/organizationsetup/company` |
+| 3 | `BRANDING` | no | — | Logo upload + primary colour | `/organization/organizationsetup/company` |
+| 4 | `EMAIL_SENDER` | no | `CHANNEL:EMAIL` | Provider select + credential fields | `/setting/communicationconfig/emailproviderconfig` |
+| 5 | `PAYMENT_GATEWAY` | no | — | Gateway select + credential fields | `/setting/paymentconfig/companypaymentgateway` |
+| 6 | `INVITE_TEAM` | no | — | Repeatable name/email/role rows | `/organization/staff/staff` |
+| 7 | `WHATSAPP_SENDER` | no | `CHANNEL:WHATSAPP` | Provider select + credential fields | `/setting/communicationconfig/whatsappsetup` |
+| 8 | `SMS_SENDER` | no | `CHANNEL:SMS` | Provider select + credential fields | `/setting/communicationconfig/smssetup` |
 
-Deep links are **verified route paths on disk** (2026-08-07). Prefix with the active locale at render time (`/${lang}/...`) — the app is locale-prefixed by root `middleware.ts`.
-
-"Checklist only" = never blocks the wizard; appears in the dashboard checklist widget (§⑥.4) so the tenant can finish it later.
+The "owning screen" column exists so you can find the **existing form component, DTO, and mutation to reuse** in that section. It is **not** a deep link — the wizard must never navigate the user there. See §⑤.4.
 
 ---
 
@@ -196,7 +196,7 @@ catch (Exception ex)
 
 Guarded on purpose: a wizard-checklist failure must never fail or pause a provisioning run. §④.3's self-heal is the safety net.
 
-New tenants must be left with `SetupWizardCompletedDate = NULL` and `SetupWizardVersion = NULL` — that is already the DB default; **do not stamp them at provisioning.** Only `finishTenantSetup` (§④.5) stamps.
+New tenants must be left with `SetupWizardCompletedDate = NULL` and `SetupWizardVersion = NULL` — that is already the DB default; **do not stamp them at provisioning.** Only `saveTenantSetup` with `finish: true`, once it passes the guard (§④.5), stamps.
 
 ### ④.3 Query — `GetTenantSetup`
 
@@ -229,27 +229,55 @@ public record TenantSetupTaskDto(
 
 Order by `DisplayOrder`. Do **not** return `NOT_APPLICABLE` rows filtered out — return them; the FE decides what to hide, and the checklist widget needs the count to be honest.
 
-### ④.4 Mutation — `CompleteTenantSetupStep`
+### ④.4 Mutation — `SaveTenantSetup` — ONE CALL SAVES EVERYTHING
 
-New command under `Base.Application/Business/SettingBusiness/TenantSetup/Commands/CompleteTenantSetupStepCommand/`.
+**There is exactly one write mutation for the setup page.** No per-section save, no per-section mutation, no partial submits. The frontend holds every field in a client store and posts the whole thing once (§⑤.3).
 
-Input `TenantSetupStepRequestDto` → GraphQL input type **`TenantSetupStepRequestDtoInput`** (HotChocolate appends `Input`).
+New command under `Base.Application/Business/SettingBusiness/TenantSetup/Commands/SaveTenantSetupCommand/`.
+
+GraphQL field: **`saveTenantSetup`**. Input `TenantSetupRequestDto` → **`TenantSetupRequestDtoInput`**.
 
 ```csharp
-public record TenantSetupStepRequestDto(
-    string TaskCode,
-    string? DefaultTimezoneId,       // MasterData id
-    string? DateFormatId,            // MasterData id
-    string? TimeFormatId,            // MasterData id
-    string? FinancialYearStartId,    // MasterData id
-    string? DefaultLanguageId);      // MasterData id
+public record TenantSetupRequestDto(
+    TenantSetupProfileDto?  Profile,        // null = section untouched
+    TenantSetupLocaleDto    Locale,         // REQUIRED — never null
+    TenantSetupBrandingDto? Branding,
+    TenantSetupEmailDto?    EmailSender,
+    TenantSetupGatewayDto?  PaymentGateway,
+    IReadOnlyList<TenantSetupInviteDto>? TeamInvites,
+    TenantSetupWhatsAppDto? WhatsAppSender,
+    TenantSetupSmsDto?      SmsSender,
+    IReadOnlyList<string>?  SkippedTaskCodes,   // sections the tenant explicitly skipped
+    bool                    Finish);            // true = also stamp the wizard complete
+
+public record TenantSetupLocaleDto(
+    string DefaultTimezoneId,        // MasterData id
+    string DateFormatId,
+    string TimeFormatId,
+    string FinancialYearStartId,
+    string DefaultLanguageId);
 ```
 
-Behaviour by `TaskCode`:
+The per-domain child DTOs (`TenantSetupEmailDto`, `TenantSetupGatewayDto`, …) must **mirror the field set of the existing screen's request DTO** for that domain. Read each one before defining it — do not invent field names.
 
-- **`ORG_LOCALE`** — write the locale settings, then mark the task COMPLETED.
-- **`ORG_PROFILE_CONFIRM`** — no writes; mark COMPLETED (the tenant is confirming what provisioning already set).
-- Any other code → reject with `SETUP_TASK_NOT_INTERACTIVE`.
+**Null vs empty is meaningful:** `null` = the tenant did not touch that section (leave existing data alone). A populated object = save it. A code in `SkippedTaskCodes` = mark SKIPPED. A section can never be both.
+
+**Handler contract:**
+
+1. `var companyId = httpContextAccessor.GetCurrentUserStaffCompanyId();`
+2. **One explicit transaction wrapping everything.** All-or-nothing: if any section fails, nothing is written — not the locale, not the invites, not the task rows. A tenant must never end up half-configured with no idea which half.
+3. For each non-null section, **delegate to the existing domain service/handler** for that domain (email provider, gateway, branding, staff invite). Do not reimplement their logic, validation, or credential masking. If a domain's logic lives only inside its command handler, invoke that handler through the mediator inside the transaction rather than copying its body.
+4. Locale is written by this handler directly — see the hazard note below.
+5. Task bookkeeping, after the domain writes succeed:
+   - section saved → `COMPLETED`, `CompletedDate = DateTime.UtcNow`, `CompletedByUserId = <current user>`
+   - code in `SkippedTaskCodes` → `SKIPPED`, `SkippedDate = DateTime.UtcNow`
+   - untouched → leave as-is
+   - `ORG_PROFILE_CONFIRM` → `COMPLETED` whenever `Profile` is non-null
+6. `Finish == true` → apply the §④.5 finish guard and stamp the company. `Finish == false` → save and return, wizard stays open (this is the "Save and continue later" path).
+7. `orgSettings.InvalidateCompany(companyId);` after commit.
+8. **Fully idempotent and re-runnable.** The same payload posted twice must produce the same end state — this mutation is also the *update* path when the tenant returns from the dashboard checklist. Sections must upsert, never blind-insert; `TeamInvites` must not re-invite an address that already has a staff row.
+
+**Error shape:** return field-level errors keyed by section so the FE can expand the offending card and highlight the field. A flat message string is not acceptable — with one submit carrying eight sections, "validation failed" is useless to the user.
 
 **⚠ The round-trip hazard — read this before writing a single line.**
 
@@ -268,38 +296,38 @@ Reuse the exact `(SettingGroupId, ParamName, DataType)` triples from `UpdateComp
 Copy the resolution idiom verbatim from `UpdateCompanySettings.cs`:
 
 ```csharp
-Upsert(existingByCode, companyId, "TIME_ZONE", mdNamesById.Get(dto.DefaultTimezoneId));
+Upsert(existingByCode, companyId, "TIME_ZONE", mdNamesById.Get(dto.Locale.DefaultTimezoneId));
 ```
 
 Do **not** duplicate the `Upsert` / `MdNameResolver` helpers by copy-paste if you can extract them — but if extraction risks touching `UpdateCompanySettings.cs`'s behaviour, prefer a private copy in the new handler over refactoring a live screen's handler. Correctness beats DRY here.
 
-After a successful save: `orgSettings.InvalidateCompany(companyId);` — same as `UpdateCompanySettings.cs` line 208. Skipping this leaves the tenant on a stale cached locale.
+Validation: `Locale` is mandatory and all five ids must be non-null. Reject with a field-level error under the locale section, not a generic 500.
 
-Validation: `ORG_LOCALE` requires all five ids non-null (it is the one required task). Reject with a field-level validation error, not a generic 500.
+**UTC only** — every Postgres date column is `timestamp with time zone` and Npgsql throws on `Kind=Unspecified`.
 
-Task update: set `Status = COMPLETED`, `CompletedDate = DateTime.UtcNow`, `CompletedByUserId = <current user id>`. **UTC only** — every Postgres date column is `timestamp with time zone` and Npgsql throws on `Kind=Unspecified`.
+### ④.5 The finish guard
 
-Idempotent: completing an already-`COMPLETED` task is a success no-op, not an error.
+Applied inside `SaveTenantSetup` when `Finish == true`:
 
-### ④.5 Mutations — `SkipTenantSetupStep` / `FinishTenantSetup`
+- If any task would still be `IsRequired == true && Status == PENDING` **after** this payload is applied → reject the whole mutation with error code **`SETUP_TASK_REQUIRED`** and roll back. Evaluate against the post-payload state, not the pre-payload state: a submit that supplies the locale *and* sets `Finish = true` must succeed in one call.
+- Otherwise stamp `Company.SetupWizardCompletedDate = DateTime.UtcNow` and `Company.SetupWizardVersion = TenantSetupConstants.CurrentSetupWizardVersion`.
+- Already complete → do not re-stamp the date; the rest of the payload still saves normally (this is the update path from the dashboard checklist).
 
-GraphQL fields: `skipTenantSetupStep`, `finishTenantSetup` (no `Get` prefix to strip).
+Required tasks can never be skipped: a `SkippedTaskCodes` list containing `ORG_LOCALE` is rejected with `SETUP_TASK_REQUIRED`.
 
-**`skipTenantSetupStep(taskCode)`**
-- If the task `IsRequired` → reject with error code **`SETUP_TASK_REQUIRED`** and a message naming the step. The FE surfaces this as an inline error on the step, not a toast-and-continue.
-- Otherwise `Status = SKIPPED`, `SkippedDate = DateTime.UtcNow`. Idempotent.
-- `NOT_APPLICABLE` tasks cannot be skipped — they are already out of scope; return success no-op.
-
-**`finishTenantSetup()`**
-- Guard: if any task has `IsRequired == true && Status == PENDING` → reject with **`SETUP_TASK_REQUIRED`**. This is the server-side twin of the FE's disabled Finish button; the FE guard is convenience, this one is the rule.
-- Stamp `Company.SetupWizardCompletedDate = DateTime.UtcNow` and `Company.SetupWizardVersion = TenantSetupConstants.CurrentSetupWizardVersion`.
-- Idempotent: already-complete → success no-op, do not re-stamp the date.
-
-Both mutations scope via `GetCurrentUserStaffCompanyId()`.
+Scoping is `GetCurrentUserStaffCompanyId()` throughout.
 
 ### ④.6 Auto-close hooks
 
-When a tenant completes a setup task **outside** the wizard (via the real screen), the checklist must reflect it. Route every hook through **one** call — `ITenantSetupService.AutoCompleteAsync(companyId, taskCode, ct)` — never scattered inline `TenantSetupTask` writes.
+**Scope first, so this does not collide with §④.4.** `SaveTenantSetup` does **all** of its own task bookkeeping inside its own transaction — it marks each supplied section COMPLETED and each `SkippedTaskCodes` entry SKIPPED itself. These hooks are **not** part of that path and must never fire from it.
+
+They exist for one case only: a tenant who **skipped** a section in the wizard and later configures it on the **real admin screen** (Company Settings, Email Provider Config, Payment Gateway, Staff, WhatsApp, SMS). The dashboard checklist has to notice.
+
+Two hard rules:
+- **No double-write.** `AutoCompleteAsync` must be a no-op when the task is already `COMPLETED`. Read-then-write under the existing unique index `(CompanyId, TaskCode)`; on a race, swallow the unique violation.
+- **Never call it from `SaveTenantSetup`** or from any handler `SaveTenantSetup` invokes via mediator. If a section's domain handler already carries the hook, `SaveTenantSetup` must suppress it (pass a flag on the command, or set an `ITenantSetupService` ambient suppression for the duration of the transaction — pick one and record which in §⑩). Two writers to the same row inside one transaction is the bug this rule prevents.
+
+Route every hook through **one** call — `ITenantSetupService.AutoCompleteAsync(companyId, taskCode, ct)` — never scattered inline `TenantSetupTask` writes.
 
 | Hook site | Task to auto-complete |
 |---|---|
@@ -315,15 +343,43 @@ When a tenant completes a setup task **outside** the wizard (via the real screen
 
 **Verify each hook site's real handler name and file path before editing** — do not assume. Backend is gitignored, so Grep returns zero; use `find -iname` or scope `grep -rn --include=*.cs` to one project subdirectory.
 
-### ④.7 Domain events (§⑤ of parent)
+### ④.7 Login landing override — THE GATE
+
+**This is where the wizard gate lives. Not the frontend.**
+
+Verified on disk: the `login` mutation already returns `defaultLandingUrl` (a role-resolved relative route, no locale prefix). The frontend consumes it in `useAuth`'s `resolvePostLoginLanding` (`src/presentation/hooks/useAuth/index.ts:48`) and `router.push`es the result — falling back to `MASTER_URL` when it is null. **That is the single post-login redirect authority in this product.**
+
+In the login handler, after the role's `DefaultLandingUrl` is resolved and immediately before the response is built:
+
+```csharp
+// First-run setup outranks the role landing. A tenant that has not finished
+// setup goes to /setup and nowhere else — no dashboard is rendered first.
+if (isTenantStaff && company.SetupWizardCompletedDate is null)
+{
+    defaultLandingUrl = "setup";
+}
+```
+
+Rules:
+- **Tenant staff only.** Platform staff (`(master)` surface) must never be diverted — their company row is not a tenant and has no wizard. Use whatever platform-staff discriminator the login handler already computes; do not invent a new one.
+- Return `"setup"` **without** a leading slash and **without** a locale prefix, matching the existing `defaultLandingUrl` contract (`resolvePostLoginLanding` strips leading slashes and prefixes `/${lang}/`).
+- No frontend change is needed for the redirect itself — `resolvePostLoginLanding` will route to `/${lang}/setup` unmodified. Its module-resolution block will simply find no owning module for `setup`, which is harmless (it only skips pre-setting module context).
+
+**Why not a client-side gate:** any redirect decided inside `(core)/layout.tsx` or a provider means the dashboard shell mounts, queries, and paints before bouncing to `/setup`. That is the flash the tenant sees today and it is unacceptable. Deciding at login means the dashboard is never requested at all.
+
+Defence in depth (cheap, keep it): the `(setup)` page itself redirects to `/${lang}` if `tenantSetup.isSetupComplete === true`, so a bookmarked `/setup` cannot trap a finished tenant. Do **not** add the inverse guard to `(core)` — the login override is the gate.
+
+### ④.8 Domain events (§⑤ of parent)
 
 Three events, published from the handlers above, following the existing `INotification` / MediatR domain-event convention in this codebase (find a sibling event and copy its shape):
 
 | Event | Published from | Payload |
 |---|---|---|
 | `TenantSetupStartedEvent` | first successful `tenantSetup` query where nothing was previously completed | CompanyId, UserId, OccurredUtc |
-| `TenantSetupStepCompletedEvent` | `CompleteTenantSetupStep`, `SkipTenantSetupStep`, `AutoCompleteAsync` | CompanyId, UserId, TaskCode, Status, OccurredUtc |
-| `TenantSetupCompletedEvent` | `FinishTenantSetup` (only on the real stamp, not the no-op) | CompanyId, UserId, CompletedCount, SkippedCount, OccurredUtc |
+| `TenantSetupStepCompletedEvent` | `SaveTenantSetup` — one per section saved or skipped in the payload; plus `AutoCompleteAsync` | CompanyId, UserId, TaskCode, Status, OccurredUtc |
+| `TenantSetupCompletedEvent` | `SaveTenantSetup` when `Finish: true` passes the guard and the `SetupWizardCompletedDate` stamp actually lands (never on a re-submit that finds it already stamped) | CompanyId, UserId, CompletedCount, SkippedCount, OccurredUtc |
+
+Publish **after** the transaction commits, not inside it — a submit that rolls back must emit nothing. Collect the events in a local list as sections are processed, then dispatch once on success.
 
 Handlers: audit-log only for now. No emails, no notifications.
 
@@ -331,72 +387,163 @@ Handlers: audit-log only for now. No emails, no notifications.
 
 ## ⑤ Frontend
 
-### ⑤.1 The gate — where it actually goes
+### ⑤.0 The three rules that govern this whole section
 
-**Confirmed on disk:** NextAuth's `authorized({ auth, request })` callback in `src/infrastructure/lib/configs/auth.ts` returns a **boolean only** (public-route allowlist + `!!auth`). It performs no redirects and has no access to tenant state. Root `middleware.ts` does locale-prefix redirection only. **Neither is the gate.**
+**RULE 1 — ONE PAGE. NO NAVIGATION.**
+Every field the tenant needs is on `/setup` itself. The wizard **never** sends the user to another screen to configure email, payment, branding, or anything else. Bouncing a brand-new user around six admin screens and hoping they find their way back is not onboarding — it is a maze. Nobody ships that.
 
-The gate belongs in the authenticated shell: `src/app/[lang]/(core)/layout.tsx`, which currently reads:
+There is no multi-step stepper, no Next/Back, no "Configure →" link, no new tab. One scrollable page, all sections visible, one submit at the end.
 
-```tsx
-<RouteGuard requireAuth={true}>
-  <RoleCapabilityProvider>
-    <PlanEnforcementProvider>
-      <DashBoardLayoutProvider trans={trans}>{children}</DashBoardLayoutProvider>
-    </PlanEnforcementProvider>
-  </RoleCapabilityProvider>
-</RouteGuard>
-```
+**RULE 2 — ONE SUBMIT. NO PER-SECTION API CALLS.**
+Every field lives in a client-side **Zustand** store as the tenant types. Nothing is sent to the server until they press **Finish setup**, which fires exactly one `saveTenantSetup` mutation carrying all eight sections. The same single call handles updates when they come back later.
 
-Add a `TenantSetupGate` **inside `RoleCapabilityProvider`, wrapping `PlanEnforcementProvider`**. Reason: it needs an authenticated session and the ambient tenant (same reason `PlanEnforcementProvider` sits inside the shell and not on public routes), and it must run before the dashboard paints.
+No autosave, no per-card Save button hitting the API, no debounced background writes. Eight small requests that can each half-fail is exactly the state we are avoiding.
 
-`TenantSetupGate` behaviour:
-- Query `tenantSetup` once (cache it — this is the same query the wizard and the checklist widget use; do not fire it three times).
-- `isSetupComplete === true` → render children unchanged. **This is the path every existing tenant takes**, which is exactly why §① must be applied first.
-- `isSetupComplete === false` → `router.replace(\`/${lang}/setup\`)` and render the shell's loading skeleton meanwhile. Never flash the dashboard.
-- Query error / network failure → **render children** (fail-open). A wizard-checklist outage must not lock a tenant out of their own product.
+**RULE 3 — THE DASHBOARD IS NEVER RENDERED FIRST.**
+The redirect is decided at login by the backend (§④.7). By the time the browser navigates anywhere, the destination is already `/setup`. There is no dashboard mount, no query, no paint, no bounce.
 
-### ⑤.2 The `/setup` route
+Do **not** add any setup gate, provider, or redirect to `(core)/layout.tsx`. It stays exactly as it is today.
 
-New route group so the wizard renders **without** sidebar/header chrome:
+### ⑤.1 The `/setup` route
+
+New route group so the page renders **without** sidebar/header chrome — a first-run user has nothing to navigate to yet, and the sidebar is a distraction from the one job on screen:
 
 ```
-src/app/[lang]/(setup)/layout.tsx     — RouteGuard requireAuth only; no DashBoardLayoutProvider
-src/app/[lang]/(setup)/setup/page.tsx — the wizard
+src/app/[lang]/(setup)/layout.tsx     — RouteGuard requireAuth only; NO DashBoardLayoutProvider
+src/app/[lang]/(setup)/setup/page.tsx — the setup page
 ```
 
-`(setup)` parentheses do not appear in the URL → the path is `/en/setup`. The `(setup)` layout must **not** include `TenantSetupGate` (infinite redirect loop).
+`(setup)` parentheses do not appear in the URL → the path is `/en/setup`.
 
-If the tenant navigates to `/setup` when already complete → `router.replace(\`/${lang}\`)`.
+Keep a minimal header on the page itself: tenant logo/name on the left, user menu + Sign out on the right. A user who lands here must always be able to leave the product.
 
-### ⑤.3 The wizard — 3 steps
+If `tenantSetup.isSetupComplete === true` → `router.replace(\`/${lang}\`)`. This is the only guard on this route.
 
-Full-page, centred, max-width container, progress indicator across the top showing 3 steps.
+**The page occupies the full viewport.** Not a narrow card floating in an ocean of grey. Concretely:
+- The `(setup)` layout is `min-h-screen w-full` with a page background; the content column is `w-full max-w-5xl mx-auto` with real page padding — wide enough that a 3-across field row (time zone / date format / time format) fits on one line at `lg`.
+- Section cards are full content-width. Field grids inside them are `grid-cols-1 md:grid-cols-2 lg:grid-cols-3`, not a single stacked column in a 600px box.
+- No fixed-width dialog shell, no `max-w-2xl` centred panel, no vertical dead space above the heading.
 
-**Step 1 — Confirm your organisation (`ORG_PROFILE_CONFIRM`)**
-Read-only summary of what provisioning already set: organisation name, country, currency, plan. A "Looks right" primary action → `completeTenantSetupStep({ taskCode: "ORG_PROFILE_CONFIRM" })` → advance. A secondary link "Edit in Company Settings" → new tab to `/${lang}/organization/organizationsetup/company`. Skippable.
+**Not a modal over the master dashboard.** It was considered and rejected: a modal means the dashboard mounts, queries and paints behind it, which is exactly the flash §④.7 exists to eliminate, and it puts a 6-section form inside a scroll-trapped box. The wizard is its own full-page route reached directly from login. (The one place a modal is still permitted is §⑤.4's OAuth/multi-step fallback — a dialog *on* `/setup`, never over the dashboard.)
 
-**Step 2 — Regional settings (`ORG_LOCALE`) — REQUIRED**
-Five selects, MasterData-driven: Time Zone (`TIMEZONE`), Date Format (`DATEFORMAT`), Time Format (`TIMEFORMAT`), Financial Year Start (`FINANCIALYEARSTARTMONTH`), Default Language. Submit → `completeTenantSetupStep` with all five ids.
-- **No Skip button on this step.** The server enforces `SETUP_TASK_REQUIRED`; the FE simply must not offer the escape hatch.
-- Next/Submit gated by RHF `formState.isValid` (all five required), never by a capability check.
+### ⑤.2 Page anatomy
 
-**Step 3 — Get ready to transact (`EMAIL_SENDER`, `PAYMENT_GATEWAY`)**
-Two cards, each with a short explanation, a status chip, and a "Configure" button deep-linking (new tab) to the route in §③. Each card has "Skip for now" → `skipTenantSetupStep`. Both optional.
-- If `EMAIL_SENDER` came back `NOT_APPLICABLE` (no `CHANNEL:EMAIL` entitlement), **hide the card entirely** — do not render a disabled or upsell tile inside the first-run wizard.
-- If both cards are hidden, the step still renders with the finish action and a short "you're all set" message.
+```
+┌──────────────────────────────────────────────────────┐
+│  [logo] Acme Foundation              [user ▾] Sign out│
+├──────────────────────────────────────────────────────┤
+│  Finish setting up Acme Foundation                    │
+│  A few details and you're ready to go.                │
+│  ▓▓▓▓▓▓▓░░░░░░░░  3 of 7 done                         │
+├──────────────────────────────────────────────────────┤
+│  ▼ Regional settings                    ● Required    │
+│    [Time zone ▾] [Date format ▾] [Time format ▾]      │
+│    [Financial year start ▾] [Language ▾]              │
+├──────────────────────────────────────────────────────┤
+│  ▶ Organisation profile                 ✎ Filled      │
+├──────────────────────────────────────────────────────┤
+│  ▶ Branding                             ○ Not set     │
+├──────────────────────────────────────────────────────┤
+│  ▶ Email sender                         ○ Not set     │
+├──────────────────────────────────────────────────────┤
+│  ▶ Payment gateway                      ⊘ Skipped     │
+├──────────────────────────────────────────────────────┤
+│  ▶ Invite your team                     ○ Not set     │
+├──────────────────────────────────────────────────────┤
+│  [ Finish setup ]  ← the ONLY button that calls an API│
+└──────────────────────────────────────────────────────┘
+```
 
-**Finish** → `finishTenantSetup()` → `router.replace(\`/${lang}\`)`. Button disabled while `hasPendingRequired === true`.
+- One page, one vertical stack of **collapsible section cards** — not tabs, not a stepper.
+- Card header carries the section title and a status chip. Chips reflect **client store state**, not server state: `Required` / `Filled` / `Not set` / `Skipped` / `Saved` (the last only after a successful submit).
+- **Regional settings is expanded on load**; every other section starts collapsed. Expanding one does not collapse another.
+- Each card body contains the **real fields**. **No card has a Save button.** Only `Skip for now`, on optional sections, which is a local store flag — not an API call.
+- `Finish setup` is the single submit, bottom of page, sticky footer on mobile. Disabled while the required section is incomplete, with the reason shown next to it — never a silently dead button.
+- Sections whose task is `NOT_APPLICABLE` are **not rendered at all**. No disabled cards, no upsell tiles in a first-run flow.
 
-Refetch `tenantSetup` after every mutation so the progress indicator and card chips stay truthful. The wizard must be resumable: closing the browser mid-wizard and logging back in returns the tenant to the first non-terminal step.
+**Banned on this page** — each of these was on an earlier build and is wrong:
+- A horizontal step-chip row (`Your organisation ▸ Regional settings ▸ Get ready to transact`) with `Back` / `Next`. That is a stepper. RULE 1 forbids it.
+- A `Configure →` button that routes anywhere. The fields belong in the card.
+- Any grouping card that bundles several tasks behind one chip ("Get ready to transact" holding email + gateway). One card per task, so the count and the UI agree.
 
-### ⑤.4 Dashboard checklist widget
+**⑤.2.1 The progress counter — count exactly what is on screen**
 
-New widget on the tenant dashboard. Shows the full 8-item checklist (excluding `NOT_APPLICABLE` rows), each with status and a deep link from §③.
+The counter and the cards must be driven by **one** array. Derive the rendered section list first, then compute both from it. Never count the catalog and render a filtered subset — that is how `2 of 6 done` appears above three visible items.
+
+```ts
+const sections = catalog
+  .filter(s => s.status !== "NOT_APPLICABLE")   // entitlement-gated sections vanish
+  .filter(s => s.isVisibleInWizard);            // any other render condition goes HERE, not in the JSX
+
+const total = sections.length;                                   // denominator
+const done  = sections.filter(s => isResolved(store, s.code)).length;  // numerator
+// isResolved = filled in the store OR already COMPLETED on the server OR skipped
+```
+
+Rules:
+- **Denominator = number of cards actually rendered.** If a card is not on screen, it is not in the count. If it is on screen, it is in the count.
+- **SKIPPED counts as resolved.** A skipped optional section is a decision, not outstanding work; leaving it in the numerator's "not done" set makes the bar unreachable — the tenant can never see `6 of 6`.
+- Both numbers come from the client store, not from a server field. There is no server round-trip while the tenant works (RULE 2), so a server-computed `completedCount` would be stale the moment they type.
+- If the counter and the visible card count ever disagree, that is a bug, not a display preference. Acceptance criterion 24.
+
+### ⑤.3 State — one Zustand store, one submit
+
+Create a dedicated store at `src/application/stores/tenant-setup-stores/tenant-setup-store.ts` with a paired `tenant-setup-istore.ts` holding the state interface. That is the verified convention in this codebase — ~126 stores follow it, and `src/presentation/store/` **does not exist**. Open a sibling store under `src/application/stores/` and copy its shape exactly.
+
+The store holds:
+- one slice per section, mirroring that section's DTO in §④.4
+- `skipped: Set<string>` of task codes
+- `expandedSection`, `submitting`, and `sectionErrors: Record<string, FieldError[]>` returned by the server
+
+Flow:
+1. On mount, hydrate the store from the `tenantSetup` query plus each section's existing values (a tenant returning from the dashboard checklist must see what they already saved, not blank fields).
+2. Every keystroke and select writes to the store. **Zero network traffic.**
+3. `Finish setup` → build one `TenantSetupRequestDto` from the store → **one** `saveTenantSetup` call with `finish: true`.
+4. Success → refetch `tenantSetup`, then `router.replace(\`/${lang}\`)`.
+5. Failure → keep every field exactly as typed, write `sectionErrors` into the store, auto-expand the first failing section and scroll to it. **Never clear the form on error.** The whole payload failed as one unit, so the user re-submits once after fixing.
+
+Per-section forms may still use RHF for field-level validation, but their values must be synced into the Zustand store — the store is the single source of truth at submit time.
+
+**Regional settings has no Skip control.** The server enforces `SETUP_TASK_REQUIRED`; the UI simply must not offer the escape hatch.
+
+`Skip for now` toggles a local flag → chip becomes `Skipped`, card collapses, its slice is sent as `null` and its code added to `skippedTaskCodes` on submit.
+
+**Unsaved-changes guard:** because nothing persists until submit, warn on tab close / sign-out if the store is dirty. Without this, a tenant who fills six sections and closes the tab loses everything — the one genuine cost of single-submit, and it must be handled, not ignored.
+
+| Section | Fields | Store slice | Optional |
+|---|---|---|---|
+| Organisation profile | org name, country, currency | `profile` | yes |
+| **Regional settings** | 5 MasterData selects | `locale` | **no — required** |
+| Branding | logo upload, primary colour | `branding` | yes |
+| Email sender | provider select + credentials | `emailSender` | yes |
+| Payment gateway | gateway select + credentials | `paymentGateway` | yes |
+| Invite your team | repeatable name / email / role rows | `teamInvites` | yes |
+| WhatsApp sender | provider select + credentials | `whatsAppSender` | yes |
+| SMS sender | provider select + credentials | `smsSender` | yes |
+
+### ⑤.4 How the sections get their fields — REUSE, do not reimplement
+
+Each section's fields already exist as a form on its owning screen (§③). **Reuse the presentational field group** — extract it into a shared component if it is currently welded to its page. Do not fork a second copy of a credentials form.
+
+What you must **not** reuse on the frontend is the owning screen's **mutation call**. Those forms submit themselves; the setup page's sections must not. Extract fields and validation, drop the submit. If a form component cannot be used without its submit wiring, extract the field group rather than bending the component.
+
+Server-side reuse happens instead inside `SaveTenantSetup` (§④.4), which delegates each section to the existing domain handler. That is where the "don't reimplement" rule is enforced.
+
+**Credential fields keep their existing security behaviour** — masked, write-only, audited. Do not weaken it because the surface changed. Note that holding credentials in a client store until submit is unavoidable under single-submit; keep them in memory only, and **never** persist the store to `localStorage` / `sessionStorage` or Zustand's `persist` middleware.
+
+**The one permitted fallback:** if a section's form genuinely cannot be rendered inline — it has its own multi-step flow, or an OAuth/redirect handshake with an external provider — open it in a **modal dialog on the same page**. A dialog is not navigation; the user never leaves `/setup`. Sending them to another route is still forbidden. Note any section you resolve this way in the build log with the reason.
+
+### ⑤.5 Dashboard checklist widget
+
+New widget on the tenant dashboard, for whatever was skipped or left unset. Shows the applicable tasks (excluding `NOT_APPLICABLE`) with their status.
+- Each row's action is **"Finish setup"** → back to `/${lang}/setup` with that section pre-expanded (`/setup#branding` or an equivalent query param). Consistent with RULE 1: setup is edited in one place. Do not deep-link rows to individual admin screens.
 - Hide the widget entirely when `completedCount + skippedCount === applicableCount`.
 - Progress as `completedCount / applicableCount`.
 - This is a **new renderer** under the dashboard's `widgets/` tree — no legacy widget reuse — and must be visually distinct from the KPI tiles around it (a checklist list, not another number tile).
 
-### ⑤.5 UI standards (non-negotiable)
+Because the widget can return the user to `/setup` after setup is finished, the §⑤.1 guard must allow re-entry: redirect to the dashboard only when the user arrived with **no** section anchor. With an anchor, render the page normally so completed sections can still be edited.
+
+### ⑤.6 UI standards (non-negotiable)
 
 - Design tokens only — **no hex, no raw px**. Uniform spacing.
 - Icon containers, status chips and badges: solid `bg-X-600` + `text-white`. **Never** `bg-X-50/100`, `text-X-700/800`, `bg-muted`, or `text-muted-foreground` on a badge or icon container.
@@ -404,17 +551,18 @@ New widget on the tenant dashboard. Shows the full 8-item checklist (excluding `
 - Responsive xs → xl. The wizard must be usable on a phone.
 - Icons: `@iconify` Phosphor.
 - Reuse existing components — search the component registries before creating anything. Create only if genuinely missing and static.
+- The page must be usable end-to-end on a phone: cards stack, fields go full-width, `Finish setup` is a sticky footer.
 
-### ⑤.6 GraphQL wiring
+### ⑤.7 GraphQL wiring
 
 Add the query and three mutations to the frontend GraphQL layer following the existing convention. **tsc cannot see GraphQL field names** — a wrong name compiles clean and fails only at runtime. Field names, exactly:
 
 | Operation | GraphQL field | Input type |
 |---|---|---|
 | query | `tenantSetup` | — |
-| mutation | `completeTenantSetupStep` | `TenantSetupStepRequestDtoInput` |
-| mutation | `skipTenantSetupStep` | (scalar `taskCode`) |
-| mutation | `finishTenantSetup` | — |
+| mutation | `saveTenantSetup` | `TenantSetupRequestDtoInput` |
+
+**Two operations total.** If you find yourself adding a third, you have reintroduced per-section saving — stop and re-read §⑤.0 RULE 2.
 
 ---
 
@@ -422,7 +570,16 @@ Add the query and three mutations to the frontend GraphQL layer following the ex
 
 - Any change to the `TenantSetupTask` entity, its EF configuration, or the existing migration.
 - A v2 wizard, version-comparison re-prompting, or any use of `SetupWizardVersion` beyond stamping it.
-- Editing email/SMS/WhatsApp/payment provider config **inside** the wizard — the wizard deep-links to the real screens, it does not reimplement them.
+- **Reimplementing** email/SMS/WhatsApp/payment/branding forms or their mutations. The setup page renders them inline by **reusing** the existing components and mutations (§⑤.4). Inline is mandatory; a second implementation is forbidden.
+- Any redirect, gate, or provider added to `(core)/layout.tsx` — it stays untouched. The gate is the backend login landing (§④.7).
+- A multi-step stepper, step-chip row, Next/Back navigation, `Configure →` button, or any link out of `/setup`.
+- Rendering the wizard as a **modal/dialog over the master dashboard** — see §⑤.1. It is a full-page route.
+- A narrow centred card layout. The page is full-viewport (§⑤.1).
+- A server-computed progress count, or any counter whose denominator is the task catalog rather than the rendered card list (§⑤.2.1).
+- **Per-section API calls.** No card gets its own Save button that hits the server. No `completeTenantSetupStep`, `skipTenantSetupStep`, or `finishTenantSetup` mutation — those were designed and then deleted; do not resurrect them.
+- **Autosave, debounced writes, or optimistic background syncing.** Typing sends nothing.
+- **A second write mutation of any kind.** `saveTenantSetup` is the only write, and it is also the update path. Two operations total (§⑤.7).
+- Zustand `persist` middleware, `localStorage`, `sessionStorage`, cookies, or IndexedDB for any wizard field — the store is memory-only because it holds provider credentials.
 - Platform-side (`(master)`) visibility of tenant setup progress.
 - Emails or notifications on any wizard event.
 - Touching `billing.PlanEntitlements` directly — go through `IEntitlementService`.
@@ -433,19 +590,40 @@ Add the query and three mutations to the frontend GraphQL layer following the ex
 
 1. `sett.TenantSetupTasks` gets 8 rows per newly provisioned tenant, with gated rows `NOT_APPLICABLE` when the plan lacks the channel.
 2. **Every pre-existing tenant logs in straight to the dashboard — the wizard never appears for them.** (Depends on §① being applied.)
-3. A newly provisioned tenant admin's first login lands on `/setup`, not the dashboard, with no dashboard flash.
-4. Step 2 cannot be skipped from the UI, and `skipTenantSetupStep("ORG_LOCALE")` returns `SETUP_TASK_REQUIRED`.
-5. `finishTenantSetup` with `ORG_LOCALE` still `PENDING` returns `SETUP_TASK_REQUIRED`.
-6. After Finish, `Companies.SetupWizardCompletedDate` and `SetupWizardVersion` are stamped and the next login goes to the dashboard.
-7. Closing the browser mid-wizard and logging back in resumes at the correct step with prior steps still marked complete.
-8. **Locale values chosen in the wizard render correctly as selected values on Company Settings (#75)** — not blank selects. This is the round-trip test for §④.4.
-9. Configuring an email provider on the real screen flips `EMAIL_SENDER` to `COMPLETED` in the dashboard checklist without visiting the wizard.
-10. A tenant with no `CHANNEL:EMAIL` entitlement never sees the email card in the wizard or the checklist.
-11. Upgrading a plan flips a `NOT_APPLICABLE` task to `PENDING` on the next materialise; a `COMPLETED` task is never reverted.
-12. Calling every mutation twice produces the same end state as calling it once.
-13. A `tenantSetup` query on a tenant with zero task rows self-heals to 8 rows and returns them in the same response.
-14. A materialiser failure during provisioning logs an error and the provisioning run still completes.
-15. The dashboard checklist widget disappears once every applicable task is COMPLETED or SKIPPED.
+3. A newly provisioned tenant admin's first login lands on `/setup` **directly** — network trace shows the dashboard route was never requested, and no dashboard chrome paints at any point.
+4. **Every field is reachable without leaving `/setup`.** Configuring email, payment gateway, branding and team invites all complete on that one page. No section renders a link or button that navigates to another route.
+5. Platform staff logging in still land on their master dashboard and never see `/setup`.
+6. Regional settings cannot be skipped from the UI, and a `saveTenantSetup` payload carrying `ORG_LOCALE` in `SkippedTaskCodes` is rejected with `SETUP_TASK_REQUIRED`.
+7. `saveTenantSetup` with `finish: true` that leaves `ORG_LOCALE` neither supplied nor already complete returns `SETUP_TASK_REQUIRED`, and the Finish button is disabled with a visible reason.
+8. A single `saveTenantSetup` carrying the locale **and** `finish: true` succeeds — the guard is evaluated against post-payload state, not pre-payload (§④.5).
+9. After Finish, `Companies.SetupWizardCompletedDate` and `SetupWizardVersion` are stamped and the next login goes to the role's normal `defaultLandingUrl`.
+
+**Single-submit behaviour — these are the criteria the §⑤.0 RULE 2 rework exists for:**
+
+10. **Filling every section and pressing Finish produces exactly ONE write request** in the network trace. Not two, not eight.
+11. **Nothing is sent while typing.** With the Network tab open, editing every field in every section produces zero requests until Finish is pressed. No autosave, no debounce, no per-card save.
+12. **A failed submit preserves every typed value.** Force a server-side failure in one section; the page still shows all entered values across all sections, the failing section is expanded and scrolled to, and its field-level errors are visible. Nothing is cleared and nothing is silently half-saved — the DB shows no partial write from that attempt.
+13. **Credentials never reach browser storage.** After filling the email and gateway sections, `localStorage`, `sessionStorage`, and cookies contain no provider secret, key, or password. Confirmed with devtools before and after submit.
+14. Closing the tab with unsaved sections triggers the unsaved-changes guard (§⑤.3).
+15. Re-submitting the same payload after a successful save updates rather than duplicates — the same mutation is the update path, and calling it twice produces the same end state as calling it once.
+
+**Round-trip and lifecycle:**
+
+16. **Locale values chosen in the wizard render correctly as selected values on Company Settings (#75)** — not blank selects. This is the round-trip test for §④.4.
+17. Saving the email-sender section inline produces the same `CompanyEmailProvider` row, with the same masking and audit behaviour, as saving it on `/setting/communicationconfig/emailproviderconfig`.
+18. Configuring an email provider on the real screen after skipping it in the wizard flips `EMAIL_SENDER` to `COMPLETED` in the dashboard checklist (§④.6), and a `saveTenantSetup` that already marked it COMPLETED does not get double-written by the same hook.
+19. A tenant with no `CHANNEL:EMAIL` entitlement never sees the email card in the wizard or the checklist.
+20. Upgrading a plan flips a `NOT_APPLICABLE` task to `PENDING` on the next materialise; a `COMPLETED` task is never reverted.
+21. A `tenantSetup` query on a tenant with zero task rows self-heals to 8 rows and returns them in the same response.
+22. A materialiser failure during provisioning logs an error and the provisioning run still completes.
+23. The dashboard checklist widget disappears once every applicable task is COMPLETED or SKIPPED, and while visible its items link to `/setup#section` — never to an admin screen.
+
+**Layout and progress:**
+
+24. **The progress denominator equals the number of section cards on screen, always.** Count the cards, read the counter — they match. Verify on a plan with no WhatsApp/SMS entitlement (fewer cards → smaller denominator) and on a fully entitled plan. `2 of 6 done` above three cards is the exact bug this criterion exists to catch.
+25. Skipping every optional section and completing the required one shows `N of N done` and a full progress bar — the bar is reachable.
+26. The page fills the viewport at 1440px: no fixed-width centred card, no large empty margins, and a 3-across field row renders on one line. At 375px everything stacks with no horizontal scroll.
+27. There is no step-chip row, no Back/Next, and no button anywhere on `/setup` that changes the route (other than Sign out and the post-Finish redirect).
 
 ---
 
@@ -470,3 +648,28 @@ None. §⑨ Q3 (deep links) and Q4 (redirect authority) of the parent spec are r
 ## ⑩ Build log
 
 _(empty — append one entry per session, newest last, keep the last 5)_
+
+### 2026-08-07 — one-page rework (BE-1…BE-7, FE-1…FE-7)
+
+**Backend**
+
+- Deleted `CompleteTenantSetupStep.cs`, `SkipTenantSetupStep.cs`, `FinishTenantSetup.cs` (commands + their folders). `TenantSetupMutations.cs` is now a single resolver `SaveTenantSetup(setup: TenantSetupRequestDtoInput)`; the read side keeps `GetTenantSetup` → `tenantSetup`.
+- `SaveTenantSetup` runs a pre-flight `Validate` over the whole payload BEFORE any write, so a bad row in section 6 cannot leave sections 1–5 half-written. Field errors come back inside the payload DTO (`sectionErrors[].errors[].field/message`), not in the envelope, because `BaseApiResponse.errorCode` is an `int` and the business codes are strings.
+- Locale/branding write `sett.OrganizationSettings` KV rows; email delegates to `SaveCompanyEmailProviderCommand` (`IsDefault = true`); gateway is idempotent Update-else-Create; invites skip already-existing users; SMS delegates to `SaveSmsSenderConfigurationCommand`; WhatsApp `GraphApiVersion` defaults to `v21.0`.
+- **§④.6 auto-close suppression — decision: ambient `AsyncLocal<bool>` on `TenantSetupService`,** not a flag threaded through the command. The nine domain handlers `SaveTenantSetup` invokes via mediator already carry their own `CompleteTaskIfPending` hook; threading a suppression flag would have meant changing nine command DTOs and every other caller of those same handlers, purely to serve one caller. The `AsyncLocal` scope is opened once for the duration of the save and disposed in a `finally`, so `SaveTenantSetup` stays the only writer of `TenantSetupTask` inside its transaction. Trade-off accepted: ambient state is invisible at the call site, so the suppression is commented at both the setter and the hook.
+- `GetUserCredential.cs` carries the §④.7 login-landing override — it returns the bare `"setup"` (no leading slash, no `[lang]`), because `resolvePostLoginLanding` strips leading slashes and prepends `/${lang}/`.
+- `sql-scripts-dyanmic/tenant-setup-task-displayorder-reorder.sql` re-orders already-materialised tenants to the §③ order (ORG_PROFILE_CONFIRM 1 … SMS_SENDER 8). Idempotent CTE UPDATE. **User applies it** — no EF migration was authored, and `dotnet build` was not run here.
+
+**Frontend**
+
+- `tenant-setup-gate.tsx` deleted and un-wired from `(core)/layout.tsx`. There is no setup gate anywhere any more: the redirect is decided once at login, so nothing can bounce a tenant mid-session.
+- GraphQL layer collapsed to exactly two operations: `GET_TENANT_SETUP_QUERY` + `SAVE_TENANT_SETUP_MUTATION`.
+- New `tenant-setup-stores` (Zustand) holds the eight draft slices. **Memory-only — no `persist`, no localStorage/sessionStorage/cookie/IndexedDB**, because the draft carries live SMTP/API/gateway/WhatsApp credentials. Losing an unsaved draft on refresh is the correct trade. `setSection` marks a card *touched*; `hydrate` deliberately does not, so prefilled ORG_PROFILE_CONFIRM/BRANDING cannot count themselves done on load.
+- `/setup` is one full-viewport page of eight collapsible section cards in DisplayOrder with a single Finish submit, a client mirror of the BE `Validate`, client-derived status chips, an x/y counter, a sticky footer that names the reason Finish is blocked, and a `beforeunload` dirty guard. On rejection it expands and scrolls to the first failing card and never clears the form.
+- `(setup)/layout.tsx` is chrome-free by design (no sidebar/menu). Because that left no way out, a minimal `tenant-setup-header.tsx` was added: tenant name, signed-in user, Sign out.
+- **Plan-gated channel cards (user request this session):** `WHATSAPP_SENDER` and `SMS_SENDER` render only when the tenant's plan entitles the channel — `hasFeature(FEATURE_CODES.ChannelWhatsApp / ChannelSms)` from `useEntitlements()`. Gate is cosmetic and **fails open** while `resolved` is false, matching every other feature gate; the server stays the authority. It is applied *before* the §⑤.2.1 counter and before payload assembly, so a hidden card can neither inflate the denominator nor submit a slice. `billing.PlanEntitlements` is never read directly.
+- `TenantSetupChecklistWidget` rows now deep-link to `/${lang}/setup#${anchor}`. The wizard reads `window.location.hash` once in an effect (invisible to `useSearchParams`), suppresses the already-complete redirect when an anchor is present, and expands + scrolls that card.
+- Two API mismatches found by reading source rather than assuming: the exported `Alert` takes `color` + `variant ∈ {outline, soft}` (the shadcn `variant="destructive"` belongs to a different file), and `ApiSingleSelect.onChange` yields `number | null` against DTOs typed `number | undefined` (six sites, fixed with `?? 0`).
+- `emailProviderTypeId` has no picker anywhere in the app yet the BE requires `> 0`, so TRANSACTIONAL is resolved from the `EMAILPROVIDERTYPE` MasterDataType via a cache-first query.
+- No §⑤.4 credential modal fallback was needed — credential fields stayed inline, masked and write-only.
+- Typecheck: `npx tsc --noEmit --incremental false` → **exit 0**.
