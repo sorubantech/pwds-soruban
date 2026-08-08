@@ -379,7 +379,49 @@ Nothing. Phase 1 has no migration, no seed, no `dotnet build`. Frontend rebuild 
 
 ## §⑬ Build log
 
-_(empty — nothing built)_
+**Status: T-1 → T-9 complete. Frontend only. No backend, no migration, no seed, no SQL, no `(core)` file touched.**
+
+Typecheck: `cd PSS_2.0_Frontend && rm -rf .next/types && npx tsc --noEmit --incremental false` → **EXIT=0**.
+
+### What landed
+
+| Task | Outcome |
+|---|---|
+| T-1 | `src/application/constants/platform-navigation.ts` — static 7-item rail, `resolveRailKey()` longest-`href`-prefix resolver. |
+| T-2 | `src/application/stores/shell-stores/app-shell-store.ts` (+ `-istore.ts`) — persisted `activeRailKey` / `panelCollapsed`; exported from the stores barrel. |
+| T-3 | `src/presentation/hooks/useRailItems` — filters `PLATFORM_NAVIGATION` by `usePlatformCapabilities`, drops empty sections/rails; exported from the hooks barrel. |
+| T-4 | `(master)/masterdashboard/page.tsx` → server-side `redirect` to `/{lang}/platform/dashboards`. Route kept: `MASTER_URL` still points here from `useAuth`, `route-guard`, and `company-switcher-item`. |
+| T-5 | `layout-components/command-palette/` — promoted from the landing page, now controlled (`open`/`onOpenChange`) with a generic `groups` prop; module-grid + `useRecentModules` deps removed. |
+| T-5 | `layout-components/app-topbar/`, `app-rail/`, `context-panel/` — the three zones; all four added to the `layout-components` barrel. |
+| T-6 | `provider/app-shell-provider.tsx` + `(master)/layout.tsx` rewired to `<AppShell navSource="platform">`. `RoleCapabilityProvider` moved **up** from the two deleted child layouts — not duplicated. |
+| T-7 | Deleted `(master)/ops/layout.tsx` and `(master)/platform/layout.tsx`. |
+| T-8 | Deleted the whole `src/presentation/pages/master/` tree (18 landing-page files + the barrel) and dropped `export * from "./master"` from `presentation/pages/index.tsx`. |
+| T-9 | Typecheck + blast-radius review. |
+
+### Deviations and findings
+
+**1. Capability-seed gap (§6.2) — carried forward, nothing invented.**
+Only four leaves in `PLATFORM_NAVIGATION` carry a `requiredCapability`; every other platform route is ungated and therefore visible to any authenticated platform user. Per §6.2 no capability codes were invented and no seed was written. Gating later is a one-line `requiredCapability:` addition per leaf once the real codes exist. **This is the one open item Phase 1 knowingly leaves behind.**
+
+**2. Icon-name form changed from the spec.**
+§14.1 writes icons in hyphen form (`ph-house`). `getFullIconName` returns the name **as-is**, so `DynamicIcon` needs Iconify colon form or renders nothing. `platform-navigation.ts` therefore uses `ph:house`, `ph:buildings`, etc. throughout. Same icons, correct form.
+
+**3. `recent-activity.ts` relocated to unblock T-8.**
+`pages/master/landing-page/recent-activity.ts` was the only landing-page file with an outside consumer (`layout-components/header/logout.tsx`). Moved to `src/application/utils/recent-modules.ts` and the import repointed, so the T-8 delete is clean. Post-delete grep finds no live reference to `pages/master` anywhere (one comment mention remains inside the relocated file).
+
+**4. Collapsed-panel escape hatch (addition, not in the spec).**
+The panel's collapse chevron lives *inside* the panel, so at `w-0` there is nothing left to click. `AppShell` renders a 16px rail-edge handle (`ph:caret-double-right`) only while `panelCollapsed`, restoring the way back. Tokens only.
+
+**5. No rail-avatar deviation.**
+`app-rail` bottom-pins **both** the Help link and `<ProfilePopover />`, so §6.5 is satisfied as written.
+
+**6. Stale `.next/types` — not a code defect.**
+The first typecheck reported 604 errors, all `TS2307` inside `.next/types/**` pointing at pre-route-group paths. Filtering showed **0 errors under `src/`**; `rm -rf .next/types` then gave EXIT=0. Worth knowing for the next run after any route move.
+
+### §⑨ acceptance — what is confirmed how
+
+- **Satisfied statically:** #2 (no tenant-theme state read anywhere in `AppShell` — no `useMenu`/`useBranding`/`layout`/`sidebarType`), #9 (`git status --short` shows zero `(core)` files touched and no sibling-worktree drift), #10 (`navSource="tenant"` throws).
+- **Requires a running dev server:** #1, #3–#8, #11, #12 — rail-click-does-not-navigate, panel swap, deep-link rail resolution, ⌘K palette, scrim handoff, drawer below `xl`, wide-grid `min-w-0` behaviour, and the platform route sweep of §14.8 (any leaf that 404s must be left in place and recorded here). **Not yet exercised.**
 
 ---
 
