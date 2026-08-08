@@ -12,7 +12,7 @@ complexity: High
 new_module: NO (existing `sett` schema; OrganizationSetting + SettingGroup + UserSetting entities + CRUD already exist)
 planned_date: 2026-05-15
 completed_date: 2026-05-15
-last_session_date: 2026-07-22
+last_session_date: 2026-08-08
 ---
 
 > **One screen, three menus** — this single tabbed UI fulfils **ORGANIZATIONSETTING**, **SETTINGGROUP** and **USERSETTING**
@@ -994,3 +994,27 @@ Full UI must be built (sidebar nav, 10 cards, 70 dynamically-rendered rows, dirt
 - **Known issues opened**: ISSUE-01 (see § Known Issues) — `ResetOrganizationSettingsToDefaults` has no `CompanyId` filter, so a reset touches every tenant's rows. Pre-existing, found while adding the ownership exclusion; out of this pass's scope.
 - **Known issues closed**: None.
 - **Next step**: none for the partition. ISSUE-01 needs its own fix session.
+
+### Session 4 — 2026-08-08 — PLANNED (NOT BUILT)
+
+- **Scope**: **Login Page Designer** for the `LOGIN` setting group — template gallery + typed payload fields + live preview, replacing the raw-JSON textbox. All 12 other setting groups are hidden (`SettingGroup.IsVisibleInUI = false`, already honoured at `GetOrganizationSettingsView.cs:81`).
+- **Full spec lives at repo root**: `PSS-2.0-LOGIN-PAGE-DESIGNER-BUILD-PROMPT.md` — §①–⑬, self-contained, build with Sonnet BE + FE agents. Do not restate it here.
+- **Hard constraints**: NO entity-level changes (no columns, no EF config edit, **no migration**); `LOGIN_TEMPLATE_PAYLOAD` gets a **fixed** JSON structure — root `schemaVersion` + 11 template slots, each carrying the identical 7 keys (`headline`, `subheadline`, `imageUrl`, `videoUrl`, `posterUrl`, `slides[]`, `autoplayMs`). Key names were chosen to match `GetTenantLoginConfigQuery.BuildDtoAsync` exactly, so the BE reader and `TryGetTemplateSlot` are unchanged.
+- **Seed rows added (data, not schema)**: `LOGIN_SHOW_REMEMBER_ME`, `LOGIN_SHOW_FORGOT_PASSWORD`, `LOGIN_SHOW_REGISTER_LINK`, `LOGIN_FOOTER_TEXT` → `OrgSettingsBaseline.ExpectedSettingCount` **120 → 124**, else the auto-seeder never fires for existing tenants.
+- **User-owned**: `sql-scripts-dyanmic/setting-group-visibility-login-only.sql`.
+- **Next step**: run the root prompt as a `/continue-screen #85` build session; append the real build log entry here on completion.
+
+### Session 5 — 2026-08-08 — ENHANCE — COMPLETED
+
+- **Scope**: Built the **Login Page Designer** planned in Session 4. Replaces the raw-JSON `<Input type="text">` for `LOGIN_TEMPLATE_PAYLOAD` with a template gallery + typed payload fields + live preview. Spec: repo-root `PSS-2.0-LOGIN-PAGE-DESIGNER-BUILD-PROMPT.md` §①–⑫ (not restated here). Sonnet BE + FE agents, run in parallel (disjoint trees).
+- **Files touched**:
+  - BE modified (5): `Base.Infrastructure/Seeders/OrgSettingsDefaultSeeder.cs` (4 new LOGIN rows + `LOGIN_TEMPLATE_PAYLOAD` description → §② + `DefaultGroup.IsVisibleInUI` param, `false` on the 12 non-LOGIN groups); `.../OrganizationSettings/Seeders/IOrgSettingsDefaultSeeder.cs` (`ExpectedSettingCount` 120→**124**); `.../Validators/OrgSettingsValueValidator.cs` (+`ValidateLoginPayloadJson` all 7 sub-rules, `ValidateHexColor`, `ValidateTemplateCode`); `.../AuthBusiness/TenantLoginConfig/Queries/GetTenantLoginConfigQuery.cs` (4 codes → `BrandingParamCodes` + `DefaultConfig` + `ParseBool` projection; `BuildDtoAsync` slot-reader and `TryGetTemplateSlot` untouched); `Schemas/AuthSchemas/TenantLoginConfigSchemas.cs` (+`ShowRememberMe`/`ShowForgotPassword`/`ShowRegisterLink`/`LoginFooterText`).
+  - BE created (1, **user-applied**): `Services/Base/sql-scripts-dyanmic/setting-group-visibility-login-only.sql` (§⑨ — flips `IsVisibleInUI` false on the 12, true on LOGIN; touches **no** `OrganizationSettings` rows; not executed by the agent).
+  - FE created (9 + 11 assets): `orgsettings/login-designer/{payload-schema.ts, template-field-schema.ts, template-gallery.tsx, payload-fields.tsx, slides-repeater.tsx, live-preview.tsx, login-designer-panel.tsx}`, `orgsettings/fields/{media-url-field.tsx, color-field.tsx}`, `public/images/login-templates/{11 codes}.svg`.
+  - FE modified (18): `components/setting-card.tsx` (LOGIN → `<LoginDesignerPanel/>` dispatch), `components/setting-row.tsx` (+`COLOR`/`MEDIA` cases, `JSON` left on `default:`), `orgsettings-page.tsx` (hide nav + search when `groups.length === 1`), `domain/entities/auth-service/TenantLoginConfigDto.ts` (+4 fields), `gql-queries/auth-queries/TenantLoginConfigQuery.ts` (+4 fields), `application/utils/tenant/getDefaultLoginConfig.ts` (+4 fallback fields), `pages/auth/login/login-form.tsx` (+optional `config` prop, 4 gated controls), the 11 template files (`<LogInForm config={config} />`), `companysettings/components/file-upload-card.tsx` (TODO comment only).
+- **Constraints honoured**: no `Base.Domain/` file, no `Migrations/`, no `*ModelSnapshot.cs`, no EF config change, no new GraphQL mutation, no `SettingsOwnership.cs` change — verified by `git status`. §⑤ boundary kept: `LOGO_URL` / `PRIMARY_COLOR_HEX` / `SECONDARY_COLOR_HEX` render as a **read-only** brand strip; #85 never writes them.
+- **Verification**: `dotnet build PeopleServe.sln` → **0 errors** (658 pre-existing warnings, none in touched files). `npx tsc --noEmit --incremental false` → **exit 0**, no output (re-run independently by the orchestrator, not just self-reported). Uniformity grep: 0 raw "Loading", 0 inline-px violations; remaining hex literals are runtime data values (user-picked swatches, brand-color previews, CSS-var fallbacks), not static chrome.
+- **Deviations from spec**: two path corrections only — backend root is `PSS_2.0_Backend/PeopleServe/Services/Base/...` (spec §⑧ abbreviates), and the BE `TenantLoginConfigDto` lives in `Schemas/AuthSchemas/TenantLoginConfigSchemas.cs`, not the path §⑧ B5 names. FE agent also fixed `getDefaultLoginConfig.ts` (TS2739 from the new required DTO fields) — necessary, not scope creep.
+- **Known issues opened**: None.
+- **Known issues closed**: None. ISSUE-01 (`ResetOrganizationSettingsToDefaults` missing `CompanyId` filter) remains OPEN — pre-existing, still needs its own fix session.
+- **Next step**: **User must apply** `sql-scripts-dyanmic/setting-group-visibility-login-only.sql` — until then all 13 groups stay visible and the single-group nav/search hiding won't trigger. No migration required. Then `pnpm dev` → `/{lang}/setting/orgsettings/organizationsetting`; first load re-seeds the 4 new ParamCodes (count gate 120→124).
