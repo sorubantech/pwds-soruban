@@ -1130,7 +1130,7 @@ Full UI must be built (buttons, forms, modals, panels, interactions, 8 sections,
 | ISSUE-29 | Session 3 2026-07-23 | Med | UI tokens / a11y | `detail/tabs/communication-tab.tsx:53-60` badge tones use `bg-emerald-100 text-emerald-700`, `bg-rose-100 text-rose-700`, `bg-amber-100 text-amber-700`, `bg-muted text-muted-foreground` — violates the project rule (solid `bg-X-600` + `text-white`). Status is also signalled by colour alone (WCAG 1.4.1). Add an icon or text cue. | CLOSED (session 5) |
 | ISSUE-30 | Session 3 2026-07-23 | Med | Performance | Communication tab hard-caps at `pageSize: 100, pageIndex: 0` with no pagination UI — contacts with a longer email history silently show a truncated view. Add server-side paging (25/page). | CLOSED (session 5) |
 | ISSUE-31 | Session 6 2026-07-23 | Med | Error handling (repo-wide) | `Base.API/Controller/ExportController.cs` — **every other** export action returns `Task<FileResult>` and calls `File(result.FileContent, result.ContentType, result.FileName)` unconditionally. Any handler returning `Success: false` (e.g. "No records found") carries empty `ContentType`/`FileName`, so ASP.NET sets an empty `Content-Type` header and throws `System.FormatException: The header contains invalid values at index 0: ''` — an opaque 500 instead of the handler's message. Fixed for the **Contact** action only in Session 6 (scope discipline); ~40 sibling actions still carry the bug. Fix pattern: return `IActionResult` and short-circuit `if (!result.Success) return BadRequest(result.ErrorMessage);`. The FE grid export button already reads a non-OK body into its error toast. | OPEN |
-| ISSUE-32 | Session 7 2026-07-23 | Low | Feature | `detail/tabs/relationships-tab.tsx:40` — the "Add Relationship" button only fires `toast.info("Add Relationship dialog — not yet wired")`. Entry point is real but the dialog was never built; relationships can only be added from the create/edit accordion. Build the dialog or route the button to the edit form. | OPEN |
+| ISSUE-32 | Session 7 2026-07-23 | Low | Feature | `detail/tabs/relationships-tab.tsx:40` — the "Add Relationship" button only fires `toast.info("Add Relationship dialog — not yet wired")`. Entry point is real but the dialog was never built; relationships can only be added from the create/edit accordion. Build the dialog or route the button to the edit form. | CLOSED — session 13 (2026-08-10, S6): routed to the edit form (`?mode=edit&id={contactId}`), toast removed. |
 
 ### § Sessions
 
@@ -1232,4 +1232,20 @@ Full UI must be built (buttons, forms, modals, panels, interactions, 8 sections,
 - **Deviations from spec**: None
 - **Known issues opened**: None
 - **Known issues closed**: None
+- **Next step**: (none)
+
+### Session 13 - 2026-08-10 - FIX - COMPLETED
+
+- **Scope**: MVP-1 session S6 (residual screen defects). The MVP-1 pending list and the demo runbook §4 both carried Contact #18 as `NEEDS_FIX`; that label is **stale** — this file and `REGISTRY.md` row 18 have read `COMPLETED` since session 2, and every ITEM of `PSS-2.0-CONTACT-PRODUCTION-READINESS-FIX-PROMPT.md` (ISSUE-24/25/26/27/28, plus 29/30) is closed. Audited the residuals; fixed the one that violates a shipping rule; left the rest documented. **Status not toggled.**
+- **Files touched**:
+  - BE: None
+  - FE:
+    - `contact/detail/tabs/relationships-tab.tsx` — ISSUE-32. "Add relationship" fired `toast.info("Add Relationship dialog — not yet wired")`, which is exactly the control ITEM 3 of the readiness prompt banned ("nothing that ships may render a control whose only behaviour is a toast saying it doesn't work"). No dialog needed building: relationships are already edited in the contact form's own Family & Relationships section, and a standalone Contact Relationship grid exists at `/crm/contact/contactrelationship`. The button now routes to `?mode=edit&id={contactId}` (the `usePathname` + `router.push` pattern already used by `donations-tab.tsx`), and is disabled until the contact has loaded. `sonner` import dropped.
+  - DB: None
+- **Deviations from spec**: None. Deliberately did **not** build an Add-Relationship dialog — S6's brief is "fix it or report it as a known limitation. Do not expand it into a redesign."
+- **Known issues opened**: None
+- **Known issues closed**: ISSUE-32
+- **Known limitations carried into MVP-1 (reported, not fixed)**:
+  - **ISSUE-31 — structural, out of S6 scope.** `ExportController` returns `Task<FileResult>` unconditionally, so a handler returning `Success: false` produces a `System.FormatException` 500 instead of a clean error. Fixed for the Contact export action only; ~40 sibling actions repo-wide still carry it. This is a controller-contract change across the whole export surface and must not be started inside a residual-defect session.
+  - **ISSUE-3 / ISSUE-4 — deferred by decision (session 7).** Engagement score card and cross-entity Timeline tab are hidden in the UI; BE plumbing untouched. Post-MVP.
 - **Next step**: (none)

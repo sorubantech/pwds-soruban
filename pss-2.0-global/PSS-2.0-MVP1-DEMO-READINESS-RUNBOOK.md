@@ -206,8 +206,8 @@ Known bucket-A candidates, in likely order:
 
 | Candidate | Evidence | Demo scene |
 |---|---|---|
-| Contact screen `#18` is `status: NEEDS_FIX` | `PSS-2.0-CONTACT-PRODUCTION-READINESS-FIX-PROMPT.md` | Scene 9, 10 |
-| Tenant comms config screens have UI/validation defects | `PSS-2.0-TENANT-COMMS-CONFIG-UI-FIX-PROMPT.md` | Scene 10 setup |
+| ~~Contact screen `#18` is `status: NEEDS_FIX`~~ | **Stale — S6 verified `contact.md` and `REGISTRY.md` row 18 both read `COMPLETED`.** Drop from bucket A. | Scene 9, 10 |
+| ~~Tenant comms config screens have UI/validation defects~~ | **Stale — Phases 1 + 2 shipped 2026-08-05** (`…-TENANT-COMMS-CONFIG-UI-FIX-PROMPT.md` §⑭). Phase 3 is a product decision, not a defect. Drop from bucket A. | Scene 10 setup |
 | `Auth:PlatformHosts` empty → `admin.` host is `Unknown` and **refuses every login** | `HostTenantResolver.cs:112` returns false when unset | Scene 1 — **fatal if you demo on a real hostname** |
 | `NEXT_PUBLIC_UPGRADE_CONTACT` unset | Known gap | Upgrade prompt shows a blank contact |
 
