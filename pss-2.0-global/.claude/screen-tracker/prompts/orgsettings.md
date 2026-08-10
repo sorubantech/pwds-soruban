@@ -902,82 +902,11 @@ Full UI must be built (sidebar nav, 10 cards, 70 dynamically-rendered rows, dirt
 
 | ID | Raised (session) | Severity | Area | Description | Status |
 |----|------------------|----------|------|-------------|--------|
-| ISSUE-01 | 3 | HIGH | BE | `ResetOrganizationSettingsToDefaultsHandler` filters on `IsDeleted` and the ownership partition but **never on `CompanyId`** — one tenant's "Reset to defaults" resets every tenant's rows. Pre-existing; found while adding the partition exclusion. Fix = add `s.CompanyId == companyId` from `IHttpContextAccessor.GetCurrentUserStaffCompanyId()`, matching the other #85 handlers. | OPEN |
+| ISSUE-01 | 3 | HIGH | BE | `ResetOrganizationSettingsToDefaultsHandler` filters on `IsDeleted` and the ownership partition but **never on `CompanyId`** — one tenant's "Reset to defaults" resets every tenant's rows. Pre-existing; found while adding the partition exclusion. Fix = add `s.CompanyId == companyId` from `IHttpContextAccessor.GetCurrentUserStaffCompanyId()`, matching the other #85 handlers. | **CLOSED** (session 7 — fixed in `ResetOrganizationSettingsToDefaults` **and** in `BulkUpdateOrganizationSettings`, which had the same bug by primary-key-only load and was not originally logged) |
 
 ### § Sessions
 
 <!-- Each session appends one entry below. Oldest first, newest last. DO NOT edit prior entries. -->
-
-### Session 1 — 2026-05-15 — BUILD — COMPLETED
-
-- **Scope**: Initial full build from PROMPT_READY prompt. ALIGN — additive BE, custom FE (3 stubs → 1 shared schema-driven page).
-- **Decisions locked at user approval**: Sonnet across all agents (per cost preference); app-tenant runtime seeder (no SQL backfill for existing tenants); single bundled build session (BE+FE+Seed parallel).
-- **Files touched**:
-  - BE created (7):
-    - `Base.Application/Business/SettingBusiness/OrganizationSettings/Queries/GetOrganizationSettingsView.cs`
-    - `Base.Application/Business/SettingBusiness/OrganizationSettings/Commands/BulkUpdateOrganizationSettings.cs`
-    - `Base.Application/Business/SettingBusiness/OrganizationSettings/Commands/ResetOrganizationSettingsToDefaults.cs`
-    - `Base.Application/Business/SettingBusiness/OrganizationSettings/Validators/OrgSettingsValueValidator.cs`
-    - `Base.Application/Business/SettingBusiness/OrganizationSettings/Seeders/IOrgSettingsDefaultSeeder.cs`
-    - `Base.Infrastructure/Seeders/OrgSettingsDefaultSeeder.cs`
-    - `Services/Base/sql-scripts-dyanmic/OrgSettings-sqlscripts.sql` (menu/role grants only — runtime seeder handles SettingGroups/OrganizationSettings per-tenant)
-  - BE modified (6):
-    - `Base.Application/Schemas/SettingSchemas/OrganizationSettingSchemas.cs` (+8 DTOs)
-    - `Base.API/EndPoints/Setting/Queries/OrganizationSettingQueries.cs` (+1 method GetOrganizationSettingsView)
-    - `Base.API/EndPoints/Setting/Mutations/OrganizationSettingMutations.cs` (+2 methods BulkUpdate / Reset)
-    - `Base.Application/Mappings/SettingMappings.cs` (Mapster configs OrganizationSetting → OrgSettingsItemDto, SettingGroup → OrgSettingsGroupDto)
-    - `Base.Application/DependencyInjection.cs` (scoped IOrgSettingsValueValidator)
-    - `Base.Infrastructure/DependencyInjection.cs` (scoped IOrgSettingsDefaultSeeder)
-  - FE created (14):
-    - `PSS_2.0_Frontend/src/domain/entities/setting-service/OrgSettingsDto.ts` (created by FE agent before crash)
-    - `PSS_2.0_Frontend/src/infrastructure/gql-queries/setting-queries/OrgSettingsViewQuery.ts` (created by FE agent before crash)
-    - `PSS_2.0_Frontend/src/infrastructure/gql-mutations/setting-mutations/BulkUpdateOrgSettingsMutation.ts` (created by FE agent before crash)
-    - `PSS_2.0_Frontend/src/infrastructure/gql-mutations/setting-mutations/ResetOrgSettingsMutation.ts` (created by FE agent before crash; orchestrator fixed data-shape post-salvage to return refreshed view)
-    - `presentation/components/page-components/setting/orgsettings/orgsettings/orgsettings-store.ts` (Zustand — originalValues/dirtyValues Maps + activeCategory/search/validationErrors + discard modal + filterGroupsBySearch helper)
-    - `.../orgsettings/orgsettings-page.tsx` (header + sidebar + content + change-bar + Export real / Import SERVICE_PLACEHOLDER + beforeunload guard + Skeletons)
-    - `.../orgsettings/index.ts` (barrel)
-    - `.../orgsettings/components/category-nav.tsx` (left sidebar — 10 groups with dirty + count badges)
-    - `.../orgsettings/components/setting-card.tsx` (group card chrome)
-    - `.../orgsettings/components/setting-row.tsx` (schema-driven renderer — switches on paramDataType across 8 widget types)
-    - `.../orgsettings/components/change-bar.tsx` (sticky bottom — Discard + Save All + confirm modal)
-    - `.../orgsettings/components/search-box.tsx`
-    - `.../orgsettings/widgets/toggle-widget.tsx` (Switch + On/Off label, persists "true"/"false")
-    - `.../orgsettings/widgets/tags-widget.tsx` (chip-input, comma-joined storage)
-    - `.../orgsettings/widgets/multi-check-widget.tsx` (Checkbox group, pipe→comma persistence)
-    - `presentation/pages/setting/orgsettings/orgsettings.tsx` (capability gate wrapper)
-  - FE modified (4):
-    - `presentation/components/page-components/setting/orgsettings/index.ts` (+1 line — `export * from "./orgsettings"`)
-    - `app/[lang]/setting/orgsettings/organizationsetting/page.tsx` (UnderConstruction → OrgSettingsPageConfig)
-    - `app/[lang]/setting/orgsettings/settinggroup/page.tsx` (same)
-    - `app/[lang]/setting/orgsettings/usersetting/page.tsx` (same)
-  - DB: `Services/Base/sql-scripts-dyanmic/OrgSettings-sqlscripts.sql` (created)
-- **Deviations from spec**: None substantive. FE generation agent crashed at ~22 tool uses (socket error) after writing 4 of 19 FE files (DTO + 3 GQL stubs). Orchestrator salvaged inline per memory pattern and built the remaining 15 FE files directly. Reset mutation GQL fragment fixed to query the view shape (BE returns `BaseApiResponse<OrgSettingsViewDto>` per §⑩ contract, not the BulkUpdate result shape the salvaged stub had).
-- **Verification**:
-  - `dotnet build` PASS — 0 errors, 0 new warnings (BE agent's final report).
-  - `pnpm tsc --noEmit` — 0 errors in orgsettings files (pre-existing errors in unrelated files unchanged per memory).
-  - UI uniformity grep on `setting/orgsettings/orgsettings/**`: 0 inline hex colors, 0 inline px padding/margin, 0 raw "Loading…" text. ✅
-  - Variant check: SETTINGS_PAGE custom page — no `AdvancedDataTable` / `FlowDataTable` use; uses internal sticky header + sticky-bottom change-bar (CompanySettings #75 pattern). ✅
-  - GQL naming verified: HC strips "Get" prefix → `organizationSettingsView` field matches BE method `GetOrganizationSettingsView`.
-- **Known issues opened**: None
-- **Known issues closed**: None
-- **Next step**: COMPLETED — no follow-up required for V1. User actions for E2E:
-  1. Apply the `OrgSettings-sqlscripts.sql` to grant BUSINESSADMIN capabilities (idempotent).
-  2. Run `dotnet build` to confirm BE compiles in the user's environment.
-  3. `pnpm dev` and navigate to `/{lang}/setting/orgsettings/organizationsetting` (also `/settinggroup` and `/usersetting` — same screen). First load auto-seeds 10 groups + 70 ParamCodes via the runtime seeder.
-  4. Verify the 10 group categories render in the sidebar, each row renders the correct widget, dirty tracking works, Save All persists in one mutation, Export downloads JSON, Discard reverts.
-
-### Session 2 — 2026-07-22 — FIX — COMPLETED
-
-- **Scope**: Settings reconciliation with #75 Company Settings — remove the 5 number-sequence ParamCodes that duplicated #75 §9's `NumberSequenceGenerator` (single source of truth). Codes: `RECEIPT_NUMBER_PREFIX`, `RECEIPT_NUMBER_FORMAT`, `NEXT_RECEIPT_NUMBER`, `FINANCIAL_YEAR_RESET`, `CONTACT_CODE_FORMAT`.
-- **Why safe**: grep confirmed no application code reads these — seed-only. Receipt codes map to the `GLOBALDONATION` NumberSequence entity, `CONTACT_CODE_FORMAT` to `CONTACT`. `CanUserOverride`=false → no `UserSettings` cascade.
-- **Files touched**:
-  - DB: `setting-groups.sql` (repo root) — removed 10 INSERT rows (5 codes × CompanyId NULL + 3), appended idempotent cleanup `DELETE ... WHERE "ParamCode" IN (...)`. **User-applied** (seeds are user-owned).
-  - Spec: `orgsettings.md` (this file) — RECEIPTS group 10→6, CONTACTS group 7→6, rows renumbered, `RECEIPT_NUMBER_PREFIX` validation rule dropped, removed-note added under each group, count refs 75→70 (screen "#75" refs preserved).
-  - Doc: `PSS-2.0-SETTINGS-SCREEN-RECONCILIATION.md` — §2E + §6 marked executed; status header updated. `companysettings.md` §⑫ — canonical-home note added to #75.
-- **Deviations from spec**: None.
-- **Known issues opened**: None.
-- **Known issues closed**: None.
-- **Next step**: COMPLETED for the 5 numbering codes. The 14 structural duplicates (§2A–2D of the reconciliation doc: currency/locale/security/`DEFAULT_REPLY_TO`) remain **pending user go-ahead** — same removal pattern, not yet executed.
 
 ### Session 3 — 2026-08-03 — FIX — COMPLETED
 
@@ -1018,3 +947,30 @@ Full UI must be built (sidebar nav, 10 cards, 70 dynamically-rendered rows, dirt
 - **Known issues opened**: None.
 - **Known issues closed**: None. ISSUE-01 (`ResetOrganizationSettingsToDefaults` missing `CompanyId` filter) remains OPEN — pre-existing, still needs its own fix session.
 - **Next step**: **User must apply** `sql-scripts-dyanmic/setting-group-visibility-login-only.sql` — until then all 13 groups stay visible and the single-group nav/search hiding won't trigger. No migration required. Then `pnpm dev` → `/{lang}/setting/orgsettings/organizationsetting`; first load re-seeds the 4 new ParamCodes (count gate 120→124).
+
+### Session 6 — 2026-08-10 — FIX — COMPLETED
+
+- **Scope**: Runtime crash on opening the setting-group screen — `` `Tooltip` must be used within `TooltipProvider` ``. Regression from Session 5.
+- **Root cause**: `orgsettings/fields/media-url-field.tsx` (new in Session 5) imported `Tooltip` / `TooltipTrigger` / `TooltipContent` but **not** `TooltipProvider`, and rendered the disabled-Upload tooltip with no provider ancestor. This codebase has **no app-root `TooltipProvider`** — 120 files each wrap their own (canonical example: `crm/donation/shared/field-label-with-hint.tsx`). Radix throws at render, so `tsc` could never catch it; it is a context error, not a type error.
+- **Files touched**: FE modified (1): `setting/orgsettings/orgsettings/fields/media-url-field.tsx` — added `TooltipProvider` to the existing `common-components` import and wrapped the `<Tooltip>` block in it. No other change.
+- **Verification**: grep over the whole `setting/orgsettings` tree confirms `media-url-field.tsx` is the **only** Tooltip consumer in the screen and it is now provider-wrapped. `npx tsc --noEmit --incremental false` → **exit 0**. Note: the first run failed with 6 × TS2307 in `.next/types/**` referencing `(master)/ops/layout` and `(master)/platform/layout`, which no longer exist in `src/` — stale generated Next.js stubs, unrelated to this screen; cleared `.next/types` and re-ran clean.
+- **Known issues opened**: None.
+- **Known issues closed**: None. ISSUE-01 (`ResetOrganizationSettingsToDefaults` missing `CompanyId` filter) remains OPEN.
+- **Next step**: unchanged from Session 5 — user still must apply `sql-scripts-dyanmic/setting-group-visibility-login-only.sql`.
+
+### Session 7 — 2026-08-10 — FIX — COMPLETED
+
+- **Scope**: three items in one pass — (a) close ISSUE-01, the missing tenant scope on the write handlers; (b) make the screen's own sticky header/footer meet the shell frame's exact top and bottom; (c) capability-gate Import / Export.
+- **(a) Tenant scoping — ISSUE-01 CLOSED, and a second handler found**:
+  - `sett.OrganizationSettings` is a **shared** table keyed `(CompanyId, ParamCode)` with `CompanyId int?` (NULL = platform-global baseline). Both handlers carried a comment claiming *"Tenant scoping: handled by pipeline — OrganizationSettings are global."* That is **false**: `grep HasQueryFilter` across `Base.Infrastructure` returns **zero** hits, so there is no global query filter anywhere and each handler must scope itself. Both comments replaced with the accurate explanation.
+  - `ResetOrganizationSettingsToDefaults.cs` — the logged issue. Reset loaded rows with no `CompanyId` predicate, so one tenant's "Reset to defaults" reset **every** tenant's rows.
+  - `BulkUpdateOrganizationSettings.cs` — **previously unlogged, same class of bug, arguably worse**: rows were loaded by primary key alone, so a crafted request carrying another tenant's `OrganizationSettingId` wrote into that tenant. Found only because the entity was re-read rather than trusting the issue text. Out-of-tenant ids now miss the `rowById` dictionary and fall through to the existing `"Setting '{code}' (Id={id}) not found."` error — no cross-tenant existence leak.
+  - Both fixes are identical in shape: `using Microsoft.AspNetCore.Http;` + `IHttpContextAccessor httpContextAccessor` on the primary constructor + `var companyId = httpContextAccessor.GetCurrentUserStaffCompanyId();` + `s.CompanyId == companyId` **first** in the predicate. Copied from `GetOrganizationSettingsView.cs:43-61`, which already did it right.
+  - **Design point**: `s.CompanyId == companyId` excludes `CompanyId IS NULL` by SQL semantics. That is intended — a tenant's reset must never touch the platform baseline rows.
+- **(b) Full-bleed layout**: the four-side gap comes from the AppShell scrollport (`app-shell-provider.tsx:367` — `layout-padding p-3`), which every other screen relies on, so it was **not** touched. Added a screen-scoped opt-out `.shell-bleed` in `globals.scss` directly beneath the `.layout-padding` rule it cancels (`margin: -0.75rem` for `p-3`, plus `margin-bottom: -112px` / `-37px` at `min-width: 768px` to cancel each breakpoint's `padding-bottom`). Negatives live beside the positives they mirror so the two cannot drift. Applied as `shell-bleed` on the `OrgSettingsPage` root only.
+- **(c) Capability gating**: Import and Export rendered unconditionally — `canRead` got you the page and with it a bulk write-in and a full dump of every setting value. `OrgSettingsPage` now takes `canImport` / `canExport` props (default `false`), gated as `{!isUserScope && canImport && …}` and `{canExport && …}`; both `OrgSettingsPageConfig` and `UserSettingsPageConfig` pass `capabilities.canImport` / `capabilities.canExport` from `useAccessCapability`. Absent capability **hides** the button rather than disabling it, matching the "+ New" convention. **Save All is deliberately NOT gated** — per project convention the page-header save is gated by RHF `formState.isValid`, never by `canUpdate`.
+- **Files touched**: BE modified (2): `.../OrganizationSettings/Commands/ResetOrganizationSettingsToDefaults.cs`, `.../Commands/BulkUpdateOrganizationSettings.cs`. FE modified (3): `public/assets/scss/globals.scss`, `.../orgsettings/orgsettings/orgsettings-page.tsx`, `presentation/pages/setting/orgsettings/orgsettings.tsx`. No entity, EF config, migration or seed change.
+- **Verification**: `dotnet build` on `Base.Application` → **0 errors** (1 pre-existing NPOI licence warning). `npx tsc --noEmit --incremental false` → **6 errors, all in `page-components/billing/` (`billing-plans-page.tsx`, `plan-comparison-matrix.tsx`)** — a different, concurrent work stream (files stamped the same day); **zero** errors in any `setting/orgsettings` file. Not exit 0, and not caused by this session.
+- **Known issues opened**: None.
+- **Known issues closed**: **ISSUE-01** (both handlers).
+- **Next step**: user to visually confirm the header/footer now sit flush against the shell frame. `sql-scripts-dyanmic/setting-group-visibility-login-only.sql` was applied by the user in Session 6's follow-up — that item is now closed too.
