@@ -100,7 +100,9 @@ There is no blob storage account provisioned (same constraint that made grant at
 
 ## ⑤ P-6 — Platform support inbox
 
-Route `(master)/ops/support`, menu code `PLATFORM_SUPPORT` (new), sidebar label **Support**, icon `ph:lifebuoy`, placed directly after the existing Audit entry in the ops group.
+Route `(master)/ops/support`, menu code **`PLATFORM_SUPPORTDESK`** (new), sidebar label **Support**, icon `ph:lifebuoy`, placed directly after the existing Audit entry in the ops group.
+
+> **Why not `PLATFORM_SUPPORT`.** That string is already taken — it is a **role code** (`ops-platform-rbac-seed.sql:122`, "Platform Support"). Roles and menus live in different tables so the database would tolerate it, but every seed script in `sql-scripts-dyanmic/` writes grants as bare tuples `('ROLE_CODE', 'MENU_CODE', 'CAPABILITY_CODE')` — see `ops-platform-rbac-seed.sql:158`. A menu whose code equals a role code makes those tuples ambiguous to read and one transposition away from silently granting the wrong thing. Use `PLATFORM_SUPPORTDESK`.
 
 ### List page
 
@@ -303,11 +305,11 @@ Index: `(SupportTicketId, CreatedDate)`.
 One file, idempotent, no DDL, safe to re-run. Header block must carry the schema note (`auth` not `app`), the two-required-checks note, and the `ISMENURENDER`-never-inserted rule — copy the header shape from `sql-scripts-dyanmic/platform-intimations-menu-capability-seed.sql`, which is the house template.
 
 Contents, in order:
-1. Menu `PLATFORM_SUPPORT`, `MenuUrl = '/ops/support'` (leading slash, unique), under the existing ops parent, `OrderBy` placing it after Audit.
-2. Capabilities `PLATFORM_SUPPORT_VIEW`, `PLATFORM_SUPPORT_MANAGE`. Idempotency guard checks `CapabilityName` — `auth."Capabilities"` has a UNIQUE index on `(CapabilityName, IsActive)`, not on the code.
-3. Capability `PLATFORM_AUDIT_VIEW` if it does not already exist (verify first — `PLATFORM_AUDIT` the menu exists; the view capability may not).
-4. `MenuCapabilities` rows linking both menus to their capabilities.
-5. `RoleCapabilities` grants to the platform staff role(s) — including `ISMENURENDER` on `PLATFORM_SUPPORT`, without which the menu is invisible.
+1. Menu `PLATFORM_SUPPORTDESK`, `MenuUrl = '/ops/support'` (leading slash, unique), under the existing ops parent. Existing Audit is `OrderBy 940` (`ops-platform-rbac-seed.sql:84`) — place Support at `950`.
+2. Capabilities `PLATFORM_SUPPORTDESK_VIEW`, `PLATFORM_SUPPORTDESK_MANAGE`. Idempotency guard checks `CapabilityName` — `auth."Capabilities"` has a UNIQUE index on `(CapabilityName, IsActive)`, not on the code.
+3. **`PLATFORM_AUDIT_VIEW` already exists** — seeded at `ops-platform-rbac-seed.sql:108` and granted to `PLATFORM_ADMIN` (:158) and `SUPERADMIN` (:183) on menu `PLATFORM_AUDIT` (:84, `/ops/audit`). Reuse it. **Do not insert it, do not re-grant it, do not touch those rows.** P-3 needs no new RBAC at all — the screen simply starts honouring a grant that already exists.
+4. `MenuCapabilities` rows linking `PLATFORM_SUPPORTDESK` to its two capabilities. `PLATFORM_AUDIT`'s link already exists (`platform-menu-capability-backfill-seed.sql:92`) — leave it alone.
+5. `RoleCapabilities` grants on `PLATFORM_SUPPORTDESK` for the `PLATFORM_SUPPORT` and `PLATFORM_ADMIN` roles and `SUPERADMIN` — including `ISMENURENDER`, without which the menu is invisible. Note the deliberate near-collision here: role `PLATFORM_SUPPORT` is granted on menu `PLATFORM_SUPPORTDESK`. Write the tuples with a comment so the next reader does not "fix" it.
 6. Closing verify block. Two counts must both be **0**: menus with a capability but no `ISMENURENDER` grant; and `MenuCapabilities` rows pointing at a non-existent `MenuCode`.
 
 ---
@@ -327,6 +329,8 @@ Each is greppable or runnable.
 9. `grep -rn "_data/" src/presentation/components/page-components/ops/audit/` → **0 matches**. Audit is never dummied.
 10. `grep -n "DELETE FROM auth" sql-scripts-dyanmic/platform-support-menu-capability-seed.sql` → **0 matches**.
 11. `grep -n "ISMENURENDER" platform-support-menu-capability-seed.sql` → appears in a `RoleCapabilities` grant, and in **no** `INSERT INTO auth."Capabilities"`.
+11b. `grep -rn "PLATFORM_SUPPORT'" sql-scripts-dyanmic/platform-support-menu-capability-seed.sql` → matches **only** in the role-code position of a grant tuple. The new menu code is `PLATFORM_SUPPORTDESK` and appears nowhere as `PLATFORM_SUPPORT`.
+11c. `grep -n "PLATFORM_AUDIT_VIEW" sql-scripts-dyanmic/platform-support-menu-capability-seed.sql` → **0 matches**. It already exists and is already granted; this seed must not touch it.
 12. The seed's closing verify block returns 0 and 0.
 13. `grep -rn "ExecuteSqlRaw\|FromSqlRaw" Base.Application/Business/OpsBusiness/Support/` → **0 matches**.
 14. `PlatformAuditWriter` is called from `UpdateSupportTicketHandler` — `grep -n "PlatformAudit" UpdateSupportTicket.cs` → non-zero.
@@ -342,7 +346,7 @@ Each is greppable or runnable.
 **Build agent: Sonnet** (BE and FE). §④–⑨ are specified to the field level.
 
 1. Read `GetTenantAuditTrail.cs`, `PlatformAuditSchemas.cs`, `PlatformAuditLog.cs`, `PlatformAuditWriter.cs`, `tenant-audit-tab.tsx`, `platform-intimations-list-page.tsx`, `platform-intimations-menu-capability-seed.sql`, `app-topbar/index.tsx`, `brand-surface.ts`. Do not start writing before all nine are read.
-2. **Confirm `PLATFORM_SUPPORT` and `PLATFORM_AUDIT_VIEW` are free.** Grep `sql-scripts-dyanmic/` for both. If either already exists with a different meaning, **stop and report** — a colliding menu code silently re-points live grants.
+2. **Code collisions are already resolved — do not re-litigate them.** Verified 2026-08-11: `PLATFORM_SUPPORT` is a role code (taken, hence `PLATFORM_SUPPORTDESK`); `PLATFORM_AUDIT_VIEW` and menu `PLATFORM_AUDIT` both already exist and are already granted. Before writing the seed, confirm only that `PLATFORM_SUPPORTDESK` returns **0 matches** across `sql-scripts-dyanmic/`. If it does not, **stop and report** — a colliding menu code silently re-points live grants.
 3. Confirm `PlatformAuditWriter`'s public surface before designing the audit call in `UpdateSupportTicketHandler`. If it needs a `TargetCompanyId` you do not have at that point, say so rather than passing null.
 4. Backend: entities → configurations → `DbSet`s → schemas → handlers → endpoints. `GetPlatformAuditTrail` first (smallest, and it validates the pattern), then the support side.
 5. Frontend: DTOs → gql documents → badges → list pages → drawer → launcher → topbar mount → route wrappers.
@@ -360,6 +364,7 @@ Each is greppable or runnable.
 
 | Date | Session | Outcome |
 |---|---|---|
+| 2026-08-11 | pre-flight | Ready to run. Seed-code check corrected three assumptions: `PLATFORM_SUPPORT` is a **role** code → new menu is `PLATFORM_SUPPORTDESK`; `PLATFORM_AUDIT_VIEW` **already exists and is already granted** → P-3 needs no RBAC seed; Audit menu is `OrderBy 940` → Support takes `950`. AI module build confirmed landed (12 `(core)/ai` routes + `ai-module-promotion-seed.sql` on disk) — no route-group overlap with this build. |
 | 2026-08-11 | prompt authored | Not yet built. Facts verified on disk: no support ticket entity exists anywhere; audit data layer complete and per-tenant only; `/ops/audit` is a `ControlPlaneComingSoon` placeholder; `ApplyGridFeatures` maps in memory via `ToDtoList`, not `ProjectTo`. |
 
 ### Known issues
