@@ -99,7 +99,7 @@ A tab strip promises three equal views of one thing. What actually sits behind i
 └───────────────────────────────────────────────────────────────────────────┘
 ```
 
-Page container: `mx-auto max-w-[1600px] px-4 pb-24 pt-2 sm:px-6 lg:px-8`. The `max-w-7xl` cap is removed — this is a data-dense editor and it must use an xl screen.
+Page container: `w-full px-4 pb-24 pt-2 sm:px-6 lg:px-8`. There is no max-width cap at all — this is a data-dense editor and it occupies the full viewport width on every screen size.
 
 ---
 
