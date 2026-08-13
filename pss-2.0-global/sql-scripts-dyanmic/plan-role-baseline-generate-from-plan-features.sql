@@ -474,6 +474,12 @@ INSERT INTO tmp_menu_grant (menu_code, parent_code, feature_code) VALUES
 -- below even when it is not in the list above - a lapsed tenant must always reach the pay
 -- screen (same invariant as FeatureCodeRules.IsProtectedMenuCode). The UNLISTED lines in
 -- Result 2 will show you the real BILLING codes so you can add them here by hand.
+--
+-- BILLING is also the ONE exception to the leaves-only rule in section 3c. 'BILLING' itself is
+-- IsLeastMenu = false, but every tenant billing handler is gated on that exact parent code
+-- ([CustomAuthorize("BILLING", "BILLING_VIEW" | "BILLING_MANAGE")]) and HasAccessAsync matches
+-- MenuCode exactly - so the group menu needs real cells or the tenant sees the nav and gets a
+-- 403 from every call behind it. See the comment at the SKIP-GROUP branch.
 
 -- ═════════════════════════════════════════════════════════════════════════════════════
 --  Working tables
@@ -824,7 +830,25 @@ LOOP
 
         -- A parent / group menu has no capability rows, so it never gets a baseline row.
         -- It stays in the list only so its verdict can cascade to the leaves above.
-        IF v_is_leaf IS DISTINCT FROM true THEN
+        --
+        -- BILLING IS THE EXCEPTION, AND IT IS LOAD-BEARING.
+        -- 'BILLING' (MenuId 555) is IsLeastMenu = false, so the rule above would skip it - but
+        -- CustomAuthorizeService.HasAccessAsync matches MenuCode EXACTLY, and every tenant
+        -- billing handler is gated on the PARENT code:
+        --     [CustomAuthorize("BILLING", "BILLING_VIEW")]    GetMySellablePlans /
+        --                                                     GetMyBillingOverview / GetTenantInvoices
+        --     [CustomAuthorize("BILLING", "BILLING_MANAGE")]  InitiateSubscriptionCheckout /
+        --                                                     ConfirmSubscriptionPayment / SetAutoRenew
+        -- Skipping the group here left a newly provisioned tenant with cells on the three leaves
+        -- (so the nav rendered) and NO cell on 'BILLING' itself - the plans list came back empty
+        -- and checkout returned "User is unauthorized to perform this action on the specified
+        -- resource." billing-capability-seed.sql masked this for tenants that already existed when
+        -- it was last run; every tenant provisioned afterwards got nothing.
+        -- auth."MenuCapabilities" already carries BILLING_VIEW / BILLING_MANAGE / ISMENURENDER on
+        -- MenuId 555 (billing-capability-seed.sql section 3), so the cell loop below has real work.
+        -- The C# PlanBaselineGenerator has no leaf filter at all and always emitted this cell -
+        -- this change removes that divergence rather than introducing one.
+        IF v_is_leaf IS DISTINCT FROM true AND v_dec.menu_code NOT LIKE 'BILLING%' THEN
             INSERT INTO tmp_baseline_report VALUES
                 (v_plan."PlanCode", v_dec.menu_code, 'SKIP-GROUP',
                  'group menu (IsLeastMenu = false) - carries no capabilities', 0);
@@ -839,7 +863,8 @@ LOOP
                        AND  mc."IsDeleted" IS DISTINCT FROM true
                        AND  mc."IsActive"  IS DISTINCT FROM false
         LOOP
-            SELECT c."IsActive" AS is_active, c."IsDeleted" AS is_deleted
+            SELECT c."IsActive" AS is_active, c."IsDeleted" AS is_deleted,
+                   upper(c."CapabilityCode") AS cap_code
             INTO   v_caprow
             FROM   auth."Capabilities" c
             WHERE  c."CapabilityId" = v_cap."CapabilityId";
@@ -847,6 +872,14 @@ LOOP
             CONTINUE WHEN NOT FOUND;
             CONTINUE WHEN v_caprow.is_deleted IS NOT DISTINCT FROM true;
             CONTINUE WHEN v_caprow.is_active  IS NOT DISTINCT FROM false;
+
+            -- Only reachable for the BILLING group exception above. A group menu must never carry
+            -- ISMENURENDER: GetParentChildMenuHandler walks parents up from authorized LEAVES, so
+            -- the "Billing" header appears on its own, and granting render on the header itself
+            -- would leave an empty label behind if every leaf were later revoked. Same rule as
+            -- billing-capability-seed.sql section 4. The API grants (BILLING_VIEW / BILLING_MANAGE)
+            -- still land, which is the whole point of the exception.
+            CONTINUE WHEN v_is_leaf IS DISTINCT FROM true AND v_caprow.cap_code = 'ISMENURENDER';
 
             INSERT INTO tmp_baseline_target ("PlanId", "MenuId", "CapabilityId")
             VALUES (v_plan."PlanId", v_menu_id, v_cap."CapabilityId");

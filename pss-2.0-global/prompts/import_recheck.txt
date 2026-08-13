@@ -1,0 +1,834 @@
+# Enterprise-Level Generic Import Review & Production Readiness
+
+Yes, the current implementation is working now. We can move back to the **Generic Import** functionality.
+
+I have already requested the Blob Storage setup from my technical team. While that infrastructure work is in progress, I want you to perform a **complete review of the current Generic Import implementation** from an enterprise SaaS application perspective.
+
+This import functionality was developed by one of my team members. Do not assume that the current implementation is correct just because it is working.
+
+Think as a **Senior Enterprise Architect, Product Manager, Software Architect, Security Architect, Database Architect, Data Engineering Lead, QA Lead, and UX Architect with 20+ years of experience**.
+
+Your responsibility is to identify both the strengths and weaknesses of the current implementation and recommend what should be improved before production.
+
+---
+
+## 1. First Understand the Existing Import Flow
+
+Review the complete current Generic Import functionality from start to finish.
+
+Understand:
+
+* How an import is initiated
+* File upload process
+* File validation
+* Import configuration
+* Data parsing
+* Column mapping
+* Data validation
+* Data transformation
+* Duplicate handling
+* Database insertion/update
+* Error handling
+* Import completion
+* Failed import handling
+* User feedback
+* Import history
+* Permissions
+* Security
+
+Do not review only the UI.
+
+Review the **complete business + application + data-processing flow**.
+
+---
+
+# 2. Enterprise-Level Import Architecture Review
+
+Evaluate whether the current implementation follows appropriate enterprise practices for a multi-tenant SaaS platform.
+
+Review:
+
+* Architecture
+* Separation of responsibilities
+* API design
+* Background processing
+* Queue/job processing
+* Database processing
+* File handling
+* Storage architecture
+* Scalability
+* Reliability
+* Maintainability
+* Error recovery
+* Performance
+
+Identify:
+
+### What is already good
+
+### What is acceptable for MVP
+
+### What should be improved before production
+
+### What can be postponed to future enterprise versions
+
+Do not recommend unnecessary complexity.
+
+---
+
+# 3. Blob Storage Integration
+
+Blob Storage is currently being prepared by our technical team.
+
+Review how Blob Storage should be incorporated into the import architecture.
+
+Consider:
+
+```text
+User
+ ↓
+Import Request
+ ↓
+Upload File
+ ↓
+Blob Storage
+ ↓
+Import Job
+ ↓
+Validation
+ ↓
+Processing
+ ↓
+Database
+ ↓
+Result
+```
+
+Analyze:
+
+* File storage
+* Temporary files
+* File naming
+* Tenant isolation
+* Access control
+* Signed URLs / temporary access
+* Encryption
+* File retention
+* Automatic cleanup
+* Maximum file size
+* Allowed file types
+* Malicious file protection
+* Failed import files
+* Successfully processed files
+
+Most importantly:
+
+> Ensure one tenant can never access another tenant's uploaded import files.
+
+---
+
+# 4. Multi-Tenant Security
+
+Because this is a multi-tenant enterprise application, review tenant isolation carefully.
+
+Verify that:
+
+* Import requests are tenant-aware
+* Uploaded files are tenant-isolated
+* Import jobs are tenant-isolated
+* Background workers cannot process the wrong tenant
+* Database operations cannot cross tenants
+* Import history is tenant-specific
+* Error files are tenant-specific
+* Logs do not expose another tenant's data
+* Platform administrators have controlled access
+
+Consider potential developer mistakes such as:
+
+```text
+Tenant A uploads file
+        ↓
+Import Job
+        ↓
+Incorrect tenant context
+        ↓
+Tenant B database/data
+```
+
+Explain how the architecture should prevent this.
+
+---
+
+# 5. File Security
+
+Review enterprise-level file security.
+
+Consider:
+
+* File type validation
+* MIME validation
+* Extension validation
+* File size validation
+* Malicious file detection
+* CSV/Excel security concerns
+* Formula injection
+* Encoding issues
+* Large file protection
+* Corrupted files
+* Duplicate uploads
+* Virus/malware scanning where appropriate
+
+Do not over-engineer this for MVP.
+
+Clearly identify which protections are **mandatory before production**.
+
+---
+
+# 6. Data Validation
+
+This is one of the most important areas.
+
+Review whether imported data is properly validated before being committed.
+
+Consider:
+
+* Required fields
+* Data types
+* String length
+* Email validation
+* Phone validation
+* Date validation
+* Numeric validation
+* Enum validation
+* Foreign key validation
+* Business rules
+* Duplicate records
+* Existing records
+* Invalid references
+* Null handling
+* Empty values
+* Formatting issues
+
+The import process should clearly distinguish:
+
+```text
+Valid Row
+Invalid Row
+Warning Row
+Duplicate Row
+Skipped Row
+```
+
+Recommend the appropriate approach.
+
+---
+
+# 7. Validation Before Database Commit
+
+Analyze whether the system should validate the complete file before importing data.
+
+For example:
+
+```text
+Upload
+ ↓
+Parse
+ ↓
+Validate
+ ↓
+Show Validation Summary
+ ↓
+User Confirms
+ ↓
+Import
+```
+
+versus:
+
+```text
+Upload
+ ↓
+Process
+ ↓
+Validate Each Row
+ ↓
+Import Valid Rows
+ ↓
+Report Invalid Rows
+```
+
+Determine which approach is appropriate for our application and why.
+
+Consider transaction safety and partial imports.
+
+---
+
+# 8. Partial Failure Handling
+
+This is very important.
+
+Suppose:
+
+```text
+10,000 rows imported
+```
+
+and:
+
+```text
+300 rows are invalid
+```
+
+What should happen?
+
+Should we:
+
+* Import 9,700 valid rows?
+* Reject the entire file?
+* Allow the user to choose?
+* Create an error report?
+* Support retrying only failed rows?
+
+Recommend the best MVP approach and future enterprise approach.
+
+---
+
+# 9. Import Job Processing
+
+If the import can contain large datasets, analyze whether processing should happen synchronously or asynchronously.
+
+Compare:
+
+```text
+User
+ ↓
+API
+ ↓
+Process entire file
+ ↓
+Response
+```
+
+versus:
+
+```text
+User
+ ↓
+Create Import Job
+ ↓
+Background Worker
+ ↓
+Process File
+ ↓
+Update Progress
+ ↓
+Complete
+```
+
+Recommend the appropriate architecture.
+
+Consider:
+
+* Large files
+* Long-running imports
+* API timeouts
+* Worker failures
+* Retry
+* Cancellation
+* Progress tracking
+* Concurrent imports
+
+---
+
+# 10. Import Status
+
+Recommend a proper import lifecycle.
+
+For example:
+
+```text
+Uploaded
+ ↓
+Queued
+ ↓
+Processing
+ ↓
+Validation Completed
+ ↓
+Importing
+ ↓
+Completed
+```
+
+Possible failure states:
+
+```text
+Failed
+Cancelled
+Partially Completed
+```
+
+Review and recommend the minimum statuses required for MVP.
+
+---
+
+# 11. Progress & User Experience
+
+The user should understand what is happening.
+
+For example:
+
+```text
+Importing Customers...
+
+Processed: 7,500 / 10,000
+
+Valid: 7,200
+Invalid: 200
+Skipped: 100
+
+Progress: 75%
+```
+
+Review whether the current UI provides enough information.
+
+Recommend improvements for:
+
+* Upload
+* Validation
+* Processing
+* Progress
+* Completion
+* Failure
+* Partial success
+
+---
+
+# 12. Import Result
+
+After processing, the user should receive a clear result.
+
+For example:
+
+```text
+Import Completed
+
+Total Records: 10,000
+Successfully Imported: 9,500
+Failed: 300
+Skipped: 200
+
+[View Details]
+[Download Error Report]
+```
+
+Recommend the best result experience.
+
+---
+
+# 13. Error Reporting
+
+Every failed import should provide useful information.
+
+For example:
+
+```text
+Row 245
+Email: Invalid email format
+
+Row 387
+Customer ID already exists
+
+Row 512
+Required field "Name" is missing
+```
+
+Analyze whether the application should generate an error file that the user can download, correct, and re-import.
+
+Recommend the best enterprise approach.
+
+---
+
+# 14. Import Audit Trail
+
+The import system should maintain proper auditing.
+
+Review whether we should track:
+
+* Who initiated the import
+* Tenant
+* File name
+* File size
+* Import type
+* Start time
+* End time
+* Status
+* Total records
+* Successful records
+* Failed records
+* Skipped records
+* Validation result
+* Error summary
+* Source IP where appropriate
+* Correlation/Job ID
+
+The audit history should help us answer:
+
+> Who imported what, when, for which tenant, and what happened?
+
+Recommend the appropriate MVP audit level.
+
+---
+
+# 15. Intimation System Integration
+
+We already have a **Generic Tenant Intimation System**.
+
+Use that existing architecture instead of creating a separate notification system for Import.
+
+When an import finishes, the relevant tenant person should receive an appropriate intimation.
+
+### Successful Import
+
+```text
+Import Completed
+
+Your customer data import has completed successfully.
+
+10,000 records were processed.
+
+[View Import]
+```
+
+### Partial Import
+
+```text
+Import Completed with Issues
+
+9,700 records were imported successfully.
+300 records require attention.
+
+[View Import Results]
+```
+
+### Failed Import
+
+```text
+Import Failed
+
+Your import could not be completed.
+
+Please review the validation errors and try again.
+
+[View Import]
+```
+
+The intimation should be delivered through our **current MVP channels**:
+
+* In-app notification
+* In-app intimation/status banner where appropriate
+
+Do NOT implement email communication for this requirement yet.
+
+However, the architecture should remain compatible with our future communication framework.
+
+---
+
+# 16. Who Should Receive the Intimation?
+
+Analyze recipient rules.
+
+For example:
+
+* Person who started the import
+* Tenant Manager
+* Specific role
+* Multiple authorized users
+
+Recommend the best approach.
+
+The person who initiated the import should generally know the result, but determine whether additional tenant administrators should also receive it.
+
+---
+
+# 17. Import History
+
+Review whether we need an Import History screen.
+
+Possible information:
+
+```text
+Import History
+
+File
+Type
+Created By
+Date
+Status
+Records
+Success
+Failed
+```
+
+Possible actions:
+
+* View details
+* View errors
+* Download error report
+* Retry
+* Cancel
+* Download source file if permitted
+
+Recommend what belongs in MVP.
+
+---
+
+# 18. Performance & Scalability
+
+Analyze how the import system behaves with:
+
+* 1,000 rows
+* 10,000 rows
+* 100,000 rows
+* 1,000,000 rows
+
+We do not necessarily need to support extremely large imports in MVP.
+
+Determine reasonable MVP limits and explain how the architecture can scale later.
+
+Consider:
+
+* Batch processing
+* Bulk database operations
+* Memory usage
+* Streaming
+* Queue workers
+* Database transactions
+* Connection management
+
+---
+
+# 19. Database Safety
+
+Review:
+
+* Transaction handling
+* Batch commits
+* Rollbacks
+* Duplicate handling
+* Deadlocks
+* Foreign key failures
+* Concurrency
+* Idempotency
+
+A retry must not accidentally create duplicate records.
+
+This is especially important for background jobs.
+
+---
+
+# 20. Observability
+
+Review whether the import process has enough technical visibility.
+
+Consider:
+
+* Structured logging
+* Correlation ID
+* Import Job ID
+* Error logs
+* Processing duration
+* Record counts
+* Failure reasons
+* Worker status
+* Metrics
+
+The support/development team should be able to investigate a failed import without manually guessing what happened.
+
+---
+
+# 21. Permissions
+
+Review who can:
+
+* Upload
+* Start an import
+* View import history
+* View import results
+* Download error reports
+* Cancel an import
+* Retry an import
+
+Ensure permissions are tenant-aware.
+
+---
+
+# 22. UI/UX Review
+
+Review the current Import UI from a **premium enterprise application** perspective.
+
+Evaluate:
+
+* Layout
+* Spacing
+* Typography
+* Upload experience
+* File selection
+* Validation messages
+* Progress
+* Status indicators
+* Buttons
+* Tables
+* Error presentation
+* Empty states
+* Success states
+* Failure states
+* Loading states
+
+The UI should be:
+
+* Clean
+* Professional
+* Premium
+* Consistent with the rest of the application
+* Easy to understand
+* Not overloaded
+
+Do not add unnecessary UI elements.
+
+---
+
+# 23. Current Scope Constraint
+
+### Do NOT implement Custom Fields now.
+
+Custom-field mapping/import support should be considered a future enhancement.
+
+Do not allow the current review to become unnecessarily complex because of custom fields.
+
+Focus on the existing standard data model and import functionality.
+
+---
+
+# 24. Final Review Format
+
+After reviewing the current implementation, provide:
+
+## A. What Is Already Good
+
+Identify the strengths of the current implementation.
+
+## B. Problems / Risks
+
+Identify security, business, technical, UX, and operational risks.
+
+## C. Production Blockers
+
+Clearly identify anything that must be fixed before production release.
+
+## D. MVP Improvements
+
+Identify improvements that are genuinely important for MVP.
+
+## E. Enterprise Enhancements
+
+Identify improvements that can be implemented later.
+
+## F. Security Review
+
+Provide a dedicated security assessment.
+
+## G. Data Processing Review
+
+Provide a dedicated validation and processing assessment.
+
+## H. Audit Review
+
+Explain the audit trail that should exist.
+
+## I. Intimation Integration
+
+Explain how Import should integrate with our existing Generic Intimation System.
+
+## J. UI/UX Review
+
+Identify important improvements to the current import experience.
+
+## K. Recommended End-to-End Architecture
+
+Show the recommended flow:
+
+```text
+User
+ ↓
+Import Screen
+ ↓
+Upload
+ ↓
+Blob Storage
+ ↓
+Create Import Job
+ ↓
+Validation
+ ↓
+Processing
+ ↓
+Database
+ ↓
+Import Result
+ ↓
+Audit
+ ↓
+Generic Intimation
+ ↓
+In-App Notification
+ + 
+Intimation Banner where appropriate
+```
+
+Improve this architecture if required.
+
+---
+
+# Important Instruction
+
+Do NOT blindly approve the current implementation because it was developed by our team member.
+
+Review it objectively.
+
+Find:
+
+* Pros
+* Cons
+* Hidden risks
+* Missing enterprise practices
+* Security weaknesses
+* Data-processing problems
+* UX problems
+* Operational problems
+* Scalability concerns
+
+But also avoid unnecessary criticism.
+
+If something is already correctly implemented, explicitly say so.
+
+For every recommendation, classify it as:
+
+**MVP / Production Required / Future**
+
+The final goal is:
+
+> **A secure, reliable, auditable, scalable, user-friendly Generic Import system that is appropriate for our enterprise SaaS product without over-engineering the MVP.**
+
+# 7A. Plan-Based Record Count Validation
+
+The Import system must also validate the uploaded data against the tenant's **subscription plan and record limits**.
+
+This is an important business-rule validation and should happen **before the import is committed to the database**.
+
+For example, suppose the tenant's plan allows:
+
+```text
+Customers: 10,000 records
+Contacts: 20,000 records
+Employees: 500 records

@@ -1,0 +1,1304 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PeopleServe — Run your entire nonprofit on one system | PW Data Solutions</title>
+<meta name="description" content="Fundraising, donors, beneficiaries, programmes, grants, events, volunteers and reporting — one platform for charities, foundations and NGOs." />
+
+<!--
+  ============================================================================
+  PeopleServe product landing page — STANDALONE OFFLINE COPY
+  ============================================================================
+  A single self-contained file for management review and forwarding. It is a
+  faithful copy of /{lang}/peopleserve as built in PSS_2.0_Frontend.
+
+  DIFFERENCES FROM THE LIVE PAGE — all deliberate:
+   1. NO network calls of any kind. No CDN, no fonts, no images, no API.
+      · Plans are hardcoded below from billing-plan-catalog-seed.sql +
+        plan-public-listing-seed.sql (the same rows the live page fetches).
+      · The country list is a short static sample instead of the API list.
+   2. The enquiry form does not submit anywhere. Pressing "Send enquiry"
+      only swaps in the thank-you panel so the flow can be demonstrated.
+   3. Icons are inline SVG instead of @iconify/react.
+   4. Two small inline scripts: the theme toggle and the form-panel swap.
+      The live page has neither — it is a Server Component with one client leaf.
+
+  Everything else — copy, section order, colours, motion, reduced-motion
+  behaviour, dark mode — matches the live page.
+  ============================================================================
+-->
+
+<style>
+/* ── Tokens ───────────────────────────────────────────────────────────────
+   Mirrors globals.scss: HSL triplets, .dark class strategy. Light is the
+   bare :root definition; dark is redefined under both the system preference
+   and an explicit [data-theme] so the toggle wins in either direction.      */
+:root{
+  --background:0 0% 100%;
+  --foreground:222.2 84% 4.9%;
+  --muted:220 14.3% 95.9%;
+  --muted-foreground:215.4 16.3% 46.9%;
+  --card:0 0% 100%;
+  --border:220 13% 91%;
+  --destructive:0 72% 51%;
+
+  /* Brand hues — from tailwind.config.ts `ps.*` */
+  --ps-indigo:#4F46E5;
+  --ps-violet:#6D5AE6;
+  --ps-fuchsia:#C026D3;
+  --ps-pink:#EC4899;
+  --ps-rose:#F43F5E;
+  --ps-lilac:#B7A6FF;
+  --ps-accent-text:var(--ps-violet); /* violet is only 3.2:1 on dark → swapped there */
+
+  --shadow-contact:0 1px 2px -1px rgb(15 23 42/0.10);
+  --radius:1rem;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --background:222.2 47.4% 11.2%;
+    --foreground:210 40% 98%;
+    --muted:215 27.9% 16.9%;
+    --muted-foreground:217.9 10.6% 64.9%;
+    --card:215 27.9% 16.9%;
+    --border:215.3 25% 26.7%;
+    --ps-accent-text:var(--ps-lilac);
+    --shadow-contact:0 1px 2px -1px rgb(0 0 0/0.5);
+  }
+}
+:root[data-theme="dark"]{
+  --background:222.2 47.4% 11.2%;
+  --foreground:210 40% 98%;
+  --muted:215 27.9% 16.9%;
+  --muted-foreground:217.9 10.6% 64.9%;
+  --card:215 27.9% 16.9%;
+  --border:215.3 25% 26.7%;
+  --ps-accent-text:var(--ps-lilac);
+  --shadow-contact:0 1px 2px -1px rgb(0 0 0/0.5);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:hsl(var(--background));
+  color:hsl(var(--foreground));
+  font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  line-height:1.5;
+  overflow-x:hidden;
+}
+h1,h2,h3,p,ul,ol,figure{margin:0}
+ul,ol{padding:0;list-style:none}
+a{color:inherit}
+img,svg{max-width:100%}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* ── Type scale — one step per role, same as marketing-system.tsx ───────── */
+.eyebrow{
+  display:flex;align-items:center;gap:.625rem;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.2em;
+  color:var(--ps-accent-text);
+}
+.eyebrow::before{
+  content:"";height:1px;width:1.5rem;flex:none;
+  background:linear-gradient(to right,var(--ps-indigo),var(--ps-fuchsia));
+}
+.h2{
+  font-size:1.75rem;font-weight:700;line-height:1.15;letter-spacing:-.02em;
+  color:hsl(var(--foreground));text-wrap:balance;margin-top:1rem;
+}
+.h3{font-size:.9375rem;font-weight:600;line-height:1.35;letter-spacing:-.01em;color:hsl(var(--foreground))}
+.h3-lg{font-size:1rem}
+.lede{max-width:58ch;font-size:1rem;line-height:1.65;color:hsl(var(--muted-foreground));margin-top:1rem}
+.body{max-width:65ch;font-size:.875rem;line-height:1.65;color:hsl(var(--muted-foreground))}
+.caption{font-size:.75rem;line-height:1.6;color:hsl(var(--muted-foreground))}
+@media(min-width:640px){
+  .h2{font-size:2.25rem}
+  .lede{font-size:1.125rem}
+}
+
+/* ── Layout ─────────────────────────────────────────────────────────────── */
+.section{position:relative;isolation:isolate;overflow:hidden;padding:5rem 0}
+.section--raised{background:hsl(var(--muted)/.4)}
+:root[data-theme="dark"] .section--raised{background:hsl(var(--muted)/.2)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .section--raised{background:hsl(var(--muted)/.2)}}
+.section[id]{scroll-margin-top:4rem}
+.inner{position:relative;width:100%;max-width:72rem;margin:0 auto;padding:0 1rem}
+.inner--narrow{max-width:48rem}
+@media(min-width:640px){.section{padding:6rem 0}.inner{padding:0 1.5rem}}
+@media(min-width:1024px){.section{padding:7rem 0}.inner{width:75%;max-width:none;padding:0 2rem}.inner--narrow{width:100%;max-width:48rem}}
+
+/* Section seam — a horizon, not a table rule. */
+.seam{position:absolute;inset-inline:0;top:0;height:1px;pointer-events:none}
+.seam i{display:block;height:1px;width:100%;background:linear-gradient(to right,transparent,hsl(var(--border)),transparent)}
+.seam b{display:block;height:1px;width:33%;margin:-1px auto 0;background:linear-gradient(to right,transparent,color-mix(in srgb,var(--ps-violet) 40%,transparent),transparent)}
+
+.heading{max-width:42rem}
+.heading--center{margin-inline:auto;text-align:center}
+.heading--center .eyebrow{justify-content:center}
+.heading--center .lede{margin-inline:auto}
+
+.grid{display:grid;gap:1.5rem;margin-top:3rem}
+.grid--dense{gap:1.25rem}
+@media(min-width:640px){.grid{margin-top:3.5rem}}
+@media(min-width:640px){.sm-2{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(min-width:768px){.md-2{grid-template-columns:repeat(2,minmax(0,1fr))}.md-3{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(min-width:1024px){.lg-3{grid-template-columns:repeat(3,minmax(0,1fr))}.lg-4{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+/* ── Decorative backdrops ───────────────────────────────────────────────── */
+.backdrop{position:absolute;inset:0;pointer-events:none;z-index:-1}
+.backdrop--grid{
+  color:hsl(var(--border)/.7);
+  background-image:
+    linear-gradient(to right,currentColor 1px,transparent 1px),
+    linear-gradient(to bottom,currentColor 1px,transparent 1px);
+  background-size:4rem 4rem;
+  -webkit-mask-image:radial-gradient(ellipse at center,black 20%,transparent 75%);
+  mask-image:radial-gradient(ellipse at center,black 20%,transparent 75%);
+}
+.backdrop--dots{
+  color:hsl(var(--border));
+  background-image:radial-gradient(currentColor 1px,transparent 1px);
+  background-size:1.5rem 1.5rem;
+  -webkit-mask-image:radial-gradient(ellipse at center,black 10%,transparent 70%);
+  mask-image:radial-gradient(ellipse at center,black 10%,transparent 70%);
+}
+.orb{position:absolute;height:18rem;width:18rem;border-radius:9999px;filter:blur(64px)}
+.orb--1{top:-6rem;inset-inline-start:-6rem;background:color-mix(in srgb,var(--ps-indigo) 28%,transparent);animation:ps-float 12s ease-in-out infinite}
+.orb--2{top:-4rem;inset-inline-end:-4rem;background:color-mix(in srgb,var(--ps-fuchsia) 22%,transparent);animation:ps-glow 9s ease-in-out infinite}
+.orb--3{bottom:-8rem;inset-inline-start:33%;background:color-mix(in srgb,var(--ps-pink) 20%,transparent);animation:ps-float 12s ease-in-out infinite reverse}
+.orbs--soft .orb{opacity:.55}
+
+/* Travelling hairline — the header/footer edge. */
+.beam{position:relative;height:1px;width:100%;background:hsl(var(--border));overflow:hidden}
+.beam::after{
+  content:"";position:absolute;inset-block:0;width:33%;
+  background:linear-gradient(to right,transparent,var(--ps-violet),transparent);
+  animation:ps-beam-slow 6s linear infinite;
+}
+
+/* ── Cards ──────────────────────────────────────────────────────────────── */
+.gcard{
+  position:relative;border-radius:var(--radius);padding:1px;
+  background:linear-gradient(to bottom,hsl(var(--border)),hsl(var(--border)/.6),hsl(var(--border)));
+  box-shadow:0 1px 2px -1px rgb(15 23 42/.10),0 8px 20px -14px rgb(15 23 42/.22);
+  transition:transform .2s cubic-bezier(.16,1,.3,1),box-shadow .2s cubic-bezier(.16,1,.3,1),background .2s;
+}
+.gcard:hover,.gcard:focus-within{
+  background:linear-gradient(to bottom,
+    color-mix(in srgb,var(--ps-indigo) 70%,transparent),
+    color-mix(in srgb,var(--ps-violet) 50%,transparent),
+    color-mix(in srgb,var(--ps-fuchsia) 60%,transparent));
+}
+.gcard--lift:hover,.gcard--lift:focus-within{
+  transform:translateY(-.25rem);
+  box-shadow:0 2px 4px -2px rgb(15 23 42/.12),0 20px 38px -22px rgb(109 90 230/.65);
+}
+.gcard--lit{background:linear-gradient(to bottom,
+    color-mix(in srgb,var(--ps-indigo) 60%,transparent),
+    color-mix(in srgb,var(--ps-violet) 40%,transparent),
+    color-mix(in srgb,var(--ps-fuchsia) 50%,transparent))}
+.gcard__inner{
+  position:relative;border-radius:calc(var(--radius) - 1px);
+  background:hsl(var(--card));height:100%;
+  display:flex;flex-direction:column;
+}
+.gcard__inner::before{
+  content:"";position:absolute;inset-inline:0;top:0;height:1px;
+  background:linear-gradient(to right,transparent,rgb(255 255 255/.7),transparent);
+}
+:root[data-theme="dark"] .gcard__inner::before{background:linear-gradient(to right,transparent,rgb(255 255 255/.15),transparent)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .gcard__inner::before{background:linear-gradient(to right,transparent,rgb(255 255 255/.15),transparent)}}
+.p-5{padding:1.25rem}.p-6{padding:1.5rem}
+@media(min-width:640px){.sm-p-7{padding:1.75rem}}
+
+/* Brand icon tile — solid brand fill, white glyph. */
+.tile{
+  display:inline-flex;align-items:center;justify-content:center;flex:none;
+  height:2.5rem;width:2.5rem;border-radius:.75rem;color:#fff;
+  background:linear-gradient(135deg,var(--ps-indigo),var(--ps-violet),var(--ps-fuchsia));
+  box-shadow:0 1px 2px rgb(15 23 42/.20),0 6px 16px -8px rgb(109 90 230/.85);
+  box-shadow:0 1px 2px rgb(15 23 42/.20),0 6px 16px -8px rgb(109 90 230/.85),inset 0 0 0 1px rgb(255 255 255/.25);
+  transition:transform .2s cubic-bezier(.16,1,.3,1);
+}
+.tile--sm{height:2rem;width:2rem;border-radius:.625rem}
+.tile--lg{height:2.75rem;width:2.75rem}
+.tile--xl{height:3rem;width:3rem}
+.tile--xs{height:1.75rem;width:1.75rem;border-radius:.5rem}
+a:hover .tile,.gcard:hover .tile,article:hover .tile{transform:scale(1.06)}
+.ico{width:1.25rem;height:1.25rem;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.ico--sm{width:1rem;height:1rem}
+.ico--xs{width:.875rem;height:.875rem}
+.ico--lg{width:1.375rem;height:1.375rem}
+
+/* ── Calls to action ────────────────────────────────────────────────────── */
+.cta{
+  position:relative;isolation:isolate;display:inline-flex;align-items:center;justify-content:center;
+  gap:.5rem;overflow:hidden;text-decoration:none;user-select:none;
+  font-size:.875rem;font-weight:600;border-radius:.75rem;padding:.75rem 1.5rem;
+  transition:transform .2s cubic-bezier(.16,1,.3,1),box-shadow .2s cubic-bezier(.16,1,.3,1),
+             background-color .2s,border-color .2s;
+}
+.cta--pill{border-radius:9999px;padding:.75rem 1.25rem}
+.cta--primary{
+  color:#fff;border:0;
+  background:linear-gradient(to right,var(--ps-indigo),var(--ps-violet),var(--ps-fuchsia));
+  box-shadow:0 1px 2px rgb(15 23 42/.18),0 10px 24px -14px rgb(79 70 229/.9);
+}
+.cta--primary::before{
+  content:"";position:absolute;inset-block:0;inset-inline:-.5rem;z-index:0;
+  transform:translateX(-100%);
+  background:linear-gradient(to right,transparent,rgb(255 255 255/.25),transparent);
+  transition:transform .7s ease-out;
+}
+.cta--primary:hover::before{transform:translateX(100%)}
+.cta--primary:hover{box-shadow:0 2px 4px rgb(15 23 42/.20),0 18px 34px -16px rgb(109 90 230/.95)}
+.cta--secondary{
+  border:1px solid hsl(var(--border));background:hsl(var(--background)/.7);
+  color:hsl(var(--foreground));backdrop-filter:blur(4px);
+}
+.cta--secondary:hover{border-color:color-mix(in srgb,var(--ps-violet) 50%,transparent);background:hsl(var(--muted))}
+.cta:hover{transform:translateY(-2px)}
+.cta:active{transform:translateY(0) scale(.985)}
+.cta > span{position:relative;z-index:10;display:inline-flex;align-items:center;gap:.5rem}
+.cta .ico{transition:transform .2s cubic-bezier(.16,1,.3,1)}
+.cta:hover .ico--arrow{transform:translateX(.25rem)}
+.cta--block{width:100%;padding:.625rem 1rem;margin-top:1.75rem}
+
+:where(a,button,summary,input,select,textarea):focus-visible{
+  outline:none;
+  box-shadow:0 0 0 2px hsl(var(--background)),0 0 0 4px var(--ps-accent-text);
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+.header{position:sticky;top:0;z-index:40;width:100%;background:hsl(var(--background)/.95);backdrop-filter:blur(8px)}
+@supports (backdrop-filter:blur(1px)){.header{background:hsl(var(--background)/.8)}}
+.header__bar{
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  height:4rem;width:100%;max-width:72rem;margin:0 auto;padding:0 1rem;
+}
+@media(min-width:640px){.header__bar{padding:0 1.5rem}}
+@media(min-width:1024px){.header__bar{width:75%;max-width:none;padding:0 2rem}}
+.wordmark{display:inline-flex;align-items:center;gap:.625rem;text-decoration:none;border-radius:.375rem}
+.wordmark span{font-size:1rem;font-weight:700;letter-spacing:-.01em}
+.nav{display:none;align-items:center;gap:1.5rem}
+@media(min-width:640px){.nav{display:flex}}
+.nav a{
+  position:relative;padding:.5rem 0;font-size:.875rem;font-weight:500;text-decoration:none;
+  color:hsl(var(--muted-foreground));transition:color .2s;border-radius:.125rem;
+}
+.nav a:hover{color:hsl(var(--foreground))}
+.nav a::after{
+  content:"";position:absolute;inset-inline:0;bottom:0;height:1px;transform:scaleX(0);transform-origin:left;
+  background:linear-gradient(to right,var(--ps-indigo),var(--ps-fuchsia));
+  transition:transform .2s cubic-bezier(.16,1,.3,1);
+}
+.nav a:hover::after{transform:scaleX(1)}
+.themebtn{
+  display:inline-flex;align-items:center;justify-content:center;height:2.25rem;width:2.25rem;
+  border-radius:9999px;border:1px solid hsl(var(--border));background:transparent;
+  color:hsl(var(--muted-foreground));cursor:pointer;transition:color .2s,border-color .2s;
+}
+.themebtn:hover{color:hsl(var(--foreground));border-color:color-mix(in srgb,var(--ps-violet) 50%,transparent)}
+
+/* ── Hero ───────────────────────────────────────────────────────────────── */
+.hero{position:relative;isolation:isolate;overflow:hidden;background:hsl(var(--background))}
+.hero__wrap{position:relative;width:100%;max-width:72rem;margin:0 auto;padding:5rem 1rem}
+@media(min-width:640px){.hero__wrap{padding:6rem 1.5rem}}
+@media(min-width:1024px){.hero__wrap{width:75%;max-width:none;padding:7rem 2rem}}
+.hero__grid{display:grid;grid-template-columns:1fr;gap:3rem;align-items:center}
+@media(min-width:1024px){.hero__grid{grid-template-columns:1fr 1fr;gap:2.5rem}}
+.pill{
+  display:inline-flex;align-items:center;gap:.5rem;margin-bottom:1.25rem;
+  border-radius:9999px;padding:.25rem .75rem;
+  border:1px solid color-mix(in srgb,var(--ps-rose) 40%,transparent);
+  background:color-mix(in srgb,var(--ps-rose) 10%,transparent);
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;
+  color:hsl(var(--foreground));
+}
+h1{
+  font-size:2.125rem;font-weight:700;line-height:1.08;letter-spacing:-.03em;text-wrap:balance;
+}
+@media(min-width:640px){h1{font-size:3rem}}
+@media(min-width:1024px){h1{font-size:3.5rem}}
+.accent{
+  background:linear-gradient(to right,var(--ps-indigo),var(--ps-violet),var(--ps-fuchsia));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.hero__lede{margin-top:1.25rem;max-width:52ch}
+@media(min-width:640px){.hero__lede{margin-top:1.5rem}}
+.hero__ctas{display:flex;flex-direction:column;gap:.75rem;margin-top:2rem}
+@media(min-width:640px){.hero__ctas{flex-direction:row;align-items:center}}
+.proof{display:flex;flex-wrap:wrap;gap:.625rem 1.25rem;margin-top:2rem}
+.proof li{display:inline-flex;align-items:center;gap:.5rem;font-size:.875rem;color:hsl(var(--muted-foreground))}
+
+/* Hero product mock */
+.mock{position:relative}
+.mock__glow{
+  position:absolute;inset:-1.5rem;border-radius:2rem;opacity:.7;filter:blur(32px);pointer-events:none;
+  background:linear-gradient(135deg,
+    color-mix(in srgb,var(--ps-indigo) 25%,transparent),
+    color-mix(in srgb,var(--ps-violet) 20%,transparent),
+    color-mix(in srgb,var(--ps-fuchsia) 25%,transparent));
+}
+.mock__panel{
+  position:relative;overflow:hidden;border-radius:var(--radius);
+  border:1px solid hsl(var(--border));background:hsl(var(--card));
+  box-shadow:0 1px 2px -1px rgb(15 23 42/.10),0 24px 48px -24px rgb(15 23 42/.30);
+}
+.mock__chrome{display:flex;align-items:center;gap:.5rem;padding:.75rem 1rem;border-bottom:1px solid hsl(var(--border));background:hsl(var(--muted)/.4)}
+.dot{height:.625rem;width:.625rem;border-radius:9999px}
+.mock__body{padding:1rem;display:flex;flex-direction:column;gap:1.25rem}
+@media(min-width:640px){.mock__body{padding:1.5rem}}
+.meter{margin-top:.5rem;height:.5rem;width:100%;border-radius:9999px;background:hsl(var(--muted));overflow:hidden}
+.meter i{
+  display:block;height:100%;width:62%;border-radius:9999px;transform-origin:left;
+  background:linear-gradient(to right,var(--ps-indigo),var(--ps-violet),var(--ps-pink));
+  animation:ps-meter 900ms cubic-bezier(.16,1,.3,1) backwards;
+}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.5rem}
+@media(min-width:640px){.tiles{gap:.75rem}}
+.tiles > div{border-radius:.75rem;border:1px solid hsl(var(--border));background:hsl(var(--background));padding:.75rem}
+.tiles .num{margin-top:.5rem;font-family:ui-monospace,monospace;font-size:1rem;font-weight:600;color:hsl(var(--foreground))}
+.tiles .lbl{margin-top:.125rem;font-size:.7rem;line-height:1.2;color:hsl(var(--muted-foreground))}
+.chart{border-radius:.75rem;border:1px solid hsl(var(--border));background:hsl(var(--background));padding:.75rem}
+.chart__bars{display:flex;align-items:flex-end;gap:.375rem;height:5rem;margin-top:.75rem}
+.chart__bars i{
+  flex:1;border-radius:.125rem;transform-origin:bottom;
+  background:linear-gradient(to top,color-mix(in srgb,var(--ps-indigo) 40%,transparent),color-mix(in srgb,var(--ps-fuchsia) 80%,transparent));
+  animation:ps-grow 900ms cubic-bezier(.16,1,.3,1) backwards;
+}
+
+/* ── Chips ──────────────────────────────────────────────────────────────── */
+.chips{display:flex;flex-wrap:wrap;gap:.625rem;margin-top:1.75rem}
+.chips li{
+  display:inline-flex;align-items:center;gap:.5rem;border-radius:9999px;
+  border:1px solid hsl(var(--border));background:hsl(var(--card)/.7);
+  padding:.375rem .75rem;font-size:.75rem;font-weight:500;
+  box-shadow:var(--shadow-contact);backdrop-filter:blur(4px);
+}
+
+/* ── Problem → outcome ──────────────────────────────────────────────────── */
+.transition-rule{display:flex;align-items:center;gap:.75rem;margin:1rem 0}
+.transition-rule i{height:1px;flex:1;background:linear-gradient(to right,color-mix(in srgb,var(--ps-indigo) 50%,transparent),color-mix(in srgb,var(--ps-violet) 40%,transparent),transparent)}
+
+/* ── Capability lists ───────────────────────────────────────────────────── */
+.pointlist{margin-top:1.25rem;display:flex;flex-direction:column;gap:.75rem}
+.pointlist li{display:flex;gap:.75rem;font-size:.875rem;line-height:1.65;color:hsl(var(--muted-foreground))}
+.hairline{height:1px;width:100%;background:hsl(var(--border)/.7);margin-top:1.25rem}
+.brandcheck{color:var(--ps-fuchsia);flex:none;margin-top:.15rem}
+
+/* ── How it works ───────────────────────────────────────────────────────── */
+.step{position:relative}
+.step__link{display:none}
+@media(min-width:768px){
+  .step__link{
+    display:block;position:absolute;top:2.75rem;inset-inline-start:100%;
+    height:1px;width:1.5rem;background:hsl(var(--border));overflow:hidden;
+  }
+  .step__link::after{
+    content:"";position:absolute;inset-block:0;width:50%;
+    background:linear-gradient(to right,transparent,var(--ps-fuchsia),transparent);
+    animation:ps-beam 3.5s linear infinite;
+  }
+}
+
+/* ── Plans ──────────────────────────────────────────────────────────────── */
+.plan__desc{min-height:2.5rem}
+.plan__price{
+  margin-top:1.25rem;font-size:2.25rem;font-weight:700;line-height:1;letter-spacing:-.02em;
+  background:linear-gradient(to right,var(--ps-indigo),var(--ps-violet),var(--ps-fuchsia));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.plan__rule{display:block;height:1px;width:100%;margin-top:1.5rem;background:linear-gradient(to right,hsl(var(--border)),hsl(var(--border)),transparent)}
+.plan__list{margin-top:1.25rem;flex:1;display:flex;flex-direction:column;gap:.625rem}
+.plan__list li{display:flex;align-items:flex-start;gap:.625rem;font-size:.875rem;line-height:1.6;color:hsl(var(--muted-foreground))}
+.plan--custom .gcard__inner{background:linear-gradient(to bottom,color-mix(in srgb,var(--ps-violet) 7%,hsl(var(--card))),hsl(var(--card)))}
+
+/* ── Security ───────────────────────────────────────────────────────────── */
+.trustcard{
+  display:flex;gap:1rem;border-radius:var(--radius);padding:1.25rem;
+  border:1px solid hsl(var(--border));background:hsl(var(--card)/.6);
+  box-shadow:0 1px 2px -1px rgb(15 23 42/.08);backdrop-filter:blur(4px);
+  transition:border-color .2s cubic-bezier(.16,1,.3,1);
+}
+.trustcard:hover{border-color:color-mix(in srgb,var(--ps-accent-text) 45%,transparent)}
+.inlink{
+  font-weight:500;color:var(--ps-accent-text);border-radius:.125rem;
+  text-decoration:underline;text-underline-offset:4px;
+  text-decoration-color:color-mix(in srgb,var(--ps-accent-text) 40%,transparent);
+  transition:text-decoration-color .2s;
+}
+.inlink:hover{text-decoration-color:var(--ps-accent-text)}
+
+/* ── FAQ ────────────────────────────────────────────────────────────────── */
+.faq{margin-top:3rem;display:flex;flex-direction:column;gap:.75rem}
+@media(min-width:640px){.faq{margin-top:3.5rem}}
+.faq .gcard__inner{padding:1rem 1.25rem;transition:background-color .2s}
+.faq .gcard:has(details[open]){background:linear-gradient(to bottom,
+  color-mix(in srgb,var(--ps-indigo) 70%,transparent),
+  color-mix(in srgb,var(--ps-violet) 50%,transparent),
+  color-mix(in srgb,var(--ps-fuchsia) 60%,transparent))}
+.faq .gcard:has(details[open]) .gcard__inner{background:color-mix(in srgb,hsl(var(--muted)) 50%,hsl(var(--card)))}
+.faq summary{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;
+  cursor:pointer;list-style:none;border-radius:.375rem;
+  font-size:.875rem;font-weight:600;line-height:1.35;color:hsl(var(--foreground));
+  transition:color .2s;
+}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary:hover{color:var(--ps-accent-text)}
+.faq summary .ico{color:var(--ps-accent-text);flex:none;margin-top:.125rem;transition:transform .2s cubic-bezier(.16,1,.3,1)}
+.faq details[open] summary .ico{transform:rotate(180deg)}
+.faq details p{margin-top:.75rem;max-width:none;animation:ps-rise 560ms cubic-bezier(.16,1,.3,1) backwards}
+
+/* ── Enquiry form ───────────────────────────────────────────────────────── */
+.form{
+  border-radius:var(--radius);border:1px solid hsl(var(--border));background:hsl(var(--card));
+  padding:1.5rem;box-shadow:0 1px 2px -1px rgb(15 23 42/.10),0 18px 36px -24px rgb(15 23 42/.35);
+  transition:border-color .2s;
+}
+.form:focus-within{border-color:color-mix(in srgb,var(--ps-accent-text) 50%,transparent)}
+@media(min-width:640px){.form{padding:2rem}}
+.fields{display:grid;grid-template-columns:1fr;gap:1.25rem}
+@media(min-width:640px){.fields{grid-template-columns:repeat(2,minmax(0,1fr))}.span2{grid-column:span 2}}
+label{display:block;font-size:.875rem;font-weight:500;color:hsl(var(--foreground))}
+.req{color:hsl(var(--destructive))}
+input[type=text],input[type=email],input[type=tel],input[type=url],select,textarea{
+  margin-top:.375rem;display:block;width:100%;border-radius:.375rem;
+  border:1px solid hsl(var(--border));background:hsl(var(--background));
+  padding:.5rem .75rem;font:inherit;font-size:.875rem;color:hsl(var(--foreground));
+  transition:border-color .2s;
+}
+input[type=text],input[type=email],input[type=tel],input[type=url],select{height:2.5rem}
+textarea{min-height:6rem;resize:vertical}
+input:hover,select:hover,textarea:hover{border-color:color-mix(in srgb,var(--ps-violet) 50%,transparent)}
+.consent{display:flex;align-items:flex-start;gap:.75rem;margin-top:1.5rem}
+.consent input{margin-top:.15rem;height:1rem;width:1rem;flex:none;accent-color:var(--ps-violet)}
+.consent label{font-weight:400;font-size:.875rem;line-height:1.6;color:hsl(var(--muted-foreground))}
+.submit{
+  margin-top:1.5rem;height:2.75rem;width:100%;border:0;cursor:pointer;
+  border-radius:.75rem;color:#fff;font:inherit;font-size:.875rem;font-weight:600;
+  background:linear-gradient(to right,var(--ps-indigo),var(--ps-violet),var(--ps-fuchsia));
+  box-shadow:0 1px 2px rgb(15 23 42/.20),0 10px 24px -12px rgb(109 90 230/.90);
+  transition:transform .2s cubic-bezier(.16,1,.3,1),box-shadow .2s;
+}
+.submit:hover{transform:translateY(-2px);box-shadow:0 2px 4px rgb(15 23 42/.22),0 18px 34px -14px rgb(109 90 230/.95)}
+.submit:active{transform:translateY(0) scale(.985)}
+@media(min-width:640px){.submit{width:auto;padding:0 1.75rem}}
+.thanks{
+  border-radius:var(--radius);padding:1px;
+  background:linear-gradient(to bottom,
+    color-mix(in srgb,var(--ps-indigo) 60%,transparent),
+    color-mix(in srgb,var(--ps-violet) 40%,transparent),
+    color-mix(in srgb,var(--ps-fuchsia) 50%,transparent));
+  box-shadow:0 2px 4px -2px rgb(15 23 42/.12),0 20px 38px -22px rgb(109 90 230/.65);
+  animation:ps-rise 560ms cubic-bezier(.16,1,.3,1) backwards;
+}
+.thanks > div{border-radius:calc(var(--radius) - 1px);background:hsl(var(--card));padding:2rem;text-align:center}
+
+/* ── Footer ─────────────────────────────────────────────────────────────── */
+footer{background:hsl(var(--background))}
+.footer__grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2.5rem 2rem}
+@media(min-width:768px){.footer__grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(min-width:1024px){.footer__grid{gap:2.5rem 3rem}}
+.footer__brand{grid-column:span 2}
+@media(min-width:768px){.footer__brand{grid-column:span 1}}
+.footer__links{margin-top:1rem;display:flex;flex-direction:column;gap:.75rem}
+.footer__links a,.flink{
+  display:inline-block;border-radius:.125rem;padding:.25rem 0;
+  font-size:.875rem;color:hsl(var(--muted-foreground));text-decoration:none;transition:color .2s;
+}
+.footer__links a:hover,.flink:hover{color:var(--ps-accent-text)}
+.footer__contact{margin-top:1.5rem;display:flex;flex-direction:column;gap:.75rem}
+.footer__contact li{display:flex;align-items:center;gap:.625rem;font-size:.875rem;color:hsl(var(--muted-foreground))}
+.footer__contact .ico{color:var(--ps-accent-text);flex:none}
+.legal{
+  display:flex;flex-direction:column;gap:1rem;width:100%;max-width:72rem;margin:0 auto;padding:1.5rem 1rem;
+}
+@media(min-width:640px){.legal{padding:1.5rem}}
+@media(min-width:768px){.legal{flex-direction:row;align-items:center;justify-content:space-between}}
+@media(min-width:1024px){.legal{width:75%;max-width:none;padding:1.5rem 2rem}}
+
+/* ── Keyframes — every one named ps-*, compositor-only properties only ──── */
+/* Entrance: rise and fade. `backwards` holds frame 0 through the delay. */
+@keyframes ps-rise{from{opacity:0;transform:translate3d(0,.75rem,0)}to{opacity:1;transform:translate3d(0,0,0)}}
+/* Bar chart: grows from its baseline. Height is a fixed inline style — no CLS. */
+@keyframes ps-grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+/* Progress meter: fills once from the leading edge. */
+@keyframes ps-meter{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+/* Travelling light along a hairline. Two speeds so nothing beats in sync. */
+@keyframes ps-beam{from{transform:translateX(-100%)}to{transform:translateX(200%)}}
+@keyframes ps-beam-slow{from{transform:translateX(-120%)}to{transform:translateX(320%)}}
+/* Background orbs. Different periods on purpose — equal ones read as a pulse. */
+@keyframes ps-float{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(0,-1.5rem,0) scale(1.06)}}
+@keyframes ps-glow{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:.85;transform:scale(1.08)}}
+
+.rise{animation:ps-rise 560ms cubic-bezier(.16,1,.3,1) backwards}
+.d1{animation-delay:60ms}.d2{animation-delay:120ms}.d3{animation-delay:180ms}.d4{animation-delay:240ms}
+
+/* Reduced motion: everything lands in its FINAL state, never invisible. */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms!important;animation-iteration-count:1!important;
+    transition-duration:.001ms!important;
+  }
+  .beam::after,.step__link::after,.cta--primary::before{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ── Icon sprite. Inline so the file stays self-contained; the live page
+     uses @iconify/react with the Phosphor set. ─────────────────────────── -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<symbol id="i-hand-heart" viewBox="0 0 24 24"><path d="M12 20s-6-4.1-6-7.6A3.2 3.2 0 0 1 12 11a3.2 3.2 0 0 1 6 1.4C18 15.9 12 20 12 20Z"/><path d="M3 13v6M21 13v6"/></symbol>
+<symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4L6 21Z"/><path d="M9 8h6M9 12h6"/></symbol>
+<symbol id="i-chart-line-up" viewBox="0 0 24 24"><path d="M4 18l6-6 3 3 7-7"/><path d="M15 8h5v5"/></symbol>
+<symbol id="i-users-three" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3"/><path d="M7 19a5 5 0 0 1 10 0"/><path d="M18 10a2.5 2.5 0 0 0 0-5M6 10a2.5 2.5 0 0 1 0-5"/></symbol>
+<symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/></symbol>
+<symbol id="i-browsers" viewBox="0 0 24 24"><rect x="3" y="6" width="14" height="12" rx="2"/><path d="M3 10h14"/><path d="M8 4h11a2 2 0 0 1 2 2v10"/></symbol>
+<symbol id="i-files" viewBox="0 0 24 24"><rect x="4" y="3" width="11" height="14" rx="2"/><path d="M8 20a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8"/></symbol>
+<symbol id="i-address-book" viewBox="0 0 24 24"><rect x="6" y="3" width="14" height="18" rx="2"/><path d="M3 8h3M3 12h3M3 16h3"/><circle cx="13" cy="10" r="2"/><path d="M10 16a3 3 0 0 1 6 0"/></symbol>
+<symbol id="i-megaphone" viewBox="0 0 24 24"><path d="M4 10v4a1 1 0 0 0 1 1h2l9 4V5L7 9H5a1 1 0 0 0-1 1Z"/><path d="M19 10a3 3 0 0 1 0 4"/></symbol>
+<symbol id="i-calendar-check" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/><path d="M9 15l2 2 4-4"/></symbol>
+<symbol id="i-hand-waving" viewBox="0 0 24 24"><path d="M9 12V5.5a1.5 1.5 0 1 1 3 0V11"/><path d="M12 11V4.5a1.5 1.5 0 1 1 3 0V11"/><path d="M15 11.5a1.5 1.5 0 1 1 3 0V15a6 6 0 0 1-6 6 6 6 0 0 1-6-6v-3a1.5 1.5 0 1 1 3 0"/></symbol>
+<symbol id="i-identification-badge" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 3h6v2H9z"/><circle cx="12" cy="11" r="2"/><path d="M9 17a3 3 0 0 1 6 0"/></symbol>
+<symbol id="i-first-aid-kit" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/><path d="M12 11v5M9.5 13.5h5"/></symbol>
+<symbol id="i-squares-four" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></symbol>
+<symbol id="i-certificate" viewBox="0 0 24 24"><circle cx="12" cy="9" r="5"/><path d="M9 13.5 8 21l4-2 4 2-1-7.5"/></symbol>
+<symbol id="i-chat-circle-dots" viewBox="0 0 24 24"><path d="M12 20a8 8 0 1 0-7.1-4.3L4 20l4.3-.9A8 8 0 0 0 12 20Z"/><path d="M9 12h.01M12 12h.01M15 12h.01"/></symbol>
+<symbol id="i-chart-bar" viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M7 20v-6M12 20V7M17 20v-9"/></symbol>
+<symbol id="i-hand-coins" viewBox="0 0 24 24"><circle cx="8" cy="7" r="3"/><circle cx="16" cy="9" r="3"/><path d="M3 20a5 5 0 0 1 9-3h3a1.5 1.5 0 0 1 0 3h-4"/></symbol>
+<symbol id="i-arrows-split" viewBox="0 0 24 24"><path d="M12 4v5"/><path d="M12 9l-5 5v6M12 9l5 5v6"/><path d="M5 18l2 2 2-2M15 18l2 2 2-2"/></symbol>
+<symbol id="i-users-four" viewBox="0 0 24 24"><circle cx="8" cy="8" r="2.5"/><circle cx="16" cy="8" r="2.5"/><path d="M4 15a4 4 0 0 1 8 0M12 15a4 4 0 0 1 8 0"/><path d="M4 20h16"/></symbol>
+<symbol id="i-gear-six" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3l2 1.7 2.6-.4.9 2.5 2.3 1.3-.7 2.5.7 2.5-2.3 1.3-.9 2.5-2.6-.4L12 21l-2-1.7-2.6.4-.9-2.5L4.2 15.9l.7-2.5-.7-2.5L6.5 9.6l.9-2.5 2.6.4Z"/></symbol>
+<symbol id="i-scales" viewBox="0 0 24 24"><path d="M12 4v16M6 20h12"/><path d="M12 7 5 9m7-2 7 2"/><path d="M5 9 2.5 14a2.5 2.5 0 0 0 5 0Zm14 0-2.5 5a2.5 2.5 0 0 0 5 0Z"/></symbol>
+<symbol id="i-lock-key" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15" r="1.3"/><path d="M12 16.3V18"/></symbol>
+<symbol id="i-shield-check" viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4.2-2.9 7.6-7 9-4.1-1.4-7-4.8-7-9V6Z"/><path d="M9 12l2 2 4-4"/></symbol>
+<symbol id="i-credit-card" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h3"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/><path d="M4 6v3h3"/></symbol>
+<symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><path d="M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/></symbol>
+<symbol id="i-export" viewBox="0 0 24 24"><path d="M12 15V4M8.5 7.5 12 4l3.5 3.5"/><path d="M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></symbol>
+<symbol id="i-file-text" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></symbol>
+<symbol id="i-sign-in" viewBox="0 0 24 24"><path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4"/><path d="M14 8l4 4-4 4M18 12H9"/></symbol>
+<symbol id="i-seal-check" viewBox="0 0 24 24"><path d="M12 3l2.2 1.8 2.8-.2.6 2.8 2.4 1.5-1.2 2.6 1.2 2.6-2.4 1.5-.6 2.8-2.8-.2L12 21l-2.2-1.8-2.8.2-.6-2.8L4 15.1l1.2-2.6L4 9.9l2.4-1.5.6-2.8 2.8.2Z"/><path d="M9.5 12.3l1.8 1.8 3.4-3.6"/></symbol>
+<symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.3l2.4 2.4 4.6-4.9"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></symbol>
+<symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></symbol>
+<symbol id="i-arrow-down" viewBox="0 0 24 24"><path d="M12 5v13M5.5 11.5 12 18l6.5-6.5"/></symbol>
+<symbol id="i-caret-down" viewBox="0 0 24 24"><path d="M6 9.5 12 15.5 18 9.5"/></symbol>
+<symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3l2.1 6.4L20.5 11.5 14.1 13.6 12 20l-2.1-6.4L3.5 11.5 9.9 9.4Z"/></symbol>
+<symbol id="i-chats-circle" viewBox="0 0 24 24"><path d="M9 15a6 6 0 1 0-5.3-3.2L3 15l3.2-.7A6 6 0 0 0 9 15Z"/><path d="M12.5 8.2A6 6 0 0 1 17.8 18l.7 3-3.2-.7A6 6 0 0 1 8.2 17"/></symbol>
+<symbol id="i-envelope" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 7l8.5 6 8.5-6"/></symbol>
+<symbol id="i-phone" viewBox="0 0 24 24"><path d="M6 3h3l2 5-2.5 1.5a12 12 0 0 0 5.5 5.5L16 12l5 2v3a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4 6.2 2 2 0 0 1 6 4Z"/></symbol>
+<symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+<symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5Z"/></symbol>
+</defs></svg>
+
+<!-- ══ Header ══════════════════════════════════════════════════════════════
+     No hamburger: the whole nav is four in-page anchors, and a burger would
+     need state. Below sm the anchors collapse and the CTA remains.        -->
+<header class="header">
+  <a href="#enquiry" class="sr-only">Skip to the enquiry form</a>
+  <div class="header__bar">
+    <a href="#top" class="wordmark">
+      <span class="tile tile--sm"><svg class="ico ico--sm"><use href="#i-hand-heart"/></svg></span>
+      <span>PeopleServe</span>
+    </a>
+    <nav class="nav" aria-label="Page sections">
+      <a href="#modules">What it does</a>
+      <a href="#capabilities">In detail</a>
+      <a href="#plans">Plans</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <div style="display:flex;align-items:center;gap:.75rem">
+      <button type="button" class="themebtn" id="themeBtn" aria-label="Switch between light and dark">
+        <svg class="ico ico--sm" id="themeIcon"><use href="#i-moon"/></svg>
+      </button>
+      <a href="#enquiry" class="cta cta--primary cta--pill"><span>Talk to us</span></a>
+    </div>
+  </div>
+  <div class="beam"></div>
+</header>
+
+<main id="top">
+
+<!-- ══ 1. Hero ═════════════════════════════════════════════════════════════
+     Exactly one <h1> on the page, and it carries NO entrance animation —
+     it is the LCP element and must paint at final opacity immediately.   -->
+<section class="hero">
+  <div class="backdrop backdrop--grid"></div>
+  <div class="backdrop"><i class="orb orb--1"></i><i class="orb orb--2"></i><i class="orb orb--3"></i></div>
+
+  <div class="hero__wrap">
+    <div class="hero__grid">
+      <div style="max-width:42rem">
+        <!-- Label text is foreground, not rose: ps-rose on its own 10% tint
+             measures ~3.7:1, which fails for text. Rose stays on the border
+             and the sparkle, which are graphical objects at 3:1. -->
+        <p class="pill rise">
+          <svg class="ico ico--xs" style="color:var(--ps-rose)"><use href="#i-sparkle"/></svg>
+          Nonprofit management platform
+        </p>
+
+        <h1>Run your entire nonprofit <span class="accent">on one system</span></h1>
+
+        <p class="lede hero__lede rise d1">Fundraising, donors, beneficiaries, programmes, grants, events, volunteers and reporting — one platform for charities, foundations and NGOs. From the moment a gift is given to the moment it reaches the person it was meant for, on one record trail.</p>
+
+        <div class="hero__ctas rise d2">
+          <a href="#enquiry" class="cta cta--primary"><span>Talk to us <svg class="ico ico--sm ico--arrow"><use href="#i-arrow-right"/></svg></span></a>
+          <a href="#plans" class="cta cta--secondary"><span>See plans</span></a>
+        </div>
+
+        <ul class="proof rise d3">
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg>Money in and money out on one ledger</li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg>Public giving pages you publish yourself</li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg>Multi-currency, multi-language, RTL</li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg>Your own numbering and receipt sequences</li>
+        </ul>
+
+        <p class="caption rise d4" style="margin-top:1.5rem;max-width:52ch">PeopleServe is set up with you — there is no self-serve signup, and no card is required to talk to us.</p>
+      </div>
+
+      <!-- Hand-built product mock, not a screenshot: sharp at any density,
+           ~0 bytes, no tenant data, and it cannot go stale as a PNG would. -->
+      <div class="rise d3">
+        <div class="mock">
+          <div class="mock__glow" aria-hidden="true"></div>
+          <div class="mock__panel" aria-hidden="true">
+            <div class="beam" style="position:absolute;top:0;left:0;background:transparent"></div>
+            <div class="mock__chrome">
+              <span class="dot" style="background:var(--ps-rose)"></span>
+              <span class="dot" style="background:var(--ps-fuchsia)"></span>
+              <span class="dot" style="background:var(--ps-indigo)"></span>
+              <span class="mono caption" style="margin-inline-start:.75rem">peopleserve · donations</span>
+            </div>
+            <div class="mock__body">
+              <div>
+                <div style="display:flex;align-items:baseline;justify-content:space-between;gap:.75rem">
+                  <p style="font-size:.75rem;font-weight:500;text-transform:uppercase;letter-spacing:.04em;color:hsl(var(--muted-foreground))">Grant budget committed</p>
+                  <p class="mono" style="font-size:.875rem;font-weight:600">62%</p>
+                </div>
+                <div class="meter"><i></i></div>
+              </div>
+
+              <div class="tiles">
+                <div><span class="tile tile--xs"><svg class="ico ico--xs"><use href="#i-hand-heart"/></svg></span><p class="num">1,284</p><p class="lbl">Donations</p></div>
+                <div><span class="tile tile--xs"><svg class="ico ico--xs"><use href="#i-receipt"/></svg></span><p class="num">1,284</p><p class="lbl">Receipts issued</p></div>
+                <div><span class="tile tile--xs"><svg class="ico ico--xs"><use href="#i-first-aid-kit"/></svg></span><p class="num">37</p><p class="lbl">Open cases</p></div>
+              </div>
+
+              <div class="chart">
+                <p style="font-size:.75rem;font-weight:500;color:hsl(var(--muted-foreground))">Giving, last seven periods</p>
+                <!-- Height is a fixed inline style; only scaleY animates, so
+                     the boxes are their final size from frame one (no CLS). -->
+                <div class="chart__bars">
+                  <i style="height:38%;animation-delay:240ms"></i>
+                  <i style="height:52%;animation-delay:310ms"></i>
+                  <i style="height:44%;animation-delay:380ms"></i>
+                  <i style="height:61%;animation-delay:450ms"></i>
+                  <i style="height:55%;animation-delay:520ms"></i>
+                  <i style="height:72%;animation-delay:590ms"></i>
+                  <i style="height:66%;animation-delay:660ms"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="caption" style="margin-top:.75rem">Illustration of the donations workspace. Sample figures — not a customer's data.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 2. Problem → outcome ════════════════════════════════════════════════
+     No customer-logo trust strip: we have no customer we are cleared to
+     name, and placeholder logos are worse than no strip at all.          -->
+<section class="section section--raised">
+  <div class="seam" aria-hidden="true"><i></i><b></b></div>
+  <div class="backdrop backdrop--dots"></div>
+  <div class="inner">
+    <div class="heading">
+      <p class="eyebrow">Before / after</p>
+      <h2 class="h2">The problems you already know about</h2>
+      <p class="lede">Not features — the things that cost nonprofit teams the most time, and what changes when the work sits in one system.</p>
+    </div>
+
+    <div class="grid md-3">
+      <div class="gcard gcard--lift"><div class="gcard__inner p-6">
+        <span class="tile tile--lg" style="margin-bottom:1.25rem"><svg class="ico ico--lg"><use href="#i-receipt"/></svg></span>
+        <h3 class="h3 h3-lg">Receipts are issued by hand, late, and sometimes twice</h3>
+        <div class="transition-rule" aria-hidden="true"><i></i><svg class="ico ico--sm" style="color:var(--ps-accent-text)"><use href="#i-arrow-down"/></svg></div>
+        <p class="body">Receipts are numbered by your own sequence, issued the moment a donation is recorded, and acknowledged by email automatically — with a full audit trail behind every number.</p>
+      </div></div>
+
+      <div class="gcard gcard--lift"><div class="gcard__inner p-6">
+        <span class="tile tile--lg" style="margin-bottom:1.25rem"><svg class="ico ico--lg"><use href="#i-chart-line-up"/></svg></span>
+        <h3 class="h3 h3-lg">Grant spend lives in a spreadsheet nobody trusts at reporting time</h3>
+        <div class="transition-rule" aria-hidden="true"><i></i><svg class="ico ico--sm" style="color:var(--ps-accent-text)"><use href="#i-arrow-down"/></svg></div>
+        <p class="body">Every grant carries its own budget, tranches and expenses. Spend is checked against the remaining balance as it is booked, so the funder report is a query, not a reconstruction.</p>
+      </div></div>
+
+      <div class="gcard gcard--lift"><div class="gcard__inner p-6">
+        <span class="tile tile--lg" style="margin-bottom:1.25rem"><svg class="ico ico--lg"><use href="#i-users-three"/></svg></span>
+        <h3 class="h3 h3-lg">The same donor exists four times under four spellings</h3>
+        <div class="transition-rule" aria-hidden="true"><i></i><svg class="ico ico--sm" style="color:var(--ps-accent-text)"><use href="#i-arrow-down"/></svg></div>
+        <p class="body">One contact record per person, with duplicate detection on entry and a merge path when duplicates slip through. Giving history, communications and consent stay attached to the person.</p>
+      </div></div>
+
+      <div class="gcard gcard--lift"><div class="gcard__inner p-6">
+        <span class="tile tile--lg" style="margin-bottom:1.25rem"><svg class="ico ico--lg"><use href="#i-target"/></svg></span>
+        <h3 class="h3 h3-lg">Nobody can say what a restricted donation was actually spent on</h3>
+        <div class="transition-rule" aria-hidden="true"><i></i><svg class="ico ico--sm" style="color:var(--ps-accent-text)"><use href="#i-arrow-down"/></svg></div>
+        <p class="body">Money is allocated to a purpose when it arrives and drawn down against it when it is used. A restricted gift can be traced from the donor, through the programme, to the beneficiary payment it funded.</p>
+      </div></div>
+
+      <div class="gcard gcard--lift"><div class="gcard__inner p-6">
+        <span class="tile tile--lg" style="margin-bottom:1.25rem"><svg class="ico ico--lg"><use href="#i-browsers"/></svg></span>
+        <h3 class="h3 h3-lg">Every campaign page needs a developer and two weeks</h3>
+        <div class="transition-rule" aria-hidden="true"><i></i><svg class="ico ico--sm" style="color:var(--ps-accent-text)"><use href="#i-arrow-down"/></svg></div>
+        <p class="body">Donation pages, crowdfunding pages, peer-to-peer campaigns, event registration and volunteer sign-up are built and published from inside the platform. Gifts land on the same ledger as everything else, already attributed to the campaign.</p>
+      </div></div>
+
+      <div class="gcard gcard--lift"><div class="gcard__inner p-6">
+        <span class="tile tile--lg" style="margin-bottom:1.25rem"><svg class="ico ico--lg"><use href="#i-files"/></svg></span>
+        <h3 class="h3 h3-lg">The annual report is assembled by hand from six exports</h3>
+        <div class="transition-rule" aria-hidden="true"><i></i><svg class="ico ico--sm" style="color:var(--ps-accent-text)"><use href="#i-arrow-down"/></svg></div>
+        <p class="body">Dashboards and reports read the live records — donations, cases, grants, events, volunteer hours — instead of a spreadsheet copy. The number on the board pack is the number in the system.</p>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 3. Module pillars ═══════════════════════════════════════════════════
+     Twelve capability areas, each backed by seeded menus and real screens.
+     No aspirational tile: it becomes a sales promise, then a ticket.     -->
+<section class="section" id="modules">
+  <div class="seam" aria-hidden="true"><i></i><b></b></div>
+  <div class="inner">
+    <div class="heading">
+      <p class="eyebrow">The platform</p>
+      <h2 class="h2">What is in the platform</h2>
+      <p class="lede">Every capability area below shares one contact register, one ledger and one permission model. You switch on the ones you need; the rest stay out of your way.</p>
+    </div>
+
+    <ul class="chips">
+      <li><svg class="ico ico--xs" style="color:var(--ps-fuchsia)"><use href="#i-address-book"/></svg>One contact register</li>
+      <li><svg class="ico ico--xs" style="color:var(--ps-fuchsia)"><use href="#i-scales"/></svg>One ledger</li>
+      <li><svg class="ico ico--xs" style="color:var(--ps-fuchsia)"><use href="#i-lock-key"/></svg>One permission model</li>
+    </ul>
+
+    <div class="grid grid--dense sm-2 lg-4">
+      <div class="gcard gcard--lift"><div class="gcard__inner p-5"><span class="tile" style="margin-bottom:1rem"><svg class="ico"><use href="#i-address-book"/></svg></span><h3 class="h3">Contacts &amp; CRM</h3><p class="body" style="margin-top:.5rem">Donors, members, families and organisations in one register, with duplicate detection, segmentation, certificates and full giving history.</p></div></div>
+      <div class="gcard gcard--lift"><div class="gcard__inner p-5"><span class="tile" style="margin-bottom:1rem"><svg class="ico"><use href="#i-hand-heart"/></svg></span><h3 class="h3">Donations</h3><p class="body" style="margin-top:.5rem">Online and offline giving, recurring gifts, gifts in kind, matching gifts, purposes and categories, receipting, refunds and field collection.</p></div></div>
+      <div class="gcard gcard--lift"><div class="gcard__inner p-5"><span class="tile" style="margin-bottom:1rem"><svg class="ico"><use href="#i-browsers"/></svg></span><h3 class="h3">Public giving pages</h3><p class="body" style="margin-top:.5rem">Branded donation pages you build and publish yourself, with your own payment gateway, live totals and instant acknowledgement.</p></div></div>
+      <div class="gcard gcard--lift"><div class="gcard__inner p-5"><span class="tile" style="margin-bottom:1rem"><svg class="ico"><use href="#i-megaphone"/></svg></span><h3 class="h3">Crowdfunding &amp; P2P</h3><p class="body" style="margin-top:.5rem">Crowdfunding appeals and peer-to-peer campaigns where supporters raise on your behalf, each with their own page, target and leaderboard.</p></div></div>
+      <div class="gcard gcard--lift"><div class="gcard__inner p-5"><span class="tile" style="margin-bottom:1rem"><svg class="ico"><use href="#i-calendar-check"/></svg></span><h3 class="h3">Events &amp; ticketing</h3><p class="body" style="margin-top:.5rem">Event setup, public registration pages, paid and free tickets, ticket templates, check-in and post-event attendance reporting.</p></div></div>
+      <div class="gcard gcard--lift"><div class="gcard__inner p-5"><span class="tile" style="margin-bottom:1rem"><svg class="ico"><use href="#i-hand-waving"/></svg></span><h3 class="h3">Volunteers</h3><p class="body" style="margin-top:.5rem">Public sign-up pages, volunteer profiles and skills, scheduling against shifts, hour logging and contribution dashboards.</p></div></div>
+      <div class="gcard gcard--lift"><div class="gcard__inner p-5"><span class="tile" style="margin-bottom:1rem"><svg class="ico"><use href="#i-identification-badge"/></svg></span><h3 class="h3">Membership</h3><p class="body" style="margin-top:.5rem">Membership types and tiers, subscriptions, renewals and member records, with membership fees flowing onto the same ledger.</p></div></div>
+      <div class="gcard gcard--lift"><div class="gcard__inner p-5"><span class="tile" style="margin-bottom:1rem"><svg class="ico"><use href="#i-first-aid-kit"/></svg></span><h3 class="h3">Case management</h3><p class="body" style="margin-top:.5rem">Beneficiary intake and verification, case files, assessments, service logs, milestones, approvals and outcome tracking.</p></div></div>
+      <div class="gcard gcard--lift"><div class="gcard__inner p-5"><span class="tile" style="margin-bottom:1rem"><svg class="ico"><use href="#i-squares-four"/></svg></span><h3 class="h3">Programmes &amp; funds</h3><p class="body" style="margin-top:.5rem">Programmes with capacity, enrolment and funding models; restricted and unrestricted funds; allocation and drawdown, so designated money stays designated.</p></div></div>
+      <div class="gcard gcard--lift"><div class="gcard__inner p-5"><span class="tile" style="margin-bottom:1rem"><svg class="ico"><use href="#i-certificate"/></svg></span><h3 class="h3">Grants</h3><p class="body" style="margin-top:.5rem">Grant records, documents, budgets, tranches, receipts against bank accounts and funder reporting on what each grant actually paid for.</p></div></div>
+      <div class="gcard gcard--lift"><div class="gcard__inner p-5"><span class="tile" style="margin-bottom:1rem"><svg class="ico"><use href="#i-chat-circle-dots"/></svg></span><h3 class="h3">Communications</h3><p class="body" style="margin-top:.5rem">Templated email, SMS and WhatsApp, in-app notifications and automation rules, with delivery tracking and per-contact consent.</p></div></div>
+      <div class="gcard gcard--lift"><div class="gcard__inner p-5"><span class="tile" style="margin-bottom:1rem"><svg class="ico"><use href="#i-chart-bar"/></svg></span><h3 class="h3">Dashboards &amp; reporting</h3><p class="body" style="margin-top:.5rem">Configurable dashboards and widgets, operational and financial reports across every area, exports and a full audit trail.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 4. Capability depth ═════════════════════════════════════════════════
+     The pillars answer "do you cover my area?"; this answers "properly?",
+     which is the question that decides the deal. Two reading columns, not
+     four — a four-up grid of eight-item lists is a wall nobody finishes. -->
+<section class="section section--raised" id="capabilities">
+  <div class="seam" aria-hidden="true"><i></i><b></b></div>
+  <div class="backdrop backdrop--dots"></div>
+  <div class="inner">
+    <div class="heading">
+      <p class="eyebrow">In detail</p>
+      <h2 class="h2">What that actually means day to day</h2>
+      <p class="lede">Follow the money: it comes in, it is directed somewhere, it is spent on someone, and the whole thing has to be administered. Everything below is in the product today.</p>
+    </div>
+
+    <div class="grid md-2">
+      <div class="gcard gcard--lift"><div class="gcard__inner p-6 sm-p-7">
+        <div style="display:flex;align-items:flex-start;gap:1rem">
+          <span class="tile tile--lg"><svg class="ico ico--lg"><use href="#i-hand-coins"/></svg></span>
+          <div><h3 class="h3 h3-lg">Getting money in</h3><p class="body" style="margin-top:.375rem">Every route a gift can arrive by, landing on one ledger.</p></div>
+        </div>
+        <div class="hairline" aria-hidden="true"></div>
+        <ul class="pointlist">
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Donation capture for cash, cheque, bank transfer, card and online payment, with your own receipt numbering per book</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Recurring giving and pledges, with what was promised tracked separately from what has been received</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Gifts in kind valued and recorded alongside cash, so the total raised is the real total</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Matching gifts, so a corporate match is attributed to both the donor and the matching organisation</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Branded donation, crowdfunding and peer-to-peer pages built in the platform and published on your own domain</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Card payments through your own gateway account — Razorpay, PayU and Braintree — so settlement goes to your bank, not ours</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Field collection for cash raised away from the office, reconciled back against the collector</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Automatic acknowledgement email with the receipt attached, the moment the gift is recorded</span></li>
+        </ul>
+      </div></div>
+
+      <div class="gcard gcard--lift"><div class="gcard__inner p-6 sm-p-7">
+        <div style="display:flex;align-items:flex-start;gap:1rem">
+          <span class="tile tile--lg"><svg class="ico ico--lg"><use href="#i-arrows-split"/></svg></span>
+          <div><h3 class="h3 h3-lg">Directing it</h3><p class="body" style="margin-top:.375rem">Restricted money that stays restricted, and can prove it did.</p></div>
+        </div>
+        <div class="hairline" aria-hidden="true"></div>
+        <ul class="pointlist">
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Donation purposes, categories and groups, so a gift is directed the moment it is taken</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Restricted and unrestricted funds with live allocated, collected and remaining balances</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Grants with documents, budgets and tranches, and receipts recorded against a named bank account</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Programmes carrying their own funding model — individual sponsorship, pooled, grant-funded or mixed</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Funding sources attached to a programme after approval, with each source's contribution tracked separately</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Payment logs per funding source, so pledged, transferred and spent are three different numbers</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Spend checked against the remaining balance as it is booked, not discovered at year end</span></li>
+        </ul>
+      </div></div>
+
+      <div class="gcard gcard--lift"><div class="gcard__inner p-6 sm-p-7">
+        <div style="display:flex;align-items:flex-start;gap:1rem">
+          <span class="tile tile--lg"><svg class="ico ico--lg"><use href="#i-users-four"/></svg></span>
+          <div><h3 class="h3 h3-lg">Reaching people</h3><p class="body" style="margin-top:.375rem">Beneficiaries, supporters and everyone in between, on one register.</p></div>
+        </div>
+        <div class="hairline" aria-hidden="true"></div>
+        <ul class="pointlist">
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Beneficiary intake with verification before a case can be opened, and its own identifier sequence</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Case files with assessments, service logs, milestones and outcomes, reviewed through an approval workflow</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Assistance paid out against a case and reconciled to the funding source that covered it</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Events with public registration, paid or free ticketing, ticket templates and check-in</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Volunteers with public sign-up, skills, shift scheduling and logged hours</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Membership types, subscriptions and renewals for organisations that run a membership base</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Families and organisations modelled as first-class records, not a text field on a person</span></li>
+        </ul>
+      </div></div>
+
+      <div class="gcard gcard--lift"><div class="gcard__inner p-6 sm-p-7">
+        <div style="display:flex;align-items:flex-start;gap:1rem">
+          <span class="tile tile--lg"><svg class="ico ico--lg"><use href="#i-gear-six"/></svg></span>
+          <div><h3 class="h3 h3-lg">Running it</h3><p class="body" style="margin-top:.375rem">The administration that decides whether a system survives its first year.</p></div>
+        </div>
+        <div class="hairline" aria-hidden="true"></div>
+        <ul class="pointlist">
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Roles and permissions granted per screen and per action, so finance, caseworkers and fundraisers see different systems</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Your branding, logo and colours across the app and every public page and email</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Multi-currency with explicit exchange rates, and English, Bengali and Arabic including right-to-left layout</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Your own numbering sequences for receipts, cases, beneficiaries and more — set once, then enforced</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Bulk import from spreadsheets with validation and duplicate checking before anything is written</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Configurable grids, saved filters and per-user column layouts on every list in the product</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Dashboards and widgets assembled from live data, plus reports and exports for the board and the auditor</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>An audit trail on financial and beneficiary records — who changed what, and when</span></li>
+        </ul>
+      </div></div>
+    </div>
+
+    <p class="body" style="margin-top:2.5rem;max-width:72ch">Not every organisation needs every one of these. Capability areas are switched on per organisation and permissions are granted per role, so your team sees the part of the platform they actually work in — and you can turn more on later without a migration.</p>
+  </div>
+</section>
+
+<!-- ══ 5. How it works ═════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="seam" aria-hidden="true"><i></i><b></b></div>
+  <div class="backdrop orbs--soft"><i class="orb orb--1"></i><i class="orb orb--3"></i></div>
+  <div class="inner">
+    <div class="heading">
+      <p class="eyebrow">Onboarding</p>
+      <h2 class="h2">How you get started</h2>
+      <p class="lede">Three steps, and a person on our side for all of them.</p>
+    </div>
+
+    <ol class="grid md-3">
+      <li class="step">
+        <div class="gcard gcard--lift"><div class="gcard__inner p-6">
+          <span class="tile mono" style="font-size:.875rem;font-weight:700">01</span>
+          <h3 class="h3 h3-lg" style="margin-top:1rem">Tell us about your organisation</h3>
+          <p class="body" style="margin-top:.5rem">A working session, not a sales call: what you fundraise for, what you deliver, who needs to see what, and which systems and spreadsheets you would be replacing. You leave it knowing whether we fit.</p>
+        </div></div>
+        <span class="step__link" aria-hidden="true"></span>
+      </li>
+      <li class="step">
+        <div class="gcard gcard--lift"><div class="gcard__inner p-6">
+          <span class="tile mono" style="font-size:.875rem;font-weight:700">02</span>
+          <h3 class="h3 h3-lg" style="margin-top:1rem">We configure your workspace</h3>
+          <p class="body" style="margin-top:.5rem">Your capability areas, roles, numbering sequences, currencies, branding and payment gateway are set up for you, and your existing donor, member and beneficiary records are imported and checked for duplicates before anyone logs in.</p>
+        </div></div>
+        <span class="step__link" aria-hidden="true"></span>
+      </li>
+      <li class="step">
+        <div class="gcard gcard--lift"><div class="gcard__inner p-6">
+          <span class="tile mono" style="font-size:.875rem;font-weight:700">03</span>
+          <h3 class="h3 h3-lg" style="margin-top:1rem">Your team goes live</h3>
+          <p class="body" style="margin-top:.5rem">Training for the people who use it daily, a hand-holding period through your first campaign or reporting cycle, then ongoing support. Your data stays yours, and you can export it at any time.</p>
+        </div></div>
+      </li>
+    </ol>
+
+    <div style="margin-top:2.5rem">
+      <a href="#enquiry" class="cta cta--primary"><span>Start with step one <svg class="ico ico--sm ico--arrow"><use href="#i-arrow-right"/></svg></span></a>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 6. Plans ════════════════════════════════════════════════════════════
+     STATIC COPY of the four publicly-listed tiers. On the live page these
+     come from the API (billing.Plans where IsPubliclyListed = true, plus the
+     PLATFORM_PLAN_HIGHLIGHTS_* settings rows). The custom tier prints the
+     word "Custom" and never its 0 anchor price.                          -->
+<section class="section section--raised" id="plans">
+  <div class="seam" aria-hidden="true"><i></i><b></b></div>
+  <div class="backdrop backdrop--dots"></div>
+  <div class="backdrop orbs--soft"><i class="orb orb--2"></i></div>
+  <div class="inner">
+    <div class="heading">
+      <p class="eyebrow">Pricing</p>
+      <h2 class="h2">Plans</h2>
+      <p class="lede">Start free and move up when your programmes do. Every plan is set up with you — pick the one that looks right and we will confirm it in the conversation.</p>
+    </div>
+
+    <div class="grid sm-2 lg-4">
+      <div class="gcard gcard--lift"><div class="gcard__inner p-6">
+        <h3 class="h3">Free</h3>
+        <div class="plan__desc"><p class="caption" style="margin-top:.25rem">For small teams getting started — contacts, donations and receipting.</p></div>
+        <p class="plan__price">Free</p>
+        <p class="caption" style="margin-top:.5rem">No cost, not a trial</p>
+        <span class="plan__rule" aria-hidden="true"></span>
+        <ul class="plan__list">
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Contacts and donor records</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Online donation collection</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Receipting and acknowledgements</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Email notifications</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Community support</span></li>
+        </ul>
+        <a href="#enquiry" class="cta cta--secondary cta--block"><span>Enquire about Free</span></a>
+      </div></div>
+
+      <div class="gcard gcard--lift"><div class="gcard__inner p-6">
+        <h3 class="h3">Growth</h3>
+        <div class="plan__desc"><p class="caption" style="margin-top:.25rem">For growing organisations — adds events, volunteers and membership.</p></div>
+        <p class="plan__price">₹50,000</p>
+        <p class="caption" style="margin-top:.5rem">per year</p>
+        <span class="plan__rule" aria-hidden="true"></span>
+        <ul class="plan__list">
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Everything in Free</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Events and registrations</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Volunteer management</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Membership records</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Full email channel</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Standard support</span></li>
+        </ul>
+        <a href="#enquiry" class="cta cta--secondary cta--block"><span>Enquire about Growth</span></a>
+      </div></div>
+
+      <div class="gcard gcard--lift"><div class="gcard__inner p-6">
+        <h3 class="h3">Full Suite</h3>
+        <div class="plan__desc"><p class="caption" style="margin-top:.25rem">Everything in the platform, including case and grant management.</p></div>
+        <p class="plan__price">₹100,000</p>
+        <p class="caption" style="margin-top:.5rem">per year</p>
+        <span class="plan__rule" aria-hidden="true"></span>
+        <ul class="plan__list">
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Everything in Growth</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Case management</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Grant management</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>SMS and WhatsApp channels</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Advanced reporting</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Priority support</span></li>
+        </ul>
+        <a href="#enquiry" class="cta cta--secondary cta--block"><span>Enquire about Full Suite</span></a>
+      </div></div>
+
+      <!-- The custom tier keeps its gradient edge lit instead of waiting for
+           hover. That is the whole of its emphasis — no scale-up, and no
+           "most popular" ribbon, because there is no popularity data. -->
+      <div class="gcard gcard--lift gcard--lit plan--custom"><div class="gcard__inner p-6">
+        <h3 class="h3">Enterprise</h3>
+        <div class="plan__desc"><p class="caption" style="margin-top:.25rem">For larger organisations — every module, with limits agreed with you.</p></div>
+        <p class="plan__price">Custom</p>
+        <p class="caption" style="margin-top:.5rem">Priced with you</p>
+        <span class="plan__rule" aria-hidden="true"></span>
+        <ul class="plan__list">
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Every module enabled</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Limits agreed with you, not a price list</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Dedicated onboarding</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Named account contact</span></li>
+          <li><svg class="ico ico--sm brandcheck"><use href="#i-check-circle"/></svg><span>Custom commercial terms</span></li>
+        </ul>
+        <a href="#enquiry" class="cta cta--primary cta--block"><span>Request a quote</span></a>
+      </div></div>
+    </div>
+
+    <p class="caption" style="margin-top:2rem">Prices exclude any applicable taxes. Charges and limits are confirmed in writing before anything is activated.</p>
+  </div>
+</section>
+
+<!-- ══ 7. Security ═════════════════════════════════════════════════════════
+     Claim only what is true today. No SOC 2 crest, no ISO 27001 mark, no
+     "bank-grade" adjective — we hold neither of the first two and the third
+     means nothing. Plain panels, and no hover lift: nothing here is a link.-->
+<section class="section">
+  <div class="seam" aria-hidden="true"><i></i><b></b></div>
+  <div class="backdrop backdrop--grid"></div>
+  <div class="inner">
+    <div class="heading">
+      <p class="eyebrow">Trust</p>
+      <h2 class="h2">Security and your data</h2>
+      <p class="lede">You are being asked to put donor and beneficiary records into someone else's system. Here is exactly what that means.</p>
+    </div>
+
+    <div class="grid grid--dense sm-2 lg-3">
+      <article class="trustcard"><span class="tile"><svg class="ico"><use href="#i-lock-key"/></svg></span><div><h3 class="h3">Your data is yours</h3><p class="body" style="margin-top:.375rem">Each organisation's data is isolated from every other organisation on the platform. We do not sell it, and we do not use it to train anything.</p></div></article>
+      <article class="trustcard"><span class="tile"><svg class="ico"><use href="#i-shield-check"/></svg></span><div><h3 class="h3">Access is controlled by role</h3><p class="body" style="margin-top:.375rem">Permissions are granted per role, per screen and per action — view, create, edit, approve — so caseworkers, finance staff and fundraisers each see only what their job requires.</p></div></article>
+      <article class="trustcard"><span class="tile"><svg class="ico"><use href="#i-credit-card"/></svg></span><div><h3 class="h3">We never hold card details</h3><p class="body" style="margin-top:.375rem">Card payments go straight to your own gateway account. Card numbers never touch our systems, and settlement goes to your bank, not through ours.</p></div></article>
+      <article class="trustcard"><span class="tile"><svg class="ico"><use href="#i-clock"/></svg></span><div><h3 class="h3">Changes are recorded</h3><p class="body" style="margin-top:.375rem">Financial and beneficiary records carry an audit trail — who changed what, and when — for internal review and external audit.</p></div></article>
+      <article class="trustcard"><span class="tile"><svg class="ico"><use href="#i-database"/></svg></span><div><h3 class="h3">Encrypted and backed up</h3><p class="body" style="margin-top:.375rem">Data is encrypted in transit, held in managed cloud infrastructure, and backed up on a regular schedule.</p></div></article>
+      <article class="trustcard"><span class="tile"><svg class="ico"><use href="#i-export"/></svg></span><div><h3 class="h3">No lock-in</h3><p class="body" style="margin-top:.375rem">Your records can be exported in standard formats whenever you ask. Leaving is a process, not a negotiation.</p></div></article>
+      <article class="trustcard"><span class="tile"><svg class="ico"><use href="#i-file-text"/></svg></span><div><h3 class="h3">Privacy</h3><p class="body" style="margin-top:.375rem">Consent is captured against the contact record and honoured by the communications module. Our privacy policy sets out how we handle personal data.</p></div></article>
+      <article class="trustcard"><span class="tile"><svg class="ico"><use href="#i-sign-in"/></svg></span><div><h3 class="h3">Sign-in is host-gated</h3><p class="body" style="margin-top:.375rem">Your users sign in on your own workspace address, and our own staff cannot sign in there at all. Which door an account may use is enforced by the server, not chosen by the browser.</p></div></article>
+      <article class="trustcard"><span class="tile"><svg class="ico"><use href="#i-seal-check"/></svg></span><div><h3 class="h3">Rules are enforced on the server</h3><p class="body" style="margin-top:.375rem">Permission checks, approval steps and validation run in the API, not only in the page you can see. Bypassing the interface does not bypass the rule.</p></div></article>
+    </div>
+
+    <p class="body" style="margin-top:2.5rem">Full detail is in our <a class="inlink" href="https://pwdatasolutions.com/privacy-policy/" target="_blank" rel="noopener noreferrer">privacy policy</a>.</p>
+  </div>
+</section>
+
+<!-- ══ 8. FAQ ══════════════════════════════════════════════════════════════
+     Native <details>/<summary>: every answer is in the DOM, collapsed by
+     markup, so a crawler and a screen reader get the full text without
+     executing anything. Narrower measure than the rest of the page.      -->
+<section class="section section--raised" id="faq">
+  <div class="seam" aria-hidden="true"><i></i><b></b></div>
+  <div class="backdrop backdrop--dots"></div>
+  <div class="inner inner--narrow">
+    <div class="heading">
+      <p class="eyebrow">FAQ</p>
+      <h2 class="h2">Questions we are asked</h2>
+    </div>
+
+    <div class="faq">
+      <div class="gcard"><div class="gcard__inner"><details><summary><span>Is there a free plan?</span><svg class="ico ico--sm"><use href="#i-caret-down"/></svg></summary><p class="body">Yes. The Free plan covers contacts, donation collection and receipting, and it is a real plan rather than a trial that expires. You can move to a larger plan when your organisation needs the additional modules.</p></details></div></div>
+      <div class="gcard"><div class="gcard__inner"><details><summary><span>Can I sign up online right now?</span><svg class="ico ico--sm"><use href="#i-caret-down"/></svg></summary><p class="body">No — and that is deliberate. Every workspace is configured for the organisation that will use it: your modules, roles, numbering, currencies and imported data. Send an enquiry and we will set it up with you.</p></details></div></div>
+      <div class="gcard"><div class="gcard__inner"><details><summary><span>How long does it take to go live?</span><svg class="ico ico--sm"><use href="#i-caret-down"/></svg></summary><p class="body">For a small organisation with clean data, typically a couple of weeks. Larger migrations with historical giving records, open cases or active grants take longer, and we will give you a realistic timeline after the first conversation.</p></details></div></div>
+      <div class="gcard"><div class="gcard__inner"><details><summary><span>Can you import our existing donor data?</span><svg class="ico ico--sm"><use href="#i-caret-down"/></svg></summary><p class="body">Yes. Contacts, giving history and beneficiary records can be imported from spreadsheets or from your current system. Data is checked for duplicates before it lands.</p></details></div></div>
+      <div class="gcard"><div class="gcard__inner"><details><summary><span>Do you support multiple currencies and languages?</span><svg class="ico ico--sm"><use href="#i-caret-down"/></svg></summary><p class="body">Yes. The platform handles multiple currencies with explicit exchange rates, and the interface is available in English, Bengali and Arabic, including right-to-left layout.</p></details></div></div>
+      <div class="gcard"><div class="gcard__inner"><details><summary><span>Who can see our data?</span><svg class="ico ico--sm"><use href="#i-caret-down"/></svg></summary><p class="body">Only the users you create, and only the parts their role permits. Your organisation's data is isolated from every other organisation on the platform.</p></details></div></div>
+      <div class="gcard"><div class="gcard__inner"><details><summary><span>What does support look like?</span><svg class="ico ico--sm"><use href="#i-caret-down"/></svg></summary><p class="body">Every plan includes support; larger plans include faster response commitments and a named contact. Support covers the platform itself as well as questions about configuring it for a new programme.</p></details></div></div>
+      <div class="gcard"><div class="gcard__inner"><details><summary><span>Can we get our data out if we leave?</span><svg class="ico ico--sm"><use href="#i-caret-down"/></svg></summary><p class="body">Yes, in standard exportable formats, on request. There is no exit fee and no hostage-taking of your records.</p></details></div></div>
+      <div class="gcard"><div class="gcard__inner"><details><summary><span>Which payment gateways do you support?</span><svg class="ico ico--sm"><use href="#i-caret-down"/></svg></summary><p class="body">Razorpay, PayU and Braintree today, connected to your own merchant account. Donations settle into your bank, not into ours, and we never see or store card numbers. If you already have a gateway relationship, tell us which one and we will confirm before you commit to anything.</p></details></div></div>
+      <div class="gcard"><div class="gcard__inner"><details><summary><span>Do we get our own web address for donation pages?</span><svg class="ico ico--sm"><use href="#i-caret-down"/></svg></summary><p class="body">Yes. Your workspace runs on your own address, and the donation, crowdfunding, peer-to-peer, event and volunteer pages you publish are served from it, carrying your logo and colours rather than ours.</p></details></div></div>
+      <div class="gcard"><div class="gcard__inner"><details><summary><span>Can we track what a restricted donation was actually spent on?</span><svg class="ico ico--sm"><use href="#i-caret-down"/></svg></summary><p class="body">That is one of the main reasons the platform exists. A gift is directed to a purpose or fund when it is recorded; programmes draw down against their funding sources; assistance paid on a case is booked back to the source that covered it. The trail from donor to beneficiary is a query, not a reconstruction.</p></details></div></div>
+      <div class="gcard"><div class="gcard__inner"><details><summary><span>Does it handle offline donations, or only online?</span><svg class="ico ico--sm"><use href="#i-caret-down"/></svg></summary><p class="body">Both, on the same ledger. Cash, cheque, bank transfer and field collection are recorded with the same receipting, purposes and reporting as online gifts — the report does not care which way the money arrived.</p></details></div></div>
+      <div class="gcard"><div class="gcard__inner"><details><summary><span>Can we run it alongside our accounting system?</span><svg class="ico ico--sm"><use href="#i-caret-down"/></svg></summary><p class="body">Yes. The platform is your fundraising and programme record, not your general ledger, and its reports and exports are built to be handed to finance. Talk to us about your accounting package and we will be specific about what that handover looks like for you.</p></details></div></div>
+      <div class="gcard"><div class="gcard__inner"><details><summary><span>What if we only need part of it?</span><svg class="ico ico--sm"><use href="#i-caret-down"/></svg></summary><p class="body">That is the normal case. Capability areas are switched on per organisation and permissions are granted per role, so a team that only does donations and events never sees case management. You can turn more on later without a migration.</p></details></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 9. Enquiry ══════════════════════════════════════════════════════════
+     OFFLINE COPY: this form posts nowhere. The live one creates a Lead with
+     Source = INBOUND, and creates no tenant, user or subscription.
+     The country list here is a static sample; the live list comes from the
+     API. Soft orbs only — movement behind a form being filled in is the
+     definition of distracting.                                           -->
+<section class="section" id="enquiry">
+  <div class="backdrop backdrop--grid"></div>
+  <div class="backdrop orbs--soft"><i class="orb orb--2"></i></div>
+  <div class="inner inner--narrow">
+    <div class="heading">
+      <p class="eyebrow">Get in touch</p>
+      <h2 class="h2">Tell us about your organisation</h2>
+      <p class="lede">A short form, then a real conversation. We will look at what you run today and tell you honestly whether we are the right fit — nothing is set up until you say so.</p>
+    </div>
+
+    <div style="margin-top:3rem">
+      <form class="form" id="enquiryForm" novalidate>
+        <div class="fields">
+          <div class="span2">
+            <label for="organizationName">Organisation name <span class="req">*</span></label>
+            <input id="organizationName" type="text" autocomplete="organization" />
+          </div>
+          <div>
+            <label for="contactName">Your name <span class="req">*</span></label>
+            <input id="contactName" type="text" autocomplete="name" />
+          </div>
+          <div>
+            <label for="contactEmail">Work email <span class="req">*</span></label>
+            <input id="contactEmail" type="email" autocomplete="email" />
+          </div>
+          <div>
+            <label for="contactPhone">Phone</label>
+            <input id="contactPhone" type="tel" autocomplete="tel" />
+          </div>
+          <div>
+            <label for="countryId">Country <span class="req">*</span></label>
+            <select id="countryId">
+              <option value="">Select a country</option>
+              <option>United Kingdom</option>
+              <option>India</option>
+              <option>United States</option>
+              <option>Bangladesh</option>
+              <option>United Arab Emirates</option>
+              <option>Saudi Arabia</option>
+              <option>Canada</option>
+              <option>Australia</option>
+              <option>Singapore</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div>
+            <label for="industry">Type of organisation</label>
+            <select id="industry">
+              <option value="">Prefer not to say</option>
+              <option>Charity / NGO</option>
+              <option>Foundation / Grantmaker</option>
+              <option>Religious organisation</option>
+              <option>Educational institution</option>
+              <option>Healthcare / Medical relief</option>
+              <option>Community organisation</option>
+              <option>Government / Public sector</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div>
+            <label for="organizationSize">Organisation size</label>
+            <select id="organizationSize">
+              <option value="">Prefer not to say</option>
+              <option>1–10 staff</option>
+              <option>11–50 staff</option>
+              <option>51–200 staff</option>
+              <option>201–500 staff</option>
+              <option>More than 500 staff</option>
+            </select>
+          </div>
+          <div>
+            <label for="website">Website</label>
+            <input id="website" type="url" placeholder="https://" />
+          </div>
+          <div class="span2">
+            <label for="notes">What would you like to tell us?</label>
+            <textarea id="notes" rows="4" placeholder="What you run today, what is not working, and roughly when you would want to start."></textarea>
+          </div>
+        </div>
+
+        <div class="consent">
+          <input id="consentGiven" type="checkbox" />
+          <label for="consentGiven">I agree that PW Data Solutions may contact me about this enquiry and store the details I have entered. <span class="req">*</span></label>
+        </div>
+
+        <button type="submit" class="submit">Send enquiry</button>
+        <p class="caption" style="margin-top:.75rem">No account is created by this form. We will reply by email.</p>
+      </form>
+
+      <!-- Success REPLACES the form. A toast over a still-filled form leaves
+           the visitor unsure whether it sent, and invites a second attempt. -->
+      <div class="thanks" id="thanksPanel" hidden>
+        <div>
+          <span class="tile tile--xl" style="border-radius:9999px;margin-bottom:1rem"><svg class="ico"><use href="#i-check"/></svg></span>
+          <h3 style="font-size:1.125rem;font-weight:600">Thank you — we have your enquiry</h3>
+          <p class="body" style="margin:.75rem auto 0;max-width:28rem">A member of our solutions team will contact you by email, typically within one working day. If your request is urgent, write to us at <a class="inlink" href="mailto:info@pwdatasolutions.com">info@pwdatasolutions.com</a> and mention your organisation's name.</p>
+          <p class="caption" style="margin-top:1rem">Offline preview — nothing was actually sent.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ══ Footer ══════════════════════════════════════════════════════════════ -->
+<footer>
+  <div class="beam"></div>
+  <div class="inner" style="padding-top:3rem;padding-bottom:3rem">
+    <div class="footer__grid">
+      <div class="footer__brand">
+        <div style="display:flex;align-items:center;gap:.625rem">
+          <span class="tile tile--sm"><svg class="ico ico--sm"><use href="#i-hand-heart"/></svg></span>
+          <span style="font-size:1rem;font-weight:700;letter-spacing:-.01em">PW Data Solutions</span>
+        </div>
+        <p class="body" style="margin-top:1rem;max-width:20rem">AI-powered operations for mission-driven organisations.</p>
+      </div>
+
+      <nav aria-label="Platform">
+        <h2 style="font-size:.875rem;font-weight:600">Platform</h2>
+        <ul class="footer__links">
+          <li><a href="https://pwdatasolutions.com/ai-agents/" target="_blank" rel="noopener noreferrer">AI Agents</a></li>
+          <li><a href="https://pwdatasolutions.com/managed-operations/" target="_blank" rel="noopener noreferrer">Managed Operations</a></li>
+        </ul>
+      </nav>
+
+      <nav aria-label="Products">
+        <h2 style="font-size:.875rem;font-weight:600">Products</h2>
+        <ul class="footer__links">
+          <li><a href="#top">PeopleServe</a></li>
+          <li><a href="https://pwdatasolutions.com/eduserve/" target="_blank" rel="noopener noreferrer">Eduserve</a></li>
+          <li><a href="https://pwdatasolutions.com/custom-development/" target="_blank" rel="noopener noreferrer">Custom Development</a></li>
+          <li><a href="https://pwdatasolutions.com/data-analytics/" target="_blank" rel="noopener noreferrer">Data Analytics</a></li>
+        </ul>
+      </nav>
+
+      <nav aria-label="Company">
+        <h2 style="font-size:.875rem;font-weight:600">Company</h2>
+        <ul class="footer__links">
+          <li><a href="https://pwdatasolutions.com/about-us/" target="_blank" rel="noopener noreferrer">About Us</a></li>
+          <li><a href="https://pwdatasolutions.com/insights/" target="_blank" rel="noopener noreferrer">Insights</a></li>
+          <li><a href="https://pwdatasolutions.com/contact/" target="_blank" rel="noopener noreferrer">Contact</a></li>
+        </ul>
+        <ul class="footer__contact">
+          <li><svg class="ico ico--sm"><use href="#i-envelope"/></svg><a class="flink" href="mailto:info@pwdatasolutions.com">info@pwdatasolutions.com</a></li>
+          <li><svg class="ico ico--sm"><use href="#i-phone"/></svg><a class="flink" href="tel:+442081331855">+44 (0) 208 133 1855</a></li>
+          <!-- Not a link: an address with nowhere to go should not look clickable. -->
+          <li><svg class="ico ico--sm"><use href="#i-map-pin"/></svg>London, United Kingdom</li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <div class="beam"></div>
+
+  <div class="legal">
+    <p class="caption">© 2026 PW Data Solutions. All rights reserved.</p>
+    <nav aria-label="Legal" style="display:flex;flex-wrap:wrap;align-items:center;gap:.5rem 1.5rem">
+      <a class="flink caption" href="https://pwdatasolutions.com/privacy-policy/" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+      <a class="flink caption" href="https://pwdatasolutions.com/terms-of-service/" target="_blank" rel="noopener noreferrer">Terms of Service</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+// Two behaviours only, both local. No network access of any kind.
+
+// 1. Theme toggle. Not on the live page (the app owns the theme there);
+//    added here so the file can be reviewed in both modes on its own.
+(function () {
+  var root = document.documentElement;
+  var btn = document.getElementById("themeBtn");
+  var use = document.querySelector("#themeIcon use");
+  function paint() {
+    var dark = root.getAttribute("data-theme") === "dark" ||
+      (!root.getAttribute("data-theme") && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    use.setAttribute("href", dark ? "#i-sun" : "#i-moon");
+  }
+  btn.addEventListener("click", function () {
+    var dark = root.getAttribute("data-theme") === "dark" ||
+      (!root.getAttribute("data-theme") && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    root.setAttribute("data-theme", dark ? "light" : "dark");
+    paint();
+  });
+  paint();
+})();
+
+// 2. Form panel swap, so the completed flow can be demonstrated. It sends
+//    nothing anywhere — see the section comment above.
+document.getElementById("enquiryForm").addEventListener("submit", function (e) {
+  e.preventDefault();
+  this.hidden = true;
+  var panel = document.getElementById("thanksPanel");
+  panel.hidden = false;
+  panel.scrollIntoView({ block: "center" });
+});
+</script>
+</body>
+</html>
