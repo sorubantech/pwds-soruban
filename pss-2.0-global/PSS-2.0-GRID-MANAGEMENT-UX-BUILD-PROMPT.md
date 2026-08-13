@@ -73,33 +73,34 @@ A tab strip promises three equal views of one thing. What actually sits behind i
 │ ScreenHeader  "Grid Management"  ph:table-columns                         │
 │   description: "Choose a grid, then decide which columns your team sees,  │
 │                 how it sorts, filters and pages."                         │
-│   right: [Field Master] [Custom Fields]   ·   [Reset all grids ▾]         │
+│   (no header actions — every action lives in the floating toolbar)        │
 ├───────────────────────────────────────────────────────────────────────────┤
-│ GRID PICKER BAR  (sticky top-0 z-20, backdrop-blur)                        │
-│   [ 🔍 Search 240 grids across 18 modules … ]   ▸ Donations › Receipts     │
-│   chips:  ● 12 customised   ○ 228 default   ↺ Recently edited              │
+│ GRID PICKER BAR  (sticky top-0 z-20, bg-accent/40, border-b-2, shadow-sm) │
+│   [ ▸ Receipts ▾ ]  [All][Customised][Default]   RECEIPT_GRID · Donations │
+│                                        · Customised · 14 of 22 visible    │
 ├───────────────────────────────────────────────────────────────────────────┤
 │ (no grid chosen) → ZERO STATE: illustration + "Pick a grid to begin",      │
 │                    plus 6 recently-edited quick cards                      │
 ├───────────────────────────────────────────────────────────────────────────┤
 │ (grid chosen)                                                             │
-│   ┌ CONTEXT STRIP ────────────────────────────────────────────────────┐   │
-│   │ Receipts  ·  RECEIPT_GRID  ·  Donations  ·  Customised · 14 cols  │   │
-│   │                                    [Preview]  [Form layout]        │   │
-│   └────────────────────────────────────────────────────────────────────┘   │
-│                                                                           │
 │   xl:  ┌─ Columns (2fr) ─────────────┐ ┌─ Behaviour · Sort · Filters ─┐   │
 │        │ column config table          │ │ stacked cards (1fr)          │   │
 │        └──────────────────────────────┘ └──────────────────────────────┘   │
 │   ≤lg: single column, Columns first                                        │
-├───────────────────────────────────────────────────────────────────────────┤
-│ STICKY ACTION BAR (bottom-0, only when a grid is chosen)                   │
-│   left: dirty/validity summary   right: [Discard changes] [Restore         │
-│                                          system defaults] [Save]           │
+│                                                                           │
+│        ┌ FLOATING TOOLBAR (sticky bottom-4, rounded rectangle) ───────┐  │
+│        │ ✓ saved │ ▣ ▣ │ 👁 Preview ▣ │ ↶ Discard ▣ ▣ │ Aa │ [ Save ] │  │
+│        └──────────────────────────────────────────────────────────────┘  │
 └───────────────────────────────────────────────────────────────────────────┘
 ```
 
-Page container: `w-full px-4 pb-24 pt-2 sm:px-6 lg:px-8`. There is no max-width cap at all — this is a data-dense editor and it occupies the full viewport width on every screen size.
+**The picker bar is not the header.** It carries its own tinted surface (`bg-accent/40`), a doubled bottom edge and a shadow, so the two never read as one merged block. The grid's identity (`gridCode` · module · Customised/System default · *n of m columns visible*) sits on the picker's own line — there is no separate context-strip card.
+
+**One toolbar, not three surfaces.** `grid-tab/floating-toolbar.tsx` renders a `pointer-events-none` **sticky** wrapper around a `pointer-events-auto` rounded rectangle: status, then rule-separated groups (reference data · view · undo/reset), then the labels toggle, then the brand-filled primary Save. The `ScreenHeader` carries no `headerActions` and there is no sticky bottom bar — the reference sheets still belong to the page, which passes `onOpenReference` / `onResetAllGrids` / `resettingAllGrids` down to `GridTab`. The status hides below `sm`.
+
+**Horizontal, not a vertical rail.** Canvas editors put tools in a right-edge rail because they have dozens of them, no single commit action and a full-viewport canvas. This screen is a form with one primary commit (Save) and a wide table that wants every horizontal pixel, so the bar sits bottom-centre and Save stays on the reading path.
+
+Page container: `w-full px-4 pb-4 pt-1 sm:px-6 lg:px-8`. There is no max-width cap at all — this is a data-dense editor and it occupies the full viewport width on every screen size.
 
 ---
 
@@ -129,13 +130,18 @@ Rewrite `column-config-table.tsx`.
 
 **Reorder — keyboard reachable.** Keep the pointer drag, and add to each row a two-button vertical stepper (`ph:caret-up` / `ph:caret-down`, `size="icon"`, `h-6 w-6`, `variant="ghost"`), disabled at the ends, each with `aria-label={"Move " + fieldName + " up|down"}`. The drag handle gets `tabIndex={0}` and `aria-roledescription="sortable"`.
 
-**Filter type becomes editable.** Where `isFilterable` is on, `filterOperator` renders as a `Select` — not a badge — over the operator set for that column's `dataTypeName`, using the same `getOperatorsForDataType` mapping that `default-filters-card.tsx` already owns. Move that function to a shared `grid-config/tabs/grid-tab/filter-operators.ts` and import it in both places; add `operatorLabel(op)` there too so `starts_with` renders as `Starts with` (capitalised, not the current bare `replace(/_/g, " ")`). When `isFilterable` is off the Select is disabled and shows `—`.
+**Filter type becomes editable.** Where `isFilterable` is on, `filterOperator` renders as a `Select` — not a badge — over the operator set for that column's `dataTypeName`, using the same `getOperatorsForDataType` mapping that `default-filters-card.tsx` already owns. Move that function to a shared `grid-config/tabs/grid-tab/filter-operators.ts` and import it in both places; add `operatorLabel(op)` there too so `starts_with` renders as `Starts with` (capitalised, not the current bare `replace(/_/g, " ")`). When `isFilterable` is off the Select is not rendered at all — see the control-gating rules below.
 
 **Width gets live bounds.** Clamp on change to `[40, 600]`; on blur, snap out-of-range values to the nearest bound and flash the input border with `border-amber-600` for one second rather than waiting for save-time validation. Empty means "auto" — post `undefined`, not `0`.
 
 **Colour.** Delete the pastel `cls` map. Filter-type chips become `variant="outline"` neutral chips with a leading icon per type (`ph:text-aa`, `ph:list`, `ph:calendar-blank`, `ph:hash`, `ph:toggle-left`). The only saturated colour in this table is the **Visible** state and the `brandSolid` drag indicator.
 
-**Locks are enforced, not decorative.** `isPrimary` → Visible switch `disabled` with tooltip `The primary column cannot be hidden.` `isSystem` → keep the `ph:lock` icon, tooltip `System column — order and width are yours; it cannot be removed.` `isPredefined` → outline chip `Predefined`, tooltip unchanged.
+**A control appears only when it can do something.** No disabled walls of switches:
+
+- `isPrimary` → the row offers **no actions at all**. No drag handle, no reorder steppers, no Visible switch (an `Always shown` outline badge stands in its place), no Filterable / Filter type / Width. Every empty cell is a muted `—` whose tooltip reads *The primary column identifies each row — it is always shown and cannot be configured.*
+- A **hidden** non-primary column keeps only its Visible switch and its reorder controls. Filterable / Filter type / Width are muted `—` with *Show this column first — only visible columns can be resized or filtered.*
+- A visible column that is not `isFilterable` shows the switch but no operator `Select` — `—` with *Turn on Filterable to choose how this column is filtered.*
+- `isSystem` → keep the `ph:lock` icon, tooltip `System column — order and width are yours; it cannot be removed.` `isPredefined` → outline chip `Predefined`, tooltip unchanged.
 
 **Responsive.** Below `lg`, the table collapses to a card list: one card per column, name + code on the first line, Visible switch top-right, and Width / Filterable / Filter type on a `grid-cols-2 gap-3` beneath. At `lg`+ the current 8-column table returns, wrapped in `overflow-x-auto` with the name column `sticky left-0 bg-background`.
 
@@ -201,18 +207,24 @@ Update `reset-confirm-modals.tsx` to export both dialogs with distinct copy. **R
 
 ---
 
-## ⑩ Save bar, validation and error states
+## ⑩ Floating toolbar, validation and error states
 
-**Sticky action bar** — `sticky bottom-0 z-20 -mx-4 border-t bg-background/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6`. Rendered only when a grid is selected.
+**Floating toolbar** — `grid-tab/floating-toolbar.tsx`, always rendered (the reference-data group works with no grid selected); the editor group, the destructive group and the primary Save appear only once a grid is chosen. The wrapper is `pointer-events-none sticky bottom-4 z-30 flex justify-center`; the bar inside is `pointer-events-auto flex-wrap rounded-lg border bg-background/95 p-1.5 shadow-lg backdrop-blur`.
 
-Left side, one line, in priority order:
+**Sticky, not fixed.** `fixed inset-x-0 … justify-center` centres on the *viewport*, so the bar drifts off-centre the moment the shell's side nav is open. Sticky inside the scroll column centres it on the body area and reserves its own height, which is why the page pad is `pb-4` and not a tall clearance.
+
+**No scroll container on the bar.** The shared `TooltipContent` atom is **not** portalled — it renders inside the trigger's DOM — so an `overflow-x-auto` bar clips every tooltip to a sliver. The bar wraps (`flex-wrap`) instead of scrolling. Do not reintroduce `overflow-*` here.
+
+**Labels are a toggle, not a breakpoint.** Actions are icon-only squares (`h-9 w-9`) by default. `ToolbarAction.alwaysLabel` opts the frequently-used ones in permanently (Preview, Discard; Save is the primary and is always named). A trailing `ph:text-aa` toggle button — `aria-pressed`, default **false**, persisted to `localStorage["pss.toolbar.show-labels"]` — reveals every label. Tooltips are identical in both modes; they are the accessible name path (`aria-label` is always the label) and never change with the toggle.
+
+Status sits at the left of the bar, one line, in priority order:
 1. `validationErrors.length > 0` → `ph:warning-circle` + `{n} issue{s} to fix` in `text-destructive`, clickable, scrolling to the first offending card.
 2. `isDirty` → `ph:circle-dashed` + `Unsaved changes`.
 3. otherwise → `ph:check-circle` + `All changes saved` in `text-muted-foreground`.
 
-Right side: `[Discard changes] [Restore system defaults] [Save configuration]`. Save is `style={brandSolid}`, disabled on `!canSave`, and when disabled its wrapper carries a Tooltip naming the reason (`Nothing to save` / `Fix {n} issue{s} first` / `Choose a grid first`) — never a silently dead button.
+Then the action groups, separated by a `h-7 w-px bg-border` vertical rule: `[Field Master] [Custom Fields]` · `[Preview] [Form layout]` · `[Discard] [Restore defaults] [Reset all grids]` · `[Aa]` · `[Save]`. Save is `style={brandSolid}`, disabled on `!canSave`, and when disabled its wrapper carries a Tooltip naming the reason (`Nothing to save` / `Fix {n} issue{s} first` / `Choose a grid first`) — never a silently dead button. The two reset actions are `text-destructive`; every action tooltips its consequence.
 
-**Validation moves up.** The `string[]` list renders in an `Alert variant="destructive"` directly beneath the context strip — above the fold, above the cards — and it renders whenever `validationErrors.length > 0`, **not** gated on `isDirty`. Each message stays as written but gains the offending column name where it has one.
+**Validation moves up.** The `string[]` list renders in an `Alert variant="destructive"` directly beneath the picker bar — above the fold, above the cards — and it renders whenever `validationErrors.length > 0`, **not** gated on `isDirty`. Each message stays as written but gains the offending column name where it has one.
 
 **Query error branch.** Destructure `error` from the config `useQuery`. On error render, in place of the editor: an `Alert variant="destructive"` with `error.message`, a `Retry` button calling `refetch()`, and the picker still usable above it. Loading renders shaped Skeletons — a 6-row table skeleton for the columns card and three `h-32` card skeletons on the right — never a spinner.
 
@@ -332,6 +344,24 @@ Each is greppable or observable.
 ## ⑬ Build Log
 
 _(append-only, newest first, last 5 sessions retained — git holds the rest)_
+
+**2026-08-13 — toolbar refinement: rectangle, icon-first, content-centred.** Frontend only, `floating-toolbar.tsx` + its call site.
+
+- **Rectangle, grouped** — `rounded-full` → `rounded-lg` on the bar and `rounded-md` on every button; groups keep a `h-7 w-px` vertical rule between them.
+- **Icon-first** — actions are `h-9 w-9` icon squares. `ToolbarAction.alwaysLabel` names only the frequently-used ones (Preview, Discard); a `ph:text-aa` toggle, default **false** and persisted to `localStorage["pss.toolbar.show-labels"]`, reveals the rest. Tooltips and `aria-label` are unchanged in both modes.
+- **Centred on the body, not the screen** — `fixed inset-x-0` → `sticky bottom-4` inside the scroll column, so an open side nav no longer pushes the bar off-centre. Page pad `pb-24` → `pb-4` since the sticky bar reserves its own height.
+- **Tooltip clipping fixed** — root cause is the shared `Tooltip` atom rendering `TooltipContent` without a `TooltipPrimitive.Portal`, so it is clipped by any ancestor scroll container. Fixed locally by dropping the bar's `overflow-x-auto` for `flex-wrap` rather than changing an atom used across the app.
+- **Horizontal kept over a vertical rail** — a rail suits canvas editors (many tools, no single commit, full-viewport canvas); this is a form with one Save and a wide table that needs the horizontal room.
+- `npx tsc --noEmit --incremental false` exits **0**; `eslint` over the folder is clean (four stale `Tooltip*` imports in `grid-tab.tsx` removed).
+
+**2026-08-12 — review pass: full-width, one toolbar, honest controls.** Frontend only.
+
+- **Full screen** — the page container lost `mx-auto max-w-[1600px]`; it is now `w-full`. The sticky bars already negative-margin to the gutters, so the extra room goes to the column table via `xl:grid-cols-3`, not to dead centre space.
+- **Header vs picker** — they read as one merged block because both were `bg-background`. The picker bar is now its own surface: `bg-accent/40`, `border-b-2`, `shadow-sm`, `py-2.5`.
+- **One toolbar** — new `grid-tab/floating-toolbar.tsx`. `ScreenHeader` lost `headerActions` and the sticky bottom bar is gone; reference data, Preview/Form layout, Discard/Restore/Reset-all and Save now share one centred floating pill. The page still owns the reference `Sheet` and the reset-all mutation and passes `onOpenReference` / `onResetAllGrids` / `resettingAllGrids` into `GridTab`.
+- **Spacing** — three vertical consumers removed: the header action row, the standalone context-strip card (its metadata folded onto the picker line), and the sticky footer. Root spacing `space-y-4` → `space-y-3`, page `pt-2` → `pt-1`.
+- **Honest controls** — the column table no longer renders disabled controls. Primary rows offer no actions at all (an `Always shown` badge replaces the Visible switch); hidden columns expose no Filter/Width; a non-filterable column exposes no operator `Select`. Every suppressed cell is a `—` whose tooltip says why.
+- `npx tsc --noEmit --incremental false` exits **0**; `eslint` over the folder is clean.
 
 **2026-08-11 — build complete (§⑮ steps 1–12).** Frontend only; no DTO, entity, resolver or migration touched.
 
