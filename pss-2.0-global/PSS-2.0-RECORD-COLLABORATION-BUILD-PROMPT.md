@@ -75,12 +75,14 @@ Signature `GetRecordActivityQuery(string entityType, int entityId, string filter
 | `parentCommentId` | One-level threading. Null = root. |
 | `isEdited`, `isDeleted` | Comment only. `isDeleted` drives the tombstone. |
 | `actionType` | `CREATE`/`UPDATE`/`APPROVE`/… Null on `COMMENT`. |
-| `fieldChanges` | `[{ field, oldValue, newValue }]` parsed from the audit row's change payload. Null/empty when unparseable — **never throw on bad JSON**. |
+| `fieldChanges` | `[{ field, before, after }]` parsed from `AuditLog.ChangesJson`. **That is the on-disk shape — do not rename to `oldValue`/`newValue`.** The column is documented as *"For UPDATE actions: array [{field, before, after}] as JSON. Max 64KB."* Null/empty when unparseable — **never throw on bad JSON**. |
+| `summary` | `AuditLog.Description` — already a human narrative (*"Updated amount from $200 to $500"*). Use it as the change item's one-line text rather than composing your own. Null on `COMMENT`. |
+| `severity` | `AuditLog.Severity` (`LOW`/`MEDIUM`/`HIGH`/`CRITICAL`). Carry it through; the FE may tone a `CRITICAL` change differently. Null on `COMMENT`. |
 | `recordCommentId`, `auditLogId` | Whichever applies. |
 
 ### Commands
 
-- `CreateRecordComment` — validates `entityType` against the same map, body 1–4000 chars, re-validates mention ids against the tenant (rule 6), stores the surviving ids, snapshots author name, returns the created item. Fires one notification per surviving mentioned user through the **existing** notification infrastructure (`useFetchNotifications`/`useNotificationCount` already consume it) — do not build a second notification path.
+- `CreateRecordComment` — validates `entityType` against the same map, body 1–4000 chars, re-validates mention ids against the tenant (rule 6), stores the surviving ids, snapshots author name, returns the created item. Then notifies via the **existing writer** — see §⑥, which now carries the exact call. Do not build a second notification path and do not write `notify.Notifications` rows directly.
 - `UpdateRecordComment` — author only; sets `IsEdited = true`; mention list re-validated identically. Editing does not re-notify.
 - `DeleteRecordComment` — soft delete; author, or manage-capability holder. Sets `IsDeleted`, preserves `AuthorUserName` for the tombstone.
 - `MarkMentionRead` — flips `IsRead` on `app.RecordCommentMentions` for the current user.
@@ -123,16 +125,18 @@ One self-contained component taking only those two props, so mounting it on a ne
 
 ### Mounting
 
-Mount as a **tab** on the detail screens of exactly these four records for this build:
+Mount on exactly these four records. **The treatment per record is decided — it was surveyed on disk 2026-08-12, do not re-survey and do not choose differently.** Only two of the four have a tab container; the other two take the bottom-section fallback rather than being restructured.
 
-| Record | Notes |
-|---|---|
-| Donation | highest-traffic record in the product |
-| Contact | the relationship record; where a team most needs shared context |
-| Case | mounts as a **second** tab named **Discussion**, beside the existing **Notes** tab, which is untouched (rule 1) |
-| Grant | longest-lived record, most hand-offs between staff |
+| Record | Host file | Treatment |
+|---|---|---|
+| **Case** | `crm/casemanagement/caselist/case/tabs/` | **New tab** named **Discussion**, added beside the existing `notes-tab.tsx`, which is untouched (rule 1). |
+| **Contact** | `crm/contact/contact/detail/tabs/` | **New tab** named **Discussion**. `timeline-tab.tsx` is untouched — see the warning below. |
+| **Grant** | `crm/grant/grantlist/grant/grant-detail.tsx` | **Bottom section.** `grep TabsTrigger` returns 0 — there is no tab container. Do not build one. |
+| **Donation** | `crm/donation/globaldonation/view-page.tsx` | **Bottom section.** `grep TabsTrigger` returns 0. Do not build one. |
 
-If any of these four detail screens does not have a tab container, mount the panel as a full-width section at the bottom of the page rather than restructuring the screen. Say which route took which treatment in the build log.
+> **Contact already has a timeline and it is not this.** `contact/detail/tabs/timeline-tab.tsx` is a **business-event** feed — donations and emails, merged from `CONTACT_DONATIONS_QUERY` and `CONTACT_EMAIL_QUEUE_QUERY`. It is a different axis from record activity (field changes + discussion) and it stays exactly as it is.
+>
+> It does, however, carry a chip list with `{ key: "notes", label: "Notes", hasData: false }` that renders a "coming soon" empty state. **Leave that chip alone in this build.** Wiring it to comments is a one-line-looking change that quietly makes the timeline depend on the collaboration layer, and it is the user's call whether Notes belongs on the business timeline or only in Discussion. Raise it in the build log; do not decide it.
 
 ### `/crm/mentions` — "Mentions me"
 
@@ -142,11 +146,42 @@ New menu `CRM_MENTIONS`, `MenuUrl = '/crm/mentions'`, in the CRM module.
 
 ---
 
-## ⑥ Notifications
+## ⑥ Notifications — the path already exists, use it exactly
 
-Reuse the existing notification pipeline — the panel at `layout-components/notifications-panel/index.tsx` and its `useFetchNotifications`/`useNotificationCount` hooks already render whatever the backend writes. A mention writes one notification per mentioned user with a deep link to the record.
+**Verified on disk 2026-08-12.** `Base.Application/Services/Notifications/` contains a complete, mute-aware fan-out writer. Inject `INotificationWriter` and call `StageAsync`. Nothing new is needed and nothing may be added.
+
+```csharp
+await notificationWriter.StageAsync(new NotificationWriteRequest
+{
+    Scope             = NotificationScope.Tenant,   // the writer THROWS if this and CompanyId disagree
+    CompanyId         = currentUser.CompanyId,      // required for Tenant, must be null for Platform
+    RecipientUserIds  = survivingMentionedUserIds,  // already re-validated per rule 6; empty list is legal, returns 0
+    Title             = $"{authorName} mentioned you",
+    Body              = excerpt,                    // ALREADY RENDERED — the writer does no token substitution
+    Category          = "Mention",
+    Priority          = "Normal",                   // NOT "Urgent" — that bypasses every mute rule
+    IconCode          = "fa-at",
+    ActionUrl         = recordPath,                 // scope-relative, NO locale prefix and NO host — the FE prepends both
+    ActionLabel       = "View comment",
+    FromUserId        = currentUser.UserId,
+    TriggerCode       = "RECORD_MENTION",           // required; also the finest-grained key a user can mute on
+    SourceEntityType  = entityType,                 // the RECORD, not the comment — lets a later feature find or revoke these
+    SourceEntityId    = entityId,
+}, cancellationToken);
+```
+
+Four things that will bite if ignored:
+
+- **`Scope` and `CompanyId` are one value.** `NotificationWriter.StageAsync` throws `ArgumentException` when a Tenant request has no `CompanyId`. This is deliberate — that pair *is* the inbox security predicate.
+- **`Title`/`Body` must be fully rendered.** The writer persists and mute-filters; it does not render tokens.
+- **`ActionUrl` is scope-relative.** No `/en`, no host.
+- **`Priority = "Urgent"` bypasses every mute rule.** A mention is not urgent. Someone who muted mentions must stay muted.
+
+The FE side needs no work — `notifications-panel/index.tsx` and its `useFetchNotifications`/`useNotificationCount` hooks already render whatever the writer stages.
 
 **Do not** add a second notification mechanism, a second badge, or a topbar change (rule 14).
+
+> **Namespace quirk, will cost you a build error.** `Notification.cs` lives in `Base.Domain/Models/NotifyModels/` but its namespace is `Base.Domain.Models.SharedModels`. The folder does not tell you the `using`.
 
 ---
 
@@ -165,6 +200,11 @@ Reuse the existing notification pipeline — the panel at `layout-components/not
 ---
 
 ## ⑧ Files touched
+
+> **Backend path prefix.** Every backend path below is relative to
+> `PSS_2.0_Backend/PeopleServe/Services/Base/`.
+> The projects are **not** at `PSS_2.0_Backend/Base.Application/` — that directory does not exist.
+> Frontend paths are relative to `PSS_2.0_Frontend/src/`.
 
 ### Backend — new
 
@@ -285,7 +325,11 @@ One file, idempotent, no DDL, safe to re-run. Copy the header shape from `sql-sc
 8. `grep -rn "bg-primary-600" src/presentation/components/custom-components/collaboration/` → **0 matches**; `grep -rn "brandSolid\|--shell-accent"` → non-zero (rule 11).
 9. `grep -rn "bg-muted\|text-muted-foreground\|bg-\(blue\|emerald\|red\|violet\|slate\)-\(50\|100\)" src/presentation/components/custom-components/collaboration/` → **0 matches** on icon containers, badges and chips.
 10. `grep -rn "AUDIT_TRAIL_REPORT_QUERY" src/presentation/components/custom-components/collaboration/` → **0 matches**. The panel uses its own record-scoped query.
-11. `grep -n "entityId" Base.Application/Business/ApplicationBusiness/Collaboration/Queries/GetRecordActivity.cs` → the audit source is filtered by both `EntityType` **and** `EntityId`.
+11. `grep -n "entityId" …/Collaboration/Queries/GetRecordActivity.cs` → the audit source is filtered by both `EntityType` **and** `EntityId`.
+11b. `grep -rn "oldValue\|newValue" …/Collaboration/` → **0 matches**. The on-disk `ChangesJson` shape is `[{field, before, after}]`.
+11c. `grep -rn "StageAsync\|INotificationWriter" …/Collaboration/Commands/CreateRecordComment.cs` → non-zero, and `grep -rn "Notifications.Add\|new Notification" …/Collaboration/` → **0 matches** (no second write path, §⑥).
+11d. `grep -rn "Urgent" …/Collaboration/` → **0 matches**. A mention must not bypass mute rules.
+11e. `git diff --stat` shows **no change** to `contact/detail/tabs/timeline-tab.tsx`, and `grep -n "hasData: false" timeline-tab.tsx` still shows the `notes` chip untouched (§⑤).
 12. The `ALL`/`COMMENTS`/`CHANGES` filter short-circuits — `grep -n "if.*filter" GetRecordActivity.cs` shows the skipped source is never queried.
 13. `grep -n "DELETE FROM auth" sql-scripts-dyanmic/crm-mentions-menu-capability-seed.sql` → **0 matches**; `ISMENURENDER` appears in a grant and in no `INSERT INTO auth."Capabilities"`.
 14. The seed's closing verify block returns 0 and 0.
@@ -302,10 +346,10 @@ One file, idempotent, no DDL, safe to re-run. Copy the header shape from `sql-sc
 **Build agent: Sonnet** (BE and FE). §④–⑨ are specified to the field level.
 
 1. Read first, all of them, before writing anything: `AuditLog.cs`, `AuditTrailQueries.ts`, `CaseNote.cs`, `notes-tab.tsx`, `CommonExtension.cs`, `notifications-panel/index.tsx` and its hooks, `brand-surface.ts`, `platform-intimations-menu-capability-seed.sql`.
-2. **Confirm the code names are free.** `CRM_MENTIONS`, `CRM_COMMENT_MANAGE` → 0 matches in `sql-scripts-dyanmic/`. If not, stop and report.
-3. **Locate the four detail screens and their tab containers before designing the mount.** If a screen has no tab container, note it and use the bottom-section fallback (§⑤) — do not restructure a working screen.
-4. Confirm how `audit.AuditLogs` stores its field-level change payload (column name and JSON shape) before writing the `fieldChanges` parser. If the shape is inconsistent across writers, parse defensively and return an empty list rather than throwing — and say so in the build log.
-5. Confirm the notification write path used by `useFetchNotifications` before wiring mention notifications. If a mention cannot be written through the existing path without changing it, **stop and report** rather than building a second path.
+2. ~~Confirm the code names are free.~~ **Already verified 2026-08-12 — `CRM_MENTIONS` and `CRM_COMMENT_MANAGE` both return 0 matches across `sql-scripts-dyanmic/`.** Do not re-litigate. Re-run the grep only as a sanity check, expecting 0.
+3. ~~Locate the four detail screens and their tab containers.~~ **Already surveyed — §⑤ names the host file and the treatment for each of the four.** Case and Contact get tabs; Grant and Donation get bottom sections because neither has a tab container. Follow the table; do not invent a tab container.
+4. ~~Confirm the audit change payload shape.~~ **Already confirmed — `AuditLog.ChangesJson`, array `[{field, before, after}]`, max 64KB.** Parse defensively: a row whose JSON does not match returns an empty list and renders `Description` alone. Never throw.
+5. ~~Confirm the notification write path.~~ **Already confirmed — `INotificationWriter.StageAsync`, call spelled out verbatim in §⑥.** Use it as written.
 6. Backend: entities → configurations → `DbSet`s → `CollaborationEntityMap` → schemas → `GetRecordActivity` → commands → `GetMyMentions` → endpoints.
 7. Frontend: DTOs → gql documents → `use-record-activity` → item components → composer → autocomplete → panel → four mounts → mentions page.
 8. Seed script last, after menu URLs are final.
@@ -322,11 +366,14 @@ One file, idempotent, no DDL, safe to re-run. Copy the header shape from `sql-sc
 
 | Date | Session | Outcome |
 |---|---|---|
+| 2026-08-12 | **BUILD — complete, handed back** | Backend + frontend + seed all written; `npx tsc --noEmit --incremental false` → **exit 0** (real file-check: an intermediate run caught two genuine `TS2322` `Badge variant="secondary"` errors — the shared atom takes `color="secondary"`, `variant` is only `"outline" \| "soft"` — fixed in `record-collaboration-panel.tsx` and `mentions-list-page.tsx`). Split authorization landed as designed: coarse `[CustomAuthorize(…, Permissions.Read)]` floor + mandatory runtime `CollaborationEntityMap.TryResolve` → `HasAccessAsync` in **every** handler, unknown `entityType` → `ForbiddenAccessException`, no default-allow. Two post-agent corrections applied by hand: **(a)** `DeleteRecordComment`'s non-author branch had been written against a module-level `Permissions.Delete` grant, which would have made the seeded `CRM_COMMENT_MANAGE` dead code — rewritten to gate the moderator path on `CRM_COMMENT_MANAGE` alone (rule 7, §⑨ pt 2); **(b)** the class-level floors on Delete (`Permissions.Delete`) and Update (`Permissions.Modify`) would have blocked an author from retracting/correcting their own comment on a record they can only read — both lowered to `Permissions.Read`, ownership enforced at runtime. Mount treatment: Case + Contact took **Discussion tabs** (each also needed a `"discussion"` key added to its tab store), Grant + Donation took **bottom sections** (no tab container, per §⑤). `@mention` autocomplete reuses the existing **`STAFFS_QUERY`** — no new user-lookup query. Seed written to repo-root `sql-scripts-dyanmic/crm-mentions-menu-capability-seed.sql`; `CRM_MENTIONS` sits root-level under the CRM module, which renders correctly because `GetParentChildMenu` **computes** `LeastMenu` from child count rather than reading the column. §⑩: 18 of 19 criteria verified; **criteria 7 / 11e cannot be run as written** — `.gitignore:12` excludes `PSS_2.0_Frontend/` (and the backend tree likewise), so `git diff --stat` reports nothing for either tree; substituted mtime evidence (`notes-tab.tsx` Jul 9 15:51, `timeline-tab.tsx` Jul 9 15:17, `app-topbar/index.tsx` Aug 11 20:09 — all predate the build, `(master)/ops` 0 files touched) plus the `hasData: false` notes chip still present at `timeline-tab.tsx:37`. **Criterion 14 is unrunnable here** (needs a DB — the seed is the user's to apply). **Handed back, not done: the EF migration (§⑨ spec), `dotnet build`, applying the seed.** |
+| 2026-08-12 | pre-flight before first run | Six corrections applied, all verified on disk. **(1)** Every backend path was missing the `PeopleServe/Services/Base/` segment — `PSS_2.0_Backend/Base.Application/` does not exist; §⑧ now states the prefix. **(2)** `ChangesJson` is `[{field, before, after}]`, not `{oldValue,newValue}`; §④ corrected and criterion 11b added. `AuditLog` also carries `Description`, `Severity`, `EntityDisplayKey` — now used. **(3)** The notification path exists and is richer than assumed: `INotificationWriter.StageAsync(NotificationWriteRequest)` already does mute filtering, scope/CompanyId validation, and carries `SourceEntityType`/`SourceEntityId`/`ActionUrl`/`TriggerCode`. §⑥ rewritten with the verbatim call; §⑪ step 5's "stop and report" is void. **(4)** Only 2 of the 4 mount targets have a tab container — Case and Contact do, Grant (`grant-detail.tsx`) and Donation (`view-page.tsx`) return 0 for `TabsTrigger`; §⑤ now names host file + treatment per record. **(5)** Contact already has `timeline-tab.tsx` (business events: donations + emails) with a dead `notes` chip — flagged, explicitly out of scope, criterion 11e guards it. **(6)** `Notification.cs` sits in `NotifyModels/` but its namespace is `Base.Domain.Models.SharedModels`. Menu/capability codes `CRM_MENTIONS` and `CRM_COMMENT_MANAGE` confirmed free. |
 | 2026-08-11 | prompt authored | Not yet built. Verified on disk: no comment/mention layer exists anywhere (`SocialMediaMention` is social listening, unrelated); `case.CaseNotes` is the only note surface and is welded to `CaseId`/`AuthorStaffId`/`NoteTypeId`; **`audit.AuditLogs` already carries `EntityType`+`EntityId`+actor+timestamp per record** — the activity half needs no new writer; `AUDIT_TRAIL_REPORT_QUERY` filters `entityType` but takes no `entityId`, which is why per-record history is unreachable today. |
 
 ### Known issues
 
 - **Topbar mention badge deferred** until the Support & Audit build releases `app-topbar/index.tsx`.
 - **No blob storage** blocks comment attachments — same constraint as grant file upload.
+- **Contact's timeline `notes` chip stays dead.** `timeline-tab.tsx` advertises a Notes filter with `hasData: false`. Once Discussion ships, a Contact page shows a working Discussion tab *and* a "Notes coming soon" chip on the timeline — visibly inconsistent. Wiring the chip to comments is small, but whether discussion belongs on a business-event timeline is a product call, not a build call. **Decide this after the build, not inside it.**
 - **`case.CaseNotes` now has a neighbour, not a successor.** The Case screen will show both a Notes tab and a Discussion tab. That is intentional for this build and is a genuine UX question to revisit once the generic layer has real usage.
 - **`FEATURE:INTELLIGENCE` visibility decision** still open from the AI module prompt — unrelated to this build, still unanswered.
