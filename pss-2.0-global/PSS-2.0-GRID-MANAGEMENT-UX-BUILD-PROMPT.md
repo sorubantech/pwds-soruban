@@ -88,7 +88,7 @@ A tab strip promises three equal views of one thing. What actually sits behind i
 │        └──────────────────────────────┘ └──────────────────────────────┘   │
 │   ≤lg: single column, Columns first                                        │
 │                                                                           │
-│        ┌ FLOATING TOOLBAR (sticky bottom-4, rounded rectangle) ───────┐  │
+│        ┌ FLOATING TOOLBAR (fixed bottom-4, column-aligned) ──────────┐  │
 │        │ ✓ saved │ ▣ ▣ │ 👁 Preview ▣ │ ↶ Discard ▣ ▣ │ Aa │ [ Save ] │  │
 │        └──────────────────────────────────────────────────────────────┘  │
 └───────────────────────────────────────────────────────────────────────────┘
@@ -96,11 +96,11 @@ A tab strip promises three equal views of one thing. What actually sits behind i
 
 **The picker bar is not the header.** It carries its own tinted surface (`bg-accent/40`), a doubled bottom edge and a shadow, so the two never read as one merged block. The grid's identity (`gridCode` · module · Customised/System default · *n of m columns visible*) sits on the picker's own line — there is no separate context-strip card.
 
-**One toolbar, not three surfaces.** `grid-tab/floating-toolbar.tsx` renders a `pointer-events-none` **sticky** wrapper around a `pointer-events-auto` rounded rectangle: status, then rule-separated groups (reference data · view · undo/reset), then the labels toggle, then the brand-filled primary Save. The `ScreenHeader` carries no `headerActions` and there is no sticky bottom bar — the reference sheets still belong to the page, which passes `onOpenReference` / `onResetAllGrids` / `resettingAllGrids` down to `GridTab`. The status hides below `sm`.
+**One toolbar, not three surfaces.** `grid-tab/floating-toolbar.tsx` renders a `pointer-events-none` **fixed, column-aligned** wrapper around a `pointer-events-auto` rounded rectangle: status, then rule-separated groups (reference data · view · undo/reset), then the labels toggle, then the brand-filled primary Save. The `ScreenHeader` carries no `headerActions` and there is no sticky bottom bar — the reference sheets still belong to the page, which passes `onOpenReference` / `onResetAllGrids` / `resettingAllGrids` down to `GridTab`. The status hides below `sm`.
 
 **Horizontal, not a vertical rail.** Canvas editors put tools in a right-edge rail because they have dozens of them, no single commit action and a full-viewport canvas. This screen is a form with one primary commit (Save) and a wide table that wants every horizontal pixel, so the bar sits bottom-centre and Save stays on the reading path.
 
-Page container: `w-full px-4 pb-4 pt-1 sm:px-6 lg:px-8`. There is no max-width cap at all — this is a data-dense editor and it occupies the full viewport width on every screen size.
+Page container: `w-full px-4 pb-24 pt-1 sm:px-6 lg:px-8` — the toolbar floats out of flow, so the last card needs the tall clearance. There is no max-width cap at all — this is a data-dense editor and it occupies the full viewport width on every screen size.
 
 ---
 
@@ -209,9 +209,15 @@ Update `reset-confirm-modals.tsx` to export both dialogs with distinct copy. **R
 
 ## ⑩ Floating toolbar, validation and error states
 
-**Floating toolbar** — `grid-tab/floating-toolbar.tsx`, always rendered (the reference-data group works with no grid selected); the editor group, the destructive group and the primary Save appear only once a grid is chosen. The wrapper is `pointer-events-none sticky bottom-4 z-30 flex justify-center`; the bar inside is `pointer-events-auto flex-wrap rounded-lg border bg-background/95 p-1.5 shadow-lg backdrop-blur`.
+**Floating toolbar** — `grid-tab/floating-toolbar.tsx`, always rendered (the reference-data group works with no grid selected); the editor group, the destructive group and the primary Save appear only once a grid is chosen. The wrapper is `pointer-events-none fixed bottom-4 z-30 flex justify-center px-2` with `left`/`width` set from a measured anchor; the bar inside is `pointer-events-auto flex-wrap rounded-lg border border-foreground/15 bg-background p-1.5 shadow-xl`.
 
-**Sticky, not fixed.** `fixed inset-x-0 … justify-center` centres on the *viewport*, so the bar drifts off-centre the moment the shell's side nav is open. Sticky inside the scroll column centres it on the body area and reserves its own height, which is why the page pad is `pb-4` and not a tall clearance.
+**Fixed, and horizontally measured — not absolute, not sticky.** The app shell owns the scrollport: `app-shell-provider`'s `<main>` is `h-[calc(100vh-4.5rem)] overflow-hidden` and its inner div is the `overflow-y-auto` box, inside which the page sits in a `motion.div` sized to its CONTENT. So `absolute bottom-4` against the page column anchors to the bottom of the whole document — the bar parks at the end of the page — and `sticky bottom-4` on a last child does the same until you scroll to the very end. Both were tried and both sink. Only `fixed` floats unconditionally.
+
+`fixed` alone would centre on the *viewport* and drift when the rail/panel is open, so the toolbar renders a zero-height `h-0 w-full` anchor in flow, measures its `getBoundingClientRect()` (re-measured by a `ResizeObserver` on the anchor plus a window `resize` listener) and applies `left`/`width` inline. Vertically pinned to the viewport, horizontally aligned to the body. Before the first measurement it falls back to `left: 0; right: 0`. Page pad stays `pb-24` so the last card clears the bar at full scroll.
+
+**Borders must be visible on a floating surface.** `bg-border` / `border-border` are hairlines tuned for flat card edges; inside a shadowed bar over content they disappear. Group rules are `bg-foreground/20`, the bar edge is `border-foreground/15`, the background is solid `bg-background` (no `/95`, no `backdrop-blur`) and the lift is `shadow-xl`.
+
+**Icons are neutral, only Save is coloured.** Ghost actions are `text-muted-foreground hover:text-foreground` — a bar of brand-coloured glyphs reads as eight competing primary actions. Destructive actions are `text-destructive`; the active labels toggle is `bg-foreground/10 text-foreground` (not `bg-accent`, which reads blue). `brandSolid` belongs to Save alone.
 
 **No scroll container on the bar.** The shared `TooltipContent` atom is **not** portalled — it renders inside the trigger's DOM — so an `overflow-x-auto` bar clips every tooltip to a sliver. The bar wraps (`flex-wrap`) instead of scrolling. Do not reintroduce `overflow-*` here.
 
@@ -222,7 +228,7 @@ Status sits at the left of the bar, one line, in priority order:
 2. `isDirty` → `ph:circle-dashed` + `Unsaved changes`.
 3. otherwise → `ph:check-circle` + `All changes saved` in `text-muted-foreground`.
 
-Then the action groups, separated by a `h-7 w-px bg-border` vertical rule: `[Field Master] [Custom Fields]` · `[Preview] [Form layout]` · `[Discard] [Restore defaults] [Reset all grids]` · `[Aa]` · `[Save]`. Save is `style={brandSolid}`, disabled on `!canSave`, and when disabled its wrapper carries a Tooltip naming the reason (`Nothing to save` / `Fix {n} issue{s} first` / `Choose a grid first`) — never a silently dead button. The two reset actions are `text-destructive`; every action tooltips its consequence.
+Then the action groups, separated by a `h-7 w-px bg-foreground/20` vertical rule: `[Field Master] [Custom Fields]` · `[Preview] [Form layout]` · `[Discard] [Restore defaults] [Reset all grids]` · `[Aa]` · `[Save]`. Save is `style={brandSolid}`, disabled on `!canSave`, and when disabled its wrapper carries a Tooltip naming the reason (`Nothing to save` / `Fix {n} issue{s} first` / `Choose a grid first`) — never a silently dead button. The two reset actions are `text-destructive`; every action tooltips its consequence.
 
 **Validation moves up.** The `string[]` list renders in an `Alert variant="destructive"` directly beneath the picker bar — above the fold, above the cards — and it renders whenever `validationErrors.length > 0`, **not** gated on `isDirty`. Each message stays as written but gains the offending column name where it has one.
 
@@ -345,11 +351,20 @@ Each is greppable or observable.
 
 _(append-only, newest first, last 5 sessions retained — git holds the rest)_
 
+**2026-08-13 — shared screen header: differentiated surface + module-aware breadcrumb.** Frontend only, shared components — every screen inherits it.
+
+- **Header differentiation moved to the common component.** `screen-header.tsx`'s container went from `bg-background … border-b border-border` to `bg-card px-4 pt-2 pb-2 sm:px-6 … border-b-2 border-foreground/10 shadow-sm`, so the header reads as its own surface rather than the first row of the page body — on every screen that uses `ScreenHeader`, not just this one.
+- **Breadcrumb is no longer optional.** `ScreenHeader` prepends a `Home` crumb to whatever the caller passes (skipped if the caller already supplies `id: "home"`) and renders the trail whenever it is non-empty. Screens that passed no `breadcrumbs` at all now still show a trail.
+- **Home means the current module's home.** New `page-header/use-module-home.ts` composes `useGlobalStore().moduleUrl` with the route `lang`. `/masterdashboard` was removed in App Shell Phase 5, so the three shared crumb builders that hardcoded `/en/masterdashboard` — `ScreenHeader`, `DataTablePageHeader`, `FlowFormPageHeader` — plus `breadcrumb-store.generateFromContext()` (which reads `useGlobalStore.getState()`) now resolve it dynamically. With no module URL the crumb renders as plain text rather than a dead link.
+- **This screen** passes `Settings › Grid Management`; Home is supplied by the shared header.
+- `npx tsc --noEmit --incremental false` exits **0**; eslint clean on all touched files (two pre-existing unused-prop warnings in `PageHeader.tsx` remain).
+
 **2026-08-13 — toolbar refinement: rectangle, icon-first, content-centred.** Frontend only, `floating-toolbar.tsx` + its call site.
 
 - **Rectangle, grouped** — `rounded-full` → `rounded-lg` on the bar and `rounded-md` on every button; groups keep a `h-7 w-px` vertical rule between them.
 - **Icon-first** — actions are `h-9 w-9` icon squares. `ToolbarAction.alwaysLabel` names only the frequently-used ones (Preview, Discard); a `ph:text-aa` toggle, default **false** and persisted to `localStorage["pss.toolbar.show-labels"]`, reveals the rest. Tooltips and `aria-label` are unchanged in both modes.
-- **Centred on the body, not the screen** — `fixed inset-x-0` → `sticky bottom-4` inside the scroll column, so an open side nav no longer pushes the bar off-centre. Page pad `pb-24` → `pb-4` since the sticky bar reserves its own height.
+- **Centred on the body, not the screen, and actually floating** — ended back on `fixed bottom-4`, with `left`/`width` measured from a zero-height in-flow anchor (`ResizeObserver` + window `resize`) so an open rail/panel no longer pushes the bar off-centre. Two wrong turns first, both worth recording: `sticky bottom-4` on a last child, and `absolute inset-x-0 bottom-4` against a `relative` page column. Neither floats, for the same reason — the app shell owns the scrollport and the page lives in a content-height `motion.div`, so the page column's bottom IS the document bottom. Page pad stays `pb-24`.
+- **Borders and icon colour** — `bg-border`/`border-border` were invisible on the shadowed bar, so rules are `bg-foreground/20`, the edge `border-foreground/15`, the surface solid `bg-background` with `shadow-xl`. Ghost action icons went neutral (`text-muted-foreground`), the toggle's active state `bg-accent` → `bg-foreground/10`; only Save keeps `brandSolid`.
 - **Tooltip clipping fixed** — root cause is the shared `Tooltip` atom rendering `TooltipContent` without a `TooltipPrimitive.Portal`, so it is clipped by any ancestor scroll container. Fixed locally by dropping the bar's `overflow-x-auto` for `flex-wrap` rather than changing an atom used across the app.
 - **Horizontal kept over a vertical rail** — a rail suits canvas editors (many tools, no single commit, full-viewport canvas); this is a form with one Save and a wide table that needs the horizontal room.
 - `npx tsc --noEmit --incremental false` exits **0**; `eslint` over the folder is clean (four stale `Tooltip*` imports in `grid-tab.tsx` removed).
