@@ -1,0 +1,233 @@
+-- =====================================================================================
+-- CUSTOM FIELDS — REQUIRED RUN ORDER
+--
+-- This file contains NO executable statements. It exists because the custom-field
+-- remediation ships as several scripts plus two EF migrations, and running them in the
+-- wrong order is not merely inefficient — two of the steps are destructive out of order
+-- and one is unrepeatable. Read this before running anything else in the custom-fields
+-- set.
+--
+-- Everything below is ordered by DEPENDENCY, not by importance. Where two steps are
+-- independent that is stated; where an order is mandatory the consequence of getting it
+-- wrong is stated with it.
+-- =====================================================================================
+
+
+-- -------------------------------------------------------------------------------------
+-- TRACK A — per-tenant custom field names (uniqueness)
+-- -------------------------------------------------------------------------------------
+--
+-- A1. sql-scripts-dyanmic/custom-fields-name-uniqueness-audit.sql          READ-ONLY
+--
+--     Run FIRST, and resolve everything it returns before going near A2. It is a pure
+--     SELECT script; it changes nothing and may be run as many times as you like.
+--
+--     Sections 1 and 2 are the blocking ones. They list the rows that will make the
+--     unique indexes in A2 FAIL to build:
+--       section 1 — two or more live system fields sharing a name (case-insensitively)
+--       section 2 — two or more live custom fields sharing a name within one company,
+--                   with NULL "CompanyId" folded to 0 by COALESCE, exactly as the index
+--                   will fold it
+--     Each duplicate must be renamed or soft-deleted by hand. There is no automated
+--     fix, deliberately: which of two colliding fields is the real one is a business
+--     question with a tenant's data behind it, and a script that guesses would silently
+--     orphan values.
+--
+--     Sections 3-5 are informational and never block.
+--
+-- A2. EF MIGRATION — drop the old global index, then add the two partial unique indexes
+--     Migration: Replace_Field_Name_Unique_Index                       << ALREADY WRITTEN >>
+--
+--     Only after A1 returns no rows from sections 1 and 2. If it is applied over
+--     unresolved duplicates the CREATE INDEX raises 23505 and the whole migration rolls
+--     back, which is safe but leaves the deployment stuck.
+--
+--     Up does THREE things, in this order:
+--
+--       1. DROP INDEX sett."IX_Fields_FieldName_FieldCode_FieldKey_IsActive"
+--
+--          This step is not cosmetic and it is not optional. The incumbent index is
+--          UNIQUE over ("FieldName", "FieldCode", "FieldKey", "IsActive") with no
+--          company column and no predicate, so it is GLOBAL across every tenant. Left in
+--          place it defeats the whole point of ux_fields_custom_name: two organisations
+--          could still not both own a field named "Region", which is precisely the
+--          cross-tenant coupling this work removes. It is also not the rule anyone
+--          intended — "IsActive" is nullable, and NULL is distinct from NULL in a B-tree,
+--          so any number of rows with a NULL "IsActive" already collide freely.
+--
+--          It is dropped by the same migration that creates the replacements so the two
+--          states are never live at once. Nothing in the codebase depends on the index:
+--          its name appears exactly once in the solution, in the initial migration that
+--          created it, and no handler catches 23505 or reads a constraint name.
+--
+--       2. CREATE UNIQUE INDEX ux_fields_system_name
+--       3. CREATE UNIQUE INDEX ux_fields_custom_name
+--
+--     Down restores the old index and drops the two new ones, so the migration is
+--     reversible. Note that Down can FAIL on a database where tenants have already
+--     taken advantage of the new freedom — restoring a global unique index over rows
+--     that are now legitimately duplicated across companies raises 23505. That is
+--     correct: it is the data telling you the rollback is not safe, not a defect.
+--
+--     NOT written with CREATE INDEX CONCURRENTLY. That was checked, not overlooked:
+--     EF wraps a migration in a transaction and CONCURRENTLY cannot run inside one.
+--     sett."Fields" is a small configuration table, so the ACCESS EXCLUSIVE lock the
+--     plain form takes is measured in milliseconds. Track B's DDL is the opposite case
+--     — large tenant tables — and is CONCURRENTLY for exactly that reason.
+--
+--     Both are partial on "IsDeleted" = false, so a soft-deleted row never collides with
+--     a live one and a name can be reused after deletion:
+--
+--       ux_fields_system_name
+--           UNIQUE (lower("FieldName"))
+--           WHERE "IsSystem" = true AND "IsDeleted" = false
+--
+--       ux_fields_custom_name
+--           UNIQUE (COALESCE("CompanyId", 0), lower("FieldName"))
+--           WHERE "IsSystem" = false AND "IsDeleted" = false
+--
+--     COALESCE rather than NULLS NOT DISTINCT: the latter needs PostgreSQL 15, and
+--     folding NULL to 0 in the index expression gets the same behaviour on every
+--     supported version. Both must be written with migrationBuilder.Sql() — expression
+--     and partial indexes cannot be expressed through HasIndex().
+--
+--     NOT enforced by either index: the rule that a CUSTOM field may not reuse a SYSTEM
+--     field's name. That spans both partitions, so no single partial index can express
+--     it; it lives in CreateCustomFieldValidator and only there. A raw INSERT bypasses
+--     it. That is a known and accepted limit, not an oversight.
+--
+-- A3. Nothing else in track A needs running. The count scoping, the null-tenant
+--     rejection and the frontend message are code, and ship with the build.
+
+
+-- -------------------------------------------------------------------------------------
+-- TRACK B — the index planner's output (performance)
+-- -------------------------------------------------------------------------------------
+--
+-- Track B is INDEPENDENT of track A. It may be run before, after or between A1 and A2;
+-- neither track's objects reference the other's. It is written second here only because
+-- A1 is the step with a deadline attached.
+--
+-- B1. sql-scripts-dyanmic/custom-fields-jsonb-plan-verification.sql        READ-ONLY
+--
+--     Run it BEFORE creating any index and keep the output. This is the step people
+--     skip, and skipping it is what makes the whole exercise unfalsifiable: without the
+--     BEFORE plans there is no way to tell afterwards whether the indexes are being used
+--     or merely being maintained. Substitute :companyid and the 'flagIcon' key first,
+--     and run the ANALYZE at the top of the script or every plan below it is a guess.
+--
+-- B2. Generate the DDL — platform-ops GraphQL query `customFieldIndexDdl`
+--
+--     Requires PLATFORM_DATA_CLEANUP / PLATFORM_DATA_PURGE. Omit both arguments to get
+--     every carrier entity for every tenant, which is the correct scope on a shared
+--     table: the indexes are physical objects serving all tenants, so DDL generated from
+--     one tenant's declarations would omit the keys every other tenant filters on.
+--     Save the returned text as the returned filename.
+--
+--     It must be generated, not written by hand and not taken from an older file. The
+--     index expression has to match what GridQueryBuilderHelper currently emits
+--     character for character; PostgreSQL matches expression indexes structurally and a
+--     near-miss produces an index that is maintained on every write and chosen on no
+--     read.
+--
+-- B3. Run that DDL — ONE STATEMENT AT A TIME, OUTSIDE ANY TRANSACTION
+--
+--     Every statement is CREATE INDEX CONCURRENTLY, which keeps the table writable and
+--     therefore CANNOT run inside a transaction block. psql with autocommit on. Never an
+--     EF migration; never a tool that wraps the file in BEGIN/COMMIT.
+--
+--     A CONCURRENTLY build that fails leaves an INVALID index that no query uses and
+--     rerunning does not repair. Find them with
+--       SELECT c.relname FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid
+--       WHERE NOT i.indisvalid;
+--     DROP INDEX CONCURRENTLY each one, then rerun its statement.
+--
+--     Every statement is IF NOT EXISTS, so a partial run may be resumed by running the
+--     file again.
+--
+-- B4. sql-scripts-dyanmic/custom-fields-jsonb-plan-verification.sql        READ-ONLY
+--
+--     Again, and compare against B1. A Seq Scan on a key that now has an index above it
+--     is an expression MISMATCH, not a missing index — read the script's closing notes
+--     before adding anything by hand. Sections 4 and 5 of that script list the shapes
+--     that are expected to Seq Scan by design.
+
+
+-- -------------------------------------------------------------------------------------
+-- TRACK C — import custom fields (correctness)
+-- -------------------------------------------------------------------------------------
+--
+-- C0. EF MIGRATION — import."ImportSessionFields" table        << USER CREATES THIS >>
+--     then Base/sql-scripts-dyanmic/ImportSessionFields-fn-snapshot.sql
+--
+--     The table used to be created by ImportSessionFields-create-table.sql, which has
+--     been retired: the table is now an EF entity (ImportSessionField) and the script has
+--     been reduced to the two PL/pgSQL functions it also carried and renamed
+--     ImportSessionFields-fn-snapshot.sql. EF cannot own a function body, so the split is
+--     permanent.
+--
+--     MIGRATION FIRST, THEN THE FUNCTION SCRIPT. The functions read and write the table;
+--     PL/pgSQL bodies are not resolved until first call, so running them against a schema
+--     without the table gives you two functions that create cleanly and fail on the first
+--     import.
+--
+--     DEV and UAT have probably already run the old script, so the table exists there.
+--     The migration must therefore be written with IF NOT EXISTS-guarded
+--     migrationBuilder.Sql(), NOT migrationBuilder.CreateTable — see the § N notes for the
+--     exact statements, including the six audit columns the old script omitted.
+--
+-- C1. EF MIGRATION — ImportSession."CustomFieldGridCode"       << USER CREATES THIS >>
+--
+--     Comes before C2. ImportCustomFields-seed.sql writes that column in its step 1.
+--
+--     Running C2 first is SAFE but INCOMPLETE, and it is worth being exact about which:
+--     step 1 is wrapped in IF EXISTS (SELECT 1 FROM information_schema.columns WHERE
+--     table_schema='import' AND table_name='ImportGridDefinitions' AND
+--     column_name='CustomFieldGridCode'), so with no column it takes the ELSE branch and
+--     RAISE NOTICEs "…does not exist — skipping the grid link. Apply the migration that
+--     adds it, then re-run this script." Nothing errors and nothing is half-written.
+--     Step 2 (removing the legacy CONTACT "CustomFields" passthrough row from
+--     import."ImportGridFields") does not touch the column and runs either way; that
+--     removal is intended and permanent, so there is nothing to rebuild.
+--
+--     The cost of getting the order wrong is therefore a silently unlinked grid — CONTACT
+--     imports carry no custom fields and look like they simply have none — not data loss.
+--     Re-running the seed after the migration fixes it completely. Verify with:
+--       SELECT "GridCode","CustomFieldGridCode" FROM import."ImportGridDefinitions";
+--     CONTACT must read CONTACT; BULKDONATION must stay NULL (it has no custom-field
+--     support, and NULL is the supported state for that, not a missing seed).
+--
+-- C2. Base/sql-scripts-dyanmic/ImportCustomFields-seed.sql
+--     Base/sql-scripts-dyanmic/ImportCustomFields-fn-build.sql
+--     Base/sql-scripts-dyanmic/ImportCommon-fn-validate.sql
+--
+--     Idempotent; safe to rerun as a set once C1 is applied.
+--
+-- C3. Base/sql-scripts-dyanmic/ContactImport-fn-execute-IDENTIFY.sql       READ-ONLY
+--
+--     Run before trusting any contact import. Three copies of the execute function exist
+--     on disk (ContactImport-fn-execute.sql, -current.sql, and the identify script's
+--     subject) and only one is actually installed in the database. This script reports
+--     which body is live and whether it carries the jsonb cast. Deleting the dead copies
+--     is gated on its answer and has NOT been done.
+--
+-- C4. Base/sql-scripts-dyanmic/ImportCustomFields-negative-scenarios.sql
+--
+--     Optional but asked for. The custom-field negative scenarios (§ I of the import
+--     prompt) that are reachable from SQL: the zero-key NULL document, an absent staging
+--     column skipped rather than raised, the three envelope limits, a type failure at
+--     execute, the snapshot freeze, and the standard-field name collision. One
+--     transaction ending in ROLLBACK — it creates a throwaway session and staging table,
+--     prints a pass/fail table, and leaves nothing behind. Set cfneg.company_id and
+--     cfneg.user_id at the top to values that exist, or the inserts fail on the foreign
+--     keys rather than on anything being measured.
+--
+--     Requires C0-C2 to be applied first; without them it fails with 42883, which is a
+--     missing deployment and not a finding. HAS NOT BEEN RUN.
+--
+--     NOT the same file as Base/sql-scripts-dyanmic/Import-validation-equivalence-harness.sql,
+--     which an earlier draft of this run order pointed at here. That one is the
+--     validate_common BEFORE/AFTER equivalence harness for the CONTACT and BULKDONATION
+--     grids; it persists its results table between runs and has nothing to do with custom
+--     fields.
+-- =====================================================================================

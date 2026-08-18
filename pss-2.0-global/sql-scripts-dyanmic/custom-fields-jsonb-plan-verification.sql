@@ -148,9 +148,10 @@ WHERE c."CompanyId" = :companyid
 --
 -- ix_contacts_customfields_gin (jsonb_path_ops) is not used by any of the three
 -- probes above; the grid never issues a containment query. It is there for
--- ad-hoc operational queries and for future key-existence probes. Included so
--- that "the GIN index never appears in a plan" is understood as expected rather
--- than investigated as a fault.
+-- ad-hoc operational queries — support answering "which rows carry this value
+-- anywhere" without knowing the key in advance. Included so that "the GIN index
+-- never appears in a plan" is understood as expected rather than investigated as
+-- a fault.
 --
 --   GOOD    Bitmap Index Scan on "ix_contacts_customfields_gin"
 --           Index Cond: ("CustomFields" @> '{"flagIcon": "IN"}'::jsonb)
@@ -185,4 +186,82 @@ WHERE c."CustomFields" @> '{"flagIcon": "IN"}'::jsonb;
 -- BUFFERS is the number that does not lie about cost. A good filter plan touches
 -- tens of shared buffers; the Seq Scan equivalent touches thousands, and does so
 -- per keystroke, per user, on every grid that carries the column.
+-- ---------------------------------------------------------------------------
+
+
+-- ---------------------------------------------------------------------------
+-- 5. Key existence — the "is empty" / "is not empty" operators.
+--
+-- The grid exposes isnull / isnotnull / isempty / isnotempty, and all four are
+-- built in BuildCustomFieldConditionCore over the RAW extraction, not lower():
+--
+--     jsonb_extract_path_text("CustomFields", 'flagIcon') IS NULL
+--
+-- so the index that can serve them is ix_contacts_cf_flagicon (the raw one), NOT
+-- ix_contacts_cfl_flagicon. A B-tree does index NULLs, so this is answerable.
+--
+-- This is the "key existence" shape, and it is deliberately probed HERE rather
+-- than through the jsonb `?` operator. Application code never issues `?`: an
+-- absent key and a key present with a JSON null both extract to SQL NULL, which
+-- is precisely what the user means by "is empty", and the extraction collapses
+-- the two cases for free. `?` would distinguish them, and would also be the one
+-- shape ix_contacts_customfields_gin CANNOT serve, because jsonb_path_ops
+-- answers containment but not key-only lookups (section 4). Probing an operator
+-- the code does not emit, against an index that could not serve it, would only
+-- manufacture a failure.
+--
+--   GOOD    Index Scan using "ix_contacts_cf_flagicon"
+--           Index Cond: (jsonb_extract_path_text(...) IS NULL)
+--   BAD     Seq Scan — but read the caveats above first: "is empty" over a
+--           sparsely-populated custom field matches most of the table, and a
+--           Seq Scan is then the CORRECT plan. Test isnotempty on a
+--           well-populated key if you want a selective version of this probe.
+-- ---------------------------------------------------------------------------
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT c."ContactId"
+FROM corg."Contacts" c
+WHERE c."CompanyId" = :companyid
+  AND jsonb_extract_path_text(c."CustomFields", 'flagIcon') IS NOT NULL
+  AND jsonb_extract_path_text(c."CustomFields", 'flagIcon') <> '';
+
+
+-- ---------------------------------------------------------------------------
+-- SHAPES THIS SCRIPT DOES NOT PROBE, AND WHY
+--
+-- The grid's operator set is fixed (GridQueryBuilderHelper
+-- .BuildCustomFieldConditionCore). Sections 1-5 above cover every shape that an
+-- index can be expected to serve. The rest are listed here so that "there is no
+-- probe for X" is a recorded decision rather than an oversight:
+--
+--   contains / like  ->  lower(...) LIKE '%term%'
+--   endswith         ->  lower(...) LIKE '%term'
+--       A leading wildcard cannot use a B-tree at all, with or without
+--       text_pattern_ops — there is no prefix to descend on. These are sequential
+--       scans by construction and no index the planner emits changes that. The
+--       only fix is a different index type (pg_trgm GIN), which is not deployed
+--       and is not proposed here: trigram indexes are large, and the operator
+--       most users reach for is the one section 3 already makes fast. If
+--       contains-search on custom fields ever becomes a hot path, that is the
+--       change to evaluate, and it belongs in the planner, not in a hand-written
+--       index.
+--
+--   notequals / notcontains
+--       Negations match most of the table. A Seq Scan is the correct plan and an
+--       index would be the wrong one. Nothing to verify.
+--
+--   Numeric and date RANGE comparisons (>, <, BETWEEN)
+--       The grid does not expose them for custom fields, and the reason is worth
+--       recording: jsonb_extract_path_text returns text, so any ordering
+--       comparison is LEXICAL — '9' > '10', and '2026-01-02' only sorts
+--       correctly because ISO-8601 happens to sort as text. The ix_*_cf_* index
+--       would be used and would return confidently wrong rows for a number
+--       field. Making ranges work needs a typed expression index per field
+--       (((...)::numeric)) chosen from the field's declared data type, which is a
+--       planner change, not a script change. Until then the absence of the
+--       operator is the safety.
+--
+--   Multi-value / IN lists
+--       Not emitted; the builder produces one comparison per rule. An IN list
+--       over the same expression would use the same ix_*_cfl_* index anyway, so
+--       adding the operator later needs no new index and no new probe.
 -- ---------------------------------------------------------------------------
