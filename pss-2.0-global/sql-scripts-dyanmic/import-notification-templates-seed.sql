@@ -1,8 +1,11 @@
--- =====================================================================================
+﻿-- =====================================================================================
 -- P5 — Import lifecycle notifications — templates
 -- -------------------------------------------------------------------------------------
--- Seeds one NOTIFICATIONCATEGORY MasterData row ('Import') and five platform-owned
+-- Seeds one NOTIFICATIONCATEGORY MasterData row ('Import') and nine platform-owned
 -- notify."NotificationTemplates" rows, one per trigger code ImportNotificationService emits.
+--
+-- The nine cover the whole lifecycle a user can see: started, validation finished (clean /
+-- with errors), cancelled, completed (clean / with errors), and the three failure paths.
 --
 -- ── WHY THIS FILE EXISTS ─────────────────────────────────────────────────────────────
 -- Scheduled imports are staying (management decision). A schedule that runs at 2 AM and
@@ -49,17 +52,35 @@
 --   2. NotificationDispatcher.EvaluateCondition PASSES when the referenced token is absent.
 --      A condition-based split would therefore fire BOTH rows the moment a token name is
 --      misspelled or a future code path omits it. The split is made in C# instead
---      (ImportNotificationService.ResolveTrigger, on ExecutionFailedRows), which is why
---      TriggerConditionJson is NULL on all five rows below. Do not add conditions here.
+--      (ImportNotificationService.ResolveTerminalTrigger, on ExecutionFailedRows), which is
+--      why TriggerConditionJson is NULL on all nine rows below. Do not add conditions here.
+--      import.validation_completed / _with_errors is split the same way, on InvalidRows.
 --
--- ── NOT SEEDED: import.cancelled ─────────────────────────────────────────────────────
--- Status 11 deliberately has no trigger and no row. The only person 'Initiated' would
--- notify is the person who just pressed Cancel.
+-- ── import.cancelled — SEEDED, BUT ONLY DELIVERED TO A THIRD PARTY ───────────────────
+-- This row previously did not exist, on the reasoning that 'Initiated' would only ever
+-- notify the person who just pressed Cancel. That reasoning was wrong in the case that
+-- actually matters: CancelImport records the CURRENT user as the actor precisely because
+-- one staff member can cancel another's import. The uploader then lost their file with no
+-- notice at all.
+--
+-- So the row exists, and the suppression moved into C#: ImportNotificationService skips the
+-- dispatch when the canceller IS the session's initiator, and sends it when they are not.
+-- {{CancelledBy}} names who stopped it. Nothing here needs to express that rule — do NOT
+-- try to encode it as TriggerConditionJson (see EvaluateCondition, above).
+--
+-- ── import.started ───────────────────────────────────────────────────────────────────
+-- Fires when the queue dispatcher gives the session the tenant's execution slot, not when
+-- the user pressed Import. On a busy tenant those are hours apart, and for a scheduled run
+-- the start is the middle of the night — which is the whole point of announcing it.
 --
 -- ── TOKENS AVAILABLE ─────────────────────────────────────────────────────────────────
 -- {{SessionId}} {{GridName}} {{GridCode}} {{FileName}} {{TotalRows}} {{ImportedRows}}
--- {{FailedRows}} {{SkippedRows}} {{StartedAt}} {{FinishedAt}} {{Duration}} {{ImportLink}}
--- and, on the three failure rows, {{FailureReason}}.
+-- {{FailedRows}} {{SkippedRows}} {{ValidRows}} {{InvalidRows}} {{WarningRows}}
+-- {{StartedAt}} {{FinishedAt}} {{Duration}} {{ImportLink}}
+-- plus {{FailureReason}} on the three failure rows and {{CancelledBy}} on the cancelled row.
+-- The row counts are whatever is committed at dispatch time: {{ValidRows}}/{{InvalidRows}}/
+-- {{WarningRows}} are the validation figures and are 0 before validation has run, so use
+-- them only on the validation rows; {{ImportedRows}}/{{FailedRows}} are 0 until execution.
 -- {{ImportLink}} is always RELATIVE (resolved from the grid's RequiredMenuCode → the menu's
 -- MenuUrl, + ?sessionId=), never a host — the same row is read by every tenant on every
 -- domain, so a hardcoded host would be wrong for all but one of them. It renders as an
@@ -103,10 +124,10 @@ WHERE t."TypeCode" = 'NOTIFICATIONCATEGORY'
       WHERE m."MasterDataTypeId" = t."MasterDataTypeId"
         AND m."DataValue" = v."DataValue");
 
--- ── 2. The five import lifecycle templates ───────────────────────────────────────────
+-- ── 2. The nine import lifecycle templates ───────────────────────────────────────────
 -- TriggerEvent values must match the constants on ImportNotificationService exactly.
 --
--- Priority 'High' on the three failure rows, 'Normal' on the two completions. Deliberately
+-- Priority 'High' on the three failure rows, 'Normal' on everything else. Deliberately
 -- NOT 'Urgent': NotificationWriter treats 'Urgent' as un-muteable, ignoring every preference
 -- row. A failed import needs attention but does not warrant overriding a user's own choice —
 -- and an Urgent row puts a switch in the preferences panel that silently does nothing.
@@ -130,6 +151,40 @@ SELECT
     v.action_url, v.action_label, NULL,
     2, now(), null, null, true, false
 FROM (VALUES
+    -- ── progress ─────────────────────────────────────────────────────────────────────
+    -- Sent when the dispatcher hands the session the tenant's execution slot. IncludeAdmins
+    -- false: routine progress on someone else's file is not an admin's business.
+    ('NOTIFY_IMPORT_STARTED', 'Import Started',
+     '{{GridName}} import of {{FileName}} has started running. {{TotalRows}} row(s) are queued for import; you will be notified when it finishes.',
+     'import.started', 'Import', 'Normal', false,
+     '{{GridName}} import started', 'ph:play-circle', '#2563eb',
+     '{{ImportLink}}', 'View progress'),
+
+    -- Validation finished and the file is clean. This is the "your turn" message: nothing
+    -- imports until someone comes back and confirms.
+    ('NOTIFY_IMPORT_VALIDATION_COMPLETED', 'Import Validation Completed',
+     'Validation of {{FileName}} finished with no errors. All {{ValidRows}} of {{TotalRows}} row(s) are ready to import ({{WarningRows}} row(s) carry warnings, which do not block the import). Open the import to start it.',
+     'import.validation_completed', 'Import', 'Normal', false,
+     '{{GridName}} file validated — ready to import', 'ph:shield-check', '#16a34a',
+     '{{ImportLink}}', 'Start import'),
+
+    -- Validation finished and found problems. Separate row so a user can mute the clean
+    -- case and keep this one (per-trigger mutes are keyed on the trigger code).
+    ('NOTIFY_IMPORT_VALIDATION_COMPLETED_WITH_ERRORS', 'Import Validation Completed With Errors',
+     'Validation of {{FileName}} finished with errors. {{ValidRows}} of {{TotalRows}} row(s) are valid; {{InvalidRows}} row(s) must be fixed before they can be imported. Open the import to review them.',
+     'import.validation_completed_with_errors', 'Import', 'Normal', false,
+     '{{GridName}} file validated — {{InvalidRows}} row(s) need attention', 'ph:warning-diamond', '#d97706',
+     '{{ImportLink}}', 'Review errors'),
+
+    -- ── cancelled ────────────────────────────────────────────────────────────────────
+    -- Dispatched ONLY when the canceller is not the initiator; see the header. Normal, not
+    -- High: the import stopping is not an incident, it is someone's decision.
+    ('NOTIFY_IMPORT_CANCELLED', 'Import Cancelled',
+     'Your {{GridName}} import of {{FileName}} was cancelled by {{CancelledBy}}. {{ImportedRows}} of {{TotalRows}} row(s) had been imported before it stopped and have not been rolled back.',
+     'import.cancelled', 'Import', 'Normal', false,
+     '{{GridName}} import cancelled by {{CancelledBy}}', 'ph:prohibit', '#64748b',
+     '{{ImportLink}}', 'View import'),
+
     -- ── success ──────────────────────────────────────────────────────────────────────
     ('NOTIFY_IMPORT_COMPLETED', 'Import Completed',
      '{{GridName}} import finished. {{ImportedRows}} of {{TotalRows}} rows were imported from {{FileName}} in {{Duration}} (started {{StartedAt}}, finished {{FinishedAt}}).',
@@ -204,7 +259,7 @@ COMMIT;
 -- =====================================================================================
 -- VERIFY (run manually after COMMIT)
 -- =====================================================================================
--- -- All five rows present, platform-scoped, with category / priority / recipient wiring:
+-- -- All nine rows present, platform-scoped, with category / priority / recipient wiring:
 -- SELECT t."NotificationTemplateCode", t."TriggerEvent",
 --        c."DataValue" AS category, p."DataValue" AS priority,
 --        r."DataValue" AS recipient_type, a."DataValue" AS audience,
@@ -218,12 +273,15 @@ COMMIT;
 --    AND t."IsDeleted" = false
 --  ORDER BY t."NotificationTemplateCode";
 --
--- -- EXPECT 5 rows. Every one must have category='Import', recipient_type='Initiated',
+-- -- EXPECT 9 rows: started, validation_completed, validation_completed_with_errors,
+-- -- cancelled, completed, completed_with_errors, failed, schedule_validation_failed,
+-- -- schedule_failed. Every one must have category='Import', recipient_type='Initiated',
 -- -- audience='Staff', TriggerConditionJson NULL, EnableInApp true, CompanyId NULL.
 -- -- A NULL in any of those four FK columns means seed_notificationtemplate_masterdata.sql
 -- -- has not run (or its DataValue spelling differs) — the JOIN dropped the row entirely, so
--- -- you would see FEWER than 5 rows rather than NULLs. Fewer than 5 = re-run that file first,
--- -- then this one.
+-- -- you would see FEWER than 9 rows rather than NULLs. Fewer than 9 = re-run that file first,
+-- -- then this one. (An existing install that already had the original five will pick up the
+-- -- four new rows on re-run; the guard is per-template-code, not all-or-nothing.)
 --
 -- -- IncludeAdmins must be TRUE on exactly the three failure triggers:
 -- SELECT "TriggerEvent", "IncludeAdmins"
@@ -231,8 +289,7 @@ COMMIT;
 --  WHERE "TriggerEvent" LIKE 'import.%' AND "IsDeleted" = false
 --  ORDER BY "IncludeAdmins" DESC, "TriggerEvent";
 -- -- EXPECT true for import.failed / import.schedule_failed /
--- -- import.schedule_validation_failed; false for import.completed and
--- -- import.completed_with_errors.
+-- -- import.schedule_validation_failed; false for all six others.
 --
 -- -- The admin fallback is only real if this setting names roles. An empty value means
 -- -- IncludeAdmins unions nobody, and a failure whose initiator has left the organisation
@@ -246,7 +303,9 @@ COMMIT;
 --   JOIN sett."MasterDataTypes" t ON t."MasterDataTypeId" = m."MasterDataTypeId"
 --  WHERE t."TypeCode" = 'NOTIFICATIONCATEGORY' AND m."DataValue" = 'Import';   -- EXPECT 1
 --
--- -- Deliberately absent — import.cancelled must NOT appear:
+-- -- import.cancelled is now seeded (it was not, originally). Its "only when someone else
+-- -- cancelled it" rule lives in ImportNotificationService, NOT in TriggerConditionJson:
 -- SELECT count(*) FROM notify."NotificationTemplates"
---  WHERE "TriggerEvent" = 'import.cancelled';                                  -- EXPECT 0
+--  WHERE "TriggerEvent" = 'import.cancelled'
+--    AND "TriggerConditionJson" IS NULL;                                       -- EXPECT 1
 -- =====================================================================================
