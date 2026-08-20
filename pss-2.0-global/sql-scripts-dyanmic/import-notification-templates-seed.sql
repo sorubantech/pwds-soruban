@@ -1,11 +1,17 @@
 ﻿-- =====================================================================================
 -- P5 — Import lifecycle notifications — templates
 -- -------------------------------------------------------------------------------------
--- Seeds one NOTIFICATIONCATEGORY MasterData row ('Import') and nine platform-owned
+-- Seeds one NOTIFICATIONCATEGORY MasterData row ('Import') and ten platform-owned
 -- notify."NotificationTemplates" rows, one per trigger code ImportNotificationService emits.
 --
--- The nine cover the whole lifecycle a user can see: started, validation finished (clean /
--- with errors), cancelled, completed (clean / with errors), and the three failure paths.
+-- The ten cover the whole lifecycle a user can see: uploaded, started, validation finished
+-- (clean / with errors), cancelled, completed (clean / with errors), and the three failures.
+--
+-- Running this file is now OPTIONAL rather than required: ImportNotificationService checks
+-- for a matching template first and, when it finds none, sends its own built-in copy through
+-- INotificationSender and logs a warning naming this file. Seeding it is still what you want
+-- — the rows here are tenant-editable and the fallback copy is not — but a missing seed no
+-- longer means silence.
 --
 -- ── WHY THIS FILE EXISTS ─────────────────────────────────────────────────────────────
 -- Scheduled imports are staying (management decision). A schedule that runs at 2 AM and
@@ -53,7 +59,7 @@
 --      A condition-based split would therefore fire BOTH rows the moment a token name is
 --      misspelled or a future code path omits it. The split is made in C# instead
 --      (ImportNotificationService.ResolveTerminalTrigger, on ExecutionFailedRows), which is
---      why TriggerConditionJson is NULL on all nine rows below. Do not add conditions here.
+--      why TriggerConditionJson is NULL on all ten rows below. Do not add conditions here.
 --      import.validation_completed / _with_errors is split the same way, on InvalidRows.
 --
 -- ── import.cancelled — SEEDED, BUT ONLY DELIVERED TO A THIRD PARTY ───────────────────
@@ -72,6 +78,11 @@
 -- Fires when the queue dispatcher gives the session the tenant's execution slot, not when
 -- the user pressed Import. On a busy tenant those are hours apart, and for a scheduled run
 -- the start is the middle of the night — which is the whole point of announcing it.
+--
+-- import.uploaded is the mirror of that at the other end: it fires from ImportParseService
+-- once the workbook has been read and the rows staged, because a large file is parsed on a
+-- background worker and the upload screen hands control back before anything is known
+-- about the file - not even whether it could be opened.
 --
 -- ── TOKENS AVAILABLE ─────────────────────────────────────────────────────────────────
 -- {{SessionId}} {{GridName}} {{GridCode}} {{FileName}} {{TotalRows}} {{ImportedRows}}
@@ -124,7 +135,7 @@ WHERE t."TypeCode" = 'NOTIFICATIONCATEGORY'
       WHERE m."MasterDataTypeId" = t."MasterDataTypeId"
         AND m."DataValue" = v."DataValue");
 
--- ── 2. The nine import lifecycle templates ───────────────────────────────────────────
+-- ── 2. The ten import lifecycle templates ───────────────────────────────────────────
 -- TriggerEvent values must match the constants on ImportNotificationService exactly.
 --
 -- Priority 'High' on the three failure rows, 'Normal' on everything else. Deliberately
@@ -152,6 +163,15 @@ SELECT
     2, now(), null, null, true, false
 FROM (VALUES
     -- ── progress ─────────────────────────────────────────────────────────────────────
+    -- The file has been read and its rows staged (session at Parsed). Large uploads parse on
+    -- a background worker and hand the screen straight back, so without this the user has no
+    -- signal that the file was even readable. IncludeAdmins false: it is their own upload.
+    ('NOTIFY_IMPORT_UPLOADED', 'Import File Uploaded',
+     '{{FileName}} has been uploaded and read successfully. {{TotalRows}} row(s) are staged and ready for validation. Open the import to review them.',
+     'import.uploaded', 'Import', 'Normal', false,
+     '{{GridName}} file uploaded', 'ph:file-arrow-up', '#2563eb',
+     '{{ImportLink}}', 'Review rows'),
+
     -- Sent when the dispatcher hands the session the tenant's execution slot. IncludeAdmins
     -- false: routine progress on someone else's file is not an admin's business.
     ('NOTIFY_IMPORT_STARTED', 'Import Started',
@@ -259,7 +279,7 @@ COMMIT;
 -- =====================================================================================
 -- VERIFY (run manually after COMMIT)
 -- =====================================================================================
--- -- All nine rows present, platform-scoped, with category / priority / recipient wiring:
+-- -- All ten rows present, platform-scoped, with category / priority / recipient wiring:
 -- SELECT t."NotificationTemplateCode", t."TriggerEvent",
 --        c."DataValue" AS category, p."DataValue" AS priority,
 --        r."DataValue" AS recipient_type, a."DataValue" AS audience,
@@ -273,15 +293,15 @@ COMMIT;
 --    AND t."IsDeleted" = false
 --  ORDER BY t."NotificationTemplateCode";
 --
--- -- EXPECT 9 rows: started, validation_completed, validation_completed_with_errors,
--- -- cancelled, completed, completed_with_errors, failed, schedule_validation_failed,
--- -- schedule_failed. Every one must have category='Import', recipient_type='Initiated',
+-- -- EXPECT 10 rows: uploaded, started, validation_completed,
+-- -- validation_completed_with_errors, cancelled, completed, completed_with_errors, failed,
+-- -- schedule_validation_failed, schedule_failed. Every one must have category='Import', recipient_type='Initiated',
 -- -- audience='Staff', TriggerConditionJson NULL, EnableInApp true, CompanyId NULL.
 -- -- A NULL in any of those four FK columns means seed_notificationtemplate_masterdata.sql
 -- -- has not run (or its DataValue spelling differs) — the JOIN dropped the row entirely, so
--- -- you would see FEWER than 9 rows rather than NULLs. Fewer than 9 = re-run that file first,
--- -- then this one. (An existing install that already had the original five will pick up the
--- -- four new rows on re-run; the guard is per-template-code, not all-or-nothing.)
+-- -- you would see FEWER than 10 rows rather than NULLs. Fewer than 10 = re-run that file
+-- -- first, then this one. (An existing install picks up whichever rows it is missing on
+-- -- re-run; the guard is per-template-code, not all-or-nothing.)
 --
 -- -- IncludeAdmins must be TRUE on exactly the three failure triggers:
 -- SELECT "TriggerEvent", "IncludeAdmins"
@@ -289,7 +309,7 @@ COMMIT;
 --  WHERE "TriggerEvent" LIKE 'import.%' AND "IsDeleted" = false
 --  ORDER BY "IncludeAdmins" DESC, "TriggerEvent";
 -- -- EXPECT true for import.failed / import.schedule_failed /
--- -- import.schedule_validation_failed; false for all six others.
+-- -- import.schedule_validation_failed; false for all seven others.
 --
 -- -- The admin fallback is only real if this setting names roles. An empty value means
 -- -- IncludeAdmins unions nobody, and a failure whose initiator has left the organisation
