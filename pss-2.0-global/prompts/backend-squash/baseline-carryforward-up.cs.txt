@@ -1,0 +1,160 @@
+// ============================================================================
+// BASELINE CARRY-FORWARD BLOCK
+// ----------------------------------------------------------------------------
+// Paste this at the END of Up() in the newly generated Baseline_<date> migration
+// (Base.Infrastructure/Migrations/<ID>_Baseline_<date>.cs), after every
+// migrationBuilder.CreateTable/CreateIndex/AddForeignKey call EF generated.
+//
+// WHY: these artefacts are created by raw SQL in the old migration chain and are
+// therefore INVISIBLE to ApplicationDbContextModelSnapshot.cs. A regenerated
+// baseline will NOT recreate them, so a fresh tenant DB would be missing them.
+//
+// Audited 2026-08-20 against all 195 old migrations. Only TWO of the five
+// migrations containing migrationBuilder.Sql() need carrying forward:
+//
+//   CARRY  20260516052920_Add_DisplayFields_In_Currency
+//            -> MasterDataType/MasterData seed rows for the 5 Currency enum
+//               fields. NOT present in sql-scripts-dyanmic/. Without these the
+//               5 Currency FK columns have no rows to point at.
+//   CARRY  20260818062300_Replace_Field_Name_Unique_Index
+//            -> two partial/expression unique indexes on sett."Fields".
+//               lower()/COALESCE()/WHERE cannot be expressed via HasIndex(),
+//               confirmed absent from the snapshot (grep 'ux_fields' => 0 hits).
+//
+//   DROP   20260514130705_Add_Staff_Basic_Fields_In_Staff
+//            -> only DROP INDEX IF EXISTS cleanup of superseded indexes. The
+//               three replacements ARE in the snapshot
+//               (IX_Staffs_CompanyId_Staff{Email,EmpId,MobileNumber}_Active).
+//   DROP   20260817091615_Change_Text_To_JsonB_To_CustomFields_In_Contact_Entities
+//            -> one-time text->jsonb ALTER. The snapshot already declares these
+//               columns as HasColumnType("jsonb"), so a fresh DB creates them
+//               in final shape.
+//   DROP   20260817154323_Add_ImportSessionField
+//            -> defensive idempotent CREATE TABLE / ADD COLUMN / FK / unique
+//               index for import."ImportSessionFields". The entity IS mapped
+//               (Base.Domain.Models.ImportModels.ImportSessionField) and the
+//               snapshot carries the table AND the unique index
+//               uix_import_session_fields_session_name, so EF regenerates all
+//               of it.
+//
+// The blocks below are idempotent and safe to re-run.
+// ============================================================================
+
+            // ---- carried forward from 20260516052920_Add_DisplayFields_In_Currency ----
+            // Seeds the MasterDataTypes / MasterDatas rows the 5 Currency FK columns
+            // reference. The trailing UPDATE backfills are no-ops on an empty
+            // com."Currencies" but are kept verbatim so behaviour matches the old chain.
+            migrationBuilder.Sql(@"
+                -- 1) Seed MasterDataTypes (idempotent)
+                INSERT INTO sett.""MasterDataTypes"" (""TypeName"", ""TypeCode"", ""Description"", ""IsSystem"", ""IsActive"", ""IsDeleted"", ""CreatedDate"")
+                SELECT 'Currency Symbol Position', 'CURRENCYSYMBOLPOSITION', 'Currency symbol placement (Before/After amount)', TRUE, TRUE, FALSE, NOW()
+                WHERE NOT EXISTS (SELECT 1 FROM sett.""MasterDataTypes"" WHERE ""TypeCode"" = 'CURRENCYSYMBOLPOSITION');
+
+                INSERT INTO sett.""MasterDataTypes"" (""TypeName"", ""TypeCode"", ""Description"", ""IsSystem"", ""IsActive"", ""IsDeleted"", ""CreatedDate"")
+                SELECT 'Currency Thousands Separator', 'CURRENCYTHOUSANDSSEPARATOR', 'Thousands separator style for currency formatting', TRUE, TRUE, FALSE, NOW()
+                WHERE NOT EXISTS (SELECT 1 FROM sett.""MasterDataTypes"" WHERE ""TypeCode"" = 'CURRENCYTHOUSANDSSEPARATOR');
+
+                INSERT INTO sett.""MasterDataTypes"" (""TypeName"", ""TypeCode"", ""Description"", ""IsSystem"", ""IsActive"", ""IsDeleted"", ""CreatedDate"")
+                SELECT 'Currency Decimal Separator', 'CURRENCYDECIMALSEPARATOR', 'Decimal separator style for currency formatting', TRUE, TRUE, FALSE, NOW()
+                WHERE NOT EXISTS (SELECT 1 FROM sett.""MasterDataTypes"" WHERE ""TypeCode"" = 'CURRENCYDECIMALSEPARATOR');
+
+                INSERT INTO sett.""MasterDataTypes"" (""TypeName"", ""TypeCode"", ""Description"", ""IsSystem"", ""IsActive"", ""IsDeleted"", ""CreatedDate"")
+                SELECT 'Currency Rate Source', 'CURRENCYRATESOURCE', 'Exchange rate source (Manual/Auto)', TRUE, TRUE, FALSE, NOW()
+                WHERE NOT EXISTS (SELECT 1 FROM sett.""MasterDataTypes"" WHERE ""TypeCode"" = 'CURRENCYRATESOURCE');
+
+                INSERT INTO sett.""MasterDataTypes"" (""TypeName"", ""TypeCode"", ""Description"", ""IsSystem"", ""IsActive"", ""IsDeleted"", ""CreatedDate"")
+                SELECT 'Currency Update Frequency', 'CURRENCYUPDATEFREQUENCY', 'Auto-update frequency for currency rates', TRUE, TRUE, FALSE, NOW()
+                WHERE NOT EXISTS (SELECT 1 FROM sett.""MasterDataTypes"" WHERE ""TypeCode"" = 'CURRENCYUPDATEFREQUENCY');
+
+                -- 2) Seed MasterDatas (idempotent via NOT EXISTS check on (TypeId, DataValue))
+                INSERT INTO sett.""MasterDatas"" (""MasterDataTypeId"", ""DataName"", ""DataValue"", ""DataSetting"", ""OrderBy"", ""IsSystem"", ""IsActive"", ""IsDeleted"", ""CreatedDate"")
+                SELECT t.""MasterDataTypeId"", v.name, v.code, '', v.ord, TRUE, TRUE, FALSE, NOW()
+                FROM sett.""MasterDataTypes"" t
+                CROSS JOIN (VALUES ('Before', 'Before', 1), ('After', 'After', 2)) AS v(name, code, ord)
+                WHERE t.""TypeCode"" = 'CURRENCYSYMBOLPOSITION'
+                  AND NOT EXISTS (SELECT 1 FROM sett.""MasterDatas"" m WHERE m.""MasterDataTypeId"" = t.""MasterDataTypeId"" AND m.""DataValue"" = v.code);
+
+                INSERT INTO sett.""MasterDatas"" (""MasterDataTypeId"", ""DataName"", ""DataValue"", ""DataSetting"", ""OrderBy"", ""IsSystem"", ""IsActive"", ""IsDeleted"", ""CreatedDate"")
+                SELECT t.""MasterDataTypeId"", v.name, v.code, '', v.ord, TRUE, TRUE, FALSE, NOW()
+                FROM sett.""MasterDataTypes"" t
+                CROSS JOIN (VALUES ('Comma', 'Comma', 1), ('Period', 'Period', 2), ('Space', 'Space', 3), ('Indian', 'Indian', 4)) AS v(name, code, ord)
+                WHERE t.""TypeCode"" = 'CURRENCYTHOUSANDSSEPARATOR'
+                  AND NOT EXISTS (SELECT 1 FROM sett.""MasterDatas"" m WHERE m.""MasterDataTypeId"" = t.""MasterDataTypeId"" AND m.""DataValue"" = v.code);
+
+                INSERT INTO sett.""MasterDatas"" (""MasterDataTypeId"", ""DataName"", ""DataValue"", ""DataSetting"", ""OrderBy"", ""IsSystem"", ""IsActive"", ""IsDeleted"", ""CreatedDate"")
+                SELECT t.""MasterDataTypeId"", v.name, v.code, '', v.ord, TRUE, TRUE, FALSE, NOW()
+                FROM sett.""MasterDataTypes"" t
+                CROSS JOIN (VALUES ('Period', 'Period', 1), ('Comma', 'Comma', 2)) AS v(name, code, ord)
+                WHERE t.""TypeCode"" = 'CURRENCYDECIMALSEPARATOR'
+                  AND NOT EXISTS (SELECT 1 FROM sett.""MasterDatas"" m WHERE m.""MasterDataTypeId"" = t.""MasterDataTypeId"" AND m.""DataValue"" = v.code);
+
+                INSERT INTO sett.""MasterDatas"" (""MasterDataTypeId"", ""DataName"", ""DataValue"", ""DataSetting"", ""OrderBy"", ""IsSystem"", ""IsActive"", ""IsDeleted"", ""CreatedDate"")
+                SELECT t.""MasterDataTypeId"", v.name, v.code, '', v.ord, TRUE, TRUE, FALSE, NOW()
+                FROM sett.""MasterDataTypes"" t
+                CROSS JOIN (VALUES ('Manual', 'Manual', 1), ('Auto - API Fetch', 'Auto', 2)) AS v(name, code, ord)
+                WHERE t.""TypeCode"" = 'CURRENCYRATESOURCE'
+                  AND NOT EXISTS (SELECT 1 FROM sett.""MasterDatas"" m WHERE m.""MasterDataTypeId"" = t.""MasterDataTypeId"" AND m.""DataValue"" = v.code);
+
+                INSERT INTO sett.""MasterDatas"" (""MasterDataTypeId"", ""DataName"", ""DataValue"", ""DataSetting"", ""OrderBy"", ""IsSystem"", ""IsActive"", ""IsDeleted"", ""CreatedDate"")
+                SELECT t.""MasterDataTypeId"", v.name, v.code, '', v.ord, TRUE, TRUE, FALSE, NOW()
+                FROM sett.""MasterDataTypes"" t
+                CROSS JOIN (VALUES ('Daily', 'Daily', 1), ('Weekly', 'Weekly', 2), ('Monthly', 'Monthly', 3)) AS v(name, code, ord)
+                WHERE t.""TypeCode"" = 'CURRENCYUPDATEFREQUENCY'
+                  AND NOT EXISTS (SELECT 1 FROM sett.""MasterDatas"" m WHERE m.""MasterDataTypeId"" = t.""MasterDataTypeId"" AND m.""DataValue"" = v.code);
+
+                -- 3) Backfill existing Currencies rows from 0 to the system-default MasterDataId.
+                UPDATE com.""Currencies"" SET ""SymbolPositionId"" = (
+                    SELECT m.""MasterDataId"" FROM sett.""MasterDatas"" m
+                    INNER JOIN sett.""MasterDataTypes"" t ON t.""MasterDataTypeId"" = m.""MasterDataTypeId""
+                    WHERE t.""TypeCode"" = 'CURRENCYSYMBOLPOSITION' AND m.""DataValue"" = 'Before'
+                ) WHERE ""SymbolPositionId"" = 0;
+
+                UPDATE com.""Currencies"" SET ""ThousandsSeparatorId"" = (
+                    SELECT m.""MasterDataId"" FROM sett.""MasterDatas"" m
+                    INNER JOIN sett.""MasterDataTypes"" t ON t.""MasterDataTypeId"" = m.""MasterDataTypeId""
+                    WHERE t.""TypeCode"" = 'CURRENCYTHOUSANDSSEPARATOR' AND m.""DataValue"" = 'Comma'
+                ) WHERE ""ThousandsSeparatorId"" = 0;
+
+                UPDATE com.""Currencies"" SET ""DecimalSeparatorId"" = (
+                    SELECT m.""MasterDataId"" FROM sett.""MasterDatas"" m
+                    INNER JOIN sett.""MasterDataTypes"" t ON t.""MasterDataTypeId"" = m.""MasterDataTypeId""
+                    WHERE t.""TypeCode"" = 'CURRENCYDECIMALSEPARATOR' AND m.""DataValue"" = 'Period'
+                ) WHERE ""DecimalSeparatorId"" = 0;
+
+                UPDATE com.""Currencies"" SET ""RateSourceId"" = (
+                    SELECT m.""MasterDataId"" FROM sett.""MasterDatas"" m
+                    INNER JOIN sett.""MasterDataTypes"" t ON t.""MasterDataTypeId"" = m.""MasterDataTypeId""
+                    WHERE t.""TypeCode"" = 'CURRENCYRATESOURCE' AND m.""DataValue"" = 'Manual'
+                ) WHERE ""RateSourceId"" = 0;
+            ");
+
+            // ---- carried forward from 20260818062300_Replace_Field_Name_Unique_Index ----
+            // Expression + partial unique indexes on sett."Fields". Invisible to the model
+            // snapshot by design - see FieldConfiguration.cs.
+            // NOT written with CREATE INDEX CONCURRENTLY: EF wraps a migration in a
+            // transaction and CONCURRENTLY cannot run inside one. sett."Fields" is a small
+            // configuration table.
+            migrationBuilder.Sql(@"
+                CREATE UNIQUE INDEX IF NOT EXISTS ux_fields_system_name
+                    ON sett.""Fields"" (lower(""FieldName""))
+                    WHERE ""IsSystem"" = true AND ""IsDeleted"" = false;
+            ");
+
+            // COALESCE("CompanyId", 0) rather than NULLS NOT DISTINCT (needs PostgreSQL 15)
+            // folds the platform-wide NULL rows into one ordinary bucket the index can
+            // police; company id 0 does not exist, so it collides with nothing real.
+            migrationBuilder.Sql(@"
+                CREATE UNIQUE INDEX IF NOT EXISTS ux_fields_custom_name
+                    ON sett.""Fields"" (COALESCE(""CompanyId"", 0), lower(""FieldName""))
+                    WHERE ""IsSystem"" = false AND ""IsDeleted"" = false;
+            ");
+
+// ============================================================================
+// AND paste this at the END of Down() in the same migration, BEFORE the
+// generated DropTable calls:
+//
+//            migrationBuilder.Sql(@"DROP INDEX IF EXISTS sett.ux_fields_custom_name;");
+//            migrationBuilder.Sql(@"DROP INDEX IF EXISTS sett.ux_fields_system_name;");
+//
+// (the seed rows need no Down - the DropTable of MasterDatas removes them)
+// ============================================================================
