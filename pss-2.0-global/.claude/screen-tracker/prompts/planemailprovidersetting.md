@@ -378,6 +378,7 @@ sql-scripts-dyanmic/platform-plan-email-menu-capability-seed.sql
 | ISSUE-2 | MED | BE | Real ESP domain-authentication API (SendGrid `/whitelabel/domains`) is not wired. The first build may issue DNS records from a stored template and mark `VERIFIED` manually. | OPEN |
 | ISSUE-3 | MED | BE | `ops.PlatformEmailAccountAssignments.CompanyId` on a control-plane table — verify the global multi-tenant query filter is not auto-applied. | CLOSED — confirmed auto-applied by convention on any `CompanyId` property; fixed via `IControlPlaneEntity` marker + exclusion in `ApplyTenantFilters`. Tenant-facing handlers over these tables MUST filter `CompanyId` explicitly |
 | ISSUE-4 | LOW | BE | `GetTenantEmailAssignments` resolves `effectiveSource` across Companies × Assignments × Subscriptions × Plans × Providers, so filtering/sorting/paging happen in memory rather than in SQL. Correct at platform tenant counts; revisit if tenant count grows past a few thousand. | OPEN |
+| ISSUE-5 | HIGH | BE | `PlatformEmailProviderGuard.EnsureFromEmailAllowedAsync` relaxes the From-lock on `(CompanyId, domain, VERIFIED)` and never on `PlatformCommunicationProviderId`. DNS is published against ONE sending account, so after a tenant override is assigned/reassigned/cleared the guard still passes a From address whose DKIM is signed by a different account — it clears our check and fails at the receiver. Fix: carry the verifying `PlatformCommunicationProviderId` on `TenantEmailDomainRequest` into the guard predicate. Mitigated for now by the `EMAIL_SENDER_ACCOUNT_CHANGED` intimation, which tells the tenant to re-verify — but that is a nudge, not an enforcement. | OPEN |
 
 ### § Sessions
 
@@ -410,3 +411,37 @@ sql-scripts-dyanmic/platform-plan-email-menu-capability-seed.sql
   - BE (modified): `Base.API/EndPoints/Ops/Queries/PlanEmailProviderQueries.cs` — additive `GetPlanEmailDefaults` resolver, wire name `planEmailDefaults`, `BaseApiResponse<IEnumerable<PlanEmailDefaultAssignmentResponseDto>>`.
   - FE (modified): `PlanEmailProviderQuery.ts` — added `PLAN_EMAIL_DEFAULTS_QUERY`; `use-plan-email-provider.ts` — fetches it once, exposes `planDefaults` / `planDefaultsByPlan` / `planDefaultsLoading`, refetches after `savePlanEmailDefaults`; `tabs/tenant-assignments-tab.tsx` — `PlanDefaultRow` now takes `defaultRow` as a prop and issues no query of its own (was one query per plan).
 - **Doc/code mismatch fixed** — `PlanEmailProviderSchemas.cs` doc-commented the status vocabulary as `PENDING | DNS_ISSUED | VERIFIED | REJECTED`; corrected to `PENDING | DNSISSUED | VERIFIED | REJECTED | CANCELLED` to match the entity and all command code.
+
+### Session 2 — 2026-08-21 — BUILD — COMPLETED
+
+- **Scope**: Platform audit-log integration, then two-way intimation/notification for the domain-verification conversation.
+- **Files touched**:
+  - BE: `Base.Application/Business/OpsBusiness/PlanEmailProviders/PlanEmailIntimations.cs` (created), `.../Commands/ReviewTenantEmailDomainRequest.cs` (modified), `.../Commands/IssueDomainDnsRecords.cs` (modified), `.../Commands/RecheckDomainDns.cs` (modified), `.../TenantRequests/RequestPlatformEmailDomain.cs` (modified), `.../TenantRequests/CancelPlatformEmailDomainRequest.cs` (modified)
+  - FE: `ops/planemail/plan-email-provider-page.tsx` (modified — `?tab=` deep link)
+- **Deviations from spec**:
+  - The two directions ride **two different seams**, and this is deliberate. `Intimation.CompanyId` is NOT NULL and is the INV-10 security predicate, so a platform-addressed intimation is not expressible without a schema change. Platform → Tenant therefore uses `IIntimationService`; Tenant → Platform uses `INotificationSender` with `NotificationTarget.PlatformRoles(...)`, the same addressing already used by `SubmitProductEnquiry` and `ProvisionTenant`.
+  - Every tenant-facing raise goes through `PlanEmailIntimations.RaiseFreshAsync`, which **resolves then raises**. `RaiseAsync` on an already-ACTIVE `(CompanyId, TypeCode, SourceKey)` only refreshes the row and returns `false` — no second notification — so the tenant would never hear DNSISSUED become VERIFIED. Safe because `UX_Intimations_Company_Type_SourceKey_Active` is partial on `"Status" = 'ACTIVE'`.
+  - `SourceKey` is the **request id**, not the domain: a tenant may have several requests in flight and each outcome is its own message.
+  - `IntimationTypeCode` is free-form `varchar(100)` — `EMAIL_DOMAIN_VERIFICATION` needs **no MasterData seed and no migration**.
+  - A failed `RecheckDomainDns` raises nothing: the "publish these records" intimation from `IssueDomainDnsRecords` is still the correct standing message.
+  - BR-6 holds through both layers — no DNS record *value* and no credential enters an audit payload, an intimation, or a notification body.
+- **Known issues opened**: None.
+- **Known issues closed**: None.
+- **Next step**: (none — build complete). User-owned: `dotnet build`; stage `Base.Infrastructure/Migrations/20260820133106_Add_TenantEmailDomainRequest_PlatformEmailAccountAssignment.cs` (agent tooling is blocked from staging that path).
+
+### Session 3 — 2026-08-21 — BUILD — COMPLETED
+
+- **Scope**: Second intimation conversation — sender-account changes on the tenant-override surface.
+- **Files touched**:
+  - BE: `.../PlanEmailProviders/PlanEmailIntimations.cs` (modified — `AccountChangedTypeCode`, `RaiseSenderAccountChangedAsync`, `ClearSenderAccountChangedAsync`), `.../Commands/AssignTenantEmailAccount.cs` (modified), `.../Commands/ClearTenantEmailAssignment.cs` (modified), `.../Commands/ReviewTenantEmailDomainRequest.cs` (modified — clear on approve), `.../Commands/RecheckDomainDns.cs` (modified — clear on verified)
+- **Design notes**:
+  - **Why these two mutations and not the others.** DNS is published against ONE ESP account. Moving a tenant to a different account (or dropping the override back to the plan/global default) leaves the published DKIM signing for the wrong account, so mail passes our own BR-5 guard and then fails at the receiver. The tenant is the only party who can fix it and had no way to learn about it.
+  - **Gated twice, deliberately.** The raise is skipped when `beforeProviderId == afterProviderId` (ops re-saving the same account is not a change) and when the tenant has no `VERIFIED` `TenantEmailDomainRequest` (nothing published, nothing to re-verify). Without the second gate every routine assignment would notify every tenant.
+  - **`Kind = Condition`, not Informational** — unlike an approval, this is something the tenant must act on, and it stays true until re-verification. It is therefore cleared by the verification handlers (`ReviewTenantEmailDomainRequest` on approve, `RecheckDomainDns` on `allVerified`), not by a timer.
+  - **`SourceKey` = the company id**, explicitly not null: one standing condition per tenant however many times ops shuffles the assignment. A null key would let duplicate ACTIVE rows accumulate, since Postgres treats NULLs as distinct in the partial unique index.
+  - **`AssignTenantEmailAccount` resolves the before-state before the execution strategy.** A first-time override displaces whatever the PLAN or GLOBAL layer was resolving to, and that is unknowable from the override row after the write. One extra round-trip, taken for correctness. `ClearTenantEmailAssignment` needs no extra query — `clearedProviderId` is already captured.
+  - The whole raise body is `try`/`catch` → `LogWarning`. It runs post-commit; a missed notification must not turn a successful ops action into a 500.
+- **Explicitly not built**: `SavePlanEmailDefaults` fans out to every tenant on a plan, most with no verified domain — per-tenant intimations there would be noise, and the honest fix at plan level is the guard (ISSUE-5). A stale-`DNSISSUED` sweep is the only true recurring *condition* on this screen but needs a Hangfire job that does not exist; deferred.
+- **Known issues opened**: ISSUE-5 (BR-5 guard is provider-blind).
+- **Known issues closed**: None.
+- **Next step**: (none — build complete). User-owned: `dotnet build`.
